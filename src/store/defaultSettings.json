@@ -1,0 +1,17 @@
+{
+  "preferQuoteCurrencySize": true,
+  "aggregateTrades": true,
+  "disableAnimations": true,
+  "calculateSlippage": false,
+  "decimalPrecision": null,
+  "theme": "dark",
+  "backgroundColor": "rgb(23,27,41)",
+  "textColor": "",
+  "timezoneOffset": 0,
+  "useAudio": false,
+  "audioIncludeInsignificants": true,
+  "audioVolume": 1.5,
+  "audioPitch": 1,
+  "settings": ["other", "chart", "stats", "counters", "audio"],
+  "recentColors": []
+}

@@ -1,0 +1,178 @@
+button {
+  color: inherit;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1rem;
+  text-transform: uppercase;
+  font-family: 'Barlow Semi Condensed';
+  padding: 0.45em 0.5em 0.55em;
+  border: 0;
+  border-radius: 3px;
+  color: inherit;
+  line-height: 1;
+  flex-shrink: 0;
+  cursor: pointer;
+
+  background-color: $green;
+
+  &:hover {
+    background-color: lighten($green, 10%);
+  }
+
+  &.-small {
+    font-size: 0.75rem;
+  }
+
+  &.-large {
+    font-size: 1.125rem;
+  }
+
+  &.-text {
+    background-color: transparent;
+    border-color: transparent;
+  }
+
+  &.-outline {
+    background: 0;
+  }
+
+  &.-icon {
+    width: 2rem;
+    height: 2rem;
+    text-align: center;
+  }
+
+  &.-red {
+    background-color: $red;
+    border: 1px solid $red;
+
+    &.-text {
+      color: $red;
+    }
+
+    &.-outline {
+      color: $red;
+      background: 0;
+
+      &:hover {
+        color: white;
+        border-color: lighten($red, 10%);
+      }
+    }
+
+    &:hover {
+      background-color: lighten($red, 10%);
+      border-color: lighten($red, 10%);
+
+      &.-text {
+        background: 0;
+        color: lighten($red, 10%);
+      }
+    }
+  }
+
+  &.-blue {
+    color: white;
+    background-color: $blue;
+    border: 1px solid $blue;
+
+    &.-text {
+      color: $blue;
+    }
+
+    &.-outline {
+      color: $blue;
+      background: 0;
+
+      &:hover {
+        color: white;
+        border-color: lighten($blue, 10%);
+      }
+    }
+
+    &:hover {
+      background-color: lighten($blue, 10%);
+      border-color: lighten($blue, 10%);
+
+      &.-text {
+        background: 0;
+        color: lighten($blue, 10%);
+      }
+    }
+  }
+
+  &.-green {
+    background-color: $green;
+    border: 1px solid $green;
+
+    &.-text {
+      color: $green;
+    }
+
+    &.-outline {
+      color: $green;
+      background: 0;
+
+      &:hover {
+        color: white;
+        border-color: lighten($green, 10%);
+      }
+    }
+
+    &:hover {
+      background-color: lighten($green, 10%);
+      border-color: lighten($green, 10%);
+
+      &.-text {
+        background: 0;
+        color: lighten($green, 10%);
+      }
+    }
+  }
+
+  &.-dark {
+    background-color: lighten($dark, 5%);
+    border-color: lighten($dark, 5%);
+    border: 1px solid lighten($dark, 5%);
+
+    &.-outline {
+      color: lighten($dark, 5%);
+      background: 0;
+
+      &:hover {
+        color: white;
+        border-color: $dark;
+      }
+    }
+
+    &:hover {
+      background-color: $dark;
+      border-color: $dark;
+
+      &.-text {
+        background: 0;
+        color: lighten($dark, 10%);
+      }
+    }
+  }
+}
+
+a {
+  color: currentColor;
+  opacity: 0.5;
+
+  &:hover,
+  &:focus {
+    opacity: 1;
+    color: currentColor;
+  }
+}
+
+#app.-light {
+  .btn:not(.-outline):not(.-text) {
+    color: white;
+  }
+}

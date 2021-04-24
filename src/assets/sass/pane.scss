@@ -1,0 +1,141 @@
+.vue-grid-layout {
+  .vue-grid-item {
+    > .vue-resizable-handle {
+      display: none;
+      width: auto;
+      height: auto;
+      background: 0;
+      font-size: 1rem;
+      padding: 0.5rem;
+      width: 2rem;
+      height: 2rem;
+      opacity: 0.2;
+
+      &:before {
+        font-family: 'icon';
+        content: $icon-resize;
+      }
+
+      &:hover {
+        opacity: 1;
+        background-color: rgba(white, 0.2);
+      }
+    }
+
+    &:hover > .vue-resizable-handle {
+      display: block;
+    }
+
+    &.vue-grid-placeholder {
+      background-color: $blue;
+      opacity: 0.4;
+    }
+
+    &.-highlight {
+      z-index: 1;
+
+      .pane {
+        z-index: 4;
+
+        .pane-header {
+          display: flex;
+        }
+      }
+    }
+  }
+}
+
+#app.-light {
+  .vue-grid-item {
+    > .vue-resizable-handle:hover {
+      background-color: rgba(black, 0.2);
+    }
+  }
+}
+
+.pane {
+  position: relative;
+  background-color: rgba(black, 0.2);
+
+  &:hover .pane-header {
+    display: flex;
+  }
+}
+
+#app.-light .pane {
+  background-color: rgba(white, 0.2);
+
+  .pane-name,
+  .pane-controls {
+    background-color: rgba(white, 0.8);
+  }
+}
+
+.pane-header {
+  display: none;
+  height: 0;
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  right: 0;
+  justify-content: space-between;
+
+  .dropdown {
+    align-self: stretch;
+
+    .options {
+      position: absolute;
+    }
+  }
+
+  button,
+  .dropdown__selected {
+    padding: 2px;
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  button {
+    border: 0;
+    background: none;
+    color: inherit;
+    position: relative;
+
+    align-self: stretch;
+    cursor: pointer;
+
+    > span {
+      display: inline-block;
+      transition: all 0.5s $ease-elastic;
+    }
+
+    &.-volume {
+      font-size: 14px;
+    }
+  }
+}
+
+.pane-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 18px;
+  border-radius: 0 0 8px 0;
+}
+
+.pane-controls {
+  display: flex;
+  align-items: stretch;
+  border-radius: 0 0 0 8px;
+}
+
+.pane-name,
+.pane-controls {
+  background-color: rgba(black, 0.5);
+  backdrop-filter: blur(5px);
+  padding: 0 4px;
+
+  height: 20px;
+}

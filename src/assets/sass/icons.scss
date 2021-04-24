@@ -1,0 +1,408 @@
+$iconpath: '../fonts';
+
+@font-face {
+  font-family: 'icon';
+  src: url('#{$iconpath}/icon.ttf?ppu658') format('truetype'), url('#{$iconpath}/icon.woff?ppu658') format('woff'),
+    url('#{$iconpath}/icon.svg?ppu658#icon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^='icon-'],
+[class*=' icon-'] {
+  font-family: 'icon' !important;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  &.-lower {
+    position: relative;
+    top: 1px;
+  }
+
+  &.-higher {
+    position: relative;
+    top: -1px;
+  }
+
+  &.-large {
+    font-size: 1.5rem;
+  }
+}
+
+.icon-bitcoin {
+  &:before {
+    content: $icon-bitcoin;
+  }
+}
+.icon-btc {
+  &:before {
+    content: $icon-btc;
+  }
+}
+.icon-dollar {
+  &:before {
+    content: $icon-dollar;
+  }
+}
+.icon-euro {
+  &:before {
+    content: $icon-euro;
+  }
+}
+.icon-monero {
+  &:before {
+    content: $icon-monero;
+  }
+}
+.icon-pound {
+  &:before {
+    content: $icon-pound;
+  }
+}
+.icon-yen {
+  &:before {
+    content: $icon-yen;
+  }
+}
+.icon-neo {
+  &:before {
+    content: $icon-neo;
+  }
+}
+.icon-ltc {
+  &:before {
+    content: $icon-ltc;
+  }
+}
+.icon-trx {
+  &:before {
+    content: $icon-trx;
+  }
+}
+.icon-xmr {
+  &:before {
+    content: $icon-xmr;
+  }
+}
+.icon-xrp {
+  &:before {
+    content: $icon-xrp;
+  }
+}
+.icon-eth {
+  &:before {
+    content: $icon-eth;
+  }
+}
+.icon-down {
+  &:before {
+    content: $icon-down;
+  }
+}
+.icon-up {
+  &:before {
+    content: $icon-up;
+  }
+}
+.icon-check {
+  &:before {
+    content: $icon-check;
+  }
+}
+.icon-cross {
+  &:before {
+    content: $icon-cross;
+  }
+}
+.icon-plus {
+  &:before {
+    content: $icon-plus;
+  }
+}
+.icon-power-on {
+  &:before {
+    content: $icon-power-on;
+  }
+}
+.icon-power-off {
+  &:before {
+    content: $icon-power-off;
+  }
+}
+.icon-cog {
+  &:before {
+    content: $icon-cog;
+  }
+}
+.icon-volume-off {
+  &:before {
+    content: $icon-volume-off;
+  }
+}
+.icon-volume-low {
+  &:before {
+    content: $icon-volume-low;
+  }
+}
+.icon-volume-medium {
+  &:before {
+    content: $icon-volume-medium;
+  }
+}
+.icon-volume-high {
+  &:before {
+    content: $icon-volume-high;
+  }
+}
+.icon-warning {
+  &:before {
+    content: $icon-warning;
+  }
+}
+.icon-info {
+  &:before {
+    content: $icon-info;
+  }
+}
+.icon-edit {
+  &:before {
+    content: $icon-edit;
+  }
+}
+.icon-trash {
+  &:before {
+    content: $icon-trash;
+  }
+}
+.icon-dropper {
+  &:before {
+    content: $icon-dropper;
+  }
+}
+.icon-coin {
+  &:before {
+    content: $icon-coin;
+  }
+}
+.icon-external-link-square-alt {
+  &:before {
+    content: $icon-external-link-square-alt;
+  }
+}
+.icon-balance {
+  &:before {
+    content: $icon-balance;
+  }
+}
+.icon-magic {
+  &:before {
+    content: $icon-magic;
+  }
+}
+.icon-skull {
+  &:before {
+    content: $icon-skull;
+  }
+}
+.icon-visible {
+  &:before {
+    content: $icon-visible;
+  }
+}
+.icon-hidden {
+  &:before {
+    content: $icon-hidden;
+  }
+}
+.icon-ada {
+  &:before {
+    content: $icon-ada;
+  }
+}
+.icon-iota {
+  &:before {
+    content: $icon-iota;
+  }
+}
+.icon-eos {
+  &:before {
+    content: $icon-eos;
+  }
+}
+.icon-slippery {
+  &:before {
+    content: $icon-slippery;
+  }
+}
+.icon-bps {
+  &:before {
+    content: $icon-bps;
+  }
+}
+.icon-ms {
+  &:before {
+    content: $icon-ms;
+  }
+}
+.icon-pile {
+  &:before {
+    content: $icon-pile;
+  }
+}
+.icon-search {
+  &:before {
+    content: $icon-search;
+  }
+}
+.icon-resize {
+  &:before {
+    content: $icon-resize;
+  }
+}
+.icon-KRAKEN {
+  &:before {
+    content: $icon-KRAKEN;
+  }
+}
+.icon-FTX {
+  &:before {
+    content: $icon-FTX;
+  }
+}
+.icon-OKEX {
+  &:before {
+    content: $icon-OKEX;
+  }
+}
+.icon-POLONIEX {
+  &:before {
+    content: $icon-POLONIEX;
+  }
+}
+.icon-COINEX {
+  &:before {
+    content: $icon-COINEX;
+  }
+}
+.icon-BINANCE {
+  &:before {
+    content: $icon-BINANCE;
+  }
+}
+.icon-BINANCE_FUTURES {
+  &:before {
+    content: $icon-BINANCE_FUTURES;
+  }
+}
+.icon-BITFINEX {
+  &:before {
+    content: $icon-BITFINEX;
+  }
+}
+.icon-BITMEX {
+  &:before {
+    content: $icon-BITMEX;
+  }
+}
+.icon-HUOBI {
+  &:before {
+    content: $icon-HUOBI;
+  }
+}
+.icon-HITBTC {
+  &:before {
+    content: $icon-HITBTC;
+  }
+}
+.icon-COINBASE {
+  &:before {
+    content: $icon-COINBASE;
+  }
+}
+.icon-DERIBIT {
+  &:before {
+    content: $icon-DERIBIT;
+  }
+}
+.icon-BYBIT {
+  &:before {
+    content: $icon-BYBIT;
+  }
+}
+.icon-BITSTAMP {
+  &:before {
+    content: $icon-BITSTAMP;
+  }
+}
+.icon-sound-wave {
+  &:before {
+    content: $icon-sound-wave;
+  }
+}
+.icon-menu {
+  &:before {
+    content: $icon-menu;
+  }
+}
+.icon-stamp {
+  &:before {
+    content: $icon-stamp;
+  }
+}
+.icon-copy-paste {
+  &:before {
+    content: $icon-copy-paste;
+  }
+}
+.icon-download {
+  &:before {
+    content: $icon-download;
+  }
+}
+.icon-drops {
+  &:before {
+    content: $icon-drops;
+  }
+}
+.icon-upload {
+  &:before {
+    content: $icon-upload;
+  }
+}
+.icon-popup {
+  &:before {
+    content: $icon-popup;
+  }
+}
+.icon-swap {
+  &:before {
+    content: $icon-swap;
+  }
+}
+.icon-dashboard {
+  &:before {
+    content: $icon-dashboard;
+  }
+}
+.icon-black-and-white {
+  &:before {
+    content: $icon-black-and-white;
+  }
+}
+.icon-fill {
+  &:before {
+    content: $icon-fill;
+  }
+}
+.icon-more {
+  &:before {
+    content: $icon-more;
+  }
+}

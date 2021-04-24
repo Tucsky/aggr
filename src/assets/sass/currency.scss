@@ -1,0 +1,204 @@
+.icon-currency,
+.icon-quote,
+.icon-base {
+  top: 1px;
+  position: relative;
+}
+
+#app {
+  &[data-quote='dollar'] .icon-quote:before {
+    content: unicode($icon-dollar);
+  }
+
+  &[data-quote='euro'] .icon-quote:before {
+    content: unicode($icon-euro);
+  }
+
+  &[data-quote='yen'] .icon-quote:before {
+    content: unicode($icon-yen);
+  }
+
+  &[data-quote='bitcoin'] .icon-quote:before {
+    content: unicode($icon-btc);
+  }
+
+  &[data-quote='ethereum'] .icon-quote:before {
+    content: unicode($icon-eth);
+  }
+
+  &[data-quote='pound'] .icon-quote:before {
+    content: unicode($icon-pound);
+  }
+
+  &[data-quote='coin'] .icon-quote:before {
+    content: unicode($icon-coin);
+  }
+
+  &[data-base='bitcoin'] .icon-base:before {
+    content: unicode($icon-btc);
+  }
+
+  &[data-base='ethereum'] .icon-base:before {
+    content: unicode($icon-eth);
+  }
+
+  &[data-base='xmr'] .icon-base:before {
+    content: unicode($icon-xmr);
+  }
+
+  &[data-base='ltc'] .icon-base:before {
+    content: unicode($icon-ltc);
+  }
+
+  &[data-base='xrp'] .icon-base:before {
+    content: unicode($icon-xrp);
+  }
+
+  &[data-base='ada'] .icon-base:before {
+    content: unicode($icon-ada);
+  }
+
+  &[data-base='trx'] .icon-base:before {
+    content: unicode($icon-trx);
+  }
+
+  &[data-base='neo'] .icon-base:before {
+    content: unicode($icon-neo);
+  }
+
+  &[data-base='iota'] .icon-base:before {
+    content: unicode($icon-iota);
+  }
+
+  &[data-base='eos'] .icon-base:before {
+    content: unicode($icon-eos);
+  }
+
+  &[data-base='coin'] .icon-base:before {
+    content: unicode($icon-coin);
+  }
+
+  &[data-prefered-sizing-currency='base'] {
+    &[data-base='dollar'] .icon-currency:before {
+      content: unicode($icon-dollar);
+    }
+  
+    &[data-base='euro'] .icon-currency:before {
+      content: unicode($icon-euro);
+    }
+  
+    &[data-base='yen'] .icon-currency:before {
+      content: unicode($icon-yen);
+    }
+  
+    &[data-base='bitcoin'] .icon-currency:before {
+      content: unicode($icon-btc);
+    }
+  
+    &[data-base='ethereum'] .icon-currency:before {
+      content: unicode($icon-eth);
+    }
+  
+    &[data-base='pound'] .icon-currency:before {
+      content: unicode($icon-pound);
+    }
+
+    &[data-base='bitcoin'] .icon-currency:before {
+      content: unicode($icon-btc);
+    }
+  
+    &[data-base='ethereum'] .icon-currency:before {
+      content: unicode($icon-eth);
+    }
+  
+    &[data-base='xmr'] .icon-currency:before {
+      content: unicode($icon-xmr);
+    }
+  
+    &[data-base='ltc'] .icon-currency:before {
+      content: unicode($icon-ltc);
+    }
+  
+    &[data-base='xrp'] .icon-currency:before {
+      content: unicode($icon-xrp);
+    }
+  
+    &[data-base='ada'] .icon-currency:before {
+      content: unicode($icon-ada);
+    }
+  
+    &[data-base='trx'] .icon-currency:before {
+      content: unicode($icon-trx);
+    }
+  
+    &[data-base='neo'] .icon-currency:before {
+      content: unicode($icon-neo);
+    }
+  
+    &[data-base='iota'] .icon-currency:before {
+      content: unicode($icon-iota);
+    }
+  
+    &[data-base='eos'] .icon-currency:before {
+      content: unicode($icon-eos);
+    }
+  }
+
+  &[data-prefered-sizing-currency='quote'] {
+    &[data-quote='dollar'] .icon-currency:before {
+      content: unicode($icon-dollar);
+    }
+  
+    &[data-quote='euro'] .icon-currency:before {
+      content: unicode($icon-euro);
+    }
+  
+    &[data-quote='yen'] .icon-currency:before {
+      content: unicode($icon-yen);
+    }
+  
+    &[data-quote='pound'] .icon-currency:before {
+      content: unicode($icon-pound);
+    }
+
+    &[data-quote='bitcoin'] .icon-currency:before {
+      content: unicode($icon-btc);
+    }
+  
+    &[data-quote='ethereum'] .icon-currency:before {
+      content: unicode($icon-eth);
+    }
+  
+    &[data-quote='xmr'] .icon-currency:before {
+      content: unicode($icon-xmr);
+    }
+  
+    &[data-quote='ltc'] .icon-currency:before {
+      content: unicode($icon-ltc);
+    }
+  
+    &[data-quote='xrp'] .icon-currency:before {
+      content: unicode($icon-xrp);
+    }
+  
+    &[data-quote='ada'] .icon-currency:before {
+      content: unicode($icon-ada);
+    }
+  
+    &[data-quote='trx'] .icon-currency:before {
+      content: unicode($icon-trx);
+    }
+  
+    &[data-quote='neo'] .icon-currency:before {
+      content: unicode($icon-neo);
+    }
+  
+    &[data-quote='iota'] .icon-currency:before {
+      content: unicode($icon-iota);
+    }
+  
+    &[data-quote='eos'] .icon-currency:before {
+      content: unicode($icon-eos);
+    }
+  }
+}

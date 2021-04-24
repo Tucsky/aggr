@@ -1,0 +1,89 @@
+.slide-notice-enter-active,
+.slide-notice-leave-active {
+  overflow: hidden;
+}
+.slide-notice-enter-active {
+  transition: all 0.4s $ease-elastic, height 0.4s $ease-out-expo;
+}
+.slide-notice-leave-active {
+  transition: all 1s $ease-out-expo;
+}
+
+.slide-notice-enter,
+.slide-notice-leave-to {
+  opacity: 0;
+}
+
+.slide-notice-enter {
+  transform: translateX(50%);
+}
+
+.slide-notice-leave-to {
+  transform: translate(50%, 50%);
+}
+
+.notices {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  list-style: none;
+  margin: 0.5em;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: white;
+
+  .notice__title {
+    max-width: 200px;
+
+    &:last-child {
+      max-width: 250px;
+    }
+  }
+}
+
+.notice {
+  pointer-events: all;
+  font-size: 12px;
+  font-weight: 500;
+
+  &__icon {
+    padding: .25rem;
+  }
+
+  &__wrapper {
+    padding: 0.33rem 0.5rem;
+    border-radius: $border-radius-base;
+    background-color: $blue;
+
+    display: flex;
+  }
+
+  &.-error .notice__wrapper {
+    background-color: $red;
+  }
+
+  &.-warning .notice__wrapper {
+    background-color: $orange;
+    color: black;
+  }
+
+  &.-success .notice__wrapper {
+    background-color: $green;
+  }
+
+  > div {
+    margin-bottom: 0.5em;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  small {
+    line-height: 1.4;
+  }
+}

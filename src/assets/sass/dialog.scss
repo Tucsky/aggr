@@ -1,0 +1,185 @@
+.dialog {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+
+  &.-mask {
+    background-color: rgba(0, 0, 0, 0.33);
+  }
+
+  .dialog-content {
+    min-width: 320px;
+    max-width: 500px;
+    font-size: 16px;
+    border-radius: $border-radius-base;
+    background-color: lighten($dark, 10%);
+    box-shadow: rgba(0, 0, 0, 0.2) 0px 18px 50px -10px;
+    color: white;
+    overflow: hidden;
+
+    .dialog-body {
+      font-size: 14px;
+      overflow: auto;
+      max-height: 70vh;
+      padding: 1rem;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      z-index: 1;
+      padding: 1rem;
+      border-bottom: 1px solid lighten($dark, 13.5%);
+      cursor: grab;
+
+      .checkbox-control > input:not(:checked) + div {
+        background: 0;
+      }
+    }
+
+    .title {
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 0;
+      letter-spacing: 1px;
+      font-size: 1.125em;
+      line-height: 1;
+      font-family: 'Barlow Semi Condensed';
+      font-weight: 400;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .subtitle {
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 80%;
+      opacity: 0.75;
+    }
+
+    textarea {
+      max-width: 100%;
+    }
+
+    p {
+      white-space: pre-wrap;
+    }
+
+    footer {
+      display: flex;
+      margin-top: 24px;
+      align-items: center;
+      justify-content: flex-end;
+
+      .btn {
+        margin-left: 0.4rem;
+      }
+    }
+  }
+
+  &.-small .dialog-content {
+    max-width: 320px;
+  }
+
+  &.-large .dialog-content {
+    max-width: calc(100% - 2rem);
+  }
+
+  .form-control {
+    margin: 0;
+    color: white;
+    border: 1px solid lighten($dark, 20%);
+    border-radius: 3px;
+    padding: 0.5rem;
+    box-sizing: border-box;
+    width: 100%;
+    letter-spacing: 0;
+  }
+
+  .verte-control {
+    border: 1px solid rgba(white, 0.2);
+  }
+
+  .dialog-controls {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+
+    &__close {
+      width: 2rem;
+      text-align: center;
+      padding: 1rem;
+      margin: -1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      align-self: stretch;
+
+      &:hover {
+        background-color: rgba(white, 0.02);
+      }
+
+      &:active {
+        background-color: rgba(black, 0.1);
+      }
+
+      > i {
+        vertical-align: middle;
+      }
+    }
+
+    > * {
+      margin-left: 15px;
+    }
+  }
+
+  hr {
+    margin: 1rem 0;
+    border: 0;
+    height: 1px;
+    background: lighten($dark, 20%);
+
+    &.-across {
+      margin-left: -1rem;
+      margin-right: -1rem;
+    }
+  }
+}
+
+.dialog.serie-dialog {
+  .title {
+    text-transform: none;
+
+    code {
+      font-size: 61.8%;
+      line-height: 0;
+      vertical-align: middle;
+      margin-top: -0.2rem;
+      display: inline-block;
+      padding: 0.5rem;
+      letter-spacing: 0;
+    }
+
+    [contenteditable='true'] {
+      color: $green;
+    }
+  }
+}
+
+#app.-light .dialog {
+  &.-mask {
+    background-color: rgba(white, 33%);
+  }
+
+  .dialog-content {
+    border: 0;
+  }
+}

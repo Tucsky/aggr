@@ -1,0 +1,203 @@
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Barlow', sans-serif;
+  height: 100%;
+}
+
+*:focus {
+  outline: none;
+}
+
+a {
+  text-decoration: none;
+}
+
+$max: 16;
+$offset: 4;
+$unit: 'px'; // Feel free to change the unit.
+@mixin list-loop($className, $styleName) {
+  $i: 0;
+
+  #{$className + 'auto'} {
+    #{$styleName}: auto !important;
+  }
+
+  @while $i <= $max {
+    #{$className + $i} {
+      @if ($i == 0) {
+        #{$styleName}: #{$i + $unit} !important;
+      } @else {
+        #{$styleName}: #{$i + $unit};
+      }
+    }
+    $i: $i + $offset;
+  }
+}
+@include list-loop('.pl', 'padding-left');
+
+@include list-loop('.mt', 'margin-top');
+@include list-loop('.mr', 'margin-right');
+@include list-loop('.mb', 'margin-bottom');
+@include list-loop('.ml', 'margin-left');
+@include list-loop('.mx', 'margin');
+// Paddings
+@include list-loop('.pt', 'padding-top');
+@include list-loop('.pr', 'padding-right');
+@include list-loop('.pb', 'padding-bottom');
+@include list-loop('.pl', 'padding-left');
+@include list-loop('.px', 'padding');
+
+.flex-right {
+  justify-content: flex-end !important;
+}
+
+.flex-left {
+  justify-content: flex-start !important;
+}
+
+.flex-center {
+  justify-content: center !important;
+}
+
+.flex-top {
+  align-items: flex-start !important;
+}
+
+.flex-bottom {
+  align-items: flex-end !important;
+}
+
+.flex-middle {
+  align-items: center !important;
+}
+
+.flex-grow-1 {
+  flex-grow: 1 !important;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-small {
+  font-size: 0.618rem;
+}
+
+.text-large {
+  font-size: 1.125rem;
+}
+
+.text-nowrap {
+  white-space: nowrap;
+}
+
+.condensed {
+  font-family: 'Barlow Semi Condensed';
+}
+
+.text-lowercase {
+  text-transform: lowercase;
+}
+
+.text-middle {
+  vertical-align: middle;
+}
+
+.text-bottom {
+  vertical-align: bottom;
+}
+
+.text-top {
+  vertical-align: top;
+}
+
+.min-768 {
+  display: none;
+}
+
+.d-block {
+  display: block;
+}
+
+.d-flex {
+  display: flex;
+
+  > .-fill {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+
+  > .-center {
+    align-self: center;
+  }
+
+  > .-end {
+    align-self: end;
+  }
+
+  > .-nowrap {
+    white-space: nowrap;
+  }
+}
+
+@media screen and (min-width: 768px) {
+  .min-768 {
+    display: inline-block;
+  }
+
+  .max-767 {
+    display: none;
+  }
+}
+
+.min-280 {
+  display: none;
+}
+
+@media screen and (min-width: 280px) {
+  .min-280 {
+    display: inline-block;
+  }
+}
+
+.w-100 {
+  width: 100% !important;
+}
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+::-webkit-scrollbar-track {
+  background-color: lighten($dark, 15%);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: transparent;
+}
+
+/* Handle */
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(black, 0.25);
+}
+
+.icon-sm {
+  font-size: 80%;
+}
+
+.text-muted {
+  opacity: 0.5;
+}

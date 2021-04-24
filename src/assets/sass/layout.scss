@@ -1,0 +1,249 @@
+body {
+  background-color: $dark;
+}
+
+#app {
+  width: 100%;
+  position: relative;
+  min-height: 100%;
+  background-color: $dark;
+  transition: transform 0.3s $ease-out-expo;
+  color: white;
+
+  &.-loading {
+    .app__layout {
+      transition: opacity 5s $ease-elastic;
+      opacity: 0.9;
+    }
+  }
+
+  &.-picking-color {
+    .dialog.-mask {
+      background: 0;
+    }
+  }
+
+  &.-no-animations {
+    animation: none !important;
+    transition: none !important;
+
+    * {
+      animation: none !important;
+      transition: none !important;
+
+      &:before,
+      &:after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  }
+}
+
+.app__wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  @media screen and (min-width: 768px) {
+    height: 100vh;
+
+    #header {
+      flex-grow: 0;
+      flex-basis: auto;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.app__layout {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 0px;
+}
+
+.vue-grid-layout {
+  flex-grow: 1;
+}
+
+.vue-resizable-handle {
+  z-index: 3;
+}
+
+.vue-grid-item {
+  > div {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.stack__container {
+  transform: none;
+  overflow: hidden;
+  font-size: 14px;
+  z-index: 2;
+}
+
+.stack__scroller {
+  overflow: auto;
+  position: relative;
+}
+
+.stack__toggler {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-size: 18px;
+  opacity: 0.2;
+  padding: 0.5em;
+  z-index: 1;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.stack__wrapper {
+  padding: 0.5em;
+  position: relative;
+
+  p {
+    &:last-child {
+      margin: 0;
+    }
+  }
+
+  code {
+    background-color: rgba(black, 0.1);
+    font-weight: 400;
+    padding: 3px 4px;
+    line-height: 1;
+    display: inline-block;
+    position: relative;
+    letter-spacing: -0.5px;
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: row;
+
+  > .-tight {
+    flex-basis: auto;
+    flex-grow: 0;
+
+    label {
+      white-space: nowrap;
+    }
+  }
+
+  > .-fill {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+
+  > .-center {
+    align-self: center;
+  }
+
+  > .-end {
+    align-self: end;
+  }
+
+  > .-nowrap {
+    white-space: nowrap;
+  }
+
+  > div {
+    margin-right: 0.5em;
+    flex-grow: 1;
+
+    > .btn {
+      height: 100%;
+      white-space: nowrap;
+    }
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+
+  &:last-child .form-group {
+    margin-bottom: 0;
+  }
+
+  > label {
+    margin-bottom: 0;
+  }
+}
+
+.grid {
+  margin: -0.5em;
+
+  > div {
+    flex-grow: 1;
+    flex-basis: auto;
+    display: flex;
+    justify-content: center;
+    padding: 0.5em;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &.-tight {
+      flex-grow: 0;
+    }
+
+    &.-inline {
+      flex-direction: row-reverse;
+      align-items: center;
+      justify-content: flex-end;
+
+      > label:first-child {
+        margin: 0 0 0 0.5em;
+      }
+    }
+  }
+}
+
+.-activable {
+  > .form-group {
+    opacity: 0.2;
+  }
+
+  &.active {
+    .form-group {
+      opacity: 1;
+    }
+  }
+}
+
+.flip-list-move {
+  transition: transform 0.4s $ease-out-expo;
+}
+
+.divider {
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+  opacity: 0.5;
+
+  &:before,
+  &:after {
+    content: '';
+    height: 1px;
+    background-color: currentColor;
+    flex-grow: 1;
+  }
+
+  &:before {
+    margin-right: 1rem;
+  }
+
+  &:after {
+    margin-left: 1rem;
+  }
+}
