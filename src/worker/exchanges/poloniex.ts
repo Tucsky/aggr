@@ -10,7 +10,7 @@ export default class extends Exchange {
   private channels: { [id: string]: string } = {}
 
   getUrl() {
-    return 'wss://api2.poloniex.com'
+    return 'wss://api2.poloniex.com/'
   }
 
   formatProducts(data) {

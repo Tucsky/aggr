@@ -5,7 +5,7 @@ export default class extends Exchange {
   protected endpoints = { PRODUCTS: 'https://www.bitstamp.net/api/v2/trading-pairs-info' }
 
   getUrl() {
-    return `wss://ws.bitstamp.net`
+    return `wss://ws.bitstamp.net/`
   }
 
   formatProducts(data) {

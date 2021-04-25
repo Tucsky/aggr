@@ -102,11 +102,13 @@ const state = {
       name: 'BTCUSD (SPOT)',
       type: 'trades',
       markets: defaultMarkets.spot,
-      thresholds: [
-        {
-          amount: 100000
-        }
-      ]
+      settings: {
+        thresholds: [
+          {
+            amount: 100000
+          }
+        ]
+      }
     },
     'perp-trades': {
       id: 'perp-trades',

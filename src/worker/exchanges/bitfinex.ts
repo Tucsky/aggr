@@ -8,7 +8,7 @@ export default class extends Exchange {
   protected endpoints = { PRODUCTS: 'https://api.bitfinex.com/v1/symbols' }
 
   getUrl() {
-    return 'wss://api-pub.bitfinex.com/ws/2'
+    return 'wss://api-pub.bitfinex.com/ws/2/'
   }
 
   formatProducts(pairs) {
@@ -33,7 +33,7 @@ export default class extends Exchange {
       })
     )
 
-    if (/f0:ustf0$/.test(pair)) {
+    if (/f0:ustf0$/i.test(pair)) {
       api.send(
         JSON.stringify({
           event: 'subscribe',

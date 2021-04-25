@@ -125,7 +125,7 @@ class Exchange extends EventEmitter {
    * @returns {Promise<void>}
    */
   unlink(pair) {
-    pair = pair.replace(/.*:/, '')
+    pair = pair.replace(/[^:]*:/, '')
 
     if (this.pairs.indexOf(pair) === -1) {
       return Promise.resolve()
@@ -209,10 +209,12 @@ class Exchange extends EventEmitter {
       }
 
       api.onclose = event => {
+        // resolve connecting (as failed)
         this.markLoadingAsCompleted(this.connecting, url, false)
 
         this.onClose(event, api._connected)
 
+        // resolve disconnecting (as success)
         this.markLoadingAsCompleted(this.disconnecting, url, true)
 
         if (api._connected.length) {
@@ -285,7 +287,13 @@ class Exchange extends EventEmitter {
           api.close()
         }
 
-        this.disconnecting[api.url].resolver = success => (success ? resolve() : reject())
+        this.disconnecting[api.url].resolver = success => {
+          if (success) {
+            resolve()
+          } else {
+            reject()
+          }
+        }
       })
 
       this.disconnecting[api.url].promise = promiseOfClose
@@ -489,8 +497,6 @@ class Exchange extends EventEmitter {
       type[url].resolver(success)
       delete type[url]
     }
-
-    Object.keys(this.disconnecting).length > 0 || Object.keys(this.connecting).length > 0
   }
 
   linkAll(pairs: string[]) {

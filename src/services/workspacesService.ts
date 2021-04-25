@@ -146,10 +146,10 @@ class WorkspacesService {
       throw new Error(`There is no current workspace`)
     }
 
-    if (this.workspace[stateId]) {
+    if (this.workspace.states[stateId]) {
       console.debug(`[workspaces] get state ${stateId}`)
 
-      return this.workspace[stateId]
+      return this.workspace.states[stateId]
     }
 
     console.debug(`[workspaces] couldn't retrieve workspace's state "${stateId}" (unknown state)`)
@@ -164,9 +164,9 @@ class WorkspacesService {
 
     console.debug(`[workspaces] remove state ${stateId}`)
 
-    delete this.workspace[stateId]
+    delete this.workspace.states[stateId]
 
-    return this.db.delete('workspaces', stateId)
+    return this.saveWorkspace()
   }
 
   async renameWorkspace(name: string) {
