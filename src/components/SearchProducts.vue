@@ -2,7 +2,7 @@
   <div v-if="showSearch" class="app-search" :class="{ '-loading': loading }">
     <div class="app-search__wrapper">
       <div v-if="searchTarget && activeMarkets.length" class="mb8 form-group">
-        <label>All connected markets :</label>
+        <label>Main window connections :</label>
         <button
           v-for="market of activeMarkets"
           :key="market"
@@ -16,7 +16,7 @@
         </button>
       </div>
       <div class="form-group">
-        <label v-if="paneName">{{ paneName }}'s markets :</label>
+        <label v-if="paneName">Selected pane connections :</label>
         <Autocomplete :load="search" :query="query" :items="pairs" @submit="setPairs($event)"></Autocomplete>
       </div>
     </div>
@@ -188,8 +188,8 @@ export default class extends Vue {
 }
 </script>
 <style lang="scss">
-#app.-light .app-search:before {
-  background: radial-gradient(ellipse at 50% 25%, rgba(white, 0.2) 0%, rgba(white, 0) 60%);
+#app.-light .app-search + div:before {
+  background: linear-gradient(to bottom, rgba(white, 0.2) 0%, rgba(white, 0) 60%);
 }
 
 .app-search {
@@ -202,6 +202,18 @@ export default class extends Vue {
   min-width: 320px;
   max-width: 80%;
 
+  @media screen and (min-width: 768px) {
+    .app-search__wrapper {
+      .form-group > label {
+        font-size: 1rem;
+      }
+
+      .btn {
+        font-size: 0.875em;
+      }
+    }
+  }
+
   &.-loading {
     pointer-events: none;
 
@@ -212,18 +224,6 @@ export default class extends Vue {
 
   &__wrapper {
     position: relative;
-  }
-
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    right: -100%;
-    bottom: -100%;
-    background: radial-gradient(ellipse at 35% 0%, rgba(black, 0.9) 0%, rgba(black, 0) 40%);
-    background-size: 150%;
-    backdrop-filter: blur(1px);
   }
 
   .autocomplete {
@@ -262,6 +262,19 @@ export default class extends Vue {
     &__option:last-child {
       margin-bottom: 0.5rem;
     }
+  }
+
+  + div:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    background: linear-gradient(to bottom, rgba(black, 0.9) 0%, rgba(black, 0) 40%);
+    background-size: 150%;
+    backdrop-filter: blur(1px);
   }
 }
 </style>

@@ -51,9 +51,24 @@ $iconpath: '../fonts';
     content: $icon-dollar;
   }
 }
+.icon-down {
+  &:before {
+    content: $icon-down;
+  }
+}
+.icon-eth {
+  &:before {
+    content: $icon-eth;
+  }
+}
 .icon-euro {
   &:before {
     content: $icon-euro;
+  }
+}
+.icon-volume-off {
+  &:before {
+    content: $icon-volume-off;
   }
 }
 .icon-monero {
@@ -66,44 +81,9 @@ $iconpath: '../fonts';
     content: $icon-pound;
   }
 }
-.icon-yen {
+.icon-sound-wave {
   &:before {
-    content: $icon-yen;
-  }
-}
-.icon-neo {
-  &:before {
-    content: $icon-neo;
-  }
-}
-.icon-ltc {
-  &:before {
-    content: $icon-ltc;
-  }
-}
-.icon-trx {
-  &:before {
-    content: $icon-trx;
-  }
-}
-.icon-xmr {
-  &:before {
-    content: $icon-xmr;
-  }
-}
-.icon-xrp {
-  &:before {
-    content: $icon-xrp;
-  }
-}
-.icon-eth {
-  &:before {
-    content: $icon-eth;
-  }
-}
-.icon-down {
-  &:before {
-    content: $icon-down;
+    content: $icon-sound-wave;
   }
 }
 .icon-up {
@@ -111,29 +91,14 @@ $iconpath: '../fonts';
     content: $icon-up;
   }
 }
-.icon-check {
+.icon-warning {
   &:before {
-    content: $icon-check;
+    content: $icon-warning;
   }
 }
-.icon-cross {
+.icon-yen {
   &:before {
-    content: $icon-cross;
-  }
-}
-.icon-plus {
-  &:before {
-    content: $icon-plus;
-  }
-}
-.icon-power-on {
-  &:before {
-    content: $icon-power-on;
-  }
-}
-.icon-power-off {
-  &:before {
-    content: $icon-power-off;
+    content: $icon-yen;
   }
 }
 .icon-cog {
@@ -141,49 +106,9 @@ $iconpath: '../fonts';
     content: $icon-cog;
   }
 }
-.icon-volume-off {
+.icon-check {
   &:before {
-    content: $icon-volume-off;
-  }
-}
-.icon-volume-low {
-  &:before {
-    content: $icon-volume-low;
-  }
-}
-.icon-volume-medium {
-  &:before {
-    content: $icon-volume-medium;
-  }
-}
-.icon-volume-high {
-  &:before {
-    content: $icon-volume-high;
-  }
-}
-.icon-warning {
-  &:before {
-    content: $icon-warning;
-  }
-}
-.icon-info {
-  &:before {
-    content: $icon-info;
-  }
-}
-.icon-edit {
-  &:before {
-    content: $icon-edit;
-  }
-}
-.icon-trash {
-  &:before {
-    content: $icon-trash;
-  }
-}
-.icon-dropper {
-  &:before {
-    content: $icon-dropper;
+    content: $icon-check;
   }
 }
 .icon-coin {
@@ -191,9 +116,44 @@ $iconpath: '../fonts';
     content: $icon-coin;
   }
 }
+.icon-volume-medium {
+  &:before {
+    content: $icon-volume-medium;
+  }
+}
+.icon-info {
+  &:before {
+    content: $icon-info;
+  }
+}
+.icon-resize {
+  &:before {
+    content: $icon-resize;
+  }
+}
+.icon-download {
+  &:before {
+    content: $icon-download;
+  }
+}
 .icon-external-link-square-alt {
   &:before {
     content: $icon-external-link-square-alt;
+  }
+}
+.icon-drops {
+  &:before {
+    content: $icon-drops;
+  }
+}
+.icon-upload {
+  &:before {
+    content: $icon-upload;
+  }
+}
+.icon-cross {
+  &:before {
+    content: $icon-cross;
   }
 }
 .icon-balance {
@@ -206,9 +166,39 @@ $iconpath: '../fonts';
     content: $icon-magic;
   }
 }
+.icon-KRAKEN {
+  &:before {
+    content: $icon-KRAKEN;
+  }
+}
+.icon-OKEX {
+  &:before {
+    content: $icon-OKEX;
+  }
+}
+.icon-power-on {
+  &:before {
+    content: $icon-power-on;
+  }
+}
 .icon-skull {
   &:before {
     content: $icon-skull;
+  }
+}
+.icon-edit {
+  &:before {
+    content: $icon-edit;
+  }
+}
+.icon-plus {
+  &:before {
+    content: $icon-plus;
+  }
+}
+.icon-POLONIEX {
+  &:before {
+    content: $icon-POLONIEX;
   }
 }
 .icon-visible {
@@ -221,69 +211,14 @@ $iconpath: '../fonts';
     content: $icon-hidden;
   }
 }
-.icon-ada {
+.icon-power-off {
   &:before {
-    content: $icon-ada;
+    content: $icon-power-off;
   }
 }
-.icon-iota {
+.icon-volume-high {
   &:before {
-    content: $icon-iota;
-  }
-}
-.icon-eos {
-  &:before {
-    content: $icon-eos;
-  }
-}
-.icon-slippery {
-  &:before {
-    content: $icon-slippery;
-  }
-}
-.icon-bps {
-  &:before {
-    content: $icon-bps;
-  }
-}
-.icon-ms {
-  &:before {
-    content: $icon-ms;
-  }
-}
-.icon-pile {
-  &:before {
-    content: $icon-pile;
-  }
-}
-.icon-search {
-  &:before {
-    content: $icon-search;
-  }
-}
-.icon-resize {
-  &:before {
-    content: $icon-resize;
-  }
-}
-.icon-KRAKEN {
-  &:before {
-    content: $icon-KRAKEN;
-  }
-}
-.icon-FTX {
-  &:before {
-    content: $icon-FTX;
-  }
-}
-.icon-OKEX {
-  &:before {
-    content: $icon-OKEX;
-  }
-}
-.icon-POLONIEX {
-  &:before {
-    content: $icon-POLONIEX;
+    content: $icon-volume-high;
   }
 }
 .icon-COINEX {
@@ -316,9 +251,79 @@ $iconpath: '../fonts';
     content: $icon-HUOBI;
   }
 }
+.icon-xrp {
+  &:before {
+    content: $icon-xrp;
+  }
+}
+.icon-ada {
+  &:before {
+    content: $icon-ada;
+  }
+}
+.icon-trx {
+  &:before {
+    content: $icon-trx;
+  }
+}
+.icon-neo {
+  &:before {
+    content: $icon-neo;
+  }
+}
+.icon-ltc {
+  &:before {
+    content: $icon-ltc;
+  }
+}
+.icon-xmr {
+  &:before {
+    content: $icon-xmr;
+  }
+}
+.icon-iota {
+  &:before {
+    content: $icon-iota;
+  }
+}
+.icon-eos {
+  &:before {
+    content: $icon-eos;
+  }
+}
+.icon-slippery {
+  &:before {
+    content: $icon-slippery;
+  }
+}
+.icon-bps {
+  &:before {
+    content: $icon-bps;
+  }
+}
+.icon-ms {
+  &:before {
+    content: $icon-ms;
+  }
+}
+.icon-pile {
+  &:before {
+    content: $icon-pile;
+  }
+}
 .icon-HITBTC {
   &:before {
     content: $icon-HITBTC;
+  }
+}
+.icon-search {
+  &:before {
+    content: $icon-search;
+  }
+}
+.icon-dropper {
+  &:before {
+    content: $icon-dropper;
   }
 }
 .icon-COINBASE {
@@ -331,6 +336,16 @@ $iconpath: '../fonts';
     content: $icon-DERIBIT;
   }
 }
+.icon-trash {
+  &:before {
+    content: $icon-trash;
+  }
+}
+.icon-black-and-white {
+  &:before {
+    content: $icon-black-and-white;
+  }
+}
 .icon-BYBIT {
   &:before {
     content: $icon-BYBIT;
@@ -341,9 +356,14 @@ $iconpath: '../fonts';
     content: $icon-BITSTAMP;
   }
 }
-.icon-sound-wave {
+.icon-fill {
   &:before {
-    content: $icon-sound-wave;
+    content: $icon-fill;
+  }
+}
+.icon-FTX {
+  &:before {
+    content: $icon-FTX;
   }
 }
 .icon-menu {
@@ -351,34 +371,14 @@ $iconpath: '../fonts';
     content: $icon-menu;
   }
 }
-.icon-stamp {
-  &:before {
-    content: $icon-stamp;
-  }
-}
-.icon-copy-paste {
-  &:before {
-    content: $icon-copy-paste;
-  }
-}
-.icon-download {
-  &:before {
-    content: $icon-download;
-  }
-}
-.icon-drops {
-  &:before {
-    content: $icon-drops;
-  }
-}
-.icon-upload {
-  &:before {
-    content: $icon-upload;
-  }
-}
 .icon-popup {
   &:before {
     content: $icon-popup;
+  }
+}
+.icon-stamp {
+  &:before {
+    content: $icon-stamp;
   }
 }
 .icon-swap {
@@ -386,19 +386,14 @@ $iconpath: '../fonts';
     content: $icon-swap;
   }
 }
+.icon-copy-paste {
+  &:before {
+    content: $icon-copy-paste;
+  }
+}
 .icon-dashboard {
   &:before {
     content: $icon-dashboard;
-  }
-}
-.icon-black-and-white {
-  &:before {
-    content: $icon-black-and-white;
-  }
-}
-.icon-fill {
-  &:before {
-    content: $icon-fill;
   }
 }
 .icon-more {

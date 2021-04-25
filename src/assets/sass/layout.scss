@@ -46,12 +46,8 @@ body {
   flex-direction: column;
 
   @media screen and (min-width: 768px) {
-    height: 100vh;
-
     #header {
-      flex-grow: 0;
-      flex-basis: auto;
-      flex-shrink: 0;
+      font-size: 2rem;
     }
   }
 }

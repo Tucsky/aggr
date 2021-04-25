@@ -74,7 +74,7 @@ export default class extends Vue {
   }
 
   created() {
-    this.items = this.items.slice(0, this.items.length)
+    // this.items = this.items.slice(0, this.items.length)
   }
 
   mounted() {

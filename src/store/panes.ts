@@ -199,6 +199,11 @@ const actions = {
 
     commit('ADD_PANE', pane)
     dispatch('appendPaneGridItem', { id: pane.id, type: pane.type })
+    dispatch('refreshMarketsListeners')
+
+    Vue.nextTick(() => {
+      window.scrollTo(0, document.body.scrollHeight)
+    })
   },
   removePane({ commit, state, dispatch }, id: string) {
     const item = state.panes[id]

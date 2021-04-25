@@ -73,69 +73,59 @@
 
 .pane-header {
   display: none;
+  justify-content: space-between;
   height: 0;
   position: absolute;
   z-index: 3;
   top: 0;
   left: 0;
   right: 0;
-  justify-content: space-between;
-
-  .dropdown {
-    align-self: stretch;
-
-    .options {
-      position: absolute;
-    }
-  }
-
-  button,
-  .dropdown__selected {
-    padding: 2px;
-    font-size: 12px;
-    line-height: 1;
-  }
+  align-items: flex-start;
+  font-size: 80%;
 
   button {
     border: 0;
-    background: none;
-    color: inherit;
-    position: relative;
+    background: 0;
+    font-size: inherit;
+  }
 
-    align-self: stretch;
+  .pane-name,
+  .pane-controls {
+    background-color: rgba(black, 0.8);
+    backdrop-filter: blur(2px);
+    border-top: 0;
+  }
+
+  .pane-controls {
+    border-radius: 0 0 0 4px;
+    display: flex;
+    border-right: 0;
+  }
+
+  .pane-name,
+  button,
+  .dropdown__selected {
+    padding: 0.5em 0.66em;
+    display: flex;
+    text-shadow: 1px 1px black;
+    font-weight: 600;
+  }
+  button,
+  .dropdown__selected {
     cursor: pointer;
+    opacity: 0.5;
 
-    > span {
-      display: inline-block;
-      transition: all 0.5s $ease-elastic;
-    }
-
-    &.-volume {
-      font-size: 14px;
+    &:hover {
+      opacity: 1;
     }
   }
-}
+  .pane-name {
+    border-radius: 0 0 4px 0;
+    padding: 0.4em 0.45em 0.6em 0.55em;
+    border-left: 0;
+  }
 
-.pane-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 10px;
-  line-height: 18px;
-  border-radius: 0 0 8px 0;
-}
-
-.pane-controls {
-  display: flex;
-  align-items: stretch;
-  border-radius: 0 0 0 8px;
-}
-
-.pane-name,
-.pane-controls {
-  background-color: rgba(black, 0.5);
-  backdrop-filter: blur(5px);
-  padding: 0 4px;
-
-  height: 20px;
+  .dropdown__options {
+    font-size: 1rem;
+  }
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="pane-prices" :class="{ [scale]: true, [mode]: true }">
+  <div class="pane-prices" :class="{ [scale]: true, [mode]: true, '-bold': this.boldFont }">
     <pane-header :paneId="paneId" />
     <transition-group v-if="markets" :name="transitionGroupName" tag="div" class="markets-bar condensed custom-scrollbar pane">
       <div
@@ -76,6 +76,10 @@ export default class extends Mixins(PaneMixin) {
 
   get showPairs() {
     return this.$store.state[this.paneId].showPairs
+  }
+
+  get boldFont() {
+    return this.$store.state[this.paneId].boldFont
   }
 
   get animateSort() {
@@ -168,6 +172,11 @@ export default class extends Mixins(PaneMixin) {
   flex-direction: row;
   height: 30px;
   overflow-x: auto;
+  height: 100%;
+
+  @media screen and (min-width: 768px) {
+    font-size: 1.25rem;
+  }
 
   @each $exchange, $icon in $exchanges {
     .market.-#{$exchange} {
@@ -224,6 +233,10 @@ export default class extends Mixins(PaneMixin) {
     overflow-y: auto;
     width: 100%;
     height: 100%;
+  }
+
+  &.-bold .market {
+    font-weight: 600;
   }
 }
 </style>

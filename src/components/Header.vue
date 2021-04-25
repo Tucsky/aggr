@@ -23,7 +23,7 @@
     </tippy>
     <button type="button" class="-volume" @click="$store.commit('settings/TOGGLE_AUDIO', !useAudio)" name="myTrigger">
       <i v-if="!useAudio" class="icon-volume-off"></i>
-      <i v-else class="icon-volume-low" :class="{ 'icon-volume-medium': audioVolume >= 1, 'icon-volume-high': audioVolume >= 5 }"></i>
+      <i v-else class="icon-volume-medium" :class="{ 'icon-volume-high': audioVolume > 1 }"></i>
     </button>
     <dropdown :options="paneTypes" placeholder="tf." @output="addPane" title="Add pane" v-tippy>
       <template v-slot:selection>
@@ -116,11 +116,10 @@ header#header {
   background-color: lighten($dark, 10%);
   color: white;
   position: absolute;
-  height: 20px;
   display: flex;
   justify-content: flex-end;
-  align-items: center;
-  padding: 0 4px;
+  align-items: stretch;
+  padding: 0 0.5em;
   top: 0;
   z-index: 1;
   left: 50%;
@@ -128,19 +127,21 @@ header#header {
   border-radius: 0 0 8px 8px;
 
   span {
-    font-size: 12px;
-    opacity: 0.5;
+    font-size: 0.5em;
+    opacity: 0.75;
     font-family: 'Barlow Semi Condensed';
     align-self: stretch;
-    margin-right: 0.25rem;
+    margin-right: 0.25em;
     line-height: 1;
-    padding: 2px;
+    padding: 0.4em 0.5em 0.66em;
+    line-height: 0.8;
   }
 
   .dropdown {
     align-self: stretch;
-    .options {
-      position: absolute;
+
+    &__options {
+      margin-top: 1rem;
     }
   }
 
@@ -167,8 +168,9 @@ header#header {
     cursor: pointer;
     padding: 0;
     display: inline-flex;
-    height: 100%;
     align-items: center;
+    line-height: 1;
+    font-size: inherit;
   }
 
   &:after,
@@ -182,19 +184,27 @@ header#header {
     background-clip: padding-box;
     transition: background-color 0.4s $ease-out-expo;
   }
-}
 
-header#header .dropdown__selected {
-  height: 100%;
-  display: inline-flex;
-  align-items: center;
-}
+  .dropdown__selected {
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+  }
 
-header#header .dropdown__selected > i,
-header#header button > i {
-  font-size: 12px;
-  padding: 0 0.25rem;
-  height: 14px;
+  .dropdown__option {
+    font-size: 1rem;
+  }
+
+  .dropdown__selected > i,
+  button > i {
+    font-size: 12px;
+    padding: 0 0.75em;
+    height: 14px;
+
+    + span {
+      padding-left: 0;
+    }
+  }
 }
 
 #app.-loading header#header {

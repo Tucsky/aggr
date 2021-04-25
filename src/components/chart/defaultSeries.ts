@@ -22,7 +22,7 @@ export const defaultChartSeries = {
   },
   price: {
     name: 'PRICE',
-    type: 'area',
+    type: 'candlestick',
     description: 'Price',
     input: 'avg_ohlc(bar)',
     axisLabelVisible: true,
@@ -98,7 +98,7 @@ export const defaultChartSeries = {
     type: 'line',
     name: 'PRICE 200 MA',
     enabled: true,
-    input: 'sma($price, options.smaLength)',
+    input: 'sma($price.close, options.smaLength)',
     options: {
       priceScaleId: 'price',
       color: '#C2EFEB',

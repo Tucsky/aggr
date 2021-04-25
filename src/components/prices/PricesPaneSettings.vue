@@ -7,6 +7,13 @@
         <span>Ticker names are {{ showPairs ? 'visible' : 'hidden' }}</span>
       </label>
     </div>
+    <div class="form-group mb8">
+      <label class="checkbox-control">
+        <input type="checkbox" class="form-control" :checked="boldFont" @change="$store.commit(paneId + '/TOGGLE_BOLD_FONT')" />
+        <div></div>
+        <span>{{ boldFont ? 'Bold' : 'Thin' }} text</span>
+      </label>
+    </div>
 
     <div class="form-group mb8">
       <label class="checkbox-control">
@@ -49,6 +56,10 @@ export default class extends Vue {
 
   get showPairs() {
     return this.$store.state[this.paneId].showPairs
+  }
+
+  get boldFont() {
+    return this.$store.state[this.paneId].boldFont
   }
 
   get animateSort() {
