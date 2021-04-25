@@ -73,6 +73,8 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
       merge(module.state, pane.settings)
 
       delete pane.settings
+
+      syncState(module.state)
     }
   }
 
