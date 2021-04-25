@@ -70,7 +70,12 @@
   right: 0;
 
   &.toolbar {
+    font-size: 1.5rem;
     display: none;
+
+    @media only screen and (-webkit-min-device-pixel-ratio: 2),(min-resolution: 192dpi) {
+      font-size: 1rem;
+    }
 
     .dropdown__selected > i,
     button > i {

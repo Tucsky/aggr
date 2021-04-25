@@ -96,7 +96,7 @@ export default {
     margin-left: 0.4em;
     font-family: 'Barlow Semi Condensed';
     pointer-events: none;
-    line-height: 1.6;
+    line-height: 1.4;
     letter-spacing: 0px;
     order: 2;
     transition: visibility;
@@ -122,6 +122,7 @@ export default {
       background-color: rgba($dark, 0.8);
       color: white;
       border-radius: 0;
+      padding: 0.2rem 0.4rem;
 
       &:hover {
         background-color: lighten($dark, 2%);

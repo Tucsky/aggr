@@ -523,9 +523,6 @@ export default class extends Mixins(PaneMixin) {
   z-index: 3;
   opacity: 0;
   transition: opacity 0.2s $ease-out-expo;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
 
   font-size: 12px;
 }
