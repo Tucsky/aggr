@@ -62,70 +62,28 @@
   }
 }
 
-#app.-light .pane {
-  background-color: rgba(white, 0.2);
-
-  .pane-name,
-  .pane-controls {
-    background-color: rgba(white, 0.8);
-  }
-}
-
 .pane-header {
-  display: none;
-  justify-content: space-between;
-  height: 0;
   position: absolute;
   z-index: 3;
   top: 0;
   left: 0;
   right: 0;
-  align-items: flex-start;
-  font-size: 80%;
 
-  button {
-    border: 0;
-    background: 0;
-    font-size: inherit;
-  }
+  &.toolbar {
+    display: none;
 
-  .pane-name,
-  .pane-controls {
-    background-color: rgba(black, 0.8);
-    backdrop-filter: blur(2px);
-    border-top: 0;
-  }
-
-  .pane-controls {
-    border-radius: 0 0 0 4px;
-    display: flex;
-    border-right: 0;
-  }
-
-  .pane-name,
-  button,
-  .dropdown__selected {
-    padding: 0.5em 0.66em;
-    display: flex;
-    text-shadow: 1px 1px black;
-    font-weight: 600;
-  }
-  button,
-  .dropdown__selected {
-    cursor: pointer;
-    opacity: 0.5;
-
-    &:hover {
-      opacity: 1;
+    .dropdown__selected > i,
+    button > i {
+      padding-left: 0.25em;
+      padding-right: 0.25em;
     }
-  }
-  .pane-name {
-    border-radius: 0 0 4px 0;
-    padding: 0.4em 0.45em 0.6em 0.55em;
-    border-left: 0;
-  }
 
-  .dropdown__options {
-    font-size: 1rem;
+    button, .dropdown__selected {
+      opacity: .5;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
   }
 }

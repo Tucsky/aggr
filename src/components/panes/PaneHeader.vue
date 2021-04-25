@@ -1,37 +1,39 @@
 <template>
-  <div class="pane-header">
-    <div class="pane-name">{{ name }}</div>
-    <div class="pane-controls">
-      <button type="button" v-if="showSearch" @click="openSearch">
-        <span class="icon-search"></span>
-      </button>
+  <div class="pane-header toolbar" v-background="0">
+    <span class="mrauto">{{ name }}</span>
+    <button type="button" v-if="showSearch" @click="openSearch">
+      <i class="icon-search"></i>
+    </button>
 
-      <dropdown
-        v-if="showTimeframe"
-        :options="timeframes"
-        :selected="timeframe"
-        class="-text-left"
-        placeholder="tf."
-        @output="$store.commit(paneId + '/SET_TIMEFRAME', +$event)"
-      ></dropdown>
+    <dropdown
+      v-if="showTimeframe"
+      :options="timeframes"
+      :selected="timeframe"
+      class="-text-left"
+      placeholder="tf."
+      @output="$store.commit(paneId + '/SET_TIMEFRAME', +$event)"
+    >
+      <template v-slot:selection="{ item }">
+        <span>{{ item }}</span>
+      </template>
+    </dropdown>
 
-      <button type="button" @click="openSettings">
-        <span class="icon-cog"></span>
-      </button>
+    <button type="button" @click="openSettings">
+      <i class="icon-cog"></i>
+    </button>
 
-      <dropdown :options="menu" @output="menu[$event].click()" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
-        <template v-slot:option="{ value }">
-          <div>
-            <i :class="'icon-' + value.icon"></i>
+    <dropdown :options="menu" @output="menu[$event].click()" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
+      <template v-slot:option="{ value }">
+        <div>
+          <i :class="'icon-' + value.icon"></i>
 
-            <span>{{ value.label }}</span>
-          </div>
-        </template>
-        <template v-slot:selection>
-          <i class="icon-more"></i>
-        </template>
-      </dropdown>
-    </div>
+          <span>{{ value.label }}</span>
+        </div>
+      </template>
+      <template v-slot:selection>
+        <i class="icon-more"></i>
+      </template>
+    </dropdown>
   </div>
 </template>
 

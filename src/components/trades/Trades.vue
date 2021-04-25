@@ -5,7 +5,9 @@
   >
     <pane-header :paneId="paneId" />
     <ul ref="tradesContainer"></ul>
-    <div v-if="!tradesCount" class="trade -empty">Nothing to show, yet.</div>
+    <ul v-if="!tradesCount">
+      <li class="trade -empty">Nothing to show, yet.</li>
+    </ul>
   </div>
 </template>
 
@@ -703,8 +705,7 @@ export default class extends Mixins(PaneMixin) {
 
   &.-empty {
     justify-content: center;
-    padding: 20px;
-    font-size: 0.8rem;
+    padding: 1em;
 
     &:after {
       display: none;

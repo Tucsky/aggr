@@ -1,6 +1,6 @@
 <template>
-  <header id="header" class="header" v-background="2">
-    <span class="title">Aggr.</span>
+  <header id="header" class="header toolbar" :class="{ '-moved': left !== null }" v-background="0.01" :style="{ left }">
+    <span ref="handle" class="header__handle title">Aggr.</span>
     <button type="button" @click="$store.dispatch('app/showSearch')" title="Search" v-tippy="{ placement: 'bottom' }">
       <i class="icon-search"></i>
     </button>
@@ -49,6 +49,7 @@
 
 <script lang="ts">
 import { PaneType } from '@/store/panes'
+import { getEventCords } from '@/utils/picker'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from './framework/picker/Slider.vue'
 
@@ -83,6 +84,10 @@ export default class extends Vue {
     }
   }
 
+  left: string = null
+
+  private _dragRef: number
+
   get useAudio() {
     return this.$store.state.settings.useAudio
   }
@@ -93,6 +98,49 @@ export default class extends Vue {
 
   get activeExchanges() {
     return this.$store.state.app.activeExchanges
+  }
+
+  $refs!: {
+    handle: HTMLElement
+  }
+
+  mounted() {
+    this.bindHandle()
+  }
+
+  bindHandle() {
+    this.$refs.handle.addEventListener('mousedown', this.startDrag)
+  }
+
+  startDrag(event: MouseEvent | TouchEvent) {
+    const { x } = getEventCords(event)
+    const rect = this.$el.getBoundingClientRect()
+
+    this.left = (rect.left / window.innerWidth) * 100 + '%'
+    this._dragRef = x
+
+    document.addEventListener('touchmove', this.onDrag)
+    document.addEventListener('mousemove', this.onDrag)
+    document.addEventListener('touchend', this.stopDrag)
+    document.addEventListener('mouseup', this.stopDrag)
+  }
+
+  onDrag(event: MouseEvent | TouchEvent) {
+    const { x } = getEventCords(event)
+
+    const offset = x - this._dragRef
+
+    const percent = Math.max(0, (((this.$el as HTMLElement).offsetLeft + offset) / window.innerWidth) * 100)
+    this.left = percent + '%'
+
+    this._dragRef = x
+  }
+
+  stopDrag() {
+    document.removeEventListener('touchmove', this.onDrag)
+    document.removeEventListener('mousemove', this.onDrag)
+    document.removeEventListener('touchend', this.stopDrag)
+    document.removeEventListener('mouseup', this.stopDrag)
   }
 
   togglePopup() {
@@ -116,146 +164,38 @@ header#header {
   background-color: lighten($dark, 10%);
   color: white;
   position: absolute;
-  display: flex;
-  justify-content: flex-end;
-  align-items: stretch;
-  padding: 0 0.5em;
   top: 0;
   z-index: 1;
   left: 50%;
   transform: translate(-50%);
   border-radius: 0 0 8px 8px;
 
-  span {
-    font-size: 0.5em;
-    opacity: 0.75;
-    font-family: 'Barlow Semi Condensed';
-    align-self: stretch;
-    margin-right: 0.25em;
-    line-height: 1;
-    padding: 0.4em 0.5em 0.66em;
-    line-height: 0.8;
-  }
-
-  .dropdown {
-    align-self: stretch;
-
-    &__options {
-      margin-top: 1rem;
-    }
-  }
-
   button,
   .dropdown {
     &:hover {
-      background-color: rgba(white, 0.2);
+      background-color: rgba(white, 0.1);
 
       &:last-child {
-        border-bottom-right-radius: 2px;
+        border-bottom-right-radius: 7px;
       }
 
       &:first-child {
-        border-bottom-left-radius: 2px;
+        border-bottom-left-radius: 7px;
       }
     }
   }
 
-  button {
-    border: 0;
-    background: none;
-    color: inherit;
-    position: relative;
-    cursor: pointer;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    line-height: 1;
-    font-size: inherit;
+  &:hover {
+    opacity: 1;
   }
 
-  &:after,
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    display: block;
-    background-clip: padding-box;
-    transition: background-color 0.4s $ease-out-expo;
+  .header__handle {
+    cursor: grab;
+    user-select: none;
   }
 
-  .dropdown__selected {
-    height: 100%;
-    display: inline-flex;
-    align-items: center;
+  &.-moved {
+    transform: none;
   }
-
-  .dropdown__option {
-    font-size: 1rem;
-  }
-
-  .dropdown__selected > i,
-  button > i {
-    font-size: 12px;
-    padding: 0 0.75em;
-    height: 14px;
-
-    + span {
-      padding-left: 0;
-    }
-  }
-}
-
-#app.-loading header#header {
-  &:before {
-    background-color: rgba(#f6f6f6, 0.1);
-    animation: indeterminate-loading-bar-slow 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
-  }
-
-  &:after {
-    background-color: rgba(#111111, 0.1);
-    animation: indeterminate-loading-bar-fast 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
-    animation-delay: 1.15s;
-  }
-}
-
-@keyframes indeterminate-loading-bar-slow {
-  0% {
-    left: -35%;
-    right: 100%;
-  }
-
-  60% {
-    left: 100%;
-    right: -90%;
-  }
-
-  100% {
-    left: 100%;
-    right: -90%;
-  }
-}
-
-@keyframes indeterminate-loading-bar-fast {
-  0% {
-    left: -200%;
-    right: 100%;
-  }
-
-  60% {
-    left: 107%;
-    right: -8%;
-  }
-
-  100% {
-    left: 107%;
-    right: -8%;
-  }
-}
-
-#app.-light header#header button:hover > span,
-#app.-light header#header .dropdown__selected:hover > span {
-  opacity: 1;
 }
 </style>

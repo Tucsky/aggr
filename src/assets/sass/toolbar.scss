@@ -1,0 +1,58 @@
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+  height: 1em;
+
+  > span,
+  > button > span,
+  .dropdown > .dropdown__selected > span {
+    font-size: 0.5em;
+    opacity: 0.75;
+    padding: 0.45em 0.5em 0.55em;
+    font-family: 'Barlow Semi Condensed';
+    align-self: center;
+    line-height: 1;
+  }
+
+  .dropdown {
+    align-self: stretch;
+
+    &__options {
+      margin-top: 1rem;
+    }
+  }
+
+  button {
+    border: 0;
+    background: none;
+    color: inherit;
+    position: relative;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    font-size: inherit;
+  }
+
+  .dropdown__selected {
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .dropdown__option {
+    font-size: 1rem;
+  }
+
+  .dropdown__selected > i,
+  button > i {
+    font-size: 0.5em;
+    padding: 0 0.75em;
+
+    + span {
+      padding-left: 0 !important;
+    }
+  }
+}

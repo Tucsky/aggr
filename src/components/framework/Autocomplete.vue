@@ -46,8 +46,7 @@ import { Component, Vue } from 'vue-property-decorator'
       type: Function
     },
     items: {
-      type: Array,
-      default: []
+      type: Array
     },
     query: {
       type: String,

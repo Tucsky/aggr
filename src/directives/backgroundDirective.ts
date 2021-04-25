@@ -6,12 +6,6 @@ const applyBackgroundColor = (el, rgb, modifier: number | boolean = false) => {
     let color = splitRgba(rgb)
     let luminance = getColorLuminance(color)
     if (typeof modifier === 'number' && modifier) {
-      if (store.state.settings.theme === 'dark') {
-        const ajusted = modifier / Math.log(255 - luminance) / 4
-        modifier = ajusted
-      } else {
-        modifier *= 1 / 255
-      }
       rgb = getLogShade(color, modifier)
     } else {
       color = splitRgba(rgb)

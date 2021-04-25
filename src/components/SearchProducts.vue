@@ -38,6 +38,7 @@ import { getAllProducts } from '@/services/productsService'
 export default class extends Vue {
   loading = false
   query = ''
+  pairs: string[] = []
 
   get showSearch() {
     return this.$store.state.app.showSearch
@@ -55,15 +56,6 @@ export default class extends Vue {
     }
   }
 
-  get pairs() {
-    console.log('get pairs', this.searchTarget)
-    if (this.searchTarget) {
-      return this.$store.state.panes.panes[this.searchTarget].markets
-    } else {
-      return Object.keys(this.$store.state.panes.marketsListeners)
-    }
-  }
-
   get indexedProducts() {
     return this.$store.state.app.indexedProducts
   }
@@ -75,11 +67,12 @@ export default class extends Vue {
   @Watch('showSearch')
   async onShowSearch(shown) {
     if (shown) {
+      this.getPairs()
       this.bindSearchClickOutside()
 
       if (!Object.keys(this.indexedProducts).length && !this.loading) {
         this.loading = true
-        getAllProducts()
+        await getAllProducts()
         this.loading = false
       }
     } else {
@@ -100,6 +93,15 @@ export default class extends Vue {
     const reg = new RegExp(query, 'i')
 
     return Array.prototype.concat(...Object.values(this.indexedProducts)).filter(a => reg.test(a))
+  }
+
+  getPairs() {
+    console.log('get pairs', this.searchTarget)
+    if (this.searchTarget) {
+      this.pairs = this.$store.state.panes.panes[this.searchTarget].markets.slice()
+    } else {
+      this.pairs = Object.keys(this.$store.state.panes.marketsListeners)
+    }
   }
 
   async setPairs(pairs: string[]) {

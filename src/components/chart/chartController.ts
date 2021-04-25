@@ -924,7 +924,11 @@ export default class ChartController {
     this.replaceData(computedSeries)
 
     if (this.activeRenderer) {
-      console.log('active renderer before', this.activeRenderer.bar.open, formatTime(this.activeRenderer.timestamp))
+      console.log(
+        'active renderer before',
+        Object.keys(this.activeRenderer.sources).reduce((sum, id) => sum + this.activeRenderer.sources[id].open, 0),
+        formatTime(this.activeRenderer.timestamp)
+      )
 
       for (const id in temporaryRenderer.series) {
         this.activeRenderer.series[id] = temporaryRenderer.series[id]
@@ -933,7 +937,11 @@ export default class ChartController {
       this.activeRenderer = temporaryRenderer
     }
 
-    console.log('active renderer after', this.activeRenderer.bar.open, formatTime(this.activeRenderer.timestamp))
+    console.log(
+      'active renderer after',
+      Object.keys(this.activeRenderer.sources).reduce((sum, id) => sum + this.activeRenderer.sources[id].open, 0),
+      formatTime(this.activeRenderer.timestamp)
+    )
   }
 
   /**
