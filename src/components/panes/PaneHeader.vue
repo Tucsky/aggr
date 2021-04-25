@@ -1,5 +1,6 @@
 <template>
-  <div class="pane-header toolbar" v-background="0">
+  <div class="pane-header toolbar" v-background="0" :class="{ '-loading': loading }">
+    <div class="pane-header__loader"></div>
     <span class="mrauto">{{ name }}</span>
     <button type="button" v-if="showSearch" @click="openSearch">
       <i class="icon-search"></i>
@@ -62,6 +63,10 @@ import PricesPaneDialog from '../prices/PricesPaneDialog.vue'
     showTimeframe: {
       type: Boolean,
       default: false
+    },
+    loading: {
+      type: Boolean,
+      default: false
     }
   }
 })
@@ -72,12 +77,17 @@ export default class extends Vue {
     3: '3s',
     5: '5s',
     10: '10s',
-    15: '15s',
     30: '30s',
     60: '1m',
     [60 * 3]: '3m',
     [60 * 5]: '5m',
-    [60 * 15]: '15m'
+    [60 * 15]: '15m',
+    [60 * 21]: '21m',
+    [60 * 60]: '1h',
+    [60 * 60 * 2]: '2h',
+    [60 * 60 * 4]: '4h',
+    [60 * 60 * 8]: '8h',
+    [60 * 60 * 24]: '1d'
   }
   menu = [
     {

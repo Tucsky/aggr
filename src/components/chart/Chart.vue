@@ -1,6 +1,6 @@
 <template>
   <div class="pane-chart">
-    <pane-header :paneId="paneId" :showTimeframe="true" />
+    <pane-header :loading="loading" :paneId="paneId" :showTimeframe="true" />
     <div class="chart__container" ref="chartContainer"></div>
     <div class="chart__series">
       <SerieControl v-for="(serie, index) in activeSeries" :key="index" :serieId="serie" :paneId="paneId" :legend="legend[serie]" />
@@ -20,7 +20,7 @@ import { Component, Mixins } from 'vue-property-decorator'
 import ChartController, { TimeRange } from './chartController'
 
 import dialogService from '../../services/dialogService'
-import { formatPrice, formatAmount, formatTime } from '../../utils/helpers'
+import { formatPrice, formatAmount, formatTime, getHms } from '../../utils/helpers'
 
 import SerieControl from './SerieControl.vue'
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
@@ -40,9 +40,8 @@ import PaneHeader from '../panes/PaneHeader.vue'
   }
 })
 export default class extends Mixins(PaneMixin) {
-  resizing = {}
-  fetching = false
   reachedEnd = false
+  loading = false
   legend = {}
 
   private _onStoreMutation: () => void
@@ -201,6 +200,10 @@ export default class extends Mixins(PaneMixin) {
    * @param {boolean} clear will clear the chart / initial fetch
    */
   fetch(rangeToFetch?: TimeRange) {
+    if (this.loading) {
+      return Promise.reject('already-fetching')
+    }
+
     const historicalMarkets = historicalService.getHistoricalMarktets(this.markets)
 
     if (!historicalMarkets.length) {
@@ -227,6 +230,13 @@ export default class extends Mixins(PaneMixin) {
         from: leftTime - timeframe * barsCount,
         to: leftTime - timeframe
       }
+
+      this.$store.dispatch('app/showNotice', {
+        id: 'fetching-' + this.paneId,
+        timeout: 15000,
+        title: `🥵 Fetching ${barsCount}×${historicalMarkets.length} bars (timeframe ${getHms(timeframe * 1000)})...`,
+        type: 'info'
+      })
     }
 
     rangeToFetch.from = Math.floor(Math.round(rangeToFetch.from) / timeframe) * timeframe
@@ -235,6 +245,8 @@ export default class extends Mixins(PaneMixin) {
     console.debug(`[chart/fetch] fetch rangeToFetch: FROM: ${formatTime(rangeToFetch.from)} | TO: ${formatTime(rangeToFetch.to)}`)
 
     this._chartController.lockRender()
+
+    this.loading = true
 
     return historicalService
       .fetch(Math.round(rangeToFetch.from * 1000), Math.round(rangeToFetch.to * 1000 - 1), timeframe, historicalMarkets)
@@ -322,6 +334,8 @@ export default class extends Mixins(PaneMixin) {
         console.error(err)
       })
       .then(() => {
+        this.$store.dispatch('app/hideNotice', 'fetching-' + this.paneId)
+        this.loading = false
         this._chartController.unlockRender()
       })
   }
@@ -499,6 +513,10 @@ export default class extends Mixins(PaneMixin) {
   &:hover .chart__series,
   &:hover .chart__controls {
     opacity: 1;
+  }
+
+  &.-loading {
+    cursor: wait;
   }
 }
 

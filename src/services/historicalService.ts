@@ -66,7 +66,7 @@ class HistoricalService extends EventEmitter {
           err &&
             store.dispatch('app/showNotice', {
               type: 'error',
-              message: `API error (${
+              title: `API error (${
                 err.response && err.response.data && err.response.data.error ? err.response.data.error : err.message || 'unknown error'
               })`
             })
