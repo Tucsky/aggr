@@ -83,13 +83,13 @@ export default class Bucket {
     this.clear()
   }
 
-  onStats(timestamp, stats) {
+  onStats(stats: Volumes) {
     const value = this.adapter(stats)
 
-    if (!this.stacks.length || timestamp > this.timestamp + this.granularity) {
-      this.appendStack(timestamp)
+    if (!this.stacks.length || stats.timestamp > this.timestamp + this.granularity) {
+      this.appendStack(stats.timestamp)
     } else if (this.filled && this.remaining) {
-      const p = (timestamp - this.timestamp) / this.granularity
+      const p = (stats.timestamp - this.timestamp) / this.granularity
       const remaining = Math.ceil(this.stacks[0] * (1 - p))
       const change = this.remaining - remaining
       this.remaining = remaining

@@ -205,10 +205,8 @@ export default class extends Mixins(PaneMixin) {
     }
   }
   onVolume(sums) {
-    const now = +new Date()
-
     for (const id in this._buckets) {
-      this._buckets[id].onStats(now, sums)
+      this._buckets[id].onStats(sums)
 
       if (this._buckets[id].stacks.length) {
         const value = this._buckets[id].getValue()

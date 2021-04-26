@@ -28,7 +28,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator'
+import { Component, Vue } from 'vue-property-decorator'
 
 import aggregatorService from './services/aggregatorService'
 
@@ -78,11 +78,6 @@ export default class extends Vue {
     return this.$store.state.app && this.$store.state.app.isBooted
   }
 
-  @Watch('isBooted')
-  onBoot() {
-    aggregatorService.on('prices', this.updatePrice)
-  }
-
   get isLoading() {
     return this.$store.state.app.isLoading
   }
@@ -127,6 +122,7 @@ export default class extends Vue {
     aggregatorService.on('notice', (notice: Notice) => {
       this.$store.dispatch('app/showNotice', notice)
     })
+    aggregatorService.on('prices', this.updatePrice)
   }
 
   beforeDestroy() {

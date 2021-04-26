@@ -44,12 +44,6 @@ body {
   height: 100%;
   display: flex;
   flex-direction: column;
-
-  @media screen and (min-width: 768px) {
-    #header {
-      font-size: 1.5rem;
-    }
-  }
 }
 
 .app__layout {

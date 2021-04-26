@@ -169,6 +169,7 @@ header#header {
   left: 50%;
   transform: translate(-50%);
   border-radius: 0 0 8px 8px;
+  font-size: 1.5rem;
 
   button,
   .dropdown {

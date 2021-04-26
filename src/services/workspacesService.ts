@@ -73,7 +73,7 @@ class WorkspacesService {
   async getCurrentWorkspace() {
     let id = window.location.pathname.substring(1)
 
-    if (!id.length || !/^[a-zA-Z0-9]{8}$/.test(id)) {
+    if (!id.length || !/^[a-zA-Z0-9]{4}$/.test(id)) {
       id = localStorage.getItem('workspace')
     }
 

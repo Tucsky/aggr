@@ -165,10 +165,6 @@ class Aggregator {
     for (let i = 0; i < trades.length; i++) {
       const trade = (trades[i] as unknown) as AggregatedTrade
       const market = trade.exchange + trade.pair
-      if (!this.connections[market]) {
-        debugger
-      }
-
       if (this.onGoingAggregations[market]) {
         const aggTrade = this.onGoingAggregations[market]
 
@@ -179,7 +175,7 @@ class Aggregator {
           aggTrade.count++
           continue
         } else {
-          this.processTrade(aggTrade)
+          this.pendingTrades.push(this.processTrade(aggTrade))
         }
       }
 
@@ -198,9 +194,6 @@ class Aggregator {
 
   processTrade(trade: Trade): Trade {
     const market = trade.exchange + trade.pair
-    if (!this.connections[market]) {
-      debugger
-    }
 
     if (this.settings.calculateSlippage) {
       if (this.settings.calculateSlippage === 'price') {
@@ -237,9 +230,6 @@ class Aggregator {
       const aggTrade = this.onGoingAggregations[aggMarkets[i]]
 
       if (now > aggTrade.timeout) {
-        if (!this.connections[aggMarkets[i]]) {
-          debugger
-        }
         this.pendingTrades.push(this.processTrade(aggTrade))
 
         delete this.onGoingAggregations[aggMarkets[i]]
@@ -260,6 +250,8 @@ class Aggregator {
   }
 
   emitStats() {
+    const timestamp = +new Date()
+
     for (const bucketId in this.settings.buckets) {
       if (!this.buckets[bucketId]) {
         console.error('bucket id doesnt exists (but exists in settings so attempted to emit bucket...)', bucketId)
@@ -278,6 +270,8 @@ class Aggregator {
         this.buckets[bucketId].lbuy += this.connections[market].bucket.lbuy
         this.buckets[bucketId].lsell += this.connections[market].bucket.lsell
       }
+
+      this.buckets[bucketId].timestamp = timestamp
 
       ctx.postMessage({ op: 'bucket-' + bucketId, data: this.buckets[bucketId] })
 
@@ -354,6 +348,7 @@ class Aggregator {
 
   createBucket(): Volumes {
     return {
+      timestamp: null,
       vbuy: 0,
       vsell: 0,
       cbuy: 0,

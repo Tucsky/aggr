@@ -53,6 +53,7 @@ export interface QueuedTrade extends Trade {
 }
 
 export interface Volumes {
+  timestamp: number
   vbuy: number
   vsell: number
   cbuy: number
