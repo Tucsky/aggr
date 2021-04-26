@@ -11,6 +11,7 @@
     <div class="mb16">
       <dropdown
         class="form-control -left -center"
+        style="width: auto;"
         :selected="type"
         label="Type"
         :options="availableTypes"

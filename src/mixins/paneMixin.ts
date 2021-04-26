@@ -1,3 +1,4 @@
+import dialogService from '@/services/dialogService'
 import { Pane } from '@/store/panes'
 import Vue from 'vue'
 import Component from 'vue-class-component'
@@ -14,6 +15,10 @@ export default class PaneMixin extends Vue {
   paneId: string
   scale = '-normal'
 
+  get pane(): Pane {
+    return this.$store.state.panes.panes[this.paneId]
+  }
+
   mounted() {
     this.$nextTick(() => {
       const width = this.$el.clientWidth
@@ -24,10 +29,6 @@ export default class PaneMixin extends Vue {
         this.onResize(width, this.$el.clientHeight)
       }
     })
-  }
-
-  get pane(): Pane {
-    return this.$store.state.panes.panes[this.paneId]
   }
 
   refreshScale(width) {

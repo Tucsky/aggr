@@ -14,6 +14,7 @@ export interface StatBucket {
   precision?: number
   color?: string
   type?: string
+  conditionnalColor?: boolean
 }
 
 export interface StatsPaneState {
@@ -40,7 +41,8 @@ const state = {
       window: 3600000,
       input: 'lbuy-lsell',
       enabled: false,
-      color: '#e91e63',
+      color: "value>0?'#43a047':'#f44336'",
+      conditionnalColor: true,
       type: 'histogram'
     }
   }
@@ -124,6 +126,30 @@ const mutations = {
     const stat = state.buckets[id]
 
     stat.color = value
+
+    Vue.set(state.buckets, id, stat)
+  },
+  SET_BUCKET_TYPE(state, { id, value }) {
+    const stat = state.buckets[id]
+
+    stat.type = value
+
+    if (stat.conditionnalColor && value !== 'histogram') {
+      this.commit(state._id + '/TOGGLE_BUCKET_COLOR_CONDITION', id)
+    }
+
+    Vue.set(state.buckets, id, stat)
+  },
+  TOGGLE_BUCKET_COLOR_CONDITION(state, id) {
+    const stat = state.buckets[id]
+    stat.conditionnalColor = !stat.conditionnalColor
+
+    if (!stat.conditionnalColor) {
+      this.commit(state._id + '/SET_BUCKET_COLOR', {
+        id,
+        value: this.state.settings.textColor
+      })
+    }
 
     Vue.set(state.buckets, id, stat)
   },

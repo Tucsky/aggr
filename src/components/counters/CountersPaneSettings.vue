@@ -11,7 +11,7 @@
             type="checkbox"
             class="form-control"
             :checked="countersCount"
-            @change="$store.commit(paneId + '/TOGGLE_COUNTERS_COUNT', $event.target.checked)"
+            @change="$store.commit(paneId + '/TOGGLE_COUNT', $event.target.checked)"
           />
           <div on="count" off="volume"></div>
         </label>

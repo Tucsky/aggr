@@ -5,6 +5,21 @@
         <div class="title">BUCKET</div>
         <div class="subtitle">{{ name }}</div>
       </div>
+
+      <dropdown
+        class="form-control -left -center w-auto"
+        :selected="type"
+        label="Type"
+        :options="availableTypes"
+        placeholder="type"
+        @output="
+          $store.dispatch(paneId + '/updateBucket', {
+            id: bucketId,
+            prop: 'type',
+            value: $event
+          })
+        "
+      ></dropdown>
     </template>
     <div class="column mb8">
       <div class="form-group  -fill">
@@ -22,7 +37,7 @@
           "
         />
       </div>
-      <div class="form-group -end mtauto" ref="colorContainer">
+      <div v-if="!conditionnalColor" class="form-group -end mtauto -tight" ref="colorContainer">
         <verte
           picker="square"
           menuPosition="left"
@@ -37,6 +52,32 @@
           "
         ></verte>
       </div>
+      <div v-if="type === 'histogram'" class="form-group -tight -end mtauto">
+        <label class="checkbox-control checkbox-control-input -auto flex-right" v-tippy="{ placement: 'bottom' }" title="Enable onditionnal color">
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="conditionnalColor"
+            @change="$store.commit(paneId + '/TOGGLE_BUCKET_COLOR_CONDITION', bucketId)"
+          />
+          <div on="dynamic" off="fixed"></div>
+        </label>
+      </div>
+    </div>
+    <div v-if="conditionnalColor" class="form-group mb8">
+      <label for>Color condition <span class="icon-info" title="eg: value > 0 ? 'red' : 'white'" v-tippy></span></label>
+      <textarea
+        class="form-control"
+        rows="2"
+        :value="color"
+        @change="
+          $store.dispatch(paneId + '/updateBucket', {
+            id: bucketId,
+            prop: 'color',
+            value: $event.target.value
+          })
+        "
+      ></textarea>
     </div>
     <div class="column">
       <div class="form-group mb8">
@@ -142,11 +183,17 @@ export default {
     color: function() {
       return store.state[this.paneId].buckets[this.bucketId].color
     },
+    conditionnalColor: function() {
+      return store.state[this.paneId].buckets[this.bucketId].conditionnalColor
+    },
     enabled: function() {
       return store.state[this.paneId].buckets[this.bucketId].enabled
     },
     name: function() {
       return store.state[this.paneId].buckets[this.bucketId].name
+    },
+    type: function() {
+      return store.state[this.paneId].buckets[this.bucketId].type || 'line'
     },
     input: function() {
       return store.state[this.paneId].buckets[this.bucketId].input
@@ -164,6 +211,9 @@ export default {
       }
     }
   },
+  data: () => ({
+    availableTypes: { line: 'Line', area: 'Area', histogram: 'Histogram' }
+  }),
   methods: {
     getHms(value) {
       return getHms(value)

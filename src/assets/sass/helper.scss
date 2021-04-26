@@ -176,6 +176,10 @@ $unit: 'px'; // Feel free to change the unit.
   width: 100% !important;
 }
 
+.w-auto {
+  width: auto !important;
+}
+
 ::-webkit-scrollbar {
   width: 0;
   height: 0;

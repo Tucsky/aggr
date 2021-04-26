@@ -210,7 +210,7 @@ export default class extends Mixins(PaneMixin) {
       return Promise.reject('unsupported-markets')
     }
 
-    const visibleRange = this._chartController.chartInstance.timeScale().getVisibleRange() as TimeRange
+    const visibleRange = this._chartController.getVisibleRange() as TimeRange
     const timeframe = +this.$store.state[this.paneId].timeframe
 
     if (!rangeToFetch) {

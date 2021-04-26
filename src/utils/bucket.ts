@@ -5,6 +5,8 @@ import store from '../store'
 import { hexToRgb, splitRgba } from './colors'
 import { getHms } from './helpers'
 
+export type BucketColor = string | ((value: number) => string)
+
 export interface BucketOptions {
   id: string
   name: string
@@ -19,7 +21,7 @@ export default class Bucket {
   name: string
   window: number
   precision: number
-  color: string
+  color: BucketColor
   granularity: number
   type: string
 
@@ -42,7 +44,7 @@ export default class Bucket {
 
     this.window = (!isNaN(options.window) ? +options.window : store.state[paneId].window) || 60000
     this.precision = options.precision
-    this.color = options.color
+    this.color = this.parseColor(options.color)
     this.granularity = Math.max(store.state[paneId].granularity, this.window / 5000)
     this.type = options.type || 'line'
 
@@ -168,21 +170,29 @@ export default class Bucket {
       return
     }
 
-    const point = {
+    const point: any = {
       time: (this.timestamp / 1000) as UTCTimestamp,
       value: value
+    }
+
+    if (typeof this.color === 'function') {
+      point.color = this.color(value)
     }
 
     this.serie.update(point)
   }
 
   getColorOptions() {
+    if (typeof this.color === 'function') {
+      return {}
+    }
+
     if (this.type === 'area') {
       let r: number
       let g: number
       let b: number
 
-      if (this.color.indexOf('#') === 0) {
+      if ((this.color as string).indexOf('#') === 0) {
         ;[r, g, b] = hexToRgb(this.color)
       } else {
         ;[r, g, b] = splitRgba(this.color)
@@ -200,14 +210,27 @@ export default class Bucket {
     }
   }
 
+  parseColor(colorInput: string): BucketColor {
+    if (/rgba?\(|#/.test(colorInput)) {
+      return colorInput
+    }
+
+    return (function() {
+      'use strict'
+      return new Function('value', '"use strict"; return ' + colorInput)
+    })() as BucketColor
+  }
+
   updateColor(color) {
     if (!this.serie) {
       return
     }
 
-    this.color = color
+    this.color = this.parseColor(color)
 
-    this.serie.applyOptions(this.getColorOptions())
+    if (typeof color === 'string') {
+      this.serie.applyOptions(this.getColorOptions())
+    }
   }
 
   removeSerie(chart: IChartApi) {

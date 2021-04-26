@@ -74,6 +74,9 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/SET_BUCKET_COLOR':
           this.recolorBucket(mutation.payload.id, mutation.payload.value)
           break
+        case this.paneId + '/SET_BUCKET_TYPE':
+          this.reloadBucketSerie(mutation.payload.id, mutation.payload.value)
+          break
         case this.paneId + '/TOGGLE_CHART':
           if (mutation.payload) {
             this.createChart()
@@ -257,6 +260,16 @@ export default class extends Mixins(PaneMixin) {
     this._buckets[id].updateColor(color)
 
     this.$set(this.data[id], 'color', color)
+  }
+
+  reloadBucketSerie(id, type?: string) {
+    if (type) {
+      // set different serie type
+      this._buckets[id].type = type
+    }
+
+    this._buckets[id].removeSerie(this._chart)
+    this._buckets[id].createSerie(this._chart)
   }
 
   createBucket(statBucket) {

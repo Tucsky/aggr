@@ -176,6 +176,8 @@
         position: relative;
         line-height: 1;
         order: 0;
+        font-size: 80%;
+        line-height: 0.9rem;
       }
 
       i {
@@ -274,6 +276,7 @@
     transition: all 0.2s $ease-out-expo;
     position: relative;
     flex-shrink: 0;
+    font-size: 1rem;
 
     &:before,
     &:after {
