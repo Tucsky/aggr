@@ -399,8 +399,6 @@ export default class extends Mixins(PaneMixin) {
   }
 
   onPan(visibleLogicalRange) {
-    // this.debugPosition()
-
     if (!visibleLogicalRange || this._chartController.panPrevented) {
       return
     }
@@ -477,7 +475,6 @@ export default class extends Mixins(PaneMixin) {
         this._chartController.chartCache.cacheRange.to
       )}`
     )
-    // this.debugPosition()
 
     if (
       !this.reachedEnd &&

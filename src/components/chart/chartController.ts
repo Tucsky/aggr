@@ -910,7 +910,12 @@ export default class ChartController {
       temporaryRenderer.sources[bar.exchange + bar.pair] = this.cloneSourceBar(bar)
     }
 
+    let scrollPosition: number
+
     if (!series) {
+      scrollPosition = this.chartInstance.timeScale().scrollPosition()
+
+      console.info('before chart replace data scrollposition', scrollPosition)
       this.clearChart()
 
       if (!bars.length) {
@@ -922,6 +927,11 @@ export default class ChartController {
     }
 
     this.replaceData(computedSeries)
+
+    if (scrollPosition) {
+      console.info('scroll to position', scrollPosition)
+      this.chartInstance.timeScale().scrollToPosition(scrollPosition, false)
+    }
 
     if (this.activeRenderer) {
       console.log(
@@ -975,9 +985,9 @@ export default class ChartController {
       }
     }
 
-    const selection = ['------------------------']
+    // const selection = ['------------------------']
     const bars = this.chartCache.chunks
-      .filter(c => {
+      /*.filter(c => {
         c.rendered = !visibleRange || c.to > from - store.state[this.paneId].timeframe * 20
         selection.push(
           `${c.rendered ? '[selected] ' : ''} #${this.chartCache.chunks.indexOf(c)} | FROM: ${formatTime(c.from)} | TO: ${formatTime(
@@ -986,10 +996,10 @@ export default class ChartController {
         )
 
         return c.rendered
-      })
+      })*/
       .reduce((bars, chunk) => bars.concat(chunk.bars), [])
-    selection.push('------------------------')
-    console.debug(selection.join('\n') + '\n')
+    /*selection.push('------------------------')
+    console.debug(selection.join('\n') + '\n')*/
     this.renderBars(bars, null)
   }
 
