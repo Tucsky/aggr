@@ -451,6 +451,8 @@ export default class extends Mixins(PaneMixin) {
     const serie = await dialogService.openAsPromise(CreateSerieDialog, { paneId: this.paneId })
 
     if (serie) {
+      serie.enabled = false
+
       this.$store.dispatch(this.paneId + '/createSerie', serie)
       dialogService.open(SerieDialog, { paneId: this.paneId, serieId: serie.id }, 'serie')
     }

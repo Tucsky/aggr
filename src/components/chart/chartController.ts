@@ -243,9 +243,9 @@ export default class ChartController {
     let bars = []
 
     for (const chunk of this.chartCache.chunks) {
-      if (chunk.rendered) {
+      // if (chunk.rendered) {
         bars = bars.concat(chunk.bars)
-      }
+      // }
     }
 
     const series = this.getSeriesDependances(this.getSerie(id))
@@ -457,7 +457,8 @@ export default class ChartController {
         dialogService.open(
           SerieDialog,
           {
-            id: serie.id
+            paneId: this.paneId,
+            serieId: serie.id
           },
           'serie'
         )
@@ -1120,7 +1121,8 @@ export default class ChartController {
           dialogService.open(
             SerieDialog,
             {
-              id: serie.id
+              paneId: this.paneId,
+              serieId: serie.id
             },
             'serie'
           )

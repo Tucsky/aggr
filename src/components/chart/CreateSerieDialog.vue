@@ -5,14 +5,23 @@
       <div class="column -center"></div>
     </template>
     <template v-if="inactiveSeries.length">
-      <dropdown class="form-control -left" :options="inactiveSeries" :alwaysShowPlaceholder="true" placeholder="Library" @output="enableSerie">
-        <template v-slot:option="{ value }">
-          <div class="serie-dropdown-control">
-            <span>{{ value.name }}</span>
-            <i class="icon-trash -action" @click.stop="$store.dispatch(paneId + '/removeSerie', value.id)"></i>
-          </div>
-        </template>
-      </dropdown>
+      <div class="form-group">
+        <label>Choose from existing serie</label>
+        <dropdown
+          class="form-control -left"
+          :options="inactiveSeries"
+          :alwaysShowPlaceholder="true"
+          :placeholder="inactiveSeries.length + ' serie' + (inactiveSeries.length > 1 ? 's' : '')"
+          @output="enableSerie"
+        >
+          <template v-slot:option="{ value }">
+            <div class="serie-dropdown-control">
+              <span>{{ value.name }}</span>
+              <i class="icon-trash -action" @click.stop="$store.dispatch(paneId + '/removeSerie', value.id)"></i>
+            </div>
+          </template>
+        </dropdown>
+      </div>
       <div class="divider">Or</div>
     </template>
     <div class="form-group mb16">
@@ -22,7 +31,7 @@
         ID will be: {{ serieId }} <span class="icon-info ml4" :title="`Use \'$${serieId}\' to reference it in other series`" v-tippy></span
       ></small>
     </div>
-    <div class="form-group mb16" v-if="availableScales.length">
+    <div class="form-group mb16">
       <label>Align serie with</label>
       <dropdown
         class="form-control -left -center"
@@ -58,23 +67,37 @@ export default {
   },
   data: () => ({
     serieId: null,
-    name: 'My New Serie',
-    priceScaleId: 'price'
+    name: 'Untitled',
+    priceScaleId: 'right'
   }),
   computed: {
+    series() {
+      const series = Object.keys(this.$store.state[this.paneId].series).map(serieId => getSerieSettings(this.paneId, serieId))
+
+      return series
+    },
     availableScales: function() {
-      return Object.keys(store.state[this.paneId].series)
-        .map(id => store.state[this.paneId].series[id].options && store.state[this.paneId].series[id].options.priceScaleId)
-        .filter((x, i, a) => {
-          return x && a.indexOf(x) == i
-        })
+      return this.series
+        .map(s => s.options && s.options.priceScaleId)
+        .reduce(
+          (scales, priceScaleId) => {
+            if (!priceScaleId || scales[priceScaleId]) {
+              return scales
+            }
+
+            scales[priceScaleId] = priceScaleId
+            return scales
+          },
+          {
+            '': 'Own scale',
+            right: 'Main scale (right)'
+          }
+        )
     },
     inactiveSeries() {
-      const series = Object.keys(this.$store.state[this.paneId].series)
-        .map(serieId => getSerieSettings(this.paneId, serieId))
-        .filter(serie => {
-          return serie.enabled === false
-        })
+      const series = this.series.filter(serie => {
+        return serie.enabled === false
+      })
 
       return series
     }

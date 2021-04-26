@@ -2,9 +2,10 @@
   <Dialog :open="open" @clickOutside="close" class="serie-dialog">
     <template v-slot:header>
       <div class="title">
-        <span v-text="name"></span>
-        <i class="icon-sm -no-grab ml4 icon-edit" style="cursor: pointer" @click="renameSerie"></i>
+        <div>{{ name }} <i class="icon-sm -no-grab ml4 icon-edit" style="cursor: pointer" @click="renameSerie"></i></div>
+        <code class="subtitle pl0" v-text="serieId"></code>
       </div>
+
       <div class="column -center"></div>
     </template>
     <p v-if="description" style="opacity: .5" class="mb16 mt0"><i class="icon-info mr8"></i> {{ description }}</p>
@@ -167,6 +168,7 @@ import Behave from 'behave-js'
 import SerieDialog from './SerieDialog.vue'
 import dialogService from '../../services/dialogService'
 import { defaultChartSeries } from './defaultSeries'
+import merge from 'lodash.merge'
 
 const ignoredOptionsKeys = ['crosshairMarkerVisible']
 
@@ -480,17 +482,24 @@ export default {
       })
 
       if (name && name !== this.name) {
+        await this.close()
         await store.dispatch(this.paneId + '/renameSerie', { id: this.serieId, name })
       }
     },
     async duplicateSerie() {
-      const id = await store.dispatch(this.paneId + '/createSerie', store.state.settings.series[this.serieId])
+      const settings = merge({}, this.defaultSettings, this.serieSettings)
+
+      settings.name += ' copy'
+      settings.enabled = false
+
+      const id = await store.dispatch(this.paneId + '/createSerie', settings)
 
       await this.close()
       dialogService.open(
         SerieDialog,
         {
-          id
+          paneId: this.paneId,
+          serieId: id
         },
         'serie'
       )

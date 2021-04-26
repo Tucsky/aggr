@@ -1,4 +1,5 @@
 import Dialog from '@/components/framework/Dialog.vue'
+import store from '@/store'
 
 export default {
   components: {
@@ -29,11 +30,14 @@ export default {
       }
 
       return new Promise(resolve => {
-        setTimeout(() => {
-          resolve()
+        setTimeout(
+          () => {
+            resolve()
 
-          this.$destroy()
-        }, 500)
+            this.$destroy()
+          },
+          store.state.settings.disableAnimations ? 0 : 500
+        )
       })
     }
   }
