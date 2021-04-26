@@ -1,4 +1,3 @@
-import dialogService from '@/services/dialogService'
 import { Pane } from '@/store/panes'
 import Vue from 'vue'
 import Component from 'vue-class-component'

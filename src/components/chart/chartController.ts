@@ -1,5 +1,5 @@
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
-import { formatAmount, formatTime, getHms, parseMarket, setValueByDotNotation } from '../../utils/helpers'
+import { formatTime, getHms, parseMarket, setValueByDotNotation } from '../../utils/helpers'
 import { defaultChartOptions, defaultPlotsOptions, defaultSerieOptions, getChartOptions } from './chartOptions'
 import store from '../../store'
 import * as seriesUtils from './serieUtils'
@@ -915,7 +915,6 @@ export default class ChartController {
     if (!series) {
       scrollPosition = this.chartInstance.timeScale().scrollPosition()
 
-      console.info('before chart replace data scrollposition', scrollPosition)
       this.clearChart()
 
       if (!bars.length) {
@@ -929,7 +928,6 @@ export default class ChartController {
     this.replaceData(computedSeries)
 
     if (scrollPosition) {
-      console.info('scroll to position', scrollPosition)
       this.chartInstance.timeScale().scrollToPosition(scrollPosition, false)
     }
 
@@ -946,12 +944,6 @@ export default class ChartController {
     } else {
       this.activeRenderer = temporaryRenderer
     }
-
-    console.log(
-      'active renderer after',
-      Object.keys(this.activeRenderer.sources).reduce((sum, id) => sum + this.activeRenderer.sources[id].open, 0),
-      formatTime(this.activeRenderer.timestamp)
-    )
   }
 
   /**

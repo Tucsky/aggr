@@ -249,7 +249,7 @@ const actions = {
   async refreshMarketsListeners({ commit, state }) {
     const marketsListeners = {}
     const buckets = {}
-    console.log(state.panes)
+
     for (const id in state.panes) {
       const markets = state.panes[id].markets
 

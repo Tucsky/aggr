@@ -98,12 +98,6 @@ class HistoricalService extends EventEmitter {
       if (data[i].timestamp === initialTs) {
         const marketIndex = markets.indexOf(data[i].market)
 
-        console.log('register ref for market', data[i].market)
-
-        if (marketIndex === -1) {
-          debugger
-        }
-
         markets.splice(marketIndex, 1)
       }
 
