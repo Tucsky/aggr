@@ -114,7 +114,12 @@ const state = {
       id: 'perp-trades',
       name: 'BTCUSD (PERP)',
       type: 'trades',
-      markets: defaultMarkets.perp
+      markets: defaultMarkets.perp,
+      settings: {
+        liquidations: {
+          amount: 100000
+        }
+      }
     },
     liquidations: {
       id: 'liquidations',
@@ -147,8 +152,8 @@ const state = {
             id: 'rare',
             amount: 1000000,
             gif: 'explosion',
-            buyColor: 'rgb(236,64,122)',
-            sellColor: 'rgb(255,152,0)'
+            buyColor: 'rgb(156,39,176)',
+            sellColor: 'rgb(255,235,59)'
           }
         ]
       }

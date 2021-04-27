@@ -68,6 +68,7 @@
   }
 
   &__options {
+    font-size: 0.875rem;
     position: absolute;
     top: 1rem;
     right: 0.6em;
@@ -92,8 +93,6 @@
   }
 
   &__option {
-    font-size: 0.9em;
-
     > div {
       transition: background-color 0.2s $ease-out-expo;
       padding: 0.6em 1.4em 0.6em 2em;

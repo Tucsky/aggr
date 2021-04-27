@@ -5,6 +5,8 @@ import { getColorLuminance, splitRgba } from '@/utils/colors'
 import { ModulesState } from '.'
 import { SlippageMode } from '@/types/test'
 import aggregatorService from '@/services/aggregatorService'
+import sfxService from '@/services/sfxService'
+import Vue from 'vue'
 
 export interface SettingsState {
   preferQuoteCurrencySize?: boolean
@@ -47,6 +49,14 @@ const actions = {
     aggregatorService.dispatch({
       op: 'settings.preferQuoteCurrencySize',
       data: state.preferQuoteCurrencySize
+    })
+
+    Vue.nextTick(() => {
+      if (state.useAudio) {
+        sfxService.connect()
+      } else {
+        sfxService.disconnect()
+      }
     })
   },
   addRecentColor({ commit, state }, newColor) {
@@ -133,6 +143,12 @@ const mutations = {
   },
   TOGGLE_AUDIO(state, value) {
     state.useAudio = value ? true : false
+
+    if (state.useAudio) {
+      sfxService.connect()
+    } else {
+      sfxService.disconnect()
+    }
   },
   TOGGLE_AUDIO_TEN_PERCENT(state, value) {
     state.audioIncludeInsignificants = value ? true : false

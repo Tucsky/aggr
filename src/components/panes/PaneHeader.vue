@@ -10,7 +10,6 @@
       v-if="showTimeframe"
       :options="timeframes"
       :selected="timeframe"
-      class="-text-left"
       placeholder="tf."
       @output="$store.commit(paneId + '/SET_TIMEFRAME', +$event)"
     >

@@ -155,13 +155,6 @@ export default class extends Mixins(PaneMixin) {
             this.clearList()
           }
           break
-        case 'settings/TOGGLE_AUDIO':
-          if (mutation.payload) {
-            sfxService.connect()
-          } else {
-            sfxService.disconnect()
-          }
-          break
         case this.paneId + '/SET_THRESHOLD_GIF':
           this.fetchGifByKeyword(mutation.payload.value, mutation.payload.isDeleted)
           break
@@ -176,10 +169,6 @@ export default class extends Mixins(PaneMixin) {
     })
   }
   mounted() {
-    if (this.useAudio) {
-      sfxService.connect()
-    }
-
     this._timeAgoInterval = setInterval(() => {
       const elements = this.$el.getElementsByClassName('-timestamp')
 
@@ -214,8 +203,6 @@ export default class extends Mixins(PaneMixin) {
     this._onStoreMutation()
 
     clearInterval(this._timeAgoInterval)
-
-    sfxService.disconnect()
   }
 
   onTrades(trades: Trade[]) {
@@ -332,7 +319,7 @@ export default class extends Mixins(PaneMixin) {
           if (i >= 1) {
             // ajusted amount > this._significantAmount
             // only pure black or pure white foreground
-            li.style.color = luminance < 144 ? 'white' : 'black'
+            li.style.color = luminance < 133 ? 'white' : 'black'
           } else {
             // take background color and apply logarithmic shade based on amount to this._significantAmount percentage
             // darken if luminance of background is high, lighten otherwise

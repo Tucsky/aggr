@@ -1,3 +1,4 @@
+import Vue from 'vue'
 import Tuna from 'tunajs'
 import store from '../store'
 
@@ -15,18 +16,20 @@ class SfxService {
     this.timestamp = +new Date()
     this.queued = 0
 
-    this.bindContext()
-    this.bindOutput()
+    Vue.nextTick(() => {
+      this.bindContext()
+      this.bindOutput()
+    })
   }
 
   bindContext() {
     this.context = new AudioContext()
 
     if (this.context.state === 'suspended') {
-      const app = document.getElementById('app')
+      const application = document.getElementById('app')
 
       setTimeout(() => {
-        app.focus()
+        application.focus()
       }, 500)
 
       const resumeOnFocus = (event => {
@@ -52,17 +55,17 @@ class SfxService {
           console.info(`[sfx] AudioContext resumed successfully during the "${event.type}" event.`)
           window.removeEventListener('focus', resumeOnFocus)
           window.removeEventListener('blur', resumeOnFocus)
-          app.removeEventListener('mouseenter', resumeOnFocus)
-          app.removeEventListener('mouseleave', resumeOnFocus)
-          app.removeEventListener('mouseup', resumeOnFocus)
+          application.removeEventListener('mouseenter', resumeOnFocus)
+          application.removeEventListener('mouseleave', resumeOnFocus)
+          application.removeEventListener('mouseup', resumeOnFocus)
         }
       }).bind(this)
 
       window.addEventListener('blur', resumeOnFocus)
       window.addEventListener('focus', resumeOnFocus)
-      app.addEventListener('mouseenter', resumeOnFocus)
-      app.addEventListener('mouseleave', resumeOnFocus)
-      app.addEventListener('mouseup', resumeOnFocus)
+      application.addEventListener('mouseenter', resumeOnFocus)
+      application.addEventListener('mouseleave', resumeOnFocus)
+      application.addEventListener('mouseup', resumeOnFocus)
     } else {
       store.dispatch('app/showNotice', {
         id: 'audio',

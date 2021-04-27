@@ -128,6 +128,7 @@
 
     &:after {
       content: unicode($icon-power-off);
+      opacity: 0.5;
     }
   }
 

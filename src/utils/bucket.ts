@@ -104,11 +104,13 @@ export default class Bucket {
       timestamp = +new Date()
     }
 
-    this.stacks.push(0)
+    if (!this.stacks.length || this.stacks[this.stacks.length - 1]) {
+      this.stacks.push(0)
+
+      this.timeouts.push(setTimeout(this.shiftStack.bind(this), this.window))
+    }
 
     this.timestamp = timestamp
-
-    this.timeouts.push(setTimeout(this.shiftStack.bind(this), this.window))
 
     if (!this.filled && this.stacks.length === this.window / this.granularity) {
       this.filled = true

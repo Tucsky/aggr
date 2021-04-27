@@ -2,7 +2,9 @@
   <Dialog :open="open" @clickOutside="close" class="serie-dialog">
     <template v-slot:header>
       <div class="title">
-        <div>{{ name }} <i class="icon-sm -no-grab ml4 icon-edit" style="cursor: pointer" @click="renameSerie"></i></div>
+        <div>
+          <strong>{{ name }} </strong> <i class="icon-sm -no-grab ml4 icon-edit" style="cursor: pointer" @click="renameSerie"></i>
+        </div>
         <code class="subtitle pl0" v-text="serieId"></code>
       </div>
 

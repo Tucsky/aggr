@@ -9,7 +9,7 @@
   .dropdown > .dropdown__selected > span {
     font-size: 0.5em;
     opacity: 0.75;
-    padding: 0.45em 0.5em 0.55em;
+    padding: 0.35em 0.5em 0.65em;
     font-family: 'Barlow Semi Condensed';
     align-self: center;
     line-height: 1;
@@ -42,14 +42,10 @@
     align-items: center;
   }
 
-  .dropdown__options {
-    font-size: 1rem;
-  }
-
   .dropdown__selected > i,
   button > i {
     font-size: 0.5em;
-    padding: 0 0.75em;
+    padding: 0 0.75em .125em;
 
     + span {
       padding-left: 0 !important;

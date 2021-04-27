@@ -68,19 +68,19 @@ export default class extends Vue {
     },
     trades: {
       title: 'Trades',
-      description: 'Significant Market Trades'
+      description: 'Significant market trades'
     },
     stats: {
-      title: 'Live Statistics',
-      description: 'Custom counters'
+      title: 'Stats',
+      description: 'Rolling averages'
     },
     counters: {
       title: 'Counters',
-      description: 'Rolling buy/sell counters'
+      description: 'Buys/sells by intervals'
     },
     prices: {
-      title: 'Tickers',
-      description: 'Just the last prices'
+      title: 'Markets',
+      description: 'Tickers sorted by price'
     }
   }
 

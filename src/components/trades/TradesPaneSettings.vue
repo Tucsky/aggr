@@ -51,7 +51,7 @@
       <label class="checkbox-control -rip" @change="$store.commit(paneId + '/TOGGLE_LIQUIDATIONS_ONLY', $event.target.checked)">
         <input type="checkbox" class="form-control" :checked="liquidationsOnly" />
         <div></div>
-        <span>List will {{ liquidationsOnly ? 'only show liquidation' : 'show trades and liquidations' }}</span>
+        <span v-html="'List will ' + (liquidationsOnly ? '<strong>ONLY</strong> show liquidation' : 'show trades and liquidations')"></span>
       </label>
     </div>
 

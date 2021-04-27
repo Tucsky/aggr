@@ -59,6 +59,12 @@
 
   &:hover .pane-header {
     display: flex;
+
+    /*+ * {
+      transform: translateY(1.5rem);
+      height: calc(100% - 1.5rem);
+      overflow: hidden;
+    }*/
   }
 }
 
@@ -68,19 +74,24 @@
   top: 0;
   left: 0;
   right: 0;
+  font-size: 1.5rem;
 
   &.toolbar {
     font-size: 1.5rem;
     display: none;
 
-    @media only screen and (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-      font-size: 1rem;
-    }
-
     .dropdown__selected > i,
     button > i {
-      padding-left: 0.25em;
-      padding-right: 0.25em;
+      padding-left: 0.5em;
+      padding-right: 0.5em;
+      padding-bottom: 0.125em;
+    }
+
+    > span,
+    > button > span,
+    .dropdown > .dropdown__selected > span {
+      font-weight: 600;
+      opacity: 1;
     }
 
     button,

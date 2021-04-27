@@ -1,13 +1,13 @@
 <template>
   <div class="pane-stats" :class="{ [scale]: true }">
     <pane-header :paneId="paneId" />
-    <div v-if="enableChart" class="stats-chart" ref="chart"></div>
     <ul class="stats-buckets">
       <li v-for="(bucket, id) in data" :key="id" class="stat-bucket" @click="editStat(id)">
         <div class="stat-bucket__name">{{ bucket.name }}</div>
         <div class="stat-bucket__value">{{ bucket.value }}</div>
       </li>
     </ul>
+    <div v-if="enableChart" class="stats-chart" ref="chart"></div>
   </div>
 </template>
 
@@ -75,7 +75,9 @@ export default class extends Mixins(PaneMixin) {
           this.recolorBucket(mutation.payload.id, mutation.payload.value)
           break
         case this.paneId + '/SET_BUCKET_TYPE':
-          this.reloadBucketSerie(mutation.payload.id, mutation.payload.value)
+          if (this._chart) {
+            this.reloadBucketSerie(mutation.payload.id, mutation.payload.value)
+          }
           break
         case this.paneId + '/TOGGLE_CHART':
           if (mutation.payload) {
@@ -318,11 +320,14 @@ export default class extends Mixins(PaneMixin) {
   &.-large {
     font-size: 1rem;
   }
+
+  &:hover .stats-buckets {
+    transform: translateY(1.5rem);
+  }
 }
 
 .stats-chart {
-  width: 100%;
-  position: relative;
+  display: static;
 
   &:before {
     content: '';
@@ -336,11 +341,6 @@ export default class extends Mixins(PaneMixin) {
     right: 0;
     bottom: 0;
   }
-
-  + .stats-buckets .stat-bucket {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }
 
 .stats-buckets {
@@ -349,6 +349,19 @@ export default class extends Mixins(PaneMixin) {
   list-style: none;
   top: 0;
   z-index: 11;
+  position: relative;
+
+  .stat-bucket {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  &:last-child {
+    .stat-bucket {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
 }
 
 .stat-bucket {
