@@ -1,0 +1,120 @@
+.table {
+  width: 100%;
+  border: 0;
+  border-spacing: 0px;
+
+  thead {
+    th {
+      text-align: left;
+      padding: 0.42rem 0.5rem;
+      font-weight: 400;
+      border-bottom: 0;
+      color: rgba(white, 0.4);
+    }
+  }
+
+  &-input {
+    position: relative;
+    background-color: transparent;
+    padding: 0.5em;
+
+    i.icon {
+      position: absolute;
+      right: 7px;
+      top: 7px;
+    }
+
+    input {
+      width: 100%;
+      border: 0;
+      padding: 0;
+      background: 0;
+      color: inherit;
+
+      &[type='number'] {
+        font-weight: 600;
+      }
+    }
+  }
+
+  &-action {
+    cursor: pointer;
+    color: rgba(white, 0.5);
+    padding: 0.5em;
+
+    &:hover {
+      color: white;
+    }
+
+    &.-green {
+      color: $green;
+
+      &:hover {
+        background-color: $green;
+        color: white;
+      }
+    }
+
+    &.-disabled {
+      color: rgba(white, 0.5);
+
+      cursor: not-allowed;
+    }
+  }
+
+  tr {
+    &.-action {
+      cursor: pointer;
+    }
+
+    &.-divider {
+      td {
+        padding: 1rem 0;
+        border: 0;
+      }
+
+      + tr > td {
+        border-top: 0;
+      }
+    }
+
+    &:first-child > td {
+      border-top: 0;
+    }
+
+    + tr > td {
+      border-left: 1px solid rgba(white, 0.2);
+      border-top: 1px solid rgba(white, 0.2);
+
+      &:first-child {
+        border-left: 0;
+      }
+    }
+  }
+
+  td {
+    &:not(.btn) + .btn {
+      margin-left: 0.5em;
+    }
+
+    &.btn {
+      padding: 0.25em;
+      margin: 0.5em 0.25em;
+      border: 1px solid transparent !important;
+      margin-left: 0.25em;
+
+      &:last-child {
+        margin-left: 0.5em;
+      }
+    }
+
+    + td {
+      border-left: 1px solid rgba(white, 0.2);
+      border-top: 1px solid rgba(white, 0.2);
+    }
+  }
+
+  tr:last-child > td {
+    border-bottom: 0;
+  }
+}

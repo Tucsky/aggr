@@ -8,7 +8,6 @@ import ChartCache, { Chunk } from './chartCache'
 import SerieTranspiler from './serieTranspiler'
 import dialogService from '../../services/dialogService'
 import SerieDialog from './SerieDialog.vue'
-import { defaultChartSeries } from './defaultSeries'
 import { Trade } from '@/types/test'
 
 export interface Bar {
@@ -244,7 +243,7 @@ export default class ChartController {
 
     for (const chunk of this.chartCache.chunks) {
       // if (chunk.rendered) {
-        bars = bars.concat(chunk.bars)
+      bars = bars.concat(chunk.bars)
       // }
     }
 
@@ -283,10 +282,6 @@ export default class ChartController {
    */
   addEnabledSeries() {
     for (const id in store.state[this.paneId].series) {
-      if (store.state[this.paneId].series[id].enabled === false) {
-        continue
-      }
-
       this.addSerie(id)
     }
   }
@@ -356,26 +351,15 @@ export default class ChartController {
    */
   addSerie(id) {
     const serieSettings = store.state[this.paneId].series[id] || {}
-    const defaultSerieSettings = defaultChartSeries[id] || {}
-    const serieType = serieSettings.type || defaultSerieSettings.type
+    const serieType = serieSettings.type
 
     if (!serieType) {
       throw new Error('unknown-serie-type')
     }
 
-    const serieOptions = Object.assign(
-      {},
-      defaultSerieOptions,
-      defaultPlotsOptions[serieType] || {},
-      defaultSerieSettings.options || {},
-      serieSettings.options || {}
-    )
+    const serieOptions = Object.assign({}, defaultSerieOptions, defaultPlotsOptions[serieType] || {}, serieSettings.options || {})
 
-    const serieInput = serieSettings.input || defaultSerieSettings.input
-
-    /* if (id === 'price' && !serieOptions.title) {
-      serieOptions.title = serieSettings.name = store.state.app.pairs.join('+')
-    } */
+    const serieInput = serieSettings.input
 
     console.debug(`[chart/${this.paneId}/addSerie] adding ${id}`)
     console.debug(`\t-> TYPE: ${serieType}`)
@@ -389,8 +373,6 @@ export default class ChartController {
       api: null,
       adapter: null
     }
-
-    store.commit(this.paneId + '/ENABLE_SERIE', id)
 
     if (!this.prepareSerie(serie)) {
       return
@@ -414,14 +396,12 @@ export default class ChartController {
   }
 
   prepareSerie(serie) {
-    // console.info(`[chart/${this.paneId}/prepareSerie] preparing serie "${serie.id}"\n\t-> ${serie.input}\n...`)
-
     try {
       const transpilationResult = this.serieTranspiler.transpile(serie)
       const { functions, variables, references } = this.serieTranspiler.transpile(serie)
       let { output, type } = transpilationResult
 
-      if (store.state[this.paneId].activeSeriesErrors[serie.id]) {
+      if (store.state[this.paneId].seriesErrors[serie.id]) {
         store.commit(this.paneId + '/SET_SERIE_ERROR', {
           id: serie.id,
           error: null
@@ -432,7 +412,7 @@ export default class ChartController {
         output += '.close'
         type = 'value'
       } else if (type === 'value' && (serie.type === 'candlestick' || serie.type === 'bar')) {
-        throw new Error('code output is a single value but ohlc object ({open, high, low, close}) was expected')
+        throw new Error('inserted input produced a number but ohlc object was expected ({open: xx, high: xx, low: xx, close: xx})')
       }
 
       serie.model = {
@@ -483,7 +463,7 @@ export default class ChartController {
 
     this.serieTranspiler.updateInstructionsArgument(functions, serie.options)
 
-    console.log(`[chart/${this.paneId}/bindSerie] binding ${serie.id} ...`)
+    console.debug(`[chart/${this.paneId}/bindSerie] binding ${serie.id} ...`)
 
     renderer.series[serie.id] = {
       value: null,
@@ -517,6 +497,10 @@ export default class ChartController {
    * @param {ActiveSerie} serie
    */
   removeSerie(serie) {
+    if (typeof serie === 'string') {
+      serie = this.getSerie(serie)
+    }
+
     if (!serie) {
       return
     }
@@ -528,7 +512,7 @@ export default class ChartController {
     this.unbindSerie(serie, this.activeRenderer)
 
     // update store (runtime prop)
-    store.commit(this.paneId + '/DISABLE_SERIE', serie.id)
+    // store.commit(this.paneId + '/DISABLE_SERIE', serie.id)
 
     // recursive remove of dependent series
     /* for (let dependentId of this.getSeriesDependendingOn(serie)) {
@@ -537,29 +521,6 @@ export default class ChartController {
 
     // remove from active series model
     this.activeSeries.splice(this.activeSeries.indexOf(serie), 1)
-  }
-
-  /**
-   * toggle serie on or off
-   * if turn on it will try redraw serie
-   * @param {Object} obj vuex store payload
-   * @param {string} obj.id serie id
-   * @param {boolean} obj.value true = enable serie, false = disable
-   */
-  toggleSerie(id) {
-    let enabled = true
-
-    if (!store.state[this.paneId].series[id] || store.state[this.paneId].series[id].enabled === false) {
-      enabled = false
-    }
-
-    if (!enabled) {
-      this.removeSerie(this.getSerie(id))
-    } else {
-      if (this.addSerie(id)) {
-        this.redrawSerie(id)
-      }
-    }
   }
 
   /**
@@ -623,10 +584,12 @@ export default class ChartController {
    * start queuing next trades
    */
   setupQueue() {
-    if (this._releaseQueueInterval || !store.state[this.paneId].refreshRate) {
+    if (this._releaseQueueInterval) {
+      return
+    } else if (!store.state[this.paneId].refreshRate) {
+      this._releaseQueueInterval = requestAnimationFrame(() => this.releaseQueue())
       return
     }
-
     console.debug(`[chart/${this.paneId}/controller] setup queue (${getHms(store.state[this.paneId].refreshRate)})`)
 
     this._releaseQueueInterval = setInterval(() => {
@@ -647,6 +610,7 @@ export default class ChartController {
     console.log(`[chart/${this.paneId}/controller] clear queue`)
 
     clearInterval(this._releaseQueueInterval)
+    cancelAnimationFrame(this._releaseQueueInterval)
     delete this._releaseQueueInterval
 
     this.releaseQueue()
@@ -657,11 +621,18 @@ export default class ChartController {
    */
   releaseQueue() {
     if (!this.queuedTrades.length || this.preventRender) {
+      if (!store.state[this.paneId].refreshRate) {
+        this._releaseQueueInterval = requestAnimationFrame(() => this.releaseQueue())
+      }
       return
     }
 
     this.renderRealtimeTrades(this.queuedTrades)
     this.queuedTrades.splice(0, this.queuedTrades.length)
+
+    if (!store.state[this.paneId].refreshRate) {
+      this._releaseQueueInterval = requestAnimationFrame(() => this.releaseQueue())
+    }
   }
 
   /**
@@ -862,6 +833,43 @@ export default class ChartController {
     let to = null
 
     let temporaryRenderer: Renderer
+    let computedBar: any
+
+    if (this.activeRenderer && this.activeRenderer.timestamp > bars[bars.length - 1].timestamp) {
+      const activeBars = Object.values(this.activeRenderer.sources).filter(bar => !bar.empty)
+
+      for (let i = 0; i < activeBars.length; i++) {
+        const activeBar = activeBars[i]
+
+        activeBar.timestamp = this.activeRenderer.timestamp
+
+        for (let j = bars.length - 1; j >= 0; j--) {
+          const cachedBar = bars[j]
+
+          if (cachedBar.timestamp < this.activeRenderer.timestamp) {
+            bars.splice(j + 1, 0, activeBar)
+            activeBars.splice(i, 1)
+            i--
+            break
+          } else if (cachedBar.exchange === activeBar.exchange && cachedBar.pair === activeBar.pair) {
+            cachedBar.vbuy += activeBar.vbuy
+            cachedBar.vsell += activeBar.vsell
+            cachedBar.cbuy += activeBar.cbuy
+            cachedBar.csell += activeBar.csell
+            cachedBar.lbuy += activeBar.lbuy
+            cachedBar.lsell += activeBar.lsell
+            cachedBar.open = activeBar.open
+            cachedBar.high = activeBar.high
+            cachedBar.low = activeBar.low
+            cachedBar.close = activeBar.close
+            activeBars.splice(i, 1)
+            i--
+
+            break
+          }
+        }
+      }
+    }
 
     for (let i = 0; i <= bars.length; i++) {
       const bar = bars[i]
@@ -874,7 +882,7 @@ export default class ChartController {
 
           to = temporaryRenderer.timestamp
 
-          const computedBar = this.computeBar(temporaryRenderer, series)
+          computedBar = this.computeBar(temporaryRenderer, series)
 
           for (const id in computedBar) {
             if (typeof computedSeries[id] === 'undefined') {
@@ -911,6 +919,14 @@ export default class ChartController {
       temporaryRenderer.sources[bar.exchange + bar.pair] = this.cloneSourceBar(bar)
     }
 
+    if (this.activeRenderer) {
+      for (const id in temporaryRenderer.series) {
+        this.activeRenderer.series[id] = temporaryRenderer.series[id]
+      }
+    } else {
+      this.activeRenderer = temporaryRenderer
+    }
+
     let scrollPosition: number
 
     if (!series) {
@@ -930,20 +946,6 @@ export default class ChartController {
 
     if (scrollPosition) {
       this.chartInstance.timeScale().scrollToPosition(scrollPosition, false)
-    }
-
-    if (this.activeRenderer) {
-      console.log(
-        'active renderer before',
-        Object.keys(this.activeRenderer.sources).reduce((sum, id) => sum + this.activeRenderer.sources[id].open, 0),
-        formatTime(this.activeRenderer.timestamp)
-      )
-
-      for (const id in temporaryRenderer.series) {
-        this.activeRenderer.series[id] = temporaryRenderer.series[id]
-      }
-    } else {
-      this.activeRenderer = temporaryRenderer
     }
   }
 
@@ -1029,8 +1031,6 @@ export default class ChartController {
 
     const delay = 1000
 
-    // console.info(`[chart/${this.paneId}/controller] prevent pan for next ${getHms(delay)}`)
-
     if (typeof this._releasePanTimeout !== 'undefined') {
       clearTimeout(this._releasePanTimeout)
     }
@@ -1038,11 +1038,7 @@ export default class ChartController {
     this.panPrevented = true
 
     this._releasePanTimeout = window.setTimeout(() => {
-      if (!this.panPrevented) {
-        // console.warn(`[chart/${this.paneId}/controller] pan already released (before timeout fired)`)
-      } else {
-        // console.info(`[chart/${this.paneId}/controller] pan released (by timeout)`)
-
+      if (this.panPrevented) {
         this.panPrevented = false
       }
     }, delay)

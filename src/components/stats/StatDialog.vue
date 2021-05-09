@@ -140,18 +140,13 @@
         "
       ></textarea>
       <small class="help-text mt-8">
-        Sum <code>{{ input }}</code> over {{ getHms(window) }} window
+        Sum <code>{{ input }}</code> over {{ window }} window
       </small>
     </div>
     <hr />
     <div class="column">
       <div class="form-group">
-        <label
-          class="checkbox-control -on-off"
-          v-tippy="{ placement: 'bottom' }"
-          :title="enabled ? 'Disable' : 'Enable'"
-          @change="disable(bucketId, $event)"
-        >
+        <label class="checkbox-control" v-tippy="{ placement: 'bottom' }" :title="enabled ? 'Disable' : 'Enable'" @change="disable(bucketId, $event)">
           <input type="checkbox" class="form-control" :checked="enabled" />
           <div></div>
           <span>
@@ -184,6 +179,10 @@ export default {
       return store.state[this.paneId].buckets[this.bucketId].color
     },
     conditionnalColor: function() {
+      if (typeof store.state[this.paneId].buckets[this.bucketId].conditionnalColor === 'undefined') {
+        this.$set(store.state[this.paneId].buckets[this.bucketId], 'conditionnalColor', false)
+      }
+
       return store.state[this.paneId].buckets[this.bucketId].conditionnalColor
     },
     enabled: function() {
@@ -193,7 +192,7 @@ export default {
       return store.state[this.paneId].buckets[this.bucketId].name
     },
     type: function() {
-      return store.state[this.paneId].buckets[this.bucketId].type || 'line'
+      return store.state[this.paneId].buckets[this.bucketId].type
     },
     input: function() {
       return store.state[this.paneId].buckets[this.bucketId].input

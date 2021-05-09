@@ -1,5 +1,6 @@
 import dialogService from '@/services/dialogService'
 import { Pane } from '@/store/panes'
+import { sleep } from '@/utils/helpers'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 
@@ -35,5 +36,13 @@ export default class PaneDialogMixin extends Vue {
     if (name && name !== this.name) {
       this.name = name
     }
+  }
+
+  async resetPane() {
+    ;(this as any).destroy()
+
+    await sleep(100)
+
+    await this.$store.dispatch('panes/resetPane', this.paneId)
   }
 }

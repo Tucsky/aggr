@@ -28,7 +28,7 @@
     </div>
     <div class="settings-exchange__detail" v-if="expanded">
       <div class="form-group" v-if="markets.length">
-        <label>Connections</label>
+        <small class="mb4 d-block">Connections</small>
         <div>
           <div v-for="market in markets" :key="market.identifier" class="d-flex">
             <div class="-fill -center">{{ market.pair }}</div>
@@ -37,8 +37,8 @@
         </div>
       </div>
       <div class="form-group mt8">
-        <label
-          >Products : <strong>{{ indexedProducts.length }}</strong></label
+        <small class="mb4 d-block"
+          >Products : <strong>{{ indexedProducts.length }}</strong></small
         >
         <button v-if="canRefreshProducts" class="btn -red -small" @click="refreshProducts">Refresh</button>
       </div>

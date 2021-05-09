@@ -2,6 +2,9 @@
   <div class="pane-header toolbar" v-background="0" :class="{ '-loading': loading }">
     <div class="pane-header__loader"></div>
     <span class="mrauto">{{ name }}</span>
+
+    <slot />
+
     <button type="button" v-if="showSearch" @click="openSearch">
       <i class="icon-search"></i>
     </button>
@@ -22,7 +25,7 @@
       <i class="icon-cog"></i>
     </button>
 
-    <dropdown :options="menu" @output="menu[$event].click()" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
+    <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
       <template v-slot:option="{ value }">
         <div>
           <i :class="'icon-' + value.icon"></i>

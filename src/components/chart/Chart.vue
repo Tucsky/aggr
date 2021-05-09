@@ -1,9 +1,26 @@
 <template>
   <div class="pane-chart">
-    <pane-header :loading="loading" :paneId="paneId" :showTimeframe="true" />
+    <pane-header :loading="loading" :paneId="paneId" :showTimeframe="true">
+      <dropdown
+        :options="{
+          clear: { label: 'Clear', click: clear },
+          trim: { label: 'Trim', click: refreshChart },
+          render: { label: 'Render', click: renderChart }
+        }"
+      >
+        <template v-slot:option="{ value }">
+          <div>
+            {{ value.label }}
+          </div>
+        </template>
+        <template v-slot:selection>
+          <span>Debug</span>
+        </template>
+      </dropdown>
+    </pane-header>
     <div class="chart__container" ref="chartContainer"></div>
     <div class="chart__series">
-      <SerieControl v-for="(serie, index) in activeSeries" :key="index" :serieId="serie" :paneId="paneId" :legend="legend[serie]" />
+      <SerieControl v-for="(serie, id) in series" :key="id" :serieId="id" :paneId="paneId" :legend="legend[serie]" />
 
       <div class="column mt8">
         <a href="javascript:void(0);" @click="addSerie" v-tippy="{ placement: 'bottom' }" title="Add" class="mr4">
@@ -48,10 +65,6 @@ export default class extends Mixins(PaneMixin) {
   private _keepAliveTimeout: number
   private _onPanTimeout: number
   private _chartController: ChartController
-
-  get activeSeries() {
-    return this.$store.state[this.paneId].activeSeries
-  }
 
   get timeframe() {
     return this.$store.state[this.paneId].timeframe
@@ -128,8 +141,14 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/SET_SERIE_INPUT':
           this._chartController.rebuildSerie(mutation.payload.id)
           break
-        case this.paneId + '/TOGGLE_SERIE':
-          this._chartController.toggleSerie(mutation.payload)
+        case this.paneId + '/ADD_SERIE':
+          if (this._chartController.addSerie(mutation.payload.id)) {
+            this._chartController.redrawSerie(mutation.payload.id)
+          }
+
+          break
+        case this.paneId + '/REMOVE_SERIE':
+          this._chartController.removeSerie(mutation.payload)
           break
         case 'app/SET_OPTIMAL_DECIMAL':
         case this.paneId + '/SET_DECIMAL_PRECISION':
@@ -137,7 +156,7 @@ export default class extends Mixins(PaneMixin) {
             break
           }
 
-          for (const id of this.activeSeries) {
+          for (const id in this.series) {
             const serie = this.$store.state[this.paneId].series[id]
 
             if (!serie.options) {
@@ -327,11 +346,18 @@ export default class extends Mixins(PaneMixin) {
         }
       })
       .catch(err => {
-        if (err === 'no-more-data') {
-          this.reachedEnd = true
-        }
-
         console.error(err)
+
+        if (err === 'no-more-data' || err === 'unsupported-historical-data-format') {
+          this.reachedEnd = true
+        } else {
+          this.$store.dispatch('app/showNotice', {
+            title: typeof err === 'string' ? err : err.message,
+            type: 'error',
+            icon: 'icon-warning',
+            timeout: -1
+          })
+        }
       })
       .then(() => {
         this.$store.dispatch('app/hideNotice', 'fetching-' + this.paneId)
@@ -382,12 +408,7 @@ export default class extends Mixins(PaneMixin) {
    * @param{Trade[]} trades trades to process
    */
   onTrades(trades) {
-    if (this._chartController.preventRender || this.refreshRate) {
-      this._chartController.queueTrades(trades)
-      return
-    }
-
-    this._chartController.renderRealtimeTrades(trades)
+    this._chartController.queueTrades(trades)
   }
 
   refreshChartDimensions() {
@@ -444,6 +465,10 @@ export default class extends Mixins(PaneMixin) {
   refreshChart() {
     this._chartController.chartCache.trim()
 
+    this.renderChart()
+  }
+
+  renderChart() {
     this._chartController.redraw()
   }
 
@@ -451,8 +476,6 @@ export default class extends Mixins(PaneMixin) {
     const serie = await dialogService.openAsPromise(CreateSerieDialog, { paneId: this.paneId })
 
     if (serie) {
-      serie.enabled = false
-
       this.$store.dispatch(this.paneId + '/createSerie', serie)
       dialogService.open(SerieDialog, { paneId: this.paneId, serieId: serie.id }, 'serie')
     }

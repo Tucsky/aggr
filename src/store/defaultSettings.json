@@ -10,8 +10,11 @@
   "timezoneOffset": 0,
   "useAudio": false,
   "audioIncludeInsignificants": true,
-  "audioVolume": 1.5,
-  "audioPitch": 1,
+  "audioVolume": 1,
+  "audioDelay": false,
+  "audioPingPong": true,
+  "audioCompressor": false,
+  "audioFilter": true,
   "settings": ["other", "chart", "stats", "counters", "audio"],
   "recentColors": []
 }

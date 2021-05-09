@@ -2,7 +2,7 @@
   <Dialog :open="open" @clickOutside="close" class="pane-dialog">
     <template v-slot:header>
       <div class="title">
-        <strong v-text="name"></strong>
+        <span v-text="name"></span>
         <i class="icon-sm -no-grab ml4 icon-edit" style="cursor: pointer" @click="renamePane"></i>
       </div>
       <div class="column -center"></div>

@@ -1,4 +1,4 @@
-import { defaultChartSeries } from '@/components/chart/defaultSeries'
+import workspacesService from '@/services/workspacesService'
 import { getSerieSettings, slugify, uniqueName } from '@/utils/helpers'
 import { scheduleSync } from '@/utils/store'
 import { SeriesOptions, SeriesType } from 'lightweight-charts'
@@ -11,24 +11,23 @@ export interface SerieSettings {
   type?: string
   description?: string
   input?: string
-  enabled?: boolean
   options?: SeriesOptions<SeriesType>
+  createdAt?: number
+  updatedAt?: number
 }
 
 export interface ChartPaneState {
   _id?: string
   series?: { [id: string]: SerieSettings }
   timeframe: number
-  activeSeries: string[]
-  activeSeriesErrors: { [serieId: string]: string }
+  seriesErrors: { [serieId: string]: string }
   refreshRate?: number
 }
 
 const getters = {} as GetterTree<ChartPaneState, ChartPaneState>
 
 const state = {
-  activeSeries: [],
-  activeSeriesErrors: {},
+  seriesErrors: {},
   series: {},
   timeframe: 10,
   refreshRate: 500
@@ -37,18 +36,20 @@ const state = {
 const actions = {
   async boot({ state }) {
     if (!Object.keys(state.series).length) {
-      for (const id in defaultChartSeries) {
-        if (defaultChartSeries[id].enabled === false) {
+      const series = await workspacesService.getSeries()
+
+      for (const serie of series) {
+        if ((serie as any).enabled === false) {
           continue
         }
 
-        Vue.set(state.series, id, {})
+        Vue.set(state.series, serie.id, serie)
       }
 
       scheduleSync(state)
     }
   },
-  createSerie({ commit, state }, serie) {
+  addSerie({ commit, state }, serie) {
     const seriesIdMap = Object.keys(state.series)
     const id = uniqueName(slugify(serie.name), seriesIdMap)
 
@@ -64,13 +65,9 @@ const actions = {
 
     serie.id = id
 
-    commit('CREATE_SERIE', serie)
-    commit('TOGGLE_SERIE', id)
+    commit('ADD_SERIE', serie)
 
     return id
-  },
-  toggleSerie({ commit }, id) {
-    commit('TOGGLE_SERIE', id)
   },
   toggleSerieVisibility({ commit, state }, id) {
     commit('SET_SERIE_OPTION', {
@@ -87,11 +84,12 @@ const actions = {
     }
 
     if (key === 'scaleMargins') {
+      // sync scale margins
       const currentPriceScaleId = state.series[id].options.priceScaleId
 
       if (currentPriceScaleId) {
         for (const _id in state.series) {
-          const serieOptions = getSerieSettings(state._id, _id).options
+          const serieOptions = state.series[_id].options
           if (id !== _id && serieOptions.priceScaleId === currentPriceScaleId) {
             dispatch('setSerieOption', { id: _id, key, value })
           }
@@ -105,14 +103,10 @@ const actions = {
 
     commit('SET_SERIE_OPTION', { id, key, value })
   },
-  removeSerie({ commit, state }, id): Promise<void> {
-    if (state.series[id].enabled !== false) {
-      commit('TOGGLE_SERIE', id)
-    }
-
+  removeSerie({ commit }, id): Promise<void> {
+    commit('REMOVE_SERIE', id)
     return new Promise(resolve => {
       setTimeout(() => {
-        commit('REMOVE_SERIE', id)
         resolve()
       }, 100)
     })
@@ -122,15 +116,11 @@ const actions = {
 
     const serieSource = getSerieSettings(state._id, id)
 
-    const serie = { ...serieSource, name, id: newId, enabled: false }
+    const serie = { ...serieSource, name, id: newId }
 
-    commit('CREATE_SERIE', serie)
+    commit('ADD_SERIE', serie)
 
-    Vue.nextTick(() => {
-      dispatch('removeSerie', id)
-
-      commit('TOGGLE_SERIE', newId)
-    })
+    dispatch('removeSerie', id)
 
     return newId
   }
@@ -140,41 +130,22 @@ const mutations = {
   SET_REFRESH_RATE(state, value) {
     state.refreshRate = +value || 0
   },
-
-  ENABLE_SERIE(state, id) {
-    const index = state.activeSeries.indexOf(id)
-
-    if (index === -1) {
-      state.activeSeries.push(id)
-    }
-  },
-  DISABLE_SERIE(state, id) {
-    const index = state.activeSeries.indexOf(id)
-
-    if (index !== -1) {
-      state.activeSeries.splice(index, 1)
-    }
-
-    if (state.activeSeriesErrors[id]) {
-      Vue.delete(state.activeSeriesErrors, id)
-    }
-  },
   SET_SERIE_ERROR(state, { id, error }) {
     if (error) {
-      Vue.set(state.activeSeriesErrors, id, error)
+      Vue.set(state.seriesErrors, id, error)
     } else {
-      Vue.set(state.activeSeriesErrors, id, null)
+      Vue.set(state.seriesErrors, id, null)
     }
   },
   SET_TIMEFRAME(state, value) {
     state.timeframe = value
   },
 
-  CREATE_SERIE(state, serie) {
+  ADD_SERIE(state, serie) {
     Vue.set(state.series, serie.id, serie)
   },
-  TOGGLE_SERIE(state, id) {
-    Vue.set(state.series[id], 'enabled', typeof state.series[id].enabled === 'undefined' ? false : !state.series[id].enabled)
+  REMOVE_SERIE(state, id) {
+    Vue.delete(state.series, id)
   },
   SET_SERIE_OPTION(state, { id, key, value }) {
     if (!state.series[id]) {
@@ -210,9 +181,6 @@ const mutations = {
   },
   CUSTOMIZE_SERIE(state, id) {
     Vue.set(state.series[id], 'options', {})
-  },
-  REMOVE_SERIE(state, id) {
-    Vue.delete(state.series, id)
   }
 } as MutationTree<ChartPaneState>
 

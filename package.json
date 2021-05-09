@@ -19,6 +19,7 @@
     "lightweight-charts": "^3.3.0",
     "lodash.merge": "^4.6.2",
     "pako": "^1.0.6",
+    "tone": "^14.7.77",
     "tunajs": "^1.0.13",
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.6",

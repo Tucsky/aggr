@@ -2,42 +2,61 @@ import Vue from 'vue'
 import Tuna from 'tunajs'
 import store from '../store'
 
+export type AudioFunction = (
+  play: (frequency: number, gain: number, decay: number, length?: number) => Promise<void>,
+  percent: number,
+  side: 'buy' | 'sell',
+  level: number
+) => void
+
 class SfxService {
   timestamp: number
-  queued: number
   context: AudioContext
+  tuna: any
+
+  queued: any[] = []
   output: any
+  _play: (frequency: number, gain: number, decay: number, length?: number) => Promise<void>
+
+  constructor() {
+    this._play = this.playOrQueue.bind(this)
+  }
 
   connect() {
+    console.log(`[sfx] connect`)
     if (this.context) {
+      console.debug(`[sfx] context already exists -> abort`)
       return
     }
 
     this.timestamp = +new Date()
-    this.queued = 0
+    this.queued.splice(0, this.queued.length)
 
     Vue.nextTick(() => {
       this.bindContext()
       this.bindOutput()
     })
+    //;(window as any).tradeToSong = this.tradeToSong.bind(this)
   }
 
   bindContext() {
     this.context = new AudioContext()
 
+    let checkInProgress = false
+
     if (this.context.state === 'suspended') {
-      const application = document.getElementById('app')
+      const application = document.body
 
       setTimeout(() => {
         application.focus()
       }, 500)
 
       const resumeOnFocus = (event => {
-        store.dispatch('app/showNotice', {
-          id: 'audio',
-          type: 'error',
-          title: 'Browser prevented audio from starting 😣<br>Click somewhere to retry.'
-        })
+        if (checkInProgress) {
+          return
+        }
+
+        checkInProgress = true
 
         console.log('[sfx] Yet another try to start AudioContext')
 
@@ -45,27 +64,36 @@ class SfxService {
           this.context.resume()
         }
 
-        if (!store.state.settings.useAudio || this.context.state !== 'suspended') {
-          store.dispatch('app/showNotice', {
-            id: 'audio',
-            type: 'success',
-            title: 'Audio resumed successfully 🔊'
-          })
+        setTimeout(() => {
+          if (!store.state.settings.useAudio || this.context.state !== 'suspended') {
+            if (store.state.settings.useAudio) {
+              store.dispatch('app/showNotice', {
+                id: 'audio',
+                type: 'success',
+                title: 'Audio resumed successfully 🔊'
+              })
 
-          console.info(`[sfx] AudioContext resumed successfully during the "${event.type}" event.`)
-          window.removeEventListener('focus', resumeOnFocus)
-          window.removeEventListener('blur', resumeOnFocus)
-          application.removeEventListener('mouseenter', resumeOnFocus)
-          application.removeEventListener('mouseleave', resumeOnFocus)
-          application.removeEventListener('mouseup', resumeOnFocus)
-        }
+              console.info(`[sfx] AudioContext resumed successfully during the "${event.type}" event.`)
+            }
+
+            window.removeEventListener('focus', resumeOnFocus)
+            window.removeEventListener('blur', resumeOnFocus)
+            application.removeEventListener('click', resumeOnFocus)
+          } else if (this.context.state === 'suspended') {
+            store.dispatch('app/showNotice', {
+              id: 'audio',
+              type: 'error',
+              title: 'Browser prevented audio from starting 😣<br>Click somewhere to retry.'
+            })
+          }
+
+          checkInProgress = false
+        }, 500)
       }).bind(this)
 
       window.addEventListener('blur', resumeOnFocus)
       window.addEventListener('focus', resumeOnFocus)
-      application.addEventListener('mouseenter', resumeOnFocus)
-      application.addEventListener('mouseleave', resumeOnFocus)
-      application.addEventListener('mouseup', resumeOnFocus)
+      application.addEventListener('click', resumeOnFocus)
     } else {
       store.dispatch('app/showNotice', {
         id: 'audio',
@@ -78,146 +106,184 @@ class SfxService {
   }
 
   bindOutput() {
-    const tuna = new Tuna(this.context)
-    const output = new tuna.PingPongDelay({
-      wetLevel: 0.6, //0 to 1
-      feedback: 0.01, //0 to 1
-      delayTimeLeft: 175, //1 to 10000 (milliseconds)
-      delayTimeRight: 100 //1 to 10000 (milliseconds)
-    })
-    const delay = new tuna.Delay({
-      feedback: 0.3, //0 to 1+
-      delayTime: 80, //1 to 10000 milliseconds
-      wetLevel: 0.3, //0 to 1+
-      dryLevel: 0.5, //0 to 1+
-      cutoff: 2000, //cutoff frequency of the built in lowpass-filter. 20 to 22050
-      bypass: 1
-    })
-    const compressor = new tuna.Compressor({
-      threshold: -1, //-100 to 0
-      makeupGain: 1, //0 and up (in decibels)
-      attack: 1, //0 to 1000
-      release: 0, //0 to 3000
-      ratio: 4, //1 to 20
-      knee: 5, //0 to 40
-      automakeup: true, //true/false
-      bypass: 0
-    })
-    const filter = new tuna.Filter({
-      frequency: 800, //20 to 22050
-      Q: 10, //0.001 to 100
-      gain: -10, //-40 to 40 (in decibels)
-      filterType: 'highpass', //lowpass, highpass, bandpass, lowshelf, highshelf, peaking, notch, allpass
-      bypass: 0
-    })
+    if (!this.context) {
+      return
+    }
 
-    output.connect(filter)
-    filter.connect(delay)
-    delay.connect(compressor)
-    compressor.connect(this.context.destination)
+    if (this.output) {
+      this.output.disconnect()
+      this.output = null
+    }
 
-    this.output = output
-  }
+    this.tuna = new Tuna(this.context)
 
-  tradeToSong(factor, side, variant) {
-    const now = +new Date()
-    const pitch = store.state.settings.audioPitch
+    const effects = []
 
-    this.queued++
+    if (store.state.settings.audioPingPong) {
+      effects.push(
+        new this.tuna.PingPongDelay({
+          wetLevel: 0.6, //0 to 1
+          feedback: 0.01, //0 to 1
+          delayTimeLeft: 175, //1 to 10000 (milliseconds)
+          delayTimeRight: 100 //1 to 10000 (milliseconds)
+        })
+      )
+    }
 
-    setTimeout(() => {
-      this.queued--
+    if (store.state.settings.audioFilter) {
+      effects.push(
+        new this.tuna.Filter({
+          frequency: 800, //20 to 22050
+          Q: 10, //0.001 to 100
+          gain: -10, //-40 to 40 (in decibels)
+          filterType: 'highpass', //lowpass, highpass, bandpass, lowshelf, highshelf, peaking, notch, allpass
+          bypass: 0
+        })
+      )
+    }
 
-      if (side === 'buy') {
-        if (variant === 0) {
-          this.play(659.26 * pitch, Math.sqrt(factor) / 10, 0.1 + Math.sqrt(factor) / 10)
-        } else if (variant === 1) {
-          this.play(659.26 * pitch, 0.05 + Math.sqrt(factor) / 10, 0.1 + factor * 0.1)
-          setTimeout(() => this.play(830.6 * pitch, 0.05 + Math.sqrt(factor) / 10, 0.1 + factor * 0.1), 80)
-        } else {
-          this.play(659.26 * pitch, 0.05 + Math.sqrt(factor) / 25, 0.1 + factor * 0.1)
-          setTimeout(() => this.play(830.6 * pitch, 0.05 + Math.sqrt(factor) / 25, 0.1 + factor * 0.1), 80)
-          setTimeout(() => this.play(987.76 * pitch, 0.05 + Math.sqrt(factor) / 25, 0.1 + factor * 0.1), 160)
-          setTimeout(() => this.play(1318.52 * pitch, 0.05 + Math.sqrt(factor) / 10, 0.1 + factor * 0.1), 240)
+    if (store.state.settings.audioDelay) {
+      effects.push(
+        new this.tuna.Delay({
+          feedback: 0.3, //0 to 1+
+          delayTime: 80, //1 to 10000 milliseconds
+          wetLevel: 0.3, //0 to 1+
+          dryLevel: 0.5, //0 to 1+
+          cutoff: 2000, //cutoff frequency of the built in lowpass-filter. 20 to 22050
+          bypass: 1
+        })
+      )
+    }
+
+    if (store.state.settings.audioCompressor) {
+      effects.push(
+        new this.tuna.Compressor({
+          threshold: -1, //-100 to 0
+          makeupGain: 1, //0 and up (in decibels)
+          attack: 1, //0 to 1000
+          release: 0, //0 to 3000
+          ratio: 4, //1 to 20
+          knee: 5, //0 to 40
+          automakeup: true, //true/false
+          bypass: 0
+        })
+      )
+    }
+
+    if (effects.length) {
+      let source
+
+      for (const effect of effects) {
+        if (source) {
+          source.connect(effect)
         }
-      } else {
-        if (variant === 0) {
-          this.play(493.88 * pitch, Math.sqrt(factor * 1.5) / 10, 0.1 + Math.sqrt(factor) / 10)
-        } else if (variant === 1) {
-          this.play(493.88 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.1 + factor * 0.1)
-          setTimeout(() => this.play(392 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.1 + factor * 0.1), 80)
-        } else {
-          this.play(493.88 * pitch, 0.05 + Math.sqrt(factor) / 25, 0.1 + factor * 0.1)
-          setTimeout(() => this.play(369.99 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.2), 80)
-          setTimeout(() => this.play(293.66 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.2), 160)
-          setTimeout(() => this.play(246.94 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.1 + factor * 0.1), 240)
-        }
+
+        source = effect
       }
-    }, this.timestamp - now)
 
-    this.timestamp = Math.max(this.timestamp, now) + (this.queued > 10 ? (this.queued > 20 ? 20 : 40) : 80)
+      source.connect(this.context.destination)
+
+      console.debug(`[sfx] created output with ${effects.length} effect(s)`)
+
+      this.output = effects[0]
+    } else {
+      console.debug(`[sfx] created output (no effect)`)
+      this.output = this.context.destination
+    }
   }
 
-  play(frequency, value = 0.5, length = 0.1, type: OscillatorType = 'triangle') {
+  playOrQueue(frequency, gain, decay, length, osc) {
+    if (this.queued.length) {
+      this.queued.push([frequency, gain, decay, length, osc])
+      return
+    }
+
+    this.queued.push([frequency, gain, decay, length])
+
+    return this.playTilEmpty(frequency, gain, decay, length, osc)
+  }
+
+  async playTilEmpty(frequency, gain, decay, length, osc) {
+    await this.play(frequency, gain, decay, length, osc)
+
+    if (this.queued.length) {
+      this.playTilEmpty(this.queued[0][0], this.queued[0][1], this.queued[0][2], this.queued[0][3], this.queued[0][4])
+    }
+  }
+
+  async play(frequency, gain, decay, length, osc) {
     if (this.context.state !== 'running') {
+      this.queued.shift()
       return
     }
 
     const time = this.context.currentTime
-    const oscillator = this.context.createOscillator()
-    const gain = this.context.createGain()
+    const oscillatorNode = this.context.createOscillator()
+    const gainNode = this.context.createGain()
+    gain = Math.min(1, gain) * store.state.settings.audioVolume
+    decay = Math.max(0.1, decay)
 
-    oscillator.frequency.value = frequency
-    oscillator.type = type
+    oscillatorNode.frequency.value = frequency
+    oscillatorNode.type = osc || 'triangle'
 
-    oscillator.onended = () => {
-      oscillator.disconnect()
+    oscillatorNode.onended = () => {
+      oscillatorNode.disconnect()
+      gainNode.disconnect()
     }
 
-    gain.connect(this.output)
-    oscillator.connect(gain)
-    length *= 1.3
-    length = Math.min(5, length)
-    const volume = Math.max(0.02, Math.min(1, value)) * store.state.settings.audioVolume
+    gainNode.connect(this.output)
+    oscillatorNode.connect(gainNode)
 
-    gain.gain.value = volume
+    gainNode.gain.value = gain
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, time + decay + 0.15)
 
-    gain.gain.setValueAtTime(gain.gain.value, time)
-    gain.gain.exponentialRampToValueAtTime(0.001, time + length)
+    oscillatorNode.start(time)
+    oscillatorNode.stop(time + decay)
 
-    oscillator.start(time)
-    oscillator.stop(time + length)
+    return new Promise<void>(resolve => {
+      setTimeout(() => {
+        this.queued.shift()
+        resolve()
+      }, length || decay * 1000)
+    })
   }
 
-  liquidation(size) {
-    const now = +new Date()
-
-    this.queued++
-
-    setTimeout(() => {
-      this.queued--
-      ;[329.63, 329.63].forEach((f, i) => {
-        size = Math.sqrt(size) / 4
-
-        setTimeout(() => this.play(f, size, 0.25, 'sine'), i * 80)
-      })
-    }, this.timestamp - now)
-
-    this.timestamp = Math.max(this.timestamp, now) + (this.queued > 10 ? (this.queued > 20 ? 20 : 40) : 80)
+  reconnect() {
+    this.disconnect()
+    this.connect()
   }
 
   disconnect() {
+    console.log(`[sfx] disconnect`)
     if (this.context && this.context.state === 'running') {
+      console.debug(`[sfx] close context`)
       this.context.close()
     }
 
+    if (this.output) {
+      this.output.disconnect()
+    }
+
     this.context = null
+
     this.output = null
 
     store.dispatch('app/showNotice', {
       id: 'audio',
       title: 'Audio disabled 🔇'
     })
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  buildAudioFunction(litteral, side) {
+    litteral = `'use strict'; 
+    var gain = (percent + level) / 3;
+    var decay = gain;
+    gain /= 1.5;
+
+    ${litteral}`
+
+    return new Function('play', 'percent', 'side', 'level', litteral) as AudioFunction
   }
 }
 

@@ -20,7 +20,10 @@ export interface SettingsState {
   useAudio?: boolean
   audioIncludeInsignificants?: boolean
   audioVolume?: number
-  audioPitch?: number
+  audioFilter?: boolean
+  audioCompressor?: boolean
+  audioPingPong?: boolean
+  audioDelay?: boolean
   settings?: string[]
   recentColors?: string[]
   disableAnimations?: boolean
@@ -156,8 +159,21 @@ const mutations = {
   SET_AUDIO_VOLUME(state, value) {
     state.audioVolume = value
   },
-  SET_AUDIO_PITCH(state, value) {
-    state.audioPitch = value
+  TOGGLE_AUDIO_COMPRESSOR(state) {
+    state.audioCompressor = !state.audioCompressor
+    sfxService.reconnect()
+  },
+  TOGGLE_AUDIO_FILTER(state) {
+    state.audioFilter = !state.audioFilter
+    sfxService.reconnect()
+  },
+  TOGGLE_AUDIO_DELAY(state) {
+    state.audioDelay = !state.audioDelay
+    sfxService.reconnect()
+  },
+  TOGGLE_AUDIO_PING_PONG(state) {
+    state.audioPingPong = !state.audioPingPong
+    sfxService.reconnect()
   },
   SET_CHART_BACKGROUND_COLOR(state, value) {
     state.backgroundColor = value

@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
 import * as seriesUtils from './serieUtils'
 
-import { exchanges } from '@/worker/exchanges'
 import { Renderer, SerieAdapter, SerieInstruction, SerieTranspilationResult } from './chartController'
+import store from '@/store'
 const AVERAGE_FUNCTIONS_NAMES = ['sma', 'ema', 'cma']
 const VARIABLE_REGEX = /([a-zA-Z0_9_]+)\s*=\s*(.*)/
 const STRIP_COMMENTS_REGEX = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/gm
@@ -11,9 +11,19 @@ const VARIABLES_VAR_NAME = 'vars'
 const FUNCTIONS_VAR_NAME = 'fns'
 
 export default class SerieTranspiler {
-  exchanges = exchanges.map(a => a.id)
+  private exchanges = []
 
   transpile(serie) {
+    this.exchanges = Object.keys(store.state.panes.panes).reduce((markets, paneId) => {
+      for (const market of store.state.panes.panes[paneId].markets) {
+        if (markets.indexOf(market) === -1) {
+          markets.push(market)
+        }
+      }
+
+      return markets
+    }, [])
+
     // input === delta = vbuy - vsell, cum(delta) + sma(ema(delta[1], 20), 10)
     const result = this.parse(serie.input)
 
@@ -42,7 +52,7 @@ export default class SerieTranspiler {
   normalizeInput(input) {
     input = '(' + input + ')'
     input = input.replace(/([^.])?\b(bar)\b/gi, '$1renderer')
-    input = input.replace(/([^.])?\b(vbuy|vsell|cbuy|csell|lbuy|lsell)\b/gi, '$1renderer.bar.$2')
+    input = input.replace(/([^.]|^)\b(vbuy|vsell|cbuy|csell|lbuy|lsell)\b/gi, '$1renderer.bar.$2')
     input = input.replace(/\s/g, '')
 
     return input
@@ -124,14 +134,15 @@ export default class SerieTranspiler {
   parseFunctions(output: string, instructions: SerieInstruction[]): string {
     let functionMatch = null
 
-    const FUNCTION_REGEX = new RegExp(`([a-zA-Z0_9_]+)\\(`, 'g')
+    const FUNCTION_LOOKUP_REGEX = new RegExp(`([a-zA-Z0_9_]+)\\(`, 'g')
+    const FUNCTION_REPLACE_REGEX = new RegExp(`([a-zA-Z0_9_]+)\\(`)
 
     do {
-      if ((functionMatch = FUNCTION_REGEX.exec(output))) {
+      if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(output))) {
         const functionName = functionMatch[1]
 
         if (Object.prototype.hasOwnProperty.call(Math, functionName)) {
-          FUNCTION_REGEX.lastIndex = functionMatch.index + functionMatch[0].length
+          FUNCTION_LOOKUP_REGEX.lastIndex = functionMatch.index + functionMatch[0].length
           continue
         }
 
@@ -163,7 +174,7 @@ export default class SerieTranspiler {
           instruction.arg = functionArguments[1]
         }
 
-        output = output.replace(FUNCTION_REGEX, `utils.$1$(${FUNCTIONS_VAR_NAME}[${instructions.length}].state,`)
+        output = output.replace(FUNCTION_REPLACE_REGEX, `utils.$1$(${FUNCTIONS_VAR_NAME}[${instructions.length}].state,`)
         instructions.push(instruction)
       }
     } while (functionMatch)
@@ -171,25 +182,29 @@ export default class SerieTranspiler {
     return output
   }
   parseExchanges(output: string, exchanges: string[]): string {
+    if (!this.exchanges.length) {
+      return output
+    }
+
     const EXCHANGE_REGEX = new RegExp(`([^.$])\\b(${this.exchanges.join('|')})\\b`)
 
     let exchangeMatch = null
-    let free = 0
+
     do {
       if ((exchangeMatch = EXCHANGE_REGEX.exec(output))) {
-        free++
         const exchangeName = exchangeMatch[2]
+        const realExchangeName = exchangeName.replace(/:/, '')
 
-        if (exchanges.indexOf(exchangeName) === -1) {
-          exchanges.push(exchangeName)
+        if (exchanges.indexOf(realExchangeName) === -1) {
+          exchanges.push(realExchangeName)
         }
 
-        output = output.replace(new RegExp('([^.$])\\b(' + exchangeName + ')\\b', 'ig'), `$1renderer.exchanges.${exchangeName}`)
+        output = output.replace(new RegExp('([^.$])\\b(' + exchangeName + ')\\b', 'ig'), `$1renderer.sources['${realExchangeName}']`)
       }
-    } while (free < 10 && exchangeMatch)
+    } while (exchangeMatch)
 
     for (const exchange of exchanges) {
-      output = `(renderer.exchanges.${exchange} ? ${output} : null)`
+      output = `(renderer.sources['${exchange}'] ? ${output} : null)`
     }
 
     return output
@@ -198,11 +213,9 @@ export default class SerieTranspiler {
     const REFERENCE_REGEX = new RegExp('\\$([a-z_\\-0-9]+)\\b')
 
     let referenceMatch = null
-    let free = 0
 
     do {
       if ((referenceMatch = REFERENCE_REGEX.exec(output))) {
-        free++
         const serieId = referenceMatch[1]
 
         if (references.indexOf(serieId) === -1) {
@@ -211,7 +224,7 @@ export default class SerieTranspiler {
 
         output = output.replace(new RegExp('\\$(' + serieId + ')\\b', 'ig'), `renderer.series.$1.point`)
       }
-    } while (free < 10 && referenceMatch)
+    } while (referenceMatch)
 
     for (const reference of references) {
       output = `(renderer.series.${reference} && renderer.series.${reference}.point !== null ? ${output} : null)`
@@ -348,7 +361,7 @@ export default class SerieTranspiler {
       const volumeVariation = (Math.random() - 0.5) / 100
 
       if (previousRenderer) {
-        exchangeBar.open *= previousRenderer.exchanges[name].close
+        exchangeBar.open *= previousRenderer.sources[name].close
       }
       exchangeBar.close = Math.abs(exchangeBar.close * priceVariation)
       exchangeBar.high = Math.max(exchangeBar.high, exchangeBar.close)

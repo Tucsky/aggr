@@ -15,7 +15,6 @@
 </template>
 
 <script>
-import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
 
 export default {
@@ -33,9 +32,6 @@ export default {
     }
   },
   mixins: [DialogMixin],
-  components: {
-    Dialog
-  },
   data: () => ({
     value: ''
   }),

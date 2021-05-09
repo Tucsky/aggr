@@ -57,10 +57,6 @@ body {
   flex-grow: 1;
 }
 
-.vue-resizable-handle {
-  z-index: 3;
-}
-
 .vue-grid-item {
   > div {
     width: 100%;
@@ -139,6 +135,10 @@ body {
 
   > .-end {
     align-self: end;
+  }
+
+  > .-start {
+    align-self: start;
   }
 
   > .-nowrap {
@@ -236,4 +236,17 @@ body {
   &:after {
     margin-left: 1rem;
   }
+}
+
+blockquote {
+  padding: 0.25rem 0.5rem;
+  margin-left: 0;
+  margin-bottom: 0;
+  border-left: 1px solid white;
+  opacity: 0.6;
+  // font-family: $font-monospace;
+}
+
+code {
+  font-family: $font-monospace;
 }

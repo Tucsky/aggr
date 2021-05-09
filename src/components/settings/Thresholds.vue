@@ -1,13 +1,13 @@
 <template>
   <div class="thresholds" :class="{ '-dragging': dragging, '-rendering': rendering }">
-    <table class="thresholds-table" v-if="showThresholdsAsTable">
+    <table class="table thresholds-table" v-if="showThresholdsAsTable">
       <transition-group name="flip-list" tag="tbody">
         <tr v-for="(threshold, index) in thresholdsRows" :key="threshold.id" :class="{ '-divider': !!threshold.divider }">
           <template v-if="threshold.divider">
             <td colspan="100%" v-text="threshold.divider"></td>
           </template>
           <template v-else>
-            <td class="thresholds-table__input">
+            <td class="table-input">
               <input
                 type="text"
                 placeholder="Amount*"
@@ -21,7 +21,7 @@
               />
               <i class="icon icon-currency"></i>
             </td>
-            <td class="thresholds-table__input">
+            <td class="table-input">
               <input
                 type="text"
                 placeholder="Giphy"
@@ -36,8 +36,17 @@
             </td>
             <td class="thresholds-table__color" :style="{ backgroundColor: threshold.buyColor }" @click="openPicker('buyColor', threshold)"></td>
             <td class="thresholds-table__color" :style="{ backgroundColor: threshold.sellColor }" @click="openPicker('sellColor', threshold)"></td>
-            <td v-if="thresholds.length > 2" class="thresholds-table__delete" @click="deleteThreshold(threshold.id)" title="Remove" v-tippy>
-              <i class="icon-cross" v-if="index > 1"></i>
+            <td class="thresholds-table__audio btn -green -small" @click="openThresholdAudio(threshold.id)" title="Configure threshold audio" v-tippy>
+              <i class="icon-volume-high"></i>
+            </td>
+            <td
+              v-if="thresholds.length > 2 && threshold.id !== 'liquidations' && index > 1"
+              class="btn -red -small"
+              @click="deleteThreshold(threshold.id)"
+              title="Remove"
+              v-tippy
+            >
+              <i class="icon-cross"></i>
             </td>
           </template>
         </tr>
@@ -161,6 +170,7 @@ import { formatAmount, formatPrice, sleep } from '../../utils/helpers'
 
 import dialogService from '@/services/dialogService'
 import { Threshold } from '@/store/panesSettings/trades'
+import ThresholdAudioDialog from '../trades/ThresholdAudioDialog.vue'
 
 @Component({
   name: 'Thresholds',
@@ -506,6 +516,13 @@ export default class extends Vue {
     })
   }
 
+  openThresholdAudio(thresholdId) {
+    dialogService.open(ThresholdAudioDialog, {
+      paneId: this.paneId,
+      thresholdId
+    })
+  }
+
   formatAmount(amount) {
     return formatAmount(amount)
   }
@@ -556,65 +573,9 @@ export default class extends Vue {
 }
 
 .thresholds-table {
-  width: 100%;
-  border: 0;
-  border-spacing: 0px;
-
-  &__input {
-    position: relative;
-    background-color: transparent;
-    padding: 0.5em;
-
-    i.icon {
-      position: absolute;
-      right: 7px;
-      top: 7px;
-    }
-
-    input {
-      width: 100%;
-      border: 0;
-      padding: 0;
-      background: 0;
-      color: inherit;
-
-      &[type='number'] {
-        font-weight: 600;
-      }
-    }
-
-    + .thresholds-table__input {
-      border-left: 1px solid rgba(white, 0.1);
-      border-top: 1px solid rgba(white, 0.1);
-    }
-  }
-
   tr {
-    &.-divider {
-      td {
-        padding: 1rem 0;
-      }
-
-      + tr .thresholds-table__input {
-        border-top: 0;
-      }
-    }
-
-    &:first-child .thresholds-table__input {
-      border-top: 0;
-    }
-
-    + tr .thresholds-table__input {
-      border-left: 1px solid rgba(white, 0.1);
-      border-top: 1px solid rgba(white, 0.1);
-
-      &:first-child {
-        border-left: 0;
-      }
-    }
-
     &:first-child {
-      .thresholds-table__input:nth-child(2) {
+      .table-input:nth-child(2) {
         pointer-events: none;
         background-color: rgba(white, 0.05);
         cursor: not-allowed;
@@ -623,11 +584,8 @@ export default class extends Vue {
     }
   }
 
-  tr:last-child .__input {
-    border-bottom: 0;
-  }
-
   &__color {
+    border: 0 !important;
     width: 2em;
     transition: box-shadow 0.2s $ease-out-expo;
     cursor: pointer;
@@ -636,23 +594,6 @@ export default class extends Vue {
       box-shadow: 0 0 0 0.5em rgba(white, 0.2);
       position: relative;
       z-index: 1;
-    }
-  }
-
-  &__delete {
-    cursor: pointer;
-    padding: 0.5em 0 0.5em 0.5em;
-
-    opacity: 0.5;
-
-    &:hover {
-      opacity: 1;
-    }
-
-    &.-disabled {
-      opacity: 0.5;
-
-      cursor: not-allowed;
     }
   }
 }

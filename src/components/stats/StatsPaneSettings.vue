@@ -36,7 +36,7 @@
 
     <div v-for="bucket in buckets" :key="bucket.id" class="column mt8">
       <div class="form-group -tight">
-        <label class="checkbox-control -on-off checkbox-control-input flex-right" v-tippy="{ placement: 'bottom' }" title="Enable bucket">
+        <label class="checkbox-control checkbox-control-input flex-right" v-tippy="{ placement: 'bottom' }" title="Enable bucket">
           <input
             type="checkbox"
             class="form-control"

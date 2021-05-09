@@ -58,10 +58,6 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  get activeExchanges() {
-    return this.$store.state.app.activeExchanges
-  }
-
   get activeMarkets() {
     return this.$store.state.app.activeMarkets
   }
@@ -174,10 +170,6 @@ export default class extends Mixins(PaneMixin) {
   overflow-x: auto;
   height: 100%;
 
-  @media screen and (min-width: 768px) {
-    font-size: 1.25rem;
-  }
-
   @each $exchange, $icon in $exchanges {
     .market.-#{$exchange} {
       background-image: url('../../assets/exchanges/#{$exchange}.svg');
@@ -237,6 +229,10 @@ export default class extends Mixins(PaneMixin) {
 
   &.-bold .market {
     font-weight: 600;
+  }
+
+  &.-small {
+    font-size: 0.886rem;
   }
 }
 </style>

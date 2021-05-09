@@ -17,22 +17,14 @@
                 <small class="text-muted">created {{ workspace.createdAt }} ago</small>
               </div>
 
-              <dropdown
-                class="ml8"
-                :options="workspaceMenu"
-                placeholder="Workspaces"
-                @output="workspaceMenu[$event].click()"
-                title="Workspace tools"
-                v-tippy
-              >
+              <dropdown class="ml8" :options="workspaceMenu" placeholder="Workspaces" title="Workspace tools" v-tippy>
                 <template v-slot:selection>
                   <button class="btn -blue"><i class="icon-menu"></i></button>
                 </template>
                 <template v-slot:option="{ value }">
                   <div>
-                    <i :class="'icon-' + value.icon"></i>
-
                     <span>{{ value.label }}</span>
+                    <i :class="'icon-' + value.icon"></i>
                   </div>
                 </template>
               </dropdown>
@@ -173,7 +165,7 @@
         <section>
           <div class="form-group" v-if="settings.indexOf('exchanges') > -1">
             <div class="settings-exchanges">
-              <Exchange v-for="(active, exchangeId) in activeExchanges" :key="exchangeId" :id="exchangeId" />
+              <Exchange v-for="exchangeId of exchanges" :key="exchangeId" :id="exchangeId" />
             </div>
           </div>
           <div class="settings__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'exchanges')">
@@ -200,7 +192,7 @@
               <a href="javascript:void(0);" @click="reset()">reset</a>
               <i class="pipe">|</i>
               <span>
-                <dropdown :options="donationMenu" @output="donationMenu[$event].click()" title="Support the project" class="-top -text-left" v-tippy>
+                <dropdown :options="donationMenu" title="Support the project" class="-top -text-left" v-tippy>
                   <template v-slot:selection>
                     <a href="javascript:void(0);">
                       donate
@@ -283,11 +275,16 @@ export default class extends Vue {
       icon: 'download',
       label: 'Download',
       click: this.exportWorkspace
+    },
+    {
+      icon: 'copy-paste',
+      label: 'Duplicate',
+      click: this.duplicateWorkspace
     }
   ]
 
-  get activeExchanges() {
-    return this.$store.state.app.activeExchanges
+  get exchanges() {
+    return this.$store.getters['exchanges/getExchanges']
   }
 
   get version() {
@@ -389,7 +386,7 @@ export default class extends Vue {
   }
 
   async importWorkspace(workspace: Workspace) {
-    await workspacesService.setWorkspace(await workspacesService.importWorkspace(workspace))
+    await workspacesService.setCurrentWorkspace(await workspacesService.importWorkspace(workspace))
 
     this.getWorkspaces()
   }
@@ -460,7 +457,9 @@ export default class extends Vue {
 
     const workspace = await workspacesService.getWorkspace(id)
 
-    await workspacesService.setWorkspace(workspace)
+    await workspacesService.setCurrentWorkspace(workspace)
+
+    this.getWorkspaces()
   }
 
   async removeWorkspace(id: string) {
@@ -478,6 +477,8 @@ export default class extends Vue {
       return
     }
 
+    await workspacesService.removeWorkspace(workspace.id)
+
     if (isCurrent) {
       let nextWorkspace = this.workspaces.find(w => w.id !== workspace.id)
 
@@ -485,21 +486,23 @@ export default class extends Vue {
         nextWorkspace = await workspacesService.createWorkspace()
       }
 
-      await workspacesService.setWorkspace(nextWorkspace)
+      await workspacesService.setCurrentWorkspace(nextWorkspace)
     }
 
-    await workspacesService.removeWorkspace(workspace.id)
-
-    this.getWorkspaces()
+    return this.getWorkspaces()
   }
 
   async createWorkspace() {
     const workspace = await workspacesService.createWorkspace()
-    await workspacesService.setWorkspace(workspace)
+    await workspacesService.setCurrentWorkspace(workspace)
   }
 
   async exportWorkspace() {
     workspacesService.downloadWorkspace()
+  }
+
+  async duplicateWorkspace() {
+    workspacesService.duplicateWorkspace()
   }
 
   async renameWorkspace() {

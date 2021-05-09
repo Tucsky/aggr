@@ -18,11 +18,12 @@ import { ago, formatPrice, formatAmount, slugify } from '../../utils/helpers'
 import { getColorByWeight, getColorLuminance, getAppBackgroundColor, splitRgba, getLogShade } from '../../utils/colors'
 
 import aggregatorService from '@/services/aggregatorService'
-import sfxService from '../../services/sfxService'
+import sfxService, { AudioFunction } from '../../services/sfxService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
 import { Trade } from '@/types/test'
 import workspacesService from '@/services/workspacesService'
+import { Threshold } from '@/store/panesSettings/trades'
 
 const GIFS: { [keyword: string]: string[] } = {} // shared cache for gifs
 const PROMISES_OF_GIFS: { [keyword: string]: Promise<string[]> } = {}
@@ -44,6 +45,11 @@ interface ThresholdColorsBySide {
   }
 }
 
+interface ThresholdAudiosBySide {
+  buy: AudioFunction
+  sell: AudioFunction
+}
+
 @Component({
   components: { PaneHeader },
   name: 'Trades'
@@ -55,13 +61,14 @@ export default class extends Mixins(PaneMixin) {
   private _onStoreMutation: () => void
 
   private _thresholdsColors: ThresholdColorsBySide[]
-
+  private _thresholdsAudios: ThresholdAudiosBySide[]
+  private _liquidationsAudio: ThresholdAudiosBySide
   private _liquidationsColor: ThresholdColorsBySide
 
   private _lastTradeTimestamp: number
   private _lastSide: 'buy' | 'sell'
-  private _minimumAmount: number
-  private _significantAmount: number
+  private _minimumThresholdAmount: number
+  private _significantThresholdAmount: number
   private _activeExchanges: { [exchange: string]: boolean }
   private _multipliers: { [identifier: string]: number }
   private _paneMarkets: { [identifier: string]: boolean }
@@ -71,7 +78,7 @@ export default class extends Mixins(PaneMixin) {
     return this.$store.state[this.paneId].maxRows
   }
 
-  get thresholds() {
+  get thresholds(): Threshold[] {
     return this.$store.state[this.paneId].thresholds
   }
 
@@ -140,6 +147,7 @@ export default class extends Mixins(PaneMixin) {
 
     this.retrieveStoredGifs()
     this.prepareColorsSteps()
+    this.prepareThresholdsAudio()
 
     aggregatorService.on('trades', this.onTrades)
 
@@ -157,6 +165,11 @@ export default class extends Mixins(PaneMixin) {
           break
         case this.paneId + '/SET_THRESHOLD_GIF':
           this.fetchGifByKeyword(mutation.payload.value, mutation.payload.isDeleted)
+          this.refreshList()
+          break
+        case this.paneId + '/SET_THRESHOLD_AUDIO':
+        case 'app/TOGGLE_AUDIO':
+          this.prepareThresholdsAudio()
           break
         case 'settings/SET_CHART_BACKGROUND_COLOR':
         case this.paneId + '/SET_THRESHOLD_COLOR':
@@ -164,6 +177,7 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/DELETE_THRESHOLD':
         case this.paneId + '/ADD_THRESHOLD':
           this.prepareColorsSteps()
+          this.refreshList()
           break
       }
     })
@@ -206,6 +220,8 @@ export default class extends Mixins(PaneMixin) {
   }
 
   onTrades(trades: Trade[]) {
+    const play = this.useAudio
+
     for (let i = 0; i < trades.length; i++) {
       const identifier = trades[i].exchange + trades[i].pair
 
@@ -218,29 +234,29 @@ export default class extends Mixins(PaneMixin) {
       const multiplier = this._multipliers[identifier]
 
       if (trade.liquidation) {
-        if (this.useAudio && amount > this._significantAmount * multiplier * 0.1) {
-          sfxService.liquidation((amount / this._significantAmount) * multiplier)
+        if (this.useAudio && amount > this._significantThresholdAmount * multiplier * 0.1) {
+          // )
         }
 
-        if (amount >= this._minimumAmount * multiplier) {
-          this.appendRow(trade, amount, multiplier, '-liquidation')
+        if (amount >= this._minimumThresholdAmount * multiplier) {
+          this.appendRow(trade, amount, multiplier, play)
         }
         continue
       } else if (this.liquidationsOnly) {
         continue
       }
 
-      if (amount >= this._minimumAmount * multiplier) {
-        this.appendRow(trade, amount, multiplier)
+      if (amount >= this._minimumThresholdAmount * multiplier) {
+        this.appendRow(trade, amount, multiplier, play)
       } else {
-        if (this.useAudio && this.audioIncludeInsignificants && amount >= this._significantAmount * 0.1) {
-          sfxService.tradeToSong(amount / (this._significantAmount * multiplier), trade.side, 0)
+        if (play && this.audioIncludeInsignificants && amount >= this._significantThresholdAmount * 0.1) {
+          this._thresholdsAudios[0][trade.side](sfxService._play, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
         }
       }
     }
   }
 
-  appendRow(trade: Trade, amount, multiplier, classname = '') {
+  appendRow(trade: Trade, amount, multiplier, play) {
     if (!this.tradesCount) {
       this.$forceUpdate()
     }
@@ -248,7 +264,7 @@ export default class extends Mixins(PaneMixin) {
     this.tradesCount++
 
     const li = document.createElement('li')
-    li.className = ('trade ' + classname).trim()
+    li.className = 'trade'
     li.className += ' -' + trade.exchange
 
     li.className += ' -' + trade.side
@@ -258,6 +274,8 @@ export default class extends Mixins(PaneMixin) {
     }
 
     if (trade.liquidation && !this.liquidationsOnly) {
+      li.className += ' -liquidation'
+
       const side = document.createElement('div')
       side.className = 'trade__side icon-skull'
       li.appendChild(side)
@@ -279,10 +297,16 @@ export default class extends Mixins(PaneMixin) {
       const luminance = this._liquidationsColor[trade.side][(intensity < 0.5 ? 'from' : 'to') + 'Luminance']
       const backgroundColor = this._liquidationsColor[trade.side].to
       const thrs = Math.max(intensity, 0.25)
-      li.style.color = getLogShade(backgroundColor, thrs * (luminance < 144 ? 1.5 : -3))
+      li.style.color = getLogShade(backgroundColor, thrs * (luminance < 180 ? 2 : -3))
       li.style.backgroundColor = 'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + intensity + ')'
+
+      if (play) {
+        this._liquidationsAudio[trade.side](sfxService._play, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
+      }
     } else {
       if (trade.liquidation) {
+        li.className += ' -liquidation'
+
         const side = document.createElement('div')
         side.className = 'trade__side icon-skull'
         li.appendChild(side)
@@ -312,23 +336,26 @@ export default class extends Mixins(PaneMixin) {
 
           // 0-255 luminance of nearest color
           const luminance = color[trade.side][(percentToNextThreshold < 0.5 ? 'from' : 'to') + 'Luminance']
-
           // background color simple color to color based on percentage of amount to next threshold
           const backgroundColor = getColorByWeight(color[trade.side].from, color[trade.side].to, percentToNextThreshold)
           li.style.backgroundColor = 'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ')'
+
           if (i >= 1) {
-            // ajusted amount > this._significantAmount
+            // ajusted amount > this._significantThresholdAmount
             // only pure black or pure white foreground
-            li.style.color = luminance < 133 ? 'white' : 'black'
+            li.style.color = luminance < 180 ? 'white' : 'black'
           } else {
-            // take background color and apply logarithmic shade based on amount to this._significantAmount percentage
+            // take background color and apply logarithmic shade based on amount to this._significantThresholdAmount percentage
             // darken if luminance of background is high, lighten otherwise
             const thrs = Math.max(percentToNextThreshold, 0.25)
-            li.style.color = getLogShade(backgroundColor, thrs * (luminance < 144 ? 1.5 : -3))
+            li.style.color = getLogShade(backgroundColor, thrs * (luminance < 180 ? 2 : -3))
           }
 
-          if (this.useAudio && amount >= (this.audioIncludeInsignificants ? this._significantAmount * 0.1 : this._minimumAmount * 1) * multiplier) {
-            sfxService.tradeToSong(amount / (this._significantAmount * multiplier), trade.side, i)
+          if (
+            play &&
+            amount >= (this.audioIncludeInsignificants ? this._significantThresholdAmount * 0.1 : this._minimumThresholdAmount) * multiplier
+          ) {
+            this._thresholdsAudios[i][trade.side](sfxService._play, percentToNextThreshold, trade.side, i)
           }
 
           break
@@ -359,7 +386,7 @@ export default class extends Mixins(PaneMixin) {
     price.innerText = `${formatPrice(trade.price)}`
     li.appendChild(price)
 
-    if (this.calculateSlippage === 'price' && Math.abs(trade.slippage) / trade.price > 0.0001) {
+    if (this.calculateSlippage === 'price' && Math.abs(trade.slippage) / trade.price > 0.0005) {
       price.setAttribute(
         'slippage',
         (trade.slippage > 0 ? '+' : '') + trade.slippage + document.getElementById('app').getAttribute('data-quote-symbol')
@@ -472,6 +499,7 @@ export default class extends Mixins(PaneMixin) {
 
     return promise
   }
+
   prepareColorsSteps() {
     const appBackgroundColor = getAppBackgroundColor()
 
@@ -499,8 +527,8 @@ export default class extends Mixins(PaneMixin) {
 
     this._thresholdsColors = []
 
-    this._minimumAmount = this.thresholds[0].amount
-    this._significantAmount = this.thresholds[1].amount
+    this._minimumThresholdAmount = this.thresholds[0].amount
+    this._significantThresholdAmount = this.thresholds[1].amount
 
     for (let i = 0; i < this.thresholds.length - 1; i++) {
       const buyFrom = splitRgba(this.thresholds[i].buyColor, appBackgroundColor)
@@ -527,9 +555,16 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  clearList() {
-    this.$refs.tradesContainer.innerHTML = ''
-    this.tradesCount = 0
+  prepareThresholdsAudio() {
+    this._thresholdsAudios = this.thresholds.map(threshold => ({
+      buy: sfxService.buildAudioFunction(threshold.buyAudio, 'buy'),
+      sell: sfxService.buildAudioFunction(threshold.sellAudio, 'sell')
+    }))
+
+    this._liquidationsAudio = {
+      buy: sfxService.buildAudioFunction(this.liquidationThreshold.buyAudio, 'buy'),
+      sell: sfxService.buildAudioFunction(this.liquidationThreshold.sellAudio, 'sell')
+    }
   }
 
   cacheFilters() {
@@ -544,6 +579,70 @@ export default class extends Mixins(PaneMixin) {
       output[identifier] = true
       return output
     }, {})
+  }
+
+  clearList() {
+    this.$refs.tradesContainer.innerHTML = ''
+    this.tradesCount = 0
+  }
+
+  refreshList() {
+    if (!this.tradesCount) {
+      return this.clearList()
+    }
+
+    const elements = this.$el.getElementsByClassName('trade')
+
+    const pairByExchanges = this.$store.state.app.activeMarkets.reduce((obj, market) => {
+      if (!obj[market.exchange]) {
+        obj[market.exchange] = market.pair
+      }
+
+      return obj
+    }, {})
+
+    const trades: Trade[] = []
+
+    for (const element of elements) {
+      const exchange = element.querySelector('.trade__exchange').getAttribute('title')
+
+      const pair = pairByExchanges[exchange]
+
+      if (!pair) {
+        console.warn('unable to map pair for exchange', exchange, pairByExchanges)
+        continue
+      }
+
+      const timestamp = +element.querySelector('.trade__date').getAttribute('timestamp')
+      const price = parseFloat((element.querySelector('.trade__price') as HTMLElement).innerText) || 0
+      const size = parseFloat((element.querySelector('.trade__amount__base') as HTMLElement).innerText) || 0
+      const side: 'buy' | 'sell' = element.classList.contains('-buy') ? 'buy' : 'sell'
+
+      const trade: Trade = {
+        timestamp,
+        exchange,
+        pair,
+        price,
+        size,
+        side
+      }
+
+      if (element.classList.contains('-liquidation')) {
+        trade.liquidation = true
+      }
+
+      trades.push(trade)
+    }
+
+    this.clearList()
+
+    for (const trade of trades) {
+      const identifier = trade.exchange + trade.pair
+      const amount = trade.size * (this.preferQuoteCurrencySize ? trade.price : 1)
+      const multiplier = this._multipliers[identifier]
+
+      this.appendRow(trade, amount, multiplier, false)
+    }
   }
 }
 </script>
@@ -741,9 +840,8 @@ export default class extends Mixins(PaneMixin) {
   }
 
   > div {
-    flex-grow: 1;
     flex-basis: 0;
-    word-break: break-word;
+    flex-grow: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -765,13 +863,12 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__exchange {
     background-repeat: no-repeat;
-    background-position: center center;
-    flex-grow: 0.75;
-    margin-left: 0.75em;
-
-    small {
-      opacity: 0.8;
-    }
+    flex-grow: 0.8;
+    margin-left: 1.75em;
+    font-size: 75%;
+    white-space: normal;
+    line-height: 1;
+    word-break: inherit;
   }
 
   .trade__price:after {
@@ -784,7 +881,6 @@ export default class extends Mixins(PaneMixin) {
   }
 
   .trade__amount {
-    flex-grow: 1;
     position: relative;
 
     > span {
@@ -819,7 +915,7 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__date {
     text-align: right;
-    flex-basis: 2em;
+    flex-basis: 1.75em;
     flex-grow: 0;
   }
 }

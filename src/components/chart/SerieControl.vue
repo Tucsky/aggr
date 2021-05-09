@@ -2,28 +2,26 @@
   <div class="serie" :class="{ '-error': !!error, '-disabled': !visible }">
     <div class="serie__name" @click="edit">{{ name }}</div>
 
-    <template v-if="!error">
-      <div class="serie__controls">
+    <div class="serie__controls">
+      <template v-if="!error">
         <button class="btn -small" @click="toggleVisibility" v-tippy :title="visible ? 'Hide' : 'Show'">
           <i :class="{ 'icon-visible': !visible, 'icon-hidden': visible }"></i>
         </button>
-        <!--<button class="btn -small" @click="bringOnTop" v-tippy title="bring on top"><i class="icon-up"></i></button>-->
         <button class="btn -small" @click="edit" v-tippy title="Edit"><i class="icon-edit"></i></button>
-        <button class="btn -small" @click="remove" v-tippy title="Disable"><i class="icon-cross"></i></button>
-      </div>
-      <div class="serie__legend" v-text="legend"></div>
-    </template>
-    <template v-else>
+      </template>
+      <button class="btn -small" @click="remove" v-tippy title="Disable"><i class="icon-cross"></i></button>
+    </div>
+    <div class="serie__legend" v-text="legend"></div>
+    <div v-if="error">
       <i class="icon-warning ml4 mr8"></i>
       {{ error }}
-    </template>
+    </div>
   </div>
 </template>
 
 <script>
 import SerieDialog from './SerieDialog.vue'
 import dialogService from '../../services/dialogService'
-import { defaultChartSeries } from './defaultSeries'
 
 export default {
   props: ['paneId', 'serieId', 'legend'],
@@ -32,10 +30,8 @@ export default {
       return this.$store.state[this.paneId].series[this.serieId]
     },
     name: function() {
-      if (this.serie.name && this.serie.name.length) {
-        return this.serie.name
-      } else if (defaultChartSeries[this.serieId]) {
-        return defaultChartSeries[this.serieId].name
+      if (this.serie.name) {
+        return this.serie.name.replace(/\{([\w\d_]+)\}/g, (match, key) => this.serie.options[key] || '')
       } else {
         return this.serieId
       }
@@ -44,7 +40,7 @@ export default {
       return !this.serie.options || typeof this.serie.options.visible === 'undefined' ? true : this.serie.options.visible
     },
     error: function() {
-      return this.$store.state[this.paneId].activeSeriesErrors[this.serieId]
+      return this.$store.state[this.paneId].seriesErrors[this.serieId]
     }
   },
   methods: {
@@ -61,7 +57,7 @@ export default {
       })
     },
     remove() {
-      this.$store.dispatch(this.paneId + '/toggleSerie', this.serieId)
+      this.$store.dispatch(this.paneId + '/removeSerie', this.serieId)
     }
   }
 }

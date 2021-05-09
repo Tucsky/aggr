@@ -91,40 +91,7 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
     await store.dispatch(id + '/boot')
   }
 }
-/*
-export function prepareModule(module: Module<any, any>): any {
-  if (!module.state._id) {
-    // unsupported module?
-    return module
-  }
 
-  module.state = mergeStoredState(module.state)
-
-  return module
-}
-
-export function preparePaneModule(pane: Pane, paneSettingsModule: Module<any, any>) {
-  const state = JSON.parse(JSON.stringify(paneSettingsModule.state))
-
-  state._id = pane.id
-
-  if (pane.settings) {
-    if (typeof pane.settings === 'object') {
-      merge(state, pane.settings)
-    }
-
-    delete pane.settings
-  }
-
-  this.registerModule(id, module)
-
-  if (typeof module.boot === 'function') {
-    await module.boot(this, module.state)
-  }
-
-  return { ...paneSettingsModule, state: mergeStoredState(state) }
-}
-*/
 export const normalizeSymbol = (symbol: string) => {
   return symbol.replace(/(?:%7F)+/g, '_').trim()
 }

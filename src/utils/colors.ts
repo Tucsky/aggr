@@ -109,6 +109,10 @@ export function rgbaToRgb(color, backgroundColor) {
   return color
 }
 
+export function rgbToHex(rgb) {
+  return '#' + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1)
+}
+
 export function hexToRgb(hex) {
   const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i
   hex = hex.replace(shorthandRegex, function(m, r, g, b) {

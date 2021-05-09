@@ -10,6 +10,7 @@
       width: 2rem;
       height: 2rem;
       opacity: 0.2;
+      z-index: 11;
 
       &:before {
         font-family: 'icon';
@@ -51,6 +52,10 @@
       background-color: rgba(black, 0.2);
     }
   }
+
+  .pane {
+    background-color: rgba(white, 0.2);
+  }
 }
 
 .pane {
@@ -90,7 +95,6 @@
     > span,
     > button > span,
     .dropdown > .dropdown__selected > span {
-      font-weight: 600;
       opacity: 1;
     }
 
@@ -102,6 +106,10 @@
         opacity: 1;
       }
     }
+  }
+
+  > span {
+    padding-right: 0 !important;
   }
 
   &__loader {

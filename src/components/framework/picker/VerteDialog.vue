@@ -228,11 +228,14 @@ export default {
         } else {
           colorStr = formatRgb(color)
         }
-      } else if (isValidHex(color)) {
+      } else if (isValidHex('#' + color)) {
         if (typeof color === 'string') {
           colorStr = color
         } else {
-          colorStr = formatHex(color)
+          colorStr = formatHex('#' + color)
+        }
+        if (color.indexOf(0) !== '#') {
+          colorStr = '#' + color
         }
       } else {
         return

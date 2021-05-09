@@ -147,8 +147,16 @@ $unit: 'px'; // Feel free to change the unit.
     align-self: end;
   }
 
+  > .-start {
+    align-self: start;
+  }
+
   > .-nowrap {
     white-space: nowrap;
+  }
+
+  > .-column {
+    flex-direction: column;
   }
 }
 

@@ -8,6 +8,8 @@ export interface Threshold {
   amount: number
   buyColor: string
   sellColor: string
+  buyAudio: string
+  sellAudio: string
   gif?: string
 }
 
@@ -43,38 +45,79 @@ const getters = {
 const state = {
   liquidations: {
     id: 'liquidations',
-    amount: 250000,
+    amount: 100000,
     buyColor: 'rgb(103,58,183)',
-    sellColor: 'rgb(255,152,0)'
+    sellColor: 'rgb(255,152,0)',
+    buyAudio: `play(329.63, gain / 2, decay, 80, 'sine');
+    play(329.63, gain / 1.5, decay * 1.5, 80, 'sine');`,
+    sellAudio: `play(440, gain / 2, decay, 80, 'sine');
+    play(440, gain / 1.5, decay * 1.5, 80, 'sine');`
   },
   thresholds: [
     {
       id: 'threshold',
       amount: 250000,
       buyColor: 'rgba(119, 148, 92, .5)',
-      sellColor: 'rgba(239, 67, 82,.5)'
+      sellColor: 'rgba(239, 67, 82,.5)',
+      buyAudio: `play(659.26, gain, decay, 50)`,
+      sellAudio: `play(493.88, gain * 2, decay, 50)`
     },
     {
       id: 'significant',
       amount: 500000,
       buyColor: 'rgb(100, 157, 102)',
-      sellColor: 'rgb(239, 67, 82)'
+      sellColor: 'rgb(239, 67, 82)',
+      buyAudio: `play(659.26, gain * 0.5, decay, 80);
+      play(830.6, gain * 1.25, decay, 80)`,
+      sellAudio: `play(493.88, gain * 0.5, decay, 80);
+      play(392, gain * 1.25, decay, 80)`
     },
     {
       id: 'huge',
       amount: 1000000,
       gif: 'cash',
       buyColor: 'rgb(59, 202, 109)',
-      sellColor: 'rgb(235, 30, 47)'
+      sellColor: 'rgb(235, 30, 47)',
+      buyAudio: `play(659.26, gain * 0.5, decay * 0.75, 80);
+      play(830.6, gain * 0.5, decay * 0.75, 80);
+      play(987.76, gain * 0.5, decay * 0.75, 80);
+      play(1318.52, gain * 1, decay, 80)`,
+      sellAudio: `play(493.88, gain * 0.5, decay * 0.75, 80);
+      play(369.99, gain * 0.5, decay * 0.75, 80);
+      play(293.66, gain * 0.5, decay * 0.75, 80);
+      play(246.94, gain * 1, decay, 80)`
     },
     {
       id: 'rare',
       amount: 10000000,
       gif: 'explosion',
       buyColor: 'rgb(0, 255, 127)',
-      sellColor: 'rgb(217, 31, 28)'
+      sellColor: 'rgb(217, 31, 28)',
+      buyAudio: `play(659.26, gain * 0.5, decay * 0.75, 80);
+      play(830.6, gain * 0.5, decay * 0.75, 80);
+      play(987.76, gain * 0.5, decay * 0.75, 80);
+      play(1318.52, gain * 1, decay, 80)`,
+      sellAudio: `play(493.88, gain * 0.5, decay * 0.75, 80);
+      play(369.99, gain * 0.5, decay * 0.75, 80);
+      play(293.66, gain * 0.5, decay * 0.75, 80);
+      play(246.94, gain * 1, decay, 80)`
     }
+
+    /*
+            if (variant === 0) {
+          this.play(493.88 * pitch, Math.sqrt(factor * 1.5) / 10, 0.1 + Math.sqrt(factor) / 10)
+        } else if (variant === 1) {
+          this.play(493.88 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.1 + factor * 0.1)
+          setTimeout(() => this.play(392 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.1 + factor * 0.1), 80)
+        } else {
+          this.play(493.88 * pitch, 0.05 + Math.sqrt(factor) / 25, 0.1 + factor * 0.1)
+          setTimeout(() => this.play(369.99 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.2), 80)
+          setTimeout(() => this.play(293.66 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.2), 160)
+          setTimeout(() => this.play(246.94 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.1 + factor * 0.1), 240)
+
+    */
   ],
+
   multipliers: {},
   showThresholdsAsTable: true,
   maxRows: 100,
@@ -138,10 +181,6 @@ const mutations = {
     state.showThresholdsAsTable = value ? true : false
   },
   SET_THRESHOLD_AMOUNT(state, payload) {
-    if (typeof this.getters[state._id + '/getThreshold'] !== 'function') {
-      console.log(this.getters, state._id + '/getThreshold')
-      debugger
-    }
     const threshold = this.getters[state._id + '/getThreshold'](payload.id)
 
     if (threshold) {
@@ -165,10 +204,6 @@ const mutations = {
     Vue.set(state.multipliers, identifier, multiplier)
   },
   SET_THRESHOLD_GIF(state, payload) {
-    if (typeof this.getters[state._id + '/getThreshold'] !== 'function') {
-      console.log(this.getters, state._id + '/getThreshold')
-      debugger
-    }
     const threshold = this.getters[state._id + '/getThreshold'](payload.id)
 
     if (threshold) {
@@ -185,22 +220,38 @@ const mutations = {
     }
   },
   SET_THRESHOLD_COLOR(state, payload) {
-    if (typeof this.getters[state._id + '/getThreshold'] !== 'function') {
-      console.log(this.getters, state._id + '/getThreshold')
-      debugger
-    }
     const threshold = this.getters[state._id + '/getThreshold'](payload.id)
 
     if (threshold) {
       threshold[payload.side] = payload.value
     }
   },
+  SET_THRESHOLD_AUDIO(state, payload) {
+    const threshold = this.getters[state._id + '/getThreshold'](payload.id)
+
+    if (threshold) {
+      threshold['buyAudio'] = payload.buyAudio
+      threshold['sellAudio'] = payload.sellAudio
+    }
+  },
   ADD_THRESHOLD(state) {
+    const previousThreshold = state.thresholds[state.thresholds.length - 1]
+
+    let buyAudio = `play(659.26, gain, decay, 50)`
+    let sellAudio = `play(493.88, gain, decay, 50)`
+
+    if (previousThreshold) {
+      buyAudio = previousThreshold.buyAudio
+      sellAudio = previousThreshold.sellAudio
+    }
+
     state.thresholds.push({
       id: randomString(8),
       amount: state.thresholds[state.thresholds.length - 1].amount * 2,
       buyColor: 'rgb(0, 255, 0)',
-      sellColor: 'rgb(255, 0, 0)'
+      sellColor: 'rgb(255, 0, 0)',
+      buyAudio,
+      sellAudio
     })
   },
   DELETE_THRESHOLD(state, id: string) {

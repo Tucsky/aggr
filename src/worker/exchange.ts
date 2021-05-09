@@ -421,6 +421,11 @@ class Exchange extends EventEmitter {
     }
 
     this.emit('subscribed', pair, api._id)
+
+    if (api.readyState !== WebSocket.OPEN) {
+      // webSocket is in CLOSING or CLOSED state
+      return false
+    }
   }
 
   /**
@@ -430,11 +435,16 @@ class Exchange extends EventEmitter {
    */
   async unsubscribe(api, pair): Promise<unknown> {
     if (!this.markPairAsDisconnected(api, pair)) {
-      // pair is already detached
+      // pair is already detached or
       return false
     }
 
     this.emit('unsubscribed', pair, api._id)
+
+    if (api.readyState !== WebSocket.OPEN) {
+      // webSocket is in CLOSING or CLOSED state
+      return false
+    }
   }
 
   /**

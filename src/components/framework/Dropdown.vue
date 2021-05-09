@@ -50,6 +50,7 @@ import { Component, Vue } from 'vue-property-decorator'
   }
 })
 export default class extends Vue {
+  options: any
   isOpen = false
 
   private _clickOutsideHandler: () => void
@@ -99,6 +100,10 @@ export default class extends Vue {
 
   set(index) {
     // this.selected = index
+    if (this.options && this.options[index] && typeof this.options[index].click === 'function') {
+      this.options[index].click(this.options[index])
+    }
+
     this.$emit('output', index)
     this.hide()
   }

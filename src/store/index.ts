@@ -28,7 +28,7 @@ const modules = { app, settings, panes, exchanges } as AppModuleTree<ModulesStat
 store.subscribe((mutation, state: any) => {
   const moduleId = mutation.type.split('/')[0]
 
-  console.log(`[store] ${mutation.type}`)
+  console.debug(`[store] ${mutation.type}`)
 
   if (state[moduleId] && state[moduleId]._id) {
     scheduleSync(state[moduleId])
@@ -65,13 +65,13 @@ export async function boot(workspace?: Workspace) {
     promises.push(store.dispatch(id + '/boot'))
   }
 
-  store.dispatch('app/setBooted')
-
   try {
     await Promise.all(promises)
   } catch (error) {
     console.log(error)
   }
+
+  store.dispatch('app/setBooted')
 }
 
 export default store

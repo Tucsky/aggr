@@ -96,10 +96,6 @@ export default class extends Vue {
     return this.$store.state.settings.audioVolume
   }
 
-  get activeExchanges() {
-    return this.$store.state.app.activeExchanges
-  }
-
   $refs!: {
     handle: HTMLElement
   }

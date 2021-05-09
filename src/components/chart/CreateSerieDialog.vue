@@ -4,23 +4,38 @@
       <div class="title">new serie</div>
       <div class="column -center"></div>
     </template>
-    <template v-if="inactiveSeries.length">
+    <template v-if="series.length">
       <div class="form-group">
         <label>Choose from existing serie</label>
-        <dropdown
-          class="form-control -left"
-          :options="inactiveSeries"
-          :alwaysShowPlaceholder="true"
-          :placeholder="inactiveSeries.length + ' serie' + (inactiveSeries.length > 1 ? 's' : '')"
-          @output="enableSerie"
-        >
-          <template v-slot:option="{ value }">
-            <div class="serie-dropdown-control">
-              <span>{{ value.name }}</span>
-              <i class="icon-trash -action" @click.stop="$store.dispatch(paneId + '/removeSerie', value.id)"></i>
-            </div>
-          </template>
-        </dropdown>
+        <div class="d-flex mb4">
+          <input type="text" class="form-control" placeholder="search" v-model="query" />
+          <div v-text="series.length" class="-center text-muted ml16"></div>
+        </div>
+        <table v-if="filteredSeries.length" class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Last updated</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="serie of filteredSeries"
+              :key="serie.id"
+              @click="selectSerie(serie)"
+              :title="serie.id"
+              v-tippy="{ placement: 'right' }"
+              class="-action"
+            >
+              <td class="table-input">
+                {{ serie.name }}
+              </td>
+              <td class="table-input">{{ ago(serie.updatedAt) }}</td>
+              <td class="btn -red -small" @click.stop="removeSerie(serie)"><i class="icon-trash"></i></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div class="divider">Or</div>
     </template>
@@ -50,9 +65,10 @@
 
 <script>
 import store from '@/store'
-import { slugify, uniqueName, getSerieSettings } from '@/utils/helpers'
+import { ago, slugify, uniqueName } from '@/utils/helpers'
 import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
+import workspacesService from '@/services/workspacesService'
 
 export default {
   mixins: [DialogMixin],
@@ -68,13 +84,16 @@ export default {
   data: () => ({
     serieId: null,
     name: 'Untitled',
-    priceScaleId: 'right'
+    priceScaleId: 'right',
+    query: '',
+    series: []
   }),
   computed: {
-    series() {
-      const series = Object.keys(this.$store.state[this.paneId].series).map(serieId => getSerieSettings(this.paneId, serieId))
-
-      return series
+    queryFilter: function() {
+      return new RegExp(this.query.replace(/\W/, '.*'), 'i')
+    },
+    filteredSeries: function() {
+      return this.series.filter(a => !this.$store.state[this.paneId].series[a.id] && this.queryFilter.test(a.name))
     },
     availableScales: function() {
       return this.series
@@ -93,17 +112,10 @@ export default {
             right: 'Main scale (right)'
           }
         )
-    },
-    inactiveSeries() {
-      const series = this.series.filter(serie => {
-        return serie.enabled === false
-      })
-
-      return series
     }
   },
-  mounted() {
-    this.getSerieId(this.name)
+  async created() {
+    await this.getSeries()
   },
   beforeDestroy() {
     if (this.editor) {
@@ -111,6 +123,10 @@ export default {
     }
   },
   methods: {
+    async getSeries() {
+      this.series = await workspacesService.getSeries()
+      this.getSerieId(this.name)
+    },
     getSerieId(name) {
       if (name.length) {
         this.serieId = uniqueName(slugify(name), Object.keys(store.state[this.paneId].series))
@@ -124,12 +140,17 @@ export default {
         priceScaleId: this.priceScaleId || this.serieId
       })
     },
-    enableSerie(index) {
-      const option = this.inactiveSeries[index]
-
-      this.$store.dispatch(this.paneId + '/toggleSerie', option.id)
-
+    selectSerie(serie) {
+      this.$store.dispatch(this.paneId + '/addSerie', serie)
       this.close(null)
+    },
+    removeSerie(serie) {
+      workspacesService.deleteSerie(serie.id)
+
+      this.series.splice(this.series.indexOf(serie), 1)
+    },
+    ago(timestamp) {
+      return ago(timestamp)
     }
   }
 }

@@ -30,8 +30,11 @@ class AggregatorService extends EventEmitter {
 
       const workspace = await workspacesService.getCurrentWorkspace()
 
-      workspacesService.setWorkspace(workspace)
+      workspacesService.setCurrentWorkspace(workspace)
     })
+    ;(window as any).trade = (amount, side, price = 57000) => {
+      this.emit('trades', [{ pair: 'XBTUSD', exchange: 'BITMEX', price: price, size: amount / price, timestamp: +new Date(), side }])
+    }
   }
 
   dispatch(payload: AggregatorPayload) {

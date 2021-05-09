@@ -32,13 +32,17 @@ export default {
       return new Promise(resolve => {
         setTimeout(
           () => {
-            resolve()
+            this.destroy()
 
-            this.$destroy()
+            resolve()
           },
           store.state.settings.disableAnimations ? 0 : 500
         )
       })
+    },
+    destroy() {
+      this.$destroy()
+      this.$el.parentNode.removeChild(this.$el)
     }
   }
 }

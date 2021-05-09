@@ -2,9 +2,7 @@
   <Dialog :open="open" @clickOutside="close" class="serie-dialog">
     <template v-slot:header>
       <div class="title">
-        <div>
-          <strong>{{ name }} </strong> <i class="icon-sm -no-grab ml4 icon-edit" style="cursor: pointer" @click="renameSerie"></i>
-        </div>
+        <div>{{ name }} <i class="icon-sm -no-grab ml4 icon-edit" style="cursor: pointer" @click="renameSerie"></i></div>
         <code class="subtitle pl0" v-text="serieId"></code>
       </div>
 
@@ -23,16 +21,49 @@
       ></dropdown>
     </div>
     <div class="form-group mb16">
-      <label for>
-        Value
-        <span
-          class="icon-info"
-          title="/!\Javascript syntax/!\<br>use build in variable such as vbuy/vsell (volume by side) cbuy/csell (trade count by side) lbuy/lsell (liquidation volume)"
-          v-tippy
-        ></span>
-      </label>
+      <div class="d-flex mb4">
+        <label for class="mrauto -center">
+          Input
+        </label>
+        <button class="btn -small -text -green" @click="showHelp = !showHelp">
+          <i class="icon-down" :class="{ 'icon-up': this.showHelp }"></i> help
+        </button>
+      </div>
+      <div class="help-block mb16" v-if="showHelp">
+        <u>Serie formula</u><br />
+        Use build in variables such as <code v-tippy title="Current bar object">bar</code>, <code v-tippy title="Buy volume">vbuy</code>,
+        <code v-tippy title="Sell volume">vsell</code>, <code v-tippy title="Buy liquidation (liquidated short)">lbuy</code>,
+        <code v-tippy title="Sell liquidation (liquidated long)">lsell</code>, <code v-tippy title="Number of buy">cbuy</code>,
+        <code v-tippy title="Number of sell">csell</code>, <code v-tippy title="Open price">open</code>, <code v-tippy title="High price">high</code>,
+        <code v-tippy title="Low price">low</code> and <code v-tippy title="Close price">close</code>. <br /><br />
+
+        Pass thoses variables to
+        <a href="https://github.com/Tucsky/aggr/blob/master/src/components/chart/serieUtils.ts" target="_blank">utility functions</a> like
+        <code v-tippy title="Average all sources in bar, output ohlc">avg_ohlc(bar)</code>,
+        <code v-tippy title="Output moving average of the input number">sma(BITMEX:XBTUSD.close, 50)</code>,
+        <code v-tippy title="Output exponential moving average of the input number">ema(BITMEX:XBTUSD.close, 50)</code><br /><br />
+
+        <u>Reference options</u><br />
+        You can access serie options with options.<code>nameOfOption</code> for exemple if you use
+        <code v-tippy title="Output simple moving average of the input number of length defined in option 'myCustomOption'"
+          >sma(avg_close(bar),options.myCustomOption)</code
+        >. This will create a new option below called "myCustomOption", just fill with a valid number for the serie to compile properly.<br /><br />
+
+        <u>Reference sources</u><br />
+        Using any specific sources
+        <code v-tippy title="Reference an active market (active = connected to app, connected to pane, not hidden or anyting)">BINANCE:btcusdt</code>
+        or <code v-tippy title="A market is just a bar object, which contain all the basic property described above">BINANCE:btcusdt.vbuy</code><br />
+        Or by combining sources <code>avg_ohlc({sources:{BYBITBTCUSD:BYBIT:BTCUSD,BITMEXXBTUSD:BITMEX:XBTUSD}})</code><br /><br />
+
+        <u>Reference other serie</u><br />
+        Make use of ID of the other serie in this code block to reference it's value. Let's say you have another serie with id <code>price</code> that
+        shows an ohlc, use
+        <code v-tippy title="Output a 50 simple moving average taking close property of another serie">sma($price.close, 50)</code> to show the 50
+        simple moving average of that. Note that the code should only produce 1 output (one line, one ohlc serie etc). Want more output duplicate the
+        serie.
+      </div>
       <textarea ref="behaveInput" class="form-control" rows="5" :value="input" @blur="setInput($event.target.value)"></textarea>
-      <p v-if="error" class="form-feedback"><i class="icon-warning mr16"></i> {{ error }}</p>
+      <p v-if="error" class="form-feedback"><i class="icon-warning mr4"></i> {{ error }}</p>
     </div>
     <hr />
     <div class="column w-100">
@@ -140,19 +171,7 @@
     </div>
     <hr />
     <div class="form-group column">
-      <label
-        class="checkbox-control -on-off"
-        v-tippy
-        :title="!enabled ? 'Enable' : 'Disable'"
-        @change="$store.dispatch(paneId + '/toggleSerie', serieId)"
-      >
-        <input type="checkbox" class="form-control" :checked="enabled" />
-        <div></div>
-        <span>
-          {{ enabled ? 'Active' : 'Disabled' }}
-        </span>
-      </label>
-      <button class="btn -blue mr16" v-tippy title="Duplicate" @click="duplicateSerie">
+      <button class="btn -blue mr16 mlauto" v-tippy title="Duplicate" @click="duplicateSerie">
         <i class="icon-copy-paste"></i>
       </button>
       <button class="btn -red" v-tippy title="Serie will be lost forever" @click="removeSerie">
@@ -169,7 +188,6 @@ import { defaultPlotsOptions, defaultSerieOptions } from './chartOptions'
 import Behave from 'behave-js'
 import SerieDialog from './SerieDialog.vue'
 import dialogService from '../../services/dialogService'
-import { defaultChartSeries } from './defaultSeries'
 import merge from 'lodash.merge'
 
 const ignoredOptionsKeys = ['crosshairMarkerVisible']
@@ -179,6 +197,7 @@ export default {
   mixins: [DialogMixin],
   data: () => ({
     editor: null,
+    showHelp: false,
     currentValues: {},
     // inputOptionsKeys: [],
     otherOptionsKeys: [],
@@ -198,31 +217,29 @@ export default {
     serieSettings: function() {
       return store.state[this.paneId].series[this.serieId]
     },
-    defaultSettings: function() {
-      return defaultChartSeries[this.serieId] || {}
-    },
     error: function() {
-      return store.state[this.paneId].activeSeriesErrors[this.serieId]
+      return store.state[this.paneId].seriesErrors[this.serieId]
     },
     name: {
       get: function() {
-        return this.serieSettings.name || this.defaultSettings.name
+        if (this.serieSettings.name) {
+          return this.serieSettings.name.replace(/\{([\w\d_]+)\}/g, (match, key) => this.serieSettings.options[key] || '')
+        } else {
+          return this.serieId
+        }
       },
       set: function(newName) {
         this.newName = newName
       }
     },
     type: function() {
-      return this.serieSettings.type || this.defaultSettings.type
+      return this.serieSettings.type
     },
     input: function() {
-      return this.serieSettings.input || this.defaultSettings.input
+      return this.serieSettings.input
     },
     description: function() {
-      return this.serieSettings.description || this.defaultSettings.description
-    },
-    enabled: function() {
-      return typeof this.serieSettings.enabled === 'undefined' ? true : this.serieSettings.enabled
+      return this.serieSettings.description
     },
     positionOption() {
       return {
@@ -352,9 +369,8 @@ export default {
 
       if (typeof this.serieSettings.options[key] !== 'undefined') {
         preferedValue = this.serieSettings.options[key]
-      } else if (this.defaultSettings.options) {
-        preferedValue = this.defaultSettings.options[key]
       }
+
       const defaultValue = this.getDefaultValue(key)
       let finalValue = ''
 
@@ -410,15 +426,12 @@ export default {
     },
     refreshOptions() {
       const serieDefaultOptionsKeys = Object.keys(this.serieSettings.options)
-      const exampleSerieOptionsKeys = Object.keys(this.defaultSettings.options || {})
 
       const inputOptionsKeys = this.getInputOptions(this.input)
       const typeOptionsKeys = Object.keys({ ...defaultSerieOptions, ...defaultPlotsOptions[this.type] })
-      const mergedOptionsKeys = [...exampleSerieOptionsKeys, ...serieDefaultOptionsKeys, ...inputOptionsKeys, ...typeOptionsKeys].filter(
-        (x, i, a) => {
-          return ignoredOptionsKeys.indexOf(x) === -1 && a.indexOf(x) == i
-        }
-      )
+      const mergedOptionsKeys = [...serieDefaultOptionsKeys, ...inputOptionsKeys, ...typeOptionsKeys].filter((x, i, a) => {
+        return ignoredOptionsKeys.indexOf(x) === -1 && a.indexOf(x) == i
+      })
 
       const colorOptionsKeys = mergedOptionsKeys.filter(k => /color/i.test(k))
       const otherOptionsKeys = mergedOptionsKeys.filter(k => !/color/i.test(k))
@@ -480,7 +493,7 @@ export default {
     async renameSerie() {
       const name = await dialogService.prompt({
         action: 'Rename',
-        input: this.name
+        input: this.serieSettings.name
       })
 
       if (name && name !== this.name) {
@@ -489,10 +502,9 @@ export default {
       }
     },
     async duplicateSerie() {
-      const settings = merge({}, this.defaultSettings, this.serieSettings)
+      const settings = merge({}, this.serieSettings)
 
       settings.name += ' copy'
-      settings.enabled = false
 
       const id = await store.dispatch(this.paneId + '/createSerie', settings)
 

@@ -1,6 +1,7 @@
 import aggregatorService from '@/services/aggregatorService'
 import { getProducts, showIndexedProductsCount } from '@/services/productsService'
-import { capitalizeFirstLetter, getBucketId, slugify, uniqueName } from '@/utils/helpers'
+import workspacesService from '@/services/workspacesService'
+import { capitalizeFirstLetter, getBucketId, sleep, slugify, uniqueName } from '@/utils/helpers'
 import { registerModule } from '@/utils/store'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
@@ -133,27 +134,45 @@ const state = {
             id: 'threshold',
             amount: 10000,
             buyColor: 'rgba(236,64,122,0.5)',
-            sellColor: 'rgba(255,152,0,0.5)'
+            sellColor: 'rgba(255,152,0,0.5)',
+            buyAudio: `play(329.63, gain, decay * 2, 80, 'sine');`,
+            sellAudio: `play(440, gain, decay * 2, 80, 'sine');`
           },
           {
             id: 'significant',
             amount: 25000,
             buyColor: 'rgba(236,64,122,0.6)',
-            sellColor: 'rgba(255,152,0,0.7)'
+            sellColor: 'rgba(255,152,0,0.7)',
+            buyAudio: `play(329.63, gain / 2, decay, 80, 'sine');
+            play(329.63, gain / 1.5, decay * 1.5, 80, 'sine');`,
+            sellAudio: `play(440, gain / 2, decay, 80, 'sine');
+            play(440, gain / 1.5, decay * 1.5, 80, 'sine');`
           },
           {
             id: 'huge',
             amount: 100000,
             gif: 'rekt',
             buyColor: 'rgba(236,64,122,0.7)',
-            sellColor: 'rgba(255,152,0,0.8)'
+            sellColor: 'rgba(255,152,0,0.8)',
+            buyAudio: `play(329.63, gain / 2, decay / 2, 80, 'sine');
+            play(329.63, gain / 2, decay / 2, 80, 'sine');
+            play(329.63, gain / 1.5, decay, 80, 'sine');`,
+            sellAudio: `play(440, gain / 2, decay / 2, 80, 'sine');
+            play(440, gain / 2, decay / 2, 80, 'sine');
+            play(440, gain / 1.5, decay, 80, 'sine');`
           },
           {
             id: 'rare',
             amount: 1000000,
             gif: 'explosion',
             buyColor: 'rgb(156,39,176)',
-            sellColor: 'rgb(255,235,59)'
+            sellColor: 'rgb(255,235,59)',
+            buyAudio: `play(329.63, gain / 2, decay, 80, 'sine');
+            play(329.63, gain / 2, decay, 80, 'sine');
+            play(329.63, gain / 1.5, decay * 1.5, 80, 'sine');`,
+            sellAudio: `play(440, gain / 2, decay, 80, 'sine');
+            play(440, gain / 2, decay, 80, 'sine');
+            play(440, gain / 1.5, decay * 1.5, 80, 'sine');`
           }
         ]
       }
@@ -283,7 +302,6 @@ const actions = {
     const allUniqueMarkets = Object.keys(marketsListeners)
       .concat(Object.keys(state.marketsListeners))
       .filter((v, i, a) => a.indexOf(v) === i)
-    console.log('!allUniqueMarke', allUniqueMarkets)
 
     const toConnect = []
     const toDisconnect = []
@@ -400,6 +418,23 @@ const actions = {
     this.dispatch('app/showNotice', {
       title: `Duplicated pane ${id}`
     })
+  },
+  async resetPane({ state, commit }, id: string) {
+    const gridItem = state.layout.find(item => item.i === id)
+
+    const pane = JSON.parse(JSON.stringify(state.panes[id]))
+
+    commit('REMOVE_GRID_ITEM', state.layout.indexOf(gridItem))
+
+    this.unregisterModule(id)
+
+    await workspacesService.removeState(id)
+
+    await sleep(100)
+
+    await registerModule(id, {}, true, pane)
+
+    commit('ADD_GRID_ITEM', gridItem)
   }
 } as ActionTree<PanesState, ModulesState>
 

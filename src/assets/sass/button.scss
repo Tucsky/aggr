@@ -22,17 +22,20 @@ button {
     background-color: lighten($green, 10%);
   }
 
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &.-block {
+    width: 100%;
+  }
+
   &.-small {
     font-size: 0.75rem;
   }
 
   &.-large {
     font-size: 1.125rem;
-  }
-
-  &.-text {
-    background-color: transparent;
-    border-color: transparent;
   }
 
   &.-outline {
@@ -110,6 +113,9 @@ button {
 
     &.-text {
       color: $green;
+      &:hover {
+        border-color: transparent;
+      }
     }
 
     &.-outline {
@@ -157,6 +163,11 @@ button {
         color: lighten($dark, 10%);
       }
     }
+  }
+
+  &.-text {
+    background-color: transparent;
+    border-color: transparent;
   }
 }
 

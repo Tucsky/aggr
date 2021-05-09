@@ -52,6 +52,8 @@ import { getEventCords } from '../../utils/picker'
 })
 export default class extends Vue {
   delta = { x: 0, y: 0 }
+  target = { x: 0, y: 0 }
+  animating = false
   private clickOutsideClose: boolean
   private _handleRelease: () => void
   private _handleDragging: (evnt: any) => void
@@ -83,11 +85,15 @@ export default class extends Vue {
 
     const startOffset = this.$refs.dialogContent.offsetTop
     this._handleDragging = evnt => {
-      window.requestAnimationFrame(() => {
-        const endPosition = getEventCords(evnt)
-        this.delta.x = lastMove.x + endPosition.x - startPosition.x
-        this.delta.y = Math.max(startOffset * -1, lastMove.y + endPosition.y - startPosition.y)
-      })
+      const endPosition = getEventCords(evnt)
+
+      const x = lastMove.x + endPosition.x - startPosition.x
+      const y = Math.max(startOffset * -1, lastMove.y + endPosition.y - startPosition.y)
+
+      this.target.x = x
+      this.target.y = y
+
+      this.animate()
     }
     this._handleRelease = () => {
       document.removeEventListener('mousemove', this._handleDragging)
@@ -101,6 +107,20 @@ export default class extends Vue {
     document.addEventListener('mouseup', this._handleRelease)
     document.addEventListener('touchmove', this._handleDragging)
     document.addEventListener('touchup', this._handleRelease)
+  }
+
+  animate() {
+    this.delta.x = this.target.x
+    this.delta.y = this.target.y
+    const distance = Math.abs(this.delta.x - this.target.x) + Math.abs(this.delta.y - this.target.y)
+    console.log('target:', this.target.x, this.target.y, 'distance:', distance)
+
+    if (distance > 10 && !this.animating) {
+      this.animating = true
+      return requestAnimationFrame(this.animate)
+    }
+
+    this.animating = false
   }
 
   clickOutside() {

@@ -96,7 +96,6 @@ export default class extends Vue {
   }
 
   getPairs() {
-    console.log('get pairs', this.searchTarget)
     if (this.searchTarget) {
       this.pairs = this.$store.state.panes.panes[this.searchTarget].markets.slice()
     } else {
@@ -130,26 +129,38 @@ export default class extends Vue {
   }
 
   bindSearchOpenByKey() {
-    document.addEventListener('keypress', this.onDocumentKeyPress)
+    document.addEventListener('keydown', this.onDocumentKeyPress)
   }
 
   unbindSearchOpenByKey() {
-    document.removeEventListener('keypress', this.onDocumentKeyPress)
+    document.removeEventListener('keydown', this.onDocumentKeyPress)
   }
 
   bindSearchClickOutside() {
     document.addEventListener('mousedown', this.onDocumentClick)
+
+    console.debug(`[search] bind clic outside`)
   }
 
   unbindSearchClickOutside() {
     document.removeEventListener('mousedown', this.onDocumentClick)
+
+    console.debug(`[search] unbind clic outside`)
   }
 
   onDocumentKeyPress(event: KeyboardEvent) {
     const activeElement = document.activeElement as HTMLElement
 
+    if (event.keyCode === 27) {
+      this.$store.dispatch('app/hideSearch')
+      return
+    }
+
     if (
       this.showSearch ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
       activeElement.tagName === 'INPUT' ||
       activeElement.tagName === 'TEXTAREA' ||
       activeElement.tagName === 'SELECT' ||
@@ -172,6 +183,8 @@ export default class extends Vue {
     const element = this.$el.children[0]
 
     const dialog = document.querySelector('.dialog')
+
+    console.debug(`[search] on document clic`)
 
     if (element !== event.target && !element.contains(event.target) && (!dialog || !dialog.contains(event.target))) {
       this.$store.dispatch('app/hideSearch')

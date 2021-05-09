@@ -2,7 +2,7 @@
   > label {
     margin-bottom: 5px;
     line-height: 1.3;
-    font-family: 'Barlow Semi Condensed';
+    // font-family: 'Share Tech Mono';
     font-size: 0.875rem;
     display: block;
 
@@ -45,6 +45,7 @@
   font-size: 14px;
   margin: 0;
   color: inherit;
+  font-family: inherit;
 }
 
 .help-text {
@@ -118,17 +119,6 @@
       left: -1.5em;
       width: 2px;
       background-color: rgba(white, 0.2);
-    }
-  }
-
-  &.-on-off input ~ div {
-    &:before {
-      content: unicode($icon-power-on);
-    }
-
-    &:after {
-      content: unicode($icon-power-off);
-      opacity: 0.5;
     }
   }
 
@@ -425,6 +415,7 @@ input[type='range'] {
 
 textarea.form-control {
   font-size: 12px;
+  font-family: $font-monospace;
 }
 
 .serie__scale-margins {
@@ -462,5 +453,14 @@ textarea.form-control {
 
   .checkbox-control > div {
     border-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+.help-block {
+  background-color: rgba(black, 0.2);
+  padding: 1rem;
+
+  code {
+    color: white;
   }
 }

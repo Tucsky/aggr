@@ -1,4 +1,6 @@
+import { defaultChartSeries } from '@/components/chart/defaultSeries'
 import { boot } from '@/store'
+import { SerieSettings } from '@/store/panesSettings/chart'
 import { GifsStorage, ProductsStorage, Workspace } from '@/types/test'
 import { downloadJson, randomString, slugify, uniqueName } from '@/utils/helpers'
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
@@ -17,6 +19,11 @@ interface AggrDB extends DBSchema {
     key: string
     indexes: { createdAt: number; updatedAt: number }
   }
+  series: {
+    value: SerieSettings
+    key: string
+    indexes: { createdAt: number; updatedAt: number }
+  }
 }
 
 class WorkspacesService {
@@ -25,49 +32,88 @@ class WorkspacesService {
   workspace: Workspace
 
   async createDatabase() {
-    console.log(`[workspaces.db] openDB 'aggr'`)
+    console.log(`[idb] openDB 'aggr'`)
 
-    return openDB<AggrDB>('aggr', 1, {
-      upgrade: (db, oldVersion, newVersion) => {
-        console.debug(`[workspaces.db] upgrade received`, oldVersion, '->', newVersion)
-        console.debug(`[workspaces.db] create idb stores`)
+    let promiseOfUpgrade: Promise<void>
 
-        const workspacesStore = db.createObjectStore('workspaces', {
-          keyPath: 'id'
-        })
+    return new Promise<IDBPDatabase<AggrDB>>(resolve => {
+      openDB<AggrDB>('aggr', 1, {
+        upgrade: (db, oldVersion, newVersion, tx) => {
+          console.debug(`[idb] upgrade received`, oldVersion, '->', newVersion)
+          console.debug(`[idb] create idb stores`)
 
-        const index = workspacesStore.createIndex('updatedAt', 'updatedAt')
+          promiseOfUpgrade = new Promise(resolve => {
+            tx.oncomplete = async () => {
+              console.debug(`[idb] upgrade completed`)
 
-        console.log(index)
+              await this.insertDefault(db)
+              resolve()
+            }
+          })
 
-        db.createObjectStore('products', {
-          keyPath: 'exchange'
-        })
+          const workspacesStore = db.createObjectStore('workspaces', {
+            keyPath: 'id'
+          })
 
-        db.createObjectStore('gifs', {
-          keyPath: 'slug'
-        })
-        // …
-      },
-      blocked() {
-        console.log(`[workspaces.db] blocked received`)
-        // …
-      },
-      blocking() {
-        console.log(`[workspaces.db] blocking received`)
-        // …
-      },
-      terminated() {
-        console.log(`[workspaces.db] terminated received`)
-        // …
-      }
+          workspacesStore.createIndex('updatedAt', 'updatedAt')
+
+          const seriesStore = db.createObjectStore('series', {
+            keyPath: 'id'
+          })
+
+          seriesStore.createIndex('updatedAt', 'updatedAt')
+
+          db.createObjectStore('products', {
+            keyPath: 'exchange'
+          })
+
+          db.createObjectStore('gifs', {
+            keyPath: 'slug'
+          })
+        },
+        blocked() {
+          console.log(`[idb] blocked received`)
+          // …
+        },
+        blocking() {
+          console.log(`[idb] blocking received`)
+          // …
+        },
+        terminated() {
+          console.log(`[idb] terminated received`)
+          // …
+        }
+      }).then(db => {
+        if (promiseOfUpgrade) {
+          return promiseOfUpgrade.then(() => resolve(db))
+        }
+
+        return resolve(db)
+      })
     })
   }
 
   async initialize() {
     this.db = await this.createDatabase()
 
-    console.log(`[storage.db] database initialized`, this.db)
+    console.log(`[idb] database initialized`, this.db)
+  }
+
+  async insertDefault(db: IDBPDatabase<AggrDB>) {
+    console.log(`[idb] insert default`)
+
+    const now = +new Date()
+    const tx = db.transaction('series', 'readwrite')
+
+    for (const id in defaultChartSeries) {
+      const serie: SerieSettings = defaultChartSeries[id]
+
+      tx.store.add({ ...serie, id, createdAt: now, updatedAt: now })
+    }
+
+    console.debug(`[idb] ${Object.keys(defaultChartSeries).length} default series added`)
+
+    await tx.done
   }
 
   async getCurrentWorkspace() {
@@ -86,7 +132,7 @@ class WorkspacesService {
     return workspace
   }
 
-  async setWorkspace(workspace: Workspace) {
+  async setCurrentWorkspace(workspace: Workspace) {
     this.workspace = workspace
 
     window.history.replaceState('Object', 'Title', '/' + this.workspace.id)
@@ -95,36 +141,6 @@ class WorkspacesService {
     await boot(workspace)
 
     return workspace
-  }
-
-  getWorkspace(id: string) {
-    console.debug(`[workspaces] get workspace ${id}`)
-
-    return this.db.get('workspaces', id)
-  }
-
-  async createWorkspace() {
-    const timestamp = +new Date()
-
-    const workspace: Workspace = {
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      name: null,
-      id: null,
-      states: {}
-    }
-
-    await this.makeUnique(workspace)
-
-    console.debug(`[workspaces] create new workspace ${workspace.name} (${workspace.id})`)
-
-    await this.db.add('workspaces', workspace)
-
-    return await this.getWorkspace(workspace.id)
-  }
-
-  getWorkspaces() {
-    return this.db.getAllFromIndex('workspaces', 'updatedAt')
   }
 
   async saveState(stateId, state: any) {
@@ -169,6 +185,88 @@ class WorkspacesService {
     return this.saveWorkspace()
   }
 
+  async importWorkspace(workspace: Workspace) {
+    const timestamp = +new Date()
+
+    await this.makeUniqueWorkspace(workspace)
+
+    await this.db.add('workspaces', {
+      ...workspace,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    })
+
+    return this.getWorkspace(workspace.id)
+  }
+
+  async makeUniqueWorkspace(workspace: Workspace) {
+    const workspaces = await this.getWorkspaces()
+
+    const names = workspaces.map(w => w.name)
+    const ids = workspaces.map(w => w.id)
+
+    if (!workspace.name) {
+      workspace.name = 'Untitled'
+    }
+
+    workspace.name = uniqueName(workspace.name, names)
+
+    let id = workspace.id
+
+    while (!id || ids.indexOf(id) !== -1) {
+      id = randomString(4)
+    }
+
+    workspace.id = id
+  }
+
+  getWorkspace(id: string) {
+    console.debug(`[workspaces] get workspace ${id}`)
+
+    return this.db.get('workspaces', id)
+  }
+
+  async createWorkspace() {
+    const timestamp = +new Date()
+
+    const workspace: Workspace = {
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      name: null,
+      id: null,
+      states: {}
+    }
+
+    await this.makeUniqueWorkspace(workspace)
+
+    console.debug(`[workspaces] create new workspace ${workspace.name} (${workspace.id})`)
+
+    await this.db.add('workspaces', workspace)
+
+    return await this.getWorkspace(workspace.id)
+  }
+
+  async duplicateWorkspace() {
+    const timestamp = +new Date()
+
+    const workspace: Workspace = JSON.parse(JSON.stringify(this.workspace))
+
+    workspace.createdAt = timestamp
+    workspace.updatedAt = timestamp
+
+    await this.makeUniqueWorkspace(workspace)
+
+    console.debug(`[workspaces] copy current workspace into ${workspace.name} (${workspace.id})`)
+
+    await this.db.add('workspaces', workspace)
+
+    return await this.setCurrentWorkspace(await this.getWorkspace(workspace.id))
+  }
+
+  getWorkspaces() {
+    return this.db.getAllFromIndex('workspaces', 'updatedAt')
+  }
+
   async renameWorkspace(name: string) {
     if (!this.workspace) {
       throw new Error(`There is no current workspace`)
@@ -195,41 +293,6 @@ class WorkspacesService {
     return this.db.delete('workspaces', id)
   }
 
-  async importWorkspace(workspace: Workspace) {
-    const timestamp = +new Date()
-
-    await this.makeUnique(workspace)
-
-    await this.db.add('workspaces', {
-      ...workspace,
-      createdAt: timestamp,
-      updatedAt: timestamp
-    })
-
-    return this.getWorkspace(workspace.id)
-  }
-
-  async makeUnique(workspace: Workspace) {
-    const workspaces = await this.getWorkspaces()
-
-    const names = workspaces.map(w => w.name)
-    const ids = workspaces.map(w => w.id)
-
-    if (!workspace.name) {
-      workspace.name = 'Untitled'
-    }
-
-    workspace.name = uniqueName(workspace.name, names)
-
-    let id = workspace.id
-
-    while (!id || ids.indexOf(id) !== -1) {
-      id = randomString(4)
-    }
-
-    workspace.id = id
-  }
-
   saveProducts(storage: ProductsStorage) {
     return this.db.put('products', storage)
   }
@@ -252,6 +315,30 @@ class WorkspacesService {
 
   deleteGifs(slug: string) {
     return this.db.delete('gifs', slug)
+  }
+
+  async saveSerie(serie: SerieSettings) {
+    const now = +new Date()
+
+    if (!serie.createdAt) {
+      serie.createdAt = now
+    }
+
+    serie.updatedAt = now
+
+    return this.db.put('series', serie)
+  }
+
+  getSerie(id: string) {
+    return this.db.get('series', id)
+  }
+
+  getSeries() {
+    return this.db.getAllFromIndex('series', 'updatedAt')
+  }
+
+  deleteSerie(id: string) {
+    return this.db.delete('series', id)
   }
 
   async reset() {

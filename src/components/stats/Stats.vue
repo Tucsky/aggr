@@ -257,12 +257,20 @@ export default class extends Mixins(PaneMixin) {
   }
 
   recolorBucket(id, color) {
+    if (!this._buckets[id]) {
+      return
+    }
+
     this._buckets[id].updateColor(color)
 
     this.$set(this.data[id], 'color', color)
   }
 
   reloadBucketSerie(id, type?: string) {
+    if (!this._buckets[id]) {
+      return
+    }
+
     if (type) {
       // set different serie type
       this._buckets[id].type = type

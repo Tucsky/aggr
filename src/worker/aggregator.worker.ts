@@ -170,7 +170,7 @@ class Aggregator {
 
         if (aggTrade.timestamp === trade.timestamp && aggTrade.side === trade.side) {
           aggTrade.size += trade.size
-          aggTrade.prices += trade.price
+          aggTrade.prices += trade.price * trade.size
           aggTrade.price = trade.price
           aggTrade.count++
           continue
@@ -186,7 +186,7 @@ class Aggregator {
       this.marketsPrices[market] = trade.price
 
       trade.count = 1
-      trade.prices = trade.price
+      trade.prices = trade.price * trade.size
       trade.timeout = now + 50
       this.onGoingAggregations[market] = trade
     }
@@ -208,7 +208,7 @@ class Aggregator {
     }
 
     if (this.settings.aggregateTrades) {
-      trade.price = (trade as AggregatedTrade).prices / trade.count
+      trade.price = (trade as AggregatedTrade).prices / trade.size
     }
 
     if (this.connections[market].bucket) {

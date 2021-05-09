@@ -50,7 +50,14 @@
   font-weight: 500;
 
   &__icon {
-    padding: .25rem;
+    padding: 0.25rem;
+
+    &:before {
+      top: -1px;
+      line-height: 0;
+      vertical-align: middle;
+      position: relative;
+    }
   }
 
   &__wrapper {
@@ -59,6 +66,8 @@
     background-color: $blue;
 
     display: flex;
+
+    align-items: center;
   }
 
   &.-error .notice__wrapper {
