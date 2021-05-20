@@ -2,7 +2,7 @@
   "preferQuoteCurrencySize": true,
   "aggregateTrades": true,
   "disableAnimations": true,
-  "calculateSlippage": false,
+  "calculateSlippage": "price",
   "decimalPrecision": null,
   "theme": "dark",
   "backgroundColor": "rgb(23,27,41)",

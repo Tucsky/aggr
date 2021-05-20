@@ -10,7 +10,7 @@
       <p class="help-text">
         No trade are matching the following markets
       </p>
-      <code v-for="market of pane.markets" :key="market">{{ market }}<br></code>
+      <code v-for="market of pane.markets" :key="market">{{ market.replace(/^\w+:/, '') }}<br /></code>
       <p class="help-text">with amount > {{ thresholds[0].amount }}</p>
       <p class="help-text" v-if="liquidationsOnly">that is a liquidation</p>
     </div>
@@ -737,7 +737,7 @@ export default class extends Mixins(PaneMixin) {
   &.-logos {
     .trade__exchange {
       flex-basis: 0;
-      flex-grow: 0.4;
+      flex-grow: 0.3;
       text-align: center;
       overflow: visible;
 
@@ -788,6 +788,10 @@ export default class extends Mixins(PaneMixin) {
 .trades-placeholder {
   text-align: center;
   margin: 1rem;
+
+  @media (-webkit-min-device-pixel-ratio: 2) {
+    font-size: 75%;
+  }
 }
 
 .trade {
@@ -871,6 +875,7 @@ export default class extends Mixins(PaneMixin) {
     text-overflow: ellipsis;
     white-space: nowrap;
     padding: 0 1px;
+    line-height: 1.4;
   }
 
   .trade__side {
@@ -889,7 +894,7 @@ export default class extends Mixins(PaneMixin) {
   .trade__exchange {
     background-repeat: no-repeat;
     flex-grow: 0.8;
-    margin-left: 1.75em;
+    margin-left: 1.5em;
     font-size: 75%;
     white-space: normal;
     line-height: 1;
@@ -943,6 +948,7 @@ export default class extends Mixins(PaneMixin) {
     text-align: right;
     flex-basis: 1.75em;
     flex-grow: 0;
+    font-size: 75%;
     font-weight: 400;
   }
 }

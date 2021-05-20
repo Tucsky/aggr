@@ -84,12 +84,12 @@
     <div class="form-group">
       <label>
         Audio threshold
-        <span class="icon-info" title="Play song for trade above certain amount (default to 50% of significant threshold)" v-tippy></span>
+        <span class="icon-info" title="Play song for trade above certain amount (default to 50% of minimum threshold)" v-tippy></span>
       </label>
       <input
         class="form-control"
         :value="audioThreshold"
-        :placeholder="tenPercentOfSignificantThreshold"
+        :placeholder="audioThresholdPlaceholder"
         @change="$store.commit(paneId + '/SET_AUDIO_THRESHOLD', $event.target.value)"
       />
     </div>
@@ -187,8 +187,8 @@ export default class extends Vue {
     return this.$store.state[this.paneId].showThresholdsAsTable
   }
 
-  get tenPercentOfSignificantThreshold() {
-    return +(this.thresholds[1] * 0.5).toFixed(2)
+  get audioThresholdPlaceholder() {
+    return +(this.thresholds[0].amount * 0.25).toFixed(2)
   }
 
   get audioThreshold() {

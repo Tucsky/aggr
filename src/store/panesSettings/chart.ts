@@ -91,7 +91,7 @@ const actions = {
         for (const _id in state.series) {
           const serieOptions = state.series[_id].options
           if (id !== _id && serieOptions.priceScaleId === currentPriceScaleId) {
-            dispatch('setSerieOption', { id: _id, key, value })
+            commit('SET_SERIE_OPTION', { id: _id, key, value })
           }
         }
       }
