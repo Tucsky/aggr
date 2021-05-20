@@ -12,7 +12,7 @@
         <slider
           style="width: 100px"
           :min="0"
-          :max="10"
+          :max="2"
           :step="0.1"
           :editable="false"
           :value="audioVolume"

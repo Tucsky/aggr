@@ -17,6 +17,7 @@ export interface TradesPaneState {
   _id?: string
   liquidations: Threshold
   thresholds: Threshold[]
+  audioThreshold: number
   showThresholdsAsTable: boolean
   maxRows: number
   showLogos: boolean
@@ -68,9 +69,9 @@ const state = {
       buyColor: 'rgb(100, 157, 102)',
       sellColor: 'rgb(239, 67, 82)',
       buyAudio: `play(659.26, gain * 0.5, decay, 80);
-      play(830.6, gain * 1.25, decay, 80)`,
+play(830.6, gain * 1.25, decay, 80)`,
       sellAudio: `play(493.88, gain * 0.5, decay, 80);
-      play(392, gain * 1.25, decay, 80)`
+play(392, gain * 1.25, decay, 80)`
     },
     {
       id: 'huge',
@@ -79,13 +80,13 @@ const state = {
       buyColor: 'rgb(59, 202, 109)',
       sellColor: 'rgb(235, 30, 47)',
       buyAudio: `play(659.26, gain * 0.5, decay * 0.75, 80);
-      play(830.6, gain * 0.5, decay * 0.75, 80);
-      play(987.76, gain * 0.5, decay * 0.75, 80);
-      play(1318.52, gain * 1, decay, 80)`,
+play(830.6, gain * 0.5, decay * 0.75, 80);
+play(987.76, gain * 0.5, decay * 0.75, 80);
+play(1318.52, gain * 1, decay, 80)`,
       sellAudio: `play(493.88, gain * 0.5, decay * 0.75, 80);
-      play(369.99, gain * 0.5, decay * 0.75, 80);
-      play(293.66, gain * 0.5, decay * 0.75, 80);
-      play(246.94, gain * 1, decay, 80)`
+play(369.99, gain * 0.5, decay * 0.75, 80);
+play(293.66, gain * 0.5, decay * 0.75, 80);
+play(246.94, gain * 1, decay, 80)`
     },
     {
       id: 'rare',
@@ -94,30 +95,16 @@ const state = {
       buyColor: 'rgb(0, 255, 127)',
       sellColor: 'rgb(217, 31, 28)',
       buyAudio: `play(659.26, gain * 0.5, decay * 0.75, 80);
-      play(830.6, gain * 0.5, decay * 0.75, 80);
-      play(987.76, gain * 0.5, decay * 0.75, 80);
-      play(1318.52, gain * 1, decay, 80)`,
+play(830.6, gain * 0.5, decay * 0.75, 80);
+play(987.76, gain * 0.5, decay * 0.75, 80);
+play(1318.52, gain * 1, decay, 80)`,
       sellAudio: `play(493.88, gain * 0.5, decay * 0.75, 80);
-      play(369.99, gain * 0.5, decay * 0.75, 80);
-      play(293.66, gain * 0.5, decay * 0.75, 80);
-      play(246.94, gain * 1, decay, 80)`
+play(369.99, gain * 0.5, decay * 0.75, 80);
+play(293.66, gain * 0.5, decay * 0.75, 80);
+play(246.94, gain * 1, decay, 80)`
     }
-
-    /*
-            if (variant === 0) {
-          this.play(493.88 * pitch, Math.sqrt(factor * 1.5) / 10, 0.1 + Math.sqrt(factor) / 10)
-        } else if (variant === 1) {
-          this.play(493.88 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.1 + factor * 0.1)
-          setTimeout(() => this.play(392 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.1 + factor * 0.1), 80)
-        } else {
-          this.play(493.88 * pitch, 0.05 + Math.sqrt(factor) / 25, 0.1 + factor * 0.1)
-          setTimeout(() => this.play(369.99 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.2), 80)
-          setTimeout(() => this.play(293.66 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.2), 160)
-          setTimeout(() => this.play(246.94 * pitch, 0.05 + Math.sqrt(factor * 1.5) / 10, 0.1 + factor * 0.1), 240)
-
-    */
   ],
-
+  audioThreshold: null,
   multipliers: {},
   showThresholdsAsTable: true,
   maxRows: 100,
@@ -272,6 +259,9 @@ const mutations = {
 
       Vue.set(state.thresholds, index, threshold)
     }
+  },
+  SET_AUDIO_THRESHOLD(state, amount: number) {
+    state.audioThreshold = amount
   }
 } as MutationTree<TradesPaneState>
 

@@ -91,7 +91,7 @@
               >
                 <input type="checkbox" class="form-control" :checked="calculateSlippage" @change="$store.commit('settings/TOGGLE_SLIPPAGE')" />
                 <div></div>
-                <span v-if="calculateSlippage === 'price'"> Calculate slippage in price difference (<i class="icon-dollar"></i>) </span>
+                <span v-if="calculateSlippage === 'price'"> Calculate slippage in price change (<i class="icon-dollar"></i>) </span>
                 <span v-if="calculateSlippage === 'bps'"> Calculate slippage in bps <i class="icon-bps"></i> </span>
                 <span v-if="!calculateSlippage">Do not show slippage</span>
               </label>

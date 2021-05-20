@@ -36,17 +36,23 @@
             </td>
             <td class="thresholds-table__color" :style="{ backgroundColor: threshold.buyColor }" @click="openPicker('buyColor', threshold)"></td>
             <td class="thresholds-table__color" :style="{ backgroundColor: threshold.sellColor }" @click="openPicker('sellColor', threshold)"></td>
-            <td class="thresholds-table__audio btn -green -small" @click="openThresholdAudio(threshold.id)" title="Configure threshold audio" v-tippy>
-              <i class="icon-volume-high"></i>
+            <td
+              v-if="useAudio"
+              class="thresholds-table__audio table-action"
+              @click="openThresholdAudio(threshold.id)"
+              title="Configure threshold audio"
+              v-tippy
+            >
+              <button class="btn  -green -small"><i class="icon-volume-high"></i></button>
             </td>
             <td
               v-if="thresholds.length > 2 && threshold.id !== 'liquidations' && index > 1"
-              class="btn -red -small"
+              class="table-action"
               @click="deleteThreshold(threshold.id)"
               title="Remove"
               v-tippy
             >
-              <i class="icon-cross"></i>
+              <button class="btn  -red -small"><i class="icon-cross"></i></button>
             </td>
           </template>
         </tr>
@@ -234,6 +240,10 @@ export default class extends Vue {
 
   get preferQuoteCurrencySize() {
     return this.$store.state.settings.preferQuoteCurrencySize
+  }
+
+  get useAudio() {
+    return this.$store.state.settings.useAudio
   }
 
   get thresholdsRows() {

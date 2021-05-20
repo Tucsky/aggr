@@ -188,23 +188,23 @@ $unit: 'px'; // Feel free to change the unit.
   width: auto !important;
 }
 
-::-webkit-scrollbar {
+.custom-scrollbar::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
 
-::-webkit-scrollbar-track {
+.custom-scrollbar::-webkit-scrollbar-track {
   background-color: lighten($dark, 15%);
 }
 
-::-webkit-scrollbar-thumb {
+.custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: transparent;
 }
 
-/* Handle */
 .custom-scrollbar:hover::-webkit-scrollbar-thumb {
   background-color: rgba(black, 0.25);
 }
+
 
 .icon-sm {
   font-size: 80%;

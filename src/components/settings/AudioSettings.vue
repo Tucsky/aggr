@@ -8,21 +8,10 @@
             <div></div>
           </label>
         </div>
-        <div class="form-group -tight">
-          <label class="checkbox-control checkbox-control-input flex-right" v-tippy title="Include orders down to 10% of significant orders">
-            <input
-              type="checkbox"
-              class="form-control"
-              :checked="audioIncludeInsignificants"
-              @change="$store.commit('settings/TOGGLE_AUDIO_TEN_PERCENT', $event.target.checked)"
-            />
-            <div class="icon-sound-wave"></div>
-          </label>
-        </div>
         <div class="form-group -fill -center">
           <slider
             :min="0"
-            :max="10"
+            :max="2"
             :step="0.1"
             :editable="false"
             :value="audioVolume"
@@ -109,10 +98,6 @@ import Slider from '../framework/picker/Slider.vue'
 export default class extends Vue {
   get useAudio() {
     return this.$store.state.settings.useAudio
-  }
-
-  get audioIncludeInsignificants() {
-    return this.$store.state.settings.audioIncludeInsignificants
   }
 
   get audioVolume() {

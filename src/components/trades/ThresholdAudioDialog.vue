@@ -46,7 +46,7 @@
         When buy
       </label>
       <div class="d-flex">
-        <textarea ref="behaveBuy" class="form-control" rows="5" :value="buyAudio" @blur="setInput($event.target.value, 'buy')"></textarea>
+        <textarea ref="behaveBuy" class="form-control" :value="buyAudio" @blur="setInput($event.target.value, 'buy')"></textarea>
         <button class="btn -green" @click="test('buy')">
           <i class="icon-volume-high"></i>
         </button>
@@ -57,7 +57,7 @@
         When sell
       </label>
       <div class="d-flex">
-        <textarea ref="behaveSell" class="form-control" rows="5" :value="sellAudio" @blur="setInput($event.target.value, 'sell')"></textarea>
+        <textarea ref="behaveSell" class="form-control" :value="sellAudio" @blur="setInput($event.target.value, 'sell')"></textarea>
         <button class="btn -red" @click="test('sell')">
           <i class="icon-volume-high"></i>
         </button>
@@ -125,7 +125,7 @@ export default {
     this.sellAudio = this.threshold.sellAudio || ''
   },
   mounted() {
-    // this.$nextTick(() => this.initBehave())
+    this.$nextTick(() => this.initBehave())
   },
   beforeDestroy() {
     for (const behave of this._behaves) {

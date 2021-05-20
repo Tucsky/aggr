@@ -16,6 +16,8 @@ class SfxService {
 
   queued: any[] = []
   output: any
+  volume: number
+
   _play: (frequency: number, gain: number, decay: number, length?: number) => Promise<void>
 
   constructor() {
@@ -32,11 +34,12 @@ class SfxService {
     this.timestamp = +new Date()
     this.queued.splice(0, this.queued.length)
 
+    this.setVolume(store.state.settings.audioVolume)
+
     Vue.nextTick(() => {
       this.bindContext()
       this.bindOutput()
     })
-    //;(window as any).tradeToSong = this.tradeToSong.bind(this)
   }
 
   bindContext() {
@@ -220,8 +223,7 @@ class SfxService {
     const time = this.context.currentTime
     const oscillatorNode = this.context.createOscillator()
     const gainNode = this.context.createGain()
-    gain = Math.min(1, gain) * store.state.settings.audioVolume
-    decay = Math.max(0.1, decay)
+    gain = Math.min(1, gain) * this.volume
 
     oscillatorNode.frequency.value = frequency
     oscillatorNode.type = osc || 'triangle'
@@ -235,7 +237,7 @@ class SfxService {
     oscillatorNode.connect(gainNode)
 
     gainNode.gain.value = gain
-    gainNode.gain.exponentialRampToValueAtTime(0.0001, time + decay + 0.15)
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, time + decay * 0.618)
 
     oscillatorNode.start(time)
     oscillatorNode.stop(time + decay)
@@ -275,15 +277,18 @@ class SfxService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  buildAudioFunction(litteral, side) {
+  buildAudioFunction(litteral, side, notice = false) {
     litteral = `'use strict'; 
-    var gain = (percent + level) / 3;
-    var decay = gain;
-    gain /= 1.5;
-
+    var decay = .2 + percent + level;
+    var gain = (percent + level) / 4;
+    
     ${litteral}`
 
     return new Function('play', 'percent', 'side', 'level', litteral) as AudioFunction
+  }
+
+  setVolume(value: number) {
+    this.volume = Math.log(1 + value)
   }
 }
 

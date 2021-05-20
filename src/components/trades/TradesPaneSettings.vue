@@ -81,6 +81,19 @@
       <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_ANIMATIONS')">Enable animations</a>
     </small>
 
+    <div class="form-group">
+      <label>
+        Audio threshold
+        <span class="icon-info" title="Play song for trade above certain amount (default to 50% of significant threshold)" v-tippy></span>
+      </label>
+      <input
+        class="form-control"
+        :value="audioThreshold"
+        :placeholder="tenPercentOfSignificantThreshold"
+        @change="$store.commit(paneId + '/SET_AUDIO_THRESHOLD', $event.target.value)"
+      />
+    </div>
+
     <div class="-fill mt16 mb8">THRESHOLD MULTIPLIER ({{ mutipliersCount }})</div>
 
     <div class="multipliers" v-if="multipliers.length">
@@ -174,6 +187,14 @@ export default class extends Vue {
     return this.$store.state[this.paneId].showThresholdsAsTable
   }
 
+  get tenPercentOfSignificantThreshold() {
+    return +(this.thresholds[1] * 0.5).toFixed(2)
+  }
+
+  get audioThreshold() {
+    return this.$store.state[this.paneId].audioThreshold
+  }
+
   get multipliers() {
     return this.markets.map(market => {
       const [exchange, pair] = parseMarket(market)
@@ -248,7 +269,6 @@ export default class extends Vue {
         content: '(default)';
         opacity: 0.8;
         padding: 2px;
-        font-size: 60%;
       }
     }
   }

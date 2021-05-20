@@ -125,7 +125,7 @@
   &.-slippage input ~ div {
     &:before,
     &:after {
-      content: unicode($icon-slippery);
+      content: unicode($icon-flash);
     }
   }
 

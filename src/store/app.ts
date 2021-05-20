@@ -319,9 +319,6 @@ const mutations = {
   SET_BUILD_DATE(state, value) {
     state.buildDate = value
   },
-  SET_HISTORICAL_SUPPORTED_MARKETS(state, markets) {
-    state.historicalMarkets = markets
-  },
   INDEX_EXCHANGE_PRODUCTS(state, { exchange, products }: { exchange: string; products: string[] }) {
     state.indexedProducts[exchange] = products.map(p => exchange + ':' + p)
   },

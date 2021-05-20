@@ -38,27 +38,17 @@
   }
 
   &-action {
+    border: 1px solid transparent !important;
     cursor: pointer;
-    color: rgba(white, 0.5);
-    padding: 0.5em;
-
-    &:hover {
-      color: white;
-    }
-
-    &.-green {
-      color: $green;
-
-      &:hover {
-        background-color: $green;
-        color: white;
-      }
-    }
+    padding: 0 0.25em;
 
     &.-disabled {
-      color: rgba(white, 0.5);
-
+      opacity: .5;
       cursor: not-allowed;
+    }
+
+    + .table-action {
+      padding-left: 0;
     }
   }
 
@@ -93,21 +83,6 @@
   }
 
   td {
-    &:not(.btn) + .btn {
-      margin-left: 0.5em;
-    }
-
-    &.btn {
-      padding: 0.25em;
-      margin: 0.5em 0.25em;
-      border: 1px solid transparent !important;
-      margin-left: 0.25em;
-
-      &:last-child {
-        margin-left: 0.5em;
-      }
-    }
-
     + td {
       border-left: 1px solid rgba(white, 0.2);
       border-top: 1px solid rgba(white, 0.2);

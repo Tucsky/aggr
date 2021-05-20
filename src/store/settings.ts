@@ -18,7 +18,6 @@ export interface SettingsState {
   textColor?: string
   timezoneOffset?: number
   useAudio?: boolean
-  audioIncludeInsignificants?: boolean
   audioVolume?: number
   audioFilter?: boolean
   audioCompressor?: boolean
@@ -153,11 +152,9 @@ const mutations = {
       sfxService.disconnect()
     }
   },
-  TOGGLE_AUDIO_TEN_PERCENT(state, value) {
-    state.audioIncludeInsignificants = value ? true : false
-  },
   SET_AUDIO_VOLUME(state, value) {
     state.audioVolume = value
+    sfxService.setVolume(value)
   },
   TOGGLE_AUDIO_COMPRESSOR(state) {
     state.audioCompressor = !state.audioCompressor
