@@ -258,7 +258,7 @@ export default class extends Vue {
         this.liquidationsThreshold,
         {
           id: 'divider-2',
-          divider: 'For trades by amount'
+          divider: 'For trades'
         }
       ]
     }

@@ -83,8 +83,8 @@ play(392, gain * 1.25, decay, 80)`
 play(830.6, gain * 0.5, decay * 0.75, 80);
 play(987.76, gain * 0.5, decay * 0.75, 80);
 play(1318.52, gain * 1, decay, 80)`,
-      sellAudio: `play(493.88, gain * 0.5, decay * 0.75, 80);
-play(369.99, gain * 0.5, decay * 0.75, 80);
+      sellAudio: `play(493.88, gain * 0.5, decay * 0.25, 80);
+play(369.99, gain * 0.5, decay * 0.5, 80);
 play(293.66, gain * 0.5, decay * 0.75, 80);
 play(246.94, gain * 1, decay, 80)`
     },
@@ -98,8 +98,8 @@ play(246.94, gain * 1, decay, 80)`
 play(830.6, gain * 0.5, decay * 0.75, 80);
 play(987.76, gain * 0.5, decay * 0.75, 80);
 play(1318.52, gain * 1, decay, 80)`,
-      sellAudio: `play(493.88, gain * 0.5, decay * 0.75, 80);
-play(369.99, gain * 0.5, decay * 0.75, 80);
+      sellAudio: `play(493.88, gain * 0.5, decay * 0.25, 80);
+play(369.99, gain * 0.5, decay * 0.5, 80);
 play(293.66, gain * 0.5, decay * 0.75, 80);
 play(246.94, gain * 1, decay, 80)`
     }

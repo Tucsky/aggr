@@ -55,6 +55,10 @@
 
   .pane {
     background-color: rgba(white, 0.2);
+
+    &-header {
+      background-color: rgba(white, 0.5);
+    }
   }
 }
 
@@ -79,23 +83,33 @@
   top: 0;
   left: 0;
   right: 0;
-  font-size: 1.5rem;
+  font-size: 2rem;
+  background-color: rgba(black, .8);
+  backdrop-filter: blur(10px);
 
   &.toolbar {
     font-size: 1.5rem;
     display: none;
+    height: 1.99rem;
 
     .dropdown__selected > i,
     button > i {
       padding-left: 0.5em;
       padding-right: 0.5em;
-      padding-bottom: 0.125em;
+      padding-top: 0.4em;
+      padding-bottom: 0.5em;
+      font-size: 1rem !important;
     }
 
     > span,
     > button > span,
     .dropdown > .dropdown__selected > span {
       opacity: 1;
+    }
+
+    > span.title-top-left {
+      align-self: flex-start;
+      font-weight: 600;
     }
 
     button,

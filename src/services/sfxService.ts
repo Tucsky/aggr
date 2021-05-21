@@ -237,16 +237,18 @@ class SfxService {
     oscillatorNode.connect(gainNode)
 
     gainNode.gain.value = gain
-    gainNode.gain.exponentialRampToValueAtTime(0.0001, time + decay * 0.618)
+    gainNode.gain.exponentialRampToValueAtTime(0.0005, time + decay * 0.618)
 
     oscillatorNode.start(time)
     oscillatorNode.stop(time + decay)
 
+    const timeout = (length || decay * 1000) - this.queued.length * .5
+    
     return new Promise<void>(resolve => {
       setTimeout(() => {
         this.queued.shift()
         resolve()
-      }, length || decay * 1000)
+      }, timeout)
     })
   }
 

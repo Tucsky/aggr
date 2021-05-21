@@ -17,12 +17,6 @@ body {
     }
   }
 
-  &.-picking-color {
-    .dialog.-mask {
-      background: 0;
-    }
-  }
-
   &.-no-animations {
     animation: none !important;
     transition: none !important;

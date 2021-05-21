@@ -12,7 +12,7 @@
       </p>
       <code v-for="market of pane.markets" :key="market">{{ market.replace(/^\w+:/, '') }}<br /></code>
       <p class="help-text">with amount > {{ thresholds[0].amount }}</p>
-      <p class="help-text" v-if="liquidationsOnly">that is a liquidation</p>
+      <p class="help-text" v-if="liquidationsOnly">liquidation only</p>
     </div>
   </div>
 </template>
@@ -176,7 +176,7 @@ export default class extends Mixins(PaneMixin) {
           this.refreshList()
           break
         case this.paneId + '/SET_THRESHOLD_AUDIO':
-        case 'app/TOGGLE_AUDIO':
+        case 'settings/TOGGLE_AUDIO':
           this.prepareThresholdsSounds()
           this.prepareAudioThreshold()
           break
@@ -647,6 +647,8 @@ export default class extends Mixins(PaneMixin) {
       trades.push(trade)
     }
 
+    trades.reverse()
+
     this.clearList()
 
     const audioThresholdValue = this._audioThreshold
@@ -655,7 +657,7 @@ export default class extends Mixins(PaneMixin) {
     for (const trade of trades) {
       const identifier = trade.exchange + trade.pair
       const amount = trade.size * (this.preferQuoteCurrencySize ? trade.price : 1)
-      const multiplier = this._multipliers[identifier]
+      const multiplier = this._multipliers[identifier] || 1
 
       this.appendRow(trade, amount, multiplier)
     }
@@ -874,7 +876,6 @@ export default class extends Mixins(PaneMixin) {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    padding: 0 1px;
     line-height: 1.4;
   }
 
@@ -920,6 +921,7 @@ export default class extends Mixins(PaneMixin) {
       text-overflow: ellipsis;
       transition: transform 0.1s ease-in-out;
       display: block;
+      padding: 0 1px;
 
       &.trade__amount__quote {
         position: absolute;
@@ -950,6 +952,7 @@ export default class extends Mixins(PaneMixin) {
     flex-grow: 0;
     font-size: 75%;
     font-weight: 400;
+    text-overflow: inherit;
   }
 }
 
