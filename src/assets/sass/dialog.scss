@@ -146,7 +146,7 @@
     margin: 1rem 0;
     border: 0;
     height: 1px;
-    background: lighten($dark, 20%);
+    background: $lighter;
 
     &.-across {
       margin-left: -1rem;

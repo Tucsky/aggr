@@ -1,6 +1,6 @@
 import { AggregatedTrade, AggregatorPayload, AggregatorSettings, Connection, Trade, Volumes } from '@/types/test'
 import { exchanges, getExchangeById } from './exchanges'
-import { countDecimals, parseMarket } from './helpers/utils'
+import { countDecimals, parseMarket, formatAmount } from './helpers/utils'
 
 const ctx: Worker = self as any
 
@@ -179,9 +179,7 @@ class Aggregator {
         }
       }
 
-      if (this.settings.calculateSlippage) {
-        trade.originalPrice = this.marketsPrices[market] || trade.price
-      }
+      trade.originalPrice = this.marketsPrices[market] || trade.price
 
       this.marketsPrices[market] = trade.price
 
@@ -209,6 +207,7 @@ class Aggregator {
 
     if (this.settings.aggregateTrades) {
       trade.price = (trade as AggregatedTrade).prices / trade.size
+      trade.size = (trade as AggregatedTrade).prices / trade.originalPrice
     }
 
     if (this.connections[market].bucket) {

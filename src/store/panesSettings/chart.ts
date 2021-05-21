@@ -18,6 +18,7 @@ export interface SerieSettings {
 
 export interface ChartPaneState {
   _id?: string
+  _booted?: boolean
   series?: { [id: string]: SerieSettings }
   timeframe: number
   seriesErrors: { [serieId: string]: string }
@@ -48,6 +49,8 @@ const actions = {
 
       scheduleSync(state)
     }
+    
+    state._booted = true
   },
   addSerie({ commit, state }, serie) {
     const seriesIdMap = Object.keys(state.series)

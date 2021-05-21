@@ -1,5 +1,5 @@
 <template>
-  <div class="slider" ref="wrapper">
+  <div class="slider" ref="wrapper" :class="{ '-vertical': vertical }">
     <div class="slider__track" ref="track" v-on="trackSlide ? { mousedown: select, touchstart: select } : {}">
       <div class="slider__fill" ref="fill"></div>
       <div
@@ -8,7 +8,7 @@
         :key="index"
         @mousedown="select"
         @touchstart="select"
-        :style="`transform: translate(${handle.position}px, 0); background-color: ${handle.color};`"
+        :style="`transform: translate(${handle.positionX}px, ${handle.positionY}px); background-color: ${handle.color};`"
       >
         <div class="slider__label" v-if="label">{{ handle.value }}</div>
       </div>
@@ -31,6 +31,7 @@ export default {
     reverse: { type: Boolean, default: false },
     label: { type: Boolean, default: false },
     trackSlide: { type: Boolean, default: true },
+    vertical: { type: Boolean, default: false },
     min: { type: Number, default: 0 },
     max: { type: Number, default: 255 },
     step: { type: Number, default: 1 },
@@ -70,7 +71,7 @@ export default {
       this.multiple = this.values.length > 1
       this.values = this.handlesValue
       this.handles = this.handlesValue.map(value => {
-        return { value, position: 0, color: '#fff' }
+        return { value, positionX: 0, positionY: 0, color: '#fff' }
       })
       if (this.values.length === 1) {
         this.values[0] = Number(this.value)
@@ -110,7 +111,7 @@ export default {
       })
     },
     handleResize() {
-      this.updateWidth()
+      this.updateSize()
       this.updateValue(this.currentValue, true)
     },
     initEvents() {
@@ -138,7 +139,7 @@ export default {
         this.pendingDblClick = false
       }, 300)
 
-      this.updateWidth()
+      this.updateSize()
       this.track.classList.add('slider--dragging')
       this.ticking = false
 
@@ -182,37 +183,57 @@ export default {
       document.removeEventListener('touchend', this.tempRelease)
     },
     getStepValue(event) {
-      const { x } = getEventCords(event)
+      const { x, y } = getEventCords(event)
 
-      const mouseValue = x - this.currentX
-      const stepCount = parseInt(mouseValue / this.stepWidth + 0.5, 10)
-      const stepValue = stepCount * this.step + this.min
+      let stepValue
+
+      if (this.vertical) {
+        const mouseValue = y - this.currentY
+        const stepCount = parseInt((this.height - mouseValue) / this.stepHeight + 0.5, 10)
+        stepValue = stepCount * this.step + this.min
+      } else {
+        const mouseValue = x - this.currentX
+        const stepCount = parseInt(mouseValue / this.stepWidth + 0.5, 10)
+        stepValue = stepCount * this.step + this.min
+      }
+
       if (!this.decimalsCount) {
         return stepValue
       }
       return Number(stepValue.toFixed(this.decimalsCount))
     },
-    updateWidth() {
+    updateSize() {
       const trackRect = this.track.getBoundingClientRect()
-      this.currentX = trackRect.left
 
-      /*       if (!trackRect.width) {
-        this.width = parseInt(this.track.parentElement.style.width)
+      if (this.vertical) {
+        this.currentY = trackRect.top
+
+        this.height = this.$el.clientHeight
+
+        if (!this.height) {
+          this.height = parseInt(this.track.parentElement.style.height)
+        }
+
+        if (!this.height && trackRect.height) {
+          this.height = trackRect.height
+        }
+
+        this.stepHeight = (this.height / (this.max - this.min)) * this.step
       } else {
-        this.width = trackRect.width
-      }
- */
-      this.width = this.$el.clientWidth
+        this.currentX = trackRect.left
 
-      if (!this.width) {
-        this.width = parseInt(this.track.parentElement.style.width)
-      }
+        this.width = this.$el.clientWidth
 
-      if (!this.width && trackRect.width) {
-        this.width = trackRect.width
-      }
+        if (!this.width) {
+          this.width = parseInt(this.track.parentElement.style.width)
+        }
 
-      this.stepWidth = (this.width / (this.max - this.min)) * this.step
+        if (!this.width && trackRect.width) {
+          this.width = trackRect.width
+        }
+
+        this.stepWidth = (this.width / (this.max - this.min)) * this.step
+      }
     },
     /**
      * get the filled area percentage
@@ -241,7 +262,8 @@ export default {
       const newIndex = closestValue <= value ? closestIndex + 1 : closestIndex
       this.handles.splice(newIndex, 0, {
         value,
-        position: 0,
+        positionX: 0,
+        positionY: 0,
         color: '#fff'
       })
       this.values.splice(newIndex, 0, value)
@@ -295,13 +317,19 @@ export default {
         const positionPercentage = this.getPositionPercentage(normalized)
 
         if (this.fill) {
-          this.fill.translate = positionPercentage * this.width
+          this.fill.translate = positionPercentage * (this.vertical ? this.height : this.width)
           this.fill.scale = 1 - positionPercentage
         }
 
         this.values[this.activeHandle] = normalized
         this.handles[this.activeHandle].value = normalized
-        this.handles[this.activeHandle].position = positionPercentage * this.width
+
+        if (this.vertical) {
+          this.handles[this.activeHandle].positionY = (1 - positionPercentage) * this.height
+        } else {
+          this.handles[this.activeHandle].positionX = positionPercentage * this.width
+        }
+
         this.currentValue = normalized
         this.$refs.input.value = this.currentValue
 
@@ -327,15 +355,15 @@ export default {
     this.init()
 
     this.$nextTick(() => {
-      this.updateWidth()
+      this.updateSize()
       this.updateValue(undefined, true)
     })
   },
   destroyed() {
     window.removeEventListener('resize', this.handleResize)
 
-    if (this._updateWidthTimeout) {
-      clearTimeout(this._updateWidthTimeout)
+    if (this._updateSizeTimeout) {
+      clearTimeout(this._updateSizeTimeout)
     }
   }
 }
@@ -361,6 +389,31 @@ export default {
     .slider-label {
       visibility: visible;
       opacity: 1;
+    }
+  }
+
+  &.-vertical {
+    .slider__track {
+      width: 8px;
+      height: 100%;
+    }
+
+    .slider__handle {
+      margin: -8px -4px 0 -4px;
+    }
+
+    .slider__label {
+      left: -3em;
+      top: -0.5em;
+
+      &:before {
+        left: auto;
+        right: -0.5em;
+        top: 50%;
+        border-width: 0.5em 0 0.5em 0.5em;
+        border-color: transparent transparent transparent $blue;
+        transform: translate3d(-1px, -50%, 0);
+      }
     }
   }
 }
@@ -435,31 +488,29 @@ export default {
 .slider__label {
   position: absolute;
   top: -3em;
-  left: 0.4em;
+  left: 0.5em;
   z-index: 999;
-  visibility: hidden;
-  padding: 6px;
+  padding: 0.5em;
   min-width: 3em;
   border-radius: 4px;
-  background-color: black;
+  background-color: $blue;
   color: white;
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1em;
-  opacity: 0;
   transform: translate(-50%, 0);
   white-space: nowrap;
 
   &:before {
     position: absolute;
-    bottom: -0.6em;
+    bottom: -0.5em;
     left: 50%;
     display: block;
     width: 0;
     height: 0;
-    border-width: 0.6em 0.6em 0 0.6em;
+    border-width: 0.5em 0.5em 0 0.5em;
     border-style: solid;
-    border-color: black transparent transparent transparent;
+    border-color: $blue transparent transparent transparent;
     content: '';
     transform: translate3d(-50%, 0, 0);
   }

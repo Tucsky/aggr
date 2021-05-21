@@ -6,7 +6,13 @@
       @click="clickOutside"
       :class="{ '-open': open, '-medium': medium, '-large': large, '-small': small, '-mask': mask }"
     >
-      <div ref="dialogContent" class="dialog-content" @click.stop :style="`transform: translate(${delta.x}px, ${delta.y}px)`">
+      <div
+        ref="dialogContent"
+        class="dialog-content"
+        @click.stop
+        :style="`transform: translate(${delta.x}px, ${delta.y}px)`"
+        @mousedown="onMouseDown"
+      >
         <header @mousedown="handleDrag" @touchstart="handleDrag">
           <slot name="header"></slot>
           <div class="dialog-controls">
@@ -109,11 +115,24 @@ export default class extends Vue {
     document.addEventListener('touchup', this._handleRelease)
   }
 
+  onMouseDown() {
+    this.clickOutsideClose = false
+
+    const handler = () => {
+      document.removeEventListener('mouseup', handler)
+
+      setTimeout(() => {
+        this.clickOutsideClose = true
+      }, 100)
+    }
+
+    document.addEventListener('mouseup', handler)
+  }
+
   animate() {
     this.delta.x = this.target.x
     this.delta.y = this.target.y
     const distance = Math.abs(this.delta.x - this.target.x) + Math.abs(this.delta.y - this.target.y)
-    console.log('target:', this.target.x, this.target.y, 'distance:', distance)
 
     if (distance > 10 && !this.animating) {
       this.animating = true

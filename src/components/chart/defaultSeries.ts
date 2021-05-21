@@ -6,7 +6,7 @@ export const defaultChartSeries = {
     input: 'avg_ohlc(bar)',
     axisLabelVisible: true,
     options: {
-      priceScaleId: 'price',
+      priceScaleId: 'right',
       priceLineVisible: true,
       lastValueVisible: true,
       upColor: 'rgb(100, 157, 102)',
@@ -22,7 +22,7 @@ export const defaultChartSeries = {
     name: 'PRICE {smaLength} MA',
     input: 'sma($price.close, options.smaLength)',
     options: {
-      priceScaleId: 'price',
+      priceScaleId: 'right',
       color: '#C2EFEB',
       smaLength: 200,
       lineWidth: 1
@@ -80,7 +80,7 @@ export const defaultChartSeries = {
     description: 'Cumulative Volume Delta',
     input: 'cum_ohlc(vbuy - vsell)',
     options: {
-      priceScaleId: 'right',
+      priceScaleId: 'cvd',
       priceFormat: {
         type: 'volume'
       },
@@ -113,7 +113,7 @@ export const defaultChartSeries = {
     name: 'CVD {smaLength} MA',
     input: 'sma($cvd.close, options.smaLength)',
     options: {
-      priceScaleId: 'right',
+      priceScaleId: 'cvd',
       color: 'rgba(236, 254, 232, .5)',
       smaLength: 50,
       lineWidth: 1

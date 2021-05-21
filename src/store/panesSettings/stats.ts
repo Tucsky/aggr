@@ -19,6 +19,7 @@ export interface StatBucket {
 
 export interface StatsPaneState {
   _id?: string
+  _booted?: boolean
   granularity?: number
   window?: number
   enableChart?: boolean
@@ -49,7 +50,8 @@ const state = {
 } as StatsPaneState
 
 const actions = {
-  async boot() {
+  async boot({ state }) {
+    state._booted = true
     //
   },
   createBucket({ state, commit }) {

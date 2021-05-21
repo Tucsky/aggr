@@ -184,11 +184,6 @@ const state = {
 const actions = {
   async boot({ dispatch, state }) {
     state.marketsListeners = {}
-
-    await Promise.all(this.getters['exchanges/getExchanges'].map(id => getProducts(id)))
-    await dispatch('refreshMarketsListeners')
-
-    showIndexedProductsCount()
   },
   async addPane({ commit, dispatch, state }, options: Pane & { settings?: any }) {
     if (!options || !options.type) {

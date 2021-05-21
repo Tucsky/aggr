@@ -1,5 +1,6 @@
 import aggregatorService from '@/services/aggregatorService'
-import { getProducts } from '@/services/productsService'
+import { getProducts, showIndexedProductsCount } from '@/services/productsService'
+import { progress } from '@/utils/helpers'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
@@ -48,7 +49,7 @@ const getters = {
 } as GetterTree<ExchangesState, ModulesState>
 
 const actions = {
-  boot({ state, getters }) {
+  async boot({ state, getters }) {
     state._exchanges.splice(0, state._exchanges.length)
 
     for (const id of getters.getExchanges) {
@@ -68,6 +69,15 @@ const actions = {
         trackingId
       })
     })
+
+
+    await Promise.all(getters.getExchanges.map(id => getProducts(id)))
+
+    await progress(`connecting to exchanges`)
+
+    await this.dispatch('panes/refreshMarketsListeners')
+
+    showIndexedProductsCount()
   },
   async toggleExchange({ commit, state, dispatch }, id: string) {
     commit('TOGGLE_EXCHANGE', id)

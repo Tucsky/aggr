@@ -6,7 +6,7 @@ import app, { AppState } from './app'
 import settings, { SettingsState } from './settings'
 import exchanges, { ExchangesState } from './exchanges'
 import panes, { PanesState } from './panes'
-import { sleep } from '@/utils/helpers'
+import { progress, sleep } from '@/utils/helpers'
 import { Workspace } from '@/types/test'
 
 Vue.use(Vuex)
@@ -23,7 +23,7 @@ export interface ModulesState {
 }
 
 const store = new Vuex.Store({} as StoreOptions<ModulesState>)
-const modules = { app, settings, panes, exchanges } as AppModuleTree<ModulesState>
+const modules = { app, settings, exchanges, panes } as AppModuleTree<ModulesState>
 
 store.subscribe((mutation, state: any) => {
   const moduleId = mutation.type.split('/')[0]
@@ -36,6 +36,8 @@ store.subscribe((mutation, state: any) => {
 })
 
 export async function boot(workspace?: Workspace) {
+  await progress(true)
+
   console.log(`[store] booting on workspace "${workspace.name}" (${workspace.id})`)
 
   if (store.state.app) {
@@ -51,27 +53,45 @@ export async function boot(workspace?: Workspace) {
     }
   }
 
-  for (const id in modules) {
-    await registerModule(id, modules[id])
-  }
+  await progress(`loading core module`)
+  registerModule('app', modules['app'])
+  await sleep(100)
+  await store.dispatch('app/boot')
+
+  await progress(`setting up workspace`)
+  registerModule('settings', modules['settings'])
+  await sleep(100)
+  await store.dispatch('settings/boot')
+
+  await progress(`loading panes`)
+  registerModule('panes', modules['panes'])
+  await sleep(100)
+  await store.dispatch('panes/boot')
 
   for (const paneId in modules.panes.state.panes) {
+    await progress(`registering pane module ${paneId}`)
     await registerModule(paneId, {}, false, modules.panes.state.panes[paneId])
   }
 
-  const promises = []
-
-  for (const id in store.state) {
-    promises.push(store.dispatch(id + '/boot'))
-  }
-
-  try {
-    await Promise.all(promises)
-  } catch (error) {
-    console.log(error)
-  }
-
   store.dispatch('app/setBooted')
+
+  await progress(`registering exchanges`)
+  registerModule('exchanges', modules['exchanges'])
+
+  for (const paneId in modules.panes.state.panes) {
+    await progress(`booting module ${paneId}`)
+
+    try {
+      await store.dispatch(paneId + '/boot')
+    } catch (error) {
+      console.error(error)
+    }
+  }
+  
+  await progress(`loading exchanges`)
+  await store.dispatch('exchanges/boot')
+
+  await progress(false)
 }
 
 export default store

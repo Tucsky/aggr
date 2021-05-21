@@ -259,11 +259,11 @@
 
   > div {
     padding: 0.5rem;
-    border: 1px solid rgba(white, 0.2);
+    border: 1px solid $lighter;
     width: 1em;
     height: 1em;
     border-radius: 3px;
-    background-color: rgba(white, 0.2);
+    background-color: $lighter;
     transition: all 0.2s $ease-out-expo;
     position: relative;
     flex-shrink: 0;
@@ -387,7 +387,7 @@ input[type='range'] {
 }
 
 .form-feedback {
-  color: $red;
+  color: lighten($red, 10%);
 }
 
 .pretty-print {

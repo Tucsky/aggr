@@ -7,13 +7,15 @@
     <button type="button" v-if="!isPopupMode" @click="togglePopup" title="Open as popup" v-tippy="{ placement: 'bottom' }">
       <i class="icon-external-link-square-alt"></i>
     </button>
-    <tippy v-if="useAudio" to="myTrigger" arrow :interactive="true" :delay="[0, 200]">
+    <tippy to="myTrigger" :interactive="true" :delay="[0, 200]" :theme="'transparent'">
       <div class="mt4 mb4 text-nowrap">
         <slider
-          style="width: 100px"
+          style="height: 100px"
           :min="0"
           :max="2"
           :step="0.1"
+          :label="true"
+          :vertical="true"
           :editable="false"
           :value="audioVolume"
           @input="$store.dispatch('settings/setAudioVolume', $event)"

@@ -2,6 +2,7 @@ import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 
 export interface PricesPaneState {
   _id?: string
+  _booted?: boolean
   animateSort?: boolean
   showPairs?: boolean
   boldFont?: boolean
@@ -18,7 +19,8 @@ const state = {
 } as PricesPaneState
 
 const actions = {
-  async boot() {
+  async boot({ state }) {
+    state._booted = true
     //
   }
 } as ActionTree<PricesPaneState, PricesPaneState>

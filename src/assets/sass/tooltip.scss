@@ -4,6 +4,10 @@
     background-color: rgba(black, 0.8);
   }
 
+  &.transparent-theme {
+    background-color: transparent;
+  }
+
   ul,
   ol {
     text-align: left;

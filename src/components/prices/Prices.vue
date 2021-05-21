@@ -102,8 +102,14 @@ export default class extends Mixins(PaneMixin) {
     if (!this.markets) {
       this.markets = []
 
-      for (const market of this.activeMarkets) {
-        this.addMarketToList(market)
+      for (const market of this.pane.markets) {
+        const [exchange, pair] = parseMarket(market)
+
+        this.addMarketToList({
+          id: exchange + pair,
+          pair,
+          exchange
+        })
       }
     } else {
       for (const market of this.markets) {
@@ -225,6 +231,10 @@ export default class extends Mixins(PaneMixin) {
     overflow-y: auto;
     width: 100%;
     height: 100%;
+
+    .market__price {
+      margin-left: auto;
+    }
   }
 
   &.-bold .market {

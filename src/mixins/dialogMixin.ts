@@ -7,6 +7,7 @@ export default {
   },
   data: function() {
     return {
+      preventClickOutside: false,
       output: null,
       open: false
     }
@@ -23,6 +24,10 @@ export default {
   },
   methods: {
     close(data): Promise<void> {
+      if (this.preventClose) {
+        return
+      }
+
       this.open = false
 
       if (data) {

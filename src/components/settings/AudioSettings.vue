@@ -15,8 +15,8 @@
             :step="0.1"
             :editable="false"
             :value="audioVolume"
-            @change="$store.dispatch('settings/setAudioVolume', $event.target.value)"
-            @reset="$store.dispatch('settings/setAudioVolume', 1.5)"
+            @input="$store.dispatch('settings/setAudioVolume', $event)"
+            @reset="$store.dispatch('settings/setAudioVolume', 1)"
           ></slider>
         </div>
       </div>

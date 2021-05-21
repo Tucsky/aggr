@@ -2,11 +2,27 @@ body {
   background-color: $dark;
 }
 
+#progress {
+  flex-direction: column;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  font-size: 1.5rem;
+  z-index: 1000;
+  height: 100%;
+  font-family: $font-monospace;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
 #app {
   width: 100%;
   position: relative;
   min-height: 100%;
-  background-color: $dark;
   transition: transform 0.3s $ease-out-expo;
   color: white;
 
@@ -205,7 +221,11 @@ body {
 }
 
 .flip-list-move {
-  transition: transform 0.4s $ease-out-expo;
+  transition: transform .4s linear;
+}
+
+#app.-no-animations *.flip-list-move {
+  transition: transform .4s linear !important;
 }
 
 .divider {

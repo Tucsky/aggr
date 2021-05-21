@@ -1,6 +1,9 @@
 import { defaultChartSeries } from '../components/chart/defaultSeries'
 import store from '../store'
 
+const progressContainer = document.getElementById('progress')
+const progressTask = progressContainer.children[0] as HTMLElement
+
 export function parseQueryString() {
   let QUERY_STRING
 
@@ -265,3 +268,15 @@ export function getBucketId(markets: string[]) {
 export function parseMarket(market: string) {
   return market.match(/([^:]*):(.*)/).slice(1, 3)
 }
+
+export async function progress(task: string | boolean) {
+  console.info(task);
+
+  if (typeof task === 'boolean') {
+    progressContainer.style.display = task ? 'flex' : 'none';
+    return
+  }
+
+  progressTask.innerText = task
+}
+

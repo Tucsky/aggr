@@ -557,7 +557,7 @@ export default class extends Mixins(PaneMixin) {
 
 .chart__series {
   position: absolute;
-  top: 2em;
+  top: 3em;
   left: 1em;
   font-family: 'Barlow Semi Condensed';
   z-index: 3;

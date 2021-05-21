@@ -1,5 +1,6 @@
 import store from '@/store'
 import { ProductsData, ProductsStorage } from '@/types/test'
+import { progress } from '@/utils/helpers'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
@@ -111,7 +112,9 @@ export async function getProducts(exchangeId: string, endpoints?: string[]): Pro
   } else {
     console.debug(`[products.${exchangeId}] endpoint are known, gona fetch now`)
 
-    productsData = fetchProducts(exchangeId, endpoints)
+    progress(`fetching ${exchangeId}'s products`)
+
+    productsData = await fetchProducts(exchangeId, endpoints)
   }
 
   if (productsData) {

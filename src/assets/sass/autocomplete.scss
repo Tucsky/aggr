@@ -4,7 +4,7 @@
   &__wrapper {
     width: 100%;
     display: flex;
-    background-color: lighten($dark, 18%);
+    background-color: $base;
     border-radius: 3px;
     overflow: hidden;
     align-items: stretch;
@@ -53,7 +53,7 @@
 
   &__dropdown {
     border-radius: $border-radius-base;
-    background-color: lighten($dark, 10%);
+    background-color: $lighter;
     margin-left: -0.6rem;
     margin-right: -0.6rem;
 

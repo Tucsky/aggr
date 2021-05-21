@@ -1,7 +1,9 @@
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
+import { boot } from '..'
 
 export interface CountersPaneState {
   _id?: string
+  _booted?: boolean
   granularity?: number
   liquidationsOnly?: boolean
   steps?: number[]
@@ -17,7 +19,11 @@ const state = {
   count: false
 } as CountersPaneState
 
-const actions = {} as ActionTree<CountersPaneState, CountersPaneState>
+const actions = {
+  async boot({ state }) {
+    state._booted = true
+  }
+} as ActionTree<CountersPaneState, CountersPaneState>
 
 const mutations = {
   REPLACE_COUNTERS(state, counters) {

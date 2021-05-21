@@ -15,6 +15,7 @@ export interface Threshold {
 
 export interface TradesPaneState {
   _id?: string
+  _booted?: boolean
   liquidations: Threshold
   thresholds: Threshold[]
   audioThreshold: number
@@ -115,8 +116,8 @@ play(246.94, gain * 1, decay, 80)`
 } as TradesPaneState
 
 const actions = {
-  async boot() {
-    //
+  async boot({ state }) {
+    state._booted = true
   },
   updateThreshold({ state, commit }, { index, prop, value }: { index: number; prop: string; value: any }) {
     const threshold = state.thresholds[index]

@@ -148,6 +148,14 @@ class WorkspacesService {
       throw new Error(`There is no current workspace`)
     }
 
+    state = JSON.parse(JSON.stringify(state))
+
+    for (const prop in state) {
+      if (prop[0] === '_' && prop !== '_id') {
+        delete state[prop]
+      }
+    }
+
     this.workspace.states[stateId] = state
 
     return this.saveWorkspace()

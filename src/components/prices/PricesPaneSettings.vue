@@ -17,22 +17,16 @@
 
     <div class="form-group mb8">
       <label class="checkbox-control">
-        <input
-          type="checkbox"
-          class="form-control"
-          :disabled="disableAnimations"
-          :checked="animateSort"
-          @change="$store.commit(paneId + '/TOGGLE_SORT_ANIMATION')"
-        />
+        <input type="checkbox" class="form-control" :checked="animateSort" @change="$store.commit(paneId + '/TOGGLE_SORT_ANIMATION')" />
         <div></div>
         <span>Order change animations are {{ animateSort ? 'enabled' : 'disabled' }}</span>
       </label>
     </div>
 
-    <small v-if="animateSort && disableAnimations" class="help-text mt8 mb16">
+    <!--<small v-if="animateSort && disableAnimations" class="help-text mt8 mb16">
       Animations are disabled globaly !
       <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_ANIMATIONS')">Enable animations</a>
-    </small>
+    </small>-->
   </div>
 </template>
 
@@ -64,10 +58,6 @@ export default class extends Vue {
 
   get animateSort() {
     return this.$store.state[this.paneId].animateSort
-  }
-
-  get disableAnimations() {
-    return this.$store.state.settings.disableAnimations
   }
 }
 </script>

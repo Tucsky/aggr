@@ -31,7 +31,7 @@
               <td class="table-input">
                 {{ serie.name }}
               </td>
-              <td class="table-input">{{ ago(serie.updatedAt) }}</td>
+              <td class="table-input">{{ ago(serie.updatedAt) }} ago</td>
               <td class="btn -red -small" @click.stop="removeSerie(serie)"><i class="icon-trash"></i></td>
             </tr>
           </tbody>

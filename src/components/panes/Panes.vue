@@ -26,7 +26,7 @@
       @container-resized="onContainerResized"
       @resized="onPaneResized"
     >
-      <component v-if="layoutReady" class="pane" ref="panes" :is="gridItem.type" :paneId="gridItem.i"></component>
+      <component v-if="layoutReady && $store.state[gridItem.i]._booted" class="pane" ref="panes" :is="gridItem.type" :paneId="gridItem.i"></component>
     </grid-item>
   </grid-layout>
 </template>
