@@ -4,6 +4,7 @@ import { parseMarket, randomString } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import Worker from 'worker-loader!@/worker/aggregator.worker'
+import { getProducts } from './productsService'
 import workspacesService from './workspacesService'
 
 class AggregatorService extends EventEmitter {
@@ -19,22 +20,13 @@ class AggregatorService extends EventEmitter {
       this.emit(event.data.op, event.data.data, event.data.trackingId)
     })
 
+    this.listenUtilityEvents()
+
     window.addEventListener('beforeunload', () => {
       this.worker.postMessage({
         op: 'unload'
       })
     })
-
-    this.once('hello', async () => {
-      await workspacesService.initialize()
-
-      const workspace = await workspacesService.getCurrentWorkspace()
-
-      workspacesService.setCurrentWorkspace(workspace)
-    })
-    ;(window as any).trade = (amount, side, price = 57000) => {
-      this.emit('trades', [{ pair: 'XBTUSD', exchange: 'BITMEX', price: price, size: amount / price, timestamp: +new Date(), side }])
-    }
   }
 
   dispatch(payload: AggregatorPayload) {
@@ -112,6 +104,45 @@ class AggregatorService extends EventEmitter {
       payload.trackingId = trackingId
 
       this.worker.postMessage(payload)
+    })
+  }
+
+  listenUtilityEvents() {
+    this.once('hello', async () => {
+      await workspacesService.initialize()
+
+      const workspace = await workspacesService.getCurrentWorkspace()
+
+      workspacesService.setCurrentWorkspace(workspace)
+    })
+
+    this.on('connection', ({ exchange, pair }: { exchange: string; pair: string }) => {
+      console.log('worker reported connection', exchange, pair)
+      store.commit('app/ADD_ACTIVE_MARKET', {
+        exchange,
+        pair
+      })
+    })
+
+    this.on('disconnection', ({ exchange, pair }: { exchange: string; pair: string }) => {
+      console.log('worker reported disconnection', exchange, pair)
+      store.commit('app/REMOVE_ACTIVE_MARKET', {
+        exchange,
+        pair
+      })
+    })
+
+    this.on('products', async ({ exchange, endpoints }: { exchange: string; endpoints: string[] }, trackingId: string) => {
+      const productsData = await getProducts(exchange, endpoints)
+
+      this.dispatch({
+        op: 'products',
+        data: {
+          exchange,
+          data: productsData
+        },
+        trackingId
+      })
     })
   }
 }

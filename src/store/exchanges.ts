@@ -57,20 +57,6 @@ const actions = {
       this.commit('app/EXCHANGE_UPDATED', id)
     }
 
-    aggregatorService.on('products', async ({ exchange, endpoints }: { exchange: string; endpoints: string[] }, trackingId: string) => {
-      const productsData = await getProducts(exchange, endpoints)
-
-      aggregatorService.dispatch({
-        op: 'products',
-        data: {
-          exchange,
-          data: productsData
-        },
-        trackingId
-      })
-    })
-
-
     await Promise.all(getters.getExchanges.map(id => getProducts(id)))
 
     await progress(`connecting to exchanges`)

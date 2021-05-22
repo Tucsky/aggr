@@ -1,5 +1,6 @@
 body {
   background-color: $dark;
+  overflow-x: hidden;
 }
 
 #progress {
@@ -221,11 +222,11 @@ body {
 }
 
 .flip-list-move {
-  transition: transform .4s linear;
+  transition: transform 0.4s linear;
 }
 
 #app.-no-animations *.flip-list-move {
-  transition: transform .4s linear !important;
+  transition: transform 0.4s linear !important;
 }
 
 .divider {
@@ -263,4 +264,62 @@ blockquote {
 
 code {
   font-family: $font-monospace;
+}
+
+.section {
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 1rem;
+  position: relative;
+
+  &:hover {
+    background-color: rgba(black, 0.05);
+  }
+
+  .section__controls {
+    position: absolute;
+    right: 1rem;
+    margin-top: -2rem;
+    z-index: 1;
+    line-height: 1;
+  }
+
+  .section__title {
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    margin: -1rem -1rem 1rem;
+    padding: 1rem 1rem 0;
+
+    &:hover {
+      opacity: 1;
+      cursor: pointer;
+    }
+
+    .icon-up {
+      transition: transform 0.2s $ease-elastic;
+      margin-left: 0.5em;
+    }
+
+    &:first-child {
+      margin: -1rem;
+      padding-bottom: 1rem;
+
+      .icon-up {
+        transform: rotateZ(180deg);
+      }
+    }
+  }
+}
+
+#app.-light .section:hover {
+  background-color: rgba(black, 0.025);
 }

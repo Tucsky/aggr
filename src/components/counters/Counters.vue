@@ -81,8 +81,6 @@ export default class extends Mixins(PaneMixin) {
   }
 
   created() {
-    aggregatorService.on('sums', this.onVolume)
-
     this._onStoreMutation = this.$store.subscribe(mutation => {
       switch (mutation.type) {
         case 'panes/SET_PANE_MARKETS':

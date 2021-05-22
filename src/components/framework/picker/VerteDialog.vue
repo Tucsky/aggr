@@ -214,7 +214,11 @@ export default {
   },
   methods: {
     selectColor(color, muted = false) {
-      let colorStr
+      let colorStr = color
+
+      if (typeof color === 'string' && color.length === 6) {
+        color = '#' + color
+      }
 
       if (isValidHsl(color)) {
         if (typeof color === 'string') {
@@ -228,14 +232,11 @@ export default {
         } else {
           colorStr = formatRgb(color)
         }
-      } else if (isValidHex('#' + color)) {
+      } else if (isValidHex(color)) {
         if (typeof color === 'string') {
           colorStr = color
         } else {
-          colorStr = formatHex('#' + color)
-        }
-        if (color.indexOf(0) !== '#') {
-          colorStr = '#' + color
+          colorStr = formatHex(color)
         }
       } else {
         return

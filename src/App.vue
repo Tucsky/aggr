@@ -18,7 +18,6 @@
     <Settings v-if="showSettings" />
     <div class="app__wrapper">
       <Header />
-      <SearchProducts />
 
       <div class="app__layout">
         <Panes />
@@ -74,6 +73,10 @@ export default class extends Vue {
     return this.$store.state.app.showSettings
   }
 
+  get showSearch() {
+    return this.$store.state.app.showSearch
+  }
+
   get isBooted() {
     return this.$store.state.app && this.$store.state.app.isBooted
   }
@@ -123,6 +126,8 @@ export default class extends Vue {
       this.$store.dispatch('app/showNotice', notice)
     })
     aggregatorService.on('prices', this.updatePrice)
+
+    document.addEventListener('keydown', this.onDocumentKeyPress)
   }
 
   beforeDestroy() {
@@ -178,6 +183,38 @@ export default class extends Vue {
       this._faviconElement.href = upFavicon
     } else {
       this._faviconElement.href = downFavicon
+    }
+  }
+
+  onDocumentKeyPress(event: KeyboardEvent) {
+    if (!this.isBooted) {
+      return
+    }
+
+    const activeElement = document.activeElement as HTMLElement
+
+    if (event.keyCode === 27) {
+      this.$store.dispatch('app/hideSearch')
+      return
+    }
+
+    if (
+      this.showSearch ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      activeElement.tagName === 'INPUT' ||
+      activeElement.tagName === 'TEXTAREA' ||
+      activeElement.tagName === 'SELECT' ||
+      activeElement.isContentEditable
+    ) {
+      return
+    }
+
+    event = event || (window.event as any)
+
+    if (/^[a-z0-9]$/i.test(event.key)) {
+      this.$store.dispatch('app/showSearch', { query: null })
     }
   }
 }

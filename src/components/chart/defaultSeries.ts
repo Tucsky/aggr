@@ -9,12 +9,13 @@ export const defaultChartSeries = {
       priceScaleId: 'right',
       priceLineVisible: true,
       lastValueVisible: true,
-      upColor: 'rgb(100, 157, 102)',
-      borderUpColor: 'rgb(59, 202, 109)',
-      wickUpColor: 'rgba(119, 148, 92, .5)',
-      downColor: 'rgb(239, 67, 82)',
-      borderDownColor: 'rgb(235, 30, 47)',
-      wickDownColor: 'rgba(239, 67, 82,.5)'
+      borderVisible: true,
+      upColor: 'rgba(33, 150, 243, 0)',
+      borderUpColor: 'rgb(255, 255, 255)',
+      wickUpColor: 'rgba(255, 255, 255, .45)',
+      downColor: 'rgba(66, 165, 245, .47)',
+      borderDownColor: 'rgb(255, 255, 255, .33)',
+      wickDownColor: 'rgb(100, 181, 246, .53)'
     }
   },
   'price-ma': {
@@ -74,9 +75,9 @@ export const defaultChartSeries = {
     }
   },
   cvd: {
-    enabled: false,
+    enabled: true,
     name: 'CVD',
-    type: 'candlestick',
+    type: 'line',
     description: 'Cumulative Volume Delta',
     input: 'cum_ohlc(vbuy - vsell)',
     options: {
@@ -84,6 +85,7 @@ export const defaultChartSeries = {
       priceFormat: {
         type: 'volume'
       },
+      color: '#ffe100',
       upColor: 'rgba(165,214,167,0)',
       borderUpColor: 'rgb(255,235,59)',
       wickUpColor: 'rgb(255,235,59)',

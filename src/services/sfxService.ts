@@ -243,7 +243,7 @@ class SfxService {
     oscillatorNode.stop(time + decay)
 
     const timeout = (length || decay * 1000) - this.queued.length * .5
-    
+
     return new Promise<void>(resolve => {
       setTimeout(() => {
         this.queued.shift()

@@ -39,9 +39,7 @@ export default class PaneDialogMixin extends Vue {
   }
 
   async resetPane() {
-    ;(this as any).destroy()
-
-    await sleep(100)
+    await (this as any).close()
 
     await this.$store.dispatch('panes/resetPane', this.paneId)
   }

@@ -8,8 +8,13 @@ import exchanges, { ExchangesState } from './exchanges'
 import panes, { PanesState } from './panes'
 import { progress, sleep } from '@/utils/helpers'
 import { Workspace } from '@/types/test'
+import aggregatorService from '@/services/aggregatorService'
 
 Vue.use(Vuex)
+
+console.debug = function() {
+  //
+}
 
 export interface AppModuleTree<R> {
   [key: string]: Module<any, R>
@@ -28,7 +33,7 @@ const modules = { app, settings, exchanges, panes } as AppModuleTree<ModulesStat
 store.subscribe((mutation, state: any) => {
   const moduleId = mutation.type.split('/')[0]
 
-  console.debug(`[store] ${mutation.type}`)
+  // console.debug(`[store] ${mutation.type}`)
 
   if (state[moduleId] && state[moduleId]._id) {
     scheduleSync(state[moduleId])
@@ -45,7 +50,17 @@ export async function boot(workspace?: Workspace) {
 
     store.dispatch('app/setBooted', false)
 
+    await progress(`unload workspace`)
+
     await sleep(500)
+
+    const markets = Object.keys(store.state.panes.marketsListeners)
+
+    if (markets.length) {
+      await progress(`disconnect from ` + markets.slice(0, 3).join(', ') + (markets.length - 3 > 0 ? ' + ' + (markets.length - 3) + ' others' : ''))
+
+      await aggregatorService.disconnect(markets)
+    }
 
     for (const id in store.state) {
       console.log(`[store] unloading module ${id}`)
@@ -87,7 +102,7 @@ export async function boot(workspace?: Workspace) {
       console.error(error)
     }
   }
-  
+
   await progress(`loading exchanges`)
   await store.dispatch('exchanges/boot')
 

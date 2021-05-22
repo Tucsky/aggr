@@ -214,6 +214,11 @@ class Exchange extends EventEmitter {
 
         this.onClose(event, api._connected)
 
+        if (event.reason) {
+          console.error(event.reason, [...api._connecting, ...api._connected])
+          this.emit('error', event.reason)
+        }
+
         // resolve disconnecting (as success)
         this.markLoadingAsCompleted(this.disconnecting, url, true)
 
@@ -223,7 +228,7 @@ class Exchange extends EventEmitter {
           console.log(`[${this.id}] connection closed unexpectedly, schedule reconnection (${pairsToReconnect.join(',')})`)
 
           Promise.all(api._connected.map(pair => this.unlink(pair))).then(() => {
-            const delay = this.reconnectionDelay[api.url] || 0
+            const delay = this.reconnectionDelay[api.url] || 10000
 
             setTimeout(() => {
               this.reconnectPairs(pairsToReconnect)
@@ -327,14 +332,18 @@ class Exchange extends EventEmitter {
    * @param {string[]} pairs (local)
    * @returns {Promise<any>}
    */
-  reconnectPairs(pairs) {
+  async reconnectPairs(pairs) {
     const pairsToReconnect = pairs.slice(0, pairs.length)
 
     console.debug(`[${this.id}] reconnect pairs ${pairsToReconnect.join(',')}`)
 
-    Promise.all(pairsToReconnect.map(pair => this.unlink(pair))).then(() => {
-      return Promise.all(pairsToReconnect.map(pair => this.link(pair)))
-    })
+    for (const pair of pairsToReconnect) {
+      await this.unlink(pair)
+    }
+
+    for (const pair of pairsToReconnect) {
+      await this.link(pair)
+    }
   }
 
   setProducts(productsData: ProductsData): void {
@@ -388,7 +397,7 @@ class Exchange extends EventEmitter {
    */
   onError(event, pairs) {
     console.debug(`[${this.id}] ${pairs.join(',')}'s api errored`, event)
-    this.emit('err', event)
+    this.emit('error', event)
   }
 
   /**
@@ -414,8 +423,10 @@ class Exchange extends EventEmitter {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async subscribe(api, pair): Promise<unknown> {
+  canSubscribe(api, pair) {
     if (!this.markPairAsConnected(api, pair)) {
+      console.log(pair, 'is already connected')
+
       // pair is already attached
       return false
     }
@@ -423,9 +434,12 @@ class Exchange extends EventEmitter {
     this.emit('subscribed', pair, api._id)
 
     if (api.readyState !== WebSocket.OPEN) {
+      console.log('(subscribe ' + pair + ') ws connection api', api._id, 'is in opening/closing state')
       // webSocket is in CLOSING or CLOSED state
       return false
     }
+
+    return true
   }
 
   /**
@@ -433,19 +447,43 @@ class Exchange extends EventEmitter {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async unsubscribe(api, pair): Promise<unknown> {
+  canUnsubscribe(api, pair) {
     if (!this.markPairAsDisconnected(api, pair)) {
-      // pair is already detached or
+      console.log(pair, 'pair is already detached')
+      // pair is already detached
       return false
     }
 
     this.emit('unsubscribed', pair, api._id)
 
     if (api.readyState !== WebSocket.OPEN) {
+      console.log('(unsubscribe ' + pair + ') ws connection api', api._id, 'is in opening/closing state')
       // webSocket is in CLOSING or CLOSED state
       return false
     }
+
+    return true
   }
+
+  /**
+   * Subscribe to channel (overrided by exchange class)
+   * @param api
+   * @param pair
+   * @returns
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  subscribe(api, pair) {}
+
+  /**
+   * Unsubscribe from channel (overrided by exchange class)
+   * @param api
+   * @param pair
+   * @returns
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  unsubscribe(api, pair) {}
 
   /**
    * Emit trade to server
@@ -509,20 +547,16 @@ class Exchange extends EventEmitter {
     }
   }
 
-  linkAll(pairs: string[]) {
+  async linkAll(pairs: string[]) {
     if (!pairs.length) {
       return Promise.resolve()
     }
 
     console.log(`[${this.id}] connecting to ${pairs.join(', ')}`)
 
-    const promises: Promise<void>[] = []
-
     for (const pair of pairs) {
-      promises.push(this.link(pair))
+      await this.link(pair)
     }
-
-    return Promise.all(promises)
   }
 
   unlinkAll(pairs?: string[], autoPairsOnEmpty = true) {

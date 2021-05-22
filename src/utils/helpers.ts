@@ -42,8 +42,6 @@ export function formatAmount(amount, decimals?: number) {
     amount = +(amount / 1000).toFixed(isNaN(decimals) ? 0 : decimals) + 'K'
   } else if (amount >= 1000) {
     amount = +(amount / 1000).toFixed(isNaN(decimals) ? 1 : decimals) + 'K'
-  } else if (store.state.settings.decimalPrecision) {
-    amount = amount.toFixed(store.state.settings.decimalPrecision)
   } else {
     amount = +amount.toFixed(4)
   }

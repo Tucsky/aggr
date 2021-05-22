@@ -51,9 +51,9 @@ const state = {
     buyColor: 'rgb(103,58,183)',
     sellColor: 'rgb(255,152,0)',
     buyAudio: `play(329.63, gain / 2, decay, 80, 'sine');
-    play(329.63, gain / 1.5, decay * 1.5, 80, 'sine');`,
+play(329.63, gain / 1.5, decay * 1.5, 80, 'sine');`,
     sellAudio: `play(440, gain / 2, decay, 80, 'sine');
-    play(440, gain / 1.5, decay * 1.5, 80, 'sine');`
+play(440, gain / 1.5, decay * 1.5, 80, 'sine');`
   },
   thresholds: [
     {

@@ -401,3 +401,13 @@ $iconpath: '../fonts';
     content: $icon-more;
   }
 }
+.icon-bear {
+  &:before {
+    content: $icon-bear;
+  }
+}
+.icon-bull {
+  &:before {
+    content: $icon-bull;
+  }
+}

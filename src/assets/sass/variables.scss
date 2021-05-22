@@ -7,6 +7,7 @@ $pink: #e91e63;
 $purple: #3e2161;
 $base: desaturate(lighten($dark, 15%), 10%);
 $lighter: lighten($base, 10%);
+$darker: darken($base, 10%);
 
 $ease-out-expo: cubic-bezier(0.005, 1, 0.22, 1);
 $ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);
@@ -94,6 +95,8 @@ $icon-copy-paste: '\e947';
 $icon-dashboard: '\e948';
 $icon-more: '\e949';
 $icon-flash: '\e910';
+$icon-bear: "\e934";
+$icon-bull: "\e94a";
 
 $exchanges: (
   'BITMEX': $icon-BITMEX,

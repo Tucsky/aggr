@@ -55,84 +55,105 @@
       </label>
     </div>
 
-    <div class="column mb8 mt16">
-      <span class="-fill">THRESHOLDS ({{ thresholds.length }})</span>
-
-      <a
-        href="javascript:void(0);"
-        v-tippy
-        title="Switch thresholds display"
-        class="-nowrap mr4"
-        @click="$store.commit(paneId + '/TOGGLE_THRESHOLDS_TABLE', !showThresholdsAsTable)"
-      >
-        Show as {{ showThresholdsAsTable ? 'slider' : 'table' }}
-      </a>
-      |
-      <a href="javascript:void(0);" class="ml4 -nowrap" v-tippy title="Add a threshold" @click="$store.commit(paneId + '/ADD_THRESHOLD')">
-        Add
-        <i class="icon-plus ml4 text-bottom"></i>
-      </a>
-    </div>
-
-    <thresholds :paneId="paneId" :show-liquidations-threshold="!this.liquidationsOnly" />
-
-    <small v-if="disableAnimations" class="help-text mt8 mb16">
-      Animations are disabled globaly ! No gif will be shown.
-      <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_ANIMATIONS')">Enable animations</a>
-    </small>
-
-    <div class="form-group">
-      <label>
-        Audio threshold
-        <span class="icon-info" title="Play song for trade above certain amount (default to 50% of minimum threshold)" v-tippy></span>
-      </label>
-      <input
-        class="form-control"
-        :value="audioThreshold"
-        :placeholder="audioThresholdPlaceholder"
-        @change="$store.commit(paneId + '/SET_AUDIO_THRESHOLD', $event.target.value)"
-      />
-    </div>
-
-    <div class="-fill mt16 mb8">THRESHOLD MULTIPLIER ({{ mutipliersCount }})</div>
-
-    <div class="multipliers" v-if="multipliers.length">
-      <div v-for="market in multipliers" :key="market.identifier" class="d-flex multipliers-market" :class="{ '-disabled': market.multiplier === 1 }">
-        <div
-          class="multipliers-market__id"
-          @dblclick="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: 1 })"
-        >
-          <div class="text-nowrap market-exchange">
-            <small>{{ market.exchange }}</small>
-          </div>
-          <div class="text-nowrap market-pair">
-            <strong>{{ market.pair }}</strong>
-          </div>
+    <section class="section">
+      <div v-if="sections.indexOf('thresholds') > -1">
+        <div class="column section__controls">
+          <span class="-fill"></span>
+          <a
+            href="javascript:void(0);"
+            v-tippy
+            title="Switch thresholds display"
+            class="-nowrap mr4"
+            @click="$store.commit(paneId + '/TOGGLE_THRESHOLDS_TABLE', !showThresholdsAsTable)"
+          >
+            Show as {{ showThresholdsAsTable ? 'slider' : 'table' }}
+          </a>
+          |
+          <a href="javascript:void(0);" class="ml4 -nowrap" v-tippy title="Add a threshold" @click="$store.commit(paneId + '/ADD_THRESHOLD')">
+            Add
+            <i class="icon-plus ml4 text-bottom"></i>
+          </a>
         </div>
-        <div class="-center market-threshold -fill">
-          {{ formatAmount(thresholds[0].amount * market.multiplier) }}
-        </div>
-        <div class="-fill -center ml16">
-          <slider
-            style="width: 100%;"
-            :min="0"
-            :gradient="[thresholds[0].buyColor, thresholds[thresholds.length - 1].buyColor]"
-            :max="2"
-            :step="0.01"
-            :value="market.multiplier"
-            :editable="false"
-            @input="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: $event })"
-            @reset="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: 1 })"
-          ></slider>
-        </div>
-        <!--<a href="javascript:void(0);" class="text-center -center pl16 multipliers-market__action" title="Detach" v-tippy>
+
+        <thresholds :paneId="paneId" :show-liquidations-threshold="!this.liquidationsOnly" />
+
+        <small v-if="displayGifWarning" class="help-text mt8 mb16">
+          Animations are disabled globaly ! No gif will be shown.
+          <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_ANIMATIONS')">Enable animations</a>
+        </small>
+      </div>
+      <div class="section__title" @click="toggleSection('thresholds')">THRESHOLDS ({{ thresholds.length }})</div>
+    </section>
+
+    <section class="section">
+      <div class="form-group" v-if="sections.indexOf('audio') > -1">
+        <label>
+          Minimum for a trade to trigger a sound
+        </label>
+        <input
+          class="form-control"
+          :value="audioThreshold"
+          :placeholder="audioThresholdPlaceholder"
+          @change="$store.commit(paneId + '/SET_AUDIO_THRESHOLD', $event.target.value)"
+        />
+      </div>
+      <div class="section__title" @click="toggleSection('audio')">Audio Threshold</div>
+    </section>
+
+    <section class="section">
+      <div class="form-group" v-if="sections.indexOf('multipliers') > -1">
+        <label>
+          Ajust threshold of specific markets
+        </label>
+        <div class="multipliers" v-if="multipliers.length">
+          <div
+            v-for="market in multipliers"
+            :key="market.identifier"
+            class="d-flex multipliers-market"
+            :class="{ '-disabled': market.multiplier === 1 }"
+          >
+            <div
+              class="multipliers-market__id"
+              @dblclick="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: 1 })"
+            >
+              <div class="text-nowrap market-exchange">
+                <small>{{ market.exchange }}</small>
+              </div>
+              <div class="text-nowrap market-pair">
+                <strong>{{ market.pair }}</strong>
+              </div>
+            </div>
+            <div class="-center market-threshold -fill">
+              {{ formatAmount(thresholds[0].amount * market.multiplier) }}
+            </div>
+            <div class="-fill -center ml16">
+              <slider
+                style="width: 100%;"
+                :min="0"
+                :gradient="[thresholds[0].buyColor, thresholds[thresholds.length - 1].buyColor]"
+                :max="2"
+                :step="0.01"
+                :value="market.multiplier"
+                :editable="false"
+                @input="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: $event })"
+                @reset="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: 1 })"
+              ></slider>
+            </div>
+            <!--<a href="javascript:void(0);" class="text-center -center pl16 multipliers-market__action" title="Detach" v-tippy>
           <i class="icon-cross"></i>
         </a>-->
+          </div>
+        </div>
+        <a v-else href="javascript:void(0);" @click="$store.dispatch('app/showSearch', { paneId })">
+          Add markets to pane
+        </a>
       </div>
-    </div>
-    <a v-else href="javascript:void(0);" @click="$store.dispatch('app/showSearch', paneId)">
-      Add markets to pane
-    </a>
+
+      <div class="section__title" @click="toggleSection('multipliers')">
+        THRESHOLD MULTIPLIER ({{ mutipliersCount }})
+        <i class="icon-up"></i>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -154,6 +175,7 @@ import Thresholds from '../settings/Thresholds.vue'
 })
 export default class extends Vue {
   paneId: string
+  sections = []
 
   get markets() {
     return this.$store.state.panes.panes[this.paneId].markets
@@ -218,8 +240,22 @@ export default class extends Vue {
     return this.$store.state.settings.disableAnimations
   }
 
+  get displayGifWarning() {
+    return this.disableAnimations && this.thresholds.filter(t => !!t.gif).length
+  }
+
   formatAmount(amount) {
     return formatAmount(amount)
+  }
+
+  toggleSection(id) {
+    const index = this.sections.indexOf(id)
+
+    if (index === -1) {
+      this.sections.push(id)
+    } else {
+      this.sections.splice(index, 1)
+    }
   }
 }
 </script>

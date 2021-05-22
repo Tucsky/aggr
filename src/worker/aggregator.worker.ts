@@ -36,6 +36,7 @@ class Aggregator {
       exchange.on('liquidations', this.onLiquidations.bind(this))
       exchange.on('subscribed', this.onSubscribed.bind(this, exchange.id))
       exchange.on('unsubscribed', this.onUnsubscribed.bind(this, exchange.id))
+      exchange.on('error', this.onError.bind(this, exchange.id))
     }
   }
 
@@ -142,6 +143,10 @@ class Aggregator {
       const trade = trades[i]
       const market = trade.exchange + ':' + trade.pair
 
+      if (!this.connections[market]) {
+        continue
+      }
+
       if (this.settings.calculateSlippage) {
         trade.originalPrice = this.marketsPrices[market] || trade.price
       }
@@ -165,6 +170,11 @@ class Aggregator {
     for (let i = 0; i < trades.length; i++) {
       const trade = (trades[i] as unknown) as AggregatedTrade
       const market = trade.exchange + trade.pair
+
+      if (!this.connections[market]) {
+        continue
+      }
+
       if (this.onGoingAggregations[market]) {
         const aggTrade = this.onGoingAggregations[market]
 
@@ -195,7 +205,7 @@ class Aggregator {
 
     if (this.settings.calculateSlippage) {
       if (this.settings.calculateSlippage === 'price') {
-        trade.slippage = Math.round(trade.price - trade.originalPrice)
+        trade.slippage = trade.price - trade.originalPrice
       } else if (this.settings.calculateSlippage === 'bps') {
         if (trade.side === 'buy') {
           trade.slippage = Math.floor(((trade.price - trade.originalPrice) / trade.originalPrice) * 10000)
@@ -206,8 +216,10 @@ class Aggregator {
     }
 
     if (this.settings.aggregateTrades) {
-      trade.price = (trade as AggregatedTrade).prices / trade.size
-      trade.size = (trade as AggregatedTrade).prices / trade.originalPrice
+      trade.price = trade.originalPrice
+      if (formatAmount(trade.price * trade.size) === '1000K') {
+        console.log((trade as AggregatedTrade).prices, trade.size, trade.originalPrice, trade.price, trade.count)
+      }
     }
 
     if (this.connections[market].bucket) {
@@ -338,7 +350,7 @@ class Aggregator {
     ctx.postMessage({
       op: 'notice',
       data: {
-        id: exchangeId,
+        id: exchangeId + pair,
         type: 'success',
         title: `Subscribed to ${exchangeId + ':' + pair}`
       }
@@ -364,11 +376,15 @@ class Aggregator {
   onUnsubscribed(exchangeId, pair) {
     const identifier = exchangeId + pair
 
+    console.log('worker DELETE', identifier)
+
     if (this.onGoingAggregations[identifier]) {
+      console.info('DELETE onGoingAggregations', identifier)
       delete this.onGoingAggregations[identifier]
     }
 
     if (this.connections[identifier]) {
+      console.info('DELETE connections', identifier)
       delete this.connections[identifier]
 
       ctx.postMessage({
@@ -382,9 +398,30 @@ class Aggregator {
       ctx.postMessage({
         op: 'notice',
         data: {
-          id: exchangeId,
+          id: exchangeId + pair,
           type: 'info',
           title: `Unsubscribed from ${exchangeId + ':' + pair}`
+        }
+      })
+    }
+  }
+
+  onError(exchangeId, reason) {
+    let message: string
+
+    if (typeof reason === 'string') {
+      message = reason
+    } else if (reason.message) {
+      message = reason.message
+    }
+
+    if (message) {
+      ctx.postMessage({
+        op: 'notice',
+        data: {
+          id: exchangeId + '-error',
+          type: 'error',
+          title: `${exchangeId} disconnected unexpectedly (${message})`
         }
       })
     }
@@ -417,7 +454,7 @@ class Aggregator {
       return output
     }, {})
 
-    const promises: Promise<void>[] = []
+    const promises: Promise<any>[] = []
 
     for (const exchangeId in marketsByExchange) {
       const exchange = getExchangeById(exchangeId)
@@ -427,9 +464,13 @@ class Aggregator {
           await exchange.getProducts()
         }
 
-        for (const market of marketsByExchange[exchangeId]) {
-          promises.push(exchange.link(market))
-        }
+        promises.push(
+          (async () => {
+            for (const market of marketsByExchange[exchangeId]) {
+              await exchange.link(market)
+            }
+          })()
+        )
       } else {
         console.error(`[worker.connect] unknown exchange ${exchange}`)
       }
@@ -471,9 +512,13 @@ class Aggregator {
       const exchange = getExchangeById(exchangeId)
 
       if (exchange) {
-        for (const market of marketsByExchange[exchangeId]) {
-          promises.push(exchange.unlink(market))
-        }
+        promises.push(
+          (async () => {
+            for (const market of marketsByExchange[exchangeId]) {
+              await exchange.unlink(market)
+            }
+          })()
+        )
       }
     }
 

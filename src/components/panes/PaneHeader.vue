@@ -137,7 +137,7 @@ export default class extends Vue {
   }
 
   openSearch() {
-    this.$store.dispatch('app/showSearch', this.paneId)
+    this.$store.dispatch('app/showSearch', { paneId: this.paneId })
   }
 
   removePane() {

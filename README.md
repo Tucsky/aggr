@@ -3,7 +3,7 @@
 
   
 
-Live cryptocurrency trades aggregator.<br>
+Cryptocurrency market trades aggregator.<br>
 
 Currently supporting BitMEX, Bitfinex, Binance & Binance Futures, Coinbase, Bitstamp, Deribit, Huobi, Okex, Hitbtc, Poloniex, Bybit and FTX ([see src/exchanges/](src/exchanges) for detail)
 
@@ -14,7 +14,7 @@ Currently supporting BitMEX, Bitfinex, Binance & Binance Futures, Coinbase, Bits
   
 
 ## What it do
-This tool shows **markets orders** LIVE on the crypto markets of your choice.
+This tool shows **markets orders** LIVE on the crypto market(s) of your choice.
 
 - Show live trades from exchanges on a specific pair
 - Filter noise by aggregating trades with the same timestamp

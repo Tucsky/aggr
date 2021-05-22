@@ -168,7 +168,7 @@ export default class extends Mixins(PaneMixin) {
         case 'panes/SET_PANE_MARKETS':
           if (mutation.payload.id === this.paneId) {
             this.cacheFilters()
-            this.clearList()
+            this.refreshList()
           }
           break
         case this.paneId + '/SET_THRESHOLD_GIF':
@@ -187,6 +187,7 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/ADD_THRESHOLD':
           this.prepareColorsSteps()
           this.refreshList()
+          this.prepareAudioThreshold()
           break
         case this.paneId + '/SET_AUDIO_THRESHOLD':
           this.prepareAudioThreshold()
@@ -285,7 +286,8 @@ export default class extends Mixins(PaneMixin) {
       li.className += ' -liquidation'
 
       const side = document.createElement('div')
-      side.className = 'trade__side icon-skull'
+      side.className = 'trade__side ' + (trade.side === 'buy' ? 'icon-bear' : 'icon-bull')
+
       li.appendChild(side)
 
       if (
@@ -316,7 +318,7 @@ export default class extends Mixins(PaneMixin) {
         li.className += ' -liquidation'
 
         const side = document.createElement('div')
-        side.className = 'trade__side icon-skull'
+        side.className = 'trade__side ' + (trade.side === 'buy' ? 'icon-bear' : 'icon-bull')
         li.appendChild(side)
       } else {
         if (trade.side !== this._lastSide) {
@@ -394,10 +396,10 @@ export default class extends Mixins(PaneMixin) {
     if (this.calculateSlippage === 'price' && Math.abs(trade.slippage) / trade.price > 0.0005) {
       price.setAttribute(
         'slippage',
-        (trade.slippage > 0 ? '+' : '') + trade.slippage + document.getElementById('app').getAttribute('data-quote-symbol')
+        (trade.slippage > 0 ? '+' : '') + formatPrice(trade.slippage) + document.getElementById('app').getAttribute('data-quote-symbol')
       )
     } else if (this.calculateSlippage === 'bps' && trade.slippage) {
-      price.setAttribute('slippage', (trade.slippage > 0 ? '+' : '-') + trade.slippage)
+      price.setAttribute('slippage', (trade.slippage > 0 ? '+' : '-') + formatPrice(trade.slippage))
     }
 
     const amount_div = document.createElement('div')
@@ -830,8 +832,12 @@ export default class extends Mixins(PaneMixin) {
   }
 
   &.-liquidation {
-    .trade__side:after {
-      margin-left: 1rem;
+    .trade__side {
+      font-weight: 400;
+
+      &:after {
+        margin-left: 1rem;
+      }
     }
 
     /* &.-buy .trade__side:after {
@@ -884,6 +890,7 @@ export default class extends Mixins(PaneMixin) {
     flex-basis: 1em;
     font-size: 1em;
     position: absolute;
+    font-weight: 600;
   }
 
   .icon-currency,

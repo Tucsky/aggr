@@ -3,8 +3,6 @@ import EventEmitter from 'eventemitter3'
 import store from '../store'
 
 class HistoricalService extends EventEmitter {
-  lastFetchUrl: string
-
   getHistoricalMarktets(markets: string[]) {
     return markets.filter(market => store.state.app.historicalMarkets.indexOf(market) !== -1)
   }
@@ -21,12 +19,6 @@ class HistoricalService extends EventEmitter {
   }
   fetch(from: number, to: number, timeframe: number, markets: string[]) {
     const url = this.getApiUrl(from, to, timeframe, markets)
-
-    if (this.lastFetchUrl === url) {
-      return Promise.reject()
-    }
-
-    this.lastFetchUrl = url
 
     store.commit('app/TOGGLE_LOADING', true)
 

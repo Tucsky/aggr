@@ -1,9 +1,11 @@
 import aggregatorService from '@/services/aggregatorService'
+import dialogService from '@/services/dialogService'
 import { Market } from '@/types/test'
 import { randomString } from '@/utils/helpers'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
+import SearchDialog from '../components/SearchDialog.vue'
 
 export interface Notice {
   id?: string
@@ -36,7 +38,6 @@ export interface AppState {
   redirectUrl: string
   showSettings: boolean
   showSearch: boolean
-  searchTarget: string
   historicalMarkets: string[]
   indexedProducts: { [exchangeId: string]: string[] }
   activeExchanges: { [exchangeId: string]: boolean }
@@ -62,7 +63,6 @@ const state = {
   pairs: [],
   showSettings: false,
   showSearch: false,
-  searchTarget: null,
   activeExchanges: {},
   activeMarkets: [],
   notices: [],
@@ -88,20 +88,6 @@ const actions = {
     commit('SET_PROXY_URL', process.env.VUE_APP_PROXY_URL)
 
     this.dispatch('app/refreshCurrencies')
-
-    aggregatorService.on('connection', ({ exchange, pair }: { exchange: string; pair: string }) => {
-      this.commit('app/ADD_ACTIVE_MARKET', {
-        exchange,
-        pair
-      })
-    })
-
-    aggregatorService.on('disconnection', ({ exchange, pair }: { exchange: string; pair: string }) => {
-      this.commit('app/REMOVE_ACTIVE_MARKET', {
-        exchange,
-        pair
-      })
-    })
   },
   setBooted({ commit }, value = true) {
     commit('SET_BOOTED', value)
@@ -234,13 +220,14 @@ const actions = {
 
     commit('SET_CURRENCIES', currencies)
   },
-  showSearch({ commit }, paneId: string) {
+  showSearch({ commit }, { paneId, query }: { paneId?: string; query?: string } = { query: '', paneId: null }) {
     if (state.showSearch) {
       return
     }
 
-    commit('SET_SEARCH_TARGET', paneId)
     commit('TOGGLE_SEARCH', true)
+
+    dialogService.open(SearchDialog, { query, paneId })
   },
   hideSearch({ commit }) {
     if (!state.showSearch) {
@@ -248,7 +235,6 @@ const actions = {
     }
 
     commit('TOGGLE_SEARCH', false)
-    commit('SET_SEARCH_TARGET', null)
   }
 } as ActionTree<AppState, ModulesState>
 
@@ -289,9 +275,6 @@ const mutations = {
   TOGGLE_SEARCH(state, value) {
     state.showSearch = typeof value === 'boolean' ? value : !state.showSearch
   },
-  SET_SEARCH_TARGET(state, value) {
-    state.searchTarget = value
-  },
   TOGGLE_SETTINGS(state, value) {
     state.showSettings = typeof value === 'boolean' ? value : !state.showSettings
   },
@@ -323,6 +306,13 @@ const mutations = {
     state.indexedProducts[exchange] = products.map(p => exchange + ':' + p)
   },
   ADD_ACTIVE_MARKET(state, { exchange, pair }: { exchange: string; pair: string }) {
+    const market = state.activeMarkets.find(m => m.exchange === exchange && m.pair === pair)
+    
+    if (market) {
+      throw new Error('add-active-market-already-exist')
+    }
+    
+    console.log('add active market', exchange, pair);
     state.activeMarkets.push({
       id: exchange + pair,
       exchange,
@@ -330,6 +320,7 @@ const mutations = {
     })
   },
   REMOVE_ACTIVE_MARKET(state, { exchange, pair }: { exchange: string; pair: string }) {
+    console.log('add active market', exchange, pair);
     const market = state.activeMarkets.find(m => m.exchange === exchange && m.pair === pair)
 
     if (!market) {

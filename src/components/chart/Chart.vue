@@ -352,7 +352,7 @@ export default class extends Mixins(PaneMixin) {
           this.reachedEnd = true
         } else {
           this.$store.dispatch('app/showNotice', {
-            title: typeof err === 'string' ? err : err.message,
+            title: err ? (typeof err === 'string' ? err : err.message) : `Historical API seems down at the moment`,
             type: 'error',
             icon: 'icon-warning',
             timeout: -1

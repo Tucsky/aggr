@@ -47,7 +47,12 @@ export default {
     },
     destroy() {
       this.$destroy()
-      this.$el.parentNode.removeChild(this.$el)
+
+      const parent = this.$el.parentNode
+
+      if (parent) {
+        parent.removeChild(this.$el)
+      }
     }
   }
 }

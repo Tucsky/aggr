@@ -3,7 +3,7 @@
     <div class="stack__scroller" v-background="0.01">
       <div class="stack__wrapper">
         <a href="#" class="stack__toggler icon-cross" @click="close"></a>
-        <section v-if="workspace">
+        <section class="section" v-if="workspace">
           <div class="form-group">
             <div class="column">
               <i class="icon-dashboard -center mr16"></i>
@@ -62,12 +62,12 @@
             </small>
           </div>
 
-          <div class="settings__title">
+          <div class="section__title">
             Workspace
           </div>
         </section>
 
-        <section>
+        <section class="section">
           <div v-if="settings.indexOf('list') > -1" class="settings-section settings-trades">
             <div class="form-group mb8">
               <label class="checkbox-control -aggr" @change="$store.commit('settings/TOGGLE_AGGREGATION', $event.target.checked)">
@@ -111,21 +111,21 @@
               </label>
             </div>
           </div>
-          <div class="settings__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'list')">
+          <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'list')">
             Trades list
             <i class="icon-up"></i>
           </div>
         </section>
 
-        <section>
+        <section class="section">
           <audio-settings v-if="settings.indexOf('audio') > -1"></audio-settings>
-          <div class="settings__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'audio')">
+          <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'audio')">
             Audio
             <i class="icon-up"></i>
           </div>
         </section>
 
-        <section>
+        <section class="section">
           <div v-if="settings.indexOf('chart') > -1" class="settings-section settings-chart">
             <div class="form-group mb8">
               <label class="checkbox-control flex-left">
@@ -156,33 +156,33 @@
               ></label>
             </div>
           </div>
-          <div class="settings__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'chart')">
+          <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'chart')">
             Chart
             <i class="icon-up"></i>
           </div>
         </section>
 
-        <section>
+        <section class="section">
           <div class="form-group" v-if="settings.indexOf('exchanges') > -1">
             <div class="settings-exchanges">
               <Exchange v-for="exchangeId of exchanges" :key="exchangeId" :id="exchangeId" />
             </div>
           </div>
-          <div class="settings__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'exchanges')">
+          <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'exchanges')">
             Exchanges
             <i class="icon-up"></i>
           </div>
         </section>
 
-        <section>
+        <section class="section">
           <other-settings v-if="settings.indexOf('other') > -1"></other-settings>
-          <div class="settings__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'other')">
+          <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'other')">
             Other
             <i class="icon-up"></i>
           </div>
         </section>
 
-        <section class="mt16 settings__footer">
+        <section class="section mt16 settings__footer">
           <div class="form-group">
             <div v-if="version" class="column">
               <div class="-grow">
@@ -331,6 +331,10 @@ export default class extends Vue {
     this.bindDrop()
   }
 
+  beforeDestroy() {
+    this.unbindDrop()
+  }
+
   bindDrop() {
     document.body.addEventListener('drop', this.handleDrop)
     document.body.addEventListener('dragover', this.handleDrop)
@@ -465,7 +469,7 @@ export default class extends Vue {
   async removeWorkspace(id: string) {
     let workspace: Workspace
 
-    if (id) {
+    if (typeof id === 'string') {
       workspace = await workspacesService.getWorkspace(id)
     } else {
       workspace = this.workspace
@@ -538,30 +542,6 @@ export default class extends Vue {
 </script>
 
 <style lang="scss">
-.settings__title {
-  display: flex;
-  align-items: center;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  opacity: 0.8;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-
-  &:hover {
-    opacity: 1;
-    cursor: pointer;
-  }
-
-  .icon-up {
-    transition: transform 0.2s $ease-elastic;
-    margin-left: 0.5em;
-  }
-}
-
 .settings__container {
   color: white;
 
@@ -605,33 +585,6 @@ export default class extends Vue {
   @media screen and (min-width: 840px) {
     .stack__scroller {
       width: 320px;
-    }
-  }
-
-  .stack__wrapper {
-    > section {
-      display: flex;
-      flex-direction: column-reverse;
-      padding: 1rem;
-      position: relative;
-
-      &:hover {
-        background-color: rgba(black, 0.05);
-      }
-
-      .settings__title {
-        margin: -1rem -1rem 1rem;
-        padding: 1rem 1rem 0;
-
-        &:first-child {
-          margin: -1rem;
-          padding-bottom: 1rem;
-
-          .icon-up {
-            transform: rotateZ(180deg);
-          }
-        }
-      }
     }
   }
 
@@ -698,10 +651,6 @@ export default class extends Vue {
     }
   }
 
-  .settings-section {
-    position: relative;
-  }
-
   .settings-exchanges {
     display: flex;
     flex-direction: row;
@@ -737,11 +686,7 @@ export default class extends Vue {
 }
 
 #app.-light {
-  .settings__container .stack__wrapper > section:hover {
-    background-color: rgba(black, 0.025);
-  }
-
-  .settings__title {
+  .section__title {
     opacity: 1;
   }
 
