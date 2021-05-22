@@ -214,7 +214,7 @@ export default class extends Vue {
     event = event || (window.event as any)
 
     if (/^[a-z0-9]$/i.test(event.key)) {
-      this.$store.dispatch('app/showSearch', { query: null })
+      this.$store.dispatch('app/showSearch')
     }
   }
 }

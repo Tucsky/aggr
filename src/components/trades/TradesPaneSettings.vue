@@ -175,7 +175,7 @@ import Thresholds from '../settings/Thresholds.vue'
 })
 export default class extends Vue {
   paneId: string
-  sections = []
+  sections = ['thresholds']
 
   get markets() {
     return this.$store.state.panes.panes[this.paneId].markets

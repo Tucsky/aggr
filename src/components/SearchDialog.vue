@@ -87,10 +87,10 @@ export default {
       return Array.prototype.concat(...Object.values(this.indexedProducts))
     },
     queryFilter: function() {
-      return new RegExp(this.query.replace(/\W/, '|'), 'i')
+      return new RegExp(this.query.replace(/\s/, '|'), 'i')
     },
     filteredMarkets: function() {
-      return this.flattenedProducts.filter(a => this.selection.indexOf(a) === -1 && this.queryFilter.test(a)).slice(0, 20)
+      return this.flattenedProducts.filter(a => this.selection.indexOf(a) === -1 && this.queryFilter.test(a)).slice(0, 100)
     }
   },
   watch: {
@@ -137,7 +137,10 @@ export default {
     },
     async apply() {
       if (!this.paneId) {
-        if (this.containMultipleMarketsConfigurations() && !(await dialogService.confirm('Are you sure ?'))) {
+        if (
+          this.containMultipleMarketsConfigurations() &&
+          !(await dialogService.confirm('Are you sure ? Some of the panes are watching specific markets.'))
+        ) {
           return
         }
 
