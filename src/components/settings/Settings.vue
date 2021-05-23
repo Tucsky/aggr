@@ -2,7 +2,7 @@
   <div id="settings" class="settings__container stack__container" @mousedown="$event.target === $el && close()">
     <div class="stack__scroller" v-background="0.01">
       <div class="stack__wrapper">
-        <a href="#" class="stack__toggler icon-cross" @click="close"></a>
+        <a href="#" class="stack__toggler icon-cross -text" @click="close"></a>
         <section class="section" v-if="workspace">
           <div class="form-group">
             <div class="column">

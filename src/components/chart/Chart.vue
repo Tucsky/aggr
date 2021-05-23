@@ -563,6 +563,10 @@ export default class extends Mixins(PaneMixin) {
   z-index: 3;
   opacity: 0;
   transition: opacity 0.2s $ease-out-expo;
+
+  @media (-webkit-min-device-pixel-ratio: 2) {
+    font-size: 12px;
+  }
 }
 
 .chart__layout {

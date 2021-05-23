@@ -85,11 +85,11 @@
   left: 0;
   right: 0;
   font-size: 2rem;
-  background-color: rgba(black, .8);
+  background-color: rgba(black, 0.8);
   backdrop-filter: blur(10px);
 
   &.toolbar {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     display: none;
     height: 1.99rem;
 
@@ -99,7 +99,7 @@
       padding-right: 0.5em;
       padding-top: 0.4em;
       padding-bottom: 0.5em;
-      font-size: 1rem !important;
+      font-size: 0.75em;
     }
 
     > span,
@@ -110,7 +110,11 @@
 
     > span.title-top-left {
       align-self: flex-start;
-      padding: .53em;
+      padding: 0.75em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-grow: 1;
     }
 
     button,

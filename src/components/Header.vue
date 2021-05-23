@@ -169,6 +169,10 @@ header#header {
   border-radius: 0 0 8px 8px;
   font-size: 1.5rem;
 
+  @media (-webkit-min-device-pixel-ratio: 2) {
+    font-size: 1.25rem;
+  }
+
   button,
   .dropdown {
     &:hover {
