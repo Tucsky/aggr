@@ -3,6 +3,7 @@ import * as seriesUtils from './serieUtils'
 
 import { Renderer, SerieAdapter, SerieInstruction, SerieTranspilationResult } from './chartController'
 import store from '@/store'
+import { findClosingBracketMatchIndex } from '@/utils/helpers'
 const AVERAGE_FUNCTIONS_NAMES = ['sma', 'ema', 'cma']
 const VARIABLE_REGEX = /([a-zA-Z0_9_]+)\s*=\s*(.*)/
 const STRIP_COMMENTS_REGEX = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/gm
@@ -10,7 +11,7 @@ const ARGUMENT_NAMES_REGEX = /([^\s,]+)/g
 const VARIABLES_VAR_NAME = 'vars'
 const FUNCTIONS_VAR_NAME = 'fns'
 
-export default class SerieTranspiler {
+export default class SerieBuilder {
   private exchanges = []
 
   transpile(serie) {
@@ -160,7 +161,7 @@ export default class SerieTranspiler {
         const functionArguments = output
           .slice(
             functionMatch.index + functionMatch[1].length + 1,
-            this.findClosingBracketMatchIndex(output, functionMatch.index + functionMatch[1].length)
+            findClosingBracketMatchIndex(output, functionMatch.index + functionMatch[1].length)
           )
           .replace(/\(.*\)/g, '')
           .split(',')
@@ -391,28 +392,6 @@ export default class SerieTranspiler {
       'use strict'
       return new Function('renderer', FUNCTIONS_VAR_NAME, VARIABLES_VAR_NAME, 'options', 'utils', '"use strict"; return ' + output)
     })() as SerieAdapter
-  }
-
-  findClosingBracketMatchIndex(str, pos) {
-    if (str[pos] != '(') {
-      throw new Error("No '(' at index " + pos)
-    }
-
-    let depth = 1
-
-    for (let i = pos + 1; i < str.length; i++) {
-      switch (str[i]) {
-        case '(':
-          depth++
-          break
-        case ')':
-          if (--depth == 0) {
-            return i
-          }
-          break
-      }
-    }
-    return -1 // No matching closing parenthesis
   }
 
   getParamNames(func) {

@@ -139,9 +139,9 @@
           })
         "
       ></textarea>
-      <small class="help-text mt-8">
+      <p class="help-text mt-8">
         Sum <code>{{ input }}</code> over {{ window }} window
-      </small>
+      </p>
     </div>
     <hr />
     <div class="column">

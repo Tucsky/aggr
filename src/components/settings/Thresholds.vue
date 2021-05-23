@@ -91,7 +91,7 @@
             transform: 'translateX(' + this.panelCaretPosition + 'px)'
           }"
         ></div>
-        <small class="help-text mb16 d-block">
+        <p class="help-text mb16 d-block">
           {{ thresholds.indexOf(selectedThreshold) > 0 ? 'for trades >' : 'show trades above' }}
           <editable
             :content="selectedThreshold.amount"
@@ -102,7 +102,7 @@
               })
             "
           ></editable>
-        </small>
+        </p>
         <a href="#" class="threshold-panel__close icon-cross" @click=";(selectedThresholdId = null), (editing = false)"></a>
 
         <div class="form-group mb8 threshold-panel__gif">
@@ -128,9 +128,9 @@
           <label>Custom colors</label>
           <div class="column">
             <div class="form-group column flex-center" title="When buy" v-tippy="{ placement: 'bottom' }">
-              <small class="help-text -center mr16">
+              <p class="help-text -center mr16">
                 Buy
-              </small>
+              </p>
               <verte
                 picker="square"
                 menuPosition="left"
@@ -146,9 +146,9 @@
               ></verte>
             </div>
             <div class="form-group column flex-center" title="When sell" v-tippy="{ placement: 'bottom' }">
-              <small class="help-text -center mr16">
+              <p class="help-text -center mr16">
                 Sell
-              </small>
+              </p>
               <verte
                 picker="square"
                 menuPosition="left"

@@ -18,7 +18,7 @@
           <div class="dialog-controls">
             <slot name="controls"></slot>
 
-            <a href="javascript:void(0);" class="dialog-controls__close -link" @click="$emit('clickOutside')">
+            <a href="javascript:void(0);" class="dialog-controls__close -link -text" @click="$emit('clickOutside')">
               <i class="icon-cross"></i>
             </a>
           </div>

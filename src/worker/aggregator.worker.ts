@@ -216,7 +216,7 @@ class Aggregator {
     }
 
     if (this.settings.aggregateTrades) {
-      trade.price = trade.originalPrice
+      trade.price = trade.side === 'buy' ? Math.min(trade.price, trade.originalPrice) : Math.max(trade.price, trade.originalPrice)
       if (formatAmount(trade.price * trade.size) === '1000K') {
         console.log((trade as AggregatedTrade).prices, trade.size, trade.originalPrice, trade.price, trade.count)
       }

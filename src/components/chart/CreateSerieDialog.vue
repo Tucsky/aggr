@@ -42,9 +42,9 @@
     <div class="form-group mb16">
       <label>Name</label>
       <input class="form-control" :value="name" @input="getSerieId($event.target.value)" />
-      <small class="help-text mt4">
+      <p class="help-text mt4">
         ID will be: {{ serieId }} <span class="icon-info ml4" :title="`Use \'$${serieId}\' to reference it in other series`" v-tippy></span
-      ></small>
+      ></p>
     </div>
     <div class="form-group mb16">
       <label>Align serie with</label>

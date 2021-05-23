@@ -68,7 +68,7 @@ export default {
   display: flex;
   width: 0;
   white-space: nowrap;
-  height: 14px;
+  height: 1.3em;
 
   i {
     line-height: 1.35;

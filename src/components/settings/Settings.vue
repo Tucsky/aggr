@@ -591,15 +591,6 @@ export default class extends Vue {
   .settings__footer {
     margin-top: auto;
     background: 0 !important;
-    font-size: 80%;
-
-    a {
-      opacity: 0.5;
-
-      &:hover {
-        opacity: 1;
-      }
-    }
 
     .form-group {
       flex-basis: auto;

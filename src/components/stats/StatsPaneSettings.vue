@@ -28,7 +28,7 @@
     <div class="column">
       <i class="icon-bucket -center mr4"></i>
       <span class="-fill">BUCKETS ({{ buckets.length }})</span>
-      <a href="javascript:void(0);" class="-nowrap" v-tippy title="Add a stat" @click="$store.dispatch(paneId + '/createBucket')">
+      <a href="javascript:void(0);" class="-nowrap -text" v-tippy title="Add a stat" @click="$store.dispatch(paneId + '/createBucket')">
         Add
         <i class="icon-plus ml4 -lower"></i>
       </a>

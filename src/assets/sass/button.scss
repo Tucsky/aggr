@@ -173,12 +173,15 @@ button {
 
 a {
   color: currentColor;
-  opacity: 0.5;
+  text-decoration: underline;
 
   &:hover,
   &:focus {
-    opacity: 1;
     color: currentColor;
+  }
+
+  &.-text {
+    text-decoration: none;
   }
 }
 

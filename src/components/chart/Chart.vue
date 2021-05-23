@@ -23,7 +23,7 @@
       <SerieControl v-for="(serie, id) in series" :key="id" :serieId="id" :paneId="paneId" :legend="legend[serie]" />
 
       <div class="column mt8">
-        <a href="javascript:void(0);" @click="addSerie" v-tippy="{ placement: 'bottom' }" title="Add" class="mr4">
+        <a href="javascript:void(0);" @click="addSerie" v-tippy="{ placement: 'bottom' }" title="Add" class="mr4 -text">
           <i class="icon-plus"></i>
         </a>
       </div>
@@ -563,8 +563,6 @@ export default class extends Mixins(PaneMixin) {
   z-index: 3;
   opacity: 0;
   transition: opacity 0.2s $ease-out-expo;
-
-  font-size: 12px;
 }
 
 .chart__layout {

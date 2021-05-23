@@ -68,21 +68,26 @@
           >
             Show as {{ showThresholdsAsTable ? 'slider' : 'table' }}
           </a>
-          |
-          <a href="javascript:void(0);" class="ml4 -nowrap" v-tippy title="Add a threshold" @click="$store.commit(paneId + '/ADD_THRESHOLD')">
+        </div>
+
+        <thresholds :paneId="paneId" :show-liquidations-threshold="!this.liquidationsOnly" />
+
+        <div class="text-right mt8 mb8">
+          <a href="javascript:void(0);" class="ml4 -nowrap -text" v-tippy title="Add a threshold" @click="$store.commit(paneId + '/ADD_THRESHOLD')">
             Add
             <i class="icon-plus ml4 text-bottom"></i>
           </a>
         </div>
 
-        <thresholds :paneId="paneId" :show-liquidations-threshold="!this.liquidationsOnly" />
-
-        <small v-if="displayGifWarning" class="help-text mt8 mb16">
-          Animations are disabled globaly ! No gif will be shown.
-          <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_ANIMATIONS')">Enable animations</a>
-        </small>
+        <div v-if="displayGifWarning" class="d-flex help-text">
+          <i class="icon-info"></i>
+          <p class="mt0 mb0">
+            No gif will be shown.
+            <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_ANIMATIONS')">Enable animations to show gifs</a>
+          </p>
+        </div>
       </div>
-      <div class="section__title" @click="toggleSection('thresholds')">THRESHOLDS ({{ thresholds.length }})</div>
+      <div class="section__title" @click="toggleSection('thresholds')">THRESHOLDS ({{ thresholds.length }}) <i class="icon-up"></i></div>
     </section>
 
     <section class="section">
@@ -97,7 +102,7 @@
           @change="$store.commit(paneId + '/SET_AUDIO_THRESHOLD', $event.target.value)"
         />
       </div>
-      <div class="section__title" @click="toggleSection('audio')">Audio Threshold</div>
+      <div class="section__title" @click="toggleSection('audio')">Audio Threshold <i class="icon-up"></i></div>
     </section>
 
     <section class="section">
@@ -128,7 +133,7 @@
             </div>
             <div class="-fill -center ml16">
               <slider
-                style="width: 100%;"
+                style="width: 100%;min-width:150px;"
                 :min="0"
                 :gradient="[thresholds[0].buyColor, thresholds[thresholds.length - 1].buyColor]"
                 :max="2"

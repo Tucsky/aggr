@@ -50,10 +50,10 @@ const state = {
     amount: 100000,
     buyColor: 'rgb(103,58,183)',
     sellColor: 'rgb(255,152,0)',
-    buyAudio: `play(329.63, gain / 2, decay, 80, 'sine');
-play(329.63, gain / 1.5, decay * 1.5, 80, 'sine');`,
-    sellAudio: `play(440, gain / 2, decay, 80, 'sine');
-play(440, gain / 1.5, decay * 1.5, 80, 'sine');`
+    buyAudio: `play(329.63, gain / 2, duration, 80, 'sine');
+play(329.63, gain / 1.5, duration * 1.5, 80, 'sine');`,
+    sellAudio: `play(440, gain / 2, duration, 80, 'sine');
+play(440, gain / 1.5, duration * 1.5, 80, 'sine');`
   },
   thresholds: [
     {
@@ -61,18 +61,18 @@ play(440, gain / 1.5, decay * 1.5, 80, 'sine');`
       amount: 250000,
       buyColor: 'rgba(119, 148, 92, .5)',
       sellColor: 'rgba(239, 67, 82,.5)',
-      buyAudio: `play(659.26, gain, decay, 50)`,
-      sellAudio: `play(493.88, gain * 2, decay, 50)`
+      buyAudio: `play(659.26, gain, duration, 50)`,
+      sellAudio: `play(493.88, gain * 2, duration, 50)`
     },
     {
       id: 'significant',
       amount: 500000,
       buyColor: 'rgb(100, 157, 102)',
       sellColor: 'rgb(239, 67, 82)',
-      buyAudio: `play(659.26, gain * 0.5, decay, 80);
-play(830.6, gain * 1.25, decay, 80)`,
-      sellAudio: `play(493.88, gain * 0.5, decay, 80);
-play(392, gain * 1.25, decay, 80)`
+      buyAudio: `play(659.26, gain * 0.5, duration, 80);
+play(830.6, gain * 1.25, duration, 80)`,
+      sellAudio: `play(493.88, gain * 0.5, duration, 80);
+play(392, gain * 1.25, duration, 80)`
     },
     {
       id: 'huge',
@@ -80,14 +80,14 @@ play(392, gain * 1.25, decay, 80)`
       gif: 'cash',
       buyColor: 'rgb(59, 202, 109)',
       sellColor: 'rgb(235, 30, 47)',
-      buyAudio: `play(659.26, gain * 0.5, decay * 0.75, 80);
-play(830.6, gain * 0.5, decay * 0.75, 80);
-play(987.76, gain * 0.5, decay * 0.75, 80);
-play(1318.52, gain * 1, decay, 80)`,
-      sellAudio: `play(493.88, gain * 0.5, decay * 0.25, 80);
-play(369.99, gain * 0.5, decay * 0.5, 80);
-play(293.66, gain * 0.5, decay * 0.75, 80);
-play(246.94, gain * 1, decay, 80)`
+      buyAudio: `play(659.26, gain * 0.5, duration * 0.75, 80);
+play(830.6, gain * 0.5, duration * 0.75, 80);
+play(987.76, gain * 0.5, duration * 0.75, 80);
+play(1318.52, gain * 1, duration, 80)`,
+      sellAudio: `play(493.88, gain * 0.5, duration * 0.25, 80);
+play(369.99, gain * 0.5, duration * 0.5, 80);
+play(293.66, gain * 0.5, duration * 0.75, 80);
+play(246.94, gain * 1, duration, 80)`
     },
     {
       id: 'rare',
@@ -95,14 +95,14 @@ play(246.94, gain * 1, decay, 80)`
       gif: 'explosion',
       buyColor: 'rgb(0, 255, 127)',
       sellColor: 'rgb(217, 31, 28)',
-      buyAudio: `play(659.26, gain * 0.5, decay * 0.75, 80);
-play(830.6, gain * 0.5, decay * 0.75, 80);
-play(987.76, gain * 0.5, decay * 0.75, 80);
-play(1318.52, gain * 1, decay, 80)`,
-      sellAudio: `play(493.88, gain * 0.5, decay * 0.25, 80);
-play(369.99, gain * 0.5, decay * 0.5, 80);
-play(293.66, gain * 0.5, decay * 0.75, 80);
-play(246.94, gain * 1, decay, 80)`
+      buyAudio: `play(659.26, gain * 0.5, duration * 0.75, 80);
+play(830.6, gain * 0.5, duration * 0.75, 80);
+play(987.76, gain * 0.5, duration * 0.75, 80);
+play(1318.52, gain * 1, duration, 80)`,
+      sellAudio: `play(493.88, gain * 0.5, duration * 0.25, 80);
+play(369.99, gain * 0.5, duration * 0.5, 80);
+play(293.66, gain * 0.5, duration * 0.75, 80);
+play(246.94, gain * 1, duration, 80)`
     }
   ],
   audioThreshold: null,
@@ -225,8 +225,8 @@ const mutations = {
   ADD_THRESHOLD(state) {
     const previousThreshold = state.thresholds[state.thresholds.length - 1]
 
-    let buyAudio = `play(659.26, gain, decay, 50)`
-    let sellAudio = `play(493.88, gain, decay, 50)`
+    let buyAudio = `play(659.26, gain, duration, 50)`
+    let sellAudio = `play(493.88, gain, duration, 50)`
 
     if (previousThreshold) {
       buyAudio = previousThreshold.buyAudio

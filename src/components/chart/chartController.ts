@@ -5,7 +5,7 @@ import store from '../../store'
 import * as seriesUtils from './serieUtils'
 import * as TV from 'lightweight-charts'
 import ChartCache, { Chunk } from './chartCache'
-import SerieTranspiler from './serieTranspiler'
+import SerieBuilder from './serieBuilder'
 import dialogService from '../../services/dialogService'
 import SerieDialog from './SerieDialog.vue'
 import { Trade } from '@/types/test'
@@ -104,7 +104,7 @@ export default class ChartController {
   renderedRange: TimeRange = { from: null, to: null }
   queuedTrades: Trade[] = []
   chartCache: ChartCache
-  serieTranspiler: SerieTranspiler
+  SerieBuilder: SerieBuilder
   preventRender: boolean
   panPrevented: boolean
   markets: { [identifier: string]: true }
@@ -117,7 +117,7 @@ export default class ChartController {
     this.paneId = id
 
     this.chartCache = new ChartCache()
-    this.serieTranspiler = new SerieTranspiler()
+    this.SerieBuilder = new SerieBuilder()
 
     this.setMarkets(store.state.panes.panes[this.paneId].markets)
   }
@@ -397,8 +397,8 @@ export default class ChartController {
 
   prepareSerie(serie) {
     try {
-      const transpilationResult = this.serieTranspiler.transpile(serie)
-      const { functions, variables, references } = this.serieTranspiler.transpile(serie)
+      const transpilationResult = this.SerieBuilder.transpile(serie)
+      const { functions, variables, references } = this.SerieBuilder.transpile(serie)
       let { output, type } = transpilationResult
 
       if (store.state[this.paneId].seriesErrors[serie.id]) {
@@ -461,7 +461,7 @@ export default class ChartController {
 
     const { functions, variables } = JSON.parse(JSON.stringify(serie.model))
 
-    this.serieTranspiler.updateInstructionsArgument(functions, serie.options)
+    this.SerieBuilder.updateInstructionsArgument(functions, serie.options)
 
     console.debug(`[chart/${this.paneId}/bindSerie] binding ${serie.id} ...`)
 
@@ -472,7 +472,7 @@ export default class ChartController {
       variables
     }
 
-    serie.adapter = this.serieTranspiler.getAdapter(serie.model.output)
+    serie.adapter = this.SerieBuilder.getAdapter(serie.model.output)
     serie.outputType = serie.model.type
 
     return serie

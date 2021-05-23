@@ -1,9 +1,10 @@
 import Vue from 'vue'
 import Tuna from 'tunajs'
 import store from '../store'
+import { findClosingBracketMatchIndex } from '@/utils/helpers'
 
 export type AudioFunction = (
-  play: (frequency: number, gain: number, decay: number, length?: number) => Promise<void>,
+  play: (frequency: number, gain: number, duration: number, length?: number, slope?: number, osc?: string) => Promise<void>,
   percent: number,
   side: 'buy' | 'sell',
   level: number
@@ -18,7 +19,7 @@ class SfxService {
   output: any
   volume: number
 
-  _play: (frequency: number, gain: number, decay: number, length?: number) => Promise<void>
+  _play: (frequency: number, gain: number, duration: number, length?: number, slope?: number, osc?: string) => Promise<void>
 
   constructor() {
     this._play = this.playOrQueue.bind(this)
@@ -195,26 +196,26 @@ class SfxService {
     }
   }
 
-  playOrQueue(frequency, gain, decay, length, osc) {
+  playOrQueue(options) {
     if (this.queued.length) {
-      this.queued.push([frequency, gain, decay, length, osc])
+      this.queued.push(options)
       return
     }
 
-    this.queued.push([frequency, gain, decay, length])
+    this.queued.push(options)
 
-    return this.playTilEmpty(frequency, gain, decay, length, osc)
+    return this.playTilEmpty(options)
   }
 
-  async playTilEmpty(frequency, gain, decay, length, osc) {
-    await this.play(frequency, gain, decay, length, osc)
+  async playTilEmpty(options) {
+    await this.play(options)
 
     if (this.queued.length) {
-      this.playTilEmpty(this.queued[0][0], this.queued[0][1], this.queued[0][2], this.queued[0][3], this.queued[0][4])
+      this.playTilEmpty.call(this, this.queued[0])
     }
   }
 
-  async play(frequency, gain, decay, length, osc) {
+  async play([frequency, gain, duration, length, slope, osc]) {
     if (this.context.state !== 'running') {
       this.queued.shift()
       return
@@ -224,6 +225,10 @@ class SfxService {
     const oscillatorNode = this.context.createOscillator()
     const gainNode = this.context.createGain()
     gain = Math.min(1, gain) * this.volume
+
+    if (!isFinite(gain) || !isFinite(frequency) || (typeof slope !== 'undefined' && !isFinite(slope))) {
+      debugger
+    }
 
     oscillatorNode.frequency.value = frequency
     oscillatorNode.type = osc || 'triangle'
@@ -236,13 +241,15 @@ class SfxService {
     gainNode.connect(this.output)
     oscillatorNode.connect(gainNode)
 
+    const decay = duration * 0.618
+
     gainNode.gain.value = gain
-    gainNode.gain.exponentialRampToValueAtTime(0.0005, time + decay * 0.618)
+    gainNode.gain.exponentialRampToValueAtTime(slope || 0.001, time + decay)
 
     oscillatorNode.start(time)
     oscillatorNode.stop(time + decay)
 
-    const timeout = (length || decay * 1000) - this.queued.length * .5
+    const timeout = (length || duration * 1000) - this.queued.length * 0.5
 
     return new Promise<void>(resolve => {
       setTimeout(() => {
@@ -281,10 +288,24 @@ class SfxService {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   buildAudioFunction(litteral, side, notice = false) {
     litteral = `'use strict'; 
-    var decay = .2 + percent + level;
+    var duration = .2 + percent + level;
     var gain = (percent + level) / 4;
     
     ${litteral}`
+
+    const FUNCTION_LOOKUP_REGEX = new RegExp(`play\\([^[]`, 'g')
+    let functionMatch = null
+
+    do {
+      if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(litteral))) {
+        const inlineParameters = litteral.slice(
+          functionMatch.index + functionMatch[0].length - 1,
+          findClosingBracketMatchIndex(litteral, functionMatch.index + functionMatch[0].length - 2)
+        )
+
+        litteral = litteral.replace('(' + inlineParameters, '([' + inlineParameters + ']')
+      }
+    } while (functionMatch)
 
     return new Function('play', 'percent', 'side', 'level', litteral) as AudioFunction
   }
