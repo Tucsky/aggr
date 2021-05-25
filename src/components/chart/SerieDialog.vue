@@ -188,6 +188,7 @@ import { defaultPlotsOptions, defaultSerieOptions } from './chartOptions'
 import Behave from 'behave-js'
 import SerieDialog from './SerieDialog.vue'
 import dialogService from '../../services/dialogService'
+import workspacesService from '../../services/workspacesService'
 import merge from 'lodash.merge'
 
 const ignoredOptionsKeys = ['crosshairMarkerVisible']
@@ -504,11 +505,16 @@ export default {
     async duplicateSerie() {
       const settings = merge({}, this.serieSettings)
 
+      settings.id += '-copy'
       settings.name += ' copy'
 
-      const id = await store.dispatch(this.paneId + '/createSerie', settings)
+      const id = await workspacesService.saveSerie(settings)
+      const serie = await workspacesService.getSerie(id)
+
+      this.$store.dispatch(this.paneId + '/addSerie', serie)
 
       await this.close()
+
       dialogService.open(
         SerieDialog,
         {

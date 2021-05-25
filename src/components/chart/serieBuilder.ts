@@ -4,7 +4,6 @@ import * as seriesUtils from './serieUtils'
 import { Renderer, SerieAdapter, SerieInstruction, SerieTranspilationResult } from './chartController'
 import store from '@/store'
 import { findClosingBracketMatchIndex } from '@/utils/helpers'
-const AVERAGE_FUNCTIONS_NAMES = ['sma', 'ema', 'cma', 'highest', 'lowest']
 const VARIABLE_REGEX = /(?:^|;|\(|,)([a-zA-Z0_9_]+)\(?(\d*)\)?\s*=\s*([^;,]*)?/
 const STRIP_COMMENTS_REGEX = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/gm
 const ARGUMENT_NAMES_REGEX = /([^\s,]+)/g
@@ -68,6 +67,29 @@ export default class SerieBuilder {
       }
     }
 
+    if (instruction.type === 'function' && typeof seriesUtils[instruction.name] && typeof seriesUtils[instruction.name] === 'object') {
+      instruction.persist = []
+      instruction.state = {}
+
+      const ignoreFromPersistance = ['count', 'points', 'sum']
+
+      for (const prop in seriesUtils[instruction.name]) {
+        try {
+          instruction.state[prop] = JSON.parse(JSON.stringify(seriesUtils[instruction.name][prop]))
+        } catch (error) {
+          instruction.state[prop] = seriesUtils[instruction.name]
+        }
+
+        if (ignoreFromPersistance.indexOf(prop) !== -1) {
+          continue
+        }
+
+        instruction.persist.push(prop)
+      }
+
+      return
+    }
+
     switch (instruction.type) {
       case 'number':
         instruction.state = 0
@@ -75,15 +97,9 @@ export default class SerieBuilder {
       case 'array':
         instruction.state = []
         break
-      case 'average_function':
-        instruction.state = {
-          sum: 0,
-          count: 0,
-          points: []
-        }
-        break
       default:
         instruction.state = {}
+
         break
     }
   }
@@ -121,15 +137,12 @@ export default class SerieBuilder {
         const variableName = variableMatch[1]
         const variableLength = +variableMatch[2] || 1
 
-        output = output.replace(
-          new RegExp('([^.])\\b(' + variableName + ')\\b', 'ig'),
-          `$1${VARIABLES_VAR_NAME}[${variables.length}]`
-        )
+        output = output.replace(new RegExp('([^.])\\b(' + variableName + ')\\b', 'ig'), `$1${VARIABLES_VAR_NAME}[${variables.length}]`)
 
         const variable = {
-            type: 'unknown',
-            length: variableLength,
-            name: variableName
+          type: 'unknown',
+          length: variableLength,
+          name: variableName
         }
 
         variables.push(variable)
@@ -159,7 +172,7 @@ export default class SerieBuilder {
         }
 
         const instruction: SerieInstruction = {
-          type: AVERAGE_FUNCTIONS_NAMES.indexOf(functionName) !== -1 ? 'average_function' : 'function',
+          type: 'function',
           name: functionName
         }
 
@@ -338,19 +351,26 @@ export default class SerieBuilder {
     for (let f = 0; f < functions.length; f++) {
       const instruction = functions[f]
 
-      if (instruction.type === 'average_function') {
+      if (typeof instruction.state.count !== 'undefined') {
+        instruction.state.count++
+      }
+
+      if (typeof instruction.state.points !== 'undefined') {
         instruction.state.points.push(instruction.state.output)
         instruction.state.sum += instruction.state.output
-        instruction.state.count++
 
         if (instruction.state.count > instruction.arg) {
           instruction.state.sum -= instruction.state.points.shift()
           instruction.state.count--
         }
-      } else if (instruction.type === 'ohlc') {
+      } else if (instruction.state.open !== 'undefined') {
         instruction.state.open = instruction.state.close
         instruction.state.high = instruction.state.close
         instruction.state.low = instruction.state.close
+      } else if (instruction.persist) {
+        for (let j = 0; j < instruction.persist.length; j++) {
+          instruction.state['_' + instruction.persist[j]] = instruction.state[instruction.persist[j]]
+        }
       }
     }
 

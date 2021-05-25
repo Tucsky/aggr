@@ -103,7 +103,7 @@
 
       &:hover {
         background-color: lighten($lighter, 5%);
-        box-shadow: 0 -1px rgba(black, .2), 0 1px rgba(black, .2);
+        box-shadow: 0 -1px rgba(black, .2);
         border-bottom-color: transparent;
         position: relative;
         z-index: 1;

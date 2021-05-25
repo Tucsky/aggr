@@ -130,25 +130,14 @@ export function cum$(state, value) {
 }
 
 /**
- * exponential moving average
- * @param {SerieMemory} memory
- * @param {number} value
+ * Highest value state
  */
-export function ema$(state, value, length) {
-  const k = 2 / (length + 1)
-
-  if (state.count) {
-    const last = state.points[state.points.length - 1]
-    state.output = (value - last) * k + last
-  } else {
-    state.output = value
-  }
-
-  return state.output
+export const highest = {
+  count: 0,
+  points: [],
 }
-
 /**
- * get highest
+ * get highest value
  * @param {SerieMemory} memory
  * @param {number} value
  */
@@ -163,7 +152,14 @@ export function highest$(state, value, length) {
 }
 
 /**
- * get lowest
+ * Lowest value state
+ */
+export const lowest = {
+  count: 0,
+  points: [],
+}
+/**
+ * Lowest value
  * @param {SerieMemory} memory
  * @param {number} value
  */
@@ -177,32 +173,60 @@ export function lowest$(state, value, length) {
   }
 }
 
-export function linreg$(state, values) {
-  if (values.length <= 1) {
+/**
+ * Linear Regression state
+ */
+export const linreg = {
+  count: 0,
+  sum: 0,
+  points: [],
+}
+
+/**
+ * Linear Regression
+ * @param state 
+ * @param value 
+ * @param length 
+ * @returns 
+ */
+export function linreg$(state, value, length) {
+  state.output = value
+
+  if (state.count < 1) {
     return null
   }
 
+  let count = 0
   let per = 0
   let sumX = 0
   let sumY = 0
   let sumXSqr = 0
   let sumXY = 0
 
-  for (let i = values.length - 1; i >= 0; i--) {
-    per = (values.length - i) + 1.0
+  for (let i = 0; i <= state.points.length; i++) {
+    const val = i === state.points.length ? value : state.points[i]
+    per = i + 1
     sumX += per
-    sumY += values[i]
+    sumY += val
     sumXSqr += per * per
-    sumXY += values[i] * per
+    sumXY += val * per
+    count++
   }
 
-  const slope = (values.length * sumXY - sumX * sumY) / (values.length * sumXSqr - sumX * sumX)
-  const average = sumY / values.length
-  const intercept = average - (slope * sumX) / values.length + slope
+  const slope = (count * sumXY - sumX * sumY) / (count * sumXSqr - sumX * sumX)
+  const average = sumY / count
+  const intercept = average - (slope * sumX) / length + slope
 
-  return intercept + slope * (values.length - 1)
+  return intercept + slope * (count - 1)
 }
 
+/**
+ * values averages (AVG) state
+ */
+export const avg = {
+  count: 0,
+  points: [],
+}
 /**
  * get avg
  * @param {SerieMemory} memory
@@ -218,8 +242,17 @@ export function avg$(state, values) {
   return sum / count
 }
 
+
 /**
- * simple moving average
+ * simple moving average (SMA) state
+ */
+export const sma = {
+  count: 0,
+  sum: 0,
+  points: [],
+}
+/**
+ * simple moving average (SMA)
  * @param {SerieMemory} memory
  * @param {number} value
  */
@@ -230,11 +263,46 @@ export function sma$(state, value) {
 }
 
 /**
- * cumulative moving average
+ * cumulative moving average (CMA) state
+ */
+export const cma = {
+  count: 0,
+  sum: 0,
+  points: [],
+}
+/**
+ * cumulative moving average (CMA)
  * @param {SerieMemory} memory
  * @param {number} value
  */
 export function cma$(state, value) {
   state.output = (state.sum + value) / (state.count + 1)
+  return state.output
+}
+
+
+/**
+ * exponential moving average (EMA) state
+ */
+ export const ema = {
+  count: 0,
+  sum: 0,
+  points: [],
+}
+/**
+ * exponential moving average
+ * @param {SerieMemory} memory
+ * @param {number} value
+ */
+export function ema$(state, value, length) {
+  const k = 2 / (length + 1)
+
+  if (state.count) {
+    const last = state.points[state.points.length - 1]
+    state.output = (value - last) * k + last
+  } else {
+    state.output = value
+  }
+
   return state.output
 }

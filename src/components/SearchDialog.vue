@@ -21,9 +21,7 @@
               v-tippy="{ placement: 'right' }"
               class="-action"
             >
-              <td class="pl0 table-input">
-                {{ market }}
-              </td>
+              <td class="pl0 table-input" v-text="market"></td>
             </tr>
           </tbody>
         </table>

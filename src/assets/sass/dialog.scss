@@ -36,7 +36,7 @@
       position: relative;
       z-index: 1;
       padding: 1rem;
-      border-bottom: 1px solid $darker;
+      border-bottom: 1px solid $lighter;
       cursor: grab;
 
       .checkbox-control > input:not(:checked) + div {
@@ -104,7 +104,7 @@
       bottom: 0;
       background: $base;
 
-      border-top: 1px solid $darker;
+      border-top: 1px solid $lighter;
       margin: 1rem -1rem 0;
       padding: 1rem;
     }

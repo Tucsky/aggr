@@ -28,11 +28,11 @@
               v-tippy="{ placement: 'right' }"
               class="-action"
             >
-              <td class="table-input">
-                {{ serie.name }}
+              <td class="table-input" v-text="serie.name"></td>
+              <td class="table-input" v-text="serie.updatedAt ? ago(serie.updatedAt) + ' ago' : ''"></td>
+              <td class="table-action">
+                <button class="btn  -red -small" @click.stop="removeSerie(serie)"><i class="icon-cross"></i></button>
               </td>
-              <td class="table-input">{{ ago(serie.updatedAt) }} ago</td>
-              <td class="btn -red -small" @click.stop="removeSerie(serie)"><i class="icon-trash"></i></td>
             </tr>
           </tbody>
         </table>
@@ -141,9 +141,8 @@ export default {
         name: this.name,
         priceScaleId: this.priceScaleId || this.serieId
       })
-      console.info(id)
+
       const serie = await workspacesService.getSerie(id)
-      console.info(serie)
 
       this.$store.dispatch(this.paneId + '/addSerie', serie)
 

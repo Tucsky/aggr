@@ -74,6 +74,7 @@ export interface SerieInstruction {
   type: string
   arg?: string | number
   length?: string | number
+  persist?: string[]
   state?: any
 }
 
@@ -1211,19 +1212,26 @@ export default class ChartController {
         for (let f = 0; f < rendererSerieData.functions.length; f++) {
           const instruction = rendererSerieData.functions[f]
 
-          if (instruction.type === 'average_function') {
+          if (typeof instruction.state.count !== 'undefined') {
+            instruction.state.count++
+          }
+
+          if (typeof instruction.state.points !== 'undefined') {
             instruction.state.points.push(instruction.state.output)
             instruction.state.sum += instruction.state.output
-            instruction.state.count++
 
             if (instruction.state.count > instruction.arg) {
               instruction.state.sum -= instruction.state.points.shift()
               instruction.state.count--
             }
-          } else if (instruction.type === 'ohlc') {
+          } else if (instruction.state.open !== 'undefined') {
             instruction.state.open = instruction.state.close
             instruction.state.high = instruction.state.close
             instruction.state.low = instruction.state.close
+          } else if (instruction.persist) {
+            for (let j = 0; j < instruction.persist.length; j++) {
+              instruction.state['_' + instruction.persist[j]] = instruction.state[instruction.persist[j]]
+            }
           }
         }
 
