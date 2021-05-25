@@ -5,7 +5,7 @@ $orange: #fbc02d;
 $dark: #171b29;
 $pink: #e91e63;
 $purple: #3e2161;
-$base: desaturate(lighten($dark, 15%), 10%);
+$base: desaturate(lighten($dark, 10%), 10%);
 $lighter: lighten($base, 10%);
 $darker: darken($base, 10%);
 

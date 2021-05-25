@@ -4,17 +4,19 @@ import * as seriesUtils from './serieUtils'
 import { Renderer, SerieAdapter, SerieInstruction, SerieTranspilationResult } from './chartController'
 import store from '@/store'
 import { findClosingBracketMatchIndex } from '@/utils/helpers'
-const AVERAGE_FUNCTIONS_NAMES = ['sma', 'ema', 'cma']
-const VARIABLE_REGEX = /([a-zA-Z0_9_]+)\s*=\s*(.*)/
+const AVERAGE_FUNCTIONS_NAMES = ['sma', 'ema', 'cma', 'highest', 'lowest']
+const VARIABLE_REGEX = /(?:^|;|\(|,)([a-zA-Z0_9_]+)\(?(\d*)\)?\s*=\s*([^;,]*)?/
 const STRIP_COMMENTS_REGEX = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/gm
 const ARGUMENT_NAMES_REGEX = /([^\s,]+)/g
 const VARIABLES_VAR_NAME = 'vars'
 const FUNCTIONS_VAR_NAME = 'fns'
 
 export default class SerieBuilder {
+  private dependencies: string[]
   private exchanges = []
 
-  transpile(serie) {
+  build(serie, dependencies = []) {
+    this.dependencies = dependencies
     this.exchanges = Object.keys(store.state.panes.panes).reduce((markets, paneId) => {
       for (const market of store.state.panes.panes[paneId].markets) {
         if (markets.indexOf(market) === -1) {
@@ -112,20 +114,29 @@ export default class SerieBuilder {
 
   parseVariables(output, variables): string {
     let variableMatch = null
-
+    let free = 0
     do {
       if ((variableMatch = VARIABLE_REGEX.exec(output))) {
+        free++
         const variableName = variableMatch[1]
+        const variableLength = +variableMatch[2] || 1
 
-        output = output.replace(new RegExp('\\b(' + variableName + ')\\b', 'ig'), `${VARIABLES_VAR_NAME}[${variables.length}]`)
+        output = output.replace(
+          new RegExp('([^.])\\b(' + variableName + ')\\b', 'ig'),
+          `$1${VARIABLES_VAR_NAME}[${variables.length}]`
+        )
 
-        variables.push({
-          type: 'unknown',
-          length: 1,
-          name: variableName
-        })
+        const variable = {
+            type: 'unknown',
+            length: variableLength,
+            name: variableName
+        }
+
+        variables.push(variable)
+
+        output = output.replace(new RegExp(`(${VARIABLES_VAR_NAME}\\[${variables.length - 1}\\])\\(${variable.length}\\)\\s*=\\s*`), '$1=')
       }
-    } while (variableMatch)
+    } while (variableMatch && free < 5)
 
     output = this.determineVariablesType(output, variables)
 
@@ -175,7 +186,11 @@ export default class SerieBuilder {
           instruction.arg = functionArguments[1]
         }
 
-        output = output.replace(FUNCTION_REPLACE_REGEX, `utils.$1$(${FUNCTIONS_VAR_NAME}[${instructions.length}].state,`)
+        output =
+          output.slice(0, functionMatch.index) +
+          output
+            .slice(functionMatch.index, output.length)
+            .replace(FUNCTION_REPLACE_REGEX, `utils.$1$(${FUNCTIONS_VAR_NAME}[${instructions.length}].state,`)
         instructions.push(instruction)
       }
     } while (functionMatch)
@@ -218,6 +233,14 @@ export default class SerieBuilder {
     do {
       if ((referenceMatch = REFERENCE_REGEX.exec(output))) {
         const serieId = referenceMatch[1]
+
+        if (this.dependencies.indexOf(serieId) === -1) {
+          throw {
+            message: 'Serie ' + serieId + ' is required',
+            status: 'serie-required',
+            serieId: serieId
+          }
+        }
 
         if (references.indexOf(serieId) === -1) {
           references.push(serieId)
@@ -272,6 +295,8 @@ export default class SerieBuilder {
       } else {
         variable.type = 'array'
       }
+
+      output = output.replace(new RegExp(`#${VARIABLES_VAR_NAME}\\[${index}\\]\\.state\\[\\d+\\]`, 'g'), `${VARIABLES_VAR_NAME}[${index}].state`)
     }
 
     return output
@@ -291,6 +316,7 @@ export default class SerieBuilder {
       values.push(value)
 
       renderer = this.getRenderer(renderer, exchanges, references)
+      this.refreshSerieMeta(functions, variables)
     }
 
     const valueSample = values[values.length - 1]
@@ -306,6 +332,39 @@ export default class SerieBuilder {
     }
 
     throw new Error('unknown serie output type')
+  }
+
+  refreshSerieMeta(functions, variables) {
+    for (let f = 0; f < functions.length; f++) {
+      const instruction = functions[f]
+
+      if (instruction.type === 'average_function') {
+        instruction.state.points.push(instruction.state.output)
+        instruction.state.sum += instruction.state.output
+        instruction.state.count++
+
+        if (instruction.state.count > instruction.arg) {
+          instruction.state.sum -= instruction.state.points.shift()
+          instruction.state.count--
+        }
+      } else if (instruction.type === 'ohlc') {
+        instruction.state.open = instruction.state.close
+        instruction.state.high = instruction.state.close
+        instruction.state.low = instruction.state.close
+      }
+    }
+
+    for (let v = 0; v < variables.length; v++) {
+      const instruction = variables[v]
+
+      if (instruction.type === 'array') {
+        instruction.state.unshift(instruction.state[0])
+
+        if (instruction.state.length > instruction.length) {
+          instruction.state.pop()
+        }
+      }
+    }
   }
 
   getRenderer(previousRenderer, exchanges, references) {

@@ -222,8 +222,9 @@ class Exchange extends EventEmitter {
         // resolve disconnecting (as success)
         this.markLoadingAsCompleted(this.disconnecting, url, true)
 
-        if (api._connected.length) {
-          const pairsToReconnect = [...api._connecting, ...api._connected]
+        const pairsToReconnect = [...api._connecting, ...api._connected]
+
+        if (pairsToReconnect.length) {
 
           console.log(`[${this.id}] connection closed unexpectedly, schedule reconnection (${pairsToReconnect.join(',')})`)
 

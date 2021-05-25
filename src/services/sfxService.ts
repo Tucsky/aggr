@@ -226,10 +226,6 @@ class SfxService {
     const gainNode = this.context.createGain()
     gain = Math.min(1, gain) * this.volume
 
-    if (!isFinite(gain) || !isFinite(frequency) || (typeof slope !== 'undefined' && !isFinite(slope))) {
-      debugger
-    }
-
     oscillatorNode.frequency.value = frequency
     oscillatorNode.type = osc || 'triangle'
 

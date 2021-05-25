@@ -43,8 +43,8 @@
       <label>Name</label>
       <input class="form-control" :value="name" @input="getSerieId($event.target.value)" />
       <p class="help-text mt4">
-        ID will be: {{ serieId }} <span class="icon-info ml4" :title="`Use \'$${serieId}\' to reference it in other series`" v-tippy></span
-      ></p>
+        ID will be: {{ serieId }} <span class="icon-info ml4" :title="`Use \'$${serieId}\' to reference it in other series`" v-tippy></span>
+      </p>
     </div>
     <div class="form-group mb16">
       <label>Align serie with</label>
@@ -68,7 +68,9 @@ import store from '@/store'
 import { ago, slugify, uniqueName } from '@/utils/helpers'
 import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
+import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
+import SerieDialog from './SerieDialog.vue'
 
 export default {
   mixins: [DialogMixin],
@@ -133,12 +135,21 @@ export default {
         this.name = name
       }
     },
-    create() {
-      this.close({
+    async create() {
+      const id = await workspacesService.saveSerie({
         id: this.serieId,
         name: this.name,
         priceScaleId: this.priceScaleId || this.serieId
       })
+      console.info(id)
+      const serie = await workspacesService.getSerie(id)
+      console.info(serie)
+
+      this.$store.dispatch(this.paneId + '/addSerie', serie)
+
+      dialogService.open(SerieDialog, { paneId: this.paneId, serieId: serie.id }, 'serie')
+
+      this.close(null)
     },
     selectSerie(serie) {
       this.$store.dispatch(this.paneId + '/addSerie', serie)

@@ -323,3 +323,14 @@ code {
 #app.-light .section:hover {
   background-color: rgba(black, 0.025);
 }
+
+
+@keyframes highlight {
+  0% {
+    opacity: 0.75;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}

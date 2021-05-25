@@ -36,7 +36,7 @@
       position: relative;
       z-index: 1;
       padding: 1rem;
-      border-bottom: 1px solid $lighter;
+      border-bottom: 1px solid $darker;
       cursor: grab;
 
       .checkbox-control > input:not(:checked) + div {
@@ -98,6 +98,22 @@
     max-width: calc(100% - 2rem);
   }
 
+  &.-sticky-footer {
+    footer {
+      position: sticky;
+      bottom: 0;
+      background: $base;
+
+      border-top: 1px solid $darker;
+      margin: 1rem -1rem 0;
+      padding: 1rem;
+    }
+
+    .dialog-body {
+      padding-bottom: 0;
+    }
+  }
+
   .form-control {
     margin: 0;
     color: white;
@@ -149,7 +165,7 @@
   hr {
     margin: 1rem 0;
     border: 0;
-    height: 1px;
+    height: 0.5px;
     background: $lighter;
 
     &.-across {
@@ -164,7 +180,7 @@
     text-transform: none;
 
     code {
-      font-size: 61.8%;
+      font-size: 75%;
       line-height: 0;
       vertical-align: middle;
       margin-top: -0.2rem;

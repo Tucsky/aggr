@@ -692,16 +692,6 @@ export default class extends Mixins(PaneMixin) {
   }
 }
 
-@keyframes highlight {
-  0% {
-    opacity: 0.75;
-  }
-
-  100% {
-    opacity: 0;
-  }
-}
-
 .pane-trades {
   line-height: 1;
 

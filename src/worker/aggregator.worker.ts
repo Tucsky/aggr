@@ -19,6 +19,7 @@ class Aggregator {
 
   activeBuckets: string[] = []
   buckets: { [id: string]: Volumes } = {}
+  connectionsCount = 0
 
   constructor() {
     console.warn(`[worker.aggr] new instance`)
@@ -216,7 +217,7 @@ class Aggregator {
     }
 
     if (this.settings.aggregateTrades) {
-      trade.price = trade.side === 'buy' ? Math.min(trade.price, trade.originalPrice) : Math.max(trade.price, trade.originalPrice)
+      trade.price = Math.max(trade.price, trade.originalPrice)
       if (formatAmount(trade.price * trade.size) === '1000K') {
         console.log((trade as AggregatedTrade).prices, trade.size, trade.originalPrice, trade.price, trade.count)
       }
@@ -299,6 +300,10 @@ class Aggregator {
   }
 
   emitPrices() {
+    if (!this.connectionsCount) {
+      return
+    }
+
     ctx.postMessage({ op: 'prices', data: this.marketsPrices })
   }
 
@@ -330,6 +335,8 @@ class Aggregator {
       hit: 0,
       timestamp: null
     }
+
+    this.connectionsCount = Object.keys(this.connections).length
 
     for (const bucketId in this.settings.buckets) {
       if (this.settings.buckets[bucketId].indexOf(market) !== -1) {
@@ -386,6 +393,8 @@ class Aggregator {
     if (this.connections[identifier]) {
       console.info('DELETE connections', identifier)
       delete this.connections[identifier]
+
+      this.connectionsCount = Object.keys(this.connections).length
 
       ctx.postMessage({
         op: 'disconnection',

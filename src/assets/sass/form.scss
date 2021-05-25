@@ -55,6 +55,10 @@
   a {
     text-decoration: underline;
   }
+
+  &.d-flex > i {
+    line-height: 1.3;
+  }
 }
 
 .form-control::-webkit-input-placeholder,

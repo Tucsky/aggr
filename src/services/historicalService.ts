@@ -19,7 +19,6 @@ class HistoricalService extends EventEmitter {
   }
   fetch(from: number, to: number, timeframe: number, markets: string[]) {
     const url = this.getApiUrl(from, to, timeframe, markets)
-
     store.commit('app/TOGGLE_LOADING', true)
 
     return new Promise((resolve, reject) => {
@@ -110,7 +109,7 @@ class HistoricalService extends EventEmitter {
         continue
       }
 
-      data.unshift({
+      /* data.unshift({
         timestamp: initialTs,
         exchange: market.shift(),
         pair: market.join(':'),
@@ -124,7 +123,7 @@ class HistoricalService extends EventEmitter {
         lsell: 0,
         cbuy: 0,
         csell: 0
-      })
+      }) */
     }
 
     return {

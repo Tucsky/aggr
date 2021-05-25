@@ -17,12 +17,12 @@ interface AggrDB extends DBSchema {
   workspaces: {
     value: Workspace
     key: string
-    indexes: { createdAt: number; updatedAt: number }
+    indexes: { name: string }
   }
   series: {
     value: SerieSettings
     key: string
-    indexes: { createdAt: number; updatedAt: number }
+    indexes: { name: string }
   }
 }
 
@@ -55,13 +55,13 @@ class WorkspacesService {
             keyPath: 'id'
           })
 
-          workspacesStore.createIndex('updatedAt', 'updatedAt')
+          workspacesStore.createIndex('name', 'name')
 
           const seriesStore = db.createObjectStore('series', {
             keyPath: 'id'
           })
 
-          seriesStore.createIndex('updatedAt', 'updatedAt')
+          seriesStore.createIndex('name', 'name')
 
           db.createObjectStore('products', {
             keyPath: 'exchange'
@@ -83,13 +83,15 @@ class WorkspacesService {
           console.log(`[idb] terminated received`)
           // …
         }
-      }).then(db => {
-        if (promiseOfUpgrade) {
-          return promiseOfUpgrade.then(() => resolve(db))
-        }
-
-        return resolve(db)
       })
+        .then(db => {
+          if (promiseOfUpgrade) {
+            return promiseOfUpgrade.then(() => resolve(db))
+          }
+
+          return resolve(db)
+        })
+        .catch(err => console.error(err))
     })
   }
 
@@ -108,7 +110,7 @@ class WorkspacesService {
     for (const id in defaultChartSeries) {
       const serie: SerieSettings = defaultChartSeries[id]
 
-      tx.store.add({ ...serie, id, createdAt: now, updatedAt: now })
+      tx.store.add({ ...serie, id, createdAt: now, updatedAt: null })
     }
 
     console.debug(`[idb] ${Object.keys(defaultChartSeries).length} default series added`)
@@ -201,7 +203,7 @@ class WorkspacesService {
     await this.db.add('workspaces', {
       ...workspace,
       createdAt: timestamp,
-      updatedAt: timestamp
+      updatedAt: null
     })
 
     return this.getWorkspace(workspace.id)
@@ -239,7 +241,7 @@ class WorkspacesService {
 
     const workspace: Workspace = {
       createdAt: timestamp,
-      updatedAt: timestamp,
+      updatedAt: null,
       name: null,
       id: null,
       states: {}
@@ -260,7 +262,7 @@ class WorkspacesService {
     const workspace: Workspace = JSON.parse(JSON.stringify(this.workspace))
 
     workspace.createdAt = timestamp
-    workspace.updatedAt = timestamp
+    workspace.updatedAt = null
 
     await this.makeUniqueWorkspace(workspace)
 
@@ -272,7 +274,7 @@ class WorkspacesService {
   }
 
   getWorkspaces() {
-    return this.db.getAllFromIndex('workspaces', 'updatedAt')
+    return this.db.getAllFromIndex('workspaces', 'name')
   }
 
   async renameWorkspace(name: string) {
@@ -342,7 +344,7 @@ class WorkspacesService {
   }
 
   getSeries() {
-    return this.db.getAllFromIndex('series', 'updatedAt')
+    return this.db.getAllFromIndex('series', 'name')
   }
 
   deleteSerie(id: string) {

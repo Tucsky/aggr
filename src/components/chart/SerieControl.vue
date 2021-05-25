@@ -92,12 +92,12 @@ export default {
     margin-left: 0.4em;
     font-family: 'Barlow Semi Condensed';
     pointer-events: none;
-    line-height: 1.4;
+    line-height: 1.75em;
     letter-spacing: 0px;
     order: 2;
     transition: visibility;
     transition-delay: 1s;
-    font-size: 11px;
+    font-size: 0.75em;
 
     text-shadow: 1px 1px black;
   }

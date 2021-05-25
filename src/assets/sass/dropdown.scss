@@ -97,12 +97,16 @@
       transition: background-color 0.2s $ease-out-expo;
       padding: 0.6em 1.4em 0.6em 2em;
       border-bottom: 1px solid $lighter;
-      background-color: $base;
+      background-color: lighten($base, 5%);
       display: flex;
       justify-content: flex-end;
 
       &:hover {
-        background-color: $lighter;
+        background-color: lighten($lighter, 5%);
+        box-shadow: 0 -1px rgba(black, .2), 0 1px rgba(black, .2);
+        border-bottom-color: transparent;
+        position: relative;
+        z-index: 1;
 
         > i.-action {
           display: block;

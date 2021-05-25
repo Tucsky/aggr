@@ -73,6 +73,7 @@ export interface SerieInstruction {
   name: string
   type: string
   arg?: string | number
+  length?: string | number
   state?: any
 }
 
@@ -349,7 +350,12 @@ export default class ChartController {
    * @param {string} serieId serie id
    * @returns {boolean} success if true
    */
-  addSerie(id) {
+  addSerie(id, depth = 0) {
+    if (this.getSerie(id)) {
+      console.log(id, 'already added')
+      return true
+    }
+
     const serieSettings = store.state[this.paneId].series[id] || {}
     const serieType = serieSettings.type
 
@@ -374,8 +380,24 @@ export default class ChartController {
       adapter: null
     }
 
-    if (!this.prepareSerie(serie)) {
-      return
+    try {
+      this.prepareSerie(serie)
+    } catch (error) {
+      if (depth < 5 && error.status === 'serie-required') {
+        if (this.addSerie(error.serieId, depth + 1)) {
+          if (depth === 0) {
+            this.addSerie(id, depth + 1)
+          }
+        } else {
+          dialogService.confirm({
+            message: `Serie ${serie.id} require ${error.serieId} that wasn't found anywhere in this workspace`,
+            ok: 'OK',
+            cancel: false
+          })
+        }
+      }
+
+      return false
     }
 
     const apiMethodName = 'add' + (serieType.charAt(0).toUpperCase() + serieType.slice(1)) + 'Series'
@@ -397,9 +419,12 @@ export default class ChartController {
 
   prepareSerie(serie) {
     try {
-      const transpilationResult = this.SerieBuilder.transpile(serie)
-      const { functions, variables, references } = this.SerieBuilder.transpile(serie)
-      let { output, type } = transpilationResult
+      const result = this.SerieBuilder.build(
+        serie,
+        this.activeSeries.map(a => a.id)
+      )
+      const { functions, variables, references } = result
+      let { output, type } = result
 
       if (store.state[this.paneId].seriesErrors[serie.id]) {
         store.commit(this.paneId + '/SET_SERIE_ERROR', {
@@ -433,7 +458,7 @@ export default class ChartController {
         error: error.message
       })
 
-      if (!dialogService.isDialogOpened('serie')) {
+      if (error.status !== 'serie-required' && !dialogService.isDialogOpened('serie')) {
         dialogService.open(
           SerieDialog,
           {
@@ -444,7 +469,7 @@ export default class ChartController {
         )
       }
 
-      return false
+      throw error
     }
   }
 
@@ -1208,7 +1233,7 @@ export default class ChartController {
           if (instruction.type === 'array') {
             instruction.state.unshift(instruction.state[0])
 
-            if (instruction.state.length > instruction.arg) {
+            if (instruction.state.length > instruction.length) {
               instruction.state.pop()
             }
           }

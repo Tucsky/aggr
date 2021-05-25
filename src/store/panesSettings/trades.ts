@@ -50,10 +50,10 @@ const state = {
     amount: 100000,
     buyColor: 'rgb(103,58,183)',
     sellColor: 'rgb(255,152,0)',
-    buyAudio: `play(329.63, gain / 2, duration, 80, 'sine');
-play(329.63, gain / 1.5, duration * 1.5, 80, 'sine');`,
-    sellAudio: `play(440, gain / 2, duration, 80, 'sine');
-play(440, gain / 1.5, duration * 1.5, 80, 'sine');`
+    buyAudio: `play(329.63, gain / 2, duration, 80, null, 'sine');
+play(329.63, gain / 1.5, duration * 1.5, 80, null,'sine');`,
+    sellAudio: `play(440, gain / 2, duration, 80, null,'sine');
+play(440, gain / 1.5, duration * 1.5, 80, null,'sine');`
   },
   thresholds: [
     {

@@ -20,7 +20,7 @@
     </pane-header>
     <div class="chart__container" ref="chartContainer"></div>
     <div class="chart__series">
-      <SerieControl v-for="(serie, id) in series" :key="id" :serieId="id" :paneId="paneId" :legend="legend[serie]" />
+      <SerieControl v-for="(serie, id) in series" :key="id" :serieId="id" :paneId="paneId" :legend="legend[id]" />
 
       <div class="column mt8">
         <a href="javascript:void(0);" @click="addSerie" v-tippy="{ placement: 'bottom' }" title="Add" class="mr4 -text">
@@ -41,7 +41,6 @@ import { formatPrice, formatAmount, formatTime, getHms } from '../../utils/helpe
 
 import SerieControl from './SerieControl.vue'
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
-import SerieDialog from './SerieDialog.vue'
 import CreateSerieDialog from './CreateSerieDialog.vue'
 import aggregatorService from '@/services/aggregatorService'
 import historicalService from '@/services/historicalService'
@@ -247,7 +246,7 @@ export default class extends Mixins(PaneMixin) {
 
       rangeToFetch = {
         from: leftTime - timeframe * barsCount,
-        to: leftTime - timeframe
+        to: leftTime
       }
 
       this.$store.dispatch('app/showNotice', {
@@ -266,6 +265,9 @@ export default class extends Mixins(PaneMixin) {
     this._chartController.lockRender()
 
     this.loading = true
+
+    //rangeToFetch.from = +new Date(new Date(rangeToFetch.from * 1000).toISOString().replace('2021', '2019')) / 1000
+    //rangeToFetch.to = +new Date(new Date(rangeToFetch.to * 1000).toISOString().replace('2021', '2019')) / 1000
 
     return historicalService
       .fetch(Math.round(rangeToFetch.from * 1000), Math.round(rangeToFetch.to * 1000 - 1), timeframe, historicalMarkets)
@@ -472,13 +474,8 @@ export default class extends Mixins(PaneMixin) {
     this._chartController.redraw()
   }
 
-  async addSerie() {
-    const serie = await dialogService.openAsPromise(CreateSerieDialog, { paneId: this.paneId })
-
-    if (serie) {
-      this.$store.dispatch(this.paneId + '/createSerie', serie)
-      dialogService.open(SerieDialog, { paneId: this.paneId, serieId: serie.id }, 'serie')
-    }
+  addSerie() {
+    dialogService.open(CreateSerieDialog, { paneId: this.paneId })
   }
 
   fetchOrRecover(visibleLogicalRange) {

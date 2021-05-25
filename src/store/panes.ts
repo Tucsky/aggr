@@ -1,5 +1,4 @@
 import aggregatorService from '@/services/aggregatorService'
-import { getProducts, showIndexedProductsCount } from '@/services/productsService'
 import workspacesService from '@/services/workspacesService'
 import { capitalizeFirstLetter, getBucketId, sleep, slugify, uniqueName } from '@/utils/helpers'
 import { registerModule } from '@/utils/store'
@@ -133,16 +132,16 @@ const state = {
           {
             id: 'threshold',
             amount: 10000,
-            buyColor: 'rgba(236,64,122,0.5)',
-            sellColor: 'rgba(255,152,0,0.5)',
+            sellColor: 'rgba(236,64,122,0.5)',
+            buyColor: 'rgba(255,152,0,0.5)',
             buyAudio: `play(329.63, gain, duration * 2, 80, null, 'sine');`,
             sellAudio: `play(440, gain, duration * 2, 80, null, 'sine');`
           },
           {
             id: 'significant',
             amount: 25000,
-            buyColor: 'rgba(236,64,122,0.6)',
-            sellColor: 'rgba(255,152,0,0.7)',
+            sellColor: 'rgba(236,64,122,0.6)',
+            buyColor: 'rgba(255,152,0,0.7)',
             buyAudio: `play(329.63, gain / 2, duration, 80, null, 'sine');
 play(329.63, gain / 1.5, duration * 1.5, 80, null, 'sine');`,
             sellAudio: `play(440, gain / 2, duration, 80, null, 'sine');
@@ -152,8 +151,8 @@ play(440, gain / 1.5, duration * 1.5, 80, null, 'sine');`
             id: 'huge',
             amount: 100000,
             gif: 'rekt',
-            buyColor: 'rgba(236,64,122,0.7)',
-            sellColor: 'rgba(255,152,0,0.8)',
+            sellColor: 'rgba(236,64,122,0.7)',
+            buyColor: 'rgba(255,152,0,0.8)',
             buyAudio: `play(329.63, gain / 2, duration / 2, 80, null, 'sine');
 play(329.63, gain / 2, duration / 2, 80, null, 'sine');
 play(329.63, gain / 1.5, duration, 80, null, 'sine');`,
@@ -165,8 +164,8 @@ play(440, gain / 1.5, duration, 80, null, 'sine');`
             id: 'rare',
             amount: 1000000,
             gif: 'explosion',
-            buyColor: 'rgb(156,39,176)',
-            sellColor: 'rgb(255,235,59)',
+            sellColor: 'rgb(156,39,176)',
+            buyColor: 'rgb(255,235,59)',
             buyAudio: `play(329.63, gain / 2, duration, 80, null, 'sine');
 play(329.63, gain / 2, duration, 80, null, 'sine');
 play(329.63, gain / 1.5, duration * 1.5, 80, null, 'sine');`,
@@ -182,7 +181,7 @@ play(440, gain / 1.5, duration * 1.5, 80, null, 'sine');`
 } as PanesState
 
 const actions = {
-  async boot({ dispatch, state }) {
+  async boot({ state }) {
     state.marketsListeners = {}
   },
   async addPane({ commit, dispatch, state }, options: Pane & { settings?: any }) {

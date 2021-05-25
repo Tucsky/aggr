@@ -148,6 +148,77 @@ export function ema$(state, value, length) {
 }
 
 /**
+ * get highest
+ * @param {SerieMemory} memory
+ * @param {number} value
+ */
+export function highest$(state, value, length) {
+  state.output = value
+
+  if (state.count) {
+    return Math.max.apply(null, state.points)
+  } else {
+    return value
+  }
+}
+
+/**
+ * get lowest
+ * @param {SerieMemory} memory
+ * @param {number} value
+ */
+export function lowest$(state, value, length) {
+  state.output = value
+
+  if (state.count) {
+    return Math.min.apply(null, state.points)
+  } else {
+    return value
+  }
+}
+
+export function linreg$(state, values) {
+  if (values.length <= 1) {
+    return null
+  }
+
+  let per = 0
+  let sumX = 0
+  let sumY = 0
+  let sumXSqr = 0
+  let sumXY = 0
+
+  for (let i = values.length - 1; i >= 0; i--) {
+    per = (values.length - i) + 1.0
+    sumX += per
+    sumY += values[i]
+    sumXSqr += per * per
+    sumXY += values[i] * per
+  }
+
+  const slope = (values.length * sumXY - sumX * sumY) / (values.length * sumXSqr - sumX * sumX)
+  const average = sumY / values.length
+  const intercept = average - (slope * sumX) / values.length + slope
+
+  return intercept + slope * (values.length - 1)
+}
+
+/**
+ * get avg
+ * @param {SerieMemory} memory
+ * @param {number[]} values
+ */
+export function avg$(state, values) {
+  const count = values.length
+  let sum = 0
+  for (let i = 0; i < values.length; i++) {
+    sum += values[i]
+  }
+
+  return sum / count
+}
+
+/**
  * simple moving average
  * @param {SerieMemory} memory
  * @param {number} value

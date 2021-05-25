@@ -268,10 +268,10 @@ export function parseMarket(market: string) {
 }
 
 export async function progress(task: string | boolean) {
-  console.info(task);
+  console.info(task)
 
   if (typeof task === 'boolean') {
-    progressContainer.style.display = task ? 'flex' : 'none';
+    progressContainer.style.display = task ? 'flex' : 'none'
     return
   }
 
@@ -298,4 +298,16 @@ export function findClosingBracketMatchIndex(str, pos) {
     }
   }
   return -1 // No matching closing parenthesis
+}
+
+export function arrayMove(arr: any[], old_index: number, new_index: number) {
+  if (new_index >= arr.length) {
+    let k = new_index - arr.length + 1
+    while (k--) {
+      arr.push(undefined)
+    }
+  }
+
+  arr.splice(new_index, 0, arr.splice(old_index, 1)[0])
+  return arr // for testing
 }

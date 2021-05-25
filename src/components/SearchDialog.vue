@@ -1,5 +1,5 @@
 <template>
-  <Dialog :open="open" @clickOutside="close" medium>
+  <Dialog :open="open" @clickOutside="close" medium class="-sticky-footer">
     <template v-slot:header>
       <div class="title" v-if="paneId">{{ paneName }}'s MARKETS</div>
       <div class="title" v-else>ALL PANES MARKETS</div>
@@ -165,6 +165,21 @@ export default {
   min-width: 200px;
 
   text-align: right;
+
+  .btn.-added {
+    &:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0;
+      background-color: white;
+      animation: 1s $ease-out-expo highlight;
+      pointer-events: none;
+    }
+  }
 }
 .search {
   flex-grow: 1;
