@@ -61,8 +61,8 @@ play(440, gain / 1.5, duration * 1.5, 80, null,'sine');`
       amount: 250000,
       buyColor: 'rgba(119, 148, 92, .5)',
       sellColor: 'rgba(239, 67, 82,.5)',
-      buyAudio: `play(659.26, gain, duration, 50)`,
-      sellAudio: `play(493.88, gain * 2, duration, 50)`
+      buyAudio: `play(659.26, gain / 2, duration, 50)`,
+      sellAudio: `play(493.88, gain , duration, 50)`
     },
     {
       id: 'significant',

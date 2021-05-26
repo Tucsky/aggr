@@ -1,14 +1,17 @@
-const date = new Date()
+var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 
 process.env.VUE_APP_VERSION = require('./package.json').version
+
+const date = new Date()
 process.env.VUE_APP_BUILD_DATE = date.getDate() + ' ' + date.toLocaleString('en-US', { month: 'short' }).toLowerCase()
+
 process.env.VUE_APP_PROXY_URL = process.env.PROXY_URL
 process.env.VUE_APP_API_URL = process.env.API_URL
 process.env.VUE_APP_API_SUPPORTED_PAIRS = process.env.API_SUPPORTED_PAIRS
 
 module.exports = {
   productionSourceMap: false,
-  publicPath: '/',
+  publicPath: '/aggr/',
   chainWebpack: config => {
     config.optimization.minimizer('terser').tap(args => {
       args[0].terserOptions.compress.drop_console = true

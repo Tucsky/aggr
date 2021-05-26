@@ -20,47 +20,77 @@
         @output="setType($event)"
       ></dropdown>
     </div>
-    <div class="form-group mb16">
+
+    <section class="section">
+      <div class="help-block" v-if="sections.indexOf('formula') > -1">
+        <strong>Serie formula</strong><br />
+        <p>
+          Use variables such as <code v-tippy title="Current bar object">bar</code>, <code v-tippy title="Buy volume">vbuy</code>,
+          <code v-tippy title="Sell volume">vsell</code>, <code v-tippy title="Buy liquidation (liquidated short)">lbuy</code>,
+          <code v-tippy title="Sell liquidation (liquidated long)">lsell</code>, <code v-tippy title="Number of buy">cbuy</code>,
+          <code v-tippy title="Number of sell">csell</code>, <code v-tippy title="Open price">open</code>,
+          <code v-tippy title="High price">high</code>, <code v-tippy title="Low price">low</code> and <code v-tippy title="Close price">close</code>.
+        </p>
+        <br /><br />
+
+        <p>
+          Pass the variables to
+          <a href="https://github.com/Tucsky/aggr/blob/master/src/components/chart/serieUtils.ts" target="_blank">built-in functions</a>
+        </p>
+        <p>
+          Example<br />
+          <code v-tippy title="Average all sources in bar, output ohlc">avg_ohlc(bar)</code>,
+          <code v-tippy title="Output moving average of the input number">sma(BITMEX:XBTUSD.close, 50)</code>,
+          <code v-tippy title="Output exponential moving average of the input number">ema(BITMEX:XBTUSD.close, 50)</code>
+        </p>
+      </div>
+      <div class="section__title" @click="toggleSection('formula')">Serie formula <i class="icon-up"></i></div>
+    </section>
+    <section class="section">
+      <div class="help-block" v-if="sections.indexOf('options') > -1">
+        <strong>Options</strong><br />
+        <p>
+          You can access serie options with options.<code>nameOfOption</code> for exemple if you use
+          <code v-tippy title="Output simple moving average of the input number of length defined in option 'myCustomOption'"
+            >sma(avg_close(bar),options.myCustomOption)</code
+          >. This will create a new option below called "myCustomOption", just fill with a valid number for the serie to compile properly.
+        </p>
+        <br /><br />
+      </div>
+      <div class="section__title" @click="toggleSection('options')">Options <i class="icon-up"></i></div>
+    </section>
+    <section class="section">
+      <div class="help-block" v-if="sections.indexOf('sources') > -1">
+        <strong>Query source</strong><br />
+
+        <p>
+          Using any specific sources
+          <code v-tippy title="Reference an active market (active = connected to app, connected to pane, not hidden or anyting)"
+            >BINANCE:btcusdt</code
+          >
+          or <code v-tippy title="A market is just a bar object, which contain all the basic property described above">BINANCE:btcusdt.vbuy</code
+          ><br />
+          Or by combining sources <code>avg_ohlc({sources:{BYBITBTCUSD:BYBIT:BTCUSD,BITMEXXBTUSD:BITMEX:XBTUSD}})</code><br /><br />
+        </p>
+      </div>
+      <div class="section__title" @click="toggleSection('sources')">Sources <i class="icon-up"></i></div>
+    </section>
+    <section class="section">
+      <div class="help-block" v-if="sections.indexOf('series') > -1">
+        <strong>Reference other serie</strong><br />
+
+        <p>Make use of ID of the other serie in this code block to reference it's value.</p>
+        Given the serie with id <code>price</code> that shows an ohlc, use
+        <code v-tippy title="Output a 50 simple moving average taking close property of another serie">sma($price.close, 50)</code> in a any new serie
+        to show the 50 simple moving average of that. Note that a script itself can only output 1 serie on the chart (one line, one ohlc serie etc).
+      </div>
+      <div class="section__title" @click="toggleSection('series')">Series <i class="icon-up"></i></div>
+    </section>
+    <div class="form-group mb16 mt16">
       <div class="d-flex mb4">
         <label for class="mrauto -center">
           Input
         </label>
-        <button class="btn -small -text -green" @click="showHelp = !showHelp">
-          <i class="icon-down" :class="{ 'icon-up': this.showHelp }"></i> help
-        </button>
-      </div>
-      <div class="help-block mb16" v-if="showHelp">
-        <u>Serie formula</u><br />
-        Use build in variables such as <code v-tippy title="Current bar object">bar</code>, <code v-tippy title="Buy volume">vbuy</code>,
-        <code v-tippy title="Sell volume">vsell</code>, <code v-tippy title="Buy liquidation (liquidated short)">lbuy</code>,
-        <code v-tippy title="Sell liquidation (liquidated long)">lsell</code>, <code v-tippy title="Number of buy">cbuy</code>,
-        <code v-tippy title="Number of sell">csell</code>, <code v-tippy title="Open price">open</code>, <code v-tippy title="High price">high</code>,
-        <code v-tippy title="Low price">low</code> and <code v-tippy title="Close price">close</code>. <br /><br />
-
-        Pass thoses variables to
-        <a href="https://github.com/Tucsky/aggr/blob/master/src/components/chart/serieUtils.ts" target="_blank">utility functions</a> like
-        <code v-tippy title="Average all sources in bar, output ohlc">avg_ohlc(bar)</code>,
-        <code v-tippy title="Output moving average of the input number">sma(BITMEX:XBTUSD.close, 50)</code>,
-        <code v-tippy title="Output exponential moving average of the input number">ema(BITMEX:XBTUSD.close, 50)</code><br /><br />
-
-        <u>Reference options</u><br />
-        You can access serie options with options.<code>nameOfOption</code> for exemple if you use
-        <code v-tippy title="Output simple moving average of the input number of length defined in option 'myCustomOption'"
-          >sma(avg_close(bar),options.myCustomOption)</code
-        >. This will create a new option below called "myCustomOption", just fill with a valid number for the serie to compile properly.<br /><br />
-
-        <u>Reference sources</u><br />
-        Using any specific sources
-        <code v-tippy title="Reference an active market (active = connected to app, connected to pane, not hidden or anyting)">BINANCE:btcusdt</code>
-        or <code v-tippy title="A market is just a bar object, which contain all the basic property described above">BINANCE:btcusdt.vbuy</code><br />
-        Or by combining sources <code>avg_ohlc({sources:{BYBITBTCUSD:BYBIT:BTCUSD,BITMEXXBTUSD:BITMEX:XBTUSD}})</code><br /><br />
-
-        <u>Reference other serie</u><br />
-        Make use of ID of the other serie in this code block to reference it's value. Let's say you have another serie with id <code>price</code> that
-        shows an ohlc, use
-        <code v-tippy title="Output a 50 simple moving average taking close property of another serie">sma($price.close, 50)</code> to show the 50
-        simple moving average of that. Note that the code should only produce 1 output (one line, one ohlc serie etc). Want more output duplicate the
-        serie.
       </div>
       <textarea ref="behaveInput" class="form-control" rows="5" :value="input" @blur="setInput($event.target.value)"></textarea>
       <p v-if="error" class="form-feedback"><i class="icon-warning mr4"></i> {{ error }}</p>
@@ -197,6 +227,7 @@ export default {
   props: ['paneId', 'serieId'],
   mixins: [DialogMixin],
   data: () => ({
+    sections: [],
     editor: null,
     showHelp: false,
     currentValues: {},
@@ -523,6 +554,15 @@ export default {
         },
         'serie'
       )
+    },
+    toggleSection(id) {
+      const index = this.sections.indexOf(id)
+
+      if (index === -1) {
+        this.sections.push(id)
+      } else {
+        this.sections.splice(index, 1)
+      }
     },
     createInputEditor() {
       setTimeout(() => {

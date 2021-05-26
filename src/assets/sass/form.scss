@@ -462,9 +462,10 @@ textarea.form-control {
 
 .help-block {
   background-color: rgba(black, 0.2);
+  color: rgba(255, 255, 255, 0.5);
   padding: 1rem;
 
-  code {
+  code, strong {
     color: white;
   }
 }
