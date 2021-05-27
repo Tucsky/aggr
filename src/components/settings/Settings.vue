@@ -30,9 +30,9 @@
               </dropdown>
             </div>
 
-            <small class="help-text mt8">
+            <small class="help-text ">
               <dropdown
-                class="-left"
+                class="-left mt16"
                 v-if="workspaces.length > 1"
                 :options="workspaces"
                 placeholder="Workspaces"

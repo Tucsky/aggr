@@ -28,8 +28,14 @@ interface AggrDB extends DBSchema {
 
 class WorkspacesService {
   db: IDBPDatabase<AggrDB>
-
   workspace: Workspace
+  urlStrategy = 'history'
+
+  constructor() {
+    if (/localhost/.test(window.location.hostname)) {
+      this.urlStrategy = 'hash'
+    }
+  }
 
   async createDatabase() {
     console.log(`[idb] openDB 'aggr'`)
@@ -119,7 +125,16 @@ class WorkspacesService {
   }
 
   async getCurrentWorkspace() {
-    let id = window.location.pathname.substring(1)
+    let id;
+
+    if (this.urlStrategy === 'hash') {
+      id = location.hash.substring(1)
+
+      debugger
+    } else {
+      id = location.pathname.substring(1)
+      debugger
+    }
 
     if (!id.length || !/^[a-zA-Z0-9]{4}$/.test(id)) {
       id = localStorage.getItem('workspace')
@@ -137,7 +152,12 @@ class WorkspacesService {
   async setCurrentWorkspace(workspace: Workspace) {
     this.workspace = workspace
 
-    window.history.replaceState('Object', 'Title', '/' + this.workspace.id)
+    if (this.urlStrategy === 'hash') {
+      location.hash = this.workspace.id
+    } else {
+      window.history.replaceState('Object', 'Title', '/' + this.workspace.id)
+    }
+
     localStorage.setItem('workspace', this.workspace.id)
 
     await boot(workspace)
