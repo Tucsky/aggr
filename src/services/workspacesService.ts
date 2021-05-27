@@ -32,7 +32,7 @@ class WorkspacesService {
   urlStrategy = 'history'
 
   constructor() {
-    if (/localhost/.test(window.location.hostname)) {
+    if (/github\.io/.test(window.location.hostname)) {
       this.urlStrategy = 'hash'
     }
   }
