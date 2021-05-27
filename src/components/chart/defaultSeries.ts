@@ -24,8 +24,19 @@ export const defaultChartSeries = {
     input: 'sma($price.close, options.smaLength)',
     options: {
       priceScaleId: 'right',
-      color: '#C2EFEB',
-      smaLength: 200,
+      color: '#42a5f5',
+      smaLength: 50,
+      lineWidth: 1
+    }
+  },
+  'price-ma2': {
+    type: 'line',
+    name: 'PRICE {smaLength} MA',
+    input: 'sma($price.close, options.smaLength)',
+    options: {
+      priceScaleId: 'right',
+      color: '#90caf9',
+      smaLength: 21,
       lineWidth: 1
     }
   },
@@ -106,18 +117,6 @@ export const defaultChartSeries = {
     options: {
       priceScaleId: 'ctd',
       lineStyle: 4,
-      lineWidth: 1
-    }
-  },
-  'cvd-ma': {
-    enabled: false,
-    type: 'line',
-    name: 'CVD {smaLength} MA',
-    input: 'sma($cvd.close, options.smaLength)',
-    options: {
-      priceScaleId: 'cvd',
-      color: 'rgba(236, 254, 232, .5)',
-      smaLength: 50,
       lineWidth: 1
     }
   }
