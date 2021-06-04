@@ -1,6 +1,6 @@
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import { getIndicatorSettings, sleep, slugify, uniqueName } from '@/utils/helpers'
+import { sleep, slugify, uniqueName } from '@/utils/helpers'
 import { scheduleSync } from '@/utils/store'
 import { SeriesOptions, SeriesType } from 'lightweight-charts'
 import Vue from 'vue'
@@ -139,9 +139,9 @@ const actions = {
   async renameIndicator({ commit, state, dispatch }, { id, name }) {
     const newId = uniqueName(slugify(name), Object.keys(state.indicators))
 
-    const serieSource = getIndicatorSettings(state._id, id)
+    const indicatorCopy = JSON.parse(JSON.stringify(state.indicators[id]))
 
-    const indicator = { ...serieSource, name, id: newId }
+    const indicator = { ...indicatorCopy, name, id: newId }
 
     commit('ADD_INDICATOR', indicator)
 

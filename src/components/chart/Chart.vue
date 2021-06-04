@@ -143,12 +143,12 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/SET_INDICATOR_SCRIPT':
           this.unbindLegend(mutation.payload)
           this._chartController.rebuildIndicator(mutation.payload.id)
-          this.bindLegend(mutation.payload)
+          this.bindLegend(mutation.payload.id)
           break
         case this.paneId + '/ADD_INDICATOR':
           if (this._chartController.addIndicator(mutation.payload.id)) {
             this._chartController.redrawIndicator(mutation.payload.id)
-            this.bindLegend(mutation.payload)
+            this.bindLegend(mutation.payload.id)
           }
 
           break
@@ -549,8 +549,10 @@ export default class extends Mixins(PaneMixin) {
     this.reachedEnd = false
   }
 
-  bindLegend(indicatorId: string) {
+  async bindLegend(indicatorId: string) {
     const series = this.indicators[indicatorId].series
+
+    await this.$nextTick()
 
     for (let i = 0; i < series.length; i++) {
       const id = indicatorId + series[i]
@@ -568,13 +570,9 @@ export default class extends Mixins(PaneMixin) {
   }
 
   unbindLegend(indicatorId: string) {
-    const series = this.indicators[indicatorId].series
-
-    for (let i = 0; i < series.length; i++) {
-      const id = indicatorId + series[i]
-
-      if (this._legendElements[id]) {
-        delete this._legendElements[id]
+    for (const legendId in this._legendElements) {
+      if (legendId.indexOf(indicatorId) === 0) {
+        delete this._legendElements[legendId]
       }
     }
   }

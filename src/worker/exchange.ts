@@ -228,7 +228,7 @@ class Exchange extends EventEmitter {
           console.log(`[${this.id}] connection closed unexpectedly, schedule reconnection (${pairsToReconnect.join(',')})`)
 
           Promise.all(api._connected.map(pair => this.unlink(pair))).then(() => {
-            const delay = this.reconnectionDelay[api.url] || 10000
+            const delay = this.reconnectionDelay[api.url] || 3000
 
             setTimeout(() => {
               this.reconnectPairs(pairsToReconnect)

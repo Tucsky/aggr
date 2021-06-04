@@ -40,9 +40,11 @@
       <div class="divider">Or</div>
     </template>
     <div class="form-group mb16">
-      <label>Create a new serie</label>
+      <label>Create indicator</label>
       <input class="form-control" :value="name" @input="getIndicatorId($event.target.value)" placeholder="Name of indicator / serie" />
-      <code>{{ indicatorId }}</code>
+      <p>
+        ID: <code>{{ indicatorId }}</code>
+      </p>
     </div>
     <div class="form-group mb16">
       <label>Align serie with</label>
@@ -167,7 +169,7 @@ export default {
     },
     removeIndicator(indicator) {
       if (dialogService.confirm(`Delete ${indicator.name} permanently ?`)) {
-        workspacesService.deleteSerie(indicator.id)
+        workspacesService.deleteIndicator(indicator.id)
 
         this.indicators.splice(this.indicators.indexOf(indicator), 1)
       }

@@ -6,6 +6,7 @@ import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '.'
 import panesSettings from './panesSettings'
+import { mobile, desktop } from './defaultPanes.json'
 
 export type PaneType = 'trades' | 'chart' | 'stats' | 'counters' | 'prices'
 export type MarketsListeners = { [market: string]: number }
@@ -33,6 +34,14 @@ export interface PanesState {
   marketsListeners: MarketsListeners
 }
 
+let state: PanesState
+
+if (window.innerWidth < 640) {
+  state = mobile as PanesState
+} else {
+  state = desktop as PanesState
+}
+
 const getters = {
   getNextGridItemCooordinates: state => {
     let x = -1
@@ -55,130 +64,6 @@ const getters = {
     return { x, y }
   }
 } as GetterTree<PanesState, ModulesState>
-
-const defaultMarkets = {
-  spot: [
-    'BITFINEX:BTCUSD',
-    'BINANCE:btcusdt',
-    'OKEX:BTC-USDT',
-    'KRAKEN:XBT/USD',
-    'COINBASE:BTC-USD',
-    'POLONIEX:USDT_BTC',
-    'HUOBI:btcusdt',
-    'BITSTAMP:btcusd'
-  ],
-  perp: [
-    'BITMEX:XBTUSD',
-    'BITFINEX:BTCF0:USTF0',
-    'OKEX:BTC-USD-SWAP',
-    'OKEX:BTC-USDT-SWAP',
-    'BINANCE_FUTURES:btcusdt',
-    'BINANCE_FUTURES:btcusd_perp',
-    'HUOBI:BTC-USD',
-    'KRAKEN:PI_XBTUSD',
-    'DERIBIT:BTC-PERPETUAL',
-    'FTX:BTC-PERP',
-    'BYBIT:BTCUSD'
-  ]
-}
-
-const state = {
-  _id: 'panes',
-  layout: [
-    { x: 0, y: 0, w: 15, h: 24, i: 'pane-chart-1', type: 'chart' },
-    { x: 15, y: 0, w: 3, h: 24, i: 'spot-trades', type: 'trades' },
-    { x: 18, y: 0, w: 3, h: 24, i: 'perp-trades', type: 'trades' },
-    { x: 21, y: 0, w: 3, h: 24, i: 'liquidations', type: 'trades' }
-  ],
-  panes: {
-    'pane-chart-1': {
-      id: 'pane-chart-1',
-      name: 'Pane chart 1',
-      type: 'chart',
-      markets: [...defaultMarkets.spot, ...defaultMarkets.perp]
-    },
-    'spot-trades': {
-      id: 'spot-trades',
-      name: 'BTCUSD (SPOT)',
-      type: 'trades',
-      markets: defaultMarkets.spot,
-      settings: {
-        thresholds: [
-          {
-            amount: 100000
-          }
-        ]
-      }
-    },
-    'perp-trades': {
-      id: 'perp-trades',
-      name: 'BTCUSD (PERP)',
-      type: 'trades',
-      markets: defaultMarkets.perp,
-      settings: {
-        liquidations: {
-          amount: 100000
-        }
-      }
-    },
-    liquidations: {
-      id: 'liquidations',
-      name: 'REKTS',
-      type: 'trades',
-      markets: defaultMarkets.perp,
-      settings: {
-        liquidationsOnly: true,
-        thresholds: [
-          {
-            id: 'threshold',
-            amount: 10000,
-            sellColor: 'rgba(236,64,122,0.5)',
-            buyColor: 'rgba(255,152,0,0.5)',
-            buyAudio: `play(329.63, gain, duration * 2, 80, null, 'sine');`,
-            sellAudio: `play(440, gain, duration * 2, 80, null, 'sine');`
-          },
-          {
-            id: 'significant',
-            amount: 25000,
-            sellColor: 'rgba(236,64,122,0.6)',
-            buyColor: 'rgba(255,152,0,0.7)',
-            buyAudio: `play(329.63, gain / 2, duration, 80, null, 'sine');
-play(329.63, gain / 1.5, duration * 1.5, 80, null, 'sine');`,
-            sellAudio: `play(440, gain / 2, duration, 80, null, 'sine');
-play(440, gain / 1.5, duration * 1.5, 80, null, 'sine');`
-          },
-          {
-            id: 'huge',
-            amount: 100000,
-            gif: 'rekt',
-            sellColor: 'rgba(236,64,122,0.7)',
-            buyColor: 'rgba(255,152,0,0.8)',
-            buyAudio: `play(329.63, gain / 2, duration / 2, 80, null, 'sine');
-play(329.63, gain / 2, duration / 2, 80, null, 'sine');
-play(329.63, gain / 1.5, duration, 80, null, 'sine');`,
-            sellAudio: `play(440, gain / 2, duration / 2, 80, null, 'sine');
-play(440, gain / 2, duration / 2, 80, null, 'sine');
-play(440, gain / 1.5, duration, 80, null, 'sine');`
-          },
-          {
-            id: 'rare',
-            amount: 1000000,
-            gif: 'explosion',
-            sellColor: 'rgb(156,39,176)',
-            buyColor: 'rgb(255,235,59)',
-            buyAudio: `play(329.63, gain / 2, duration, 80, null, 'sine');
-play(329.63, gain / 2, duration, 80, null, 'sine');
-play(329.63, gain / 1.5, duration * 1.5, 80, null, 'sine');`,
-            sellAudio: `play(440, gain / 2, duration, 80, null, 'sine');
-play(440, gain / 2, duration, 80, null, 'sine');
-play(440, gain / 1.5, duration * 1.5, 80, null, 'sine');`
-          }
-        ]
-      }
-    }
-  },
-  marketsListeners: {}
-} as PanesState
 
 const actions = {
   async boot({ state }) {

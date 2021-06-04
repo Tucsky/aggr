@@ -1,0 +1,165 @@
+{
+  "desktop": {
+    "_id": "panes",
+    "layout": [
+      { "x": 0, "y": 0, "w": 15, "h": 24, "i": "pane-chart-1", "type": "chart" },
+      { "x": 15, "y": 0, "w": 3, "h": 24, "i": "spot-trades", "type": "trades" },
+      { "x": 18, "y": 0, "w": 3, "h": 24, "i": "perp-trades", "type": "trades" },
+      { "x": 21, "y": 0, "w": 3, "h": 24, "i": "liquidations", "type": "trades" }
+    ],
+    "panes": {
+      "pane-chart-1": {
+        "id": "pane-chart-1",
+        "name": "Pane chart 1",
+        "type": "chart",
+        "markets": [
+          "BITFINEX:BTCUSD",
+          "BINANCE:btcusdt",
+          "OKEX:BTC-USDT",
+          "KRAKEN:XBT/USD",
+          "COINBASE:BTC-USD",
+          "POLONIEX:USDT_BTC",
+          "HUOBI:btcusdt",
+          "BITSTAMP:btcusd",
+          "BITMEX:XBTUSD",
+          "BITFINEX:BTCF0:USTF0",
+          "OKEX:BTC-USD-SWAP",
+          "OKEX:BTC-USDT-SWAP",
+          "BINANCE_FUTURES:btcusdt",
+          "BINANCE_FUTURES:btcusd_perp",
+          "HUOBI:BTC-USD",
+          "KRAKEN:PI_XBTUSD",
+          "DERIBIT:BTC-PERPETUAL",
+          "FTX:BTC-PERP",
+          "BYBIT:BTCUSD"
+        ]
+      },
+      "spot-trades": {
+        "id": "spot-trades",
+        "name": "BTCUSD (SPOT)",
+        "type": "trades",
+        "markets": [
+          "BITFINEX:BTCUSD",
+          "BINANCE:btcusdt",
+          "OKEX:BTC-USDT",
+          "KRAKEN:XBT/USD",
+          "COINBASE:BTC-USD",
+          "POLONIEX:USDT_BTC",
+          "HUOBI:btcusdt",
+          "BITSTAMP:btcusd"
+        ],
+        "settings": { "thresholds": [{ "amount": 100000 }] }
+      },
+      "perp-trades": {
+        "id": "perp-trades",
+        "name": "BTCUSD (PERP)",
+        "type": "trades",
+        "markets": [
+          "BITMEX:XBTUSD",
+          "BITFINEX:BTCF0:USTF0",
+          "OKEX:BTC-USD-SWAP",
+          "OKEX:BTC-USDT-SWAP",
+          "BINANCE_FUTURES:btcusdt",
+          "BINANCE_FUTURES:btcusd_perp",
+          "HUOBI:BTC-USD",
+          "KRAKEN:PI_XBTUSD",
+          "DERIBIT:BTC-PERPETUAL",
+          "FTX:BTC-PERP",
+          "BYBIT:BTCUSD"
+        ],
+        "settings": { "liquidations": { "amount": 100000 } }
+      },
+      "liquidations": {
+        "id": "liquidations",
+        "name": "REKTS",
+        "type": "trades",
+        "markets": [
+          "BITMEX:XBTUSD",
+          "BITFINEX:BTCF0:USTF0",
+          "OKEX:BTC-USD-SWAP",
+          "OKEX:BTC-USDT-SWAP",
+          "BINANCE_FUTURES:btcusdt",
+          "BINANCE_FUTURES:btcusd_perp",
+          "HUOBI:BTC-USD",
+          "KRAKEN:PI_XBTUSD",
+          "DERIBIT:BTC-PERPETUAL",
+          "FTX:BTC-PERP",
+          "BYBIT:BTCUSD"
+        ],
+        "settings": {
+          "liquidationsOnly": true,
+          "thresholds": [
+            {
+              "id": "threshold",
+              "amount": 10000,
+              "sellColor": "rgba(236,64,122,0.5)",
+              "buyColor": "rgba(255,152,0,0.5)",
+              "buyAudio": "play(329.63, gain, duration * 2, 80, null, 'sine');",
+              "sellAudio": "play(440, gain, duration * 2, 80, null, 'sine');"
+            },
+            {
+              "id": "significant",
+              "amount": 25000,
+              "sellColor": "rgba(236,64,122,0.6)",
+              "buyColor": "rgba(255,152,0,0.7)",
+              "buyAudio": "play(329.63, gain / 2, duration, 80, null, 'sine');\\nplay(329.63, gain / 1.5, duration * 1.5, 80, null, 'sine');",
+              "sellAudio": "play(440, gain / 2, duration, 80, null, 'sine');\\nplay(440, gain / 1.5, duration * 1.5, 80, null, 'sine');"
+            },
+            {
+              "id": "huge",
+              "amount": 100000,
+              "gif": "rekt",
+              "sellColor": "rgba(236,64,122,0.7)",
+              "buyColor": "rgba(255,152,0,0.8)",
+              "buyAudio": "play(329.63, gain / 2, duration / 2, 80, null, 'sine');\\nplay(329.63, gain / 2, duration / 2, 80, null, 'sine');\\nplay(329.63, gain / 1.5, duration, 80, null, 'sine');",
+              "sellAudio": "play(440, gain / 2, duration / 2, 80, null, 'sine');\\nplay(440, gain / 2, duration / 2, 80, null, 'sine');\\nplay(440, gain / 1.5, duration, 80, null, 'sine');"
+            },
+            {
+              "id": "rare",
+              "amount": 1000000,
+              "gif": "explosion",
+              "sellColor": "rgb(156,39,176)",
+              "buyColor": "rgb(255,235,59)",
+              "buyAudio": "play(329.63, gain / 2, duration, 80, null, 'sine');\\nplay(329.63, gain / 2, duration, 80, null, 'sine');\\nplay(329.63, gain / 1.5, duration * 1.5, 80, null, 'sine');",
+              "sellAudio": "play(440, gain / 2, duration, 80, null, 'sine');\\nplay(440, gain / 2, duration, 80, null, 'sine');\\nplay(440, gain / 1.5, duration * 1.5, 80, null, 'sine');"
+            }
+          ]
+        }
+      }
+    },
+    "marketsListeners": {}
+  },
+  "mobile": {
+    "_id": "panes",
+    "layout": [{ "x": 0, "y": 0, "w": 24, "h": 24, "i": "trades", "type": "trades" }],
+    "panes": {
+      "trades": {
+        "id": "trades",
+        "name": "TRADES",
+        "type": "trades",
+        "markets": [
+          "BITFINEX:BTCUSD",
+          "BINANCE:btcusdt",
+          "OKEX:BTC-USDT",
+          "KRAKEN:XBT/USD",
+          "COINBASE:BTC-USD",
+          "POLONIEX:USDT_BTC",
+          "HUOBI:btcusdt",
+          "BITSTAMP:btcusd",
+          "BITMEX:XBTUSD",
+          "BITFINEX:BTCF0:USTF0",
+          "OKEX:BTC-USD-SWAP",
+          "OKEX:BTC-USDT-SWAP",
+          "BINANCE_FUTURES:btcusdt",
+          "BINANCE_FUTURES:btcusd_perp",
+          "HUOBI:BTC-USD",
+          "KRAKEN:PI_XBTUSD",
+          "DERIBIT:BTC-PERPETUAL",
+          "FTX:BTC-PERP",
+          "BYBIT:BTCUSD"
+        ]
+      }
+    },
+    "marketsListeners": {}
+  }
+}

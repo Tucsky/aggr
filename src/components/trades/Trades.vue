@@ -6,13 +6,16 @@
     <pane-header :paneId="paneId" />
     <ul ref="tradesContainer" class="custom-scrollbar"></ul>
     <div v-if="!tradesCount" class="trades-placeholder">
-      <strong>Waiting for trades</strong>
-      <p class="help-text">
-        No trade are matching the following markets
-      </p>
-      <code v-for="market of pane.markets" :key="market">{{ market.replace(/^\w+:/, '') }}<br /></code>
-      <p class="help-text">with amount > {{ thresholds[0].amount }}</p>
-      <p class="help-text" v-if="liquidationsOnly">liquidation only</p>
+      <div class="mt16 ml16 mr16">
+        <strong>Waiting for trades</strong>
+
+        <p class="help-text">
+          No trade are matching the following markets
+        </p>
+        <code v-for="market of pane.markets" :key="market">{{ market.replace(/^\w+:/, '') }}<br /></code>
+        <p class="help-text">with amount > {{ thresholds[0].amount }}</p>
+        <p class="help-text" v-if="liquidationsOnly">liquidation only</p>
+      </div>
     </div>
   </div>
 </template>
@@ -781,7 +784,9 @@ export default class extends Mixins(PaneMixin) {
 
 .trades-placeholder {
   text-align: center;
-  margin: 1rem;
+  text-align: center;
+  overflow: hidden;
+  max-height: 100%;
 
   @media (-webkit-min-device-pixel-ratio: 2) {
     font-size: 75%;

@@ -30,7 +30,7 @@
     <dropdown :options="paneTypes" placeholder="tf." @output="addPane" title="Add pane" v-tippy>
       <template v-slot:selection>
         <i class="icon-plus"></i>
-        <span>Add pane</span>
+        <span>Pane</span>
       </template>
       <template v-slot:option="{ value }">
         <div>
@@ -121,6 +121,7 @@ export default class extends Vue {
     document.addEventListener('mousemove', this.onDrag)
     document.addEventListener('touchend', this.stopDrag)
     document.addEventListener('mouseup', this.stopDrag)
+    this.$el.classList.add('-dragging')
   }
 
   onDrag(event: MouseEvent | TouchEvent) {
@@ -139,6 +140,7 @@ export default class extends Vue {
     document.removeEventListener('mousemove', this.onDrag)
     document.removeEventListener('touchend', this.stopDrag)
     document.removeEventListener('mouseup', this.stopDrag)
+    this.$el.classList.remove('-dragging')
   }
 
   togglePopup() {
@@ -158,6 +160,17 @@ export default class extends Vue {
 </script>
 
 <style lang="scss">
+@keyframes header-in {
+  0% {
+    transform: translate(-50%, -32px) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%);
+    opacity: 1;
+  }
+}
+
 header#header {
   background-color: lighten($dark, 10%);
   color: white;
@@ -168,6 +181,8 @@ header#header {
   transform: translate(-50%);
   border-radius: 0 0 8px 8px;
   font-size: 1.5rem;
+  animation: 0.4s $ease-out-expo header-in;
+  display: none;
 
   button,
   .dropdown {
@@ -195,6 +210,21 @@ header#header {
 
   &.-moved {
     transform: none;
+    animation: none;
+  }
+
+  &.-dragging {
+    display: flex !important;
+  }
+}
+
+body:hover header#header {
+  display: flex;
+}
+
+@media screen and (max-width: 640px) {
+  #settings + .app__wrapper > header#header {
+    display: none;
   }
 }
 </style>

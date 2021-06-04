@@ -16,12 +16,12 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
-import { getIndicatorSettings } from '../../utils/helpers'
 
 import IndicatorControl from './IndicatorControl.vue'
 import { defaultChartOptions } from './chartOptions'
 import PaneHeader from '../panes/PaneHeader.vue'
 import { getEventCords } from '@/utils/picker'
+import { ChartPaneState } from '@/store/panesSettings/chart'
 
 @Component({
   name: 'Chart',
@@ -77,7 +77,7 @@ export default class extends Vue {
       return
     }
 
-    const { options } = getIndicatorSettings(this.paneId, this.indicatorId)
+    const { options } = (this.$store.state[this.paneId] as ChartPaneState).indicators[this.indicatorId]
 
     let scaleMargins = options.scaleMargins
 

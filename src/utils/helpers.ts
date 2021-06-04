@@ -155,18 +155,6 @@ export function sleep(duration = 1000): Promise<void> {
   })
 }
 
-export function getIndicatorSettings(paneId: string, indicatorId: string) {
-  const serieSettings = store.state[paneId].indicators[indicatorId] || {}
-  const defaultSerieSettings = defaultIndicators[indicatorId] || {}
-
-  return {
-    ...defaultSerieSettings,
-    ...serieSettings,
-    options: Object.assign({}, defaultSerieSettings.options || {}, serieSettings.options || {}),
-    id: indicatorId
-  }
-}
-
 export function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
