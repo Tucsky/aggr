@@ -1,6 +1,6 @@
 import store from '@/store'
 import { formatRgb, toRgb } from 'color-fns'
-import { ChartOptions, DeepPartial, LineWidth } from 'lightweight-charts'
+import { ChartOptions, DeepPartial, LineType, LineWidth } from 'lightweight-charts'
 
 export const defaultChartOptions = {
   crosshair: {
@@ -62,7 +62,7 @@ export const defaultChartOptions = {
       bottom: 0.2
     }
   }
-} as DeepPartial<ChartOptions>
+}
 
 export const defaultSerieOptions = {
   crosshairMarkerVisible: false,
@@ -112,6 +112,17 @@ export const defaultAreaOptions = {
   lineColor: 'rgba(21, 146, 230, 1)',
   lineStyle: 0,
   lineWidth: 2
+}
+
+export const defaultCloudAreaOptions = {
+  positiveColor: 'rgba( 76, 175, 80, 0.1)',
+  negativeColor: 'rgba( 255, 82, 82, 0.1)',
+  higherLineColor: '#4CAF50',
+  higherLineStyle: LineType.Simple,
+  higherLineWidth: 3,
+  lowerLineColor: '#FF5252',
+  lowerLineStyle: LineType.Simple,
+  lowerLineWidth: 3
 }
 
 export const defaultBarOptions = {
@@ -188,10 +199,15 @@ export function getChartOptions(baseOptions: DeepPartial<ChartOptions>): DeepPar
   return chartOptions
 }
 
+export const plotTypesMap = {
+  cloudarea: 'cloud-area'
+}
+
 export const defaultPlotsOptions = {
   line: defaultLineOptions,
   area: defaultAreaOptions,
   candlestick: defaultCandlestickOptions,
+  'cloud-area': defaultCloudAreaOptions,
   bar: defaultBarOptions,
   histogram: defaultHistogramOptions
 }

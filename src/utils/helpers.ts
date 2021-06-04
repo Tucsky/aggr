@@ -1,4 +1,4 @@
-import { defaultChartSeries } from '../components/chart/defaultSeries'
+import { defaultIndicators } from '../components/chart/defaultIndicators'
 import store from '../store'
 
 const progressContainer = document.getElementById('progress')
@@ -156,14 +156,14 @@ export function snakeToSentence(str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-export const setValueByDotNotation = (object, path, value) => {
+export const deepSet = (object, path, value) => {
   if (path.length === 1) object[path[0]] = value
   else if (path.length === 0) throw 'error'
   else {
-    if (object[path[0]]) return setValueByDotNotation(object[path[0]], path.slice(1), value)
+    if (object[path[0]]) return deepSet(object[path[0]], path.slice(1), value)
     else {
       object[path[0]] = {}
-      return setValueByDotNotation(object[path[0]], path.slice(1), value)
+      return deepSet(object[path[0]], path.slice(1), value)
     }
   }
 }
@@ -212,15 +212,15 @@ export function array_move(arr, old_index, new_index) {
   arr.splice(new_index, 0, arr.splice(old_index, 1)[0])
 }
 
-export function getSerieSettings(paneId: string, serieId: string) {
-  const serieSettings = store.state[paneId].series[serieId] || {}
-  const defaultSerieSettings = defaultChartSeries[serieId] || {}
+export function getIndicatorSettings(paneId: string, indicatorId: string) {
+  const serieSettings = store.state[paneId].indicators[indicatorId] || {}
+  const defaultSerieSettings = defaultIndicators[indicatorId] || {}
 
   return {
     ...defaultSerieSettings,
     ...serieSettings,
     options: Object.assign({}, defaultSerieSettings.options || {}, serieSettings.options || {}),
-    id: serieId
+    id: indicatorId
   }
 }
 
@@ -231,11 +231,11 @@ export function capitalizeFirstLetter(string) {
 /*
 export function getAllSeries() {
   const ids = Object.keys(store.state.settings.series)
-    .concat(Object.keys(defaultChartSeries))
+    .concat(Object.keys(defaultIndicators))
     .filter((x, i, a) => a.indexOf(x) == i)
 
   return ids.reduce((series, id) => {
-    series.push(getSerieSettings(id))
+    series.push(getIndicatorSettings(id))
 
     return series
   }, [])
@@ -268,36 +268,53 @@ export function parseMarket(market: string) {
 }
 
 export async function progress(task: string | boolean) {
-  console.info(task)
-
   if (typeof task === 'boolean') {
     progressContainer.style.display = task ? 'flex' : 'none'
     return
   }
 
+  console.info(task)
+
   progressTask.innerText = task
 }
 
-export function findClosingBracketMatchIndex(str, pos) {
-  if (str[pos] != '(') {
-    throw new Error("No '(' at index " + pos)
+export function findClosingBracketMatchIndex(str, pos, open = /\(/, close = /\)/) {
+  if (!open.test(str[pos])) {
+    throw new Error('No ' + open.toString() + ' at index ' + pos)
   }
 
   let depth = 1
 
   for (let i = pos + 1; i < str.length; i++) {
-    switch (str[i]) {
-      case '(':
-        depth++
-        break
-      case ')':
-        if (--depth == 0) {
-          return i
-        }
-        break
+    if (close.test(str[i])) {
+      if (--depth == 0) {
+        return i
+      }
+    } else if (open.test(str[i])) {
+      depth++
     }
   }
   return -1 // No matching closing parenthesis
+}
+
+export function parseFunctionArguments(str) {
+  const PARANTHESIS_REGEX = /\(|{|\[/g
+  let paranthesisMatch
+  let iteration = 0
+  do {
+    if ((paranthesisMatch = PARANTHESIS_REGEX.exec(str))) {
+      iteration++
+      const closingParenthesisIndex = findClosingBracketMatchIndex(str, paranthesisMatch.index, /\(|{|\[/, /\)|}|\]/)
+      const contentWithinParenthesis = str.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/,/g, '#COMMA#')
+      str = str.slice(0, paranthesisMatch.index + 1) + contentWithinParenthesis + str.slice(closingParenthesisIndex, str.length)
+    }
+  } while (paranthesisMatch && iteration < 10)
+
+  if (iteration >= 10) {
+    throw new Error('maxiumum parseFunctionArguments iteration reached')
+  }
+
+  return str.split(',').map(arg => arg.trim().replace(/#COMMA#/g, ','))
 }
 
 export function arrayMove(arr: any[], old_index: number, new_index: number) {
@@ -310,4 +327,10 @@ export function arrayMove(arr: any[], old_index: number, new_index: number) {
 
   arr.splice(new_index, 0, arr.splice(old_index, 1)[0])
   return arr // for testing
+}
+
+export function camelize(str) {
+  return str.replace(/-([a-z])/g, function(g) {
+    return g[1].toUpperCase()
+  })
 }

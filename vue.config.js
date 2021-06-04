@@ -1,4 +1,4 @@
-var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
+// let BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 
 process.env.VUE_APP_VERSION = require('./package.json').version
 

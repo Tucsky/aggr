@@ -1,5 +1,5 @@
 <template>
-  <Dialog :open="open" @clickOutside="close" class="pane-dialog">
+  <Dialog @clickOutside="close" class="pane-dialog">
     <template v-slot:header>
       <div class="title">
         <span v-text="name"></span>

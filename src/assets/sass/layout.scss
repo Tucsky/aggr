@@ -1,6 +1,15 @@
 body {
   background-color: $dark;
   overflow-x: hidden;
+
+  &.-unselectable {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
 }
 
 #progress {
@@ -18,6 +27,7 @@ body {
   right: 0;
   bottom: 0;
   pointer-events: none;
+  opacity: 0.25;
 }
 
 #app {
@@ -323,7 +333,6 @@ code {
 #app.-light .section:hover {
   background-color: rgba(black, 0.025);
 }
-
 
 @keyframes highlight {
   0% {

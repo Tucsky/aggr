@@ -246,16 +246,18 @@ export default {
     }
   },
   mounted() {
-    this.pickerRect = { ...this.$refs.canvas.getBoundingClientRect(), width: this.$refs.canvas.clientWidth, height: this.$refs.canvas.clientHeight }
-
-    if (this.mode === 'wheel') {
-      this.initWheel()
-    }
-    if (this.mode === 'square') {
-      this.initSquare()
-    }
     this.$nextTick(() => {
-      this.handleValue(this.value)
+      this.pickerRect = { ...this.$refs.canvas.getBoundingClientRect(), width: this.$refs.canvas.clientWidth, height: this.$refs.canvas.clientHeight }
+
+      if (this.mode === 'wheel') {
+        this.initWheel()
+      }
+      if (this.mode === 'square') {
+        this.initSquare()
+      }
+      this.$nextTick(() => {
+        this.handleValue(this.value)
+      })
     })
   }
 }

@@ -8,9 +8,11 @@
   align-items: center;
   justify-content: center;
   z-index: 10;
+  pointer-events: none;
 
   &.-mask {
     background-color: rgba(0, 0, 0, 0.33);
+    pointer-events: all;
   }
 
   .dialog-content {
@@ -22,6 +24,7 @@
     box-shadow: rgba(0, 0, 0, 0.2) 0px 18px 50px -10px;
     color: white;
     overflow: hidden;
+    pointer-events: all;
 
     .dialog-body {
       font-size: 14px;
@@ -175,7 +178,7 @@
   }
 }
 
-.dialog.serie-dialog {
+.dialog.indicator-dialog {
   .title {
     text-transform: none;
 

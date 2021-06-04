@@ -82,7 +82,7 @@ const actions = {
 
     console.log(`[exchanges.${id}] manually disconnecting ${markets.join(', ')}`)
 
-    aggregatorService.disconnect(markets)
+    await aggregatorService.disconnect(markets)
   },
   async connect({ rootState }, id: string) {
     const exchangeRegex = new RegExp(`^${id}:`, 'i')
@@ -90,7 +90,7 @@ const actions = {
 
     console.log(`[exchanges.${id}] manually connecting ${markets.join(', ')}`)
 
-    aggregatorService.connect(markets)
+    await aggregatorService.connect(markets)
   },
   toggleExchangeVisibility({ commit }, id: string) {
     commit('TOGGLE_EXCHANGE_VISIBILITY', id)

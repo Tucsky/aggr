@@ -89,14 +89,7 @@ export default class extends Vue {
     }
 
     if (!isNaN(event.target.innerText) && (event.which === 38 || event.which === 40)) {
-      const max = typeof this.max === 'undefined' ? Infinity : this.max
-      const min = typeof this.min === 'undefined' ? 0 : this.min
-      const step = this.step || 1
-      const precision = countDecimals(step)
-      const change = step * (event.which === 40 ? -1 : 1)
-      const value = +Math.max(min, Math.min(max, +event.target.innerText + change)).toFixed(precision)
-
-      this.$emit('output', value)
+      this.crement(event.which === 40 ? -1 : 1)
     }
   }
 
@@ -117,6 +110,23 @@ export default class extends Vue {
     this.clickAt = now
   }
 
+  crement(direction: number) {
+    const text = (this.$el as HTMLElement).innerText
+
+    if (isNaN(text as any)) {
+      return
+    }
+
+    const max = typeof this.max === 'undefined' ? Infinity : this.max
+    const min = typeof this.min === 'undefined' ? 0 : this.min
+    const step = this.step || 1
+    const precision = countDecimals(step)
+    const change = step * (direction > 0 ? -1 : 1)
+    const value = +Math.max(min, Math.min(max, +text + change)).toFixed(precision)
+
+    this.$emit('output', value)
+  }
+
   onWheel(event) {
     if (!(document.activeElement as HTMLElement).isContentEditable) {
       return
@@ -124,9 +134,7 @@ export default class extends Vue {
 
     event.preventDefault()
 
-    if (!isNaN(event.target.innerText)) {
-      this.$emit('output', +event.target.innerText + Math.sign(event.deltaY) * -1)
-    }
+    this.crement(Math.sign(event.deltaY))
   }
 }
 </script>

@@ -72,7 +72,7 @@ play(440, gain / 1.5, duration * 1.5, 80, null,'sine');`
       buyAudio: `play(659.26, gain * 0.5, duration, 80);
 play(830.6, gain * 1.25, duration, 80)`,
       sellAudio: `play(493.88, gain * 0.5, duration, 80);
-play(392, gain * 1.25, duration, 80)`
+play(392, gain * 1.5, duration, 80)`
     },
     {
       id: 'huge',
@@ -85,9 +85,9 @@ play(830.6, gain * 0.5, duration * 0.75, 80);
 play(987.76, gain * 0.5, duration * 0.75, 80);
 play(1318.52, gain * 1, duration, 80)`,
       sellAudio: `play(493.88, gain * 0.5, duration * 0.25, 80);
-play(369.99, gain * 0.5, duration * 0.5, 80);
-play(293.66, gain * 0.5, duration * 0.75, 80);
-play(246.94, gain * 1, duration, 80)`
+play(369.99, gain * 0.75, duration * 0.75, 80);
+play(293.66, gain, duration * 0.75, 80);
+play(246.94, gain * 2, duration, 80)`
     },
     {
       id: 'rare',

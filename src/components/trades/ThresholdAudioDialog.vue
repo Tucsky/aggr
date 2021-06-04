@@ -1,5 +1,5 @@
 <template>
-  <Dialog :open="open" @clickOutside="close" class="pane-dialog" @mousedown="clickOutsideClose = false" @mouseup="clickOutsideClose = true">
+  <Dialog @clickOutside="close" class="pane-dialog" @mousedown="clickOutsideClose = false" @mouseup="clickOutsideClose = true">
     <template v-slot:header>
       <div class="title">
         <div>Threshold</div>
@@ -97,7 +97,7 @@
 import DialogMixin from '../../mixins/dialogMixin'
 import Behave from 'behave-js'
 import { formatAmount } from '@/utils/helpers'
-import sfxService from '@/services/sfxService'
+import audioService from '@/services/audioService'
 
 export default {
   props: {
@@ -192,9 +192,9 @@ export default {
       if (amount) {
         const litteral = this[side + 'Audio']
 
-        const adapter = sfxService.buildAudioFunction(litteral, side, this.$store.state[this.paneId].thresholds)
+        const adapter = audioService.buildAudioFunction(litteral, side, this.$store.state[this.paneId].thresholds)
 
-        adapter(sfxService.playOrQueue.bind(sfxService), percent, side, level)
+        adapter(audioService.playOrQueue.bind(audioService), percent, side, level)
 
         this.$store.dispatch('app/showNotice', {
           id: 'testing-threshold-audio',

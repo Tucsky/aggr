@@ -68,6 +68,13 @@
   .dialog-content {
     width: 250px;
     min-width: 0;
+    background-color: black;
+    color: white;
+
+    header,
+    footer {
+      border: 0;
+    }
   }
 
   .dialog-body {

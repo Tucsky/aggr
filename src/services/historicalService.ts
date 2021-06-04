@@ -109,7 +109,7 @@ class HistoricalService extends EventEmitter {
         continue
       }
 
-      /* data.unshift({
+      data.unshift({
         timestamp: initialTs,
         exchange: market.shift(),
         pair: market.join(':'),
@@ -123,7 +123,7 @@ class HistoricalService extends EventEmitter {
         lsell: 0,
         cbuy: 0,
         csell: 0
-      }) */
+      })
     }
 
     return {

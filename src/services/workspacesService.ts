@@ -1,11 +1,12 @@
-import { defaultChartSeries } from '@/components/chart/defaultSeries'
+import { defaultIndicators } from '@/components/chart/defaultIndicators'
 import { boot } from '@/store'
-import { SerieSettings } from '@/store/panesSettings/chart'
+import { IndicatorSettings } from '@/store/panesSettings/chart'
 import { GifsStorage, ProductsStorage, Workspace } from '@/types/test'
 import { downloadJson, randomString, slugify, uniqueName } from '@/utils/helpers'
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
+import * as migrations from './migrations'
 
-interface AggrDB extends DBSchema {
+export interface AggrDB extends DBSchema {
   products: {
     value: ProductsStorage
     key: string
@@ -19,8 +20,8 @@ interface AggrDB extends DBSchema {
     key: string
     indexes: { name: string }
   }
-  series: {
-    value: SerieSettings
+  indicators: {
+    value: IndicatorSettings
     key: string
     indexes: { name: string }
   }
@@ -46,7 +47,6 @@ class WorkspacesService {
       openDB<AggrDB>('aggr', 1, {
         upgrade: (db, oldVersion, newVersion, tx) => {
           console.debug(`[idb] upgrade received`, oldVersion, '->', newVersion)
-          console.debug(`[idb] create idb stores`)
 
           promiseOfUpgrade = new Promise(resolve => {
             tx.oncomplete = async () => {
@@ -57,25 +57,10 @@ class WorkspacesService {
             }
           })
 
-          const workspacesStore = db.createObjectStore('workspaces', {
-            keyPath: 'id'
-          })
-
-          workspacesStore.createIndex('name', 'name')
-
-          const seriesStore = db.createObjectStore('series', {
-            keyPath: 'id'
-          })
-
-          seriesStore.createIndex('name', 'name')
-
-          db.createObjectStore('products', {
-            keyPath: 'exchange'
-          })
-
-          db.createObjectStore('gifs', {
-            keyPath: 'slug'
-          })
+          for (let i = oldVersion; i <= newVersion; i++) {
+            console.debug(`[idb] migrating v${i}`)
+            migrations['v' + i](db)
+          }
         },
         blocked() {
           console.log(`[idb] blocked received`)
@@ -111,29 +96,26 @@ class WorkspacesService {
     console.log(`[idb] insert default`)
 
     const now = +new Date()
-    const tx = db.transaction('series', 'readwrite')
+    const tx = db.transaction('indicators', 'readwrite')
 
-    for (const id in defaultChartSeries) {
-      const serie: SerieSettings = defaultChartSeries[id]
+    for (const id in defaultIndicators) {
+      const serie: IndicatorSettings = defaultIndicators[id]
 
       tx.store.add({ ...serie, id, createdAt: now, updatedAt: null })
     }
 
-    console.debug(`[idb] ${Object.keys(defaultChartSeries).length} default series added`)
+    console.debug(`[idb] ${Object.keys(defaultIndicators).length} default indicators added`)
 
     await tx.done
   }
 
   async getCurrentWorkspace() {
-    let id;
+    let id
 
     if (this.urlStrategy === 'hash') {
       id = location.hash.substring(1)
-
-      debugger
     } else {
       id = location.pathname.substring(1)
-      debugger
     }
 
     if (!id.length || !/^[a-zA-Z0-9]{4}$/.test(id)) {
@@ -347,28 +329,28 @@ class WorkspacesService {
     return this.db.delete('gifs', slug)
   }
 
-  async saveSerie(serie: SerieSettings) {
+  async saveIndicator(indicator: IndicatorSettings) {
     const now = +new Date()
 
-    if (!serie.createdAt) {
-      serie.createdAt = now
+    if (!indicator.createdAt) {
+      indicator.createdAt = now
     }
 
-    serie.updatedAt = now
+    indicator.updatedAt = now
 
-    return this.db.put('series', serie)
+    return this.db.put('indicators', indicator)
   }
 
-  getSerie(id: string) {
-    return this.db.get('series', id)
+  getIndicator(id: string) {
+    return this.db.get('indicators', id)
   }
 
-  getSeries() {
-    return this.db.getAllFromIndex('series', 'name')
+  getIndicators() {
+    return this.db.getAllFromIndex('indicators', 'name')
   }
 
-  deleteSerie(id: string) {
-    return this.db.delete('series', id)
+  deleteIndicator(id: string) {
+    return this.db.delete('indicators', id)
   }
 
   async reset() {

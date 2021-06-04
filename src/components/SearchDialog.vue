@@ -1,5 +1,5 @@
 <template>
-  <Dialog :open="open" @clickOutside="close" medium class="-sticky-footer">
+  <Dialog @clickOutside="close" medium class="-sticky-footer">
     <template v-slot:header>
       <div class="title" v-if="paneId">{{ paneName }}'s MARKETS</div>
       <div class="title" v-else>ALL PANES MARKETS</div>

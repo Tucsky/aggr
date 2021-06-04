@@ -411,3 +411,8 @@ $iconpath: '../fonts';
     content: $icon-bull;
   }
 }
+.icon-resize-height {
+  &:before {
+    content: $icon-resize-height;
+  }
+}

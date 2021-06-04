@@ -1,5 +1,5 @@
 <template>
-  <Dialog :open="open" @clickOutside="close" class="-picker" :mask="false">
+  <Dialog @clickOutside="close" class="-picker" :mask="false" :header-background="currentColor">
     <template v-slot:header>
       <div>
         <div class="title">{{ title }}</div>
@@ -38,7 +38,7 @@
           <input class="form-control" @change="inputChanged($event, 'blue')" :value="rgb.blue" />
         </template>
         <template v-if="currentModel === 'hex'">
-          <input class="form-control" @change="inputChanged($event, 'hex')" :value="'' + hex.red + hex.green + hex.blue" type="text" />
+          <input class="form-control" @change="inputChanged($event, 'hex')" :value="'#' + hex.red + hex.green + hex.blue" type="text" />
         </template>
         <button class="verte__submit" @click="submit" type="button">
           <i class="icon-check"></i>

@@ -43,8 +43,6 @@ export function parseMarket(market: string) {
   return market.match(/([^:]*):(.*)/).slice(1, 3)
 }
 
-
-
 export function formatAmount(amount, decimals?: number) {
   const negative = amount < 0
 

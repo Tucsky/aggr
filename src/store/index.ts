@@ -12,9 +12,9 @@ import aggregatorService from '@/services/aggregatorService'
 
 Vue.use(Vuex)
 
-console.debug = function() {
+/* console.debug = function() {
   //
-}
+} */
 
 export interface AppModuleTree<R> {
   [key: string]: Module<any, R>

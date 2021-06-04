@@ -225,7 +225,6 @@ class Exchange extends EventEmitter {
         const pairsToReconnect = [...api._connecting, ...api._connected]
 
         if (pairsToReconnect.length) {
-
           console.log(`[${this.id}] connection closed unexpectedly, schedule reconnection (${pairsToReconnect.join(',')})`)
 
           Promise.all(api._connected.map(pair => this.unlink(pair))).then(() => {
@@ -472,8 +471,7 @@ class Exchange extends EventEmitter {
    * @param pair
    * @returns
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   subscribe(api, pair) {}
 
   /**
@@ -482,8 +480,7 @@ class Exchange extends EventEmitter {
    * @param pair
    * @returns
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   unsubscribe(api, pair) {}
 
   /**

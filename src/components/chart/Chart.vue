@@ -5,7 +5,8 @@
         :options="{
           clear: { label: 'Clear', click: clear },
           trim: { label: 'Trim', click: refreshChart },
-          render: { label: 'Render', click: renderChart }
+          render: { label: 'Render', click: renderChart },
+          reset: { label: 'Reset', click: resetChart }
         }"
       >
         <template v-slot:option="{ value }">
@@ -19,15 +20,16 @@
       </dropdown>
     </pane-header>
     <div class="chart__container" ref="chartContainer"></div>
-    <div class="chart__series">
-      <SerieControl v-for="(serie, id) in series" :key="id" :serieId="id" :paneId="paneId" :legend="legend[id]" />
+    <div class="chart__indicators">
+      <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" :legend="legend[id]" />
 
       <div class="column mt8">
-        <a href="javascript:void(0);" @click="addSerie" v-tippy="{ placement: 'bottom' }" title="Add" class="mr4 -text">
+        <a href="javascript:void(0);" @click="addIndicator" v-tippy="{ placement: 'bottom' }" title="Add" class="mr4 -text">
           <i class="icon-plus"></i>
         </a>
       </div>
     </div>
+    <IndicatorResize v-if="resizingIndicator" :indicatorId="resizingIndicator" :paneId="paneId"></IndicatorResize>
   </div>
 </template>
 
@@ -36,22 +38,25 @@ import { Component, Mixins } from 'vue-property-decorator'
 
 import ChartController, { TimeRange } from './chartController'
 
-import dialogService from '../../services/dialogService'
 import { formatPrice, formatAmount, formatTime, getHms } from '../../utils/helpers'
-
-import SerieControl from './SerieControl.vue'
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
-import CreateSerieDialog from './CreateSerieDialog.vue'
+import { getCustomColorsOptions } from './chartOptions'
+
 import aggregatorService from '@/services/aggregatorService'
 import historicalService from '@/services/historicalService'
+import dialogService from '../../services/dialogService'
+
 import PaneMixin from '@/mixins/paneMixin'
-import { getCustomColorsOptions } from './chartOptions'
 import PaneHeader from '../panes/PaneHeader.vue'
+import IndicatorResize from './IndicatorResize.vue'
+import IndicatorControl from './IndicatorControl.vue'
+import CreateIndicatorDialog from './CreateIndicatorDialog.vue'
 
 @Component({
   name: 'Chart',
   components: {
-    SerieControl,
+    IndicatorResize,
+    IndicatorControl,
     PaneHeader
   }
 })
@@ -81,8 +86,12 @@ export default class extends Mixins(PaneMixin) {
     return this.$store.state[this.paneId].refreshRate
   }
 
-  get series() {
-    return this.$store.state[this.paneId].series
+  get indicators() {
+    return this.$store.state[this.paneId].indicators
+  }
+
+  get resizingIndicator() {
+    return this.$store.state[this.paneId].resizingIndicator
   }
 
   get theme() {
@@ -111,11 +120,12 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.chartInstance.applyOptions(getCustomColorsOptions())
           break
         case 'settings/SET_TIMEZONE_OFFSET':
+          this._chartController.setTimezoneOffset(this.timezoneOffset)
           this._chartController.clearChart()
-          this._chartController.renderVisibleChunks()
+          this._chartController.renderAll()
           break
         case 'app/EXCHANGE_UPDATED':
-          this._chartController.renderVisibleChunks()
+          this._chartController.renderAll()
           break
         case 'panes/SET_PANE_MARKETS':
           if (mutation.payload.id === this.paneId) {
@@ -133,21 +143,20 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.clearQueue()
           this._chartController.setupQueue()
           break
-        case this.paneId + '/SET_SERIE_OPTION':
-          this._chartController.setSerieOption(mutation.payload)
+        case this.paneId + '/SET_INDICATOR_OPTION':
+          this._chartController.setIndicatorOption(mutation.payload.id, mutation.payload.key, mutation.payload.value)
           break
-        case this.paneId + '/SET_SERIE_TYPE':
-        case this.paneId + '/SET_SERIE_INPUT':
-          this._chartController.rebuildSerie(mutation.payload.id)
+        case this.paneId + '/SET_INDICATOR_SCRIPT':
+          this._chartController.rebuildIndicator(mutation.payload.id)
           break
-        case this.paneId + '/ADD_SERIE':
-          if (this._chartController.addSerie(mutation.payload.id)) {
-            this._chartController.redrawSerie(mutation.payload.id)
+        case this.paneId + '/ADD_INDICATOR':
+          if (this._chartController.addIndicator(mutation.payload.id)) {
+            this._chartController.redrawIndicator(mutation.payload.id)
           }
 
           break
-        case this.paneId + '/REMOVE_SERIE':
-          this._chartController.removeSerie(mutation.payload)
+        case this.paneId + '/REMOVE_INDICATOR':
+          this._chartController.removeIndicator(mutation.payload)
           break
         case 'app/SET_OPTIMAL_DECIMAL':
         case this.paneId + '/SET_DECIMAL_PRECISION':
@@ -155,25 +164,17 @@ export default class extends Mixins(PaneMixin) {
             break
           }
 
-          for (const id in this.series) {
-            const serie = this.$store.state[this.paneId].series[id]
+          for (const id in this.indicators) {
+            const indicator = this.$store.state[this.paneId].indicators[id]
 
-            if (!serie.options) {
+            if (!indicator.options) {
               continue
             }
 
-            if (serie.options.priceFormat && serie.options.priceFormat.type === 'price') {
-              this._chartController.setSerieOption({
-                id: serie.id,
-                key: 'priceFormat.precision',
-                value: mutation.payload
-              })
+            if (indicator.options.priceFormat && indicator.options.priceFormat.type === 'price') {
+              this._chartController.setIndicatorOption(indicator.id, 'priceFormat.precision', mutation.payload)
 
-              this._chartController.setSerieOption({
-                id: serie.id,
-                key: 'priceFormat.minMove',
-                value: 1 / Math.pow(10, mutation.payload)
-              })
+              this._chartController.setIndicatorOption(indicator.id, 'priceFormat.minMove', 1 / Math.pow(10, mutation.payload))
             }
           }
 
@@ -344,7 +345,7 @@ export default class extends Mixins(PaneMixin) {
             this._chartController.chartCache.saveChunk(chunk)
           }
 
-          this._chartController.renderVisibleChunks()
+          this._chartController.renderAll()
         }
       })
       .catch(err => {
@@ -383,24 +384,29 @@ export default class extends Mixins(PaneMixin) {
     ) {
       this.legend = {}
     } else {
-      for (const serie of this._chartController.activeSeries) {
-        const data = param.seriesPrices.get(serie.api)
+      for (let i = 0; i < this._chartController.loadedIndicators.length; i++) {
+        const indicator = this._chartController.loadedIndicators[i]
 
-        if (!data) {
-          this.$set(this.legend, serie.id, '')
-          continue
-        }
+        for (let j = 0; j < this._chartController.loadedIndicators[i].apis.length; j++) {
+          const api = this._chartController.loadedIndicators[i].apis[j]
+          const data = param.seriesPrices.get(api)
 
-        const formatFunction = serie.options.priceFormat && serie.options.priceFormat.type === 'volume' ? formatAmount : formatPrice
+          if (!data) {
+            this.$set(this.legend, api.id, '')
+            continue
+          }
 
-        if (data.close) {
-          this.$set(
-            this.legend,
-            serie.id,
-            `O: ${formatFunction(data.open)} H: ${formatFunction(data.high)} L: ${formatFunction(data.low)} C: ${formatFunction(data.close)}`
-          )
-        } else {
-          this.$set(this.legend, serie.id, formatFunction(data))
+          const formatFunction = indicator.options.priceFormat && indicator.options.priceFormat.type === 'volume' ? formatAmount : formatPrice
+
+          if (data.close) {
+            this.$set(
+              this.legend,
+              api.id,
+              `O: ${formatFunction(data.open)} H: ${formatFunction(data.high)} L: ${formatFunction(data.low)} C: ${formatFunction(data.close)}`
+            )
+          } else {
+            this.$set(this.legend, api.id, formatFunction(data))
+          }
         }
       }
     }
@@ -458,7 +464,7 @@ export default class extends Mixins(PaneMixin) {
     if (this._keepAliveTimeout) {
       this._chartController.chartCache.trim()
 
-      this._chartController.redraw()
+      this._chartController.renderAll()
     }
 
     this._keepAliveTimeout = setTimeout(this.keepAlive.bind(this), 1000 * 60 * 30)
@@ -471,11 +477,18 @@ export default class extends Mixins(PaneMixin) {
   }
 
   renderChart() {
-    this._chartController.redraw()
+    this._chartController.renderAll()
   }
 
-  addSerie() {
-    dialogService.open(CreateSerieDialog, { paneId: this.paneId })
+  resetChart() {
+    this.destroyChart()
+    this.$nextTick(() => {
+      this.createChart()
+    })
+  }
+
+  addIndicator() {
+    dialogService.open(CreateIndicatorDialog, { paneId: this.paneId })
   }
 
   fetchOrRecover(visibleLogicalRange) {
@@ -511,7 +524,7 @@ export default class extends Mixins(PaneMixin) {
       )
       console.warn('(might trigger redraw with more cached chunks here...)')
 
-      this._chartController.renderVisibleChunks()
+      this._chartController.renderAll()
     }
   }
 
@@ -529,7 +542,7 @@ export default class extends Mixins(PaneMixin) {
 
 <style lang="scss">
 .pane-chart {
-  &:hover .chart__series,
+  &:hover .chart__indicators,
   &:hover .chart__controls {
     opacity: 1;
   }
@@ -552,7 +565,7 @@ export default class extends Mixins(PaneMixin) {
   user-select: none;
 }
 
-.chart__series {
+.chart__indicators {
   position: absolute;
   top: 3em;
   left: 1em;
@@ -573,61 +586,6 @@ export default class extends Mixins(PaneMixin) {
   left: 0;
   right: 0;
   z-index: 3;
-}
-
-.chart__handler {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 2;
-
-  &.-width {
-    top: 0;
-    left: auto;
-    width: 16px;
-    margin-right: -8px;
-    cursor: ew-resize;
-    display: none;
-
-    @media screen and (min-width: 768px) {
-      display: block;
-    }
-  }
-
-  &.-height {
-    height: 8px;
-    margin-top: -4px;
-    cursor: row-resize;
-
-    @media screen and (min-width: 768px) {
-      display: none;
-    }
-  }
-}
-
-.chart__positions {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 2rem;
-  font-family: 'Barlow Semi Condensed';
-  background-color: rgba(black, 0.8);
-  pointer-events: none;
-  display: flex;
-  justify-content: space-between;
-  text-align: center;
-  z-index: 10;
-
-  > div {
-    &:first-child {
-      text-align: left;
-    }
-    &:last-child {
-      text-align: right;
-    }
-  }
 }
 
 .chart__controls {

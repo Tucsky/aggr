@@ -5,7 +5,7 @@ import { getColorLuminance, splitRgba } from '@/utils/colors'
 import { ModulesState } from '.'
 import { SlippageMode } from '@/types/test'
 import aggregatorService from '@/services/aggregatorService'
-import sfxService from '@/services/sfxService'
+import audioService from '@/services/audioService'
 import Vue from 'vue'
 
 export interface SettingsState {
@@ -55,9 +55,9 @@ const actions = {
 
     Vue.nextTick(() => {
       if (state.useAudio) {
-        sfxService.connect()
+        audioService.connect()
       } else {
-        sfxService.disconnect()
+        audioService.disconnect()
       }
     })
   },
@@ -147,30 +147,30 @@ const mutations = {
     state.useAudio = value ? true : false
 
     if (state.useAudio) {
-      sfxService.connect()
+      audioService.connect()
     } else {
-      sfxService.disconnect()
+      audioService.disconnect()
     }
   },
   SET_AUDIO_VOLUME(state, value) {
     state.audioVolume = value
-    sfxService.setVolume(value)
+    audioService.setVolume(value)
   },
   TOGGLE_AUDIO_COMPRESSOR(state) {
     state.audioCompressor = !state.audioCompressor
-    sfxService.reconnect()
+    audioService.reconnect()
   },
   TOGGLE_AUDIO_FILTER(state) {
     state.audioFilter = !state.audioFilter
-    sfxService.reconnect()
+    audioService.reconnect()
   },
   TOGGLE_AUDIO_DELAY(state) {
     state.audioDelay = !state.audioDelay
-    sfxService.reconnect()
+    audioService.reconnect()
   },
   TOGGLE_AUDIO_PING_PONG(state) {
     state.audioPingPong = !state.audioPingPong
-    sfxService.reconnect()
+    audioService.reconnect()
   },
   SET_CHART_BACKGROUND_COLOR(state, value) {
     state.backgroundColor = value

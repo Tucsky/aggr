@@ -235,7 +235,7 @@ export default class Bucket {
     }
   }
 
-  removeSerie(chart: IChartApi) {
+  removeIndicator(chart: IChartApi) {
     if (!this.serie) {
       return
     }

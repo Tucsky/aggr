@@ -57,7 +57,7 @@ export default class extends Exchange {
    * @param {string} pair
    */
   async subscribe(api, pair): Promise<void> {
-    if (!(this.canSubscribe(api, pair))) {
+    if (!this.canSubscribe(api, pair)) {
       return
     }
 
@@ -83,7 +83,7 @@ export default class extends Exchange {
    * @param {string} pair
    */
   async unsubscribe(api, pair): Promise<void> {
-    if (!(this.canUnsubscribe(api, pair))) {
+    if (!this.canUnsubscribe(api, pair)) {
       return
     }
 

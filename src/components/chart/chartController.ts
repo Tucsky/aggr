@@ -1,14 +1,15 @@
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
-import { formatTime, getHms, parseMarket, setValueByDotNotation } from '../../utils/helpers'
+import { getHms, parseMarket, deepSet, camelize } from '../../utils/helpers'
 import { defaultChartOptions, defaultPlotsOptions, defaultSerieOptions, getChartOptions } from './chartOptions'
 import store from '../../store'
 import * as seriesUtils from './serieUtils'
 import * as TV from 'lightweight-charts'
 import ChartCache, { Chunk } from './chartCache'
 import SerieBuilder from './serieBuilder'
-import dialogService from '../../services/dialogService'
-import SerieDialog from './SerieDialog.vue'
 import { Trade } from '@/types/test'
+import dialogService from '@/services/dialogService'
+import IndicatorDialog from './IndicatorDialog.vue'
+import { ChartPaneState } from '@/store/panesSettings/chart'
 
 export interface Bar {
   vbuy?: number
@@ -27,6 +28,10 @@ export interface Bar {
   empty?: boolean
 }
 
+export interface IndicatorApi extends TV.ISeriesApi<any> {
+  id: string
+}
+
 export interface TimeRange {
   from: number
   to: number
@@ -39,59 +44,80 @@ export interface OHLC {
   close: number
 }
 
-export type SerieAdapter = (
+export type IndicatorRealtimeAdapter = (
   renderer: Renderer,
-  functions: SerieInstruction,
-  variables: SerieInstruction,
+  functions: IndicatorFunction[],
+  variables: IndicatorVariable[],
+  apis: IndicatorApi[],
   options: TV.SeriesOptions<any>,
   seriesUtils: any
-) => OHLC | number | { value: number }
-
-export type SerieTranspilationOutputType = 'ohlc' | 'value' | 'custom'
-
-export interface ActiveSerie {
+) => void
+export interface LoadedIndicator {
   id: string
-  type: string
-  input: string
   options: any
-  model: SerieTranspilationResult
-  adapter: SerieAdapter
-  outputType?: SerieTranspilationOutputType
-  api: TV.ISeriesApi<any>
+  script: string
+  model: IndicatorTranspilationResult
+  adapter: IndicatorRealtimeAdapter
+  apis: IndicatorApi[]
+  apisNoop: IndicatorApi[]
 }
 
-export interface SerieTranspilationResult {
+export interface IndicatorTranspilationResult {
   output: string
-  type: SerieTranspilationOutputType
-  variables: SerieInstruction[]
-  functions: SerieInstruction[]
-  exchanges?: string[]
-  references?: string[]
+  variables: IndicatorVariable[]
+  functions: IndicatorFunction[]
+  plots: IndicatorPlot[]
+  markets?: string[]
+  references?: IndicatorReference[]
 }
-
-export interface SerieInstruction {
+export interface IndicatorFunction {
   name: string
-  type: string
   arg?: string | number
   length?: string | number
-  persist?: string[]
+  persistence?: string[]
   state?: any
 }
-
+export interface IndicatorVariable {
+  name: string
+  length?: number
+  state?: any
+}
+export interface IndicatorPlot {
+  id: string
+  type: string
+  expectedInput: 'number' | 'ohlc' | 'range'
+  options: { [prop: string]: any }
+}
+export interface IndicatorReference {
+  indicatorId: string
+  serieId?: string
+  plotIndex: number
+}
 export interface Renderer {
   timestamp: number
+  localTimestamp: number
   length: number
   bar: Bar
   sources: { [name: string]: Bar }
-  series: { [id: string]: RendererSerieData }
+  indicators: { [id: string]: RendererIndicatorData }
   empty?: boolean
 }
 
-interface RendererSerieData {
-  value: number
-  point?: any
-  variables: SerieInstruction[]
-  functions: SerieInstruction[]
+interface RendererIndicatorData {
+  series: {
+    time: number
+    value?: number
+    open?: number
+    high?: number
+    low?: number
+    close?: number
+    color?: string
+    higherValue?: number
+    lowerValue?: number
+  }[]
+  variables: IndicatorVariable[]
+  functions: IndicatorFunction[]
+  plotsOptions?: any[]
 }
 
 export default class ChartController {
@@ -100,16 +126,20 @@ export default class ChartController {
 
   chartInstance: TV.IChartApi
   chartElement: HTMLElement
-  activeSeries: ActiveSerie[] = []
-  activeRenderer: Renderer
-  activeChunk: Chunk
-  renderedRange: TimeRange = { from: null, to: null }
-  queuedTrades: Trade[] = []
-  chartCache: ChartCache
-  SerieBuilder: SerieBuilder
+  loadedIndicators: LoadedIndicator[] = []
   preventRender: boolean
   panPrevented: boolean
+  activeRenderer: Renderer
+  renderedRange: TimeRange = { from: null, to: null }
+  chartCache: ChartCache
   markets: { [identifier: string]: true }
+  timezoneOffset = 0
+
+  private loadedSeries: { [id: string]: IndicatorApi } = {}
+  private activeChunk: Chunk
+  private queuedTrades: Trade[] = []
+  private serieBuilder: SerieBuilder
+  private seriesIndicatorsMap: { [serieId: string]: IndicatorReference } = {}
 
   private _releaseQueueInterval: number
   private _releasePanTimeout: number
@@ -119,11 +149,16 @@ export default class ChartController {
     this.paneId = id
 
     this.chartCache = new ChartCache()
-    this.SerieBuilder = new SerieBuilder()
+    this.serieBuilder = new SerieBuilder()
 
     this.setMarkets(store.state.panes.panes[this.paneId].markets)
+    this.setTimezoneOffset(store.state.settings.timezoneOffset)
   }
 
+  /**
+   * update watermark when pane's markets changes
+   * @param markets
+   */
   setMarkets(markets: string[]) {
     this.watermark = markets
       .filter(market => {
@@ -142,10 +177,30 @@ export default class ChartController {
     this.updateWatermark()
   }
 
-  createChart(containerElement) {
+  /**
+   * Cache timezone offset
+   * @param offset in ms
+   */
+  setTimezoneOffset(offset: number) {
+    const originalTimezoneOffset = this.timezoneOffset
+
+    this.timezoneOffset = offset / 1000
+
+    const change = this.timezoneOffset - originalTimezoneOffset
+
+    if (this.activeRenderer) {
+      this.activeRenderer.localTimestamp += change
+    }
+  }
+
+  /**
+   * create Lightweight Charts instance and render pane's indicators
+   * @param {HTMLElement} containerElement
+   */
+  createChart(containerElement: HTMLElement) {
     console.log(`[chart/${this.paneId}/controller] create chart`)
 
-    const chartOptions = getChartOptions(defaultChartOptions)
+    const chartOptions = getChartOptions(defaultChartOptions as any)
 
     this.chartInstance = TV.createChart(containerElement, chartOptions)
     this.chartElement = containerElement
@@ -164,8 +219,8 @@ export default class ChartController {
       return
     }
 
-    while (this.activeSeries.length) {
-      this.removeSerie(this.activeSeries[0])
+    while (this.loadedIndicators.length) {
+      this.removeIndicator(this.loadedIndicators[0])
     }
 
     this.chartInstance.remove()
@@ -174,88 +229,119 @@ export default class ChartController {
   }
 
   /**
-   * Get active serie by id
-   * @returns {ActiveSerie} serie
+   * Get active indicator by id
+   * @returns {LoadedIndicator} serie
    */
-  getSerie(id: string): ActiveSerie {
-    for (let i = 0; i < this.activeSeries.length; i++) {
-      if (this.activeSeries[i].id === id) {
-        return this.activeSeries[i]
+  getLoadedIndicator(id: string): LoadedIndicator {
+    for (let i = 0; i < this.loadedIndicators.length; i++) {
+      if (this.loadedIndicators[i].id === id) {
+        return this.loadedIndicators[i]
       }
     }
   }
 
   /**
-   * Update one serie's option
-   * @param {Object} obj vuex store payload
-   * @param {string} obj.id serie id
-   * @param {string} obj.key option key
-   * @param {any} obj.value serie id
+   * Set indicator option by key
+   * @param {string} id serie id
+   * @param {string} key option key
+   * @param {any} value serie id
    */
-  setSerieOption({ id, key, value }) {
-    const serie = this.getSerie(id)
+  setIndicatorOption(id, key, value) {
+    const indicator = this.getLoadedIndicator(id)
 
-    if (!serie) {
+    if (!indicator) {
       return
     }
 
-    let firstKey = key
+    let rootOptionKey = key
 
     if (key.indexOf('.') !== -1) {
       const path = key.split('.')
-      setValueByDotNotation(serie.options, path, value)
-      firstKey = path[0]
+
+      deepSet(indicator.options, path, value)
+
+      rootOptionKey = path[0]
     } else {
-      serie.options[key] = value
+      indicator.options[rootOptionKey] = value
     }
 
-    serie.api.applyOptions({
-      [firstKey]: serie.options[firstKey]
-    })
+    for (let i = 0; i < indicator.apis.length; i++) {
+      let value = indicator.options[rootOptionKey]
 
-    const noRedrawOptions = [/priceFormat/i, /scaleMargins/i, /color/i, /^linetype$/i, /width/i, /style$/i, /visible$/i]
-
-    for (let i = 0; i < noRedrawOptions.length; i++) {
-      if (noRedrawOptions[i] === firstKey || (noRedrawOptions[i] instanceof RegExp && noRedrawOptions[i].test(firstKey))) {
-        return
+      if (this.activeRenderer && typeof this.activeRenderer.indicators[id].plotsOptions[i][key] !== 'undefined') {
+        value = this.activeRenderer.indicators[id].plotsOptions[i][key]
       }
+
+      indicator.apis[i].applyOptions({
+        [rootOptionKey]: value
+      })
     }
 
-    this.redrawSerie(id)
+    if (this.optionRequiresRedraw(rootOptionKey)) {
+      this.redrawIndicator(id)
+    }
+  }
+
+  optionRequiresRedraw(key: string) {
+    const redrawOptions = /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor/i
+
+    if (redrawOptions.test(key)) {
+      return true
+    }
+
+    const noRedrawOptions = /color|priceFormat|scaleMargins|linetype|width|style|visible/i
+
+    if (noRedrawOptions.test(key)) {
+      return false
+    }
+
+    return true
   }
 
   /**
-   * Rebuild the whole serie
+   * rebuild the whole serie
    * @param {string} id serie id
    */
-  rebuildSerie(id) {
-    this.removeSerie(this.getSerie(id))
+  rebuildIndicator(id) {
+    this.removeIndicator(this.getLoadedIndicator(id))
 
-    if (this.addSerie(id)) {
-      this.redrawSerie(id)
+    if (this.addIndicator(id)) {
+      this.redrawIndicator(id)
     }
   }
 
   /**
-   * Redraw one specific serie (and the series it depends on)
-   * @param {string} id
+   * get id(s) of indicators used in anoter indicator
+   * @param {LoadedIndicator} indicator
+   * @returns {string[]} id of indicators
    */
-  redrawSerie(id) {
+  getReferencedIndicators(indicator: LoadedIndicator) {
+    return indicator.model.references
+      .slice()
+      .map(a => a.indicatorId)
+      .filter((t, index, self) => self.indexOf(t) === index)
+  }
+
+  /**
+   * redraw one specific indicator (and the series it depends on)
+   * @param {string} indicatorId
+   */
+  redrawIndicator(indicatorId) {
     let bars = []
 
     for (const chunk of this.chartCache.chunks) {
-      // if (chunk.rendered) {
       bars = bars.concat(chunk.bars)
-      // }
     }
 
-    const series = this.getSeriesDependances(this.getSerie(id))
+    const requiredIndicatorsIds = this.getReferencedIndicators(this.getLoadedIndicator(indicatorId))
 
-    series.push(id)
-
-    this.renderBars(bars, series)
+    this.renderBars(bars, [...requiredIndicatorsIds, indicatorId])
   }
 
+  /**
+   * just a extention of Lightweight Charts getVisibleRange but using timezone offset from the settings
+   * @returns
+   */
   getVisibleRange() {
     const visibleRange = this.chartInstance.timeScale().getVisibleRange() as TimeRange
 
@@ -263,36 +349,33 @@ export default class ChartController {
       return visibleRange
     }
 
-    const timezoneOffset = store.state.settings.timezoneOffset / 1000
-
-    visibleRange.from -= timezoneOffset
-    visibleRange.to -= timezoneOffset
+    visibleRange.from -= this.timezoneOffset
+    visibleRange.to -= this.timezoneOffset
 
     return visibleRange
   }
 
   /**
-   * Redraw
-   * @param
-   */
-  redraw() {
-    this.renderVisibleChunks()
-  }
-
-  /**
-   * Add all enabled series
+   * add all pane's indicators
    */
   addEnabledSeries() {
-    for (const id in store.state[this.paneId].series) {
-      this.addSerie(id)
+    for (const id in store.state[this.paneId].indicators) {
+      this.addIndicator(id)
     }
   }
 
+  /**
+   * render watermark in chart
+   * @returns
+   */
   updateWatermark() {
     if (!this.chartInstance) {
       return
     }
 
+    /**
+     * weird spaces (\u00A0) are for left / right margins
+     */
     this.chartInstance.applyOptions({
       watermark: {
         text: `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0${this.watermark}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0`,
@@ -302,270 +385,280 @@ export default class ChartController {
   }
 
   /**
-   * get series that depends on this serie
-   * @param {ActiveSerie} serie
-   * @returns {string[]} id of series
+   * create indicator and register associated series
+   * @param {string} indicatorId indicator id
    */
-  getSeriesDependendingOn(serie) {
-    const series = []
-
-    for (let i = 0; i < this.activeSeries.length; i++) {
-      const serieCompare = this.activeSeries[i]
-
-      if (serieCompare.id === serie.id) {
-        continue
-      }
-
-      if (this.isSerieReferencedIn(serie, serieCompare)) {
-        series.push(serieCompare.id)
-      }
-    }
-
-    return series
-  }
-
-  /**
-   * get dependencies of serie
-   * @param {ActiveSerie} serie
-   * @returns {string[]} id of series
-   */
-  getSeriesDependances(serie) {
-    return serie.model.references.slice()
-  }
-
-  /**
-   * is serieA referenced in serieB
-   * @param {ActiveSerie} serieA
-   * @param {ActiveSerie} serieB
-   * @returns {boolean}
-   */
-  isSerieReferencedIn(serieA, serieB) {
-    const functionString = serieB.input.toString()
-    const reg = new RegExp(`bar\\.series\\.${serieA.id}\\.`, 'g')
-
-    return !!functionString.match(reg)
-  }
-
-  /**
-   * register serie and create serie api12
-   * @param {string} serieId serie id
-   * @returns {boolean} success if true
-   */
-  addSerie(id, depth = 0) {
-    if (this.getSerie(id)) {
-      console.log(id, 'already added')
+  addIndicator(id, dependencyDepth?: number) {
+    if (this.getLoadedIndicator(id)) {
       return true
     }
 
-    const serieSettings = store.state[this.paneId].series[id] || {}
-    const serieType = serieSettings.type
-
-    if (!serieType) {
-      throw new Error('unknown-serie-type')
+    if (dependencyDepth > 5) {
+      return false
     }
 
-    const serieOptions = Object.assign({}, defaultSerieOptions, defaultPlotsOptions[serieType] || {}, serieSettings.options || {})
+    // get indicator name, script, options ...
+    const indicatorSettings = store.state[this.paneId].indicators[id]
 
-    const serieInput = serieSettings.input
+    console.debug(`[chart/${this.paneId}/addIndicator] adding ${id}`)
 
-    console.debug(`[chart/${this.paneId}/addSerie] adding ${id}`)
-    console.debug(`\t-> TYPE: ${serieType}`)
-
-    const serie: ActiveSerie = {
+    const indicator: LoadedIndicator = {
       id,
-      type: serieType,
-      input: serieInput,
-      options: serieOptions,
+      options: JSON.parse(JSON.stringify(indicatorSettings.options)),
+      script: indicatorSettings.script,
       model: null,
-      api: null,
-      adapter: null
+      adapter: null,
+      apis: [],
+      apisNoop: []
     }
 
+    // build indicator
     try {
-      this.prepareSerie(serie)
+      this.prepareIndicator(indicator)
     } catch (error) {
-      if (depth < 5 && error.status === 'serie-required') {
-        if (this.addSerie(error.serieId, depth + 1)) {
-          if (depth === 0) {
-            this.addSerie(id, depth + 1)
-          }
-        } else {
-          dialogService.confirm({
-            message: `Serie ${serie.id} require ${error.serieId} that wasn't found anywhere in this workspace`,
-            ok: 'OK',
-            cancel: false
-          })
-        }
+      // handle dependency issue (resolveDependency adds required indicator(s) then try add this one again)
+      if (error.status === 'indicator-required' && !this.resolveDependency(indicator.id, error.serieId, dependencyDepth || 0)) {
+        dialogService.confirm({
+          message: `"${indicator.id}" indicator need the "${error.serieId}" serie but that one WAS NOT found anywhere in the current indicators.`,
+          ok: 'I see',
+          cancel: false
+        })
+      }
+
+      if (!error.status && !dialogService.isDialogOpened('indicator')) {
+        dialogService.open(
+          IndicatorDialog,
+          {
+            paneId: this.paneId,
+            indicatorId: indicator.id
+          },
+          'indicator'
+        )
       }
 
       return false
     }
 
-    const apiMethodName = 'add' + (serieType.charAt(0).toUpperCase() + serieType.slice(1)) + 'Series'
+    // build complete
+    this.loadedIndicators.push(indicator)
 
-    serie.api = this.chartInstance[apiMethodName](serieOptions)
-
-    if (serieOptions.scaleMargins && serieOptions.priceScaleId) {
-      serie.api.applyOptions({
-        scaleMargins: serieOptions.scaleMargins
-      })
-    }
-
-    this.activeSeries.push(serie)
-
-    this.bindSerie(serie, this.activeRenderer)
+    // attach indicator to active renderer
+    this.bindIndicator(indicator, this.activeRenderer)
 
     return true
   }
 
-  prepareSerie(serie) {
-    try {
-      const result = this.SerieBuilder.build(
-        serie,
-        this.activeSeries.map(a => a.id)
-      )
-      const { functions, variables, references } = result
-      let { output, type } = result
+  resolveDependency(originalIndicatorId: string, missingSerieId: string, dependencyDepth: number) {
+    // serie was not found in active indicators
+    // first we loop through pane indicators, maybe order of add is incorrect
+    const indicators = (store.state[this.paneId] as ChartPaneState).indicators
 
-      if (store.state[this.paneId].seriesErrors[serie.id]) {
-        store.commit(this.paneId + '/SET_SERIE_ERROR', {
-          id: serie.id,
+    for (const otherIndicatorId in indicators) {
+      if (otherIndicatorId === originalIndicatorId || !indicators[otherIndicatorId].series) {
+        continue
+      }
+
+      if (indicators[otherIndicatorId].series.indexOf(missingSerieId) !== -1) {
+        // found missing indicator
+        // add missing indicator (otherIndicatorId) that seems to contain the missing serie (missingSerieId)
+        if (this.addIndicator(otherIndicatorId, dependencyDepth + 1)) {
+          if (dependencyDepth === 0) {
+            // finaly add original indicator
+            this.addIndicator(originalIndicatorId, dependencyDepth + 1)
+          }
+
+          return true
+        } else {
+          return false
+          // too many dependencies
+        }
+      }
+    }
+
+    if (indicators[missingSerieId]) {
+      if (this.addIndicator(indicators[missingSerieId].id, dependencyDepth + 1)) {
+        if (dependencyDepth === 0) {
+          this.addIndicator(originalIndicatorId, dependencyDepth + 1)
+        }
+
+        return true
+      }
+    }
+
+    return false
+  }
+
+  /**
+   * build indicator and create own series instances from Lightweight Charts
+   * @param indicator
+   */
+  prepareIndicator(indicator: LoadedIndicator) {
+    try {
+      const result = this.serieBuilder.build(indicator, this.seriesIndicatorsMap, this.paneId)
+      const { functions, variables, references, plots, output } = result
+
+      if (store.state[this.paneId].indicatorsErrors[indicator.id]) {
+        store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
+          id: indicator.id,
           error: null
         })
       }
 
-      if (type === 'ohlc' && serie.type !== 'candlestick' && serie.type !== 'bar') {
-        output += '.close'
-        type = 'value'
-      } else if (type === 'value' && (serie.type === 'candlestick' || serie.type === 'bar')) {
-        throw new Error('inserted input produced a number but ohlc object was expected ({open: xx, high: xx, low: xx, close: xx})')
-      }
-
-      serie.model = {
+      indicator.model = {
         output,
-        type,
         functions,
+        variables,
         references,
-        variables
+        plots
       }
 
-      return true
+      const series = []
+
+      for (let i = 0; i < indicator.model.plots.length; i++) {
+        const serie = indicator.model.plots[i]
+        const apiMethodName = camelize('add-' + serie.type + '-series')
+        const serieOptions = Object.assign({}, defaultSerieOptions, defaultPlotsOptions[serie.type] || {}, indicator.options, serie.options)
+
+        const api = this.chartInstance[apiMethodName](serieOptions) as IndicatorApi
+
+        api.id = serie.id
+
+        this.seriesIndicatorsMap[serie.id.replace(/\W/g, '')] = {
+          indicatorId: indicator.id,
+          plotIndex: i
+        }
+        series.push(serie.id)
+
+        if (indicator.options.scaleMargins) {
+          api.applyOptions({
+            scaleMargins: indicator.options.scaleMargins
+          })
+        }
+
+        this.loadedSeries[serie.id] = api
+        indicator.apis.push(this.loadedSeries[serie.id])
+
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        indicator.apisNoop.push(({ update: () => {} } as unknown) as IndicatorApi) // for batch rendering
+      }
+
+      store.commit(this.paneId + '/SET_INDICATOR_SERIES', {
+        id: indicator.id,
+        series
+      })
     } catch (error) {
-      console.error(`[chart/${this.paneId}/prepareSerie] transpilation failed`)
+      console.error(`[chart/${this.paneId}/prepareIndicator] transpilation failed`)
       console.error(`\t->`, error)
 
-      store.commit(this.paneId + '/SET_SERIE_ERROR', {
-        id: serie.id,
+      store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
+        id: indicator.id,
         error: error.message
       })
-
-      if (error.status !== 'serie-required' && !dialogService.isDialogOpened('serie')) {
-        dialogService.open(
-          SerieDialog,
-          {
-            paneId: this.paneId,
-            serieId: serie.id
-          },
-          'serie'
-        )
-      }
 
       throw error
     }
   }
 
   /**
-   *
-   * @param {ActiveSerie} serie
+   * attach indicator copy of indicator model (incl. states of variables and functions)
+   * @param {LoadedIndicator} indicator
    * @param {Renderer} renderer
    * @returns
    */
-  bindSerie(serie: ActiveSerie, renderer) {
-    if (!renderer || typeof renderer.series[serie.id] !== 'undefined' || !serie.model) {
+  bindIndicator(indicator: LoadedIndicator, renderer: Renderer) {
+    if (!renderer || typeof renderer.indicators[indicator.id] !== 'undefined' || !indicator.model) {
       return
     }
 
-    const { functions, variables } = JSON.parse(JSON.stringify(serie.model))
+    console.debug(`[chart/${this.paneId}/bindIndicator] binding ${indicator.id} ...`)
 
-    this.SerieBuilder.updateInstructionsArgument(functions, serie.options)
+    const { functions, variables, plots } = JSON.parse(JSON.stringify(indicator.model))
 
-    console.debug(`[chart/${this.paneId}/bindSerie] binding ${serie.id} ...`)
+    // bindIndicator is called when a indicator option changes
+    // this is the time to parse thoses from the scripts itself
+    // and get matching value from indicator.options
+    //
+    // take a script like : plotline(avg_close(bar), color=options.lineColor)
+    // assign (options.lineColor) value into (plots[0].options.lineColor)
+    this.serieBuilder.parseScriptOptions(functions, plots, indicator.options)
 
-    renderer.series[serie.id] = {
-      value: null,
-      point: null,
+    // attach indicator to renderer, with fresh functions & variables states
+    // all ready to calculate bars from the start
+    renderer.indicators[indicator.id] = {
+      series: [],
       functions,
-      variables
+      variables,
+      plotsOptions: plots.map(p => p.options)
     }
 
-    serie.adapter = this.SerieBuilder.getAdapter(serie.model.output)
-    serie.outputType = serie.model.type
+    // update indicator series with plotoptions
+    for (let i = 0; i < renderer.indicators[indicator.id].plotsOptions.length; i++) {
+      indicator.apis[i].applyOptions(renderer.indicators[indicator.id].plotsOptions[i])
+    }
 
-    return serie
+    // create function ready to calculate (& render) everything for this indicator
+    indicator.adapter = this.serieBuilder.getAdapter(indicator.model.output)
+
+    return indicator
   }
 
   /**
-   * Detach serie from renderer
-   * @param {ActiveSerie} serie
+   * detach serie from renderer
+   * @param {LoadedIndicator} indicator
    * @param {Renderer} renderer
    */
-  unbindSerie(serie, renderer) {
-    if (!renderer || typeof renderer.series[serie.id] === 'undefined') {
+  unbindIndicator(indicator, renderer) {
+    if (!renderer || typeof renderer.indicators[indicator.id] === 'undefined') {
       return
     }
 
-    delete renderer.series[serie.id]
+    delete renderer.indicators[indicator.id]
   }
 
   /**
-   * Derender serie
-   * if there is series depending on this serie, they will be also removed
-   * @param {ActiveSerie} serie
+   * deactivate indicator and remove it from chart controller
+   * @param {LoadedIndicator} indicator
    */
-  removeSerie(serie) {
-    if (typeof serie === 'string') {
-      serie = this.getSerie(serie)
+  removeIndicator(indicator: LoadedIndicator) {
+    if (typeof indicator === 'string') {
+      indicator = this.getLoadedIndicator(indicator)
     }
 
-    if (!serie) {
+    if (!indicator) {
       return
     }
 
     // remove from chart instance (derender)
-    this.chartInstance.removeSeries(serie.api)
+    for (let i = 0; i < indicator.apis.length; i++) {
+      delete this.loadedSeries[indicator.apis[i].id]
+      this.chartInstance.removeSeries(indicator.apis[i])
+    }
 
     // unbind from activebar (remove serie meta data like sma memory etc)
-    this.unbindSerie(serie, this.activeRenderer)
-
-    // update store (runtime prop)
-    // store.commit(this.paneId + '/DISABLE_SERIE', serie.id)
-
-    // recursive remove of dependent series
-    /* for (let dependentId of this.getSeriesDependendingOn(serie)) {
-      this.removeSerie(this.getSerie(dependentId))
-    } */
+    this.unbindIndicator(indicator, this.activeRenderer)
 
     // remove from active series model
-    this.activeSeries.splice(this.activeSeries.indexOf(serie), 1)
+    this.loadedIndicators.splice(this.loadedIndicators.indexOf(indicator), 1)
   }
 
   /**
-   * clear rendered stuff
+   * clear all rendered data on chart (empty the chart)
    */
   clearChart() {
     console.log(`[chart/${this.paneId}/controller] clear chart (all series emptyed)`)
 
     this.preventPan()
 
-    for (const serie of this.activeSeries) {
-      this.clearSerie(serie)
+    for (const indicator of this.loadedIndicators) {
+      this.clearIndicatorSeries(indicator)
     }
 
     this.renderedRange.from = this.renderedRange.to = null
   }
 
   /**
-   * clear active data
+   * remove active renderer and incoming data
+   * only use when chart indicators are cleared
    */
   clearData() {
     console.log(`[chart/${this.paneId}/controller] clear data (activeRenderer+activeChunk+queuedTrades1)`)
@@ -576,7 +669,7 @@ export default class ChartController {
   }
 
   /**
-   * clear data and rendered stuff
+   * fresh start : clear cache, renderer and rendered series on chart
    */
   clear() {
     console.log(`[chart/${this.paneId}/controller] clear all (cache+activedata+chart)`)
@@ -600,10 +693,12 @@ export default class ChartController {
   }
 
   /**
-   * @param {ActiveSerie} serie serie to clear
+   * @param {LoadedIndicator} indicator indicator owning series
    */
-  clearSerie(serie) {
-    serie.api.setData([])
+  clearIndicatorSeries(indicator: LoadedIndicator) {
+    for (let i = 0; i < indicator.apis.length; i++) {
+      indicator.apis[i].setData([])
+    }
   }
 
   /**
@@ -626,7 +721,8 @@ export default class ChartController {
   }
 
   /**
-   * release queue and stop queuing next trades
+   * release queue and stop queuing next trades (stops all timers handling realtime data)
+   * called when chart refresh rate changes (followed by setupQueue with new refresh rate)
    */
   clearQueue() {
     if (!this._releaseQueueInterval) {
@@ -689,8 +785,6 @@ export default class ChartController {
    * @param {Trade[]} trades trades to render
    */
   renderRealtimeTrades(trades) {
-    const formatedBars = []
-
     if (!trades.length) {
       return
     }
@@ -728,7 +822,7 @@ export default class ChartController {
           }
 
           if (!this.activeRenderer.bar.empty) {
-            formatedBars.push(this.computeBar(this.activeRenderer))
+            this.updateBar(this.activeRenderer)
           }
 
           // feed activeChunk with active bar exchange snapshot
@@ -798,15 +892,11 @@ export default class ChartController {
     }
 
     if (!this.activeRenderer.bar.empty) {
-      formatedBars.push(this.computeBar(this.activeRenderer))
+      this.updateBar(this.activeRenderer)
 
       if (this.renderedRange.to < this.activeRenderer.timestamp) {
         this.renderedRange.to = this.activeRenderer.timestamp
       }
-    }
-
-    for (let i = 0; i < formatedBars.length; i++) {
-      this.updateBar(formatedBars[i])
     }
   }
 
@@ -835,16 +925,19 @@ export default class ChartController {
   }
 
   /**
-   * Render a set of bars
+   * then render indicatorsIds (or all if not specified) from new set of bars
+   * this replace data of series, erasing current data on chart
+   * if no indicatorsIds is specified, all indicators on chart are rendered from start to finish
+   * then merge indicator's states from temporary renderer used to render all thoses bars into activeRenderer
    *
    * @param {Bar[]} bars bars to render
-   * @param {string[]} [series] render only theses series
+   * @param {string[]} indicatorsId id of indicators to render
    */
-  renderBars(bars, series) {
+  renderBars(bars, indicatorsIds) {
     console.log(
       `[chart/${this.paneId}/controller] render bars`,
       '(',
-      series ? 'specific serie(s): ' + series.join(',') : 'all series',
+      indicatorsIds ? 'specific serie(s): ' + indicatorsIds.join(',') : 'all series',
       ')',
       bars.length,
       'bar(s)'
@@ -908,7 +1001,7 @@ export default class ChartController {
 
           to = temporaryRenderer.timestamp
 
-          computedBar = this.computeBar(temporaryRenderer, series)
+          computedBar = this.computeBar(temporaryRenderer, indicatorsIds)
 
           for (const id in computedBar) {
             if (typeof computedSeries[id] === 'undefined') {
@@ -926,7 +1019,7 @@ export default class ChartController {
         if (temporaryRenderer) {
           this.nextBar(bar.timestamp, temporaryRenderer)
         } else {
-          temporaryRenderer = this.createRenderer(bar.timestamp, series)
+          temporaryRenderer = this.createRenderer(bar.timestamp, indicatorsIds)
         }
       }
 
@@ -946,8 +1039,8 @@ export default class ChartController {
     }
 
     if (this.activeRenderer) {
-      for (const id in temporaryRenderer.series) {
-        this.activeRenderer.series[id] = temporaryRenderer.series[id]
+      for (const id in temporaryRenderer.indicators) {
+        this.activeRenderer.indicators[id] = temporaryRenderer.indicators[id]
       }
     } else {
       this.activeRenderer = temporaryRenderer
@@ -955,7 +1048,9 @@ export default class ChartController {
 
     let scrollPosition: number
 
-    if (!series) {
+    if (!indicatorsIds || !indicatorsIds.length) {
+      // whole chart was rendered from start to finish
+
       scrollPosition = this.chartInstance.timeScale().scrollPosition()
 
       this.clearChart()
@@ -978,73 +1073,15 @@ export default class ChartController {
   /**
    * Renders chunks that collides with visible range
    */
-  renderVisibleChunks() {
+  renderAll() {
     if (!this.chartCache.chunks.length || !this.chartInstance) {
       return
     }
 
-    const visibleRange = this.getVisibleRange()
-    const visibleLogicalRange = this.chartInstance.timeScale().getVisibleLogicalRange()
-
-    let from = null
-
-    if (visibleRange) {
-      console.debug(
-        '[chart/${this.paneId}/renderVisibleChunks] VisibleRange: ',
-        `from: ${formatTime(visibleRange.from)} -> to: ${formatTime(visibleRange.to)}`
-      )
-
-      from = visibleRange.from
-
-      if (visibleLogicalRange.from < 0) {
-        from += store.state[this.paneId].timeframe * visibleLogicalRange.from
-
-        console.debug(
-          '[chart/${this.paneId}/renderVisibleChunks] Ajusted visibleRange using visibleLogicalRange: ',
-          `bars offset: ${visibleLogicalRange.from} === from: ${formatTime(from)}`
-        )
-      }
-    }
-
-    // const selection = ['------------------------']
-    const bars = this.chartCache.chunks
-      /*.filter(c => {
-        c.rendered = !visibleRange || c.to > from - store.state[this.paneId].timeframe * 20
-        selection.push(
-          `${c.rendered ? '[selected] ' : ''} #${this.chartCache.chunks.indexOf(c)} | FROM: ${formatTime(c.from)} | TO: ${formatTime(
-            c.to
-          )} (${formatAmount(c.bars.length)} bars)`
-        )
-
-        return c.rendered
-      })*/
-      .reduce((bars, chunk) => bars.concat(chunk.bars), [])
-    /*selection.push('------------------------')
-    console.debug(selection.join('\n') + '\n')*/
-    this.renderBars(bars, null)
-  }
-
-  /**
-   * Attach marker to serie
-   * @param {ActiveSerie} serie serie
-   */
-  setMarkers(serie, marker) {
-    if (!serie.markers) {
-      serie.markers = []
-    }
-
-    for (let i = serie.markers.length - 1; i >= 0; i--) {
-      if (serie.markers[i].time === marker.time) {
-        serie.markers.splice(i, 1)
-        break
-      }
-    }
-
-    serie.markers.push(marker)
-
-    setTimeout(() => {
-      serie.api.setMarkers(serie.markers)
-    }, 100)
+    this.renderBars(
+      this.chartCache.chunks.reduce((bars, chunk) => bars.concat(chunk.bars), []),
+      null
+    )
   }
 
   /**
@@ -1071,88 +1108,53 @@ export default class ChartController {
   }
 
   /**
-   * replace whole chart with a set of bars
-   * @param {Bar[]} bars bars to render
+   * replace whole chart with a set of computed series bars
+   * @param {Bar[]} seriesData Lightweight Charts formated series
    */
-  replaceData(computedSeries) {
+  replaceData(seriesData: { [id: string]: (TV.LineData | TV.BarData | TV.HistogramData)[] }) {
     this.preventPan()
 
-    for (const serie of this.activeSeries) {
-      if (computedSeries[serie.id] && computedSeries[serie.id].length) {
-        serie.api.setData(computedSeries[serie.id])
-      }
+    for (const id in seriesData) {
+      this.loadedSeries[id].setData(seriesData[id])
     }
   }
 
   /**
-   * update last or add new bar to this.chartInstance
-   * @param {Bar} bar
+   * excecute indicators, updating chart series with renderer's data
+   * @param renderer
    */
-  updateBar(bar) {
-    for (const serie of this.activeSeries) {
-      if (bar[serie.id]) {
-        serie.api.update(bar[serie.id])
-      }
+  updateBar(renderer: Renderer) {
+    for (let i = 0; i < this.loadedIndicators.length; i++) {
+      const indicator = this.loadedIndicators[i]
+      const serieData = renderer.indicators[indicator.id]
+
+      this.loadedIndicators[i].adapter(renderer, serieData.functions, serieData.variables, indicator.apis, indicator.options, seriesUtils)
     }
   }
 
   /**
-   * Process bar data and compute series values for this bar
+   * excecute indicators with renderer's data, and return series points
+   * this does not update series on chart (indicator.apisNoop is passed instead of indicator.apis)
    * @param {Renderer} renderer
-   * @param {string[]} series
+   * @param {string[]} indicators id of indicators to execute (all indicators calculated if null)
+   * @returns series points
    */
-  computeBar(renderer, series?: string[]) {
+  computeBar(renderer: Renderer, indicatorsIds?: string[]): { [serieId: string]: any } {
     const points = {}
 
-    const time = renderer.timestamp + store.state.settings.timezoneOffset / 1000
-
-    for (const serie of this.activeSeries) {
-      if (series && series.indexOf(serie.id) === -1) {
+    for (const indicator of this.loadedIndicators) {
+      if (indicatorsIds && indicatorsIds.indexOf(indicator.id) === -1) {
         continue
       }
 
-      const serieData = renderer.series[serie.id]
+      const serieData = renderer.indicators[indicator.id]
 
-      serieData.point = serie.adapter(renderer, serieData.functions, serieData.variables, serie.options, seriesUtils)
+      indicator.adapter(renderer, serieData.functions, serieData.variables, indicator.apisNoop, indicator.options, seriesUtils)
 
-      if (renderer.length < serie.options.minLength) {
-        delete points[serie.id]
-        continue
-      }
-
-      if (serie.model.type === 'value') {
-        serieData.value = serieData.point
-        points[serie.id] = { time, value: serieData.point }
-      } else if (serie.model.type === 'ohlc') {
-        serieData.value = serieData.point.close
-        points[serie.id] = { time, open: serieData.point.open, high: serieData.point.high, low: serieData.point.low, close: serieData.point.close }
-      } else if (serie.model.type === 'custom') {
-        serieData.value = serieData.point.value
-        points[serie.id] = { time, ...serieData.point }
-      }
-
-      if (isNaN(serieData.value)) {
-        this.unbindSerie(serie, this.activeRenderer)
-
-        store.commit(this.paneId + '/SET_SERIE_ERROR', {
-          id: serie.id,
-          error: `${serie.id} is NaN`
-        })
-
-        if (!dialogService.isDialogOpened('serie')) {
-          dialogService.open(
-            SerieDialog,
-            {
-              paneId: this.paneId,
-              serieId: serie.id
-            },
-            'serie'
-          )
+      for (let i = 0; i < serieData.series.length; i++) {
+        if (indicator.model.plots[i].type !== 'histogram' || serieData.series[i].value !== 0) {
+          points[indicator.apis[i].id] = serieData.series[i]
         }
-
-        continue
-      } else if (serieData.value === null || (serie.type === 'histogram' && serieData.value === 0)) {
-        delete points[serie.id]
       }
     }
 
@@ -1160,15 +1162,17 @@ export default class ChartController {
   }
 
   /**
-   * Create empty renderer
-   * @param {number} timestamp start timestamp
-   * @param {string[]} series series to bind
+   * create empty renderer
+   * this is called on first realtime trade or when indicator(s) are rendered from start to finish
+   * @param {number} timestamp create at time
+   * @param {string[]} indicatorsIds id of indicators to bind (if null all indicators are binded)
    */
-  createRenderer(firstBarTimestamp, series?: string[]) {
+  createRenderer(firstBarTimestamp, indicatorsIds?: string[]) {
     const renderer: Renderer = {
       timestamp: firstBarTimestamp,
+      localTimestamp: firstBarTimestamp + this.timezoneOffset,
       length: 1,
-      series: {},
+      indicators: {},
       sources: {},
 
       bar: {
@@ -1182,12 +1186,12 @@ export default class ChartController {
       }
     }
 
-    for (const serie of this.activeSeries) {
-      if (series && series.indexOf(serie.id) === -1) {
+    for (const indicator of this.loadedIndicators) {
+      if (indicatorsIds && indicatorsIds.indexOf(indicator.id) === -1) {
         continue
       }
 
-      this.bindSerie(serie, renderer)
+      this.bindIndicator(indicator, renderer)
     }
 
     return renderer
@@ -1202,8 +1206,8 @@ export default class ChartController {
     renderer.length++
 
     if (!renderer.bar.empty) {
-      for (let i = 0; i < this.activeSeries.length; i++) {
-        const rendererSerieData = renderer.series[this.activeSeries[i].id]
+      for (let i = 0; i < this.loadedIndicators.length; i++) {
+        const rendererSerieData = renderer.indicators[this.loadedIndicators[i].id]
 
         if (!rendererSerieData) {
           continue
@@ -1228,9 +1232,9 @@ export default class ChartController {
             instruction.state.open = instruction.state.close
             instruction.state.high = instruction.state.close
             instruction.state.low = instruction.state.close
-          } else if (instruction.persist) {
-            for (let j = 0; j < instruction.persist.length; j++) {
-              instruction.state['_' + instruction.persist[j]] = instruction.state[instruction.persist[j]]
+          } else if (instruction.persistence) {
+            for (let j = 0; j < instruction.persistence.length; j++) {
+              instruction.state['_' + instruction.persistence[j]] = instruction.state[instruction.persistence[j]]
             }
           }
         }
@@ -1238,7 +1242,7 @@ export default class ChartController {
         for (let v = 0; v < rendererSerieData.variables.length; v++) {
           const instruction = rendererSerieData.variables[v]
 
-          if (instruction.type === 'array') {
+          if (instruction.length > 1) {
             instruction.state.unshift(instruction.state[0])
 
             if (instruction.state.length > instruction.length) {
@@ -1250,11 +1254,13 @@ export default class ChartController {
     }
 
     renderer.timestamp = timestamp
+    renderer.localTimestamp = timestamp + this.timezoneOffset
 
     this.resetRendererBar(renderer)
   }
 
   /**
+   * fresh start for the renderer bar (and all its sources / markets)
    * @param {Renderer} bar bar to clear for next timestamp
    */
   resetRendererBar(renderer: Renderer) {
@@ -1276,7 +1282,7 @@ export default class ChartController {
   }
 
   /**
-   *
+   * preparing bar for next
    * @param {Bar} bar
    */
   resetBar(bar: Bar) {

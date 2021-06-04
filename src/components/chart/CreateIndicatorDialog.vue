@@ -1,17 +1,17 @@
 <template>
-  <Dialog :open="open" @clickOutside="close">
+  <Dialog @clickOutside="close">
     <template v-slot:header>
       <div class="title">new serie</div>
       <div class="column -center"></div>
     </template>
-    <template v-if="series.length">
+    <template v-if="indicators.length">
       <div class="form-group">
         <label>Choose from existing serie</label>
         <div class="d-flex mb4">
           <input type="text" class="form-control" placeholder="search" v-model="query" />
-          <div v-text="series.length" class="-center text-muted ml16"></div>
+          <div v-text="indicators.length" class="-center text-muted ml16"></div>
         </div>
-        <table v-if="filteredSeries.length" class="table">
+        <table v-if="filteredIndicators.length" class="table">
           <thead>
             <tr>
               <th>Name</th>
@@ -21,17 +21,17 @@
           </thead>
           <tbody>
             <tr
-              v-for="serie of filteredSeries"
-              :key="serie.id"
-              @click="selectSerie(serie)"
-              :title="serie.id"
+              v-for="indicator of filteredIndicators"
+              :key="indicator.id"
+              @click="selectIndicator(indicator)"
+              :title="indicator.id"
               v-tippy="{ placement: 'right' }"
               class="-action"
             >
-              <td class="table-input" v-text="serie.name"></td>
-              <td class="table-input" v-text="serie.updatedAt ? ago(serie.updatedAt) + ' ago' : ''"></td>
+              <td class="table-input" v-text="indicator.displayName || indicator.name"></td>
+              <td class="table-input" v-text="indicator.updatedAt ? ago(indicator.updatedAt) + ' ago' : 'Never'"></td>
               <td class="table-action">
-                <button class="btn  -red -small" @click.stop="removeSerie(serie)"><i class="icon-cross"></i></button>
+                <button class="btn  -red -small" @click.stop="removeIndicator(indicator)"><i class="icon-cross"></i></button>
               </td>
             </tr>
           </tbody>
@@ -41,10 +41,7 @@
     </template>
     <div class="form-group mb16">
       <label>Name</label>
-      <input class="form-control" :value="name" @input="getSerieId($event.target.value)" />
-      <p class="help-text mt4">
-        ID will be: {{ serieId }} <span class="icon-info ml4" :title="`Use \'$${serieId}\' to reference it in other series`" v-tippy></span>
-      </p>
+      <input class="form-control" :value="name" @input="getIndicatorId($event.target.value)" />
     </div>
     <div class="form-group mb16">
       <label>Align serie with</label>
@@ -64,13 +61,12 @@
 </template>
 
 <script>
-import store from '@/store'
 import { ago, slugify, uniqueName } from '@/utils/helpers'
 import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import SerieDialog from './SerieDialog.vue'
+import IndicatorDialog from './IndicatorDialog.vue'
 
 export default {
   mixins: [DialogMixin],
@@ -84,21 +80,23 @@ export default {
     Dialog
   },
   data: () => ({
-    serieId: null,
     name: 'Untitled',
+    indicatorId: null,
     priceScaleId: 'right',
     query: '',
-    series: []
+    indicators: []
   }),
   computed: {
     queryFilter: function() {
       return new RegExp(this.query.replace(/\W/, '.*'), 'i')
     },
-    filteredSeries: function() {
-      return this.series.filter(a => !this.$store.state[this.paneId].series[a.id] && this.queryFilter.test(a.name))
+    filteredIndicators: function() {
+      return this.indicators.filter(
+        a => !this.$store.state[this.paneId].indicators[a.id] && (this.queryFilter.test(a.name) || this.queryFilter.test(a.displayName))
+      )
     },
     availableScales: function() {
-      return this.series
+      return this.indicators
         .map(s => s.options && s.options.priceScaleId)
         .reduce(
           (scales, priceScaleId) => {
@@ -117,7 +115,7 @@ export default {
     }
   },
   async created() {
-    await this.getSeries()
+    await this.getIndicators()
   },
   beforeDestroy() {
     if (this.editor) {
@@ -125,39 +123,47 @@ export default {
     }
   },
   methods: {
-    async getSeries() {
-      this.series = await workspacesService.getSeries()
-      this.getSerieId(this.name)
+    async getIndicators() {
+      this.indicators = await workspacesService.getIndicators()
+      this.getIndicatorId(this.name)
     },
-    getSerieId(name) {
+    getIndicatorId(name) {
       if (name.length) {
-        this.serieId = uniqueName(slugify(name), Object.keys(store.state[this.paneId].series))
+        this.indicatorId = uniqueName(slugify(name), Object.keys(this.$store.state[this.paneId].indicators))
         this.name = name
       }
     },
     async create() {
-      const id = await workspacesService.saveSerie({
-        id: this.serieId,
+      if (!this.name || this.name.length < 3) {
+        return
+      }
+
+      const slug = slugify(this.name)
+
+      const id = await workspacesService.saveIndicator({
+        id: this.indicatorId,
         name: this.name,
-        priceScaleId: this.priceScaleId || this.serieId
+        priceScaleId: this.priceScaleId || slug
       })
 
-      const serie = await workspacesService.getSerie(id)
+      const indicator = await workspacesService.getIndicator(id)
 
-      this.$store.dispatch(this.paneId + '/addSerie', serie)
+      this.$store.dispatch(this.paneId + '/addIndicator', indicator)
 
-      dialogService.open(SerieDialog, { paneId: this.paneId, serieId: serie.id }, 'serie')
+      dialogService.open(IndicatorDialog, { paneId: this.paneId, indicatorId: indicator.id }, 'indicator')
 
       this.close(null)
     },
-    selectSerie(serie) {
-      this.$store.dispatch(this.paneId + '/addSerie', serie)
+    selectIndicator(indicator) {
+      this.$store.dispatch(this.paneId + '/addIndicator', indicator)
       this.close(null)
     },
-    removeSerie(serie) {
-      workspacesService.deleteSerie(serie.id)
+    removeIndicator(indicator) {
+      if (dialogService.confirm(`Delete ${indicator.name} permanently ?`)) {
+        workspacesService.deleteSerie(indicator.id)
 
-      this.series.splice(this.series.indexOf(serie), 1)
+        this.indicators.splice(this.indicators.indexOf(indicator), 1)
+      }
     },
     ago(timestamp) {
       return ago(timestamp)

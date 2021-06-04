@@ -1,5 +1,4 @@
 import Dialog from '@/components/framework/Dialog.vue'
-import store from '@/store'
 
 export default {
   components: {
@@ -8,8 +7,7 @@ export default {
   data: function() {
     return {
       preventClickOutside: false,
-      output: null,
-      open: false
+      output: null
     }
   },
   created() {
@@ -19,40 +17,30 @@ export default {
       })
     }
   },
-  mounted() {
-    this.open = true
-  },
   methods: {
     close(data): Promise<void> {
+      if (this._isDestroyed) {
+        console.warn('attempting to close destroyed dialog.')
+      }
+
       if (this.preventClose) {
         return
       }
-
-      this.open = false
 
       if (data) {
         this.output = data
       }
 
-      return new Promise(resolve => {
-        setTimeout(
-          () => {
-            this.destroy()
-
-            resolve()
-          },
-          store.state.settings.disableAnimations ? 0 : 500
-        )
-      })
-    },
-    destroy() {
       this.$destroy()
 
-      const parent = this.$el.parentNode
-
-      if (parent) {
-        parent.removeChild(this.$el)
+      // remove the element from the DOM
+      try {
+        this.$el.parentNode.removeChild(this.$el)
+      } catch (error) {
+        console.warn('failed to remove dialog element: was the dialog already destroyed?', error)
       }
+
+      return Promise.resolve()
     }
   }
 }

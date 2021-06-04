@@ -1,5 +1,5 @@
 <template>
-  <Dialog :open="open" @clickOutside="close">
+  <Dialog @clickOutside="close">
     <template v-slot:header>
       <div class="title">{{ action }}</div>
     </template>

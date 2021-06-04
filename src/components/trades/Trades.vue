@@ -24,7 +24,7 @@ import { ago, formatPrice, formatAmount, slugify } from '../../utils/helpers'
 import { getColorByWeight, getColorLuminance, getAppBackgroundColor, splitRgba, getLogShade } from '../../utils/colors'
 
 import aggregatorService from '@/services/aggregatorService'
-import sfxService, { AudioFunction } from '../../services/sfxService'
+import audioService, { AudioFunction } from '../../services/audioService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
 import { Trade } from '@/types/test'
@@ -260,7 +260,7 @@ export default class extends Mixins(PaneMixin) {
       if (amount >= this._minimumThresholdAmount * multiplier) {
         this.appendRow(trade, amount, multiplier)
       } else if (amount > this._audioThreshold) {
-        this._thresholdsAudios[0][trade.side](sfxService._play, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
+        this._thresholdsAudios[0][trade.side](audioService._play, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
       }
     }
   }
@@ -311,7 +311,7 @@ export default class extends Mixins(PaneMixin) {
       li.style.backgroundColor = 'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + intensity + ')'
 
       if (amount > this._audioThreshold) {
-        this._liquidationsAudio[trade.side](sfxService._play, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
+        this._liquidationsAudio[trade.side](audioService._play, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
       }
     } else {
       if (trade.liquidation) {
@@ -362,7 +362,7 @@ export default class extends Mixins(PaneMixin) {
           }
 
           if (amount > this._audioThreshold) {
-            this._thresholdsAudios[i][trade.side](sfxService._play, percentToNextThreshold, trade.side, i)
+            this._thresholdsAudios[i][trade.side](audioService._play, percentToNextThreshold, trade.side, i)
           }
 
           break
@@ -563,13 +563,13 @@ export default class extends Mixins(PaneMixin) {
 
   prepareThresholdsSounds() {
     this._thresholdsAudios = this.thresholds.map(threshold => ({
-      buy: sfxService.buildAudioFunction(threshold.buyAudio, 'buy'),
-      sell: sfxService.buildAudioFunction(threshold.sellAudio, 'sell')
+      buy: audioService.buildAudioFunction(threshold.buyAudio, 'buy'),
+      sell: audioService.buildAudioFunction(threshold.sellAudio, 'sell')
     }))
 
     this._liquidationsAudio = {
-      buy: sfxService.buildAudioFunction(this.liquidationThreshold.buyAudio, 'buy'),
-      sell: sfxService.buildAudioFunction(this.liquidationThreshold.sellAudio, 'sell')
+      buy: audioService.buildAudioFunction(this.liquidationThreshold.buyAudio, 'buy'),
+      sell: audioService.buildAudioFunction(this.liquidationThreshold.sellAudio, 'sell')
     }
   }
 

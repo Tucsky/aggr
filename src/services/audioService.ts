@@ -10,7 +10,7 @@ export type AudioFunction = (
   level: number
 ) => void
 
-class SfxService {
+class AudioService {
   timestamp: number
   context: AudioContext
   tuna: any
@@ -312,4 +312,4 @@ class SfxService {
   }
 }
 
-export default new SfxService()
+export default new AudioService()

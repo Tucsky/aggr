@@ -35,7 +35,7 @@ export default {
   }, */
   beforeDestroy() {
     if (this.dialogInstance) {
-      this.dialogInstance.$destroy()
+      this.dialogInstance.close()
     }
   },
   methods: {

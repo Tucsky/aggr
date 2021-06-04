@@ -1,37 +1,31 @@
 <template>
-  <transition name="scale">
+  <div class="dialog" @click="clickOutside" :class="{ '-mask': mask }">
     <div
-      v-if="open"
-      class="dialog"
-      @click="clickOutside"
-      :class="{ '-open': open, '-medium': medium, '-large': large, '-small': small, '-mask': mask }"
+      ref="dialogContent"
+      class="dialog-content"
+      @click.stop
+      :style="{ transform: `translate(${delta.x}px, ${delta.y}px)` }"
+      @mousedown="onMouseDown"
     >
-      <div
-        ref="dialogContent"
-        class="dialog-content"
-        @click.stop
-        :style="`transform: translate(${delta.x}px, ${delta.y}px)`"
-        @mousedown="onMouseDown"
-      >
-        <header @mousedown="handleDrag" @touchstart="handleDrag">
-          <slot name="header"></slot>
-          <div class="dialog-controls">
-            <slot name="controls"></slot>
+      <header @mousedown="handleDrag" @touchstart="handleDrag" :style="{ color: headerColor, background: headerBackground }">
+        <slot name="header"></slot>
+        <div class="dialog-controls">
+          <slot name="controls"></slot>
 
-            <a href="javascript:void(0);" class="dialog-controls__close -link -text" @click="$emit('clickOutside')">
-              <i class="icon-cross"></i>
-            </a>
-          </div>
-        </header>
-        <div class="dialog-body custom-scrollbar">
-          <slot></slot>
+          <a href="javascript:void(0);" class="dialog-controls__close -link -text" @click="$emit('clickOutside')">
+            <i class="icon-cross"></i>
+          </a>
         </div>
+      </header>
+      <div class="dialog-body custom-scrollbar">
+        <slot></slot>
       </div>
     </div>
-  </transition>
+  </div>
 </template>
 
 <script lang="ts">
+import { getColorLuminance, splitRgba } from '@/utils/colors'
 import { Component, Vue } from 'vue-property-decorator'
 import { getEventCords } from '../../utils/picker'
 
@@ -53,10 +47,18 @@ import { getEventCords } from '../../utils/picker'
     mask: {
       type: Boolean,
       default: true
+    },
+    headerBackground: {
+      required: false
+    },
+    startPosition: {
+      required: false
     }
   }
 })
 export default class extends Vue {
+  startPosition: { x: number; y: number }
+  headerBackground: string
   delta = { x: 0, y: 0 }
   target = { x: 0, y: 0 }
   animating = false
@@ -68,8 +70,27 @@ export default class extends Vue {
     dialogContent: HTMLElement
   }
 
+  get headerColor() {
+    if (this.headerBackground) {
+      const lum = getColorLuminance(splitRgba(this.headerBackground))
+      return lum > 150 ? 'black' : 'white'
+    }
+
+    return null
+  }
+
   created() {
     this.clickOutsideClose = true
+
+    if (this.startPosition) {
+      if (this.startPosition.x) {
+        this.delta.x = window.innerWidth * this.startPosition.x
+      }
+
+      if (this.startPosition.y) {
+        this.delta.y = window.innerHeight * this.startPosition.y
+      }
+    }
   }
 
   beforeDestroy() {
@@ -151,13 +172,3 @@ export default class extends Vue {
   }
 }
 </script>
-<style lang="scss" scoped>
-.scale-enter-active,
-.scale-leave-active {
-  transition: opacity 0.2s $ease-out-expo, transform 0.2s $ease-out-expo;
-}
-.scale-enter, .scale-leave-to /* .scale-leave-active below version 2.1.8 */ {
-  opacity: 0;
-  transform: scale(0.8);
-}
-</style>

@@ -131,7 +131,7 @@ export default class extends Mixins(PaneMixin) {
   async createChart() {
     await this.$nextTick()
 
-    const chartOptions = getChartOptions(defaultStatsChartOptions)
+    const chartOptions = getChartOptions(defaultStatsChartOptions as any)
 
     this._chart = TV.createChart(this.$refs.chart, chartOptions)
 
@@ -150,7 +150,7 @@ export default class extends Mixins(PaneMixin) {
     // this.stopChartUpdate()
 
     for (const id in this._buckets) {
-      this._buckets[id].removeSerie(this._chart)
+      this._buckets[id].removeIndicator(this._chart)
     }
 
     this._chart.remove()
@@ -238,7 +238,7 @@ export default class extends Mixins(PaneMixin) {
     this._buckets[id].unbind()
 
     if (this._chart) {
-      this._buckets[id].removeSerie(this._chart)
+      this._buckets[id].removeIndicator(this._chart)
     }
 
     this.$delete(this.data, id)
@@ -276,7 +276,7 @@ export default class extends Mixins(PaneMixin) {
       this._buckets[id].type = type
     }
 
-    this._buckets[id].removeSerie(this._chart)
+    this._buckets[id].removeIndicator(this._chart)
     this._buckets[id].createSerie(this._chart)
   }
 

@@ -1,17 +1,18 @@
 <template>
-  <div class="serie" :class="{ '-error': !!error, '-disabled': !visible }">
-    <div class="serie__name" @click="edit">{{ name }}</div>
+  <div class="indicator" :class="{ '-error': !!error, '-disabled': !visible }">
+    <div class="indicator__name" @click="edit">{{ name }}</div>
 
-    <div class="serie__controls">
+    <div class="indicator__controls">
       <template v-if="!error">
         <button class="btn -small" @click="toggleVisibility" v-tippy :title="visible ? 'Hide' : 'Show'">
           <i :class="{ 'icon-visible': !visible, 'icon-hidden': visible }"></i>
         </button>
         <button class="btn -small" @click="edit" v-tippy title="Edit"><i class="icon-edit"></i></button>
       </template>
+      <button class="btn -small" @click="resize" v-tippy title="Resize"><i class="icon-resize-height"></i></button>
       <button class="btn -small" @click="remove" v-tippy title="Disable"><i class="icon-cross"></i></button>
     </div>
-    <div class="serie__legend" v-text="legend"></div>
+    <div class="indicator__legend" v-text="legend"></div>
     <div v-if="error">
       <i class="icon-warning ml4 mr8"></i>
       {{ error }}
@@ -20,51 +21,52 @@
 </template>
 
 <script>
-import SerieDialog from './SerieDialog.vue'
+import IndicatorDialog from './IndicatorDialog.vue'
 import dialogService from '../../services/dialogService'
 
 export default {
-  props: ['paneId', 'serieId', 'legend'],
+  props: ['paneId', 'indicatorId', 'legend'],
   computed: {
-    serie: function() {
-      return this.$store.state[this.paneId].series[this.serieId]
+    indicator: function() {
+      return this.$store.state[this.paneId].indicators[this.indicatorId]
     },
     name: function() {
-      if (this.serie.name) {
-        return this.serie.name.replace(/\{([\w\d_]+)\}/g, (match, key) => this.serie.options[key] || '')
+      if (this.indicator.displayName) {
+        return this.indicator.displayName
+      } else if (this.indicator.name) {
+        return this.indicator.name
       } else {
-        return this.serieId
+        return this.indicatorId
       }
     },
     visible: function() {
-      return !this.serie.options || typeof this.serie.options.visible === 'undefined' ? true : this.serie.options.visible
+      return !this.indicator.options || typeof this.indicator.options.visible === 'undefined' ? true : this.indicator.options.visible
     },
     error: function() {
-      return this.$store.state[this.paneId].seriesErrors[this.serieId]
+      return this.$store.state[this.paneId].indicatorsErrors[this.indicatorId]
     }
   },
   methods: {
     edit() {
-      dialogService.open(SerieDialog, { paneId: this.paneId, serieId: this.serieId }, 'serie')
+      dialogService.open(IndicatorDialog, { paneId: this.paneId, indicatorId: this.indicatorId }, 'indicator')
     },
     toggleVisibility() {
-      if (!this.serie.options) {
-        this.$store.commit(this.paneId + '/CUSTOMIZE_SERIE', this.serieId)
-      }
-
       this.$nextTick(() => {
-        this.$store.dispatch(this.paneId + '/toggleSerieVisibility', this.serieId)
+        this.$store.dispatch(this.paneId + '/toggleSerieVisibility', this.indicatorId)
       })
     },
     remove() {
-      this.$store.dispatch(this.paneId + '/removeSerie', this.serieId)
+      this.$store.dispatch(this.paneId + '/removeIndicator', { id: this.indicatorId })
+    },
+    resize() {
+      this.$store.dispatch(this.paneId + '/resizeIndicator', this.indicatorId)
     }
   }
 }
 </script>
 
 <style lang="scss">
-.serie {
+.indicator {
   display: flex;
   width: 0;
   white-space: nowrap;
@@ -137,7 +139,7 @@ export default {
   }
 
   &:hover {
-    .serie__controls {
+    .indicator__controls {
       display: inline-flex;
       pointer-events: all;
     }
@@ -145,11 +147,11 @@ export default {
 }
 
 #app.-light {
-  .serie__legend {
+  .indicator__legend {
     color: $green;
     text-shadow: none;
   }
-  .serie__controls > .btn {
+  .indicator__controls > .btn {
     background-color: rgba($green, 0.8);
 
     &:hover {

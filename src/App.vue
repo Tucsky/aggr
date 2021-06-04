@@ -34,7 +34,6 @@ import aggregatorService from './services/aggregatorService'
 import Notices from './components/framework/Notices.vue'
 import Header from './components/Header.vue'
 import Settings from './components/settings/Settings.vue'
-import SearchProducts from './components/SearchProducts.vue'
 
 import Panes from '@/components/panes/Panes.vue'
 
@@ -48,7 +47,6 @@ import { Notice } from './store/app'
   name: 'App',
   components: {
     Header,
-    SearchProducts,
     Settings,
     Notices,
     Panes

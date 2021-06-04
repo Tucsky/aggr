@@ -39,11 +39,8 @@ export function avg_ohlc$(state, renderer) {
   state.high /= nbSources
   state.low /= nbSources
   state.close /= nbSources
-  if (isNaN(state.close)) {
-    throw new Error('is NaN!')
-  }
 
-  return { open: state.open, high: state.high, low: state.low, close: state.close }
+  return { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }
 }
 
 /**
@@ -67,9 +64,6 @@ export function avg_close$(state, renderer) {
   }
 
   state.close /= nbSources
-  if (isNaN(state.close)) {
-    throw new Error('is NaN!')
-  }
 
   return state.close
 }
@@ -79,7 +73,7 @@ export function avg_close$(state, renderer) {
  * simple average
  * @param {Renderer} renderer
  */
-export function ohlc$(state, value) {
+export function ohlc$(state, value, time) {
   if (typeof state.open === 'undefined') {
     state.open = value
     state.high = value
@@ -90,7 +84,7 @@ export function ohlc$(state, value) {
   state.low = Math.min(state.low, value)
   state.close = value
 
-  return { open: state.open, high: state.high, low: state.low, close: state.close }
+  return { time: time, open: state.open, high: state.high, low: state.low, close: state.close }
 }
 
 /**
@@ -98,7 +92,7 @@ export function ohlc$(state, value) {
  * simple average
  * @param {Renderer} renderer
  */
-export function cum_ohlc$(state, value) {
+export function cum_ohlc$(state, value, time) {
   if (typeof state.open === 'undefined') {
     state.open = value
     state.high = value
@@ -111,7 +105,7 @@ export function cum_ohlc$(state, value) {
   state.low = Math.min(state.low, value)
   state.close = value
 
-  return { open: state.open, high: state.high, low: state.low, close: state.close }
+  return { time: time, open: state.open, high: state.high, low: state.low, close: state.close }
 }
 
 /**
@@ -134,14 +128,14 @@ export function cum$(state, value) {
  */
 export const highest = {
   count: 0,
-  points: [],
+  points: []
 }
 /**
  * get highest value
  * @param {SerieMemory} memory
  * @param {number} value
  */
-export function highest$(state, value, length) {
+export function highest$(state, value) {
   state.output = value
 
   if (state.count) {
@@ -156,14 +150,14 @@ export function highest$(state, value, length) {
  */
 export const lowest = {
   count: 0,
-  points: [],
+  points: []
 }
 /**
  * Lowest value
  * @param {SerieMemory} memory
  * @param {number} value
  */
-export function lowest$(state, value, length) {
+export function lowest$(state, value) {
   state.output = value
 
   if (state.count) {
@@ -179,15 +173,15 @@ export function lowest$(state, value, length) {
 export const linreg = {
   count: 0,
   sum: 0,
-  points: [],
+  points: []
 }
 
 /**
  * Linear Regression
- * @param state 
- * @param value 
- * @param length 
- * @returns 
+ * @param state
+ * @param value
+ * @param length
+ * @returns
  */
 export function linreg$(state, value, length) {
   state.output = value
@@ -225,7 +219,7 @@ export function linreg$(state, value, length) {
  */
 export const avg = {
   count: 0,
-  points: [],
+  points: []
 }
 /**
  * get avg
@@ -242,14 +236,13 @@ export function avg$(state, values) {
   return sum / count
 }
 
-
 /**
  * simple moving average (SMA) state
  */
 export const sma = {
   count: 0,
   sum: 0,
-  points: [],
+  points: []
 }
 /**
  * simple moving average (SMA)
@@ -268,7 +261,7 @@ export function sma$(state, value) {
 export const cma = {
   count: 0,
   sum: 0,
-  points: [],
+  points: []
 }
 /**
  * cumulative moving average (CMA)
@@ -280,14 +273,13 @@ export function cma$(state, value) {
   return state.output
 }
 
-
 /**
  * exponential moving average (EMA) state
  */
- export const ema = {
+export const ema = {
   count: 0,
   sum: 0,
-  points: [],
+  points: []
 }
 /**
  * exponential moving average

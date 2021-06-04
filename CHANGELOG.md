@@ -2,13 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.0] - 2021-05-09
+## [3.0] - 2021-06-04
 
 ### Added
 - Dynamic panes
 - Workspaces
 - Custom audio per threshold
 - Liquidation threshold
+- Plot function
 
 ### Changed
 - Outlined icons

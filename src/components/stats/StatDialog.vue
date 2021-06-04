@@ -1,5 +1,5 @@
 <template>
-  <Dialog :open="open" @clickOutside="close">
+  <Dialog @clickOutside="close">
     <template v-slot:header>
       <div>
         <div class="title">BUCKET</div>

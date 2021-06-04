@@ -1,5 +1,4 @@
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
-import { boot } from '..'
 
 export interface CountersPaneState {
   _id?: string
