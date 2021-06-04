@@ -89,7 +89,7 @@ export default class extends Vue {
     }
 
     if (!isNaN(event.target.innerText) && (event.which === 38 || event.which === 40)) {
-      this.crement(event.which === 40 ? -1 : 1)
+      this.crement(event.which === 40 ? 1 : -1)
     }
   }
 

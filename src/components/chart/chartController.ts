@@ -1152,9 +1152,14 @@ export default class ChartController {
       indicator.adapter(renderer, serieData.functions, serieData.variables, indicator.apisNoop, indicator.options, seriesUtils)
 
       for (let i = 0; i < serieData.series.length; i++) {
-        if (indicator.model.plots[i].type !== 'histogram' || serieData.series[i].value !== 0) {
-          points[indicator.apis[i].id] = serieData.series[i]
+        if (
+          (typeof serieData.series[i].value !== 'undefined' && serieData.series[i].value === null) ||
+          (typeof serieData.series[i].lowerValue !== 'undefined' && serieData.series[i].lowerValue === null) ||
+          (indicator.model.plots[i].type === 'histogram' && serieData.series[i].value === 0)
+        ) {
+          continue
         }
+        points[indicator.apis[i].id] = serieData.series[i]
       }
     }
 

@@ -290,6 +290,12 @@ export default class SerieBuilder {
     if (serieType === 'histogram') {
       // only update point if there is a value to avoid long histogram * base line * at zero
       finalInstruction += pointVariable + '.value&&'
+    } else if (serieType === 'line') {
+      // prevent null
+      finalInstruction += pointVariable + '.value !== null&&'
+    } else if (serieType === 'cloudarea') {
+      // prevent null
+      finalInstruction += pointVariable + '.lowerValue !== null&&'
     }
 
     finalInstruction += serieUpdate
@@ -548,11 +554,11 @@ export default class SerieBuilder {
         const point = renderer.indicators[this.indicatorId].series[p]
         const plot = plots[p]
         const resultedType =
-          typeof point.value === 'number'
+          typeof point.value !== 'undefined'
             ? 'number'
-            : typeof point.open === 'number'
+            : typeof point.open !== 'undefined'
             ? 'ohlc'
-            : typeof point.higherValue === 'number'
+            : typeof point.higherValue !== 'undefined'
             ? 'range'
             : null
 
