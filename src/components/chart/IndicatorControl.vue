@@ -12,7 +12,9 @@
       <button class="btn -small" @click="resize" v-tippy title="Resize"><i class="icon-resize-height"></i></button>
       <button class="btn -small" @click="remove" v-tippy title="Disable"><i class="icon-cross"></i></button>
     </div>
-    <div class="indicator__legend" v-text="legend"></div>
+    <div class="indicator__legend">
+      <div v-for="serie of series" :key="serie" :id="indicator.id + serie"></div>
+    </div>
     <div v-if="error">
       <i class="icon-warning ml4 mr8"></i>
       {{ error }}
@@ -25,10 +27,13 @@ import IndicatorDialog from './IndicatorDialog.vue'
 import dialogService from '../../services/dialogService'
 
 export default {
-  props: ['paneId', 'indicatorId', 'legend'],
+  props: ['paneId', 'indicatorId'],
   computed: {
     indicator: function() {
       return this.$store.state[this.paneId].indicators[this.indicatorId]
+    },
+    series: function() {
+      return this.indicator.series
     },
     name: function() {
       if (this.indicator.displayName) {

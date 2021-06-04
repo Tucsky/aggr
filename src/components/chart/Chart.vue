@@ -21,7 +21,7 @@
     </pane-header>
     <div class="chart__container" ref="chartContainer"></div>
     <div class="chart__indicators">
-      <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" :legend="legend[id]" />
+      <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" />
 
       <div class="column mt8">
         <a href="javascript:void(0);" @click="addIndicator" v-tippy="{ placement: 'bottom' }" title="Add" class="mr4 -text">
@@ -38,7 +38,7 @@ import { Component, Mixins } from 'vue-property-decorator'
 
 import ChartController, { TimeRange } from './chartController'
 
-import { formatPrice, formatAmount, formatTime, getHms } from '../../utils/helpers'
+import { formatPrice, formatAmount, formatTime, getHms, formatBytes } from '../../utils/helpers'
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
 import { getCustomColorsOptions } from './chartOptions'
 
@@ -51,6 +51,7 @@ import PaneHeader from '../panes/PaneHeader.vue'
 import IndicatorResize from './IndicatorResize.vue'
 import IndicatorControl from './IndicatorControl.vue'
 import CreateIndicatorDialog from './CreateIndicatorDialog.vue'
+import { ChartPaneState } from '@/store/panesSettings/chart'
 
 @Component({
   name: 'Chart',
@@ -63,39 +64,31 @@ import CreateIndicatorDialog from './CreateIndicatorDialog.vue'
 export default class extends Mixins(PaneMixin) {
   reachedEnd = false
   loading = false
-  legend = {}
 
   private _onStoreMutation: () => void
   private _keepAliveTimeout: number
   private _onPanTimeout: number
   private _chartController: ChartController
-
-  get timeframe() {
-    return this.$store.state[this.paneId].timeframe
-  }
-
-  get exchanges() {
-    return this.$store.state.exchanges
-  }
+  private _legendElements: { [id: string]: HTMLElement }
 
   get markets() {
     return this.$store.state.panes.panes[this.paneId].markets
   }
 
+  get timeframe() {
+    return (this.$store.state[this.paneId] as ChartPaneState).timeframe
+  }
+
   get refreshRate() {
-    return this.$store.state[this.paneId].refreshRate
+    return (this.$store.state[this.paneId] as ChartPaneState).refreshRate
   }
 
   get indicators() {
-    return this.$store.state[this.paneId].indicators
+    return (this.$store.state[this.paneId] as ChartPaneState).indicators
   }
 
   get resizingIndicator() {
-    return this.$store.state[this.paneId].resizingIndicator
-  }
-
-  get theme() {
-    return this.$store.state.settings.theme
+    return (this.$store.state[this.paneId] as ChartPaneState).resizingIndicator
   }
 
   get timezoneOffset() {
@@ -108,6 +101,7 @@ export default class extends Mixins(PaneMixin) {
 
   created() {
     this._chartController = new ChartController(this.paneId)
+    this._legendElements = {}
 
     this._onStoreMutation = this.$store.subscribe(mutation => {
       switch (mutation.type) {
@@ -147,25 +141,25 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.setIndicatorOption(mutation.payload.id, mutation.payload.key, mutation.payload.value)
           break
         case this.paneId + '/SET_INDICATOR_SCRIPT':
+          this.unbindLegend(mutation.payload)
           this._chartController.rebuildIndicator(mutation.payload.id)
+          this.bindLegend(mutation.payload)
           break
         case this.paneId + '/ADD_INDICATOR':
           if (this._chartController.addIndicator(mutation.payload.id)) {
             this._chartController.redrawIndicator(mutation.payload.id)
+            this.bindLegend(mutation.payload)
           }
 
           break
         case this.paneId + '/REMOVE_INDICATOR':
+          this.unbindLegend(mutation.payload)
           this._chartController.removeIndicator(mutation.payload)
           break
         case 'app/SET_OPTIMAL_DECIMAL':
-        case this.paneId + '/SET_DECIMAL_PRECISION':
-          if (this.$store.state[this.paneId].decimalPrecision && mutation.payload.type === 'app/SET_OPTIMAL_DECIMAL') {
-            break
-          }
-
+        case 'settings/SET_DECIMAL_PRECISION':
           for (const id in this.indicators) {
-            const indicator = this.$store.state[this.paneId].indicators[id]
+            const indicator = (this.$store.state[this.paneId] as ChartPaneState).indicators[id]
 
             if (!indicator.options) {
               continue
@@ -199,6 +193,10 @@ export default class extends Mixins(PaneMixin) {
     this.bindChartEvents()
 
     this.fetch()
+
+    for (const id in this.indicators) {
+      this.bindLegend(id)
+    }
   }
 
   destroyChart() {
@@ -230,7 +228,7 @@ export default class extends Mixins(PaneMixin) {
     }
 
     const visibleRange = this._chartController.getVisibleRange() as TimeRange
-    const timeframe = +this.$store.state[this.paneId].timeframe
+    const timeframe = +(this.$store.state[this.paneId] as ChartPaneState).timeframe
 
     if (!rangeToFetch) {
       const barsCount = window.innerWidth / 2
@@ -250,10 +248,13 @@ export default class extends Mixins(PaneMixin) {
         to: leftTime
       }
 
+      const bytesPerBar = 206.54355723892712
+      const estimatedSize = formatBytes(barsCount * historicalMarkets.length * bytesPerBar)
+
       this.$store.dispatch('app/showNotice', {
         id: 'fetching-' + this.paneId,
         timeout: 15000,
-        title: `🥵 Fetching ${barsCount}×${historicalMarkets.length} bars (timeframe ${getHms(timeframe * 1000)})...`,
+        title: `Fetching ${barsCount * historicalMarkets.length} × ${getHms(timeframe * 1000)} bars (~${estimatedSize})`,
         type: 'info'
       })
     }
@@ -374,6 +375,8 @@ export default class extends Mixins(PaneMixin) {
    * @param{TV.MouseEventParams} param tv mousemove param
    */
   onCrosshair(param) {
+    let showLegend = true
+
     if (
       param === undefined ||
       param.time === undefined ||
@@ -382,30 +385,38 @@ export default class extends Mixins(PaneMixin) {
       param.point.y < 0 ||
       param.point.y > this.$refs.chartContainer.clientHeight
     ) {
-      this.legend = {}
-    } else {
-      for (let i = 0; i < this._chartController.loadedIndicators.length; i++) {
-        const indicator = this._chartController.loadedIndicators[i]
+      showLegend = false
+    }
 
-        for (let j = 0; j < this._chartController.loadedIndicators[i].apis.length; j++) {
-          const api = this._chartController.loadedIndicators[i].apis[j]
+    for (let i = 0; i < this._chartController.loadedIndicators.length; i++) {
+      const indicator = this._chartController.loadedIndicators[i]
+
+      for (let j = 0; j < this._chartController.loadedIndicators[i].apis.length; j++) {
+        const api = this._chartController.loadedIndicators[i].apis[j]
+        const id = indicator.id + api.id
+
+        if (!this._legendElements[id]) {
+          continue
+        }
+
+        if (!showLegend) {
+          this._legendElements[id].innerText = ''
+        } else {
           const data = param.seriesPrices.get(api)
 
           if (!data) {
-            this.$set(this.legend, api.id, '')
+            this._legendElements[id].innerText = ''
             continue
           }
 
           const formatFunction = indicator.options.priceFormat && indicator.options.priceFormat.type === 'volume' ? formatAmount : formatPrice
 
-          if (data.close) {
-            this.$set(
-              this.legend,
-              api.id,
-              `O: ${formatFunction(data.open)} H: ${formatFunction(data.high)} L: ${formatFunction(data.low)} C: ${formatFunction(data.close)}`
-            )
-          } else {
-            this.$set(this.legend, api.id, formatFunction(data))
+          if (typeof data === 'number') {
+            this._legendElements[id].innerText = formatFunction(data)
+          } else if (data.close) {
+            this._legendElements[id].innerText = `O: ${formatFunction(data.open)} H: ${formatFunction(data.high)} L: ${formatFunction(
+              data.low
+            )} C: ${formatFunction(data.close)}`
           }
         }
       }
@@ -536,6 +547,36 @@ export default class extends Mixins(PaneMixin) {
     this._chartController.clear()
 
     this.reachedEnd = false
+  }
+
+  bindLegend(indicatorId: string) {
+    const series = this.indicators[indicatorId].series
+
+    for (let i = 0; i < series.length; i++) {
+      const id = indicatorId + series[i]
+
+      if (this._legendElements[id]) {
+        continue
+      }
+
+      const el = document.getElementById(id)
+
+      if (el) {
+        this._legendElements[id] = el
+      }
+    }
+  }
+
+  unbindLegend(indicatorId: string) {
+    const series = this.indicators[indicatorId].series
+
+    for (let i = 0; i < series.length; i++) {
+      const id = indicatorId + series[i]
+
+      if (this._legendElements[id]) {
+        delete this._legendElements[id]
+      }
+    }
   }
 }
 </script>

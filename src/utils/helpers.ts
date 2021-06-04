@@ -4,33 +4,6 @@ import store from '../store'
 const progressContainer = document.getElementById('progress')
 const progressTask = progressContainer.children[0] as HTMLElement
 
-export function parseQueryString() {
-  let QUERY_STRING
-
-  try {
-    QUERY_STRING = JSON.parse(
-      '{"' +
-        decodeURI(location.search.substring(1))
-          .replace(/"/g, '\\"')
-          .replace(/&/g, '","')
-          .replace(/=/g, '":"') +
-        '"}'
-    )
-  } catch (error) {
-    QUERY_STRING = {}
-  }
-
-  for (const name in QUERY_STRING) {
-    try {
-      QUERY_STRING[name] = JSON.parse(QUERY_STRING[name])
-    } catch (error) {
-      // empty
-    }
-  }
-
-  return QUERY_STRING
-}
-
 export function formatAmount(amount, decimals?: number) {
   const negative = amount < 0
 
@@ -68,11 +41,6 @@ export function formatPrice(price) {
   } else {
     return price.toFixed(2)
   }
-}
-
-export function padNumber(num, size) {
-  const s = '000000000' + num
-  return s.substr(s.length - size)
 }
 
 export function ago(timestamp) {
@@ -136,24 +104,10 @@ export function uniqueName(name, names) {
   return name
 }
 
-export function movingAverage(accumulator, newValue, alpha) {
-  return alpha * newValue + (1.0 - alpha) * accumulator
-}
-
 export function formatTime(time) {
   const date = new Date(time * 1000)
 
   return date.getDate() + '/' + (date.getMonth() + 1) + ' ' + date.toTimeString().split(' ')[0]
-}
-
-export function camelToSentence(str) {
-  str = str.replace(/([A-Z])/g, ' $1')
-  return str.charAt(0).toUpperCase() + str.slice(1)
-}
-
-export function snakeToSentence(str) {
-  str = str.replace(/_/g, ' ')
-  return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
 export const deepSet = (object, path, value) => {
@@ -201,17 +155,6 @@ export function sleep(duration = 1000): Promise<void> {
   })
 }
 
-export function array_move(arr, old_index, new_index) {
-  if (new_index >= arr.length) {
-    let k = new_index - arr.length + 1
-    while (k--) {
-      arr.push(undefined)
-    }
-  }
-
-  arr.splice(new_index, 0, arr.splice(old_index, 1)[0])
-}
-
 export function getIndicatorSettings(paneId: string, indicatorId: string) {
   const serieSettings = store.state[paneId].indicators[indicatorId] || {}
   const defaultSerieSettings = defaultIndicators[indicatorId] || {}
@@ -227,20 +170,6 @@ export function getIndicatorSettings(paneId: string, indicatorId: string) {
 export function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
-
-/*
-export function getAllSeries() {
-  const ids = Object.keys(store.state.settings.series)
-    .concat(Object.keys(defaultIndicators))
-    .filter((x, i, a) => a.indexOf(x) == i)
-
-  return ids.reduce((series, id) => {
-    series.push(getIndicatorSettings(id))
-
-    return series
-  }, [])
-}
-*/
 
 export function getErrorMessage(error: Error | string) {
   let errorMessage = 'Something wrong happened.'
@@ -317,20 +246,20 @@ export function parseFunctionArguments(str) {
   return str.split(',').map(arg => arg.trim().replace(/#COMMA#/g, ','))
 }
 
-export function arrayMove(arr: any[], old_index: number, new_index: number) {
-  if (new_index >= arr.length) {
-    let k = new_index - arr.length + 1
-    while (k--) {
-      arr.push(undefined)
-    }
-  }
-
-  arr.splice(new_index, 0, arr.splice(old_index, 1)[0])
-  return arr // for testing
-}
-
 export function camelize(str) {
   return str.replace(/-([a-z])/g, function(g) {
     return g[1].toUpperCase()
   })
+}
+
+export function formatBytes(bytes, decimals = 2) {
+  if (bytes === 0) return '0 Bytes'
+
+  const k = 1024
+  const dm = decimals < 0 ? 0 : decimals
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }

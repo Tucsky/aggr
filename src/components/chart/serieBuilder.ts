@@ -406,8 +406,10 @@ export default class SerieBuilder {
           exchanges.push(marketId)
         }
 
-        
-        output = output.replace(new RegExp('([^\n].*)([^.$])\\b(' + marketName + ')\\b(.*)', 'i'), `if (renderer.sources['${marketId}']) { $1$2renderer.sources['${marketId}']$4 }`)
+        output = output.replace(
+          new RegExp('([^\n].*)([^.$])\\b(' + marketName + ')\\b(.*)', 'i'),
+          `if (renderer.sources['${marketId}']) { $1$2renderer.sources['${marketId}']$4 }`
+        )
       }
     } while (marketMatch)
 

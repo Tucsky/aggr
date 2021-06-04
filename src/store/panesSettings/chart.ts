@@ -120,8 +120,8 @@ const actions = {
       confirm &&
       (await dialogService.confirm({
         message: `You have unsaved changes on "${id}".<br>Save this indicator to workspace before remove ?`,
-        cancel: 'NO',
-        ok: 'YES'
+        cancel: 'DISCARD',
+        ok: 'SAVE'
       }))
     ) {
       await dispatch('saveIndicator', id)
