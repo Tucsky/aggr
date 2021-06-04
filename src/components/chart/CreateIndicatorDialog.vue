@@ -1,12 +1,12 @@
 <template>
   <Dialog @clickOutside="close">
     <template v-slot:header>
-      <div class="title">new serie</div>
+      <div class="title">Add indicator</div>
       <div class="column -center"></div>
     </template>
     <template v-if="indicators.length">
       <div class="form-group">
-        <label>Choose from existing serie</label>
+        <label>Choose from existing indicator</label>
         <div class="d-flex mb4">
           <input type="text" class="form-control" placeholder="search" v-model="query" />
           <div v-text="indicators.length" class="-center text-muted ml16"></div>
@@ -40,8 +40,9 @@
       <div class="divider">Or</div>
     </template>
     <div class="form-group mb16">
-      <label>Name</label>
-      <input class="form-control" :value="name" @input="getIndicatorId($event.target.value)" />
+      <label>Create a new serie</label>
+      <input class="form-control" :value="name" @input="getIndicatorId($event.target.value)" placeholder="Name of indicator / serie" />
+      <code>{{ indicatorId }}</code>
     </div>
     <div class="form-group mb16">
       <label>Align serie with</label>
@@ -80,7 +81,7 @@ export default {
     Dialog
   },
   data: () => ({
-    name: 'Untitled',
+    name: '',
     indicatorId: null,
     priceScaleId: 'right',
     query: '',
@@ -128,10 +129,16 @@ export default {
       this.getIndicatorId(this.name)
     },
     getIndicatorId(name) {
-      if (name.length) {
-        this.indicatorId = uniqueName(slugify(name), Object.keys(this.$store.state[this.paneId].indicators))
-        this.name = name
+      if (!name.length) {
+        name = 'Untitled'
       }
+
+      this.indicatorId = uniqueName(
+        slugify(name),
+        this.indicators.map(i => i.id)
+      )
+
+      this.name = name
     },
     async create() {
       if (!this.name || this.name.length < 3) {

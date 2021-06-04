@@ -69,12 +69,14 @@
     }
 
     textarea {
+      width: 100%;
       max-width: 100%;
       flex-grow: 1;
     }
 
     p {
       white-space: pre-wrap;
+      line-height: 1.4;
     }
 
     footer {
@@ -97,7 +99,8 @@
     max-width: 320px;
   }
 
-  &.-large .dialog-content {
+  &.-medium .dialog-content {
+    width: 520px;
     max-width: calc(100% - 2rem);
   }
 

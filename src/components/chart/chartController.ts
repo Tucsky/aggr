@@ -1153,6 +1153,7 @@ export default class ChartController {
 
       for (let i = 0; i < serieData.series.length; i++) {
         if (
+          !serieData.series[i] ||
           (typeof serieData.series[i].value !== 'undefined' && serieData.series[i].value === null) ||
           (typeof serieData.series[i].lowerValue !== 'undefined' && serieData.series[i].lowerValue === null) ||
           (indicator.model.plots[i].type === 'histogram' && serieData.series[i].value === 0)

@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="close" class="serie-dialog" :mask="!resizing">
+  <Dialog @clickOutside="close" class="serie-dialog -medium" :mask="!resizing">
     <template v-slot:header>
       <div class="title">
         <div>{{ name }} <i class="icon-sm -no-grab ml4 icon-edit" style="cursor: pointer" @click="renameIndicator"></i></div>
@@ -10,11 +10,9 @@
     </template>
     <div class="d-flex mb16">
       <button v-if="unsavedChanges" class="btn -text" href="javascript:void(0)" @click="$store.dispatch(paneId + '/saveIndicator', indicatorId)">
-        Save indicator now
+        <i class="icon-info mr4"></i> unsaved changes
       </button>
-      <button class="btn -text -white mlauto" @click="showHelp">
-        help
-      </button>
+      <button class="btn -text -white mlauto" @click="showHelp">get help <i class="icon-external-link-square-alt ml4"></i></button>
     </div>
     <div class="form-group mb16 mt16">
       <div class="d-flex mb4">
@@ -22,7 +20,7 @@
           Input
         </label>
       </div>
-      <textarea ref="behaveInput" class="form-control" rows="5" :value="script" @blur="updateScript($event.target.value)"></textarea>
+      <textarea ref="behaveInput" class="form-control" rows="10" :value="script" @blur="updateScript($event.target.value)"></textarea>
       <p v-if="error" class="form-feedback"><i class="icon-warning mr4"></i> {{ error }}</p>
     </div>
     <hr />

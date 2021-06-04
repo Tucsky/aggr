@@ -1,5 +1,5 @@
 import { defaultIndicators } from '@/components/chart/defaultIndicators'
-import { boot } from '@/store'
+import store, { boot } from '@/store'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
 import { GifsStorage, ProductsStorage, Workspace } from '@/types/test'
 import { downloadJson, randomString, slugify, uniqueName } from '@/utils/helpers'
@@ -89,7 +89,11 @@ class WorkspacesService {
   async initialize() {
     this.db = await this.createDatabase()
 
-    console.log(`[idb] database initialized`, this.db)
+    if (Object.values((this.db as any).objectStoreNames).indexOf('series') !== -1) {
+      await this.reset()
+
+      window.location.reload()
+    }
   }
 
   async insertDefault(db: IDBPDatabase<AggrDB>) {
@@ -337,6 +341,11 @@ class WorkspacesService {
     }
 
     indicator.updatedAt = now
+
+    store.dispatch('app/showNotice', {
+      type: 'info',
+      title: `Saved indicator ${indicator.id}`
+    })
 
     return this.db.put('indicators', indicator)
   }

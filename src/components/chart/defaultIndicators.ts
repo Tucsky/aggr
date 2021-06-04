@@ -65,13 +65,17 @@ export const defaultIndicators = {
   },
   volume: {
     name: 'Volume',
-    script: 'plothistogram(vbuy + vsell)',
+    script: 'plothistogram(vbuy + vsell, id=totalvolume)',
     options: {
       priceFormat: {
         type: 'volume'
       },
       color: 'rgba(255, 255, 255, .15)',
-      priceScaleId: 'volume'
+      priceScaleId: 'volume',
+      scaleMargins: {
+        top: 0.91,
+        bottom: 0
+      }
     }
   },
   volume_delta: {
@@ -83,22 +87,26 @@ export const defaultIndicators = {
       },
       upColor: '#3BCA6D',
       downColor: '#EB1E2F',
-      priceScaleId: 'volume'
+      priceScaleId: 'volume',
+      scaleMargins: {
+        top: 0.91,
+        bottom: 0
+      }
     }
   },
   liquidations: {
     name: 'Liquidations',
-    script: 'plothistogram({ time: time, value: lbuy+lsell, color: lbuy - lsell > 0 ? options.upColor : options.downColor})',
+    script: 'plothistogram(lbuy, color=options.upColor)\nplothistogram(-lsell, color=options.downColor)',
     options: {
       priceFormat: {
         type: 'volume'
       },
       priceScaleId: 'volume_liquidations',
-      upColor: 'rgba(255,235,59,0.79)',
-      downColor: 'rgba(103,58,183,0.69)',
+      upColor: 'rgba(103,58,183,0.69)',
+      downColor: 'rgba(255,235,59,0.79)',
       scaleMargins: {
-        top: 0.9,
-        bottom: 0
+        top: 0.81,
+        bottom: 0.1
       }
     }
   },
@@ -140,6 +148,17 @@ export const defaultIndicators = {
       priceScaleId: 'right',
       lineStyle: 4,
       lineWidth: 1
+    }
+  },
+  allmarkets: {
+    enabled: false,
+    script:
+      'plotline(BITFINEX:BTCUSD.close, color=options.spotColor, title=Bitfinex.spot)\nplotline(BINANCE:btcusdt.close, color=options.spotColor, title=Binance.spot)\nplotline(OKEX:BTC-USDT.close, color=options.spotColor, title=Okex.spot)\nplotline(KRAKEN:XBT/USD.close, color=options.spotColor, title=Kraken.spot)\nplotline(COINBASE:BTC-USD.close, color=options.spotColor, title=Coinbase.spot)\nplotline(POLONIEX:USDT_BTC.close, color=options.spotColor, title=Poloniex.spot)\nplotline(HUOBI:btcusdt.close, color=options.spotColor, title=Huobi.spot)\nplotline(BITSTAMP:btcusd.close, color=options.spotColor, title=Bitstamp.spot)\nplotline(BITMEX:XBTUSD.close, color=options.futuresColor, title=Bitmex.perp)\nplotline(BITFINEX:BTCF0:USTF0.close, color=options.futuresColor, title=Bitfinex.perp)\nplotline(OKEX:BTC-USD-SWAP.close, color=options.futuresColor, title=Okex.perp)\nplotline(BINANCE_FUTURES:btcusdt.close, color=options.futuresColor, title=Binance.perp)\nplotline(BINANCE_FUTURES:btcusd_perp.close, color=options.futuresColor, title=Binance.perp)\nplotline(HUOBI:BTC-USD.close, color=options.futuresColor, title=Huobi.perp)\nplotline(KRAKEN:PI_XBTUSD.close, color=options.futuresColor, title=Kraken.perp)\nplotline(DERIBIT:BTC-PERPETUAL.close, color=options.futuresColor, title=Deribit.perp)\nplotline(FTX:BTC-PERP.close, color=options.futuresColor, title=Ftx.perp)\nplotline(BYBIT:BTCUSD.close, color=options.futuresColor, title=Bybit.perp)',
+    name: 'All markets',
+    options: {
+      priceScaleId: 'right',
+      spotColor: '#81c784',
+      futuresColor: '#ec407a'
     }
   }
 }

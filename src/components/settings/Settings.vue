@@ -53,7 +53,11 @@
                       <div class="dropdown-option__title">
                         {{ value.name }} <code>{{ value.id }}</code>
                       </div>
-                      <div class="dropdown-option__description text-muted">last updated {{ ago(value.updatedAt) }} ago</div>
+                      <div
+                        v-if="value.updatedAt"
+                        class="dropdown-option__description text-muted"
+                        v-text="'last used ' + ago(value.updatedAt) + ' ago'"
+                      ></div>
                     </div>
                     <i class="icon-external-link-square-alt ml4"></i>
                   </div>
@@ -526,7 +530,9 @@ export default class extends Vue {
     if (
       await dialogService.confirm({
         title: 'Reset ?',
-        message: `This will remove all <strong>${this.workspaces.length} workspace${this.workspaces.length > 1 ? 's' : ''}</strong> you had.`
+        message: `This will remove your <strong>${this.workspaces.length} workspace${
+          this.workspaces.length > 1 ? 's' : ''
+        }</strong>.<br>All associated data will be lost forever.`
       })
     ) {
       await workspacesService.reset()

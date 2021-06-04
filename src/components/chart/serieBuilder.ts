@@ -16,8 +16,6 @@ import store from '@/store'
 import { findClosingBracketMatchIndex, parseFunctionArguments, slugify, uniqueName } from '@/utils/helpers'
 import { plotTypesMap } from './chartOptions'
 const VARIABLE_REGEX = /(?:^|\n)([a-zA-Z0_9_]+)\(?(\d*)\)?\s*=\s*([^;,]*)?/
-const STRIP_COMMENTS_REGEX = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/gm
-const ARGUMENT_NAMES_REGEX = /([^\s,]+)/g
 const VARIABLES_VAR_NAME = 'vars'
 const FUNCTIONS_VAR_NAME = 'fns'
 const SERIE_TYPES = {
@@ -408,13 +406,10 @@ export default class SerieBuilder {
           exchanges.push(marketId)
         }
 
-        output = output.replace(new RegExp('([^.$])\\b(' + marketName + ')\\b', 'ig'), `$1renderer.sources['${marketId}']`)
+        
+        output = output.replace(new RegExp('([^\n].*)([^.$])\\b(' + marketName + ')\\b(.*)', 'i'), `if (renderer.sources['${marketId}']) { $1$2renderer.sources['${marketId}']$4 }`)
       }
     } while (marketMatch)
-
-    for (const exchange of exchanges) {
-      output = `if (!renderer.sources['${exchange}']) return\n${output}`
-    }
 
     return output
   }
@@ -760,17 +755,6 @@ export default class SerieBuilder {
       'use strict'
       return new Function('renderer', FUNCTIONS_VAR_NAME, VARIABLES_VAR_NAME, 'series', 'options', 'utils', '"use strict"; ' + output)
     })() as IndicatorRealtimeAdapter
-  }
-
-  getParamNames(func) {
-    const fnStr = func.toString().replace(STRIP_COMMENTS_REGEX, '')
-    let result = fnStr.slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')')).match(ARGUMENT_NAMES_REGEX)
-
-    if (result === null) {
-      result = []
-    }
-
-    return result
   }
 
   /**
