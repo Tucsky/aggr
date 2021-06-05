@@ -835,9 +835,6 @@ export default class ChartController {
           // feed activeChunk with active bar exchange snapshot
           for (const source in this.activeRenderer.sources) {
             if (this.activeRenderer.sources[source].empty === false) {
-              if (this.activeRenderer.sources[source].close === 0) {
-                debugger
-              }
               this.activeChunk.bars.push(this.cloneSourceBar(this.activeRenderer.sources[source], this.activeRenderer.timestamp))
             }
           }
@@ -917,9 +914,6 @@ export default class ChartController {
    * @param {number} [timestamp] apply timestamp to returned bar
    */
   cloneSourceBar(sourceBar, timestamp?: number): Bar {
-    if (sourceBar.close === 0) {
-      debugger;
-    }
     return {
       pair: sourceBar.pair,
       exchange: sourceBar.exchange,
@@ -1049,9 +1043,6 @@ export default class ChartController {
       temporaryRenderer.bar.lsell += bar.lsell
 
       temporaryRenderer.sources[bar.exchange + bar.pair] = this.cloneSourceBar(bar)
-      if (temporaryRenderer.sources[bar.exchange + bar.pair].close === 0) {
-        debugger
-      }
     }
 
     if (this.activeRenderer) {
@@ -1308,10 +1299,6 @@ export default class ChartController {
    * @param {Bar} bar
    */
   resetBar(bar: Bar) {
-    
-    if (bar.close === 0) {
-      debugger
-    }
     if (typeof bar.close !== null) {
       bar.open = bar.close
       bar.high = bar.close

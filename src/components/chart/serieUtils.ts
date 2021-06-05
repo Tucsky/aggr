@@ -17,6 +17,10 @@ export function avg_ohlc$(state, renderer) {
   state.close = 0
 
   for (const identifier in renderer.sources) {
+    if (typeof renderer.sources[identifier].open === 'undefined') {
+      continue
+    }
+
     if (setOpen) {
       state.open += renderer.sources[identifier].open
     }
@@ -54,6 +58,10 @@ export function avg_close$(state, renderer) {
   state.close = 0
 
   for (const identifier in renderer.sources) {
+    if (typeof renderer.sources[identifier].open === 'undefined') {
+      continue
+    }
+
     state.close += renderer.sources[identifier].close
 
     nbSources++

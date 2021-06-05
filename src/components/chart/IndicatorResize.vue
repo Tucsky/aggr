@@ -109,7 +109,7 @@ export default class extends Vue {
     document.addEventListener('mousemove', this.resize)
     document.addEventListener('mouseup', this.release)
     document.addEventListener('touchmove', this.resize)
-    document.addEventListener('touchup', this.release)
+    document.addEventListener('touchend', this.release)
   }
 
   handleMove(event: MouseEvent | TouchEvent) {
@@ -124,7 +124,7 @@ export default class extends Vue {
     document.addEventListener('mousemove', this.move)
     document.addEventListener('mouseup', this.release)
     document.addEventListener('touchmove', this.move)
-    document.addEventListener('touchup', this.release)
+    document.addEventListener('touchend', this.release)
   }
 
   release() {
@@ -141,7 +141,7 @@ export default class extends Vue {
     }
 
     document.removeEventListener('mouseup', this.release)
-    document.removeEventListener('touchup', this.release)
+    document.removeEventListener('touchend', this.release)
     this._reference = null
   }
 

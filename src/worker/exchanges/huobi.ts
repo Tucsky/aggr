@@ -124,10 +124,6 @@ export default class extends Exchange {
     } else if (json.tick && json.tick.data && json.tick.data.length) {
       const pair = json.ch.replace(/market.(.*).trade.detail/, '$1')
 
-      if (!this.types[pair]) {
-        debugger
-      }
-
       this.emitTrades(
         api._id,
         json.tick.data.map(trade => {

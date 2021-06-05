@@ -12,6 +12,17 @@ process.env.VUE_APP_API_SUPPORTED_PAIRS = process.env.API_SUPPORTED_PAIRS
 module.exports = {
   productionSourceMap: false,
   publicPath: process.env.PUBLIC_PATH || '/',
+  configureWebpack: config => {
+    if (process.env.NODE_ENV === 'development') {
+      config.devtool = 'eval-source-map'
+      config.output.devtoolModuleFilenameTemplate = info =>
+        info.resourcePath.match(/\.vue$/) && !info.identifier.match(/type=script/) // this is change ✨
+          ? `webpack-generated:///${info.resourcePath}?${info.hash}`
+          : `webpack-yourCode:///${info.resourcePath}`
+
+      config.output.devtoolFallbackModuleFilenameTemplate = 'webpack:///[resource-path]?[hash]'
+    }
+  },
   chainWebpack: config => {
     config.optimization.minimizer('terser').tap(args => {
       args[0].terserOptions.compress.drop_console = true

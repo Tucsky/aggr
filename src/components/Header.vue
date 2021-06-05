@@ -106,8 +106,18 @@ export default class extends Vue {
     this.bindHandle()
   }
 
+  beforeDestroy() {
+    this.bindHandle()
+  }
+
   bindHandle() {
     this.$refs.handle.addEventListener('mousedown', this.startDrag)
+    this.$refs.handle.addEventListener('touchstart', this.startDrag)
+  }
+
+  unbindHandle() {
+    this.$refs.handle.removeEventListener('mousedown', this.startDrag)
+    this.$refs.handle.removeEventListener('touchstart', this.startDrag)
   }
 
   startDrag(event: MouseEvent | TouchEvent) {
@@ -129,7 +139,7 @@ export default class extends Vue {
 
     const offset = x - this._dragRef
 
-    const percent = Math.max(0, (((this.$el as HTMLElement).offsetLeft + offset) / window.innerWidth) * 100)
+    const percent = Math.max(0, (((this.$el as HTMLElement).offsetLeft + offset) / window.outerWidth) * 100)
     this.left = percent + '%'
 
     this._dragRef = x

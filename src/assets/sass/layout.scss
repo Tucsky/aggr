@@ -36,6 +36,7 @@ body {
   min-height: 100%;
   transition: transform 0.3s $ease-out-expo;
   color: white;
+  overflow-x: hidden;
 
   &.-loading {
     .app__layout {

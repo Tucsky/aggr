@@ -12,7 +12,7 @@
         <div class="dialog-controls">
           <slot name="controls"></slot>
 
-          <a href="javascript:void(0);" class="dialog-controls__close -link -text" @click="$emit('clickOutside')">
+          <a href="javascript:void(0);" class="dialog-controls__close -link -text" @click="close" @touchend="close">
             <i class="icon-cross"></i>
           </a>
         </div>
@@ -126,14 +126,14 @@ export default class extends Vue {
       document.removeEventListener('mousemove', this._handleDragging)
       document.removeEventListener('mouseup', this._handleRelease)
       document.removeEventListener('touchmove', this._handleDragging)
-      document.removeEventListener('touchup', this._handleRelease)
+      document.removeEventListener('touchend', this._handleRelease)
 
       delete this._handleRelease
     }
     document.addEventListener('mousemove', this._handleDragging)
     document.addEventListener('mouseup', this._handleRelease)
     document.addEventListener('touchmove', this._handleDragging)
-    document.addEventListener('touchup', this._handleRelease)
+    document.addEventListener('touchend', this._handleRelease)
   }
 
   onMouseDown() {
@@ -168,6 +168,10 @@ export default class extends Vue {
       return false
     }
 
+    this.$emit('clickOutside')
+  }
+
+  close() {
     this.$emit('clickOutside')
   }
 }

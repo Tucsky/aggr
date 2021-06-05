@@ -235,7 +235,6 @@ export default class extends Mixins(PaneMixin) {
 
       if (to) {
         chunksToDecrease = this._counters[i].chunks.splice(0, to + 1)
-        if (isNaN(this.steps[i].buy - decreaseBuy) || isNaN(this.steps[i].sell - decreaseSell)) debugger
         this.steps[i].buy -= decreaseBuy
         this.steps[i].sell -= decreaseSell
       }

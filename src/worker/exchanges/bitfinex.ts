@@ -79,9 +79,6 @@ export default class extends Exchange {
     if (json.event) {
       if (json.chanId && json.pair) {
         console.debug(`[${this.id}] register channel ${json.chanId} (${json.channel}:${json.pair})`)
-        if (this.pairs.indexOf(json.pair) === -1) {
-          debugger
-        }
         this.channels[json.chanId] = {
           name: json.channel,
           pair: json.pair

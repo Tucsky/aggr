@@ -180,8 +180,6 @@ export default class extends Mixins(PaneMixin) {
   }
 
   mounted() {
-    this._chartController.setupQueue()
-
     this.createChart()
 
     this.keepAlive()
@@ -190,6 +188,7 @@ export default class extends Mixins(PaneMixin) {
   async createChart() {
     await this.$nextTick()
 
+    this._chartController.setupQueue()
     this._chartController.createChart(this.$refs.chartContainer)
 
     this.bindChartEvents()
@@ -229,7 +228,7 @@ export default class extends Mixins(PaneMixin) {
     const timeframe = +(this.$store.state[this.paneId] as ChartPaneState).timeframe
 
     if (!rangeToFetch) {
-      const barsCount = window.innerWidth / 2
+      const barsCount = Math.ceil(window.innerWidth / 2)
 
       let leftTime
 

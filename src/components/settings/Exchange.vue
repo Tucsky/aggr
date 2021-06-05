@@ -8,8 +8,8 @@
       '-expanded': expanded
     }"
   >
-    <div class="settings-exchange__header" @click="toggleExchange">
-      <div class="settings-exchange__identity">
+    <div class="settings-exchange__header">
+      <div class="settings-exchange__identity" :title="'Toggle ' + id" v-tippy @click="toggleExchange">
         <div class="settings-exchange__name">{{ name }}</div>
       </div>
       <div class="settings-exchange__controls">
