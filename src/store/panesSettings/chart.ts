@@ -43,12 +43,16 @@ const actions = {
     if (!Object.keys(state.indicators).length) {
       const indicators = await workspacesService.getIndicators()
 
-      for (const serie of indicators) {
-        if ((serie as any).enabled === false) {
+      for (const indicator of indicators) {
+        if ((indicator as any).enabled === false) {
           continue
         }
 
-        Vue.set(state.indicators, serie.id, serie)
+        if (!indicator.series) {
+          indicator.series = []
+        }
+
+        Vue.set(state.indicators, indicator.id, indicator)
       }
 
       scheduleSync(state)

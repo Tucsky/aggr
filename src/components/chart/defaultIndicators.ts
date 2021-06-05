@@ -130,6 +130,33 @@ export const defaultIndicators = {
       priceLineVisible: true
     }
   },
+  btccvdperp: {
+    enabled: false,
+    name: 'BTC CVD PERP',
+    script: `plotline(cum((BITMEX:XBTUSD.vbuy + BITFINEX:BTCF0:USTF0.vbuy + OKEX:BTC-USDT-SWAP.vbuy + BINANCE_FUTURES:btcusdt.vbuy + BINANCE_FUTURES:btcusd_perp.vbuy + HUOBI:BTC-USD.vbuy + KRAKEN:PI_XBTUSD.vbuy + DERIBIT:BTC-PERPETUAL.vbuy + FTX:BTC-PERP.vbuy + BYBIT:BTCUSD.vbuy) - (BITMEX:XBTUSD.vsell + BITFINEX:BTCF0:USTF0.vsell + OKEX:BTC-USD-SWAP.vsell + OKEX:BTC-USDT-SWAP.vsell + BINANCE_FUTURES:btcusdt.vsell + BINANCE_FUTURES:btcusd_perp.vsell + HUOBI:BTC-USD.vsell + KRAKEN:PI_XBTUSD.vsell + DERIBIT:BTC-PERPETUAL.vsell + FTX:BTC-PERP.vsell + BYBIT:BTCUSD.vsell)))`,
+    options: {
+      priceScaleId: 'cvdperp',
+      color: '#42a5f5'
+    }
+  },
+  btccvdspot: {
+    enabled: false,
+    name: 'BTC CVD SPOT',
+    script: `plotline(cum((
+      BITFINEX:BTCUSD.vbuy+ BINANCE:btcusdt.vbuy+ OKEX:BTC-USDT.vbuy+ KRAKEN:XBT/USD.vbuy+ COINBASE:BTC-USD.vbuy+ POLONIEX:USDT_BTC.vbuy+ HUOBI:btcusdt.vbuy+ BITSTAMP:btcusd.vbuy) - (
+        BITFINEX:BTCUSD.vsell +
+        BINANCE:btcusdt.vsell +
+        OKEX:BTC-USDT.vsell +
+        KRAKEN:XBT/USD.vsell +
+        COINBASE:BTC-USD.vsell +
+        POLONIEX:USDT_BTC.vsell +
+        HUOBI:btcusdt.vsell +
+        BITSTAMP:btcusd.vsell)))`,
+    options: {
+      priceScaleId: 'cvdspot',
+      color: '#4caf50'
+    }
+  },
   ctd: {
     enabled: false,
     script: 'plotline(cum(cbuy-csell))',

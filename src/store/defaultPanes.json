@@ -102,8 +102,8 @@
               "amount": 25000,
               "sellColor": "rgba(236,64,122,0.6)",
               "buyColor": "rgba(255,152,0,0.7)",
-              "buyAudio": "play(329.63, gain / 2, duration, 80, null, 'sine');\\nplay(329.63, gain / 1.5, duration * 1.5, 80, null, 'sine');",
-              "sellAudio": "play(440, gain / 2, duration, 80, null, 'sine');\\nplay(440, gain / 1.5, duration * 1.5, 80, null, 'sine');"
+              "buyAudio": "play(329.63, gain / 2, duration, 80, null, 'sine');\nplay(329.63, gain / 1.5, duration * 1.5, 80, null, 'sine');",
+              "sellAudio": "play(440, gain / 2, duration, 80, null, 'sine');\nplay(440, gain / 1.5, duration * 1.5, 80, null, 'sine');"
             },
             {
               "id": "huge",
@@ -111,8 +111,8 @@
               "gif": "rekt",
               "sellColor": "rgba(236,64,122,0.7)",
               "buyColor": "rgba(255,152,0,0.8)",
-              "buyAudio": "play(329.63, gain / 2, duration / 2, 80, null, 'sine');\\nplay(329.63, gain / 2, duration / 2, 80, null, 'sine');\\nplay(329.63, gain / 1.5, duration, 80, null, 'sine');",
-              "sellAudio": "play(440, gain / 2, duration / 2, 80, null, 'sine');\\nplay(440, gain / 2, duration / 2, 80, null, 'sine');\\nplay(440, gain / 1.5, duration, 80, null, 'sine');"
+              "buyAudio": "play(329.63, gain / 2, duration / 2, 80, null, 'sine');\nplay(329.63, gain / 2, duration / 2, 80, null, 'sine');\nplay(329.63, gain / 1.5, duration, 80, null, 'sine');",
+              "sellAudio": "play(440, gain / 2, duration / 2, 80, null, 'sine');\nplay(440, gain / 2, duration / 2, 80, null, 'sine');\nplay(440, gain / 1.5, duration, 80, null, 'sine');"
             },
             {
               "id": "rare",
@@ -120,8 +120,8 @@
               "gif": "explosion",
               "sellColor": "rgb(156,39,176)",
               "buyColor": "rgb(255,235,59)",
-              "buyAudio": "play(329.63, gain / 2, duration, 80, null, 'sine');\\nplay(329.63, gain / 2, duration, 80, null, 'sine');\\nplay(329.63, gain / 1.5, duration * 1.5, 80, null, 'sine');",
-              "sellAudio": "play(440, gain / 2, duration, 80, null, 'sine');\\nplay(440, gain / 2, duration, 80, null, 'sine');\\nplay(440, gain / 1.5, duration * 1.5, 80, null, 'sine');"
+              "buyAudio": "play(329.63, gain / 2, duration, 80, null, 'sine');\nplay(329.63, gain / 2, duration, 80, null, 'sine');\nplay(329.63, gain / 1.5, duration * 1.5, 80, null, 'sine');",
+              "sellAudio": "play(440, gain / 2, duration, 80, null, 'sine');\nplay(440, gain / 2, duration, 80, null, 'sine');\nplay(440, gain / 1.5, duration * 1.5, 80, null, 'sine');"
             }
           ]
         }

@@ -128,7 +128,7 @@
     </section>
     <hr />
     <div class="form-group column">
-      <button class="btn -blue mr16 mlauto" v-tippy title="Duplicate" @click="duplicateSerie">
+      <button class="btn -blue mr16 mlauto" v-tippy title="Duplicate" @click="duplicateIndicator">
         <i class="icon-copy-paste"></i>
       </button>
       <button class="btn -red" v-tippy title="Serie will be lost forever" @click="removeIndicator">
@@ -471,14 +471,16 @@ export default {
         await store.dispatch(this.paneId + '/renameIndicator', { id: this.indicatorId, name })
       }
     },
-    async duplicateSerie() {
+    async duplicateIndicator() {
       const settings = merge({}, this.indicatorSettings)
 
       settings.id += '-copy'
       settings.name += ' copy'
+      delete settings.updatedAt
+      delete settings.createdAt
 
-      const id = await workspacesService.saveSerie(settings)
-      const serie = await workspacesService.getSerie(id)
+      const id = await workspacesService.saveIndicator(settings)
+      const serie = await workspacesService.getIndicator(id)
 
       this.$store.dispatch(this.paneId + '/addIndicator', serie)
 

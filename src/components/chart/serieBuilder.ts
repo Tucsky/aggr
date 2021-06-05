@@ -10,7 +10,8 @@ import {
   IndicatorFunction,
   LoadedIndicator,
   IndicatorApi,
-  IndicatorReference
+  IndicatorReference,
+  IndicatorMarkets
 } from './chartController'
 import store from '@/store'
 import { findClosingBracketMatchIndex, parseFunctionArguments, slugify, uniqueName } from '@/utils/helpers'
@@ -81,6 +82,7 @@ export default class SerieBuilder {
       functions: result.functions,
       variables: result.variables,
       references: result.references,
+      markets: result.markets,
       plots: result.plots,
       type
     }
@@ -158,7 +160,7 @@ export default class SerieBuilder {
     const functions: IndicatorFunction[] = []
     const variables: IndicatorVariable[] = []
     const plots: IndicatorPlot[] = []
-    const markets: string[] = []
+    const markets: IndicatorMarkets = {}
     const references: IndicatorReference[] = []
 
     let output = this.normalizeInput(input)
@@ -388,28 +390,30 @@ export default class SerieBuilder {
     return output
   }
 
-  parseMarkets(output: string, exchanges: string[]): string {
+  parseMarkets(output: string, markets: IndicatorMarkets): string {
     if (!this.markets.length) {
       return output
     }
 
-    const EXCHANGE_REGEX = new RegExp(`([^.$])\\b(${this.markets.join('|')})\\b`)
+    const EXCHANGE_REGEX = new RegExp(`([^.$])\\b(${this.markets.sort((a, b) => b.length - a.length).join('|')})\\b(\\.\\w+)?`)
 
     let marketMatch = null
 
     do {
       if ((marketMatch = EXCHANGE_REGEX.exec(output))) {
         const marketName = marketMatch[2]
-        const marketId = marketName.replace(/:/, '')
+        const marketDataKey = marketMatch[3].substr(1)
+        const marketId = marketName.replace(':', '')
 
-        if (exchanges.indexOf(marketId) === -1) {
-          exchanges.push(marketId)
+        if (!markets[marketId]) {
+          markets[marketId] = []
         }
 
-        output = output.replace(
-          new RegExp('([^\n].*)([^.$])\\b(' + marketName + ')\\b(.*)', 'i'),
-          `if (renderer.sources['${marketId}']) { $1$2renderer.sources['${marketId}']$4 }`
-        )
+        if (marketDataKey && markets[marketId].indexOf(marketDataKey)) {
+          markets[marketId].push(marketDataKey)
+        }
+
+        output = output.replace(new RegExp('([^.$])\\b(' + marketName + ')\\b', 'i'), `$1renderer.sources['${marketId}']`)
       }
     } while (marketMatch)
 
@@ -646,7 +650,7 @@ export default class SerieBuilder {
     previousRenderer,
     functions: IndicatorFunction[],
     variables: IndicatorVariable[],
-    markets: string[],
+    markets: IndicatorMarkets,
     references: IndicatorReference[]
   ) {
     const sample = {
@@ -720,14 +724,14 @@ export default class SerieBuilder {
       renderer.localTimestamp = renderer.timestamp
     }
 
-    for (const name of markets) {
+    for (const id in markets) {
       const exchangeBar = Object.assign({}, sample)
 
       const priceVariation = (Math.random() - 0.5) / 100
       const volumeVariation = (Math.random() - 0.5) / 100
 
       if (previousRenderer) {
-        exchangeBar.open *= previousRenderer.sources[name].close
+        exchangeBar.open *= previousRenderer.sources[id].close
       }
       exchangeBar.close = Math.abs(exchangeBar.close * priceVariation)
       exchangeBar.high = Math.max(exchangeBar.high, exchangeBar.close)
@@ -746,7 +750,7 @@ export default class SerieBuilder {
       renderer.bar.lbuy += exchangeBar.lbuy
       renderer.bar.lsell += exchangeBar.lsell
 
-      renderer.sources[name] = exchangeBar
+      renderer.sources[id] = exchangeBar
     }
 
     return renderer

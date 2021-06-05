@@ -336,11 +336,11 @@ class WorkspacesService {
   async saveIndicator(indicator: IndicatorSettings) {
     const now = +new Date()
 
-    if (!indicator.createdAt) {
+    if (indicator.createdAt) {
+      indicator.updatedAt = now
+    } else {
       indicator.createdAt = now
     }
-
-    indicator.updatedAt = now
 
     store.dispatch('app/showNotice', {
       type: 'info',

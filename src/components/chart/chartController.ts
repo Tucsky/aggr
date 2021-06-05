@@ -32,6 +32,10 @@ export interface IndicatorApi extends TV.ISeriesApi<any> {
   id: string
 }
 
+export type IndicatorMarkets = {
+  [marketId: string]: string[]
+}
+
 export interface TimeRange {
   from: number
   to: number
@@ -67,7 +71,7 @@ export interface IndicatorTranspilationResult {
   variables: IndicatorVariable[]
   functions: IndicatorFunction[]
   plots: IndicatorPlot[]
-  markets?: string[]
+  markets?: IndicatorMarkets
   references?: IndicatorReference[]
 }
 export interface IndicatorFunction {
@@ -169,7 +173,7 @@ export default class ChartController {
       .join(' + ')
 
     this.markets = markets.reduce((output, identifier) => {
-      output[identifier.replace(/:/g, '')] = true
+      output[identifier.replace(':', '')] = true
 
       return output
     }, {})
@@ -495,7 +499,7 @@ export default class ChartController {
   prepareIndicator(indicator: LoadedIndicator) {
     try {
       const result = this.serieBuilder.build(indicator, this.seriesIndicatorsMap, this.paneId)
-      const { functions, variables, references, plots, output } = result
+      const { output, functions, variables, references, markets, plots } = result
 
       if (store.state[this.paneId].indicatorsErrors[indicator.id]) {
         store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
@@ -509,6 +513,7 @@ export default class ChartController {
         functions,
         variables,
         references,
+        markets,
         plots
       }
 
@@ -598,6 +603,8 @@ export default class ChartController {
 
     // create function ready to calculate (& render) everything for this indicator
     indicator.adapter = this.serieBuilder.getAdapter(indicator.model.output)
+
+    this.meetIndicatorRequirements(indicator.id, renderer)
 
     return indicator
   }
@@ -827,7 +834,10 @@ export default class ChartController {
 
           // feed activeChunk with active bar exchange snapshot
           for (const source in this.activeRenderer.sources) {
-            if (!this.activeRenderer.sources[source].empty) {
+            if (this.activeRenderer.sources[source].empty === false) {
+              if (this.activeRenderer.sources[source].close === 0) {
+                debugger
+              }
               this.activeChunk.bars.push(this.cloneSourceBar(this.activeRenderer.sources[source], this.activeRenderer.timestamp))
             }
           }
@@ -848,7 +858,7 @@ export default class ChartController {
 
       const amount = trade.price * trade.size
 
-      if (!this.activeRenderer.sources[identifier]) {
+      if (!this.activeRenderer.sources[identifier] || typeof this.activeRenderer.sources[identifier] === 'undefined') {
         this.activeRenderer.sources[identifier] = {
           pair: trade.pair,
           exchange: trade.exchange,
@@ -907,6 +917,9 @@ export default class ChartController {
    * @param {number} [timestamp] apply timestamp to returned bar
    */
   cloneSourceBar(sourceBar, timestamp?: number): Bar {
+    if (sourceBar.close === 0) {
+      debugger;
+    }
     return {
       pair: sourceBar.pair,
       exchange: sourceBar.exchange,
@@ -955,7 +968,7 @@ export default class ChartController {
     let computedBar: any
 
     if (this.activeRenderer && this.activeRenderer.timestamp > bars[bars.length - 1].timestamp) {
-      const activeBars = Object.values(this.activeRenderer.sources).filter(bar => !bar.empty)
+      const activeBars = Object.values(this.activeRenderer.sources).filter(bar => bar.empty === false)
 
       for (let i = 0; i < activeBars.length; i++) {
         const activeBar = activeBars[i]
@@ -1036,6 +1049,9 @@ export default class ChartController {
       temporaryRenderer.bar.lsell += bar.lsell
 
       temporaryRenderer.sources[bar.exchange + bar.pair] = this.cloneSourceBar(bar)
+      if (temporaryRenderer.sources[bar.exchange + bar.pair].close === 0) {
+        debugger
+      }
     }
 
     if (this.activeRenderer) {
@@ -1292,9 +1308,15 @@ export default class ChartController {
    * @param {Bar} bar
    */
   resetBar(bar: Bar) {
-    bar.open = bar.close
-    bar.high = bar.close
-    bar.low = bar.close
+    
+    if (bar.close === 0) {
+      debugger
+    }
+    if (typeof bar.close !== null) {
+      bar.open = bar.close
+      bar.high = bar.close
+      bar.low = bar.close
+    }
     bar.vbuy = 0
     bar.vsell = 0
     bar.cbuy = 0
@@ -1302,5 +1324,31 @@ export default class ChartController {
     bar.lbuy = 0
     bar.lsell = 0
     bar.empty = false
+  }
+
+  meetIndicatorRequirements(indicatorId: string, renderer: Renderer) {
+    for (let i = 0; i < this.loadedIndicators.length; i++) {
+      if (indicatorId && this.loadedIndicators[i].id === indicatorId) {
+        const markets = Object.keys(this.loadedIndicators[i].model.markets)
+
+        for (let j = 0; j < markets.length; j++) {
+          if (!renderer.sources[markets[j]]) {
+            renderer.sources[markets[j]] = {}
+          }
+
+          const keys = this.loadedIndicators[i].model.markets[markets[j]]
+
+          if (keys.length) {
+            for (let k = 0; k < keys.length; k++) {
+              if (typeof renderer.sources[markets[j]][keys[k]] === 'undefined') {
+                renderer.sources[markets[j]][keys[k]] = 0
+              }
+            }
+          }
+        }
+
+        break
+      }
+    }
   }
 }

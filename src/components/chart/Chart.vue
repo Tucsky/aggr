@@ -141,8 +141,10 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.setIndicatorOption(mutation.payload.id, mutation.payload.key, mutation.payload.value)
           break
         case this.paneId + '/SET_INDICATOR_SCRIPT':
-          this.unbindLegend(mutation.payload)
           this._chartController.rebuildIndicator(mutation.payload.id)
+          break
+        case this.paneId + '/SET_INDICATOR_SERIES':
+          this.unbindLegend(mutation.payload.id)
           this.bindLegend(mutation.payload.id)
           break
         case this.paneId + '/ADD_INDICATOR':
@@ -192,11 +194,7 @@ export default class extends Mixins(PaneMixin) {
 
     this.bindChartEvents()
 
-    this.fetch()
-
-    for (const id in this.indicators) {
-      this.bindLegend(id)
-    }
+    await this.fetch()
   }
 
   destroyChart() {

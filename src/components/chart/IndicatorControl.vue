@@ -33,7 +33,7 @@ export default {
       return this.$store.state[this.paneId].indicators[this.indicatorId]
     },
     series: function() {
-      return this.indicator.series
+      return this.indicator.series.slice(0, 2)
     },
     name: function() {
       if (this.indicator.displayName) {

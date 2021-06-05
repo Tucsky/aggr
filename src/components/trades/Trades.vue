@@ -589,7 +589,7 @@ export default class extends Mixins(PaneMixin) {
     this._activeExchanges = { ...this.activeExchanges }
     this._multipliers = {}
     this._paneMarkets = this.$store.state.panes.panes[this.paneId].markets.reduce((output, market) => {
-      const identifier = market.replace(/:/g, '')
+      const identifier = market.replace(':', '')
       const multiplier = this.multipliers[identifier]
 
       this._multipliers[identifier] = !isNaN(multiplier) ? multiplier : 1
@@ -675,7 +675,6 @@ export default class extends Mixins(PaneMixin) {
 <style lang="scss">
 @mixin tradesVariant($base: 20) {
   font-size: $base * 0.7px;
-  font-weight: 600;
 
   .trade {
     height: round($base * 1px);
@@ -711,6 +710,7 @@ export default class extends Mixins(PaneMixin) {
 
   &.-small ul {
     @include tradesVariant(18);
+    font-weight: 600;
 
     .-large {
       display: none;
@@ -719,10 +719,6 @@ export default class extends Mixins(PaneMixin) {
 
   &.-large ul {
     @include tradesVariant(24);
-  }
-
-  &.-wide ul {
-    @include tradesVariant(26);
   }
 
   &.-slippage {
@@ -773,8 +769,8 @@ export default class extends Mixins(PaneMixin) {
     .trade__exchange {
       font-size: 0.75em;
       letter-spacing: -0.5px;
-      margin-top: -5px;
-      margin-bottom: -5px;
+      margin-top: -0.2em;
+      margin-bottom: -0.5em;
       white-space: normal;
       word-break: break-word;
       line-height: 0.9;
@@ -898,7 +894,7 @@ export default class extends Mixins(PaneMixin) {
     background-repeat: no-repeat;
     flex-grow: 0.8;
     margin-left: 1.5em;
-    font-size: 75%;
+    font-size: 80%;
     white-space: normal;
     line-height: 1;
     word-break: inherit;
@@ -916,6 +912,7 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__amount {
     position: relative;
+    font-weight: 600;
 
     > span {
       max-width: 100%;
