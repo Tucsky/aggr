@@ -15,6 +15,13 @@
       ></slider>
     </div>
     <p v-if="refreshRate < 500" class="form-feedback"><i class="icon-warning"></i> Low refresh rate can be very CPU intensive</p>
+    <div class="form-group mt16 mb8">
+      <label class="checkbox-control">
+        <input type="checkbox" class="form-control" :checked="showLegend" @change="$store.commit(paneId + '/TOGGLE_LEGEND')" />
+        <div></div>
+        <span>Show legend</span>
+      </label>
+    </div>
     <div class="form-group mb8">
       <label for="">Vertical grid lines</label>
       <div class="form-group column">
@@ -72,8 +79,8 @@ import Slider from '../framework/picker/Slider.vue'
 export default class extends Vue {
   paneId: string
 
-  get showChart() {
-    return this.$store.state.settings.showChart
+  get showLegend() {
+    return this.$store.state[this.paneId].showLegend
   }
 
   get refreshRate() {

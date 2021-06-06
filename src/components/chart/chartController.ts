@@ -1314,7 +1314,7 @@ export default class ChartController {
    * @param {Bar} bar
    */
   resetBar(bar: Bar) {
-    if (typeof bar.close !== null) {
+    if (bar.close !== null) {
       bar.open = bar.close
       bar.high = bar.close
       bar.low = bar.close
@@ -1335,7 +1335,12 @@ export default class ChartController {
 
         for (let j = 0; j < markets.length; j++) {
           if (!renderer.sources[markets[j]]) {
-            renderer.sources[markets[j]] = {}
+            renderer.sources[markets[j]] = {
+              open: null,
+              high: null,
+              low: null,
+              close: null,
+            }
           }
 
           const keys = this.loadedIndicators[i].model.markets[markets[j]]

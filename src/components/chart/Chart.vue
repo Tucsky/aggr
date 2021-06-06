@@ -90,6 +90,10 @@ export default class extends Mixins(PaneMixin) {
     return (this.$store.state[this.paneId] as ChartPaneState).resizingIndicator
   }
 
+  get showLegend() {
+    return (this.$store.state[this.paneId] as ChartPaneState).showLegend
+  }
+
   get timezoneOffset() {
     return this.$store.state.settings.timezoneOffset
   }
@@ -137,10 +141,12 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.setupQueue()
           break
         case this.paneId + '/TOGGLE_LEGEND':
-          if (mutation.payload) {
+          if (this.showLegend) {
             this.bindLegend()
+            this._chartController.chartInstance.subscribeCrosshairMove(this.onCrosshair)
           } else {
             this.unbindLegend()
+            this._chartController.chartInstance.unsubscribeCrosshairMove(this.onCrosshair)
           }
           break
         case this.paneId + '/SET_GRIDLINES':
@@ -470,14 +476,20 @@ export default class extends Mixins(PaneMixin) {
   bindChartEvents() {
     aggregatorService.on('trades', this.onTrades)
 
-    this._chartController.chartInstance.subscribeCrosshairMove(this.onCrosshair)
+    if (this.showLegend) {
+      this._chartController.chartInstance.subscribeCrosshairMove(this.onCrosshair)
+    }
+
     this._chartController.chartInstance.timeScale().subscribeVisibleLogicalRangeChange(this.onPan)
   }
 
   unbindChartEvents() {
     aggregatorService.off('trades', this.onTrades)
 
-    this._chartController.chartInstance.unsubscribeCrosshairMove(this.onCrosshair)
+    if (this.showLegend) {
+      this._chartController.chartInstance.unsubscribeCrosshairMove(this.onCrosshair)
+    }
+
     this._chartController.chartInstance.timeScale().unsubscribeVisibleLogicalRangeChange(this.onPan)
   }
 

@@ -12,7 +12,6 @@ export interface SettingsState {
   preferQuoteCurrencySize?: boolean
   calculateSlippage?: SlippageMode
   aggregateTrades?: boolean
-  showChart?: boolean
   theme?: string
   backgroundColor?: string
   textColor?: string

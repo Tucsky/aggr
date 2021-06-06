@@ -17,7 +17,7 @@ export function avg_ohlc$(state, renderer) {
   state.close = 0
 
   for (const identifier in renderer.sources) {
-    if (typeof renderer.sources[identifier].open === 'undefined' || renderer.sources[identifier].open === null) {
+    if (renderer.sources[identifier].open === null) {
       continue
     }
 
@@ -58,7 +58,7 @@ export function avg_close$(state, renderer) {
   state.close = 0
 
   for (const identifier in renderer.sources) {
-    if (typeof renderer.sources[identifier].open === 'undefined' || renderer.sources[identifier].open === null) {
+    if (renderer.sources[identifier].open === null) {
       continue
     }
 
@@ -235,10 +235,15 @@ export const avg = {
  * @param {number[]} values
  */
 export function avg$(state, values) {
-  const count = values.length
+  let count = 0
   let sum = 0
+
   for (let i = 0; i < values.length; i++) {
+    if (values[i] === null) {
+      continue
+    }
     sum += values[i]
+    count++
   }
 
   return sum / count
