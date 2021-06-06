@@ -55,6 +55,7 @@ import IndicatorResize from './IndicatorResize.vue'
 import IndicatorControl from './IndicatorControl.vue'
 import CreateIndicatorDialog from './CreateIndicatorDialog.vue'
 import { ChartPaneState } from '@/store/panesSettings/chart'
+import { getColorLuminance, joinRgba, splitRgba } from '@/utils/colors'
 
 @Component({
   name: 'Chart',
@@ -644,7 +645,99 @@ export default class extends Mixins(PaneMixin) {
   }
 
   takeScreenshot() {
-    const canvas = this._chartController.chartInstance.takeScreenshot()
+    const chartCanvas = this._chartController.chartInstance.takeScreenshot()
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+
+    const text = this.markets.join(', ')
+
+    const isHRS = window.devicePixelRatio > 1
+
+    const textPadding = isHRS ? 14 : 8
+    const textFontsize = isHRS ? 16 : 10
+    canvas.width = chartCanvas.width
+    ctx.font = `${textFontsize}px Share Tech Mono`
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
+
+    const words = text.split(' ')
+    const lines = []
+    const date = new Date().toISOString()
+    const dateWidth = ctx.measureText(date).width
+
+    let currentLine = ' | '
+
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i]
+      const width = (!lines.length ? dateWidth : 0) + ctx.measureText(currentLine + ' ' + word).width
+      if (width < chartCanvas.width - textPadding * 2) {
+        currentLine += ' ' + word
+      } else {
+        lines.push(currentLine)
+        currentLine = word
+      }
+    }
+
+    lines.push(currentLine)
+
+    const lineHeight = Math.round(textPadding + textPadding * 0.25)
+    const headerHeight = Math.round(textPadding * 2 + lines.length * lineHeight)
+    canvas.height = chartCanvas.height + headerHeight
+
+    const backgroundColor = this.$store.state.settings.backgroundColor
+
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, canvas.width, headerHeight)
+    ctx.fillStyle = backgroundColor
+    ctx.fillRect(0, headerHeight, canvas.width, canvas.height - headerHeight)
+    ctx.drawImage(chartCanvas, 0, headerHeight)
+
+    ctx.fillStyle = 'black'
+    ctx.font = `${textFontsize}px Share Tech Mono`
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
+
+    for (let i = 0; i < lines.length; i++) {
+      let offset = 0
+
+      if (i === 0) {
+        ctx.fillStyle = '#2196f3'
+        ctx.fillText(date, textPadding, textPadding)
+        offset = dateWidth
+        ctx.fillStyle = 'black'
+      }
+
+      ctx.fillText(lines[i], offset + textPadding, textPadding + lineHeight * i)
+    }
+
+    const luminance = getColorLuminance(splitRgba(backgroundColor))
+    const textColor = luminance < 180 ? 'white' : 'black'
+
+    Object.values(this.indicators).forEach((indicator, index) => {
+      const options = indicator.options as any
+
+      if (options.visible === false) {
+        return
+      }
+
+      let color = options.color || options.upColor || textColor
+
+      try {
+        color = splitRgba(color)
+
+        if (typeof color[3] !== 'undefined') {
+          color[3] = 1
+        }
+
+        color = joinRgba(color)
+      } catch (error) {
+        // not rgb(a)
+      }
+
+      ctx.fillStyle = color
+      ctx.fillText(indicator.name.toUpperCase(), textPadding, headerHeight + textPadding + index * lineHeight)
+    })
+
     const dataURL = canvas.toDataURL('image/png')
 
     const win = window.open()

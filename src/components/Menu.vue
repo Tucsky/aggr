@@ -167,6 +167,7 @@ export default class extends Vue {
     display: flex;
     flex-direction: column-reverse;
     align-items: flex-end;
+    width: 0;
   }
 
   .menu-action {

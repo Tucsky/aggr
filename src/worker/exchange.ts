@@ -26,6 +26,7 @@ class Exchange extends EventEmitter {
   private disconnecting: { [url: string]: { promise?: Promise<void>; resolver?: (success: boolean) => void } } = {}
 
   private reconnectionDelay: { [apiUrl: string]: number } = {}
+  private clearReconnectionDelayTimeout: { [url: string]: number } = {}
 
   private _keepAliveIntervals: { [url: string]: number } = {}
 
@@ -199,8 +200,10 @@ class Exchange extends EventEmitter {
 
       api.onopen = event => {
         if (typeof this.reconnectionDelay[url] !== 'undefined') {
-          console.debug(`[${this.id}] clear reconnection delay (${url})`)
-          delete this.reconnectionDelay[url]
+          this.clearReconnectionDelayTimeout[url] = setTimeout(() => {
+            console.debug(`[${this.id}] clear reconnection delay (${url})`)
+            delete this.reconnectionDelay[url]
+          }, 10000)
         }
 
         this.markLoadingAsCompleted(this.connecting, url, true)
@@ -209,6 +212,11 @@ class Exchange extends EventEmitter {
       }
 
       api.onclose = event => {
+        if (this.clearReconnectionDelayTimeout[url]) {
+          clearTimeout(this.clearReconnectionDelayTimeout[url])
+          delete this.clearReconnectionDelayTimeout[url]
+        }
+
         // resolve connecting (as failed)
         this.markLoadingAsCompleted(this.connecting, url, false)
 

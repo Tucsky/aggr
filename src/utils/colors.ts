@@ -152,7 +152,7 @@ export function splitRgba(string, backgroundColor?: number[]) {
 export function joinRgba(color) {
   const [a, b, c, d] = color
 
-  return 'rgb' + (d ? 'a(' : '(') + a + ',' + b + ',' + c + (d ? ',' + d : ')')
+  return 'rgb' + (d ? 'a(' : '(') + a + ',' + b + ',' + c + (d ? ',' + d + ')' : ')')
 }
 
 export function getAppBackgroundColor() {

@@ -149,7 +149,7 @@ import dialogService from '../../services/dialogService'
 import workspacesService from '../../services/workspacesService'
 import merge from 'lodash.merge'
 
-const ignoredOptionsKeys = ['crosshairMarkerVisible', 'minLength']
+const ignoredOptionsKeys = ['crosshairMarkerVisible', 'minLength', 'visible']
 
 export default {
   props: ['paneId', 'indicatorId'],

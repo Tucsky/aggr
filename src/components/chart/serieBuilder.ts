@@ -810,7 +810,7 @@ export default class SerieBuilder {
   getPlotId(input: string) {
     input = input.replace(/options\.([a-zA-Z0-9_]+)/g, '')
 
-    const marketsUsed = input.match(new RegExp(`\\b(${this.markets.sort((a, b) => b.length - a.length).join('|')})\\b`)) || []
+    const marketsUsed = input.match(new RegExp(`\\b(${this.markets.sort((a, b) => b.length - a.length).join('|')})\\b(?:\\.\\w+)`, 'g')) || []
 
     // const referencesUsed = (input.match(new RegExp('\\$([a-z_\\-0-9]+)\\b')) || []).slice(1).map(name => name.replace('$', ''))
 

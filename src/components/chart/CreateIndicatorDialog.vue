@@ -167,8 +167,8 @@ export default {
       this.$store.dispatch(this.paneId + '/addIndicator', indicator)
       this.close(null)
     },
-    removeIndicator(indicator) {
-      if (dialogService.confirm(`Delete ${indicator.name} permanently ?`)) {
+    async removeIndicator(indicator) {
+      if (await dialogService.confirm(`Delete ${indicator.name} permanently ?`)) {
         workspacesService.deleteIndicator(indicator.id)
 
         this.indicators.splice(this.indicators.indexOf(indicator), 1)

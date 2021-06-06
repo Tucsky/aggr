@@ -164,13 +164,13 @@ export default class ChartController {
    * @param markets
    */
   setMarkets(markets: string[]) {
-    this.watermark = markets
-      .filter(market => {
-        const [exchange] = parseMarket(market)
+    const marketsForWatermark = markets.filter(market => {
+      const [exchange] = parseMarket(market)
 
-        return !store.state.exchanges[exchange] || !store.state.exchanges[exchange].disabled
-      })
-      .join(' + ')
+      return !store.state.exchanges[exchange] || !store.state.exchanges[exchange].disabled
+    })
+
+    this.watermark = marketsForWatermark.slice(0, 3).join(' + ') + (markets.length - 3 > 0 ? ' + ' + (markets.length - 3) + ' others' : '')
 
     this.markets = markets.reduce((output, identifier) => {
       output[identifier.replace(':', '')] = true
@@ -1339,7 +1339,7 @@ export default class ChartController {
               open: null,
               high: null,
               low: null,
-              close: null,
+              close: null
             }
           }
 

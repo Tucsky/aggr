@@ -396,8 +396,6 @@ export default {
     .slider__track {
       width: 8px;
       height: 100%;
-
-      padding: 0.5em 0;
     }
 
     .slider__handle {
