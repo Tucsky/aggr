@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="$store.dispatch('app/hideSearch')" medium class="-sticky-footer">
+  <Dialog @clickOutside="hide" medium class="-sticky-footer">
     <template v-slot:header>
       <div class="title" v-if="paneId">{{ paneName }}'s MARKETS</div>
       <div class="title" v-else>ALL PANES MARKETS</div>
@@ -38,7 +38,7 @@
     </div>
 
     <footer>
-      <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Close</a>
+      <a href="javascript:void(0);" class="btn -text mr8" @click="hide">Close</a>
       <button class="btn -large" @click="apply">OK</button>
     </footer>
   </Dialog>
@@ -145,7 +145,10 @@ export default {
         })
       }
 
-      this.close()
+      this.hide()
+    },
+    hide() {
+      this.$store.dispatch('app/hideSearch')
     }
   }
 }
@@ -158,6 +161,10 @@ export default {
   min-width: 200px;
 
   text-align: right;
+
+  .btn {
+    text-transform: none;
+  }
 
   .btn.-added {
     &:after {

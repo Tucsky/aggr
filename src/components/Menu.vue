@@ -180,15 +180,25 @@ export default class extends Vue {
 
     &.btn {
       background-color: $darker;
+
+      &:hover {
+        background-color: $green;
+      }
     }
   }
 
-  &.-open .menu-action {
-    transition: all 0.4s $ease-elastic;
-    transform: none;
-    opacity: 1;
+  &.-open {
+    .menu__button {
+      background-color: $green;
+    }
 
-    visibility: visible;
+    .menu-action {
+      transition: all 0.4s $ease-elastic;
+      transform: none;
+      opacity: 1;
+
+      visibility: visible;
+    }
   }
 
   .dropdown__options {

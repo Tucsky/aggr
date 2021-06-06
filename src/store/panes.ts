@@ -93,6 +93,7 @@ const actions = {
       id,
       name,
       type: options.type,
+      settings: options.settings,
       markets: options.markets || []
     }
 

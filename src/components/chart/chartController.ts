@@ -413,12 +413,13 @@ export default class ChartController {
 
     // get indicator name, script, options ...
     const indicatorSettings = store.state[this.paneId].indicators[id]
+    const indicatorOptions = indicatorSettings.options || {}
 
     console.debug(`[chart/${this.paneId}/addIndicator] adding ${id}`)
 
     const indicator: LoadedIndicator = {
       id,
-      options: JSON.parse(JSON.stringify(indicatorSettings.options)),
+      options: JSON.parse(JSON.stringify(indicatorOptions)),
       script: indicatorSettings.script,
       model: null,
       adapter: null,
@@ -864,7 +865,7 @@ export default class ChartController {
 
       const amount = trade.price * trade.size
 
-      if (!this.activeRenderer.sources[identifier] || typeof this.activeRenderer.sources[identifier] === 'undefined') {
+      if (!this.activeRenderer.sources[identifier] || typeof this.activeRenderer.sources[identifier].empty === 'undefined') {
         this.activeRenderer.sources[identifier] = {
           pair: trade.pair,
           exchange: trade.exchange,

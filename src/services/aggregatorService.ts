@@ -53,7 +53,7 @@ class AggregatorService extends EventEmitter {
         store.dispatch('app/showNotice', {
           type: 'warning',
           timeout: 10000,
-          title: `⚠️ Not connecting to ${pair} because exchange is disabled<br><small>Pair is currently added in ${panes.join(', ')}.</small>`
+          title: `⚠️ Not connecting to ${exchange}:${pair} because ${exchange} is disabled<br><small>Found market in ${panes.join(', ')}.</small>`
         })
 
         markets.splice(i, 1)

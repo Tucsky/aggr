@@ -12,7 +12,7 @@ process.env.VUE_APP_API_SUPPORTED_PAIRS = process.env.API_SUPPORTED_PAIRS
 module.exports = {
   productionSourceMap: false,
   publicPath: process.env.PUBLIC_PATH || '/',
-  configureWebpack: config => {
+  /*configureWebpack: config => {
     if (process.env.NODE_ENV === 'development') {
       config.devtool = 'eval-source-map'
       config.output.devtoolModuleFilenameTemplate = info =>
@@ -22,7 +22,7 @@ module.exports = {
 
       config.output.devtoolFallbackModuleFilenameTemplate = 'webpack:///[resource-path]?[hash]'
     }
-  },
+  },*/
   chainWebpack: config => {
     config.optimization.minimizer('terser').tap(args => {
       args[0].terserOptions.compress.drop_console = true

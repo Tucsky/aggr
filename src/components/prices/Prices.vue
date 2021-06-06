@@ -151,6 +151,10 @@ export default class extends Mixins(PaneMixin) {
   }
 
   addMarketToList(market: Market) {
+    if (!this.markets) {
+      this.markets = []
+    }
+
     this.markets.push({
       ...market,
       status: 'pending',

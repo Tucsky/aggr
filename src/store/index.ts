@@ -91,7 +91,7 @@ export async function boot(workspace?: Workspace) {
   store.dispatch('app/setBooted')
 
   await progress(`registering exchanges`)
-  registerModule('exchanges', modules['exchanges'])
+  await registerModule('exchanges', modules['exchanges'])
 
   for (const paneId in modules.panes.state.panes) {
     await progress(`booting module ${paneId}`)
