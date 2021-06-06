@@ -29,6 +29,9 @@
         </a>
       </div>
     </div>
+    <div class="chart__controls">
+      <button class="chart__screenshot btn -text" @click="takeScreenshot"><i class="icon-photo"></i></button>
+    </div>
     <IndicatorResize v-if="resizingIndicator" :indicatorId="resizingIndicator" :paneId="paneId"></IndicatorResize>
   </div>
 </template>
@@ -77,10 +80,6 @@ export default class extends Mixins(PaneMixin) {
 
   get timeframe() {
     return (this.$store.state[this.paneId] as ChartPaneState).timeframe
-  }
-
-  get refreshRate() {
-    return (this.$store.state[this.paneId] as ChartPaneState).refreshRate
   }
 
   get indicators() {
@@ -137,6 +136,16 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.clearQueue()
           this._chartController.setupQueue()
           break
+        case this.paneId + '/TOGGLE_LEGEND':
+          if (mutation.payload) {
+            this.bindLegend()
+          } else {
+            this.unbindLegend()
+          }
+          break
+        case this.paneId + '/SET_GRIDLINES':
+          this.updateGridlines(mutation.payload.type)
+          break
         case this.paneId + '/SET_INDICATOR_OPTION':
           this._chartController.setIndicatorOption(mutation.payload.id, mutation.payload.key, mutation.payload.value)
           break
@@ -191,9 +200,13 @@ export default class extends Mixins(PaneMixin) {
     this._chartController.setupQueue()
     this._chartController.createChart(this.$refs.chartContainer)
 
+    await this.$nextTick()
+
     this.bindChartEvents()
 
     await this.fetch()
+
+    this.positionControls()
   }
 
   destroyChart() {
@@ -546,7 +559,14 @@ export default class extends Mixins(PaneMixin) {
     this.reachedEnd = false
   }
 
-  async bindLegend(indicatorId: string) {
+  async bindLegend(indicatorId?: string) {
+    if (!indicatorId) {
+      for (const id in this.indicators) {
+        this.bindLegend(id)
+      }
+      return
+    }
+
     const series = this.indicators[indicatorId].series
 
     await this.$nextTick()
@@ -566,12 +586,57 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  unbindLegend(indicatorId: string) {
+  unbindLegend(indicatorId?: string) {
+    if (!indicatorId) {
+      for (const id in this.indicators) {
+        this.unbindLegend(id)
+      }
+      return
+    }
+
     for (const legendId in this._legendElements) {
       if (legendId.indexOf(indicatorId) === 0) {
         delete this._legendElements[legendId]
       }
     }
+  }
+
+  updateGridlines(type: 'vertical' | 'horizontal') {
+    const chartOptions = this.$store.state[this.paneId] as ChartPaneState
+    let show: boolean
+    let color: string
+
+    if (type === 'vertical') {
+      show = chartOptions.showVerticalGridlines
+      color = chartOptions.verticalGridlinesColor
+    } else {
+      show = chartOptions.showHorizontalGridlines
+      color = chartOptions.horizontalGridlinesColor
+    }
+
+    this._chartController.chartInstance.applyOptions({
+      grid: {
+        [type === 'vertical' ? 'vertLines' : 'horzLines']: {
+          color: color,
+          visible: show
+        }
+      }
+    })
+  }
+
+  positionControls() {
+    const priceAxisCanvas = this.$refs.chartContainer.querySelector('td:last-child canvas:nth-child(2)') as HTMLElement
+    const chartControls = this.$el.querySelector('.chart__controls') as HTMLElement
+    console.log(priceAxisCanvas, chartControls)
+    chartControls.style.marginRight = priceAxisCanvas.clientWidth + 'px'
+  }
+
+  takeScreenshot() {
+    const canvas = this._chartController.chartInstance.takeScreenshot()
+    const dataURL = canvas.toDataURL('image/png')
+
+    const win = window.open()
+    win.document.write('<img src="' + dataURL + '"/>')
   }
 }
 </script>
@@ -580,7 +645,7 @@ export default class extends Mixins(PaneMixin) {
 .pane-chart {
   &:hover .chart__indicators,
   &:hover .chart__controls {
-    opacity: 1;
+    display: block;
   }
 
   &.-loading {
@@ -607,8 +672,7 @@ export default class extends Mixins(PaneMixin) {
   left: 1em;
   font-family: 'Barlow Semi Condensed';
   z-index: 3;
-  opacity: 0;
-  transition: opacity 0.2s $ease-out-expo;
+  display: none;
 
   @media (-webkit-min-device-pixel-ratio: 2) {
     font-size: 12px;
@@ -626,15 +690,10 @@ export default class extends Mixins(PaneMixin) {
 
 .chart__controls {
   position: absolute;
-  top: 1em;
-  right: 5em;
-  font-family: 'Barlow Semi Condensed';
+  top: 2.5rem;
+  right: 1rem;
   z-index: 2;
-  opacity: 0;
-  transition: opacity 0.2s $ease-out-expo;
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
+  display: none;
 
   @media screen and (max-width: 767px) {
     display: none;

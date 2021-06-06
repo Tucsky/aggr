@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="close" medium class="-sticky-footer">
+  <Dialog @clickOutside="$store.dispatch('app/hideSearch')" medium class="-sticky-footer">
     <template v-slot:header>
       <div class="title" v-if="paneId">{{ paneName }}'s MARKETS</div>
       <div class="title" v-else>ALL PANES MARKETS</div>
@@ -92,12 +92,7 @@ export default {
     }
   },
   watch: {
-    open(value) {
-      if (!value) {
-        this.$store.dispatch('app/hideSearch')
-      }
-    },
-    showSearch(value) {
+    '$store.state.app.showSearch': function(value) {
       if (!value) {
         this.close(false)
       }

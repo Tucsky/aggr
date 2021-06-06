@@ -1,7 +1,7 @@
 .tippy-tooltip {
   max-width: 180px;
   &.blue-theme {
-    background-color: rgba(black, 0.8);
+    background-color: $tooltip;
   }
 
   &.transparent-theme {
@@ -26,20 +26,20 @@
 }
 
 .tippy-popper[x-placement^='bottom'] .tippy-arrow {
-  border-bottom-color: rgba(black, 0.8);
+  border-bottom-color: $tooltip;
   top: -8px;
 }
 
 .tippy-popper[x-placement^='top'] .tippy-arrow {
-  border-top-color: rgba(black, 0.8);
+  border-top-color: $tooltip;
   bottom: -8px;
 }
 
 .tippy-popper[x-placement^='left'] .tippy-arrow {
-  border-left-color: rgba(black, 0.8);
+  border-left-color: $tooltip;
   right: -8px;
 }
 .tippy-popper[x-placement^='right'] .tippy-arrow {
-  border-right-color: rgba(black, 0.8);
+  border-right-color: $tooltip;
   left: -8px;
 }

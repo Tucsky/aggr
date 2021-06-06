@@ -396,6 +396,8 @@ export default {
     .slider__track {
       width: 8px;
       height: 100%;
+
+      padding: 0.5em 0;
     }
 
     .slider__handle {
@@ -411,7 +413,7 @@ export default {
         right: -0.5em;
         top: 50%;
         border-width: 0.5em 0 0.5em 0.5em;
-        border-color: transparent transparent transparent $blue;
+        border-color: transparent transparent transparent $tooltip;
         transform: translate3d(-1px, -50%, 0);
       }
     }
@@ -448,10 +450,11 @@ export default {
   margin: 0;
   width: auto;
   height: 8px;
-  background: $blue;
+  background: $lighter;
   will-change: transfom;
   border-radius: 10px;
   cursor: pointer;
+  padding: 0 0.5em;
 }
 
 #app.-light .slider__track {
@@ -493,7 +496,7 @@ export default {
   padding: 0.5em;
   min-width: 3em;
   border-radius: 4px;
-  background-color: $blue;
+  background-color: $tooltip;
   color: white;
   text-align: center;
   font-size: 14px;
@@ -510,7 +513,7 @@ export default {
     height: 0;
     border-width: 0.5em 0.5em 0 0.5em;
     border-style: solid;
-    border-color: $blue transparent transparent transparent;
+    border-color: $tooltip transparent transparent transparent;
     content: '';
     transform: translate3d(-50%, 0, 0);
   }

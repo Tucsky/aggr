@@ -311,7 +311,6 @@ const mutations = {
       throw new Error('add-active-market-already-exist')
     }
 
-    console.log('add active market', exchange, pair)
     state.activeMarkets.push({
       id: exchange + pair,
       exchange,
@@ -319,7 +318,6 @@ const mutations = {
     })
   },
   REMOVE_ACTIVE_MARKET(state, { exchange, pair }: { exchange: string; pair: string }) {
-    console.log('add active market', exchange, pair)
     const market = state.activeMarkets.find(m => m.exchange === exchange && m.pair === pair)
 
     if (!market) {

@@ -229,8 +229,6 @@ export default class extends Vue {
 
   get selectedThreshold() {
     const threshold = this.$store.getters[this.paneId + '/getThreshold'](this.selectedThresholdId)
-
-    console.log('GET selected threshold', threshold)
     return threshold
   }
 

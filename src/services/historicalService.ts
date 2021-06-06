@@ -101,7 +101,7 @@ class HistoricalService extends EventEmitter {
     markets.length && console.warn('missing markets', markets.join(', '))
 
     for (const id of markets) {
-      const market: string[] = id.split(':')
+      // const market: string[] = id.split(':')
 
       if (!refs[id]) {
         console.warn(`Server did not send anything about ${id} but client expected it (check if server is tracking this market)`)
@@ -109,7 +109,7 @@ class HistoricalService extends EventEmitter {
         continue
       }
 
-      data.unshift({
+      /*data.unshift({
         timestamp: initialTs,
         exchange: market.shift(),
         pair: market.join(':'),
@@ -123,7 +123,7 @@ class HistoricalService extends EventEmitter {
         lsell: 0,
         cbuy: 0,
         csell: 0
-      })
+      })*/
     }
 
     return {

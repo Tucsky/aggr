@@ -416,3 +416,8 @@ $iconpath: '../fonts';
     content: $icon-resize-height;
   }
 }
+.icon-photo {
+  &:before {
+    content: $icon-photo;
+  }
+}

@@ -17,7 +17,7 @@
     <Notices />
     <Settings v-if="showSettings" />
     <div class="app__wrapper">
-      <Header />
+      <Menu />
 
       <div class="app__layout">
         <Panes />
@@ -32,7 +32,7 @@ import { Component, Vue } from 'vue-property-decorator'
 import aggregatorService from './services/aggregatorService'
 
 import Notices from './components/framework/Notices.vue'
-import Header from './components/Header.vue'
+import Menu from './components/Menu.vue'
 import Settings from './components/settings/Settings.vue'
 
 import Panes from '@/components/panes/Panes.vue'
@@ -46,7 +46,7 @@ import { Notice } from './store/app'
 @Component({
   name: 'App',
   components: {
-    Header,
+    Menu,
     Settings,
     Notices,
     Panes

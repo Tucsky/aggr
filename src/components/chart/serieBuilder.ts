@@ -172,6 +172,8 @@ export default class SerieBuilder {
     output = this.parseMarkets(output, markets)
     output = this.parseReferences(output, references, plots)
 
+    output = this.formatOutput(output)
+
     return {
       output,
       functions,
@@ -180,6 +182,43 @@ export default class SerieBuilder {
       markets,
       references
     }
+  }
+
+  formatOutput(input) {
+    const PARANTHESIS_REGEX = /\(|{|\[/g
+    let paranthesisMatch
+    do {
+      if ((paranthesisMatch = PARANTHESIS_REGEX.exec(input))) {
+        const lineBreakIt = paranthesisMatch[0] === '('
+
+        const closingParenthesisIndex = findClosingBracketMatchIndex(input, paranthesisMatch.index, /\(|{|\[/, /\)|}|\]/)
+        const contentWithinParenthesis = input.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/\n/g, ' ')
+
+        input =
+          input.slice(0, paranthesisMatch.index) +
+          input.slice(paranthesisMatch.index, paranthesisMatch.index + 1) +
+          contentWithinParenthesis +
+          input.slice(closingParenthesisIndex, closingParenthesisIndex + 1) +
+          (lineBreakIt ? '\n' : '') +
+          input.slice(closingParenthesisIndex + 1, input.length)
+
+        PARANTHESIS_REGEX.lastIndex = closingParenthesisIndex
+      }
+    } while (paranthesisMatch)
+
+    const lines = input.trim().split(/\n/)
+
+    for (let i = 0; i < lines.length; i++) {
+      const sourcesMatches = lines[i].match(/renderer.sources\['[\w/:_-]+']\.\w+/g)
+
+      if (sourcesMatches && sourcesMatches.length === 1) {
+        lines[i] = `if (${sourcesMatches[0]}) {
+          ${lines[i]}
+        }`
+      }
+    }
+
+    return lines.join('\n').replace(/\n\n/g, '\n')
   }
 
   parseVariables(output, variables): string {
@@ -191,7 +230,7 @@ export default class SerieBuilder {
         const variableName = variableMatch[1]
         const variableLength = +variableMatch[2] || 1
 
-        output = output.replace(new RegExp('([^.])\\b(' + variableName + ')\\b', 'ig'), `$1${VARIABLES_VAR_NAME}[${variables.length}]`)
+        output = output.replace(new RegExp('(?:[^.]|^)\\b(' + variableName + ')\\b', 'ig'), `${VARIABLES_VAR_NAME}[${variables.length}]`)
 
         const variable = {
           type: 'unknown',
@@ -771,7 +810,7 @@ export default class SerieBuilder {
   getPlotId(input: string) {
     input = input.replace(/options\.([a-zA-Z0-9_]+)/g, '')
 
-    const marketsUsed = (input.match(new RegExp(`([^.$])\\b(${this.markets.join('|')})\\b`, 'g')) || []).slice(1)
+    const marketsUsed = input.match(new RegExp(`\\b(${this.markets.sort((a, b) => b.length - a.length).join('|')})\\b`)) || []
 
     // const referencesUsed = (input.match(new RegExp('\\$([a-z_\\-0-9]+)\\b')) || []).slice(1).map(name => name.replace('$', ''))
 

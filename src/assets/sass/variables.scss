@@ -8,6 +8,7 @@ $purple: #3e2161;
 $base: desaturate(lighten($dark, 10%), 10%);
 $lighter: lighten($base, 10%);
 $darker: darken($base, 10%);
+$tooltip: $lighter;
 
 $ease-out-expo: cubic-bezier(0.005, 1, 0.22, 1);
 $ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);
@@ -98,6 +99,7 @@ $icon-dashboard: '\e948';
 $icon-more: '\e949';
 $icon-bull: '\e94a';
 $icon-resize-height: '\e94b';
+$icon-photo: "\e94c";
 
 $exchanges: (
   'BITMEX': $icon-BITMEX,

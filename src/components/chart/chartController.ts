@@ -139,7 +139,7 @@ export default class ChartController {
   markets: { [identifier: string]: true }
   timezoneOffset = 0
 
-  private loadedSeries: { [id: string]: IndicatorApi } = {}
+  // private loadedSeries: { [id: string]: IndicatorApi } = {}
   private activeChunk: Chunk
   private queuedTrades: Trade[] = []
   private serieBuilder: SerieBuilder
@@ -168,7 +168,7 @@ export default class ChartController {
       .filter(market => {
         const [exchange] = parseMarket(market)
 
-        return !store.state.exchanges[exchange].disabled
+        return !store.state.exchanges[exchange] || !store.state.exchanges[exchange].disabled
       })
       .join(' + ')
 
@@ -205,6 +205,16 @@ export default class ChartController {
     console.log(`[chart/${this.paneId}/controller] create chart`)
 
     const chartOptions = getChartOptions(defaultChartOptions as any)
+
+    if (store.state[this.paneId].showVerticalGridlines) {
+      chartOptions.grid.vertLines.visible = store.state[this.paneId].showVerticalGridlines
+      chartOptions.grid.vertLines.color = store.state[this.paneId].verticalGridlinesColor
+    }
+
+    if (store.state[this.paneId].showHorizontalGridlines) {
+      chartOptions.grid.horzLines.visible = store.state[this.paneId].showHorizontalGridlines
+      chartOptions.grid.horzLines.color = store.state[this.paneId].horizontalGridlinesColor
+    }
 
     this.chartInstance = TV.createChart(containerElement, chartOptions)
     this.chartElement = containerElement
@@ -523,7 +533,6 @@ export default class ChartController {
         const serie = indicator.model.plots[i]
         const apiMethodName = camelize('add-' + serie.type + '-series')
         const serieOptions = Object.assign({}, defaultSerieOptions, defaultPlotsOptions[serie.type] || {}, indicator.options, serie.options)
-
         const api = this.chartInstance[apiMethodName](serieOptions) as IndicatorApi
 
         api.id = serie.id
@@ -540,8 +549,8 @@ export default class ChartController {
           })
         }
 
-        this.loadedSeries[serie.id] = api
-        indicator.apis.push(this.loadedSeries[serie.id])
+        // this.loadedSeries[serie.id] = api
+        indicator.apis.push(api)
 
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         indicator.apisNoop.push(({ update: () => {} } as unknown) as IndicatorApi) // for batch rendering
@@ -637,7 +646,6 @@ export default class ChartController {
 
     // remove from chart instance (derender)
     for (let i = 0; i < indicator.apis.length; i++) {
-      delete this.loadedSeries[indicator.apis[i].id]
       this.chartInstance.removeSeries(indicator.apis[i])
     }
 
@@ -704,6 +712,7 @@ export default class ChartController {
    */
   clearIndicatorSeries(indicator: LoadedIndicator) {
     for (let i = 0; i < indicator.apis.length; i++) {
+      indicator.apis[i].setData([])
       indicator.apis[i].setData([])
     }
   }
@@ -1043,11 +1052,15 @@ export default class ChartController {
       temporaryRenderer.bar.lsell += bar.lsell
 
       temporaryRenderer.sources[bar.exchange + bar.pair] = this.cloneSourceBar(bar)
+      temporaryRenderer.sources[bar.exchange + bar.pair].empty = false
     }
 
     if (this.activeRenderer) {
       for (const id in temporaryRenderer.indicators) {
         this.activeRenderer.indicators[id] = temporaryRenderer.indicators[id]
+      }
+      for (const id in temporaryRenderer.sources) {
+        this.activeRenderer.sources[id] = temporaryRenderer.sources[id]
       }
     } else {
       this.activeRenderer = temporaryRenderer
@@ -1069,9 +1082,7 @@ export default class ChartController {
         this.renderedRange.to = to
       }
     }
-
     this.replaceData(computedSeries)
-
     if (scrollPosition) {
       this.chartInstance.timeScale().scrollToPosition(scrollPosition, false)
     }
@@ -1121,8 +1132,13 @@ export default class ChartController {
   replaceData(seriesData: { [id: string]: (TV.LineData | TV.BarData | TV.HistogramData)[] }) {
     this.preventPan()
 
-    for (const id in seriesData) {
-      this.loadedSeries[id].setData(seriesData[id])
+    for (let i = 0; i < this.loadedIndicators.length; i++) {
+      for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
+        const serieId = this.loadedIndicators[i].apis[j].id
+        if (seriesData[serieId]) {
+          this.loadedIndicators[i].apis[j].setData(seriesData[serieId])
+        }
+      }
     }
   }
 
@@ -1134,7 +1150,6 @@ export default class ChartController {
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       const indicator = this.loadedIndicators[i]
       const serieData = renderer.indicators[indicator.id]
-
       this.loadedIndicators[i].adapter(renderer, serieData.functions, serieData.variables, indicator.apis, indicator.options, seriesUtils)
     }
   }
@@ -1327,7 +1342,13 @@ export default class ChartController {
 
           if (keys.length) {
             for (let k = 0; k < keys.length; k++) {
-              if (typeof renderer.sources[markets[j]][keys[k]] === 'undefined') {
+              if (
+                typeof renderer.sources[markets[j]][keys[k]] === 'undefined' &&
+                keys[k] !== 'open' &&
+                keys[k] !== 'high' &&
+                keys[k] !== 'low' &&
+                keys[k] !== 'close'
+              ) {
                 renderer.sources[markets[j]][keys[k]] = 0
               }
             }

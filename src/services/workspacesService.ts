@@ -1,4 +1,4 @@
-import { defaultIndicators } from '@/components/chart/defaultIndicators'
+import defaultIndicators from '@/store/defaultIndicators.json'
 import store, { boot } from '@/store'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
 import { GifsStorage, ProductsStorage, Workspace } from '@/types/test'

@@ -26,6 +26,11 @@ export interface ChartPaneState {
   timeframe: number
   indicatorsErrors: { [indicatorId: string]: string }
   refreshRate?: number
+  showLegend: boolean
+  showHorizontalGridlines: boolean
+  horizontalGridlinesColor: string
+  showVerticalGridlines: boolean
+  verticalGridlinesColor: string
 }
 
 const getters = {} as GetterTree<ChartPaneState, ChartPaneState>
@@ -35,7 +40,12 @@ const state = {
   indicators: {},
   resizingIndicator: null,
   timeframe: 10,
-  refreshRate: 500
+  refreshRate: 500,
+  showLegend: true,
+  showHorizontalGridlines: false,
+  horizontalGridlinesColor: 'rgba(255,255,255,.1)',
+  showVerticalGridlines: false,
+  verticalGridlinesColor: 'rgba(255,255,255,.1)'
 } as ChartPaneState
 
 const actions = {
@@ -161,6 +171,24 @@ const actions = {
 const mutations = {
   SET_REFRESH_RATE(state, value) {
     state.refreshRate = +value || 0
+  },
+  TOGGLE_LEGEND(state) {
+    state.showLegend = !state.showLegend
+  },
+  SET_GRIDLINES(state, { type, value }) {
+    if (type === 'vertical') {
+      if (typeof value === 'boolean') {
+        state.showVerticalGridlines = value
+      } else {
+        state.verticalGridlinesColor = value
+      }
+    } else {
+      if (typeof value === 'boolean') {
+        state.showHorizontalGridlines = value
+      } else {
+        state.horizontalGridlinesColor = value
+      }
+    }
   },
   SET_INDICATOR_SERIES(state, { id, series }) {
     state.indicators[id].series = series

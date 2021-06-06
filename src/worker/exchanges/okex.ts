@@ -104,8 +104,6 @@ export default class extends Exchange {
     )
 
     await sleep(100)
-
-    console.log('okex send unsubscribe', pair)
   }
 
   onMessage(event, api) {

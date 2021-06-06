@@ -1,4 +1,3 @@
-import { defaultIndicators } from '../components/chart/defaultIndicators'
 import store from '../store'
 
 const progressContainer = document.getElementById('progress')

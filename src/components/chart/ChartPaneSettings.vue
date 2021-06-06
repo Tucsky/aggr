@@ -1,6 +1,6 @@
 <template>
   <div class="settings-chart">
-    <div class="form-group">
+    <div class="form-group mb8">
       <label> Refresh chart every <strong v-text="refreshRateHms"></strong> </label>
 
       <slider
@@ -15,6 +15,42 @@
       ></slider>
     </div>
     <p v-if="refreshRate < 500" class="form-feedback"><i class="icon-warning"></i> Low refresh rate can be very CPU intensive</p>
+    <div class="form-group mb8">
+      <label for="">Vertical grid lines</label>
+      <div class="form-group column">
+        <label class="checkbox-control" @change="$store.commit(paneId + '/SET_GRIDLINES', { type: 'vertical', value: $event.target.checked })">
+          <input type="checkbox" class="form-control" :checked="showVerticalGridlines" />
+          <div class="mr8"></div>
+        </label>
+        <verte
+          v-if="showVerticalGridlines"
+          picker="square"
+          menuPosition="left"
+          model="rgb"
+          :value="verticalGridlinesColor"
+          @input="$event !== verticalGridlinesColor && $store.commit(paneId + '/SET_GRIDLINES', { type: 'vertical', value: $event })"
+        ></verte>
+        <label for="" class="-fill -center ml8">Color</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="">Horizontal grid lines</label>
+      <div class="form-group column">
+        <label class="checkbox-control" @change="$store.commit(paneId + '/SET_GRIDLINES', { type: 'horizontal', value: $event.target.checked })">
+          <input type="checkbox" class="form-control" :checked="showHorizontalGridlines" />
+          <div class="mr8"></div>
+        </label>
+        <verte
+          v-if="showHorizontalGridlines"
+          picker="square"
+          menuPosition="left"
+          model="rgb"
+          :value="horizontalGridlinesColor"
+          @input="$event !== horizontalGridlinesColor && $store.commit(paneId + '/SET_GRIDLINES', { type: 'horizontal', value: $event })"
+        ></verte>
+        <label for="" class="-fill -center ml8">Color</label>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -42,6 +78,22 @@ export default class extends Vue {
 
   get refreshRate() {
     return this.$store.state[this.paneId].refreshRate
+  }
+
+  get showVerticalGridlines() {
+    return this.$store.state[this.paneId].showVerticalGridlines
+  }
+
+  get verticalGridlinesColor() {
+    return this.$store.state[this.paneId].verticalGridlinesColor
+  }
+
+  get showHorizontalGridlines() {
+    return this.$store.state[this.paneId].showHorizontalGridlines
+  }
+
+  get horizontalGridlinesColor() {
+    return this.$store.state[this.paneId].horizontalGridlinesColor
   }
 
   get refreshRateHms() {

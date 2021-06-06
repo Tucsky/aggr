@@ -12,7 +12,7 @@
       <button class="btn -small" @click="resize" v-tippy title="Resize"><i class="icon-resize-height"></i></button>
       <button class="btn -small" @click="remove" v-tippy title="Disable"><i class="icon-cross"></i></button>
     </div>
-    <div class="indicator__legend">
+    <div v-if="showLegend" class="indicator__legend">
       <div v-for="serie of series" :key="serie" :id="indicator.id + serie"></div>
     </div>
     <div v-if="error">
@@ -33,7 +33,10 @@ export default {
       return this.$store.state[this.paneId].indicators[this.indicatorId]
     },
     series: function() {
-      return this.indicator.series.slice(0, 2)
+      return this.indicator.series
+    },
+    showLegend: function() {
+      return this.$store.state[this.paneId].showLegend
     },
     name: function() {
       if (this.indicator.displayName) {
@@ -97,7 +100,7 @@ export default {
   &__legend {
     color: lighten($blue, 20%);
     margin-left: 0.4em;
-    font-family: 'Barlow Semi Condensed';
+    font-family: $font-monospace;
     pointer-events: none;
     line-height: 1.75em;
     letter-spacing: 0px;
@@ -107,6 +110,12 @@ export default {
     font-size: 0.75em;
 
     text-shadow: 1px 1px black;
+
+    > div {
+      display: inline-block;
+      line-height: 1.5;
+      margin: 0.26em 0 0 0.26em;
+    }
   }
 
   &__controls {
@@ -128,7 +137,7 @@ export default {
       padding: 0.2rem 0.4rem;
 
       &:hover {
-        background-color: lighten($dark, 2%);
+        background-color: $green;
       }
 
       &:first-child {
@@ -155,13 +164,6 @@ export default {
   .indicator__legend {
     color: $green;
     text-shadow: none;
-  }
-  .indicator__controls > .btn {
-    background-color: rgba($green, 0.8);
-
-    &:hover {
-      background-color: lighten($green, 2%);
-    }
   }
 }
 </style>
