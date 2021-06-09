@@ -3,8 +3,8 @@
     <pane-header :loading="loading" :paneId="paneId" :showTimeframe="true">
       <dropdown
         :options="{
-          clear: { label: 'Clear', click: clear },
-          trim: { label: 'Trim', click: refreshChart },
+          //clear: { label: 'Clear', click: clear },
+          //trim: { label: 'Trim', click: refreshChart },
           render: { label: 'Render', click: renderChart },
           reset: { label: 'Reset', click: resetChart }
         }"
@@ -41,7 +41,7 @@ import { Component, Mixins } from 'vue-property-decorator'
 
 import ChartController, { TimeRange } from './chartController'
 
-import { formatPrice, formatAmount, formatTime, getHms, formatBytes } from '../../utils/helpers'
+import { formatPrice, formatAmount, formatTime, getHms, formatBytes, openBase64InNewTab } from '../../utils/helpers'
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
 import { getCustomColorsOptions } from './chartOptions'
 
@@ -649,7 +649,7 @@ export default class extends Mixins(PaneMixin) {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
 
-    const text = this.markets.join(', ')
+    const text = this.markets.join(', ') + ' | ' + getHms(this.timeframe * 1000).toUpperCase()
 
     const isHRS = window.devicePixelRatio > 1
 
@@ -665,7 +665,7 @@ export default class extends Mixins(PaneMixin) {
     const date = new Date().toISOString()
     const dateWidth = ctx.measureText(date).width
 
-    let currentLine = ' | '
+    let currentLine = ' |'
 
     for (let i = 0; i < words.length; i++) {
       const word = words[i]
@@ -739,9 +739,10 @@ export default class extends Mixins(PaneMixin) {
     })
 
     const dataURL = canvas.toDataURL('image/png')
+    const startIndex = dataURL.indexOf('base64,') + 7
+    const b64 = dataURL.substr(startIndex)
 
-    const win = window.open()
-    win.document.write('<img src="' + dataURL + '"/>')
+    openBase64InNewTab(b64, 'image/png')
   }
 }
 </script>

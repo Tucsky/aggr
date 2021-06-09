@@ -1,38 +1,64 @@
 <template>
   <Dialog @clickOutside="hide" medium class="-sticky-footer">
     <template v-slot:header>
-      <div class="title" v-if="paneId">{{ paneName }}'s MARKETS</div>
-      <div class="title" v-else>ALL PANES MARKETS</div>
+      <div class="title" v-if="paneId">
+        {{ paneName }}'s MARKETS
+        <div class="subtitle">Choose which markets <u>this pane</u> should listen to</div>
+      </div>
+      <div class="title" v-else>
+        ALL PANES MARKETS
+        <div class="subtitle">Change <u>all</u> panes markets regardless of their current configuration</div>
+      </div>
       <div class="column -center"></div>
     </template>
     <div class="d-flex">
       <div class="form-group search">
-        <label>Add markets ({{ flattenedProducts.length }})</label>
-        <div class="mb4">
+        <label>Available ({{ flattenedProducts.length }})</label>
+        <div class="mb8 d-flex">
           <input ref="input" type="text" class="form-control" placeholder="search (eg: BITMEX:XBTUSD)" v-model="query" />
+          <dropdown :options="filters" placeholder="Filter" title="Filters" v-tippy="{ placement: 'top' }">
+            <template v-slot:selection>
+              <div class="btn" :class="{ '-text': !hasFilters, ml8: hasFilters }">
+                filter <i class="ml4" :class="hasFilters ? 'icon-warning' : 'icon-plus'"></i>
+              </div>
+            </template>
+            <template v-slot:option="{ index, value }">
+              <div @click="toggleFilter(index)">
+                <i class="icon-check" v-if="value"></i>
+
+                {{ index }}
+              </div>
+            </template>
+          </dropdown>
         </div>
-        <table v-if="filteredMarkets.length" class="table">
+        <table v-if="results.length">
           <tbody>
-            <tr
-              v-for="market of filteredMarkets"
-              :key="market"
-              @click="selectMarket(market)"
-              :title="market"
-              v-tippy="{ placement: 'right' }"
-              class="-action"
-            >
-              <td class="pl0 table-input" v-text="market"></td>
+            <tr v-for="market of results" :key="market" @click="selectMarket(market)" class="-action">
+              <td class="icon search__exchange" :class="'icon-' + market.split(':')[0]"></td>
+              <td v-text="market"></td>
+              <td>
+                <i v-if="historicalMarkets.indexOf(market) !== -1" class="icon-candlestick"></i>
+              </td>
             </tr>
           </tbody>
         </table>
+        <div class="text-danger" v-else>
+          <p>No results</p>
+        </div>
       </div>
       <div class="form-group selection">
-        <label v-if="paneId">Pane {{ paneId }}</label>
-        <label v-else>Workspace (all panes)</label>
-        <button v-for="market of selection" :key="market" class="btn -small mr4 mb4 -green" title="Click to remove" @click="deselectMarket(market)">
+        <label>Selection <span v-if="paneId" v-text="paneId"></span></label>
+        <button
+          v-for="market of selection"
+          :key="market"
+          class="btn -small mr4 mb4 -green"
+          :class="{ '-connected': activeMarkets.indexOf(market) !== -1 }"
+          title="Click to remove"
+          @click="deselectMarket(market)"
+        >
           {{ market }}
 
-          <i class="icon-check ml8" v-if="activeMarkets.indexOf(market) !== -1" title="Connected" v-tippy></i>
+          <i class="icon-check ml8" title="Connected" v-tippy></i>
         </button>
       </div>
     </div>
@@ -65,7 +91,10 @@ export default {
   },
   data: () => ({
     markets: [],
-    selection: []
+    selection: [],
+    filters: {
+      historical: false
+    }
   }),
   computed: {
     paneName() {
@@ -78,6 +107,9 @@ export default {
     activeMarkets() {
       return this.$store.state.app.activeMarkets.map(m => m.exchange + ':' + m.pair)
     },
+    historicalMarkets() {
+      return this.$store.state.app.historicalMarkets
+    },
     indexedProducts() {
       return this.$store.state.app.indexedProducts
     },
@@ -85,10 +117,22 @@ export default {
       return Array.prototype.concat(...Object.values(this.indexedProducts))
     },
     queryFilter: function() {
-      return new RegExp(this.query.replace(/\s/, '|'), 'i')
+      return new RegExp(this.query.replace(/[ ,]/g, '|'), 'i')
     },
-    filteredMarkets: function() {
-      return this.flattenedProducts.filter(a => this.selection.indexOf(a) === -1 && this.queryFilter.test(a)).slice(0, 100)
+    filteredProducts() {
+      return this.flattenedProducts.filter(a => {
+        if (this.filters.historical) {
+          return this.historicalMarkets.indexOf(a) !== -1
+        }
+
+        return true
+      })
+    },
+    results: function() {
+      return this.filteredProducts.filter(a => this.selection.indexOf(a) === -1 && this.queryFilter.test(a)).slice(0, 100)
+    },
+    hasFilters() {
+      return this.filters.historical
     }
   },
   watch: {
@@ -149,6 +193,9 @@ export default {
     },
     hide() {
       this.$store.dispatch('app/hideSearch')
+    },
+    toggleFilter(key) {
+      this.$set(this.filters, key, !this.filters[key])
     }
   }
 }
@@ -158,30 +205,60 @@ export default {
   flex-basis: 0;
   margin-left: 1rem;
 
-  min-width: 200px;
-
   text-align: right;
 
   .btn {
     text-transform: none;
-  }
+    opacity: 0.75;
 
-  .btn.-added {
-    &:after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      opacity: 0;
-      background-color: white;
-      animation: 1s $ease-out-expo highlight;
-      pointer-events: none;
+    i {
+      display: none;
+    }
+
+    &.-added {
+      &:after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        opacity: 0;
+        background-color: white;
+        animation: 1s $ease-out-expo highlight;
+        pointer-events: none;
+      }
+    }
+
+    &.-connected {
+      opacity: 1;
+
+      i {
+        display: block;
+      }
     }
   }
 }
 .search {
   flex-grow: 1;
+
+  table {
+    border: 0;
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  td {
+    padding: 0.25rem 0.33rem;
+  }
+
+  tr:hover {
+    background-color: rgba(white, 0.1);
+    cursor: pointer;
+  }
+
+  &__exchange {
+    background-position: right;
+  }
 }
 </style>

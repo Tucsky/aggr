@@ -1,7 +1,7 @@
 <template>
   <div class="pane-header toolbar" :class="{ '-loading': loading }">
     <div class="pane-header__loader"></div>
-    <span class="mrauto title-top-left">{{ name }}</span>
+    <span class="mrauto">{{ name }}</span>
 
     <slot />
 

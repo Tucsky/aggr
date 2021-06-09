@@ -1,7 +1,10 @@
 <template>
   <Dialog @clickOutside="close" class="serie-dialog" :mask="false" :startPosition="{ x: 0.33 }">
     <template v-slot:header>
-      <div class="title">Help with indicators</div>
+      <div class="title">
+        Documentation
+        <div class="subtitle">Indicators</div>
+      </div>
     </template>
     <section class="section">
       <div class="help-block" v-if="sections.indexOf('formula') > -1">

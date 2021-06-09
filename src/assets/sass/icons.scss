@@ -421,3 +421,8 @@ $iconpath: '../fonts';
     content: $icon-photo;
   }
 }
+.icon-candlestick {
+  &:before {
+    content: $icon-candlestick;
+  }
+}

@@ -98,7 +98,7 @@ export default {
   }
 
   &__legend {
-    color: lighten($blue, 20%);
+    color: lighten($green, 20%);
     margin-left: 0.4em;
     font-family: $font-monospace;
     pointer-events: none;

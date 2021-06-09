@@ -1,6 +1,7 @@
 <template>
   <div class="slider" ref="wrapper" :class="{ '-vertical': vertical }">
     <div class="slider__track" ref="track" v-on="trackSlide ? { mousedown: select, touchstart: select } : {}">
+      <div v-if="showCompletion && handles[0]" class="slider__completion" :style="`width: ${handles[0].positionX}px`"></div>
       <div class="slider__fill" ref="fill"></div>
       <div
         class="slider__handle"
@@ -36,7 +37,8 @@ export default {
     max: { type: Number, default: 255 },
     step: { type: Number, default: 1 },
     value: { type: Number, default: 0 },
-    handlesValue: { type: Array, default: () => [0] }
+    handlesValue: { type: Array, default: () => [0] },
+    showCompletion: { type: Boolean, default: true }
   },
   data: () => ({
     fill: {
@@ -452,7 +454,7 @@ export default {
   will-change: transfom;
   border-radius: 10px;
   cursor: pointer;
-  padding: 0 0.5em;
+  padding: 0;
 }
 
 #app.-light .slider__track {
@@ -522,5 +524,12 @@ export default {
   height: 100%;
   transform-origin: left top;
   border-radius: 10px;
+}
+
+.slider__completion {
+  height: 100%;
+
+  border-radius: 10px;
+  background-color: $green;
 }
 </style>

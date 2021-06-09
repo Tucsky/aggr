@@ -194,6 +194,18 @@ export async function progress(task: string | boolean) {
   progressTask.innerText = task
 }
 
+export function openBase64InNewTab(data, mimeType) {
+  const byteCharacters = atob(data)
+  const byteNumbers = new Array(byteCharacters.length)
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i)
+  }
+  const byteArray = new Uint8Array(byteNumbers)
+  const file = new Blob([byteArray], { type: mimeType + ';base64' })
+  const fileURL = URL.createObjectURL(file)
+  window.open(fileURL)
+}
+
 export function findClosingBracketMatchIndex(str, pos, open = /\(/, close = /\)/) {
   if (!open.test(str[pos])) {
     throw new Error('No ' + open.toString() + ' at index ' + pos)

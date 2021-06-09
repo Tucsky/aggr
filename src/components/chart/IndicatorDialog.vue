@@ -12,7 +12,7 @@
       <button v-if="unsavedChanges" class="btn -text" href="javascript:void(0)" @click="$store.dispatch(paneId + '/saveIndicator', indicatorId)">
         <i class="icon-info mr4"></i> unsaved changes
       </button>
-      <button class="btn -text -white mlauto" @click="showHelp">get help <i class="icon-external-link-square-alt ml4"></i></button>
+      <button class="btn -text -white mlauto" @click="showHelp">doc <i class="icon-external-link-square-alt ml4"></i></button>
     </div>
     <div class="form-group mb16 mt16">
       <div class="d-flex mb4">
