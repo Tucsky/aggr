@@ -1,60 +1,65 @@
 <template>
-  <Dialog @clickOutside="close">
+  <Dialog @clickOutside="close" class="-medium">
     <template v-slot:header>
       <div class="title">Add indicator</div>
       <div class="column -center"></div>
     </template>
-    <template v-if="indicators.length">
-      <div class="form-group">
-        <label>Choose from existing indicator</label>
-        <div class="d-flex mb4">
-          <input type="text" class="form-control" placeholder="search" v-model="query" />
-          <div v-text="indicators.length" class="-center text-muted ml16"></div>
+    <div class="d-flex mobile-dir-col-desktop-dir-row">
+      <template v-if="indicators.length">
+        <div class="form-group">
+          <label>Choose from existing indicator</label>
+          <div class="d-flex mb4">
+            <input type="text" class="form-control" placeholder="search" v-model="query" />
+            <div v-text="indicators.length" class="-center text-muted ml16"></div>
+          </div>
+          <table v-if="filteredIndicators.length" class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Last updated</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="indicator of filteredIndicators"
+                :key="indicator.id"
+                @click="selectIndicator(indicator)"
+                :title="indicator.description"
+                v-tippy="{ placement: 'right' }"
+                class="-action"
+              >
+                <td class="table-input" v-text="indicator.displayName || indicator.name"></td>
+                <td class="table-input" v-text="indicator.updatedAt ? ago(indicator.updatedAt) + ' ago' : 'Never'"></td>
+                <td class="table-action">
+                  <button class="btn  -red -small" @click.stop="removeIndicator(indicator)"><i class="icon-cross"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <table v-if="filteredIndicators.length" class="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Last updated</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="indicator of filteredIndicators"
-              :key="indicator.id"
-              @click="selectIndicator(indicator)"
-              :title="indicator.id"
-              v-tippy="{ placement: 'right' }"
-              class="-action"
-            >
-              <td class="table-input" v-text="indicator.displayName || indicator.name"></td>
-              <td class="table-input" v-text="indicator.updatedAt ? ago(indicator.updatedAt) + ' ago' : 'Never'"></td>
-              <td class="table-action">
-                <button class="btn  -red -small" @click.stop="removeIndicator(indicator)"><i class="icon-cross"></i></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="divider -horizontal">Or</div>
+        <div class="divider -vertical">Or</div>
+      </template>
+      <div>
+        <div class="form-group mb16">
+          <label>Create indicator</label>
+          <input class="form-control" :value="name" @input="getIndicatorId($event.target.value)" placeholder="Name of indicator / serie" />
+          <p>
+            ID: <code class="-filled">{{ indicatorId }}</code>
+          </p>
+        </div>
+        <div class="form-group mb16">
+          <label>Scale with</label>
+          <dropdown
+            class="form-control -left -center"
+            :selected="priceScaleId"
+            :options="availableScales"
+            placeholder="Default scale"
+            @output="priceScaleId = $event"
+          ></dropdown>
+        </div>
       </div>
-      <div class="divider">Or</div>
-    </template>
-    <div class="form-group mb16">
-      <label>Create indicator</label>
-      <input class="form-control" :value="name" @input="getIndicatorId($event.target.value)" placeholder="Name of indicator / serie" />
-      <p>
-        ID: <code>{{ indicatorId }}</code>
-      </p>
-    </div>
-    <div class="form-group mb16">
-      <label>Align serie with</label>
-      <dropdown
-        class="form-control -left -center"
-        :selected="priceScaleId"
-        :options="availableScales"
-        placeholder="Default scale"
-        @output="priceScaleId = $event"
-      ></dropdown>
     </div>
     <footer>
       <a href="javascript:void(0);" class="btn -text mr16" @click="close(false)">Cancel</a>
@@ -131,8 +136,12 @@ export default {
       this.getIndicatorId(this.name)
     },
     getIndicatorId(name) {
-      if (!name.length) {
-        name = 'Untitled'
+      if (!name || !name.length) {
+        if (!this.name || !this.name.lengt) {
+          name = 'Untitled'
+        } else {
+          name = this.name
+        }
       }
 
       this.indicatorId = uniqueName(
@@ -172,6 +181,8 @@ export default {
         workspacesService.deleteIndicator(indicator.id)
 
         this.indicators.splice(this.indicators.indexOf(indicator), 1)
+
+        this.getIndicatorId()
       }
     },
     ago(timestamp) {

@@ -41,7 +41,7 @@ export default class extends Exchange {
       const type = ['spot', 'futures', 'swap'][response.indexOf(data)]
 
       for (const product of data.data) {
-        let pair
+        let pair: string
 
         switch (type) {
           case 'spot':
@@ -79,17 +79,26 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async subscribe(api, pair): Promise<void> {
-    if (!this.canSubscribe(api, pair)) {
+  async subscribe(api, pair) {
+    if (!(await super.subscribe(api, pair))) {
       return
     }
 
     api.send(
       JSON.stringify({
-        sub: 'market.' + pair + '.trade.detail',
+        sub: `market.${pair}.trade.detail`,
         id: pair
       })
     )
+
+    api.send(
+      JSON.stringify({
+        sub: `public.${pair}.liquidation_orders`,
+        id: pair
+      })
+    )
+
+    return true
   }
 
   /**
@@ -97,8 +106,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async unsubscribe(api, pair): Promise<void> {
-    if (!this.canUnsubscribe(api, pair)) {
+  async unsubscribe(api, pair) {
+    if (!(await super.unsubscribe(api, pair))) {
       return
     }
 
@@ -108,6 +117,15 @@ export default class extends Exchange {
         id: pair
       })
     )
+
+    api.send(
+      JSON.stringify({
+        unsub: `public.${pair}.liquidation_orders`,
+        id: pair
+      })
+    )
+
+    return true
   }
 
   onMessage(event, api) {
@@ -124,8 +142,14 @@ export default class extends Exchange {
     } else if (json.tick && json.tick.data && json.tick.data.length) {
       const pair = json.ch.replace(/market.(.*).trade.detail/, '$1')
 
+      const name = this.id
+
+      /*if (this.types[pair] !== 'spot') {
+        name += '_futures'
+      }*/
+
       this.emitTrades(
-        api._id,
+        api.id,
         json.tick.data.map(trade => {
           let size = +trade.amount
 
@@ -134,7 +158,7 @@ export default class extends Exchange {
           }
 
           return {
-            exchange: this.id,
+            exchange: name,
             pair: pair,
             timestamp: trade.ts,
             price: +trade.price,

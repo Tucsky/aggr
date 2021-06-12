@@ -640,7 +640,6 @@ export default class extends Mixins(PaneMixin) {
   positionControls() {
     const priceAxisCanvas = this.$refs.chartContainer.querySelector('td:last-child canvas:nth-child(2)') as HTMLElement
     const chartControls = this.$el.querySelector('.chart__controls') as HTMLElement
-    console.log(priceAxisCanvas, chartControls)
     chartControls.style.marginRight = priceAxisCanvas.clientWidth + 'px'
   }
 
@@ -691,6 +690,8 @@ export default class extends Mixins(PaneMixin) {
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, headerHeight, canvas.width, canvas.height - headerHeight)
     ctx.drawImage(chartCanvas, 0, headerHeight)
+    ctx.fillStyle = 'rgba(0,0,0,.2)'
+    ctx.fillRect(0, headerHeight, canvas.width, canvas.height - headerHeight)
 
     ctx.fillStyle = 'black'
     ctx.font = `${textFontsize}px Share Tech Mono`
@@ -747,7 +748,7 @@ export default class extends Mixins(PaneMixin) {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .pane-chart {
   &:hover .chart__indicators,
   &:hover .chart__controls {
@@ -803,6 +804,15 @@ export default class extends Mixins(PaneMixin) {
 
   @media screen and (max-width: 767px) {
     display: none;
+  }
+}
+.btn.-text {
+  &.-text {
+    opacity: 0.5;
+
+    &:hover {
+      opacity: 1;
+    }
   }
 }
 </style>

@@ -14,6 +14,17 @@
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>
       </button>
+      <a
+        class="menu-action btn"
+        type="button"
+        target="_blank"
+        href="https://github.com/Tucsky/aggr"
+        title="Github"
+        v-tippy="{ placement: 'left', distance: 20 }"
+      >
+        <span class="mr4">Github</span>
+        <i class="icon-external-link-square-alt"></i>
+      </a>
       <button
         class="menu-action btn"
         type="button"
@@ -30,7 +41,7 @@
           <slider
             style="width: 100px"
             :min="0"
-            :max="10"
+            :max="2"
             :step="0.1"
             :label="true"
             :editable="false"
@@ -147,7 +158,7 @@ export default class extends Vue {
 
 <style lang="scss">
 .menu {
-  position: absolute;
+  position: fixed;
   bottom: 1rem;
   right: 1rem;
   z-index: 2;
@@ -175,6 +186,7 @@ export default class extends Vue {
     opacity: 0;
     transition: all 0.4s $ease-elastic, visibility 0.4s linear 0.4s;
     margin-bottom: 0.625rem;
+    text-decoration: none;
 
     visibility: hidden;
 

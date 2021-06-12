@@ -59,12 +59,12 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async subscribe(api, pair): Promise<void> {
-    if (!this.canSubscribe(api, pair)) {
+  async subscribe(api, pair) {
+    if (!(await super.subscribe(api, pair))) {
       return
     }
 
-    const event: { event: string; pair?: string[]; product_ids?: string[]; feed?: string; subscription?: { name: string } } = {
+    const event: any = {
       event: 'subscribe'
     }
 
@@ -81,6 +81,8 @@ export default class extends Exchange {
     }
 
     api.send(JSON.stringify(event))
+
+    return true
   }
 
   /**
@@ -88,12 +90,12 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async unsubscribe(api, pair): Promise<void> {
-    if (!this.canUnsubscribe(api, pair)) {
+  async unsubscribe(api, pair) {
+    if (!(await super.unsubscribe(api, pair))) {
       return
     }
 
-    const event: { event: string; pair?: string[]; product_ids?: string[]; feed?: string; subscription?: { name: string } } = {
+    const event: any = {
       event: 'unsubscribe'
     }
 
@@ -110,6 +112,8 @@ export default class extends Exchange {
     }
 
     api.send(JSON.stringify(event))
+
+    return true
   }
 
   onMessage(event, api) {
@@ -122,7 +126,7 @@ export default class extends Exchange {
     if (json.feed === 'trade' && json.qty) {
       // futures
 
-      return this.emitTrades(api._id, [
+      return this.emitTrades(api.id, [
         {
           exchange: this.id,
           pair: json.product_id,
@@ -136,7 +140,7 @@ export default class extends Exchange {
       // spot
 
       return this.emitTrades(
-        api._id,
+        api.id,
         json[1].map(trade => ({
           exchange: this.id,
           pair: json[3],
@@ -151,13 +155,13 @@ export default class extends Exchange {
     return false
   }
 
-  onApiBinded(api) {
+  onApiCreated(api) {
     if (/futures/.test(api.url)) {
       this.startKeepAlive(api)
     }
   }
 
-  onApiUnbinded(api) {
+  onApiRemoved(api) {
     if (/futures/.test(api.url)) {
       this.stopKeepAlive(api)
     }

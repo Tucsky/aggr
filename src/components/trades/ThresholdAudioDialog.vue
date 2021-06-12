@@ -23,19 +23,11 @@
           play(<br /><span class="ml8" v-tippy title="Frequency (hz)">frequency: number</span>,<br />
           <span class="ml8" v-tippy title="Gain (volume, 0 is muted and 1 is a loud)">gain: number</span>,<br />
           <span class="ml8" v-tippy title="Duration (duration of the song in seconds)">duration: number</span>,<br />
-          <span
-            class="ml8"
-            v-tippy
-            title="Wait for (duration in which the song will *block* the sequence, queuing the next songs, default to duration)"
-            >wait?: number</span
-          >,<br />
-          <span
-            class="ml8"
-            v-tippy
-            title="Target gain (gain at the end of song, default to 0.001, can be same as gain, or fade to a value close to 0)"
-            >target?: number</span
-          >,<br />
-          <span class="ml8" v-tippy title="Oscillator type (default to sine, either sine, square, triangle, or sawtooth)">osc?: string</span><br />
+          <span class="ml8" v-tippy title="Delay song by n second">wait?: number</span>,<br />
+          <span class="ml8" v-tippy title="Fade in/out (duration in second)">fadeInDuration?: number</span>,<br />
+          <span class="ml8" v-tippy title="Oscillator type (default to sine, either sine, square, triangle, or sawtooth)"
+            >oscillatorType?: 'sine' | 'triangle' | 'square' | 'sawtooth'</span
+          ><br />
           )
         </code>
       </blockquote>
@@ -49,19 +41,19 @@
           >play(<span v-tippy title="Frequency">659.26</span>,
           <span v-tippy title="Calculated gain (from trade size relative to thresholds)">gain * 0.5</span>,
           <span v-tippy title="Calculated duration (from trade size relative to thresholds)">duration</span>,
-          <span v-tippy title="Wait (wait 80ms before playing next)">80</span>)</code
+          <span v-tippy title="Wait (.08s before playing)">80</span>)</code
         ><br />
         <code
           >play(<span v-tippy title="Frequency">830.6</span>,
           <span v-tippy title="Calculated gain (from trade size relative to thresholds)">gain * 1.25</span>,
           <span v-tippy title="Calculated duration (from trade size relative to thresholds)">duration</span>,
-          <span v-tippy title="Wait (wait 80ms before playing next)">80</span>)</code
+          <span v-tippy title="Wait (.08s before playing)">80</span>)</code
         ><br />
       </blockquote>
 
       <blockquote>
         // using js Math functions<br />
-        <code>play(1256, Math.log(1 + gain / 10), .1, 10, -2, 'square')</code>
+        <code>play(1256, Math.log(1 + gain / 10) , 1, 0, .1, 'square')</code>
       </blockquote>
     </div>
     <div class="form-group mb16">
@@ -69,7 +61,7 @@
         When buy
       </label>
       <div class="d-flex">
-        <textarea ref="behaveBuy" class="form-control" :value="buyAudio" @blur="setInput($event.target.value, 'buy')"></textarea>
+        <textarea ref="behaveBuy" class="form-control" :value="buyAudio" @blur="setInput($event.target.value, 'buy')" spellcheck="false"></textarea>
         <button class="btn -green" @click="test('buy')">
           <i class="icon-volume-high"></i>
         </button>
@@ -80,7 +72,13 @@
         When sell
       </label>
       <div class="d-flex">
-        <textarea ref="behaveSell" class="form-control" :value="sellAudio" @blur="setInput($event.target.value, 'sell')"></textarea>
+        <textarea
+          ref="behaveSell"
+          class="form-control"
+          :value="sellAudio"
+          @blur="setInput($event.target.value, 'sell')"
+          spellcheck="false"
+        ></textarea>
         <button class="btn -red" @click="test('sell')">
           <i class="icon-volume-high"></i>
         </button>
@@ -194,7 +192,7 @@ export default {
 
         const adapter = audioService.buildAudioFunction(litteral, side, this.$store.state[this.paneId].thresholds)
 
-        adapter(audioService.playOrQueue.bind(audioService), percent, side, level)
+        adapter(audioService.play.bind(audioService), percent, side, level)
 
         this.$store.dispatch('app/showNotice', {
           id: 'testing-threshold-audio',

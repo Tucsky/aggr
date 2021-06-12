@@ -1,4 +1,5 @@
 import Exchange from '../exchange'
+import { sleep } from '../helpers/utils'
 
 export default class extends Exchange {
   id = 'BINANCE'
@@ -19,8 +20,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async subscribe(api, pair): Promise<void> {
-    if (!this.canSubscribe(api, pair)) {
+  async subscribe(api, pair) {
+    if (!(await super.subscribe(api, pair))) {
       return
     }
 
@@ -37,7 +38,9 @@ export default class extends Exchange {
     )
 
     // BINANCE: WebSocket connections have a limit of 5 incoming messages per second.
-    return new Promise(resolve => setTimeout(resolve, 250))
+    await sleep(250)
+
+    return true
   }
 
   /**
@@ -45,8 +48,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async unsubscribe(api, pair): Promise<void> {
-    if (!this.canUnsubscribe(api, pair)) {
+  async unsubscribe(api, pair) {
+    if (!(await super.unsubscribe(api, pair))) {
       return
     }
 
@@ -63,14 +66,14 @@ export default class extends Exchange {
     delete this.subscriptions[pair]
 
     // BINANCE: WebSocket connections have a limit of 5 incoming messages per second.
-    return new Promise(resolve => setTimeout(resolve, 250))
+    return new Promise<boolean>(resolve => setTimeout(resolve, 250))
   }
 
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
     if (json.E) {
-      return this.emitTrades(api._id, [
+      return this.emitTrades(api.id, [
         {
           exchange: this.id,
           pair: json.s.toLowerCase(),

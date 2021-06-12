@@ -582,7 +582,7 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
-    this._audioThreshold = +this.audioThreshold ? this.audioThreshold : this._minimumThresholdAmount * 0.25
+    this._audioThreshold = +this.audioThreshold ? this.audioThreshold : this._minimumThresholdAmount * 0.45
   }
 
   cacheFilters() {

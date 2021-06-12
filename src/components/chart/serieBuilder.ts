@@ -230,7 +230,7 @@ export default class SerieBuilder {
         const variableName = variableMatch[1]
         const variableLength = +variableMatch[2] || 1
 
-        output = output.replace(new RegExp('(?:[^.]|^)\\b(' + variableName + ')\\b', 'ig'), `${VARIABLES_VAR_NAME}[${variables.length}]`)
+        output = output.replace(new RegExp('([^.]|^)\\b(' + variableName + ')\\b', 'ig'), `$1${VARIABLES_VAR_NAME}[${variables.length}]`)
 
         const variable = {
           type: 'unknown',

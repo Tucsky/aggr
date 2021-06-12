@@ -534,6 +534,15 @@ export default class ChartController {
         const serie = indicator.model.plots[i]
         const apiMethodName = camelize('add-' + serie.type + '-series')
         const serieOptions = Object.assign({}, defaultSerieOptions, defaultPlotsOptions[serie.type] || {}, indicator.options, serie.options)
+
+        if (!indicator.options.scaleMargins && indicator.options.priceScaleId) {
+          const scaleMargins = this.getPriceScaleMargins(indicator.options.priceScaleId)
+
+          if (scaleMargins) {
+            serieOptions.scaleMargins = scaleMargins
+          }
+        }
+
         const api = this.chartInstance[apiMethodName](serieOptions) as IndicatorApi
 
         api.id = serie.id
@@ -544,11 +553,11 @@ export default class ChartController {
         }
         series.push(serie.id)
 
-        if (indicator.options.scaleMargins) {
+        /* if (indicator.options.scaleMargins) {
           api.applyOptions({
             scaleMargins: indicator.options.scaleMargins
           })
-        }
+        } */ 
 
         // this.loadedSeries[serie.id] = api
         indicator.apis.push(api)
@@ -614,7 +623,7 @@ export default class ChartController {
     // create function ready to calculate (& render) everything for this indicator
     indicator.adapter = this.serieBuilder.getAdapter(indicator.model.output)
 
-    this.meetIndicatorRequirements(indicator.id, renderer)
+    this.prepareRendererForIndicators(indicator.id, renderer)
 
     return indicator
   }
@@ -1329,7 +1338,7 @@ export default class ChartController {
     bar.empty = false
   }
 
-  meetIndicatorRequirements(indicatorId: string, renderer: Renderer) {
+  prepareRendererForIndicators(indicatorId: string, renderer: Renderer) {
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       if (indicatorId && this.loadedIndicators[i].id === indicatorId) {
         const markets = Object.keys(this.loadedIndicators[i].model.markets)
@@ -1362,6 +1371,14 @@ export default class ChartController {
         }
 
         break
+      }
+    }
+  }
+
+  getPriceScaleMargins(priceScaleId) {
+    for (let i = 0; i < this.loadedIndicators.length; i++) {
+      if (this.loadedIndicators[i].options.priceScaleId === priceScaleId && this.loadedIndicators[i].options.scaleMargins) {
+        return this.loadedIndicators[i].options.scaleMargins
       }
     }
   }

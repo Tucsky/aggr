@@ -69,6 +69,7 @@
       <textarea
         class="form-control"
         rows="2"
+        spellcheck="false"
         :value="color"
         @change="
           $store.dispatch(paneId + '/updateBucket', {
@@ -130,6 +131,7 @@
       <textarea
         class="form-control"
         rows="5"
+        spellcheck="false"
         :value="input"
         @change="
           $store.dispatch(paneId + '/updateBucket', {

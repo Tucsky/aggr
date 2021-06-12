@@ -31,7 +31,7 @@ const state = [
   (exchangesState: ExchangesState, id: string) => {
     exchangesState[id] = {}
 
-    if (id === 'HITBTC') {
+    if (id === 'HITBTC' || id === 'BYBIT') {
       exchangesState[id].disabled = true
     }
 

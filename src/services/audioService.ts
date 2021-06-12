@@ -4,7 +4,7 @@ import store from '../store'
 import { findClosingBracketMatchIndex } from '@/utils/helpers'
 
 export type AudioFunction = (
-  play: (frequency: number, gain: number, duration: number, length?: number, slope?: number, osc?: string) => Promise<void>,
+  play: (frequency: number, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>,
   percent: number,
   side: 'buy' | 'sell',
   level: number
@@ -15,14 +15,15 @@ class AudioService {
   context: AudioContext
   tuna: any
 
-  queued: any[] = []
   output: any
   volume: number
 
-  _play: (frequency: number, gain: number, duration: number, length?: number, slope?: number, osc?: string) => Promise<void>
+  _play: (frequency: number, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>
+  count = 0
+  minTime = 0
 
   constructor() {
-    this._play = this.playOrQueue.bind(this)
+    this._play = this.play.bind(this)
   }
 
   connect() {
@@ -33,7 +34,6 @@ class AudioService {
     }
 
     this.timestamp = +new Date()
-    this.queued.splice(0, this.queued.length)
 
     this.setVolume(store.state.settings.audioVolume)
 
@@ -196,32 +196,11 @@ class AudioService {
     }
   }
 
-  playOrQueue(options) {
-    if (this.queued.length) {
-      this.queued.push(options)
-      return
-    }
-
-    this.queued.push(options)
-
-    return this.playTilEmpty(options)
-  }
-
-  async playTilEmpty(options) {
-    await this.play(options)
-
-    if (this.queued.length) {
-      this.playTilEmpty.call(this, this.queued[0])
-    }
-  }
-
-  async play([frequency, gain, duration, length, slope, osc]) {
+  async play([frequency, gain, duration, delay, ramp, osc]) {
     if (this.context.state !== 'running') {
-      this.queued.shift()
       return
     }
 
-    const time = this.context.currentTime
     const oscillatorNode = this.context.createOscillator()
     const gainNode = this.context.createGain()
     gain = Math.min(1, gain) * this.volume
@@ -232,28 +211,39 @@ class AudioService {
     oscillatorNode.onended = () => {
       oscillatorNode.disconnect()
       gainNode.disconnect()
+      this.count--
     }
 
     gainNode.connect(this.output)
     oscillatorNode.connect(gainNode)
 
-    const decay = duration * 0.618
+    if (!this.minTime) {
+      this.minTime = this.context.currentTime;
+    } else {
+      this.minTime = Math.max(this.minTime, this.context.currentTime + delay)
+    }
 
-    gainNode.gain.value = gain
-    gainNode.gain.exponentialRampToValueAtTime(slope || 0.001, time + decay)
+    console.log(this.context.currentTime, this.minTime)
+
+    const time = this.minTime
+
+    if (ramp) {
+      gainNode.gain.value = 0.0001
+      gainNode.gain.exponentialRampToValueAtTime(gain, time + ramp)
+      setTimeout(() => {
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, time + ramp * 2 + duration / 1.5)
+      }, delay + ramp * 1000)
+    } else {
+      ramp = 0
+      gainNode.gain.value = 0.0001
+      gainNode.gain.linearRampToValueAtTime(gain, time + 0.001)
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, time + 0.001 + duration)
+    }
 
     oscillatorNode.start(time)
-    oscillatorNode.stop(time + decay)
+    oscillatorNode.stop(time + duration + ramp)
 
-    const timeout = length || duration * 1000
-    // const timeout = (length || duration * 1000) - this.queued.length * 0.5
-
-    return new Promise<void>(resolve => {
-      setTimeout(() => {
-        this.queued.shift()
-        resolve()
-      }, timeout)
-    })
+    this.minTime += .08
   }
 
   reconnect() {
@@ -285,7 +275,7 @@ class AudioService {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   buildAudioFunction(litteral, side, notice = false) {
     litteral = `'use strict'; 
-    var duration = .2 + percent + level;
+    var duration = .2 + percent + level / 2;
     var gain = (percent + level) / 4;
     
     ${litteral}`

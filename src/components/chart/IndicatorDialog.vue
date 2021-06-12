@@ -2,8 +2,9 @@
   <Dialog @clickOutside="close" class="serie-dialog -medium" :mask="!resizing">
     <template v-slot:header>
       <div class="title">
-        <div>{{ name }} <i class="icon-sm -no-grab ml4 icon-edit" style="cursor: pointer" @click="renameIndicator"></i></div>
-        <code class="subtitle pl0" v-text="indicatorId"></code>
+        <div @dblclick="renameIndicator">{{ name }}</div>
+        <div v-if="description" class="subtitle pl0" v-text="description" @dblclick="editDescription"></div>
+        <code v-else class="subtitle -filled" v-text="indicatorId" @dblclick="editDescription"></code>
       </div>
 
       <div class="column -center"></div>
@@ -20,7 +21,14 @@
           Input
         </label>
       </div>
-      <textarea ref="behaveInput" class="form-control" rows="10" :value="script" @blur="updateScript($event.target.value)"></textarea>
+      <textarea
+        ref="behaveInput"
+        class="form-control"
+        rows="10"
+        :value="script"
+        @blur="updateScript($event.target.value)"
+        spellcheck="false"
+      ></textarea>
       <p v-if="error" class="form-feedback"><i class="icon-warning mr4"></i> {{ error }}</p>
     </div>
     <hr />
@@ -155,6 +163,7 @@ export default {
   props: ['paneId', 'indicatorId'],
   mixins: [DialogMixin],
   data: () => ({
+    types: [],
     sections: [],
     editor: null,
     currentValues: {},
@@ -181,6 +190,9 @@ export default {
     displayName: function() {
       return this.indicatorSettings.displayName
     },
+    description: function() {
+      return this.indicatorSettings.description
+    },
     unsavedChanges() {
       return this.indicatorSettings.unsavedChanges
     },
@@ -192,12 +204,6 @@ export default {
     },
     script: function() {
       return this.indicatorSettings.script
-    },
-    types: function() {
-      return (this.script.match(/plot(\w+)/g) || [])
-        .map(t => t.replace(/^plot/, ''))
-        .map(t => plotTypesMap[t] || t)
-        .filter((t, index, self) => self.indexOf(t) === index && defaultPlotsOptions[t])
     },
     positionOption() {
       return {
@@ -221,6 +227,7 @@ export default {
   },
   created() {
     this.$nextTick(() => {
+      this.refreshPlotTypes()
       this.refreshOptions()
     })
   },
@@ -332,6 +339,7 @@ export default {
       return this.currentValues[key]
     },
     updateScript(newInput) {
+      this.refreshPlotTypes()
       this.refreshOptions(newInput)
 
       this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', { id: this.indicatorId, value: newInput })
@@ -377,6 +385,12 @@ export default {
           break
         }
       }
+    },
+    refreshPlotTypes() {
+      this.types = (this.script.match(/plot(\w+)/g) || [])
+        .map(t => t.replace(/^plot/, ''))
+        .map(t => plotTypesMap[t] || t)
+        .filter((t, index, self) => self.indexOf(t) === index && defaultPlotsOptions[t])
     },
     refreshOptions(script) {
       const defaultIndicatorOptionsKeys = Object.keys(this.indicatorSettings.options)
@@ -469,6 +483,16 @@ export default {
       if (name && name !== this.name) {
         await this.close()
         await store.dispatch(this.paneId + '/renameIndicator', { id: this.indicatorId, name })
+      }
+    },
+    async editDescription() {
+      const description = await dialogService.prompt({
+        action: 'Description',
+        input: this.description
+      })
+
+      if (description !== this.description) {
+        await store.commit(this.paneId + '/UPDATE_DESCRIPTION', { id: this.indicatorId, description })
       }
     },
     async duplicateIndicator() {

@@ -20,8 +20,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async subscribe(api, pair): Promise<void> {
-    if (!this.canSubscribe(api, pair)) {
+  async subscribe(api, pair) {
+    if (!(await super.subscribe(api, pair))) {
       return
     }
 
@@ -33,15 +33,17 @@ export default class extends Exchange {
       })
     )
 
-    if (/f0:ustf0$/i.test(pair)) {
+    if (api._connected.length === 1) {
       api.send(
         JSON.stringify({
           event: 'subscribe',
           channel: 'status',
-          key: 'liq:t' + pair
+          key: 'liq:global'
         })
       )
     }
+
+    return true
   }
 
   /**
@@ -49,18 +51,36 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async unsubscribe(api, pair): Promise<void> {
-    if (!this.canUnsubscribe(api, pair)) {
+  async unsubscribe(api, pair) {
+    if (!(await super.unsubscribe(api, pair))) {
       return
+    }
+
+    if (api._connected.length === 0) {
+      const chanId = Object.keys(this.channels).find(id => this.channels[id].name === 'status')
+
+      if (chanId) {
+        api.send(
+          JSON.stringify({
+            event: 'unsubscribe',
+            chanId: chanId
+          })
+        )
+
+        delete this.channels[chanId]
+      }
+
+      return true
     }
 
     const channelsToUnsubscribe = Object.keys(this.channels).filter(id => this.channels[id].pair === pair)
 
-    if (!channelsToUnsubscribe) {
+    if (!channelsToUnsubscribe.length) {
       console.log(
         `[${this}.id}/unsubscribe] no channel to unsubscribe to, but server called unsubscibr(${pair}). Here is the active channels on bitfinex exchange :`,
         this.channels
       )
+      return
     }
 
     for (const id of channelsToUnsubscribe) {
@@ -70,19 +90,19 @@ export default class extends Exchange {
           chanId: id
         })
       )
+
+      delete this.channels[id]
     }
   }
 
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
-    if (json.event) {
-      if (json.chanId && json.pair) {
-        console.debug(`[${this.id}] register channel ${json.chanId} (${json.channel}:${json.pair})`)
-        this.channels[json.chanId] = {
-          name: json.channel,
-          pair: json.pair
-        }
+    if (json.event === 'subscribed' && json.chanId) {
+      console.debug(`[${this.id}] register channel ${json.chanId} (${json.channel}:${json.pair})`)
+      this.channels[json.chanId] = {
+        name: json.channel,
+        pair: json.pair
       }
       return
     }
@@ -96,16 +116,16 @@ export default class extends Exchange {
 
     const channel = this.channels[json[0]]
 
-    if (channel.name !== 'status' && !channel.hasReceivedInitialData) {
+    if (!channel.hasSentInitialMessage) {
       console.debug(`[${this.id}] skip first payload ${channel.name}:${channel.pair}`)
-      channel.hasReceivedInitialData = true
+      channel.hasSentInitialMessage = true
       return
     }
 
     if (channel.name === 'trades' && json[1] === 'te') {
-      this.prices[api._id + channel.pair] = +json[2][3]
+      this.prices[api.id + channel.pair] = +json[2][3]
 
-      return this.emitTrades(api._id, [
+      return this.emitTrades(api.id, [
         {
           exchange: this.id,
           pair: channel.pair,
@@ -116,12 +136,10 @@ export default class extends Exchange {
         }
       ])
     } else if (channel.name === 'status' && json[1]) {
-      console.debug(`[${this.id}] status ${JSON.stringify(json[1])}`)
-
       return this.emitLiquidations(
-        api._id,
+        api.id,
         json[1]
-          .filter(a => this.pairs.indexOf(a[4].substring(1)) !== -1)
+          .filter(a => api._connected.indexOf(a[4].substring(1)) !== -1)
           .map(a => {
             const pair = a[4].substring(1)
 
@@ -129,7 +147,7 @@ export default class extends Exchange {
               exchange: this.id,
               pair: a[4].substring(1),
               timestamp: parseInt(a[2]),
-              price: this.prices[api._id + pair],
+              price: this.prices[api.id + pair],
               size: Math.abs(a[5]),
               side: a[5] > 1 ? 'buy' : 'sell',
               liquidation: true

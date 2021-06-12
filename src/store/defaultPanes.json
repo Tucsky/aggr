@@ -92,36 +92,36 @@
             {
               "id": "threshold",
               "amount": 10000,
-              "sellColor": "rgba(236,64,122,0.5)",
-              "buyColor": "rgba(255,152,0,0.5)",
-              "buyAudio": "play(329.63, gain, duration * 2, 80, null, 'sine');",
-              "sellAudio": "play(440, gain, duration * 2, 80, null, 'sine');"
+              "buyColor": "rgba(236,64,122,0.5)",
+              "sellColor": "rgba(255,152,0,0.5)",
+              "buyAudio": "play(329.63, gain, duration, 0.08, .05, 'sine');",
+              "sellAudio": "play(440, gain, duration, 0.08, .05, 'sine');"
             },
             {
               "id": "significant",
               "amount": 25000,
-              "sellColor": "rgba(236,64,122,0.6)",
-              "buyColor": "rgba(255,152,0,0.7)",
-              "buyAudio": "play(329.63, gain / 2, duration, 80, null, 'sine');\nplay(329.63, gain / 1.5, duration * 1.5, 80, null, 'sine');",
-              "sellAudio": "play(440, gain / 2, duration, 80, null, 'sine');\nplay(440, gain / 1.5, duration * 1.5, 80, null, 'sine');"
+              "buyColor": "rgba(236,64,122,0.6)",
+              "sellColor": "rgba(255,152,0,0.7)",
+              "buyAudio": "play(329.63, gain, duration * 2, 0.08, .1, 'sine');",
+              "sellAudio": "play(440, gain, duration * 2, 0.08, .1, 'sine');"
             },
             {
               "id": "huge",
               "amount": 100000,
               "gif": "rekt",
-              "sellColor": "rgba(236,64,122,0.7)",
-              "buyColor": "rgba(255,152,0,0.8)",
-              "buyAudio": "play(329.63, gain / 2, duration / 2, 80, null, 'sine');\nplay(329.63, gain / 2, duration / 2, 80, null, 'sine');\nplay(329.63, gain / 1.5, duration, 80, null, 'sine');",
-              "sellAudio": "play(440, gain / 2, duration / 2, 80, null, 'sine');\nplay(440, gain / 2, duration / 2, 80, null, 'sine');\nplay(440, gain / 1.5, duration, 80, null, 'sine');"
+              "buyColor": "rgba(236,64,122,0.7)",
+              "sellColor": "rgba(255,152,0,0.8)",
+              "buyAudio": "play(329.63, gain, duration * 5, 0.08, .1, 'sine');",
+              "sellAudio": "play(440, gain, duration * 5, 0.08, .1, 'sine');"
             },
             {
               "id": "rare",
               "amount": 1000000,
               "gif": "explosion",
-              "sellColor": "rgb(156,39,176)",
-              "buyColor": "rgb(255,235,59)",
-              "buyAudio": "play(329.63, gain / 2, duration, 80, null, 'sine');\nplay(329.63, gain / 2, duration, 80, null, 'sine');\nplay(329.63, gain / 1.5, duration * 1.5, 80, null, 'sine');",
-              "sellAudio": "play(440, gain / 2, duration, 80, null, 'sine');\nplay(440, gain / 2, duration, 80, null, 'sine');\nplay(440, gain / 1.5, duration * 1.5, 80, null, 'sine');"
+              "buyColor": "rgb(156,39,176)",
+              "sellColor": "rgb(255,235,59)",
+              "buyAudio": "play(329.63, gain, duration * 10, 0.08, .1, 'sine');",
+              "sellAudio": "play(440, gain, duration * 10, 0.08, .1, 'sine');"
             }
           ]
         }

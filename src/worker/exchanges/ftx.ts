@@ -18,8 +18,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async subscribe(api, pair): Promise<void> {
-    if (!this.canSubscribe(api, pair)) {
+  async subscribe(api, pair) {
+    if (!(await super.subscribe(api, pair))) {
       return
     }
 
@@ -30,6 +30,8 @@ export default class extends Exchange {
         market: pair
       })
     )
+
+    return true
   }
 
   /**
@@ -37,8 +39,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async unsubscribe(api, pair): Promise<void> {
-    if (!this.canUnsubscribe(api, pair)) {
+  async unsubscribe(api, pair) {
+    if (!(await super.unsubscribe(api, pair))) {
       return
     }
 
@@ -49,6 +51,8 @@ export default class extends Exchange {
         market: pair
       })
     )
+
+    return true
   }
 
   onMessage(event, api) {
@@ -58,37 +62,32 @@ export default class extends Exchange {
       return
     }
 
-    const trades: Trade[] = []
-    const liquidations: Trade[] = []
+    return this.emitTrades(
+      api.id,
+      json.data.map(trade => {
+        const output: Trade = {
+          exchange: this.id,
+          pair: json.market,
+          timestamp: +new Date(trade.time),
+          price: +trade.price,
+          size: trade.size,
+          side: trade.side
+        }
 
-    for (let i = 0; i < json.data.length; i++) {
-      json.data[i].exchange = this.id
-      json.data[i].pair = json.market
-      json.data[i].timestamp = +new Date(json.data[i].time)
+        if (trade.liquidation) {
+          output.liquidation = true
+        }
 
-      if (json.data[i].liquidation) {
-        liquidations.push(json.data[i])
-      }
-
-      trades.push(json.data[i])
-    }
-
-    if (liquidations.length) {
-      this.emitLiquidations(api._id, liquidations)
-    }
-
-    if (trades.length) {
-      this.emitTrades(api._id, trades)
-    }
-
-    return true
+        return output
+      })
+    )
   }
 
-  onApiBinded(api) {
+  onApiCreated(api) {
     this.startKeepAlive(api, { op: 'ping' }, 15000)
   }
 
-  onApiUnbinded(api) {
+  onApiRemoved(api) {
     this.stopKeepAlive(api)
   }
 }

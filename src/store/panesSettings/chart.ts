@@ -78,7 +78,7 @@ const actions = {
       script: 'plotline(avg_close(bar))',
       ...indicator,
       options: {
-        priceScaleId: indicator.id,
+        priceScaleId: indicator.priceScaleId || indicator.id,
         ...indicator.options
       }
     }
@@ -203,9 +203,11 @@ const mutations = {
   SET_TIMEFRAME(state, value) {
     state.timeframe = value
   },
-
   ADD_INDICATOR(state, indicator) {
     Vue.set(state.indicators, indicator.id, indicator)
+  },
+  UPDATE_DESCRIPTION(state, { id, description }) {
+    Vue.set(state.indicators[id], 'description', description)
   },
   REMOVE_INDICATOR(state, id) {
     Vue.delete(state.indicators, id)

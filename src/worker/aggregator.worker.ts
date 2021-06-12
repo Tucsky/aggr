@@ -1,6 +1,6 @@
 import { AggregatedTrade, AggregatorPayload, AggregatorSettings, Connection, Trade, Volumes } from '@/types/test'
 import { exchanges, getExchangeById } from './exchanges'
-import { countDecimals, parseMarket, formatAmount } from './helpers/utils'
+import { countDecimals, parseMarket } from './helpers/utils'
 
 const ctx: Worker = self as any
 

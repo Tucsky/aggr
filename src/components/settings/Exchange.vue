@@ -54,6 +54,7 @@ import { formatAmount, formatPrice } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '@/components/framework/picker/Slider.vue'
 import aggregatorService from '@/services/aggregatorService'
+import workspacesService from '@/services/workspacesService'
 
 @Component({
   name: 'Exchange',
@@ -102,6 +103,8 @@ export default class extends Vue {
 
   async refreshProducts() {
     this.canRefreshProducts = false
+
+    await workspacesService.deleteProducts(this.id)
 
     await aggregatorService.dispatch({
       op: 'fetch-products',

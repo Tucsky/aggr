@@ -48,7 +48,12 @@ export async function mergeStoredState(state: any) {
 
     if (storedState) {
       console.debug(`[store] retrieved stored state for module ${state._id}`)
-      return Object.assign({}, state, storedState)
+
+      if (['panes', 'settings', 'app', 'exchanges'].indexOf(state._id) === -1) {
+        return merge(state, storedState)
+      } else {
+        return Object.assign({}, state, storedState)
+      }
     }
   } catch (error) {
     console.error(`[store] error retrieving stored state for module ${state._id}`, error)

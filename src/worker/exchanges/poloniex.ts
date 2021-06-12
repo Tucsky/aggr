@@ -22,8 +22,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async subscribe(api, pair): Promise<void> {
-    if (!this.canSubscribe(api, pair)) {
+  async subscribe(api, pair) {
+    if (!(await super.subscribe(api, pair))) {
       return
     }
 
@@ -33,6 +33,8 @@ export default class extends Exchange {
         channel: pair
       })
     )
+
+    return true
   }
 
   /**
@@ -40,8 +42,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async unsubscribe(api, pair): Promise<void> {
-    if (!this.canUnsubscribe(api, pair)) {
+  async unsubscribe(api, pair) {
+    if (!(await super.unsubscribe(api, pair))) {
       return
     }
 
@@ -51,6 +53,8 @@ export default class extends Exchange {
         channel: pair
       })
     )
+
+    return true
   }
 
   onMessage(event, api) {
@@ -65,7 +69,7 @@ export default class extends Exchange {
         this.channels[json[0]] = json[2][0][1].currencyPair
       } else {
         return this.emitTrades(
-          api._id,
+          api.id,
           json[2]
             .filter(result => result[0] === 't')
             .map(trade => ({

@@ -1,6 +1,5 @@
 import Exchange from '../exchange'
 import pako from 'pako'
-import { sleep } from '../helpers/utils'
 
 export default class extends Exchange {
   id = 'OKEX'
@@ -69,8 +68,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async subscribe(api, pair): Promise<void> {
-    if (!this.canSubscribe(api, pair)) {
+  async subscribe(api, pair) {
+    if (!(await super.subscribe(api, pair))) {
       return
     }
 
@@ -82,6 +81,8 @@ export default class extends Exchange {
         args: [`${type}/trade:${pair}`]
       })
     )
+
+    return true
   }
 
   /**
@@ -89,8 +90,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async unsubscribe(api, pair): Promise<void> {
-    if (!this.canUnsubscribe(api, pair)) {
+  async unsubscribe(api, pair) {
+    if (!(await super.unsubscribe(api, pair))) {
       return
     }
 
@@ -103,7 +104,7 @@ export default class extends Exchange {
       })
     )
 
-    await sleep(100)
+    return true
   }
 
   onMessage(event, api) {
@@ -119,23 +120,27 @@ export default class extends Exchange {
       return
     }
 
+    !json.table && console.log(json)
+
     if (!json || !json.data || !json.data.length) {
       return
     }
 
     return this.emitTrades(
-      api._id,
+      api.id,
       json.data.map(trade => {
         let size
+        const name = this.id
 
         if (typeof this.specs[trade.instrument_id] !== 'undefined') {
           size = ((trade.size || trade.qty) * this.specs[trade.instrument_id]) / (this.inversed[trade.instrument_id] ? trade.price : 1)
+          // name += '_futures'
         } else {
           size = trade.size
         }
 
         return {
-          exchange: this.id,
+          exchange: name,
           pair: trade.instrument_id,
           timestamp: +new Date(trade.timestamp),
           price: +trade.price,
@@ -144,13 +149,5 @@ export default class extends Exchange {
         }
       })
     )
-  }
-
-  onApiBinded(api) {
-    this.startKeepAlive(api)
-  }
-
-  onApiUnbinded(api) {
-    this.stopKeepAlive(api)
   }
 }

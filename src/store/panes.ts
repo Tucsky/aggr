@@ -158,7 +158,6 @@ const actions = {
       const markets = state.panes[id].markets
 
       if (!markets) {
-        console.log('! err no markets for pane', id)
         continue
       }
 

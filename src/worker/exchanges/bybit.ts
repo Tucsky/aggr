@@ -17,8 +17,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async subscribe(api, pair): Promise<void> {
-    if (!this.canSubscribe(api, pair)) {
+  async subscribe(api, pair) {
+    if (!(await super.subscribe(api, pair))) {
       return
     }
 
@@ -28,6 +28,8 @@ export default class extends Exchange {
         args: ['trade.' + pair]
       })
     )
+
+    return true
   }
 
   /**
@@ -35,8 +37,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async unsubscribe(api, pair): Promise<void> {
-    if (!this.canUnsubscribe(api, pair)) {
+  async unsubscribe(api, pair) {
+    if (!(await super.unsubscribe(api, pair))) {
       return
     }
 
@@ -46,6 +48,8 @@ export default class extends Exchange {
         args: ['trade.' + pair]
       })
     )
+
+    return true
   }
 
   onMessage(event, api) {
@@ -56,14 +60,14 @@ export default class extends Exchange {
     }
 
     return this.emitTrades(
-      api._id,
+      api.id,
       json.data.map(trade => {
         const size = /USDT$/.test(trade.symbol) ? trade.size : trade.size / trade.price
 
         return {
           exchange: this.id,
           pair: trade.symbol,
-          timestamp: trade.trade_time_ms,
+          timestamp: +new Date(trade.timestamp),
           price: +trade.price,
           size: size,
           side: trade.side === 'Buy' ? 'buy' : 'sell'
@@ -72,11 +76,11 @@ export default class extends Exchange {
     )
   }
 
-  onApiBinded(api) {
+  onApiCreated(api) {
     this.startKeepAlive(api, { op: 'ping' }, 45000)
   }
 
-  onApiUnbinded(api) {
+  onApiRemoved(api) {
     this.stopKeepAlive(api)
   }
 }

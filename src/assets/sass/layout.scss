@@ -36,7 +36,7 @@ body {
   min-height: 100%;
   transition: transform 0.3s $ease-out-expo;
   color: white;
-  overflow-x: hidden;
+  overflow: hidden;
 
   &.-loading {
     .app__layout {
@@ -262,6 +262,27 @@ body {
   &:after {
     margin-left: 1rem;
   }
+
+  &.-vertical {
+    margin: 0 1rem;
+    flex-direction: column;
+    align-items: center;
+
+    &:before,
+    &:after {
+      height: auto;
+      width: 1px;
+      margin: 0;
+    }
+
+    &:before {
+      margin-bottom: 1rem;
+    }
+
+    &:after {
+      margin-top: 1rem;
+    }
+  }
 }
 
 blockquote {
@@ -275,6 +296,12 @@ blockquote {
 
 code {
   font-family: $font-monospace;
+
+  &.-filled {
+    background-color: rgba(black, 0.75);
+    border-radius: 4px;
+    padding: 0.25rem;
+  }
 }
 
 .section {
@@ -327,6 +354,29 @@ code {
       .icon-up {
         transform: rotateZ(180deg);
       }
+    }
+  }
+}
+
+.mobile-dir-col-desktop-dir-row {
+  flex-direction: column;
+
+  .divider.-vertical,
+  hr.-vertical {
+    display: none;
+  }
+
+  @media screen and (min-width: 768px) {
+    flex-direction: row;
+
+    .divider.-horizontal,
+    hr.-horizontal {
+      display: none;
+    }
+
+    .divider.-vertical,
+    hr.-vertical {
+      display: flex;
     }
   }
 }

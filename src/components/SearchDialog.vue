@@ -11,7 +11,7 @@
       </div>
       <div class="column -center"></div>
     </template>
-    <div class="d-flex">
+    <div class="d-flex d-flex mobile-dir-col-desktop-dir-row">
       <div class="form-group search">
         <label>Available ({{ flattenedProducts.length }})</label>
         <div class="mb8 d-flex">
@@ -19,7 +19,7 @@
           <dropdown :options="filters" placeholder="Filter" title="Filters" v-tippy="{ placement: 'top' }">
             <template v-slot:selection>
               <div class="btn" :class="{ '-text': !hasFilters, ml8: hasFilters }">
-                filter <i class="ml4" :class="hasFilters ? 'icon-warning' : 'icon-plus'"></i>
+                filter <i class="ml4" :class="hasFilters ? 'icon-check' : 'icon-plus'"></i>
               </div>
             </template>
             <template v-slot:option="{ index, value }">
@@ -46,8 +46,10 @@
           <p>No results</p>
         </div>
       </div>
+      <hr class="-horizontal" />
+      <hr class="-vertical mb8" />
       <div class="form-group selection">
-        <label>Selection <span v-if="paneId" v-text="paneId"></span></label>
+        <label class="text-nowrap">Selection <code v-if="paneId" class="-filled" v-text="paneId"></code></label>
         <button
           v-for="market of selection"
           :key="market"
@@ -64,8 +66,8 @@
     </div>
 
     <footer>
-      <a href="javascript:void(0);" class="btn -text mr8" @click="hide">Close</a>
-      <button class="btn -large" @click="apply">OK</button>
+      <a href="javascript:void(0);" class="btn -text" @click="hide">Close</a>
+      <button v-if="toConnect || toDisconnect" class="btn -large ml8" @click="apply" v-text="submitLabel"></button>
     </footer>
   </Dialog>
 </template>
@@ -92,6 +94,7 @@ export default {
   data: () => ({
     markets: [],
     selection: [],
+    originalSelection: [],
     filters: {
       historical: false
     }
@@ -106,6 +109,27 @@ export default {
     },
     activeMarkets() {
       return this.$store.state.app.activeMarkets.map(m => m.exchange + ':' + m.pair)
+    },
+    toConnect() {
+      return this.selection.filter(a => this.activeMarkets.indexOf(a) === -1).length
+    },
+    toDisconnect() {
+      return this.originalSelection.filter(a => this.selection.indexOf(a) === -1).length
+    },
+    submitLabel() {
+      const toConnect = +this.toConnect
+      const toDisconnect = +this.toDisconnect
+      let label = ''
+
+      if (toConnect) {
+        label += `connect ${toConnect}`
+      }
+
+      if (toDisconnect) {
+        label += `${toConnect ? ' and ' : ''}disconnect ${toDisconnect}`
+      }
+
+      return label
     },
     historicalMarkets() {
       return this.$store.state.app.historicalMarkets
@@ -148,6 +172,8 @@ export default {
     } else {
       this.selection = this.activeMarkets.slice()
     }
+
+    this.originalSelection = this.selection.slice()
   },
   mounted() {
     this.$nextTick(() => {

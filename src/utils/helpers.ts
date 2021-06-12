@@ -262,3 +262,34 @@ export function formatBytes(bytes, decimals = 2) {
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
+
+export function getDiff(obj, model) {
+  if (typeof model === 'undefined' || typeof obj === 'undefined') {
+    return obj
+  }
+
+  for (const prop in obj) {
+    if (Array.isArray(obj) && obj[prop] && obj[prop].id !== model[prop].id) {
+      continue
+    }
+
+    if (prop !== '_id' && obj[prop] === model[prop]) {
+      delete obj[prop]
+      continue
+    }
+
+    if (obj[prop] && typeof obj[prop] === 'object') {
+      obj[prop] = getDiff(obj[prop], model[prop])
+
+      /*if (!Object.keys(obj[prop]).length) {
+        if (Array.isArray(obj)) {
+          obj.splice(obj.indexOf(obj[prop]), 1)
+        } else {
+          delete obj[prop]
+        }
+      }*/
+    }
+  }
+
+  return obj
+}

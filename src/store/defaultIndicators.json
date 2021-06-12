@@ -109,6 +109,7 @@
   },
   "cvd": {
     "name": "CVD",
+    "description": "Cumulative Volume Delta",
     "script": "plotline(cum(vbuy - vsell))",
     "options": {
       "priceScaleId": "cvd",
@@ -146,16 +147,31 @@
     "enabled": false,
     "script": "plotline(cum(cbuy-csell))",
     "name": "CTD",
+    "description": "Cumulative Trades Delta",
     "options": {
       "priceScaleId": "ctd",
       "lineStyle": 4,
       "lineWidth": 1
     }
   },
+  "cld": {
+    "enabled": false,
+    "script": "plotline(cum(lbuy-lsell))",
+    "name": "CLD",
+    "description": "Cumulative Liquidations Delta",
+    "options": {
+      "priceFormat": {
+        "type": "volume"
+      },
+      "color": "rgb(156,39,176)",
+      "priceScaleId": "ctd",
+      "lineWidth": 1
+    }
+  },
   "linregcurve": {
     "enabled": false,
     "script": "plotline(linreg($price.close, 50))\nplotline(linreg($price.close, 100))\nplotline(linreg($price.close, 200))",
-    "name": "linreg",
+    "name": "Linear Regression",
     "options": {
       "priceScaleId": "right",
       "lineStyle": 4,

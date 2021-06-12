@@ -4,14 +4,14 @@
       <div class="title">{{ action }}</div>
     </template>
     <p class="mx0" v-if="question">{{ question }}</p>
-    <form @submit.prevent="validate">
+    <form @submit.prevent="submit">
       <div class="form-group">
         <input ref="input" type="text" class="form-control" v-model="value" />
       </div>
 
       <footer>
         <a href="javascript:void(0);" class="btn -text" @click="close(false)">Cancel</a>
-        <button type="submit" class="btn -large"><i class="icon-check mr4"></i> Validate</button>
+        <button type="submit" class="btn -large"><i class="icon-check mr4"></i> Submit</button>
       </footer>
     </form>
   </Dialog>
@@ -49,11 +49,7 @@ export default {
     })
   },
   methods: {
-    validate() {
-      if (!this.value.length) {
-        return
-      }
-
+    submit() {
       this.close(this.value)
     }
   }

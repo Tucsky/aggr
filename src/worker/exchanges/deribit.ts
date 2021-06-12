@@ -18,8 +18,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async subscribe(api, pair): Promise<void> {
-    if (!this.canSubscribe(api, pair)) {
+  async subscribe(api, pair) {
+    if (!(await super.subscribe(api, pair))) {
       return
     }
 
@@ -31,6 +31,8 @@ export default class extends Exchange {
         }
       })
     )
+
+    return true
   }
 
   /**
@@ -38,8 +40,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async unsubscribe(api, pair): Promise<void> {
-    if (!this.canUnsubscribe(api, pair)) {
+  async unsubscribe(api, pair) {
+    if (!(await super.unsubscribe(api, pair))) {
       return
     }
 
@@ -51,6 +53,8 @@ export default class extends Exchange {
         }
       })
     )
+
+    return true
   }
 
   onMessage(event, api) {
@@ -60,42 +64,32 @@ export default class extends Exchange {
       return
     }
 
-    const trades: Trade[] = []
-    const liquidations: Trade[] = []
+    return this.emitTrades(
+      api.id,
+      json.params.data.map(a => {
+        const trade: Trade = {
+          exchange: this.id,
+          pair: a.instrument_name,
+          timestamp: +a.timestamp,
+          price: +a.price,
+          size: a.amount / a.price,
+          side: a.direction
+        }
 
-    for (let i = 0; i < json.params.data.length; i++) {
-      const trade: Trade = {
-        exchange: this.id,
-        pair: json.params.data[i].instrument_name,
-        timestamp: json.params.data[i].timestamp,
-        price: json.params.data[i].price,
-        size: json.params.data[i].amount / json.params.data[i].price,
-        side: json.params.data[i].direction
-      }
+        if (a.liquidation) {
+          trade.liquidation = true
+        }
 
-      if (trade.liquidation) {
-        liquidations.push({ ...trade, liquidation: true })
-      }
-
-      trades.push(trade)
-    }
-
-    if (liquidations.length) {
-      this.emitLiquidations(api._id, liquidations)
-    }
-
-    if (trades.length) {
-      this.emitTrades(api._id, trades)
-    }
-
-    return true
+        return trade
+      })
+    )
   }
 
-  onApiBinded(api) {
+  onApiCreated(api) {
     this.startKeepAlive(api, { method: 'public/ping' }, 45000)
   }
 
-  onApiUnbinded(api) {
+  onApiRemoved(api) {
     this.stopKeepAlive(api)
   }
 }

@@ -56,8 +56,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async subscribe(api, pair): Promise<void> {
-    if (!this.canSubscribe(api, pair)) {
+  async subscribe(api, pair) {
+    if (!(await super.subscribe(api, pair))) {
       return
     }
 
@@ -75,6 +75,8 @@ export default class extends Exchange {
 
     // BINANCE: WebSocket connections have a limit of 5 incoming messages per second.
     await sleep(250)
+
+    return true
   }
 
   /**
@@ -82,8 +84,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async unsubscribe(api, pair): Promise<void> {
-    if (!this.canUnsubscribe(api, pair)) {
+  async unsubscribe(api, pair) {
+    if (!(await super.unsubscribe(api, pair))) {
       return
     }
 
@@ -101,6 +103,8 @@ export default class extends Exchange {
 
     // BINANCE: WebSocket connections have a limit of 5 incoming messages per second.
     await sleep(250)
+
+    return true
   }
 
   onMessage(event, api) {
@@ -118,7 +122,7 @@ export default class extends Exchange {
           size = (size * this.specs[symbol]) / json.p
         }
 
-        return this.emitTrades(api._id, [
+        return this.emitTrades(api.id, [
           {
             exchange: this.id,
             pair: symbol,
@@ -137,7 +141,7 @@ export default class extends Exchange {
           size = (size * this.specs[symbol]) / json.o.p
         }
 
-        return this.emitLiquidations(api._id, [
+        return this.emitLiquidations(api.id, [
           {
             exchange: this.id,
             pair: symbol,

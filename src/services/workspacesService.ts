@@ -2,9 +2,10 @@ import defaultIndicators from '@/store/defaultIndicators.json'
 import store, { boot } from '@/store'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
 import { GifsStorage, ProductsStorage, Workspace } from '@/types/test'
-import { downloadJson, randomString, slugify, uniqueName } from '@/utils/helpers'
+import { downloadJson, getDiff, randomString, slugify, uniqueName } from '@/utils/helpers'
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import * as migrations from './migrations'
+import panesSettings from '@/store/panesSettings'
 
 export interface AggrDB extends DBSchema {
   products: {
@@ -156,7 +157,22 @@ class WorkspacesService {
       throw new Error(`There is no current workspace`)
     }
 
+    state = this.cleanState(state)
+
+    this.workspace.states[stateId] = state
+
+    return this.saveWorkspace()
+  }
+
+  cleanState(state) {
     state = JSON.parse(JSON.stringify(state))
+
+    if (store.state.panes.panes[state._id]) {
+      const pane = store.state.panes.panes[state._id]
+      const paneSettings = JSON.parse(JSON.stringify(panesSettings[pane.type]))
+
+      state = getDiff(state, paneSettings.state)
+    }
 
     for (const prop in state) {
       if (prop[0] === '_' && prop !== '_id') {
@@ -164,9 +180,7 @@ class WorkspacesService {
       }
     }
 
-    this.workspace.states[stateId] = state
-
-    return this.saveWorkspace()
+    return state
   }
 
   downloadWorkspace() {

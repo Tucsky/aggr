@@ -75,6 +75,7 @@
       width: 100%;
       max-width: 100%;
       flex-grow: 1;
+      background-color: rgba(black, 0.5);
     }
 
     p {
@@ -127,7 +128,7 @@
     margin: 0;
     color: white;
     border: 1px solid $lighter;
-    border-radius: 3px;
+    border-radius: 4px;
     padding: 0.5rem;
     box-sizing: border-box;
     width: 100%;
@@ -176,10 +177,12 @@
     border: 0;
     height: 0.5px;
     background: $lighter;
+    flex-shrink: 0;
 
-    &.-across {
-      margin-left: -1rem;
-      margin-right: -1rem;
+    &.-vertical {
+      margin: 0 1rem;
+      height: auto;
+      width: 0.5px;
     }
   }
 }

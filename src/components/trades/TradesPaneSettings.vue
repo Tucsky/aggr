@@ -80,9 +80,8 @@
         </div>
 
         <div v-if="displayGifWarning" class="d-flex help-text">
-          <i class="icon-info"></i>
           <p class="mt0 mb0">
-            No gif will be shown.
+            <i class="icon-info mr8"></i>
             <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_ANIMATIONS')">Enable animations to show gifs</a>
           </p>
         </div>
@@ -215,7 +214,7 @@ export default class extends Vue {
   }
 
   get audioThresholdPlaceholder() {
-    return +(this.thresholds[0].amount * 0.25).toFixed(2)
+    return +(this.thresholds[0].amount * 0.45).toFixed(2)
   }
 
   get audioThreshold() {

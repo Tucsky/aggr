@@ -17,8 +17,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async subscribe(api, pair): Promise<void> {
-    if (!this.canSubscribe(api, pair)) {
+  async subscribe(api, pair) {
+    if (!(await super.subscribe(api, pair))) {
       return
     }
 
@@ -30,6 +30,8 @@ export default class extends Exchange {
         }
       })
     )
+
+    return true
   }
 
   /**
@@ -37,8 +39,8 @@ export default class extends Exchange {
    * @param {WebSocket} api
    * @param {string} pair
    */
-  async unsubscribe(api, pair): Promise<void> {
-    if (!this.canUnsubscribe(api, pair)) {
+  async unsubscribe(api, pair) {
+    if (!(await super.unsubscribe(api, pair))) {
       return
     }
 
@@ -50,6 +52,8 @@ export default class extends Exchange {
         }
       })
     )
+
+    return true
   }
 
   onMessage(event, api) {
@@ -62,7 +66,7 @@ export default class extends Exchange {
 
     const trade = json.data
 
-    return this.emitTrades(api._id, [
+    return this.emitTrades(api.id, [
       {
         exchange: this.id,
         pair: json.channel.split('_').pop(),
