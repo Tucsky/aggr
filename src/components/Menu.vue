@@ -41,7 +41,7 @@
           <slider
             style="width: 100px"
             :min="0"
-            :max="2"
+            :max="10"
             :step="0.1"
             :label="true"
             :editable="false"

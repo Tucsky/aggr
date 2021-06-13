@@ -218,7 +218,7 @@ class AudioService {
     oscillatorNode.connect(gainNode)
 
     if (!this.minTime) {
-      this.minTime = this.context.currentTime;
+      this.minTime = this.context.currentTime
     } else {
       this.minTime = Math.max(this.minTime, this.context.currentTime + delay)
     }
@@ -243,7 +243,7 @@ class AudioService {
     oscillatorNode.start(time)
     oscillatorNode.stop(time + duration + ramp)
 
-    this.minTime += .08
+    this.minTime += 0.08
   }
 
   reconnect() {

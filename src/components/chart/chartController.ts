@@ -557,7 +557,7 @@ export default class ChartController {
           api.applyOptions({
             scaleMargins: indicator.options.scaleMargins
           })
-        } */ 
+        } */
 
         // this.loadedSeries[serie.id] = api
         indicator.apis.push(api)
