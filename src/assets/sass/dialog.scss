@@ -27,10 +27,13 @@
     pointer-events: all;
 
     .dialog-body {
-      font-size: 14px;
       overflow: auto;
       max-height: 70vh;
       padding: 1rem;
+
+      @media (-webkit-min-device-pixel-ratio: 2) {
+        font-size: 14px;
+      }
     }
 
     header {
