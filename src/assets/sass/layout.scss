@@ -30,6 +30,22 @@ body {
   opacity: 0.25;
 }
 
+.-no-animations {
+  animation: none !important;
+  transition: none !important;
+
+  * {
+    animation: none !important;
+    transition: none !important;
+
+    &:before,
+    &:after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}
+
 #app {
   width: 100%;
   position: relative;
@@ -42,22 +58,6 @@ body {
     .app__layout {
       transition: opacity 5s $ease-elastic;
       opacity: 0.9;
-    }
-  }
-
-  &.-no-animations {
-    animation: none !important;
-    transition: none !important;
-
-    * {
-      animation: none !important;
-      transition: none !important;
-
-      &:before,
-      &:after {
-        animation: none !important;
-        transition: none !important;
-      }
     }
   }
 }

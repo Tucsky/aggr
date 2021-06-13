@@ -127,21 +127,23 @@
                 <strong>{{ market.pair }}</strong>
               </div>
             </div>
-            <div class="-center market-threshold -fill">
-              {{ formatAmount(thresholds[0].amount * market.multiplier) }}
-            </div>
             <div class="-fill -center ml16">
               <slider
                 style="width: 100%;min-width:150px;"
                 :min="0"
-                :gradient="[thresholds[0].buyColor, thresholds[thresholds.length - 1].buyColor]"
                 :max="2"
+                :label="market.multiplier !== 1"
                 :step="0.01"
+                :showCompletion="false"
                 :value="market.multiplier"
                 :editable="false"
                 @input="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: $event })"
                 @reset="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: 1 })"
-              ></slider>
+              >
+                <template v-slot:tooltip="{ value }">
+                  {{ thresholds[0].amount * value }}
+                </template>
+              </slider>
             </div>
             <!--<a href="javascript:void(0);" class="text-center -center pl16 multipliers-market__action" title="Detach" v-tippy>
           <i class="icon-cross"></i>
@@ -295,6 +297,7 @@ export default class extends Vue {
   .market-exchange {
     font-family: 'Barlow Semi Condensed';
     line-height: 1;
+    font-weight: 600;
   }
 
   &.-disabled {
@@ -303,13 +306,7 @@ export default class extends Vue {
     }
 
     .market-threshold {
-      opacity: 0.5;
-
-      &:after {
-        content: '(default)';
-        opacity: 0.8;
-        padding: 2px;
-      }
+      display: none;
     }
   }
 }

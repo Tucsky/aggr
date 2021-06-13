@@ -712,7 +712,7 @@ export default class extends Mixins(PaneMixin) {
     }
 
     const luminance = getColorLuminance(splitRgba(backgroundColor))
-    const textColor = luminance < 180 ? 'white' : 'black'
+    const textColor = luminance < 170 ? 'white' : 'black'
 
     Object.values(this.indicators).forEach((indicator, index) => {
       const options = indicator.options as any

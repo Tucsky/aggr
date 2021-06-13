@@ -83,6 +83,7 @@ export default class extends Mixins(PaneMixin) {
   private _multipliers: { [identifier: string]: number }
   private _paneMarkets: { [identifier: string]: boolean }
   private _timeAgoInterval: number
+  private _enableAnimationsTimeout: number
 
   get maxRows() {
     return this.$store.state[this.paneId].maxRows
@@ -294,8 +295,8 @@ export default class extends Mixins(PaneMixin) {
       li.appendChild(side)
 
       if (
-        !this.disableAnimations &&
         this.liquidationThreshold.gif &&
+        !this.disableAnimations &&
         GIFS[this.liquidationThreshold.gif] &&
         amount >= this.liquidationThreshold.amount * multiplier
       ) {
@@ -310,7 +311,7 @@ export default class extends Mixins(PaneMixin) {
       const luminance = this._liquidationsColor[trade.side][(intensity < 0.5 ? 'from' : 'to') + 'Luminance']
       const backgroundColor = this._liquidationsColor[trade.side].to
       const thrs = Math.max(intensity, 0.25)
-      li.style.color = getLogShade(backgroundColor, thrs * (luminance < 180 ? 2 : -3))
+      li.style.color = getLogShade(backgroundColor, thrs * (luminance < 170 ? 2 : -3))
       li.style.backgroundColor = 'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + intensity + ')'
 
       if (amount > this._audioThreshold) {
@@ -356,12 +357,12 @@ export default class extends Mixins(PaneMixin) {
           if (i >= 1) {
             // ajusted amount > this._significantThresholdAmount
             // only pure black or pure white foreground
-            li.style.color = luminance < 180 ? 'white' : 'black'
+            li.style.color = luminance < 170 ? 'white' : 'black'
           } else {
             // take background color and apply logarithmic shade based on amount to this._significantThresholdAmount percentage
             // darken if luminance of background is high, lighten otherwise
             const thrs = Math.max(percentToNextThreshold, 0.25)
-            li.style.color = getLogShade(backgroundColor, thrs * (luminance < 180 ? 2 : -3))
+            li.style.color = getLogShade(backgroundColor, thrs * (luminance < 170 ? 2 : -3))
           }
 
           if (amount > this._audioThreshold) {
@@ -609,6 +610,17 @@ export default class extends Mixins(PaneMixin) {
       return this.clearList()
     }
 
+    this.$el.classList.add('-no-animations')
+    if (this._enableAnimationsTimeout) {
+      clearTimeout(this._enableAnimationsTimeout)
+    }
+    this._enableAnimationsTimeout = setTimeout(() => {
+      if (!this.$store.state.settings.disableAnimations) {
+        this.$el.classList.remove('-no-animations')
+      }
+
+      this._enableAnimationsTimeout = null
+    }, 1000)
     const elements = this.$el.getElementsByClassName('trade')
 
     const pairByExchanges = this.$store.state.app.activeMarkets.reduce((obj, market) => {
