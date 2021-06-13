@@ -70,7 +70,7 @@ class DialogService {
 
   openPicker(initialColor, cb, title?: string) {
     if (this.pickerInstance) {
-      this.pickerInstance.selectColor(initialColor)
+      this.pickerInstance.selectColor(initialColor, true)
 
       if (typeof title !== 'undefined') {
         this.pickerInstance.title = title
