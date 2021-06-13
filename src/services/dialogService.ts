@@ -7,8 +7,9 @@ import PromptDialog from '@/components/framework/PromptDialog.vue'
 
 class DialogService {
   mountedComponents = {}
+  pickerInstance: any
 
-  createComponent(component, props = {}, resolve = null, dialogId?: string) {
+  createComponent(component, props = {}, resolve = null, dialogId?: string): Vue {
     const Factory = Vue.extend(Object.assign({ store }, component))
 
     const cmp = new Factory(
@@ -19,6 +20,10 @@ class DialogService {
           destroyed: () => {
             if (dialogId) {
               this.mountedComponents[dialogId]--
+            }
+
+            if (this.pickerInstance === cmp) {
+              delete this.pickerInstance
             }
 
             if (typeof resolve === 'function') {
@@ -46,7 +51,7 @@ class DialogService {
     })
   }
 
-  open(component, props = {}, dialogId?: string) {
+  open(component, props = {}, dialogId?: string): Vue {
     component = this.createComponent(component, props, null, dialogId)
 
     this.mountDialog(component)
@@ -54,7 +59,7 @@ class DialogService {
     return component
   }
 
-  mountDialog(cmp) {
+  mountDialog(cmp: Vue) {
     const container = document.getElementById('app') || document.body
     container.appendChild(cmp.$mount().$el)
   }
@@ -64,16 +69,27 @@ class DialogService {
   }
 
   openPicker(initialColor, cb, title?: string) {
-    const dialog = this.open(VerteDialog, {
-      value: initialColor,
-      title
-    })
+    if (this.pickerInstance) {
+      this.pickerInstance.selectColor(initialColor)
 
-    if (typeof cb === 'function') {
-      dialog.$on('input', cb)
+      if (typeof title !== 'undefined') {
+        this.pickerInstance.title = title
+
+      }
+
+      this.pickerInstance.$off('input')
+    } else {
+      this.pickerInstance = this.open(VerteDialog, {
+        value: initialColor,
+        title
+      })
     }
 
-    return dialog
+    if (typeof cb === 'function') {
+      this.pickerInstance.$on('input', cb)
+    }
+
+    return this.pickerInstance
   }
 
   async confirm(options: any) {
