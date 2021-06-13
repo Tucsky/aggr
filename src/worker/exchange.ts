@@ -7,6 +7,8 @@ interface Api extends WebSocket {
   _pending: string[]
   _connected: string[]
   _timestamp: number
+  _reconnecting: boolean
+
 }
 
 class Exchange extends EventEmitter {
@@ -176,8 +178,10 @@ class Exchange extends EventEmitter {
       if (typeof this.scheduledOperationsDelays[url] !== 'undefined') {
         this.clearReconnectionDelayTimeout[url] = setTimeout(() => {
           delete this.clearReconnectionDelayTimeout[url]
-          console.debug(`[${this.id}.createWs] 10s since api opened: clear reconnection delay (${url})`)
+          console.debug(`[${this.id}.createWs] clear reconnection delay (${url})`)
           delete this.scheduledOperationsDelays[url]
+
+          api._reconnecting = false
         }, 10000)
       }
 
@@ -213,6 +217,8 @@ class Exchange extends EventEmitter {
 
         console.error(`[${this.id}] connection closed unexpectedly, schedule reconnection (${pairsToReconnect.join(',')})`)
 
+        api._reconnecting = true;
+
         this.scheduledOperationsDelays[api.url] = this.schedule(
           () => {
             this.reconnectPairs(pairsToReconnect)
@@ -220,7 +226,7 @@ class Exchange extends EventEmitter {
           api.url,
           500,
           1.5,
-          1000 * 30
+          1000 * 60
         )
       }
     }
@@ -480,7 +486,7 @@ class Exchange extends EventEmitter {
       return false
     }
 
-    this.emit('subscribed', pair, api._id)
+    this.emit('subscribed', pair, api._reconnecting)
 
     if (api.readyState !== WebSocket.OPEN) {
       console.log('(subscribe ' + pair + ') ws connection api', api._id, 'is in opening/closing state')
