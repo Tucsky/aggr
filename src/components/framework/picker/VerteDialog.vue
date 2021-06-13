@@ -17,6 +17,7 @@
         :step="0.01"
         :editable="false"
         :value="alpha"
+        :showCompletion="false"
         v-model="alpha"
       >
       </Slider>

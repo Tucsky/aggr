@@ -7,6 +7,7 @@
     <slider
       class="verte-picker__slider"
       v-if="mode === 'square'"
+      :showCompletion="false"
       :gradient="['#f00', '#ff0', '#0f0', '#0ff', '#00f', '#f0f', '#f00']"
       :editable="false"
       :max="360"
@@ -15,6 +16,7 @@
     <slider
       class="verte-picker__slider"
       v-if="mode === 'wheel'"
+      :showCompletion="false"
       :gradient="[`hsl(${currentColor.hue},0%,${currentColor.lum}%)`, `hsl(${currentColor.hue},100%,${currentColor.lum}%)`]"
       :editable="false"
       :max="100"

@@ -1,8 +1,8 @@
 <template>
   <div class="slider" ref="wrapper" :class="{ '-vertical': vertical }">
     <div class="slider__track" ref="track" v-on="trackSlide ? { mousedown: select, touchstart: select } : {}">
-      <div v-if="showCompletion && handles[0]" class="slider__completion" :style="`width: ${handles[0].positionX}px`"></div>
       <div class="slider__fill" ref="fill"></div>
+      <div v-if="showCompletion && handles[0]" class="slider__completion" :style="`width: ${handles[0].positionX}px`"></div>
       <div
         class="slider__handle"
         v-for="(handle, index) in handles"
@@ -11,7 +11,11 @@
         @touchstart="select"
         :style="`transform: translate(${handle.positionX}px, ${handle.positionY}px); background-color: ${handle.color};`"
       >
-        <div class="slider__label" v-if="label">{{ handle.value }}</div>
+        <div class="slider__label" v-if="label">
+          <slot name="tooltip" :value="handle.value">
+            {{ handle.value }}
+          </slot>
+        </div>
       </div>
     </div>
     <input class="slider__input" ref="input" :type="colorCode ? 'text' : 'number'" v-show="editable" @change="updateValue($event.target.value)" />
@@ -527,6 +531,8 @@ export default {
 }
 
 .slider__completion {
+  position: absolute;
+  top: 0;
   height: 100%;
 
   border-radius: 10px;
