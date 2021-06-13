@@ -11,7 +11,6 @@ export type AudioFunction = (
 ) => void
 
 class AudioService {
-  timestamp: number
   context: AudioContext
   tuna: any
 
@@ -33,7 +32,7 @@ class AudioService {
       return
     }
 
-    this.timestamp = +new Date()
+    this.minTime = 0
 
     this.setVolume(store.state.settings.audioVolume)
 
