@@ -49,7 +49,7 @@ const state = {
     id: 'liquidations',
     amount: 100000,
     buyColor: 'rgb(103,58,183)',
-    sellColor: 'rgb(255,152,0)',
+    sellColor: 'rgb(103,58,183)',
     buyAudio: `play(329.63, gain , duration * 10, 0, 0.025, 'sine');
 play(329.63, gain, duration * 5, 0.08, .025,'sine');`,
     sellAudio: `play(440, gain, duration * 10, 0, 0.025,'sine');
