@@ -214,18 +214,22 @@ class AudioService {
       this.count--
     }
 
+    this.count++
+
     gainNode.connect(this.output)
     oscillatorNode.connect(gainNode)
 
     if (!this.minTime) {
       this.minTime = this.context.currentTime
     } else {
-      this.minTime = Math.max(this.minTime, this.context.currentTime + delay)
+      this.minTime = Math.max(this.minTime, this.context.currentTime)
+
+      if (!delay) {
+        this.minTime += this.count > 10 ? (this.count > 20 ? 0.02 : 0.04) : 0.08
+      }
     }
 
-    console.log(this.context.currentTime, this.minTime)
-
-    const time = this.minTime
+    const time = this.minTime + delay
 
     if (ramp) {
       gainNode.gain.value = 0.0001
@@ -242,8 +246,6 @@ class AudioService {
 
     oscillatorNode.start(time)
     oscillatorNode.stop(time + duration + ramp)
-
-    this.minTime += 0.08
   }
 
   reconnect() {
