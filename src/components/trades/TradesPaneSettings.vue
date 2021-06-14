@@ -216,7 +216,7 @@ export default class extends Vue {
   }
 
   get audioThresholdPlaceholder() {
-    return +(this.thresholds[0].amount * 0.45).toFixed(2)
+    return +(this.thresholds[0].amount * 0.1).toFixed(2)
   }
 
   get audioThreshold() {

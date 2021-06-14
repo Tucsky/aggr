@@ -448,7 +448,7 @@ export default class extends Mixins(PaneMixin) {
   async retrieveStoredGifs(refresh = false) {
     for (const threshold of this.thresholds) {
       if (!threshold.gif || GIFS[threshold.gif]) {
-        return
+        continue
       }
 
       const slug = slugify(threshold.gif)
@@ -583,7 +583,7 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
-    this._audioThreshold = +this.audioThreshold ? this.audioThreshold : this._minimumThresholdAmount * 0.45
+    this._audioThreshold = +this.audioThreshold ? this.audioThreshold : this._minimumThresholdAmount * 0.1
   }
 
   cacheFilters() {
@@ -763,6 +763,7 @@ export default class extends Mixins(PaneMixin) {
     &.-logos-colors {
       .trade__exchange {
         height: 1em;
+        background-position: center;
 
         &:before {
           display: none;

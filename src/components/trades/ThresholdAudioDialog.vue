@@ -182,8 +182,14 @@ export default {
 
         const range = this.max - this.min
 
-        amount = this.min + Math.random() * range
-        percent = (amount - this.min) / range
+        if (range) {
+          amount = this.min + Math.random() * range
+          percent = (amount - this.min) / range
+        } else {
+          amount = this.min
+          percent = 1
+        }
+
         level = i
       }
 
