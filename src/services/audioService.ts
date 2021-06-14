@@ -237,15 +237,15 @@ class AudioService {
         gainNode.gain.exponentialRampToValueAtTime(0.0001, time + ramp * 2 + duration / 1.5)
       }, delay + ramp * 1000)
     } else {
-      ramp = 0.001
+      ramp = duration / 1000
 
-      gainNode.gain.value = 0.0001
+      gainNode.gain.value = 0
       gainNode.gain.linearRampToValueAtTime(gain, time + ramp)
-      gainNode.gain.exponentialRampToValueAtTime(0.0001, time + ramp * 2 + duration)
+      gainNode.gain.exponentialRampToValueAtTime(0.00001, time + ramp + duration)
     }
 
     oscillatorNode.start(time)
-    oscillatorNode.stop(time + duration + ramp * 2)
+    oscillatorNode.stop(time + ramp + duration)
   }
 
   reconnect() {
