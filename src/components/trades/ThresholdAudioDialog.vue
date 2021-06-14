@@ -184,7 +184,7 @@ export default {
 
         if (range) {
           amount = this.min + Math.random() * range
-          percent = (amount - this.min) / range
+          percent = amount / this.amounts[1]
         } else {
           amount = this.min
           percent = 1

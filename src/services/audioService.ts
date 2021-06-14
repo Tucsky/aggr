@@ -5,7 +5,7 @@ import { findClosingBracketMatchIndex } from '@/utils/helpers'
 
 export type AudioFunction = (
   play: (frequency: number, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>,
-  percent: number,
+  ratio: number,
   side: 'buy' | 'sell',
   level: number
 ) => void
@@ -133,18 +133,6 @@ class AudioService {
       )
     }
 
-    if (store.state.settings.audioFilter) {
-      effects.push(
-        new this.tuna.Filter({
-          frequency: 800, //20 to 22050
-          Q: 10, //0.001 to 100
-          gain: -10, //-40 to 40 (in decibels)
-          filterType: 'highpass', //lowpass, highpass, bandpass, lowshelf, highshelf, peaking, notch, allpass
-          bypass: 0
-        })
-      )
-    }
-
     if (store.state.settings.audioDelay) {
       effects.push(
         new this.tuna.Delay({
@@ -168,6 +156,18 @@ class AudioService {
           ratio: 4, //1 to 20
           knee: 5, //0 to 40
           automakeup: true, //true/false
+          bypass: 0
+        })
+      )
+    }
+
+    if (store.state.settings.audioFilter) {
+      effects.push(
+        new this.tuna.Filter({
+          frequency: 800, //20 to 22050
+          Q: 10, //0.001 to 100
+          gain: -10, //-40 to 40 (in decibels)
+          filterType: 'highpass', //lowpass, highpass, bandpass, lowshelf, highshelf, peaking, notch, allpass
           bypass: 0
         })
       )
@@ -202,7 +202,7 @@ class AudioService {
 
     const oscillatorNode = this.context.createOscillator()
     const gainNode = this.context.createGain()
-    gain = Math.min(1, gain) * this.volume
+    gain = Math.max(0.01, Math.min(1, gain)) * this.volume
 
     oscillatorNode.frequency.value = frequency
     oscillatorNode.type = osc || 'triangle'
@@ -218,34 +218,34 @@ class AudioService {
     gainNode.connect(this.output)
     oscillatorNode.connect(gainNode)
 
-    if (!this.minTime) {
-      this.minTime = this.context.currentTime
-    } else {
-      this.minTime = Math.max(this.minTime, this.context.currentTime)
-
-      if (!delay) {
-        this.minTime += this.count > 10 ? (this.count > 20 ? 0.02 : 0.04) : 0.08
-      }
-    }
-
-    const time = this.minTime + delay
-
     if (ramp) {
       gainNode.gain.value = 0.0001
-      gainNode.gain.exponentialRampToValueAtTime(gain, time + ramp)
+      gainNode.gain.exponentialRampToValueAtTime(gain, this.context.currentTime + delay + ramp)
       setTimeout(() => {
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, time + ramp * 2 + duration / 1.5)
-      }, delay + ramp * 1000)
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, this.context.currentTime + duration)
+      }, (delay + ramp) * 1000)
+
+      oscillatorNode.start(this.context.currentTime + delay)
+      oscillatorNode.stop(this.context.currentTime + delay + ramp + duration)
     } else {
-      ramp = duration / 1000
+      if (!this.minTime) {
+        this.minTime = this.context.currentTime
+      } else {
+        this.minTime = Math.max(this.minTime, this.context.currentTime)
 
-      gainNode.gain.value = 0
-      gainNode.gain.linearRampToValueAtTime(gain, time + ramp)
-      gainNode.gain.exponentialRampToValueAtTime(0.00001, time + ramp + duration)
+        if (!delay) {
+          this.minTime += this.count > 10 ? (this.count > 20 ? 0.02 : 0.04) : 0.08
+        }
+      }
+
+      const time = this.minTime + delay
+
+      gainNode.gain.setValueAtTime(gain, time)
+      gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration)
+
+      oscillatorNode.start(time)
+      oscillatorNode.stop(time + duration)
     }
-
-    oscillatorNode.start(time)
-    oscillatorNode.stop(time + ramp + duration)
   }
 
   reconnect() {
@@ -277,8 +277,6 @@ class AudioService {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   buildAudioFunction(litteral, side, notice = false) {
     litteral = `'use strict'; 
-    var duration = .2 + percent + level / 2;
-    var gain = (percent + level) / 4;
     
     ${litteral}`
 
@@ -296,11 +294,18 @@ class AudioService {
       }
     } while (functionMatch)
 
-    return new Function('play', 'percent', 'side', 'level', litteral) as AudioFunction
+    try {
+      return new Function('play', 'ratio', 'side', 'level', litteral) as AudioFunction
+    } catch (error) {
+      console.warn('invalid audio script', litteral)
+      console.error(error)
+
+      return new Function() as AudioFunction
+    }
   }
 
   setVolume(value: number) {
-    this.volume = Math.log(1 + value)
+    this.volume = value
   }
 }
 

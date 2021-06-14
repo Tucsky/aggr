@@ -264,7 +264,7 @@ export default class extends Mixins(PaneMixin) {
       if (amount >= this._minimumThresholdAmount * multiplier) {
         this.appendRow(trade, amount, multiplier)
       } else if (amount > this._audioThreshold) {
-        this._thresholdsAudios[0][trade.side](audioService._play, amount / (this._minimumThresholdAmount * multiplier), trade.side, 0)
+        this._thresholdsAudios[0][trade.side](audioService._play, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
       }
     }
   }
@@ -315,7 +315,7 @@ export default class extends Mixins(PaneMixin) {
       li.style.backgroundColor = 'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + intensity + ')'
 
       if (amount > this._audioThreshold) {
-        this._liquidationsAudio[trade.side](audioService._play, amount / (this._minimumThresholdAmount * multiplier), trade.side, 0)
+        this._liquidationsAudio[trade.side](audioService._play, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
       }
     } else {
       if (trade.liquidation) {
@@ -366,7 +366,7 @@ export default class extends Mixins(PaneMixin) {
           }
 
           if (amount > this._audioThreshold) {
-            this._thresholdsAudios[i][trade.side](audioService._play, percentToNextThreshold, trade.side, i)
+            this._thresholdsAudios[i][trade.side](audioService._play, amount / this._significantThresholdAmount, trade.side, i)
           }
 
           break
