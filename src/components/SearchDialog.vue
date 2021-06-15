@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="hide" medium class="-sticky-footer">
+  <Dialog @clickOutside="hide" medium class="-sticky-footer -medium">
     <template v-slot:header>
       <div class="title" v-if="paneId">
         {{ paneName }}'s MARKETS
@@ -67,7 +67,7 @@
 
     <footer>
       <a href="javascript:void(0);" class="btn -text" @click="hide">Close</a>
-      <button v-if="toConnect || toDisconnect" class="btn -large ml8" @click="apply" v-text="submitLabel"></button>
+      <button v-if="toConnect || toDisconnect" class="btn -large ml8" @click="submit" v-text="submitLabel"></button>
     </footer>
   </Dialog>
 </template>
@@ -198,13 +198,17 @@ export default {
         this.selection.splice(index, 1)
       }
     },
-    async apply() {
+    async submit() {
       if (!this.paneId) {
         if (
           this.containMultipleMarketsConfigurations() &&
           !(await dialogService.confirm('Are you sure ? Some of the panes are watching specific markets.'))
         ) {
           return
+        }
+
+        if (!Object.keys(this.$store.state.panes.panes).length) {
+          await this.$store.dispatch('panes/addPane', { type: 'trades' })
         }
 
         this.$store.dispatch('panes/setMarketsForAll', this.selection)
