@@ -139,8 +139,8 @@
       <button class="btn -blue mr16 mlauto" v-tippy title="Duplicate" @click="duplicateIndicator">
         <i class="icon-copy-paste"></i>
       </button>
-      <button class="btn -red" v-tippy title="Serie will be lost forever" @click="removeIndicator">
-        <i class="icon-trash"></i>
+      <button class="btn -red" v-tippy title="Unload indicator" @click="removeIndicator">
+        <i class="icon-cross"></i>
       </button>
     </div>
   </Dialog>
