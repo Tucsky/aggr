@@ -8,14 +8,14 @@
           </template>
           <template v-else>
             <td class="table-input">
-              <input
-                type="text"
+              <editable
                 placeholder="Amount*"
-                :value="threshold.amount"
-                @change="
+                class="pr16"
+                :content="threshold.amount"
+                @output="
                   $store.commit(paneId + '/SET_THRESHOLD_AMOUNT', {
                     id: threshold.id,
-                    value: $event.target.value
+                    value: $event
                   })
                 "
               />
@@ -91,8 +91,8 @@
             transform: 'translateX(' + this.panelCaretPosition + 'px)'
           }"
         ></div>
-        <p class="help-text mb16 d-block">
-          {{ thresholds.indexOf(selectedThreshold) > 0 ? 'for trades >' : 'show trades above' }}
+        <p class="mb16 d-block">
+          <i class="icon-info -lower"></i> {{ thresholds.indexOf(selectedThreshold) > 0 ? 'For trades >' : 'Show trades above' }}
           <editable
             :content="selectedThreshold.amount"
             @output="
@@ -126,9 +126,9 @@
         </div>
         <div class="form-group mb8 threshold-panel__colors">
           <label>Custom colors</label>
-          <div class="column">
+          <div class="column mt8">
             <div class="form-group column flex-center" title="When buy" v-tippy="{ placement: 'bottom' }">
-              <p class="help-text -center mr16">
+              <p class="help-text -center mr16 mt0 mb0">
                 Buy
               </p>
               <verte
@@ -146,7 +146,7 @@
               ></verte>
             </div>
             <div class="form-group column flex-center" title="When sell" v-tippy="{ placement: 'bottom' }">
-              <p class="help-text -center mr16">
+              <p class="help-text -center mr16 mt0 mb0">
                 Sell
               </p>
               <verte
@@ -741,6 +741,7 @@ export default class extends Vue {
     top: 0;
     padding: 1em;
     font-size: 1.125em;
+    text-decoration: none;
 
     &:hover {
       opacity: 1;
@@ -776,7 +777,7 @@ export default class extends Vue {
       content: 'Minimum for a trade to show up';
       display: block;
       margin-bottom: 0.25rem;
-      text-decoration: underline;
+      opacity: 0.6;
     }
 
     .threshold-panel__gif {
