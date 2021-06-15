@@ -298,11 +298,17 @@ class AudioService {
       return new Function('play', 'ratio', 'side', 'level', litteral) as AudioFunction
     } catch (error) {
       console.warn('invalid audio script', litteral)
-      console.error(error)
 
       if (test) {
         throw error
       } else {
+        store.dispatch('app/showNotice', {
+          id: 'audio-script-error',
+          type: 'error',
+          title: `Please check that ${side} audio script is syntactically correct. `,
+          timeout: 60000
+        })
+
         return new Function() as AudioFunction
       }
     }
