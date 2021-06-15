@@ -275,7 +275,7 @@ class AudioService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  buildAudioFunction(litteral, side, notice = false) {
+  buildAudioFunction(litteral, side, test = false) {
     litteral = `'use strict'; 
     
     ${litteral}`
@@ -300,7 +300,11 @@ class AudioService {
       console.warn('invalid audio script', litteral)
       console.error(error)
 
-      return new Function() as AudioFunction
+      if (test) {
+        throw error
+      } else {
+        return new Function() as AudioFunction
+      }
     }
   }
 

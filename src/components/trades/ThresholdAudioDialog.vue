@@ -64,6 +64,7 @@
           <i class="icon-volume-high"></i>
         </button>
       </div>
+      <p v-if="buyError" class="form-feedback"><i class="icon-warning mr4"></i> {{ buyError }}</p>
     </div>
     <div class="form-group mb16">
       <label for>
@@ -81,6 +82,7 @@
           <i class="icon-volume-high"></i>
         </button>
       </div>
+      <p v-if="sellError" class="form-feedback"><i class="icon-warning mr4"></i> {{ sellError }}</p>
     </div>
     <footer>
       <a href="javascript:void(0);" class="btn -text" @click="close(false)">Cancel</a>
@@ -94,6 +96,7 @@ import DialogMixin from '../../mixins/dialogMixin'
 import Behave from 'behave-js'
 import { formatAmount } from '@/utils/helpers'
 import audioService from '@/services/audioService'
+import dialogService from '@/services/dialogService'
 
 export default {
   props: {
@@ -110,6 +113,8 @@ export default {
   data: () => ({
     buyAudio: '',
     sellAudio: '',
+    buyError: null,
+    sellError: null,
     showHelp: false
   }),
   computed: {
@@ -156,6 +161,10 @@ export default {
       this[side + 'Audio'] = input
     },
     saveInputs() {
+      if (!this.validate(true)) {
+        return
+      }
+
       this.$store.commit(this.paneId + '/SET_THRESHOLD_AUDIO', {
         id: this.thresholdId,
         buyAudio: this.buyAudio,
@@ -163,6 +172,27 @@ export default {
       })
 
       this.close(true)
+    },
+    validate(alert = false) {
+      for (const side of ['buy', 'sell']) {
+        const litteral = this[side + 'Audio']
+
+        try {
+          this.getAdapter(litteral, side)
+        } catch (error) {
+          if (alert) {
+            dialogService.confirm({
+              message: `Please check that ${side} audio script is syntactically correct.`,
+              ok: 'OK',
+              cancel: false
+            })
+          }
+
+          return false
+        }
+      }
+
+      return true
     },
     test(side) {
       let percent
@@ -194,7 +224,7 @@ export default {
       if (amount) {
         const litteral = this[side + 'Audio']
 
-        const adapter = audioService.buildAudioFunction(litteral, side, this.$store.state[this.paneId].thresholds)
+        const adapter = this.getAdapter(litteral, side)
 
         adapter(audioService.play.bind(audioService), percent, side, level)
 
@@ -208,6 +238,19 @@ export default {
     },
     formatAmount(amount) {
       return formatAmount(amount)
+    },
+    getAdapter(litteral, side) {
+      try {
+        const adapter = audioService.buildAudioFunction(litteral, side, true)
+
+        this[side + 'Error'] = null
+
+        return adapter
+      } catch (error) {
+        this[side + 'Error'] = error.message
+
+        throw error
+      }
     },
     initBehave() {
       for (const el of [this.$refs.behaveBuy, this.$refs.behaveSell]) {
