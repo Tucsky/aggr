@@ -157,6 +157,7 @@ export default class extends Mixins(PaneMixin) {
       switch (mutation.type) {
         case 'app/EXCHANGE_UPDATED':
         case this.paneId + '/SET_THRESHOLD_MULTIPLIER':
+        case this.paneId + '/TOGGLE_TRADE_TYPE':
           this.cacheFilters()
           break
         case 'panes/SET_PANE_MARKETS':
