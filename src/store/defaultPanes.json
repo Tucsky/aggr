@@ -87,7 +87,7 @@
           "BYBIT:BTCUSD"
         ],
         "settings": {
-          "liquidationsOnly": true,
+          "tradeType": "liquidations",
           "thresholds": [
             {
               "id": "threshold",

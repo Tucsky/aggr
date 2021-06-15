@@ -32,8 +32,8 @@ export default class PaneMixin extends Vue {
 
   refreshScale(width) {
     if (width > 768) {
-      this.scale = '-wide'
-    } else if (width > 420) {
+      this.scale = '-xlarge'
+    } else if (width > 360) {
       this.scale = '-large'
     } else if (width > 240) {
       this.scale = '-normal'

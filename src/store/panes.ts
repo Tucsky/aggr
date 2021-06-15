@@ -48,18 +48,18 @@ const getters = {
     let y = 0
 
     for (const gridItem of state.layout.slice().sort((a, b) => a.x + a.y * 2 - (b.x + b.y * 2))) {
-      if (gridItem.x + gridItem.y * 2 - (x + y * 2) > 1) {
+      if (gridItem.x + gridItem.y * 2 - (x + y * 2) >= 4) {
         break
       }
 
-      x = gridItem.x
-      y = gridItem.y
+      x = (gridItem.x + gridItem.w) % 24
+      y = (gridItem.y + gridItem.h) % 24
     }
 
     const baseIndex = x + y * 2 + 1
 
-    x = baseIndex % 8
-    y = Math.floor(baseIndex / 8)
+    x = baseIndex % 24
+    y = Math.floor(baseIndex / 24)
 
     return { x, y }
   }
@@ -111,7 +111,7 @@ const actions = {
       window.scrollTo(0, document.body.scrollHeight)
     })
   },
-  removePane({ commit, state, dispatch }, id: string) {
+  async removePane({ commit, state, dispatch }, id: string) {
     const item = state.panes[id]
 
     if (!item) {
@@ -121,6 +121,8 @@ const actions = {
     dispatch('removePaneGridItems', id)
     commit('REMOVE_PANE', id)
     dispatch('refreshMarketsListeners')
+
+    await workspacesService.removeState(id)
 
     setTimeout(() => {
       this.unregisterModule(id)
@@ -298,7 +300,7 @@ const actions = {
       title: `Duplicated pane ${id}`
     })
   },
-  async resetPane({ state, commit }, id: string) {
+  async resetPane({ state, commit }, { id, data }: { id: string; data?: any }) {
     const gridItem = state.layout.find(item => item.i === id)
 
     const pane = JSON.parse(JSON.stringify(state.panes[id]))
@@ -308,6 +310,10 @@ const actions = {
     this.unregisterModule(id)
 
     await workspacesService.removeState(id)
+
+    if (data && typeof data === 'object') {
+      await workspacesService.saveState(id, data)
+    }
 
     await sleep(100)
 

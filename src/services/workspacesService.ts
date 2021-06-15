@@ -1,7 +1,7 @@
 import defaultIndicators from '@/store/defaultIndicators.json'
 import store, { boot } from '@/store'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
-import { GifsStorage, ProductsStorage, Workspace } from '@/types/test'
+import { GifsStorage, Preset, PresetType, ProductsStorage, Workspace } from '@/types/test'
 import { downloadJson, getDiff, randomString, slugify, uniqueName } from '@/utils/helpers'
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import * as migrations from './migrations'
@@ -26,6 +26,10 @@ export interface AggrDB extends DBSchema {
     key: string
     indexes: { name: string }
   }
+  presets: {
+    value: Preset
+    key: string
+  }
 }
 
 class WorkspacesService {
@@ -45,7 +49,7 @@ class WorkspacesService {
     let promiseOfUpgrade: Promise<void>
 
     return new Promise<IDBPDatabase<AggrDB>>(resolve => {
-      openDB<AggrDB>('aggr', 1, {
+      openDB<AggrDB>('aggr', 2, {
         upgrade: (db, oldVersion, newVersion, tx) => {
           console.debug(`[idb] upgrade received`, oldVersion, '->', newVersion)
 
@@ -58,7 +62,7 @@ class WorkspacesService {
             }
           })
 
-          for (let i = oldVersion; i <= newVersion; i++) {
+          for (let i = oldVersion ? oldVersion + 1 : oldVersion; i <= newVersion; i++) {
             console.debug(`[idb] migrating v${i}`)
             migrations['v' + i](db)
           }
@@ -98,18 +102,29 @@ class WorkspacesService {
   }
 
   async insertDefault(db: IDBPDatabase<AggrDB>) {
-    console.log(`[idb] insert default`)
-
     const now = +new Date()
     const tx = db.transaction('indicators', 'readwrite')
+
+    const existing = await tx.store.getAllKeys()
+    let added = 0
 
     for (const id in defaultIndicators) {
       const serie: IndicatorSettings = defaultIndicators[id]
 
-      tx.store.add({ ...serie, id, createdAt: now, updatedAt: null })
+      if (existing.indexOf(id) !== -1) {
+        continue
+      }
+
+      console.log(`[idb] insert default indicator ${id}`)
+
+      await tx.store.add({ ...serie, id, createdAt: now, updatedAt: null })
+
+      added++
     }
 
-    console.debug(`[idb] ${Object.keys(defaultIndicators).length} default indicators added`)
+    if (added) {
+      console.debug(`[idb] ${added} indicators added`)
+    }
 
     await tx.done
   }
@@ -211,6 +226,10 @@ class WorkspacesService {
     console.debug(`[workspaces] remove state ${stateId}`)
 
     delete this.workspace.states[stateId]
+
+    if (this.workspace.states[stateId]) {
+      delete this.workspace.states[stateId]
+    }
 
     return this.saveWorkspace()
   }
@@ -374,6 +393,22 @@ class WorkspacesService {
 
   deleteIndicator(id: string) {
     return this.db.delete('indicators', id)
+  }
+
+  savePreset(preset: Preset) {
+    return this.db.put('presets', preset)
+  }
+
+  getPreset(id: string) {
+    return this.db.get('presets', id)
+  }
+
+  removePreset(id) {
+    return this.db.delete('presets', id)
+  }
+
+  getPresetsKeysByType(type: PresetType) {
+    return this.db.getAllKeys('presets', IDBKeyRange.bound(type, type + '|', true, true))
   }
 
   async reset() {

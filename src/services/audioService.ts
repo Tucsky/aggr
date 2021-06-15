@@ -202,7 +202,7 @@ class AudioService {
 
     const oscillatorNode = this.context.createOscillator()
     const gainNode = this.context.createGain()
-    gain = Math.max(0.01, Math.min(1, gain)) * this.volume
+    gain = Math.min(1, gain) * this.volume
 
     oscillatorNode.frequency.value = frequency
     oscillatorNode.type = osc || 'triangle'
@@ -244,7 +244,7 @@ class AudioService {
       gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration)
 
       oscillatorNode.start(time)
-      oscillatorNode.stop(time + duration)
+      oscillatorNode.stop(0.2 + time + duration)
     }
   }
 

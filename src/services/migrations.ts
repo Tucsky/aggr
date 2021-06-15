@@ -34,3 +34,9 @@ export const v1 = (db: IDBPDatabase<AggrDB>) => {
 
   indicatorsStore.createIndex('name', 'name')
 }
+
+export const v2 = (db: IDBPDatabase<AggrDB>) => {
+  db.createObjectStore('presets', {
+    keyPath: 'name'
+  })
+}

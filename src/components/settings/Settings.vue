@@ -131,7 +131,7 @@
 
         <section class="section">
           <div v-if="settings.indexOf('chart') > -1" class="settings-section settings-chart">
-            <div class="form-group mb8">
+            <div class="form-group mb16">
               <label class="checkbox-control flex-left">
                 <input
                   type="checkbox"

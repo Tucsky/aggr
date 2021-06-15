@@ -1,4 +1,7 @@
+import { PaneType } from '@/store/panes'
+
 export type SlippageMode = false | 'price' | 'bps'
+
 declare module 'test.worker' {
   // You need to change `Worker`, if you specified a different value for the `workerType` option
   class WebpackWorker extends Worker {
@@ -88,6 +91,14 @@ export interface Workspace {
   id: string
   name: string
   states: { [id: string]: any }
+}
+
+export type PresetType = ('audio' | 'colors') | PaneType
+
+export interface Preset {
+  name: string
+  type: PresetType
+  data: any
 }
 
 export type ProductsData = string[] | { [prop: string]: any }

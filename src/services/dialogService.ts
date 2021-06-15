@@ -74,7 +74,6 @@ class DialogService {
 
       if (typeof title !== 'undefined') {
         this.pickerInstance.title = title
-
       }
 
       this.pickerInstance.$off('input')

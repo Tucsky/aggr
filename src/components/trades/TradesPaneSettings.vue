@@ -48,10 +48,12 @@
     </div>
 
     <div class="form-group mb8">
-      <label class="checkbox-control -rip" @change="$store.commit(paneId + '/TOGGLE_LIQUIDATIONS_ONLY', $event.target.checked)">
-        <input type="checkbox" class="form-control" :checked="liquidationsOnly" />
+      <label class="checkbox-control" :class="{ '-rip': tradeType === 'liquidations' }">
+        <input type="checkbox" class="form-control" :checked="tradeType" @change="$store.commit(paneId + '/TOGGLE_TRADE_TYPE')" />
         <div></div>
-        <span v-html="'List will ' + (liquidationsOnly ? '<strong>ONLY</strong> show liquidation' : 'show trades and liquidations')"></span>
+        <span v-if="tradeType === 'both'"> Show both trades and liquidations </span>
+        <span v-if="tradeType === 'liquidations'"> Only show liquidations </span>
+        <span v-if="tradeType === 'trades'">Only show trades</span>
       </label>
     </div>
 
@@ -59,18 +61,18 @@
       <div v-if="sections.indexOf('thresholds') > -1">
         <div class="column section__controls">
           <span class="-fill"></span>
-          <a
-            href="javascript:void(0);"
+          <button
+            type="button"
             v-tippy
             title="Switch thresholds display"
-            class="-nowrap mr4"
+            class="btn -text -nowrap mr4"
             @click="$store.commit(paneId + '/TOGGLE_THRESHOLDS_TABLE', !showThresholdsAsTable)"
           >
             Show as {{ showThresholdsAsTable ? 'slider' : 'table' }}
-          </a>
+          </button>
         </div>
 
-        <thresholds :paneId="paneId" :show-liquidations-threshold="!this.liquidationsOnly" />
+        <thresholds :paneId="paneId" :show-liquidations-threshold="tradeType === 'both'" />
 
         <div class="text-right mt8 mb8">
           <a href="javascript:void(0);" class="ml4 -nowrap -text" v-tippy title="Add a threshold" @click="$store.commit(paneId + '/ADD_THRESHOLD')">
@@ -91,15 +93,34 @@
 
     <section class="section">
       <div class="form-group" v-if="sections.indexOf('audio') > -1">
-        <label>
-          Minimum for a trade to trigger a sound
-        </label>
-        <input
-          class="form-control"
-          :value="audioThreshold"
-          :placeholder="audioThresholdPlaceholder"
-          @change="$store.commit(paneId + '/SET_AUDIO_THRESHOLD', $event.target.value)"
-        />
+        <div class="column section__controls">
+          <presets type="audio" title="Audio presets" :adapter="getAudioPreset" @apply="applyAudioPreset($event)" />
+        </div>
+        <div class="form-group mb16">
+          <label class="checkbox-control">
+            <input type="checkbox" class="form-control" :disabled="!useAudio" :checked="muted" @change="$store.commit(paneId + '/TOGGLE_MUTED')" />
+            <div></div>
+            <span>Mute this pane</span>
+          </label>
+        </div>
+        <div class="form-group" v-if="useAudio && !muted">
+          <label>
+            Minimum for a trade to trigger a sound
+          </label>
+          <input
+            class="form-control"
+            :value="audioThreshold"
+            :placeholder="audioThresholdPlaceholder"
+            @change="$store.commit(paneId + '/SET_AUDIO_THRESHOLD', $event.target.value)"
+          />
+        </div>
+
+        <div v-if="!useAudio" class="d-flex help-text">
+          <p class="mt0 mb0">
+            <i class="icon-info mr8"></i>
+            <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_AUDIO', true)">Enable audio</a>
+          </p>
+        </div>
       </div>
       <div class="section__title" @click="toggleSection('audio')">Audio Threshold <i class="icon-up"></i></div>
     </section>
@@ -164,6 +185,8 @@
 </template>
 
 <script lang="ts">
+import panesSettings from '@/store/panesSettings'
+import { Threshold, TradesPaneState } from '@/store/panesSettings/trades'
 import { formatAmount, parseMarket } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '../framework/picker/Slider.vue'
@@ -183,51 +206,59 @@ export default class extends Vue {
   paneId: string
   sections = ['thresholds']
 
+  get useAudio() {
+    return this.$store.state.settings.useAudio
+  }
+
   get markets() {
     return this.$store.state.panes.panes[this.paneId].markets
   }
 
   get maxRows() {
-    return this.$store.state[this.paneId].maxRows
+    return (this.$store.state[this.paneId] as TradesPaneState).maxRows
   }
 
   get showLogos() {
-    return this.$store.state[this.paneId].showLogos
+    return (this.$store.state[this.paneId] as TradesPaneState).showLogos
   }
 
   get monochromeLogos() {
-    return this.$store.state[this.paneId].monochromeLogos
+    return (this.$store.state[this.paneId] as TradesPaneState).monochromeLogos
   }
 
-  get liquidationsOnly() {
-    return this.$store.state[this.paneId].liquidationsOnly
+  get tradeType() {
+    return (this.$store.state[this.paneId] as TradesPaneState).tradeType
   }
 
   get showTradesPairs() {
-    return this.$store.state[this.paneId].showTradesPairs
+    return (this.$store.state[this.paneId] as TradesPaneState).showTradesPairs
   }
 
   get thresholds() {
-    return this.$store.state[this.paneId].thresholds
+    return (this.$store.state[this.paneId] as TradesPaneState).thresholds
   }
 
   get showThresholdsAsTable() {
-    return this.$store.state[this.paneId].showThresholdsAsTable
+    return (this.$store.state[this.paneId] as TradesPaneState).showThresholdsAsTable
   }
 
   get audioThresholdPlaceholder() {
-    return +(this.thresholds[0].amount * 0.1).toFixed(2)
+    return '10% (' + +(this.thresholds[0].amount * 0.1).toFixed(2) + ')'
   }
 
   get audioThreshold() {
-    return this.$store.state[this.paneId].audioThreshold
+    return (this.$store.state[this.paneId] as TradesPaneState).audioThreshold
+  }
+
+  get muted() {
+    return (this.$store.state[this.paneId] as TradesPaneState).muted
   }
 
   get multipliers() {
     return this.markets.map(market => {
       const [exchange, pair] = parseMarket(market)
 
-      const multiplier = this.$store.state[this.paneId].multipliers[exchange + pair]
+      const multiplier = (this.$store.state[this.paneId] as TradesPaneState).multipliers[exchange + pair]
 
       return {
         exchange,
@@ -261,6 +292,41 @@ export default class extends Vue {
       this.sections.push(id)
     } else {
       this.sections.splice(index, 1)
+    }
+  }
+
+  getAudioPreset() {
+    return this.thresholds.map(a => ({
+      id: a.id,
+      buyAudio: a.buyAudio,
+      sellAudio: a.sellAudio
+    }))
+  }
+
+  applyAudioPreset(presetData?) {
+    let defaultSettings: Threshold[]
+
+    if (!presetData) {
+      defaultSettings = JSON.parse(JSON.stringify(panesSettings[this.$store.state.panes.panes[this.paneId].type as 'trades'].state)).thresholds
+    }
+
+    for (let i = 0; i < this.thresholds.length; i++) {
+      let buyAudio = this.thresholds[i].buyAudio
+      let sellAudio = this.thresholds[i].sellAudio
+
+      if (defaultSettings && defaultSettings[i]) {
+        buyAudio = defaultSettings[i].buyAudio
+        sellAudio = defaultSettings[i].sellAudio
+      } else if (presetData && presetData[i]) {
+        buyAudio = presetData[i].buyAudio
+        sellAudio = presetData[i].sellAudio
+      }
+
+      this.$store.commit(this.paneId + '/SET_THRESHOLD_AUDIO', {
+        id: this.thresholds[i].id,
+        buyAudio: buyAudio,
+        sellAudio: sellAudio
+      })
     }
   }
 }

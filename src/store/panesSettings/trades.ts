@@ -13,6 +13,8 @@ export interface Threshold {
   gif?: string
 }
 
+export type TradeTypeFilter = 'both' | 'liquidations' | 'trades'
+
 export interface TradesPaneState {
   _id?: string
   _booted?: boolean
@@ -20,11 +22,12 @@ export interface TradesPaneState {
   thresholds: Threshold[]
   audioThreshold: number
   showThresholdsAsTable: boolean
+  tradeType: TradeTypeFilter
+  muted: boolean
   maxRows: number
   showLogos: boolean
   monochromeLogos: boolean
   showTradesPairs: boolean
-  liquidationsOnly: boolean
   multipliers: { [identifier: string]: number }
 }
 
@@ -56,21 +59,21 @@ const state = {
   thresholds: [
     {
       id: 'threshold',
-      amount: 250000,
+      amount: 100000,
       buyColor: 'rgba(119, 148, 92, 0.5)',
       sellColor: 'rgba(239, 67, 82, 0.5)',
-      buyAudio: `play(659.26, Math.sqrt(ratio) / 10, 0.1 + Math.sqrt(ratio) / 10, 0)`,
-      sellAudio: `play(493.88, Math.sqrt(ratio * 1.5) / 10, 0.1 + Math.sqrt(ratio) / 10, 0)`
+      buyAudio: `play(659.26, Math.sqrt(ratio) / 10, 0.1 + Math.sqrt(ratio) * 0.23, 0)`,
+      sellAudio: `play(493.88, Math.sqrt(ratio * 1.5) / 10, 0.1 + Math.sqrt(ratio) * 0.23, 0)`
     },
     {
       id: 'significant',
-      amount: 500000,
+      amount: 250000,
       buyColor: 'rgb(100, 157, 102)',
       sellColor: 'rgb(239, 67, 82)',
-      buyAudio: `play(659.26, 0.05 + Math.sqrt(ratio) / 10, 0.1 + ratio * 0.1, 0);
-play(830.6, 0.05 + Math.sqrt(ratio) / 10, 0.1 + ratio * 0.1, 0.08)`,
+      buyAudio: `play(659.26, 0.05 + Math.sqrt(ratio) / 10, 0.1 + ratio * 0.23, 0);
+play(830.6, 0.05 + Math.sqrt(ratio) / 10, 0.1 + ratio * 0.23, 0.08)`,
       sellAudio: `play(493.88, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.1, 0);
-play(392, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.1), 0.08)`
+play(392, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.23, 0.08)`
     },
     {
       id: 'huge',
@@ -78,14 +81,14 @@ play(392, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.1), 0.08)`
       gif: 'cash',
       buyColor: 'rgb(59, 202, 109)',
       sellColor: 'rgb(235, 30, 47)',
-      buyAudio: `play(659.26, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.1, 0);
-play(830.6, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.1, 0.08);
-play(987.76, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.1, 0.16);
-play(1318.52, 0.05 + Math.sqrt(ratio) / 10, 0.1 + ratio * 0.1, 0.24)`,
-      sellAudio: `play(493.88, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.1, 0);
+      buyAudio: `play(659.26, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.23, 0);
+play(830.6, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.23, 0.08);
+play(987.76, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.23, 0.16);
+play(1318.52, 0.05 + Math.sqrt(ratio) / 10, 0.1 + ratio * 0.23, 0.24)`,
+      sellAudio: `play(493.88, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.23, 0);
 play(369.99, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.2, 0.08);
 play(293.66, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.2, 0.16);
-play(246.94, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.1, 0.24)`
+play(246.94, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.23, 0.24)`
     },
     {
       id: 'rare',
@@ -93,14 +96,14 @@ play(246.94, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.1, 0.24)`
       gif: 'explosion',
       buyColor: 'rgb(0, 255, 127)',
       sellColor: 'rgb(217, 31, 28)',
-      buyAudio: `play(659.26, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.1, 0);
-play(830.6, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.1, 0.08);
-play(987.76, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.1, 0.16);
-play(1318.52, 0.05 + Math.sqrt(ratio) / 10, 0.1 + ratio * 0.1, 0.24)`,
-      sellAudio: `play(493.88, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.1, 0);
+      buyAudio: `play(659.26, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.13, 0);
+play(830.6, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.13, 0.08);
+play(987.76, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.13, 0.16);
+play(1318.52, 0.05 + Math.sqrt(ratio) / 10, 0.1 + ratio * 0.13, 0.24)`,
+      sellAudio: `play(493.88, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.13, 0);
 play(369.99, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.2, 0.08);
 play(293.66, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.2, 0.16);
-play(246.94, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.1, 0.24)`
+play(246.94, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.13, 0.24)`
     }
   ],
   audioThreshold: null,
@@ -108,7 +111,7 @@ play(246.94, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.1, 0.24)`
   showThresholdsAsTable: true,
   maxRows: 100,
   showTradesPairs: false,
-  liquidationsOnly: false,
+  tradeType: 'both',
   showLogos: true,
   monochromeLogos: true
 } as TradesPaneState
@@ -157,27 +160,34 @@ const mutations = {
   TOGGLE_LOGOS(state, value) {
     state.showLogos = value ? true : false
   },
+  TOGGLE_MUTED(state) {
+    state.muted = !state.muted
+  },
   TOGGLE_MONOCHROME_LOGOS(state, value) {
     state.monochromeLogos = value ? true : false
   },
-  TOGGLE_LIQUIDATIONS_ONLY(state) {
-    state.liquidationsOnly = !state.liquidationsOnly
+  TOGGLE_TRADE_TYPE(state) {
+    const values: TradeTypeFilter[] = ['both', 'liquidations', 'trades']
+
+    const index = Math.max(0, values.indexOf(state.tradeType))
+
+    state.tradeType = values[(index + 1) % values.length]
   },
   TOGGLE_THRESHOLDS_TABLE(state, value) {
     state.showThresholdsAsTable = value ? true : false
   },
-  SET_THRESHOLD_AMOUNT(state, payload) {
-    const threshold = this.getters[state._id + '/getThreshold'](payload.id)
+  SET_THRESHOLD_AMOUNT(state, { id, value }) {
+    const threshold = this.getters[state._id + '/getThreshold'](id)
 
     if (threshold) {
-      if (typeof payload.value === 'string' && /m|k$/i.test(payload.value)) {
-        if (/m$/i.test(payload.value)) {
-          threshold.amount = parseFloat(payload.value) * 1000000
+      if (typeof value === 'string' && /m|k$/i.test(value)) {
+        if (/m$/i.test(value)) {
+          threshold.amount = parseFloat(value) * 1000000
         } else {
-          threshold.amount = parseFloat(payload.value) * 1000
+          threshold.amount = parseFloat(value) * 1000
         }
       }
-      threshold.amount = +payload.value
+      threshold.amount = +value
 
       this.commit(state._id + '/UPDATE_THRESHOLD', threshold)
     }
@@ -205,19 +215,19 @@ const mutations = {
       this.commit(state._id + '/UPDATE_THRESHOLD', threshold)
     }
   },
-  SET_THRESHOLD_COLOR(state, payload) {
-    const threshold = this.getters[state._id + '/getThreshold'](payload.id)
+  SET_THRESHOLD_COLOR(state, { id, side, value }) {
+    const threshold = this.getters[state._id + '/getThreshold'](id)
 
     if (threshold) {
-      threshold[payload.side] = payload.value
+      threshold[side] = value
     }
   },
-  SET_THRESHOLD_AUDIO(state, payload) {
-    const threshold = this.getters[state._id + '/getThreshold'](payload.id)
+  SET_THRESHOLD_AUDIO(state, { id, buyAudio, sellAudio }) {
+    const threshold = this.getters[state._id + '/getThreshold'](id)
 
     if (threshold) {
-      threshold['buyAudio'] = payload.buyAudio
-      threshold['sellAudio'] = payload.sellAudio
+      threshold['buyAudio'] = buyAudio
+      threshold['sellAudio'] = sellAudio
     }
   },
   ADD_THRESHOLD(state) {

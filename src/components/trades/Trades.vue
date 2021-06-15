@@ -9,12 +9,9 @@
       <div class="mt16 ml16 mr16">
         <strong>Waiting for trades</strong>
 
-        <p class="help-text">
-          No trade are matching the following markets
-        </p>
-        <code v-for="market of pane.markets" :key="market">{{ market.replace(/^\w+:/, '') }}<br /></code>
+        <p class="help-text">No{{ tradeType === 'both' ? 'thing' : ' ' + tradeType }} matching</p>
+        <code v-for="market of pane.markets" :key="market" class="trades-placeholder__market">{{ market.replace(/^\w+:/, '') }}<br /></code>
         <p class="help-text">with amount > {{ thresholds[0].amount }}</p>
-        <p class="help-text" v-if="liquidationsOnly">liquidation only</p>
       </div>
     </div>
   </div>
@@ -32,7 +29,7 @@ import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
 import { Trade } from '@/types/test'
 import workspacesService from '@/services/workspacesService'
-import { Threshold } from '@/store/panesSettings/trades'
+import { Threshold, TradeTypeFilter } from '@/store/panesSettings/trades'
 
 const GIFS: { [keyword: string]: string[] } = {} // shared cache for gifs
 const PROMISES_OF_GIFS: { [keyword: string]: Promise<string[]> } = {}
@@ -80,6 +77,7 @@ export default class extends Mixins(PaneMixin) {
   private _minimumThresholdAmount: number
   private _significantThresholdAmount: number
   private _activeExchanges: { [exchange: string]: boolean }
+  private _tradeType: TradeTypeFilter
   private _multipliers: { [identifier: string]: number }
   private _paneMarkets: { [identifier: string]: boolean }
   private _timeAgoInterval: number
@@ -97,8 +95,8 @@ export default class extends Mixins(PaneMixin) {
     return this.$store.state[this.paneId].liquidations
   }
 
-  get liquidationsOnly() {
-    return this.$store.state[this.paneId].liquidationsOnly
+  get tradeType() {
+    return this.$store.state[this.paneId].tradeType
   }
 
   get showTradesPairs() {
@@ -121,10 +119,6 @@ export default class extends Mixins(PaneMixin) {
     return this.$store.state.exchanges
   }
 
-  get useAudio() {
-    return this.$store.state.settings.useAudio
-  }
-
   get calculateSlippage() {
     return this.$store.state.settings.calculateSlippage
   }
@@ -135,10 +129,6 @@ export default class extends Mixins(PaneMixin) {
 
   get decimalPrecision() {
     return this.$store.state.settings.decimalPrecision
-  }
-
-  get activeExchanges() {
-    return this.$store.state.app.activeExchanges
   }
 
   get disableAnimations() {
@@ -194,6 +184,7 @@ export default class extends Mixins(PaneMixin) {
           this.prepareAudioThreshold()
           break
         case this.paneId + '/SET_AUDIO_THRESHOLD':
+        case this.paneId + '/TOGGLE_MUTED':
           this.prepareAudioThreshold()
           break
       }
@@ -252,12 +243,12 @@ export default class extends Mixins(PaneMixin) {
       const amount = trade.size * (this.preferQuoteCurrencySize ? trade.price : 1)
       const multiplier = this._multipliers[identifier]
 
-      if (trade.liquidation) {
+      if (this._tradeType !== 'trades' && trade.liquidation) {
         if (amount >= this._minimumThresholdAmount * multiplier) {
           this.appendRow(trade, amount, multiplier)
         }
         continue
-      } else if (this.liquidationsOnly) {
+      } else if (this._tradeType === 'liquidations') {
         continue
       }
 
@@ -286,7 +277,7 @@ export default class extends Mixins(PaneMixin) {
       li.className += ' -sm'
     }
 
-    if (trade.liquidation && !this.liquidationsOnly) {
+    if (trade.liquidation && this._tradeType === 'both') {
       li.className += ' -liquidation'
 
       const side = document.createElement('div')
@@ -397,13 +388,15 @@ export default class extends Mixins(PaneMixin) {
     price.innerText = `${formatPrice(trade.price)}`
     li.appendChild(price)
 
-    if (this.calculateSlippage === 'price' && Math.abs(trade.slippage) / trade.price > 0.0005) {
-      price.setAttribute(
-        'slippage',
-        (trade.slippage > 0 ? '+' : '') + formatPrice(trade.slippage) + document.getElementById('app').getAttribute('data-quote-symbol')
-      )
-    } else if (this.calculateSlippage === 'bps' && trade.slippage) {
-      price.setAttribute('slippage', (trade.slippage > 0 ? '+' : '-') + formatPrice(trade.slippage))
+    if (trade.slippage) {
+      if (this.calculateSlippage === 'price' && Math.abs(trade.slippage) / trade.price > 0.0005) {
+        price.setAttribute(
+          'slippage',
+          (trade.slippage > 0 ? '+' : '') + formatPrice(trade.slippage) + document.getElementById('app').getAttribute('data-quote-symbol')
+        )
+      } else if (this.calculateSlippage === 'bps' && trade.slippage) {
+        price.setAttribute('slippage', (trade.slippage > 0 ? '+' : '-') + formatPrice(trade.slippage))
+      }
     }
 
     const amount_div = document.createElement('div')
@@ -424,15 +417,17 @@ export default class extends Mixins(PaneMixin) {
     const date = document.createElement('div')
     date.className = 'trade__time'
 
-    const timestamp = Math.floor(trade.timestamp / 1000) * 1000
+    if (!isNaN(trade.timestamp)) {
+      const timestamp = Math.floor(trade.timestamp / 1000) * 1000
 
-    if (timestamp !== this._lastTradeTimestamp) {
-      this._lastTradeTimestamp = timestamp
+      if (timestamp !== this._lastTradeTimestamp) {
+        this._lastTradeTimestamp = timestamp
 
-      date.setAttribute('timestamp', trade.timestamp.toString())
-      date.innerText = ago(timestamp)
+        date.setAttribute('timestamp', trade.timestamp.toString())
+        date.innerText = ago(timestamp)
 
-      date.className += ' -timestamp'
+        date.className += ' -timestamp'
+      }
     }
 
     li.appendChild(date)
@@ -578,16 +573,25 @@ export default class extends Mixins(PaneMixin) {
   }
 
   prepareAudioThreshold() {
-    if (!this.useAudio) {
+    if (!this.$store.state.settings.useAudio || this.$store.state[this.paneId].muted) {
       this._audioThreshold = Infinity
       return
     }
 
-    this._audioThreshold = +this.audioThreshold ? this.audioThreshold : this._minimumThresholdAmount * 0.1
+    if (this.audioThreshold) {
+      if (typeof this.audioThreshold === 'string' && /\d\s*%$/.test(this.audioThreshold)) {
+        this._audioThreshold = this._minimumThresholdAmount * (parseFloat(this.audioThreshold) / 100)
+      } else {
+        this._audioThreshold = +this.audioThreshold
+      }
+    } else {
+      this._audioThreshold = this._minimumThresholdAmount * 0.1
+    }
   }
 
   cacheFilters() {
-    this._activeExchanges = { ...this.activeExchanges }
+    this._tradeType = this.$store.state[this.paneId].tradeType
+    this._activeExchanges = { ...this.$store.state.app.activeExchanges }
     this._multipliers = {}
     this._paneMarkets = this.$store.state.panes.panes[this.paneId].markets.reduce((output, market) => {
       const identifier = market.replace(':', '')
@@ -686,7 +690,7 @@ export default class extends Mixins(PaneMixin) {
 
 <style lang="scss">
 @mixin tradesVariant($base: 20) {
-  font-size: $base * 0.7px;
+  font-size: min($base * 0.7px, 16px);
 
   .trade {
     height: round($base * 1px);
@@ -717,20 +721,11 @@ export default class extends Mixins(PaneMixin) {
   }
 
   &.-normal ul {
-    @include tradesVariant(22);
+    @include tradesVariant(20);
   }
 
   &.-small ul {
     @include tradesVariant(18);
-    font-weight: 600;
-
-    .-large {
-      display: none;
-    }
-  }
-
-  &.-large ul {
-    @include tradesVariant(24);
   }
 
   &.-slippage {
@@ -782,11 +777,10 @@ export default class extends Mixins(PaneMixin) {
     .trade__exchange {
       font-size: 0.75em;
       letter-spacing: -0.5px;
-      margin-top: -0.2em;
+      margin-top: -0.45em;
       margin-bottom: -0.5em;
       white-space: normal;
       word-break: break-word;
-      line-height: 0.9;
     }
   }
 }
@@ -799,6 +793,10 @@ export default class extends Mixins(PaneMixin) {
 
   @media (-webkit-min-device-pixel-ratio: 2) {
     font-size: 75%;
+  }
+
+  &__market {
+    opacity: 0.6;
   }
 }
 
@@ -925,7 +923,6 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__amount {
     position: relative;
-    font-weight: 600;
 
     > span {
       max-width: 100%;

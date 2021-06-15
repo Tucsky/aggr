@@ -18,10 +18,12 @@ Vue.use(VueTippy, {
 import Verte from '@/components/framework/picker/Verte.vue'
 import Editable from '@/components/framework/Editable.vue'
 import Dropdown from '@/components/framework/Dropdown.vue'
+import Presets from '@/components/framework/Presets.vue'
 Vue.component('tippy', TippyComponent)
 Vue.component('verte', Verte)
 Vue.component('dropdown', Dropdown)
 Vue.component('editable', Editable)
+Vue.component('presets', Presets)
 
 import backgroundDirective from './directives/backgroundDirective'
 Vue.directive('background', backgroundDirective)

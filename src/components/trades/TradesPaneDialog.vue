@@ -9,7 +9,7 @@
     </template>
     <trades-settings :paneId="paneId" />
     <footer>
-      <button class="btn -red mrauto ml0" @click="resetPane"><i class="icon-warning mr4"></i> Reset</button>
+      <presets type="trades" :adapter="getPreset" @apply="resetPane($event)" class="-left -top" />
     </footer>
   </Dialog>
 </template>

@@ -8,7 +8,6 @@ interface Api extends WebSocket {
   _connected: string[]
   _timestamp: number
   _reconnecting: boolean
-
 }
 
 class Exchange extends EventEmitter {
@@ -217,7 +216,7 @@ class Exchange extends EventEmitter {
 
         console.error(`[${this.id}] connection closed unexpectedly, schedule reconnection (${pairsToReconnect.join(',')})`)
 
-        api._reconnecting = true;
+        api._reconnecting = true
 
         this.scheduledOperationsDelays[api.url] = this.schedule(
           () => {

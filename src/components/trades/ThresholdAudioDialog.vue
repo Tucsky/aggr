@@ -11,9 +11,7 @@
       <p class="help-text mx0 -center">
         <i class="icon-info mr4"></i><span v-text="`Play a song when a ${formatAmount(this.min)} - ${formatAmount(this.max)} trade occur.`"></span>
       </p>
-      <button class="btn -text -green mlauto" @click="showHelp = !showHelp">
-        <i class="icon-down" :class="{ 'icon-up': this.showHelp }"></i> help
-      </button>
+      <button class="btn -text mlauto" @click="showHelp = !showHelp"><i class="icon-down" :class="{ 'icon-up': this.showHelp }"></i> help</button>
     </div>
     <div class="help-block mb16" v-if="showHelp">
       Write a sequence of sounds using the play() function

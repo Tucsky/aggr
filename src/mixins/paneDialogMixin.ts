@@ -1,4 +1,5 @@
 import dialogService from '@/services/dialogService'
+import workspacesService from '@/services/workspacesService'
 import { Pane } from '@/store/panes'
 import Vue from 'vue'
 import Component from 'vue-class-component'
@@ -37,9 +38,13 @@ export default class PaneDialogMixin extends Vue {
     }
   }
 
-  async resetPane() {
+  async resetPane(data?: any) {
     await (this as any).close()
 
-    await this.$store.dispatch('panes/resetPane', this.paneId)
+    await this.$store.dispatch('panes/resetPane', { id: this.paneId, data })
+  }
+
+  async getPreset() {
+    return await workspacesService.getState(this.paneId)
   }
 }

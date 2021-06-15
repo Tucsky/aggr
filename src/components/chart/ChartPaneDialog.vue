@@ -8,6 +8,9 @@
       <div class="column -center"></div>
     </template>
     <chart-pane-settings :paneId="paneId" />
+    <footer>
+      <presets type="chart" :adapter="getPreset" @apply="resetPane($event)" class="-left -top" />
+    </footer>
   </Dialog>
 </template>
 
@@ -19,9 +22,6 @@ import ChartPaneSettings from './ChartPaneSettings.vue'
 export default {
   components: { ChartPaneSettings },
   mixins: [DialogMixin, PaneDialogMixin],
-  data: () => ({
-    renaming: false
-  }),
   methods: {}
 }
 </script>
