@@ -2,6 +2,7 @@ import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 
 import Vue from 'vue'
 import { randomString } from '@/utils/helpers'
+import { scheduleSync } from '@/utils/store'
 
 export interface Threshold {
   id: string
@@ -118,6 +119,13 @@ play(246.94, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.13, 0.24)`
 
 const actions = {
   async boot({ state }) {
+    // 15th june 2021 retrocompatibillity with liquidationsOnly property
+    if (typeof (state as any).liquidationsOnly === 'boolean') {
+      state.tradeType = 'liquidations'
+      delete (state as any).liquidationsOnly
+      scheduleSync(state)
+    }
+
     state._booted = true
   },
   updateThreshold({ state, commit }, { index, prop, value }: { index: number; prop: string; value: any }) {
