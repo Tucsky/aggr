@@ -66,11 +66,13 @@ export default class extends Mixins(PaneMixin) {
 
   private _onStoreMutation: () => void
 
+  // cache all thoses vuex property (via cacheFilters when component load / a settings is updated)
+  // so they the getters don't get re evaluated on each trades
+  // not sure if good practice tho
   private _thresholdsColors: ThresholdColorsBySide[]
   private _thresholdsAudios: ThresholdAudiosBySide[]
   private _liquidationsAudio: ThresholdAudiosBySide
   private _liquidationsColor: ThresholdColorsBySide
-
   private _lastTradeTimestamp: number
   private _lastSide: 'buy' | 'sell'
   private _audioThreshold: number
@@ -82,6 +84,8 @@ export default class extends Mixins(PaneMixin) {
   private _paneMarkets: { [identifier: string]: boolean }
   private _timeAgoInterval: number
   private _enableAnimationsTimeout: number
+  private _disableAnimations: boolean
+  private _preferQuoteCurrencySize: boolean
 
   get maxRows() {
     return this.$store.state[this.paneId].maxRows
@@ -111,28 +115,12 @@ export default class extends Mixins(PaneMixin) {
     return this.$store.state[this.paneId].monochromeLogos
   }
 
-  get multipliers() {
-    return this.$store.state[this.paneId].multipliers
-  }
-
   get exchanges() {
     return this.$store.state.exchanges
   }
 
   get calculateSlippage() {
     return this.$store.state.settings.calculateSlippage
-  }
-
-  get preferQuoteCurrencySize() {
-    return this.$store.state.settings.preferQuoteCurrencySize
-  }
-
-  get decimalPrecision() {
-    return this.$store.state.settings.decimalPrecision
-  }
-
-  get disableAnimations() {
-    return this.$store.state.settings.disableAnimations
   }
 
   get audioThreshold() {
@@ -241,7 +229,7 @@ export default class extends Mixins(PaneMixin) {
       }
 
       const trade = trades[i]
-      const amount = trade.size * (this.preferQuoteCurrencySize ? trade.price : 1)
+      const amount = trade.size * (this._preferQuoteCurrencySize ? trade.price : 1)
       const multiplier = this._multipliers[identifier]
 
       if (this._tradeType !== 'trades' && trade.liquidation) {
@@ -288,7 +276,7 @@ export default class extends Mixins(PaneMixin) {
 
       if (
         this.liquidationThreshold.gif &&
-        !this.disableAnimations &&
+        !this._disableAnimations &&
         GIFS[this.liquidationThreshold.gif] &&
         amount >= this.liquidationThreshold.amount * multiplier
       ) {
@@ -302,8 +290,7 @@ export default class extends Mixins(PaneMixin) {
 
       const luminance = this._liquidationsColor[trade.side][(intensity < 0.5 ? 'from' : 'to') + 'Luminance']
       const backgroundColor = this._liquidationsColor[trade.side].to
-      const thrs = Math.max(intensity, 0.25)
-      li.style.color = getLogShade(backgroundColor, thrs * (luminance < 170 ? 2 : -3))
+      li.style.color = getLogShade(backgroundColor, (0.75 + intensity) * (luminance > 170 ? -1 : 1))
       li.style.backgroundColor = 'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + intensity + ')'
 
       if (amount > this._audioThreshold) {
@@ -332,7 +319,7 @@ export default class extends Mixins(PaneMixin) {
           const color = this._thresholdsColors[Math.min(this.thresholds.length - 2, i)]
           const threshold = this.thresholds[i]
 
-          if (!this.disableAnimations && threshold.gif && GIFS[threshold.gif]) {
+          if (!this._disableAnimations && threshold.gif && GIFS[threshold.gif]) {
             // get random gif for this threshold
             li.style.backgroundImage = `url('${GIFS[threshold.gif][Math.floor(Math.random() * (GIFS[threshold.gif].length - 1))]}`
           }
@@ -342,20 +329,14 @@ export default class extends Mixins(PaneMixin) {
 
           // 0-255 luminance of nearest color
           const luminance = color[trade.side][(percentToNextThreshold < 0.5 ? 'from' : 'to') + 'Luminance']
+          const bright = luminance > 170
           // background color simple color to color based on percentage of amount to next threshold
           const backgroundColor = getColorByWeight(color[trade.side].from, color[trade.side].to, percentToNextThreshold)
           li.style.backgroundColor = 'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ')'
 
-          if (i >= 1) {
-            // ajusted amount > this._significantThresholdAmount
-            // only pure black or pure white foreground
-            li.style.color = luminance < 170 ? 'white' : 'black'
-          } else {
-            // take background color and apply logarithmic shade based on amount to this._significantThresholdAmount percentage
-            // darken if luminance of background is high, lighten otherwise
-            const thrs = Math.max(percentToNextThreshold, 0.25)
-            li.style.color = getLogShade(backgroundColor, thrs * (luminance < 170 ? 2 : -3))
-          }
+          // take background color and apply logarithmic shade based on amount to this._significantThresholdAmount percentage
+          // darken if luminance of background is high, lighten otherwise
+          li.style.color = getLogShade(backgroundColor, (0.75 + percentToNextThreshold) * (bright ? -1 : 1))
 
           if (amount > this._audioThreshold) {
             this._thresholdsAudios[i][trade.side](audioService._play, amount / this._significantThresholdAmount, trade.side, i)
@@ -591,12 +572,14 @@ export default class extends Mixins(PaneMixin) {
   }
 
   cacheFilters() {
+    this._preferQuoteCurrencySize = this.$store.state.settings.preferQuoteCurrencySize
+    this._disableAnimations = this.$store.state.settings.disableAnimations
     this._tradeType = this.$store.state[this.paneId].tradeType
     this._activeExchanges = { ...this.$store.state.app.activeExchanges }
     this._multipliers = {}
     this._paneMarkets = this.$store.state.panes.panes[this.paneId].markets.reduce((output, market) => {
       const identifier = market.replace(':', '')
-      const multiplier = this.multipliers[identifier]
+      const multiplier = this.$store.state[this.paneId].multipliers[identifier]
 
       this._multipliers[identifier] = !isNaN(multiplier) ? multiplier : 1
 
@@ -678,7 +661,7 @@ export default class extends Mixins(PaneMixin) {
 
     for (const trade of trades) {
       const identifier = trade.exchange + trade.pair
-      const amount = trade.size * (this.preferQuoteCurrencySize ? trade.price : 1)
+      const amount = trade.size * (this._preferQuoteCurrencySize ? trade.price : 1)
       const multiplier = this._multipliers[identifier] || 1
 
       this.appendRow(trade, amount, multiplier)

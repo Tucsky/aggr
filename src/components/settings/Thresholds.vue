@@ -91,7 +91,7 @@
             transform: 'translateX(' + this.panelCaretPosition + 'px)'
           }"
         ></div>
-        <p class="mb16 d-block">
+        <p class="mt0 mb16 d-block">
           <i class="icon-info -lower"></i> {{ thresholds.indexOf(selectedThreshold) > 0 ? 'For trades >' : 'Show trades above' }}
           <editable
             :content="selectedThreshold.amount"
@@ -107,11 +107,6 @@
 
         <div class="form-group mb8 threshold-panel__gif">
           <label>Show gif</label>
-          <small class="help-text">
-            Le
-            <a href="https://giphy.com" target="_blank">Giphy</a>
-            keyword
-          </small>
           <input
             type="text"
             class="form-control"
@@ -123,6 +118,11 @@
               })
             "
           />
+          <small class="help-text mb4">
+            Le
+            <a href="https://tenor.com/" target="_blank">Tenor</a>
+            keyword
+          </small>
         </div>
         <div class="form-group mb8 threshold-panel__colors">
           <label>Custom colors</label>

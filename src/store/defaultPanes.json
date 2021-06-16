@@ -2,14 +2,14 @@
   "desktop": {
     "_id": "panes",
     "layout": [
-      { "x": 0, "y": 0, "w": 15, "h": 24, "i": "pane-chart", "type": "chart" },
+      { "x": 0, "y": 0, "w": 15, "h": 24, "i": "chart", "type": "chart" },
       { "x": 15, "y": 0, "w": 3, "h": 24, "i": "spot-trades", "type": "trades" },
       { "x": 18, "y": 0, "w": 3, "h": 24, "i": "perp-trades", "type": "trades" },
       { "x": 21, "y": 0, "w": 3, "h": 24, "i": "liquidations", "type": "trades" }
     ],
     "panes": {
-      "pane-chart": {
-        "id": "pane-chart",
+      "chart": {
+        "id": "chart",
         "name": "Chart",
         "type": "chart",
         "markets": [

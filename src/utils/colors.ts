@@ -170,13 +170,20 @@ export function getAppBackgroundColor() {
 }
 
 export function getLogShade(color, percent) {
-  const r = Math.round
-  const [a, b, c, d] = color
+  const transparency = typeof color[3] !== 'undefined'
+  percent = Math.max(-1, Math.min(1, percent))
   const P = percent < 0
   const t = P ? 0 : percent * 255 ** 2
   const p = P ? 1 + percent : 1 - percent
   return (
-    'rgb' + (d ? 'a(' : '(') + r((p * a ** 2 + t) ** 0.5) + ',' + r((p * b ** 2 + t) ** 0.5) + ',' + r((p * c ** 2 + t) ** 0.5) + (d ? ',' + d : ')')
+    'rgb' +
+    (transparency ? 'a(' : '(') +
+    Math.round((p * color[0] ** 2 + t) ** 0.5) +
+    ',' +
+    Math.round((p * color[1] ** 2 + t) ** 0.5) +
+    ',' +
+    Math.round((p * color[2] ** 2 + t) ** 0.5) +
+    (transparency ? ',' + color[3] : ')')
   )
 }
 
