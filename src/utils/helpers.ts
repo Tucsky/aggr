@@ -269,7 +269,7 @@ export function getDiff(obj, model) {
   }
 
   for (const prop in obj) {
-    if (Array.isArray(obj) && obj[prop] && obj[prop].id !== model[prop].id) {
+    if (Array.isArray(obj) && obj[prop] && model[prop] && obj[prop].id !== model[prop].id) {
       continue
     }
 
