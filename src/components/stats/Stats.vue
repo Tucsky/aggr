@@ -298,15 +298,10 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  refreshBucketName({ oldId, id }: { oldId: string; id: string }) {
-    const bucket = this._buckets[oldId]
-
-    this.data[id] = this.data[oldId]
-    delete this.data[oldId]
-    bucket.id = id
-
-    const statBucket = this.buckets[id]
-    bucket.name = statBucket.name
+  refreshBucketName({ id, name }: { id: string; name: string }) {
+    const bucket = this._buckets[id]
+    bucket.name = name
+    this.$set(this.data[id], 'name', name)
   }
 
   editStat(id) {
@@ -358,16 +353,21 @@ export default class extends Mixins(PaneMixin) {
   top: 0;
   z-index: 11;
   position: relative;
+  width: 0;
 
   .stat-bucket {
     flex-direction: column;
     align-items: flex-start;
+    width: 0;
+    white-space: nowrap;
   }
 
   &:last-child {
+    width: auto;
     .stat-bucket {
       flex-direction: row;
       align-items: center;
+      width: auto;
     }
   }
 }

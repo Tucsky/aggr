@@ -84,16 +84,11 @@ const actions = {
     })
   },
   renameBucket({ commit, state }, { id, name }) {
-    const otherIds = Object.keys(state.buckets).filter(_id => _id !== id)
-    const otherNames = otherIds.map(id => state.buckets[id].name)
-
-    const oldId = id
+    const otherNames = Object.keys(state.buckets).filter(_id => _id !== id).map(id => state.buckets[id].name)
 
     name = uniqueName(name, otherNames)
-    id = uniqueName(slugify(name), otherIds)
 
     commit('RENAME_BUCKET', {
-      oldId,
       id,
       name
     })
@@ -115,13 +110,13 @@ const mutations = {
 
     Vue.set(state.buckets, id, stat)
   },
-  RENAME_BUCKET(state, { oldId, id, name }) {
-    const stat = state.buckets[oldId]
+  RENAME_BUCKET(state, { id, name }) {
+    const stat = state.buckets[id]
 
     stat.name = name
-    stat.id = id
+    // stat.id = id
 
-    Vue.delete(state.buckets, oldId)
+    // Vue.delete(state.buckets, oldId)
     Vue.set(state.buckets, id, stat)
   },
   SET_BUCKET_COLOR(state, { id, value }) {

@@ -28,11 +28,10 @@
           type="text"
           class="form-control"
           :value="name"
-          @change="
-            $store.dispatch(paneId + '/updateBucket', {
+          @input="
+            $store.dispatch(paneId + '/renameBucket', {
               id: bucketId,
-              prop: 'name',
-              value: $event.target.value
+              name: $event.target.value
             })
           "
         />
