@@ -903,7 +903,7 @@ export default class ChartController {
       this.activeRenderer.sources[identifier].low = Math.min(this.activeRenderer.sources[identifier].low, +trade.price)
       this.activeRenderer.sources[identifier].close = +trade.price
 
-      this.activeRenderer.sources[identifier]['c' + trade.side]++
+      this.activeRenderer.sources[identifier]['c' + trade.side] += trade.count
       this.activeRenderer.sources[identifier]['v' + trade.side] += amount
 
       if (isActive) {
