@@ -62,6 +62,10 @@
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
+
+      &.-editable {
+        cursor: text;
+      }
     }
 
     .subtitle {
@@ -111,6 +115,10 @@
   &.-medium .dialog-content {
     width: 520px;
     max-width: calc(100% - 2rem);
+  }
+
+  &.-auto .dialog-content {
+    max-width: none;
   }
 
   &.-sticky-footer {
@@ -187,26 +195,6 @@
       margin: 0 1rem;
       height: auto;
       width: 0.5px;
-    }
-  }
-}
-
-.dialog.indicator-dialog {
-  .title {
-    text-transform: none;
-
-    code {
-      font-size: 75%;
-      line-height: 0;
-      vertical-align: middle;
-      margin-top: -0.2rem;
-      display: inline-block;
-      padding: 0.5rem;
-      letter-spacing: 0;
-    }
-
-    [contenteditable='true'] {
-      color: $green;
     }
   }
 }

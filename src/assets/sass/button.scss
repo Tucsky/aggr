@@ -107,6 +107,32 @@ button {
     }
   }
 
+  &.-dark {
+    background-color: lighten($dark, 5%);
+    border-color: lighten($dark, 5%);
+    border: 1px solid lighten($dark, 5%);
+
+    &.-outline {
+      color: lighten($dark, 5%);
+      background: 0;
+
+      &:hover {
+        color: white;
+        border-color: $dark;
+      }
+    }
+
+    &:hover {
+      background-color: $dark;
+      border-color: $dark;
+
+      &.-text {
+        background: 0;
+        color: lighten($dark, 10%);
+      }
+    }
+  }
+
   &.-green {
     background-color: $green;
     border: 1px solid $green;
@@ -135,32 +161,6 @@ button {
       &.-text {
         background: 0;
         color: lighten($green, 10%);
-      }
-    }
-  }
-
-  &.-dark {
-    background-color: lighten($dark, 5%);
-    border-color: lighten($dark, 5%);
-    border: 1px solid lighten($dark, 5%);
-
-    &.-outline {
-      color: lighten($dark, 5%);
-      background: 0;
-
-      &:hover {
-        color: white;
-        border-color: $dark;
-      }
-    }
-
-    &:hover {
-      background-color: $dark;
-      border-color: $dark;
-
-      &.-text {
-        background: 0;
-        color: lighten($dark, 10%);
       }
     }
   }

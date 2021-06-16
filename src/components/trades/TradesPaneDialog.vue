@@ -1,10 +1,7 @@
 <template>
-  <Dialog @clickOutside="close" class="pane-dialog" @mousedown="clickOutsideClose = false" @mouseup="clickOutsideClose = true">
+  <Dialog @clickOutside="close" class="pane-dialog -medium" @mousedown="clickOutsideClose = false" @mouseup="clickOutsideClose = true">
     <template v-slot:header>
-      <div class="title">
-        <span v-text="name"></span>
-        <i class="icon-sm -no-grab ml4 icon-edit" style="cursor: pointer" @click="renamePane"></i>
-      </div>
+      <div class="title -editable" @dblclick="renamePane" v-text="name"></div>
       <div class="column -center"></div>
     </template>
     <trades-settings :paneId="paneId" />

@@ -145,7 +145,7 @@
                 <small>{{ market.exchange }}</small>
               </div>
               <div class="text-nowrap market-pair">
-                <strong>{{ market.pair }}</strong>
+                {{ market.pair }}
               </div>
             </div>
             <div class="-fill -center ml16">
