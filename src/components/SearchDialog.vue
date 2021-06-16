@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="hide" medium class="-sticky-footer -medium">
+  <Dialog @clickOutside="hide" medium class="-sticky-footer -auto">
     <template v-slot:header>
       <div class="title" v-if="paneId">
         {{ paneName }}'s MARKETS
@@ -11,63 +11,68 @@
       </div>
       <div class="column -center"></div>
     </template>
-    <div class="d-flex d-flex mobile-dir-col-desktop-dir-row">
-      <div class="form-group search">
-        <label>Available ({{ flattenedProducts.length }})</label>
-        <div class="mb8 d-flex">
-          <input ref="input" type="text" class="form-control" placeholder="search (eg: BITMEX:XBTUSD)" v-model="query" />
-          <dropdown :options="filters" placeholder="Filter" title="Filters" v-tippy="{ placement: 'top' }">
-            <template v-slot:selection>
-              <div class="btn" :class="{ '-text': !hasFilters, ml8: hasFilters }">
-                filter <i class="ml4" :class="hasFilters ? 'icon-check' : 'icon-plus'"></i>
-              </div>
-            </template>
-            <template v-slot:option="{ index, value }">
-              <div @click="toggleFilter(index)">
-                <i class="icon-check" v-if="value"></i>
-
-                {{ index }}
-              </div>
-            </template>
-          </dropdown>
+    <div class="d-flex mobile-dir-col-desktop-dir-row">
+      <div class="search">
+        <div v-if="otherPanes.length" class="form-group mb8">
+          <label>Choose from other panes</label>
+          <button v-for="pane of otherPanes" :key="pane.id" class="btn mb4 mr4 -dark" v-text="pane.name" @click="selectPaneMarkets(pane)"></button>
         </div>
-        <table v-if="results.length">
-          <tbody>
-            <tr v-for="market of results" :key="market" @click="selectMarket(market)" class="-action">
-              <td class="icon search__exchange" :class="'icon-' + market.split(':')[0]"></td>
-              <td v-text="market"></td>
-              <td>
-                <i v-if="historicalMarkets.indexOf(market) !== -1" class="icon-candlestick"></i>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="text-danger" v-else>
-          <p>No results</p>
+        <div class="form-group">
+          <label>All products ({{ flattenedProducts.length }})</label>
+          <div class="mb8 d-flex">
+            <input ref="input" type="text" class="form-control" placeholder="search (eg: BITMEX:XBTUSD)" v-model="query" />
+            <dropdown :options="filters" placeholder="Filter" title="Filters" v-tippy="{ placement: 'top' }">
+              <template v-slot:selection>
+                <div class="btn" :class="{ '-text': !hasFilters, ml8: hasFilters }">
+                  filter <i class="ml4" :class="hasFilters ? 'icon-check' : 'icon-plus'"></i>
+                </div>
+              </template>
+              <template v-slot:option="{ index, value }">
+                <div @click="toggleFilter(index)">
+                  <i class="icon-check" v-if="value"></i>
+
+                  {{ index }}
+                </div>
+              </template>
+            </dropdown>
+          </div>
+          <table v-if="results.length">
+            <tbody>
+              <tr v-for="market of results" :key="market" @click="selectMarket(market)" class="-action">
+                <td class="icon search__exchange" :class="'icon-' + market.split(':')[0]"></td>
+                <td v-text="market"></td>
+                <td>
+                  <i v-if="historicalMarkets.indexOf(market) !== -1" class="icon-candlestick"></i>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="text-danger" v-else>
+            <p>No results</p>
+          </div>
         </div>
       </div>
       <hr class="-horizontal" />
       <hr class="-vertical mb8" />
-      <div class="form-group selection">
-        <label class="text-nowrap">Selection <code v-if="paneId" class="-filled" v-text="paneId"></code></label>
-        <button
-          v-for="market of selection"
-          :key="market"
-          class="btn -small mr4 mb4 -green"
-          :class="{ '-connected': activeMarkets.indexOf(market) !== -1 }"
-          title="Click to remove"
-          @click="deselectMarket(market)"
-        >
-          {{ market }}
-
-          <i class="icon-check ml8" title="Connected" v-tippy></i>
-        </button>
+      <div class="form-group">
+        <label class="text-nowrap">Selection <code v-if="paneId" class="-filled" v-text="paneName"></code></label>
+        <div class="selection mt8">
+          <button
+            v-for="market of selection"
+            :key="market"
+            class="btn -small mb4 -dark"
+            :class="{ '-green': activeMarkets.indexOf(market) !== -1 }"
+            title="Click to remove"
+            @click="deselectMarket(market)"
+            v-text="market"
+          ></button>
+        </div>
       </div>
     </div>
 
     <footer>
-      <a href="javascript:void(0);" class="btn -text" @click="hide">Close</a>
-      <button v-if="toConnect || toDisconnect" class="btn -large ml8" @click="submit" v-text="submitLabel"></button>
+      <a href="javascript:void(0);" class="btn -text" @click="hide">Cancel</a>
+      <button class="btn -large ml8" @click="submit" v-text="submitLabel"></button>
     </footer>
   </Dialog>
 </template>
@@ -100,6 +105,11 @@ export default {
     }
   }),
   computed: {
+    otherPanes() {
+      return Object.keys(this.$store.state.panes.panes)
+        .filter(a => a !== this.paneId)
+        .map(a => this.$store.state.panes.panes[a])
+    },
     paneName() {
       if (this.paneId) {
         return this.$store.state.panes.panes[this.paneId].name
@@ -110,8 +120,19 @@ export default {
     activeMarkets() {
       return this.$store.state.app.activeMarkets.map(m => m.exchange + ':' + m.pair)
     },
+    paneMarkets() {
+      if (!this.paneId) {
+        return []
+      }
+
+      return this.$store.state.panes.panes[this.paneId].markets
+    },
     toConnect() {
-      return this.selection.filter(a => this.activeMarkets.indexOf(a) === -1).length
+      if (this.paneId) {
+        return this.selection.filter(a => this.paneMarkets.indexOf(a) === -1).length
+      } else {
+        return this.selection.filter(a => this.activeMarkets.indexOf(a) === -1).length
+      }
     },
     toDisconnect() {
       return this.originalSelection.filter(a => this.selection.indexOf(a) === -1).length
@@ -122,14 +143,14 @@ export default {
       let label = ''
 
       if (toConnect) {
-        label += `connect ${toConnect}`
+        label += `add ${toConnect}`
       }
 
       if (toDisconnect) {
-        label += `${toConnect ? ' and ' : ''}disconnect ${toDisconnect}`
+        label += `${toConnect ? ' and ' : ''}remove ${toDisconnect}`
       }
 
-      return label
+      return label ? label + ' markets' : 'OK'
     },
     historicalMarkets() {
       return this.$store.state.app.historicalMarkets
@@ -188,6 +209,13 @@ export default {
           .filter((v, i, a) => a.indexOf(v) === i).length > 1
       )
     },
+    selectPaneMarkets(pane) {
+      this.selection.splice(0, this.selection.length)
+
+      for (let i = 0; i < pane.markets.length; i++) {
+        this.selection.push(pane.markets[i])
+      }
+    },
     selectMarket(market) {
       this.selection.push(market)
     },
@@ -232,14 +260,12 @@ export default {
 </script>
 <style lang="scss" scoped>
 .selection {
-  flex-basis: 0;
-  margin-left: 1rem;
-
-  text-align: right;
+  display: flex;
+  flex-direction: column;
+  place-items: flex-end;
 
   .btn {
     text-transform: none;
-    opacity: 0.75;
 
     i {
       display: none;
@@ -259,13 +285,14 @@ export default {
         pointer-events: none;
       }
     }
+  }
 
-    &.-connected {
-      opacity: 1;
+  @media screen and (max-width: 767px) {
+    flex-direction: row;
+    flex-wrap: wrap;
 
-      i {
-        display: block;
-      }
+    .btn {
+      margin-right: 4px;
     }
   }
 }
