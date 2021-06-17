@@ -615,7 +615,7 @@ class Exchange extends EventEmitter {
     const pendingIndex = api._pending.indexOf(pair)
 
     if (pendingIndex !== -1) {
-      console.debug(`[${this.id}.markPairAsConnected] ${pair} was connecting. move from _pending to _connected`)
+      // console.debug(`[${this.id}.markPairAsConnected] ${pair} was connecting. move from _pending to _connected`)
 
       api._pending.splice(pendingIndex, 1)
     } else {
@@ -632,7 +632,7 @@ class Exchange extends EventEmitter {
 
     api._connected.push(pair)
 
-    console.debug(`[${this.id}.markPairAsConnected] ${pair} added to _connected list at index ${api._connected.length - 1}`)
+    // console.debug(`[${this.id}.markPairAsConnected] ${pair} added to _connected list at index ${api._connected.length - 1}`)
 
     return true
   }
@@ -660,7 +660,7 @@ class Exchange extends EventEmitter {
 
     api._connected.splice(connectedIndex, 1)
 
-    console.debug(`[${this.id}.markPairAsDisconnected] ${pair} removed from _connected list`)
+    // console.debug(`[${this.id}.markPairAsDisconnected] ${pair} removed from _connected list`)
 
     return true
   }

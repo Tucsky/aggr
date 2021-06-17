@@ -351,12 +351,11 @@ export default class SerieBuilder {
       id = this.getPlotId(rawFunctionArguments)
     }
 
+    const names = Object.keys(this.serieIndicatorsMap).concat(plots.map(plot => plot.id))
+
     // register plot
     plots.push({
-      id: uniqueName(
-        id,
-        plots.map(plot => plot.id)
-      ),
+      id: uniqueName(id, names),
       type: plotTypesMap[serieType] || serieType,
       expectedInput: expectedInput,
       options: serieOptions
@@ -434,22 +433,25 @@ export default class SerieBuilder {
       return output
     }
 
-    const EXCHANGE_REGEX = new RegExp(`([^.$])\\b(${this.markets.sort((a, b) => b.length - a.length).join('|')})\\b(\\.\\w+)?`)
-
+    const EXCHANGE_REGEX = /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{5,})(:[\w]{4,})?\.?([a-z]{4,})?\b/
+    
     let marketMatch = null
 
     do {
       if ((marketMatch = EXCHANGE_REGEX.exec(output))) {
-        const marketName = marketMatch[2]
-        const marketDataKey = marketMatch[3].substr(1)
+        const marketName = marketMatch[1] + (marketMatch[2] ? marketMatch[2] : '')
         const marketId = marketName.replace(':', '')
+        let marketDataKey = marketMatch[3]
 
         if (!markets[marketId]) {
           markets[marketId] = []
         }
 
-        if (marketDataKey && markets[marketId].indexOf(marketDataKey)) {
-          markets[marketId].push(marketDataKey)
+        if (marketDataKey) {
+          marketDataKey = marketDataKey.substr(1)
+          if (markets[marketId].indexOf(marketDataKey) !== -1) {
+            markets[marketId].push(marketDataKey)
+          }
         }
 
         output = output.replace(new RegExp('([^.$])\\b(' + marketName + ')\\b', 'i'), `$1renderer.sources['${marketId}']`)

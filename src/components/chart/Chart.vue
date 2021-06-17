@@ -556,9 +556,12 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.chartCache.cacheRange.from
         )})`
       )
-      console.warn('(might trigger redraw with more cached chunks here...)')
 
-      this._chartController.renderAll()
+      if (this._chartController.renderedRange.from > this._chartController.chartCache.cacheRange.from) {
+        console.warn('(might trigger redraw with more cached chunks here...)')
+
+        this._chartController.renderAll()
+      }
     }
   }
 

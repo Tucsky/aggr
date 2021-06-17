@@ -73,6 +73,7 @@ export default class extends Mixins(PaneMixin) {
   private _thresholdsAudios: ThresholdAudiosBySide[]
   private _liquidationsAudio: ThresholdAudiosBySide
   private _liquidationsColor: ThresholdColorsBySide
+  private _liquidationThreshold: Threshold
   private _lastTradeTimestamp: number
   private _lastSide: 'buy' | 'sell'
   private _audioThreshold: number
@@ -93,10 +94,6 @@ export default class extends Mixins(PaneMixin) {
 
   get thresholds(): Threshold[] {
     return this.$store.state[this.paneId].thresholds
-  }
-
-  get liquidationThreshold() {
-    return this.$store.state[this.paneId].liquidations
   }
 
   get tradeType() {
@@ -232,11 +229,12 @@ export default class extends Mixins(PaneMixin) {
       const amount = trade.size * (this._preferQuoteCurrencySize ? trade.price : 1)
       const multiplier = this._multipliers[identifier]
 
-      if (this._tradeType !== 'trades' && trade.liquidation) {
-        if (amount >= this._minimumThresholdAmount * multiplier) {
+      if (trade.liquidation) {
+        if (this._tradeType === 'both' && amount >= this._liquidationThreshold.amount * multiplier) {
           this.appendRow(trade, amount, multiplier)
+        } else if (this._tradeType === 'trades') {
+          continue
         }
-        continue
       } else if (this._tradeType === 'liquidations') {
         continue
       }
@@ -275,18 +273,18 @@ export default class extends Mixins(PaneMixin) {
       li.appendChild(side)
 
       if (
-        this.liquidationThreshold.gif &&
+        this._liquidationThreshold.gif &&
         !this._disableAnimations &&
-        GIFS[this.liquidationThreshold.gif] &&
-        amount >= this.liquidationThreshold.amount * multiplier
+        GIFS[this._liquidationThreshold.gif] &&
+        amount >= this._liquidationThreshold.amount * multiplier
       ) {
-        // get random gif for this this.liquidationThreshold
+        // get random gif for this this._liquidationThreshold
         li.style.backgroundImage = `url('${
-          GIFS[this.liquidationThreshold.gif][Math.floor(Math.random() * (GIFS[this.liquidationThreshold.gif].length - 1))]
+          GIFS[this._liquidationThreshold.gif][Math.floor(Math.random() * (GIFS[this._liquidationThreshold.gif].length - 1))]
         }`
       }
 
-      const intensity = Math.min(1, amount / this.liquidationThreshold.amount)
+      const intensity = Math.min(1, amount / this._liquidationThreshold.amount)
 
       const luminance = this._liquidationsColor[trade.side][(intensity < 0.5 ? 'from' : 'to') + 'Luminance']
       const backgroundColor = this._liquidationsColor[trade.side].to
@@ -491,10 +489,10 @@ export default class extends Mixins(PaneMixin) {
   prepareColorsSteps() {
     const appBackgroundColor = getAppBackgroundColor()
 
-    const liquidationBuy = splitRgba(this.liquidationThreshold.buyColor, appBackgroundColor)
+    const liquidationBuy = splitRgba(this._liquidationThreshold.buyColor, appBackgroundColor)
     const liquidationBuyFrom = [liquidationBuy[0], liquidationBuy[1], liquidationBuy[2], 0]
     const liquidationBuyTo = [liquidationBuy[0], liquidationBuy[1], liquidationBuy[2], 1]
-    const liquidationSell = splitRgba(this.liquidationThreshold.sellColor, appBackgroundColor)
+    const liquidationSell = splitRgba(this._liquidationThreshold.sellColor, appBackgroundColor)
     const liquidationSellFrom = [liquidationSell[0], liquidationSell[1], liquidationSell[2], 0]
     const liquidationSellTo = [liquidationSell[0], liquidationSell[1], liquidationSell[2], 1]
 
@@ -549,8 +547,8 @@ export default class extends Mixins(PaneMixin) {
     }))
 
     this._liquidationsAudio = {
-      buy: audioService.buildAudioFunction(this.liquidationThreshold.buyAudio, 'buy'),
-      sell: audioService.buildAudioFunction(this.liquidationThreshold.sellAudio, 'sell')
+      buy: audioService.buildAudioFunction(this._liquidationThreshold.buyAudio, 'buy'),
+      sell: audioService.buildAudioFunction(this._liquidationThreshold.sellAudio, 'sell')
     }
   }
 
@@ -575,6 +573,7 @@ export default class extends Mixins(PaneMixin) {
     this._preferQuoteCurrencySize = this.$store.state.settings.preferQuoteCurrencySize
     this._disableAnimations = this.$store.state.settings.disableAnimations
     this._tradeType = this.$store.state[this.paneId].tradeType
+    this._liquidationThreshold = this.$store.state[this.paneId].liquidations
     this._activeExchanges = { ...this.$store.state.app.activeExchanges }
     this._multipliers = {}
     this._paneMarkets = this.$store.state.panes.panes[this.paneId].markets.reduce((output, market) => {

@@ -874,7 +874,7 @@ export default class ChartController {
 
       const amount = trade.price * trade.size
 
-      if (!this.activeRenderer.sources[identifier] || typeof this.activeRenderer.sources[identifier].empty === 'undefined') {
+      if (!this.activeRenderer.sources[identifier] || typeof this.activeRenderer.sources[identifier].pair === 'undefined') {
         this.activeRenderer.sources[identifier] = {
           pair: trade.pair,
           exchange: trade.exchange,
@@ -1335,7 +1335,7 @@ export default class ChartController {
     bar.csell = 0
     bar.lbuy = 0
     bar.lsell = 0
-    bar.empty = false
+    bar.empty = true
   }
 
   prepareRendererForIndicators(indicatorId: string, renderer: Renderer) {

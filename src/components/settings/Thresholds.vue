@@ -10,7 +10,7 @@
             <td class="table-input">
               <editable
                 placeholder="Amount*"
-                class="pr16"
+                class="pr16 w-100"
                 :content="threshold.amount"
                 @output="
                   $store.commit(paneId + '/SET_THRESHOLD_AMOUNT', {

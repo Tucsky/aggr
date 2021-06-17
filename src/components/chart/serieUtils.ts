@@ -223,13 +223,6 @@ export function linreg$(state, value, length) {
 }
 
 /**
- * values averages (AVG) state
- */
-export const avg = {
-  count: 0,
-  points: []
-}
-/**
  * get avg
  * @param {SerieMemory} memory
  * @param {number[]} values
