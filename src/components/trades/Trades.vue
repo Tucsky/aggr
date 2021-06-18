@@ -601,7 +601,10 @@ export default class extends Mixins(PaneMixin) {
       return this.clearList()
     }
 
-    this.$el.classList.add('-no-animations')
+    if (!this.$store.state.settings.disableAnimations) {
+      this.$el.classList.add('-no-animations')
+    }
+
     if (this._enableAnimationsTimeout) {
       clearTimeout(this._enableAnimationsTimeout)
     }
