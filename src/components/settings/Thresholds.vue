@@ -223,10 +223,6 @@ export default class extends Vue {
     return this.$store.state[this.paneId].thresholds
   }
 
-  get liquidationsThreshold() {
-    return this.$store.state[this.paneId].liquidations
-  }
-
   get selectedThreshold() {
     const threshold = this.$store.getters[this.paneId + '/getThreshold'](this.selectedThresholdId)
     return threshold
@@ -253,7 +249,7 @@ export default class extends Vue {
           id: 'divider-1',
           divider: 'For liquidations'
         },
-        this.liquidationsThreshold,
+        this.$store.state[this.paneId].liquidations,
         {
           id: 'divider-2',
           divider: 'For trades'

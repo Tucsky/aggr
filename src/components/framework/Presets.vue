@@ -9,7 +9,8 @@
 
         <span>{{ value.label }}</span>
 
-        <i v-if="value.id" class="icon-trash -action mr16 -lower" @click.stop="removePreset(value.id)"></i>
+        <i v-if="value.id" class="icon-upload -action ml16 -lower" @click.stop="savePreset(value.label)" title="Update"></i>
+        <i v-if="value.id" class="icon-trash -action ml8 -lower" @click.stop="removePreset(value.id)" title="Delete"></i>
       </div>
     </template>
   </dropdown>
@@ -83,8 +84,12 @@ export default class extends Vue {
     this.$emit('apply', preset.data)
   }
 
-  async savePreset() {
-    const name = await dialogService.prompt('Enter a name')
+  async savePreset(name?: string) {
+    if (!name || typeof name !== 'string') {
+      name = await dialogService.prompt('Enter a name')
+    } else if (!(await dialogService.confirm(`Override preset ${name} with current settings ?`))) {
+      return
+    }
 
     if (!name) {
       return
@@ -99,6 +104,10 @@ export default class extends Vue {
       })
 
       return
+    }
+
+    if (data._id) {
+      delete data._id
     }
 
     await workspacesService.savePreset({
@@ -117,9 +126,11 @@ export default class extends Vue {
   }
 
   async removePreset(id) {
-    await workspacesService.removePreset(id)
+    if (await dialogService.confirm('Remove preset ' + id + ' ?')) {
+      await workspacesService.removePreset(id)
 
-    await this.getPresets()
+      await this.getPresets()
+    }
   }
 }
 </script>

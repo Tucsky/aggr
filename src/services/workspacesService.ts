@@ -399,7 +399,7 @@ class WorkspacesService {
     return this.db.put('presets', preset)
   }
 
-  getPreset(id: string) {
+  async getPreset(id: string) {
     return this.db.get('presets', id)
   }
 
