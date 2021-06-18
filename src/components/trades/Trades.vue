@@ -232,6 +232,7 @@ export default class extends Mixins(PaneMixin) {
       if (trade.liquidation) {
         if (this._tradeType === 'both' && amount >= this._liquidationThreshold.amount * multiplier) {
           this.appendRow(trade, amount, multiplier)
+          continue
         } else if (this._tradeType === 'trades') {
           continue
         }
@@ -272,16 +273,15 @@ export default class extends Mixins(PaneMixin) {
 
       li.appendChild(side)
 
-      if (
-        this._liquidationThreshold.gif &&
-        !this._disableAnimations &&
-        GIFS[this._liquidationThreshold.gif] &&
-        amount >= this._liquidationThreshold.amount * multiplier
-      ) {
+      if (this._liquidationThreshold.gif && GIFS[this._liquidationThreshold.gif] && amount >= this._liquidationThreshold.amount * multiplier) {
+        li.className += ' -gif'
         // get random gif for this this._liquidationThreshold
-        li.style.backgroundImage = `url('${
-          GIFS[this._liquidationThreshold.gif][Math.floor(Math.random() * (GIFS[this._liquidationThreshold.gif].length - 1))]
-        }`
+
+        if (!this._disableAnimations) {
+          li.style.backgroundImage = `url('${
+            GIFS[this._liquidationThreshold.gif][Math.floor(Math.random() * (GIFS[this._liquidationThreshold.gif].length - 1))]
+          }`
+        }
       }
 
       const intensity = Math.min(1, amount / this._liquidationThreshold.amount)
@@ -317,9 +317,13 @@ export default class extends Mixins(PaneMixin) {
           const color = this._thresholdsColors[Math.min(this.thresholds.length - 2, i)]
           const threshold = this.thresholds[i]
 
-          if (!this._disableAnimations && threshold.gif && GIFS[threshold.gif]) {
+          if (threshold.gif && GIFS[threshold.gif]) {
             // get random gif for this threshold
-            li.style.backgroundImage = `url('${GIFS[threshold.gif][Math.floor(Math.random() * (GIFS[threshold.gif].length - 1))]}`
+            li.className += ' -gif'
+
+            if (!this._disableAnimations) {
+              li.style.backgroundImage = `url('${GIFS[threshold.gif][Math.floor(Math.random() * (GIFS[threshold.gif].length - 1))]}`
+            }
           }
 
           // percentage to next threshold
@@ -859,6 +863,10 @@ export default class extends Mixins(PaneMixin) {
   &.-level-3 {
     box-shadow: 0 0 20px rgba(black, 0.5);
     z-index: 1;
+  }
+
+  &.-gif {
+    font-weight: 600;
   }
 
   > div {
