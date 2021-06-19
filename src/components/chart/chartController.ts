@@ -216,11 +216,16 @@ export default class ChartController {
       chartOptions.grid.horzLines.color = store.state[this.paneId].horizontalGridlinesColor
     }
 
+    if (store.state[this.paneId].showWatermark) {
+      chartOptions.watermark.visible = store.state[this.paneId].showWatermark
+      chartOptions.watermark.color = store.state[this.paneId].watermarkColor
+    }
+
     this.chartInstance = TV.createChart(containerElement, chartOptions)
     this.chartElement = containerElement
 
     this.addEnabledSeries()
-    if (chartOptions.watermark.visible) {
+    if (defaultChartOptions.watermark.visible) {
       this.updateWatermark()
     }
   }

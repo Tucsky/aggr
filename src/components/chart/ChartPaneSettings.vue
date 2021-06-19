@@ -58,6 +58,24 @@
         <label for="" class="-fill -center ml8">Color</label>
       </div>
     </div>
+    <div class="form-group">
+      <label for="">Watermark</label>
+      <div class="form-group column">
+        <label class="checkbox-control" @change="$store.commit(paneId + '/SET_WATERMARK', { value: $event.target.checked })">
+          <input type="checkbox" class="form-control" :checked="showWatermark" />
+          <div class="mr8"></div>
+        </label>
+        <verte
+          v-if="showWatermark"
+          picker="square"
+          menuPosition="left"
+          model="rgb"
+          :value="watermarkColor"
+          @input="$event !== watermarkColor && $store.commit(paneId + '/SET_WATERMARK', { value: $event })"
+        ></verte>
+        <label for="" class="-fill -center ml8">Color</label>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -101,6 +119,14 @@ export default class extends Vue {
 
   get horizontalGridlinesColor() {
     return this.$store.state[this.paneId].horizontalGridlinesColor
+  }
+
+  get showWatermark() {
+    return this.$store.state[this.paneId].showWatermark
+  }
+
+  get watermarkColor() {
+    return this.$store.state[this.paneId].watermarkColor
   }
 
   get refreshRateHms() {

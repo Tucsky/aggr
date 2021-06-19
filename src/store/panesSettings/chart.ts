@@ -31,6 +31,8 @@ export interface ChartPaneState {
   horizontalGridlinesColor: string
   showVerticalGridlines: boolean
   verticalGridlinesColor: string
+  showWatermark: boolean
+  watermarkColor: string
 }
 
 const getters = {} as GetterTree<ChartPaneState, ChartPaneState>
@@ -188,6 +190,13 @@ const mutations = {
       } else {
         state.horizontalGridlinesColor = value
       }
+    }
+  },
+  SET_WATERMARK(state, { value }) {
+    if (typeof value === 'boolean') {
+      state.showWatermark = value
+    } else {
+      state.watermarkColor = value
     }
   },
   SET_INDICATOR_SERIES(state, { id, series }) {
