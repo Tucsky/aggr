@@ -225,7 +225,7 @@ export default class ChartController {
     this.chartElement = containerElement
 
     this.addEnabledSeries()
-    if (defaultChartOptions.watermark.visible) {
+    if (chartOptions.watermark.visible) {
       this.updateWatermark()
     }
   }
