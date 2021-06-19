@@ -24,6 +24,7 @@ export interface Pane {
   type: PaneType
   id: string
   name: string
+  zoom?: number
   markets?: string[]
   settings?: any
 }
@@ -320,6 +321,15 @@ const actions = {
     await registerModule(id, {}, true, pane)
 
     commit('ADD_GRID_ITEM', gridItem)
+  },
+  setZoom({ state, commit }, { id, zoom }: { id: string; zoom: number }) {
+    if (zoom) {
+      zoom = (state.panes[id].zoom || 1) + zoom
+    } else {
+      zoom = 1
+    }
+
+    commit('SET_PANE_ZOOM', { id, zoom })
   }
 } as ActionTree<PanesState, ModulesState>
 
@@ -353,6 +363,9 @@ const mutations = {
   },
   SET_PANE_NAME: (state, { id, name }: { id: string; name: string }) => {
     state.panes[id].name = name
+  },
+  SET_PANE_ZOOM: (state, { id, zoom }: { id: string; zoom: number }) => {
+    Vue.set(state.panes[id], 'zoom', zoom)
   }
 } as MutationTree<PanesState>
 

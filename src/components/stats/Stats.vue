@@ -1,6 +1,6 @@
 <template>
-  <div class="pane-stats" :class="{ [scale]: true }">
-    <pane-header :paneId="paneId" />
+  <div class="pane-stats" :style="{ fontSize: zoom + 'em' }">
+    <pane-header v-if="hovered" :paneId="paneId" />
     <ul class="stats-buckets">
       <li v-for="(bucket, id) in data" :key="id" class="stat-bucket" @click="editStat(id)">
         <div class="stat-bucket__name">{{ bucket.name }}</div>
@@ -37,7 +37,6 @@ export default class extends Mixins(PaneMixin) {
   }
 
   private _refreshChartDimensionsTimeout: number
-  // private _chartUpdateInterval: number
   private _onStoreMutation: () => void
   private _chart: TV.IChartApi
   private _buckets: { [id: string]: Bucket } = {}
@@ -49,6 +48,10 @@ export default class extends Mixins(PaneMixin) {
 
   get buckets() {
     return this.$store.state[this.paneId].buckets
+  }
+
+  get zoom() {
+    return this.$store.state.panes.panes[this.paneId].zoom
   }
 
   created() {
@@ -317,12 +320,6 @@ export default class extends Mixins(PaneMixin) {
 <style lang="scss">
 .pane-stats {
   position: relative;
-
-  font-size: 14px;
-
-  &.-large {
-    font-size: 1rem;
-  }
 
   &:hover .stats-buckets {
     transform: translateY(1.5rem);

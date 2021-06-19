@@ -68,13 +68,11 @@
           <div class="btn"><i class="icon-dashboard -center mr16"></i><span class="mr4">Pane</span><i class="icon-plus"></i></div>
         </template>
         <template v-slot:option="{ value }">
-          <div>
-            <div>
-              <div class="dropdown-option__title">{{ value.title }}</div>
-              <div class="dropdown-option__description">{{ value.description }}</div>
-            </div>
-            <i class="icon-plus mr4"></i>
-          </div>
+          <span>
+            <div class="dropdown-option__title">{{ value.title }}</div>
+            <div class="dropdown-option__description">{{ value.description }}</div>
+          </span>
+          <i class="icon-plus mr4"></i>
         </template>
       </dropdown>
       <button
@@ -108,15 +106,15 @@ export default class extends Vue {
   paneTypes = {
     chart: {
       title: 'Chart',
-      description: 'Live Chart'
+      description: 'Live chart'
     },
     trades: {
       title: 'Trades',
-      description: 'Significant market trades'
+      description: 'Trades feed'
     },
     stats: {
       title: 'Stats',
-      description: 'Rolling averages'
+      description: 'Rolling metrics'
     },
     counters: {
       title: 'Counters',

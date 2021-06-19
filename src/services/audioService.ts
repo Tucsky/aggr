@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Tuna from 'tunajs'
 import store from '../store'
-import { findClosingBracketMatchIndex } from '@/utils/helpers'
+import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
 
 export type AudioFunction = (
   play: (frequency: number, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>,
@@ -275,7 +275,7 @@ class AudioService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  buildAudioFunction(litteral, side, test = false) {
+  buildAudioFunction(litteral, side, frequencyMultiplier?: number, test = false) {
     litteral = `'use strict'; 
     
     ${litteral}`
@@ -285,12 +285,20 @@ class AudioService {
 
     do {
       if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(litteral))) {
-        const inlineParameters = litteral.slice(
+        const originalParameters = litteral.slice(
           functionMatch.index + functionMatch[0].length - 1,
           findClosingBracketMatchIndex(litteral, functionMatch.index + functionMatch[0].length - 2)
         )
 
-        litteral = litteral.replace('(' + inlineParameters, '([' + inlineParameters + ']')
+        const functionArguments = parseFunctionArguments(originalParameters)
+
+        if (frequencyMultiplier) {
+          functionArguments[0] = +functionArguments[0] + frequencyMultiplier
+        }
+
+        const finalParameters = functionArguments.join(',')
+
+        litteral = litteral.replace('(' + originalParameters, '([' + finalParameters + ']')
       }
     } while (functionMatch)
 

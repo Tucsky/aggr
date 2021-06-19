@@ -8,16 +8,16 @@
     </div>
     <transition name="scale">
       <div class="dropdown__options" v-if="isOpen">
-        <div class="dropdown__scroller custom-scrollbar">
+        <div class="dropdown__scroller hide-scrollbar">
           <div
             class="dropdown__option"
             v-for="(value, index) in options"
             :key="index"
             :class="{ active: !alwaysShowPlaceholder && index === selected }"
-            @click="set(index)"
+            @click="set(index, $event)"
           >
             <slot name="option" :value="value" :index="index">
-              <div>{{ value }}</div>
+              {{ value }}
             </slot>
           </div>
         </div>
@@ -98,14 +98,17 @@ export default class extends Vue {
     }
   }
 
-  set(index) {
+  set(index, event: Event) {
     // this.selected = index
     if (this.options && this.options[index] && typeof this.options[index].click === 'function') {
-      this.options[index].click(this.options[index])
+      this.options[index].click(event, this.options[index])
     }
 
-    this.$emit('output', index)
-    this.hide()
+    if (!event.defaultPrevented) {
+      this.$emit('output', index)
+
+      this.hide()
+    }
   }
 }
 </script>

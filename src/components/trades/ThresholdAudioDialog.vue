@@ -128,6 +128,9 @@ export default {
     amounts: function() {
       return this.$store.state[this.paneId].thresholds.map(t => t.amount)
     },
+    audioPitch: function() {
+      return this.$store.state[this.paneId].audioPitch
+    },
     index: function() {
       return this.amounts.indexOf(this.threshold.amount)
     },
@@ -241,7 +244,7 @@ export default {
     },
     getAdapter(litteral, side) {
       try {
-        const adapter = audioService.buildAudioFunction(litteral, side, true)
+        const adapter = audioService.buildAudioFunction(litteral, side, this.audioPitch, true)
 
         this[side + 'Error'] = null
 

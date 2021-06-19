@@ -1,7 +1,7 @@
 <template>
   <div class="pane-header toolbar" :class="{ '-loading': loading }">
     <div class="pane-header__loader"></div>
-    <span class="mrauto">{{ name }}</span>
+    <span class="mrauto" @dblclick="renamePane">{{ name }}</span>
 
     <slot />
 
@@ -28,7 +28,7 @@
     <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
       <template v-slot:option="{ value }">
         <div>
-          <i :class="'icon-' + value.icon"></i>
+          <i class="-lower" :class="'icon-' + value.icon"></i>
 
           <span>{{ value.label }}</span>
         </div>
@@ -98,6 +98,16 @@ export default class extends Vue {
       click: this.duplicatePane
     },
     {
+      icon: 'plus',
+      label: 'Zoom in',
+      click: this.zoomIn
+    },
+    {
+      icon: 'minus',
+      label: 'Zoom out',
+      click: this.zoomOut
+    },
+    {
       icon: 'trash',
       label: 'Remove pane',
       click: this.removePane
@@ -106,6 +116,10 @@ export default class extends Vue {
 
   get name() {
     return this.$store.state.panes.panes[this.paneId].name || this.paneId
+  }
+
+  get zoom() {
+    return this.$store.state.panes.panes[this.paneId].zoom || 1
   }
 
   get type() {
@@ -138,6 +152,20 @@ export default class extends Vue {
 
   openSearch() {
     this.$store.dispatch('app/showSearch', { paneId: this.paneId })
+  }
+
+  zoomIn(event: Event) {
+    this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: 0.1 })
+
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  zoomOut(event: Event) {
+    this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: -0.1 })
+
+    event.preventDefault()
+    event.stopPropagation()
   }
 
   removePane() {
@@ -173,6 +201,17 @@ export default class extends Vue {
       id: this.paneId,
       settings: settings
     })
+  }
+
+  async renamePane() {
+    const name = await dialogService.prompt({
+      action: 'Rename',
+      input: this.name
+    })
+
+    if (name && name !== this.name) {
+      this.$store.commit('panes/SET_PANE_NAME', { id: this.paneId, name: name })
+    }
   }
 }
 </script>

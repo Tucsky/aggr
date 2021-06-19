@@ -116,6 +116,11 @@ $iconpath: '../fonts';
     content: $icon-coin;
   }
 }
+.icon-flash {
+  &:before {
+    content: $icon-flash;
+  }
+}
 .icon-volume-medium {
   &:before {
     content: $icon-volume-medium;
@@ -291,9 +296,9 @@ $iconpath: '../fonts';
     content: $icon-eos;
   }
 }
-.icon-flash {
+.icon-bear {
   &:before {
-    content: $icon-flash;
+    content: $icon-bear;
   }
 }
 .icon-bps {
@@ -401,11 +406,6 @@ $iconpath: '../fonts';
     content: $icon-more;
   }
 }
-.icon-bear {
-  &:before {
-    content: $icon-bear;
-  }
-}
 .icon-bull {
   &:before {
     content: $icon-bull;
@@ -416,13 +416,28 @@ $iconpath: '../fonts';
     content: $icon-resize-height;
   }
 }
-.icon-photo {
+.icon-add-photo {
   &:before {
-    content: $icon-photo;
+    content: $icon-add-photo;
   }
 }
 .icon-candlestick {
   &:before {
     content: $icon-candlestick;
+  }
+}
+.icon-refresh {
+  &:before {
+    content: $icon-refresh;
+  }
+}
+.icon-music-note {
+  &:before {
+    content: $icon-music-note;
+  }
+}
+.icon-minus {
+  &:before {
+    content: $icon-minus;
   }
 }

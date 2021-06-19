@@ -1,6 +1,6 @@
 <template>
   <div class="settings-chart">
-    <div class="form-group mb8">
+    <div class="form-group mb16">
       <label> Refresh chart every <strong v-text="refreshRateHms"></strong> </label>
 
       <slider
@@ -15,7 +15,7 @@
       ></slider>
     </div>
     <p v-if="refreshRate < 500" class="form-feedback"><i class="icon-warning"></i> Low refresh rate can be very CPU intensive</p>
-    <div class="form-group mt16 mb8">
+    <div class="form-group mb8">
       <label class="checkbox-control">
         <input type="checkbox" class="form-control" :checked="showLegend" @change="$store.commit(paneId + '/TOGGLE_LEGEND')" />
         <div></div>
@@ -23,39 +23,39 @@
       </label>
     </div>
     <div class="form-group mb8">
-      <label for="">Vertical grid lines</label>
       <div class="form-group column">
         <label class="checkbox-control" @change="$store.commit(paneId + '/SET_GRIDLINES', { type: 'vertical', value: $event.target.checked })">
-          <input type="checkbox" class="form-control" :checked="showVerticalGridlines" />
+          <input type="checkbox" class="form-control" :checked="showVerticalGridlines" :id="paneId + 'showVerticalGridlines'" />
           <div class="mr8"></div>
         </label>
         <verte
           v-if="showVerticalGridlines"
           picker="square"
           menuPosition="left"
+          class="mr8"
           model="rgb"
           :value="verticalGridlinesColor"
           @input="$event !== verticalGridlinesColor && $store.commit(paneId + '/SET_GRIDLINES', { type: 'vertical', value: $event })"
         ></verte>
-        <label for="" class="-fill -center ml8">Color</label>
+        <label :for="paneId + 'showVerticalGridlines'" class="-fill -center ">Vertical grid lines</label>
       </div>
     </div>
     <div class="form-group">
-      <label for="">Horizontal grid lines</label>
       <div class="form-group column">
         <label class="checkbox-control" @change="$store.commit(paneId + '/SET_GRIDLINES', { type: 'horizontal', value: $event.target.checked })">
-          <input type="checkbox" class="form-control" :checked="showHorizontalGridlines" />
+          <input type="checkbox" class="form-control" :checked="showHorizontalGridlines" :id="paneId + 'showHorizontalGridlines'" />
           <div class="mr8"></div>
         </label>
         <verte
           v-if="showHorizontalGridlines"
           picker="square"
           menuPosition="left"
+          class="mr8"
           model="rgb"
           :value="horizontalGridlinesColor"
           @input="$event !== horizontalGridlinesColor && $store.commit(paneId + '/SET_GRIDLINES', { type: 'horizontal', value: $event })"
         ></verte>
-        <label for="" class="-fill -center ml8">Color</label>
+        <label :for="paneId + 'showHorizontalGridlines'" class="-fill -center ">Horizontal grid lines</label>
       </div>
     </div>
   </div>

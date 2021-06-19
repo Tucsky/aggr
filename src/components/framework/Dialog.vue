@@ -17,7 +17,7 @@
           </a>
         </div>
       </header>
-      <div class="dialog-body custom-scrollbar">
+      <div class="dialog-body hide-scrollbar">
         <slot></slot>
       </div>
     </div>

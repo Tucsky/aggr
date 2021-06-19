@@ -1,17 +1,15 @@
 <template>
-  <dropdown :options="presets" @output="onSelect" class="mrauto">
+  <dropdown :options="presets" @output="onSelect" class="mrauto form-control">
     <template v-slot:selection>
-      <button class="btn -text ml0" type="button">{{ title }} <i class="icon-down ml4"></i></button>
+      {{ label }}
     </template>
     <template v-slot:option="{ value }">
-      <div>
-        <i :class="'-lower icon-' + value.icon"></i>
+      <i :class="'-lower icon-' + value.icon"></i>
 
-        <span>{{ value.label }}</span>
+      <span>{{ value.label }}</span>
 
-        <i v-if="value.id" class="icon-upload -action ml16 -lower" @click.stop="savePreset(value.label)" title="Update"></i>
-        <i v-if="value.id" class="icon-trash -action ml8 -lower" @click.stop="removePreset(value.id)" title="Delete"></i>
-      </div>
+      <i v-if="value.id" class="icon-refresh -action ml16 -lower" @click.stop="savePreset(value.label)" title="Update"></i>
+      <i v-if="value.id" class="icon-trash -action ml8 -lower" @click.stop="removePreset(value.id)" title="Delete"></i>
     </template>
   </dropdown>
 </template>
@@ -32,7 +30,7 @@ import Dropdown from '@/components/framework/Dropdown.vue'
     adapter: {
       required: true
     },
-    title: {
+    label: {
       default: 'Presets'
     }
   }

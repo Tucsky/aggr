@@ -112,7 +112,7 @@
             class="form-control"
             :value="selectedThreshold.gif"
             @change="
-              $store.commit('settings/SET_THRESHOLD_GIF', {
+              $store.commit(paneId + '/SET_THRESHOLD_GIF', {
                 id: selectedThreshold.id,
                 value: $event.target.value
               })
@@ -661,7 +661,7 @@ export default class extends Vue {
 
 .threshold-panel {
   position: relative;
-  background-color: lighten($dark, 18%);
+  background-color: $lighter;
   border-radius: 4px;
   padding: 1em;
   margin: 1.5em auto 0;
@@ -749,7 +749,7 @@ export default class extends Vue {
     top: -0.75em;
     border-left: 0.75em solid transparent;
     border-right: 0.75em solid transparent;
-    border-bottom: 0.75em solid lighten($dark, 18%);
+    border-bottom: 0.75em solid $lighter;
     margin-left: -1.75em;
     transition: transform 0.2s $ease-out-expo;
   }

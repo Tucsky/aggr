@@ -88,7 +88,7 @@ export default class extends Vue {
       return
     }
 
-    if (!isNaN(event.target.innerText) && (event.which === 38 || event.which === 40)) {
+    if (event.which === 38 || event.which === 40) {
       this.crement(event.which === 40 ? 1 : -1)
     }
   }
@@ -103,7 +103,7 @@ export default class extends Vue {
   onClick() {
     const now = +new Date()
 
-    if (this.clickAt && now - this.clickAt < 250) {
+    if (this.clickAt && now - this.clickAt < 150) {
       this.selectAll()
     }
 
@@ -111,7 +111,7 @@ export default class extends Vue {
   }
 
   crement(direction: number) {
-    const text = (this.$el as HTMLElement).innerText
+    const text = (this.$el as HTMLElement).innerText.replace(/[^0-9-]/g, '')
 
     if (isNaN(text as any)) {
       return

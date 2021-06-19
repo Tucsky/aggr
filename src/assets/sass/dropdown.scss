@@ -40,10 +40,8 @@
   &.-text-left {
     .dropdown__options {
       .dropdown__option {
-        > div {
-          justify-content: flex-start;
-          padding: 0.6em 1.4em 0.6em 1em;
-        }
+        justify-content: flex-start;
+        padding: 0.75em 1.4em 0.75em 1em;
       }
     }
   }
@@ -68,7 +66,7 @@
   }
 
   &__options {
-    font-size: 0.875rem;
+    font-size: 1rem;
     position: absolute;
     top: 1rem;
     right: 0.6em;
@@ -93,41 +91,51 @@
   }
 
   &__option {
-    > div {
-      transition: background-color 0.2s $ease-out-expo;
-      padding: 0.6em 1.4em 0.6em 2em;
-      border-bottom: 1px solid $lighter;
-      background-color: lighten($base, 5%);
-      display: flex;
-      justify-content: flex-end;
+    transition: background-color 0.2s $ease-out-expo;
+    padding: 0.75em 1.4em 0.75em 2em;
+    border-bottom: 1px solid $lighter;
+    background-color: lighten($base, 5%);
+    display: flex;
+    justify-content: flex-end;
 
-      &:hover {
-        background-color: lighten($lighter, 5%);
-        box-shadow: 0 -1px rgba(black, .2);
-        border-bottom-color: transparent;
-        position: relative;
-        z-index: 1;
+    &:last-child {
+      border-bottom: 0;
+    }
 
-        > i.-action {
-          display: block;
+    &:hover {
+      background-color: lighten($lighter, 5%);
+      box-shadow: 0 -1px rgba(black, 0.2);
+      border-bottom-color: transparent;
+      position: relative;
+      z-index: 1;
+
+      i.-action {
+        display: block;
+      }
+    }
+
+    span + i {
+      margin-left: 1rem;
+    }
+
+    i {
+      align-self: center;
+
+      &.-action {
+        display: none;
+        opacity: 0.5;
+
+        &:hover {
+          opacity: 1;
         }
       }
 
-      > i {
-        align-self: center;
+      &:first-child {
+        margin-right: 0.5rem;
+      }
 
-        &.-action {
-          display: none;
-          opacity: 0.5;
-
-          &:hover {
-            opacity: 1;
-          }
-        }
-
-        &:first-child {
-          margin-right: 0.5rem;
-        }
+      + i {
+        margin-left: 0.5rem;
       }
     }
 
@@ -136,8 +144,9 @@
       text-decoration: underline;
     }
 
-    &:last-child > div {
-      border-bottom: 0;
+    > div {
+      padding: 0.75em 1.4em 0.75em 2em;
+      margin: -0.75em -1.4em -0.75em -2em;
     }
   }
 
@@ -157,6 +166,10 @@
     opacity: 0.5;
     font-size: 80%;
   }
+}
+
+.dialog .dropdown.form-control {
+  width: auto;
 }
 
 #app.-light .dropdown {

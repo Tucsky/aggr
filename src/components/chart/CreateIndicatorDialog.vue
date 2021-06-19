@@ -16,7 +16,7 @@
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Last updated</th>
+                <th>Updated</th>
                 <th></th>
               </tr>
             </thead>
@@ -41,7 +41,7 @@
         <div class="divider -horizontal">Or</div>
         <div class="divider -vertical">Or</div>
       </template>
-      <div>
+      <div class="-unshrinkable">
         <div class="form-group mb16">
           <label>Create indicator</label>
           <input class="form-control" :value="name" @input="getIndicatorId($event.target.value)" placeholder="Name of indicator / serie" />

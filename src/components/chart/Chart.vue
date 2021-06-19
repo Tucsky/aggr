@@ -1,6 +1,6 @@
 <template>
   <div class="pane-chart">
-    <pane-header :loading="loading" :paneId="paneId" :showTimeframe="true">
+    <pane-header v-if="hovered" :loading="loading" :paneId="paneId" :showTimeframe="true">
       <dropdown
         :options="{
           //clear: { label: 'Clear', click: clear },

@@ -9,10 +9,9 @@ Vue.use(VueTippy, {
   duration: 0,
   arrow: false,
   animation: 'none',
-  size: 'small',
   delay: [200, 0],
   animateFill: false,
-  theme: 'blue'
+  theme: 'dark'
 })
 
 import Verte from '@/components/framework/picker/Verte.vue'

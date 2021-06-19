@@ -54,9 +54,9 @@
       </div>
       <hr class="-horizontal" />
       <hr class="-vertical mb8" />
-      <div class="form-group">
+      <div class="form-group selection">
         <label class="text-nowrap">Selection <code v-if="paneId" class="-filled" v-text="paneName"></code></label>
-        <div class="selection mt8">
+        <div class="selection__items mt8">
           <button
             v-for="market of selection"
             :key="market"
@@ -260,9 +260,11 @@ export default {
 </script>
 <style lang="scss" scoped>
 .selection {
-  display: flex;
-  flex-direction: column;
-  place-items: flex-end;
+  &__items {
+    display: flex;
+    flex-direction: column;
+    place-items: flex-end;
+  }
 
   .btn {
     text-transform: none;
@@ -285,6 +287,10 @@ export default {
         pointer-events: none;
       }
     }
+  }
+
+  @media screen and (min-width: 768px) {
+    text-align: right;
   }
 
   @media screen and (max-width: 767px) {

@@ -1,10 +1,11 @@
 <template>
   <div
     class="pane-trades"
-    :class="{ [scale]: true, '-logos': this.showLogos, '-logos-colors': !this.monochromeLogos, '-slippage': this.calculateSlippage }"
+    :class="{ '-logos': this.showLogos, '-logos-colors': !this.monochromeLogos, '-slippage': this.calculateSlippage }"
+    :style="{ fontSize: zoom + 'em' }"
   >
-    <pane-header :paneId="paneId" />
-    <ul ref="tradesContainer" class="custom-scrollbar"></ul>
+    <pane-header v-if="hovered" :paneId="paneId" />
+    <ul ref="tradesContainer" class="hide-scrollbar"></ul>
     <div v-if="!tradesCount" class="trades-placeholder">
       <div class="mt16 ml16 mr16">
         <strong>Waiting for trades</strong>
@@ -20,18 +21,18 @@
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 
-import { ago, formatPrice, formatAmount, slugify } from '../../utils/helpers'
-import { getColorByWeight, getColorLuminance, getAppBackgroundColor, splitRgba, getLogShade } from '../../utils/colors'
+import { formatPrice, formatAmount, slugify, sleep } from '../../utils/helpers'
+import { getColorByWeight, getColorLuminance, getAppBackgroundColor, splitRgba } from '../../utils/colors'
 
 import aggregatorService from '@/services/aggregatorService'
+import workspacesService from '@/services/workspacesService'
 import audioService, { AudioFunction } from '../../services/audioService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
 import { Trade } from '@/types/test'
-import workspacesService from '@/services/workspacesService'
 import { Threshold, TradeTypeFilter } from '@/store/panesSettings/trades'
 
-const GIFS: { [keyword: string]: string[] } = {} // shared cache for gifs
+const GIFS: { [keyword: string]: string[] } = {}
 const PROMISES_OF_GIFS: { [keyword: string]: Promise<string[]> } = {}
 
 interface ThresholdColorsBySide {
@@ -62,13 +63,11 @@ interface ThresholdAudiosBySide {
 })
 export default class extends Mixins(PaneMixin) {
   tradesCount = 0
-  scale = '-normal'
 
   private _onStoreMutation: () => void
 
   // cache all thoses vuex property (via cacheFilters when component load / a settings is updated)
   // so they the getters don't get re evaluated on each trades
-  // not sure if good practice tho
   private _thresholdsColors: ThresholdColorsBySide[]
   private _thresholdsAudios: ThresholdAudiosBySide[]
   private _liquidationsAudio: ThresholdAudiosBySide
@@ -87,6 +86,10 @@ export default class extends Mixins(PaneMixin) {
   private _enableAnimationsTimeout: number
   private _disableAnimations: boolean
   private _preferQuoteCurrencySize: boolean
+
+  get zoom() {
+    return this.$store.state.panes.panes[this.paneId].zoom
+  }
 
   get maxRows() {
     return this.$store.state[this.paneId].maxRows
@@ -156,6 +159,7 @@ export default class extends Mixins(PaneMixin) {
           this.refreshList()
           break
         case this.paneId + '/SET_THRESHOLD_AUDIO':
+        case this.paneId + '/SET_AUDIO_PITCH':
         case 'settings/TOGGLE_AUDIO':
           this.prepareThresholdsSounds()
           this.prepareAudioThreshold()
@@ -189,6 +193,18 @@ export default class extends Mixins(PaneMixin) {
   }
 
   startTimeAgoInterval() {
+    let now
+
+    const timeAgo = milliseconds => {
+      if (milliseconds < 60000) {
+        return Math.floor(milliseconds / 1000) + 's'
+      } else if (milliseconds < 3600000) {
+        return Math.floor(milliseconds / 60000) + 'm'
+      } else {
+        return Math.floor(milliseconds / 3600000) + 'h'
+      }
+    }
+
     this._timeAgoInterval = setInterval(() => {
       const elements = this.$el.getElementsByClassName('-timestamp')
 
@@ -196,25 +212,33 @@ export default class extends Mixins(PaneMixin) {
         return
       }
 
-      let ref
+      now = +new Date()
 
-      for (let i = elements.length - 1; i >= 0; i--) {
-        const txt = ago(elements[i].getAttribute('timestamp'))
+      const topOfTheMinute = (now / 1000) % 60 < 1
 
-        if (typeof ref !== 'undefined' && ref === txt) {
-          elements[i].textContent = ''
-          elements[i].className = 'trade__time'
-          i--
+      let previousRowTimeAgo
+
+      for (let i = 0; i < elements.length; i++) {
+        const milliseconds = now - (elements[i] as any).getAttribute('timestamp')
+        const txt = timeAgo(milliseconds)
+
+        if (txt === previousRowTimeAgo && txt) {
+          elements[i - 1].textContent = ''
+          elements[i - 1].className = 'trade__time'
           continue
         }
 
         if (txt !== elements[i].textContent) {
           elements[i].textContent = txt
+
+          if (!topOfTheMinute && txt[txt.length - 1] !== 's') {
+            break
+          }
         }
 
-        ref = txt
+        previousRowTimeAgo = txt
       }
-    }, 2500)
+    }, 1000)
   }
 
   onTrades(trades: Trade[]) {
@@ -261,10 +285,6 @@ export default class extends Mixins(PaneMixin) {
 
     li.className += ' -' + trade.side
 
-    if (trade.exchange.length > 10) {
-      li.className += ' -sm'
-    }
-
     if (trade.liquidation && this._tradeType === 'both') {
       li.className += ' -liquidation'
 
@@ -284,12 +304,13 @@ export default class extends Mixins(PaneMixin) {
         }
       }
 
-      const intensity = Math.min(1, amount / this._liquidationThreshold.amount)
+      const percentToSignificant = amount / this._significantThresholdAmount
 
-      const luminance = this._liquidationsColor[trade.side][(intensity < 0.5 ? 'from' : 'to') + 'Luminance']
+      const luminance = this._liquidationsColor[trade.side][(percentToSignificant < 0.5 ? 'from' : 'to') + 'Luminance']
       const backgroundColor = this._liquidationsColor[trade.side].to
-      li.style.color = getLogShade(backgroundColor, (0.75 + intensity) * (luminance > 170 ? -1 : 1))
-      li.style.backgroundColor = 'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + intensity + ')'
+      li.style.color = luminance > 170 ? 'rgba(0, 0, 0, ' + percentToSignificant + ')' : 'rgba(255, 255, 255, ' + luminance + ')'
+      li.style.backgroundColor =
+        'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + percentToSignificant + ')'
 
       if (amount > this._audioThreshold) {
         this._liquidationsAudio[trade.side](audioService._play, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
@@ -328,20 +349,24 @@ export default class extends Mixins(PaneMixin) {
 
           // percentage to next threshold
           const percentToNextThreshold = (Math.max(amount, color.threshold) - color.threshold) / color.range
+          const percentToSignificant = amount / this._significantThresholdAmount
 
           // 0-255 luminance of nearest color
           const luminance = color[trade.side][(percentToNextThreshold < 0.5 ? 'from' : 'to') + 'Luminance']
-          const bright = luminance > 170
+
           // background color simple color to color based on percentage of amount to next threshold
           const backgroundColor = getColorByWeight(color[trade.side].from, color[trade.side].to, percentToNextThreshold)
           li.style.backgroundColor = 'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ')'
 
           // take background color and apply logarithmic shade based on amount to this._significantThresholdAmount percentage
           // darken if luminance of background is high, lighten otherwise
-          li.style.color = getLogShade(backgroundColor, (0.75 + percentToNextThreshold) * (bright ? -1 : 1))
+          li.style.color =
+            luminance > 170
+              ? 'rgba(0, 0, 0, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
+              : 'rgba(255, 255, 255, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
 
           if (amount > this._audioThreshold) {
-            this._thresholdsAudios[i][trade.side](audioService._play, amount / this._significantThresholdAmount, trade.side, i)
+            this._thresholdsAudios[i][trade.side](audioService._play, percentToSignificant, trade.side, i)
           }
 
           break
@@ -408,7 +433,6 @@ export default class extends Mixins(PaneMixin) {
         this._lastTradeTimestamp = timestamp
 
         date.setAttribute('timestamp', trade.timestamp.toString())
-        date.innerText = ago(timestamp)
 
         date.className += ' -timestamp'
       }
@@ -440,6 +464,37 @@ export default class extends Mixins(PaneMixin) {
         this.fetchGifByKeyword(threshold.gif)
       }
     }
+
+    // this.playSample()
+  }
+
+  async playSample() {
+    this._audioThreshold = Infinity
+
+    const pairs = ['btcusdt', 'btcusdt_perp', 'BTC-PERP', 'BTC-PERPETUAL']
+    const exchanges = ['BINANCE', 'BINANCE_FUTURES', 'BITMEX']
+
+    for (let i = 0; i < 300; i++) {
+      const threshold = this.thresholds[Math.floor(Math.random() * this.thresholds.length)]
+      const thresholdIndex = this.thresholds.indexOf(threshold)
+      const max = thresholdIndex < this.thresholds.length - 1 ? this.thresholds[thresholdIndex + 1].amount - 1 : threshold.amount * 10
+      const amount = threshold.amount + (max - threshold.amount) * Math.random()
+
+      this.appendRow(
+        {
+          timestamp: +new Date(),
+          side: Math.random() > 0.5 ? 'buy' : 'sell',
+          exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
+          pair: pairs[Math.floor(Math.random() * exchanges.length)],
+          price: 57000,
+          size: amount / 57000
+        },
+        amount,
+        1
+      )
+
+      await sleep(Math.random() * 500)
+    }
   }
 
   async fetchGifByKeyword(keyword: string, isDeleted = false) {
@@ -451,6 +506,11 @@ export default class extends Mixins(PaneMixin) {
 
     if (isDeleted) {
       if (GIFS[keyword]) {
+        this.$store.dispatch('app/showNotice', {
+          title: 'Removed ' + GIFS[keyword].length + ' gifs about "' + slug + '"',
+          type: 'info'
+        })
+
         delete GIFS[keyword]
       }
 
@@ -471,6 +531,11 @@ export default class extends Mixins(PaneMixin) {
         for (const item of res.results) {
           GIFS[keyword].push(item.media[0].gif.url)
         }
+
+        this.$store.dispatch('app/showNotice', {
+          title: 'Downloaded ' + GIFS[keyword].length + ' gifs about "' + slug + '"',
+          type: 'success'
+        })
 
         await workspacesService.saveGifs({
           slug,
@@ -545,14 +610,16 @@ export default class extends Mixins(PaneMixin) {
   }
 
   prepareThresholdsSounds() {
+    const audioPitch = this.$store.state[this.paneId].audioPitch
+
     this._thresholdsAudios = this.thresholds.map(threshold => ({
-      buy: audioService.buildAudioFunction(threshold.buyAudio, 'buy'),
-      sell: audioService.buildAudioFunction(threshold.sellAudio, 'sell')
+      buy: audioService.buildAudioFunction(threshold.buyAudio, 'buy', audioPitch),
+      sell: audioService.buildAudioFunction(threshold.sellAudio, 'sell', audioPitch)
     }))
 
     this._liquidationsAudio = {
-      buy: audioService.buildAudioFunction(this._liquidationThreshold.buyAudio, 'buy'),
-      sell: audioService.buildAudioFunction(this._liquidationThreshold.sellAudio, 'sell')
+      buy: audioService.buildAudioFunction(this._liquidationThreshold.buyAudio, 'buy', audioPitch),
+      sell: audioService.buildAudioFunction(this._liquidationThreshold.sellAudio, 'sell', audioPitch)
     }
   }
 
@@ -679,43 +746,14 @@ export default class extends Mixins(PaneMixin) {
 </script>
 
 <style lang="scss">
-@mixin tradesVariant($base: 20) {
-  font-size: min($base * 0.7px, 16px);
-
-  .trade {
-    height: round($base * 1px);
-
-    &.-level-1 {
-      height: round($base * 1.1px);
-    }
-
-    &.-level-2 {
-      height: round($base * 1.33px);
-    }
-
-    &.-level-3 {
-      font-size: round($base * 0.8px);
-      height: round($base * 1.5px);
-    }
-  }
-}
-
 .pane-trades {
-  line-height: 1;
-
   ul {
     margin: 0;
     padding: 0;
     overflow: auto;
     max-height: 100%;
-  }
-
-  &.-normal ul {
-    @include tradesVariant(20);
-  }
-
-  &.-small ul {
-    @include tradesVariant(18);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
   }
 
   &.-slippage {
@@ -762,17 +800,6 @@ export default class extends Mixins(PaneMixin) {
       }
     }
   }
-
-  &:not(.-logos) .trade.-sm {
-    .trade__exchange {
-      font-size: 0.75em;
-      letter-spacing: -0.5px;
-      margin-top: -0.45em;
-      margin-bottom: -0.5em;
-      white-space: normal;
-      word-break: break-word;
-    }
-  }
 }
 
 .trades-placeholder {
@@ -780,10 +807,6 @@ export default class extends Mixins(PaneMixin) {
   text-align: center;
   overflow: hidden;
   max-height: 100%;
-
-  @media (-webkit-min-device-pixel-ratio: 2) {
-    font-size: 75%;
-  }
 
   &__market {
     opacity: 0.6;
@@ -798,7 +821,6 @@ export default class extends Mixins(PaneMixin) {
   background-blend-mode: overlay;
   position: relative;
   align-items: center;
-  height: 1.8em;
   padding: 0 0.5em 2px;
 
   &:after {
@@ -831,14 +853,6 @@ export default class extends Mixins(PaneMixin) {
         margin-left: 1rem;
       }
     }
-
-    /* &.-buy .trade__side:after {
-      content: 'SHORT';
-    }
-
-    &.-sell .trade__side:after {
-      content: 'LONG';
-    } */
   }
 
   &.-sell {
@@ -859,13 +873,26 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
+  &.-level-0 {
+    height: 1.5em;
+    font-size: 0.875em;
+  }
+
   &.-level-1 {
-    color: white;
+    height: 1.5em;
+    font-size: 0.875em;
+  }
+
+  &.-level-2 {
+    height: 1.75em;
+    font-size: 1em;
   }
 
   &.-level-3 {
+    height: 2em;
     box-shadow: 0 0 20px rgba(black, 0.5);
     z-index: 1;
+    font-size: 1.125em;
   }
 
   &.-gif {
@@ -878,7 +905,6 @@ export default class extends Mixins(PaneMixin) {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    line-height: 1.4;
   }
 
   .trade__side {
@@ -898,11 +924,11 @@ export default class extends Mixins(PaneMixin) {
   .trade__exchange {
     background-repeat: no-repeat;
     flex-grow: 0.8;
-    margin-left: 1.5em;
-    font-size: 80%;
+    margin-left: 1.25rem;
     white-space: normal;
-    line-height: 1;
     word-break: inherit;
+    font-size: 75%;
+    line-height: 1;
   }
 
   .trade__price:after {
@@ -951,11 +977,11 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__time {
     text-align: right;
-    flex-basis: 1.75em;
+    flex-basis: 1.5em;
     flex-grow: 0;
     font-size: 75%;
     font-weight: 400;
-    text-overflow: inherit;
+    overflow: visible;
   }
 }
 

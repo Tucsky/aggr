@@ -66,19 +66,10 @@
 .pane {
   position: relative;
   background-color: rgba(black, 0.2);
-
-  &:hover .pane-header {
-    display: flex;
-
-    /*+ * {
-      transform: translateY(1.5rem);
-      height: calc(100% - 1.5rem);
-      overflow: hidden;
-    }*/
-  }
 }
 
 .pane-header {
+  display: flex;
   position: absolute;
   z-index: 3;
   top: 0;
@@ -86,11 +77,9 @@
   right: 0;
   font-size: 2rem;
   background-color: rgba(black, 0.8);
-  backdrop-filter: blur(10px);
 
   &.toolbar {
     font-size: 1rem;
-    display: none;
     height: 1.99rem;
 
     .dropdown__selected > i,

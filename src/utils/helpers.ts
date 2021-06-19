@@ -280,14 +280,6 @@ export function getDiff(obj, model) {
 
     if (obj[prop] && typeof obj[prop] === 'object') {
       obj[prop] = getDiff(obj[prop], model[prop])
-
-      /*if (!Object.keys(obj[prop]).length) {
-        if (Array.isArray(obj)) {
-          obj.splice(obj.indexOf(obj[prop]), 1)
-        } else {
-          delete obj[prop]
-        }
-      }*/
     }
   }
 

@@ -112,8 +112,6 @@ export default class extends Vue {
       return
     }
 
-    pane.refreshScale(width)
-
     if (typeof pane.onResize === 'function') {
       pane.$nextTick(() => {
         pane.onResize(width, height)

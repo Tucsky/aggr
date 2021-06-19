@@ -32,7 +32,7 @@ export default {
     gradient: Array,
     classes: Array,
     colorCode: { type: Boolean, default: false },
-    editable: { type: Boolean, default: true },
+    editable: { type: Boolean, default: false },
     reverse: { type: Boolean, default: false },
     label: { type: Boolean, default: false },
     trackSlide: { type: Boolean, default: true },
@@ -381,6 +381,7 @@ export default {
   display: flex;
   align-items: center;
   box-sizing: border-box;
+  z-index: 1;
 
   &.-alpha {
     .slider__track {
@@ -409,8 +410,8 @@ export default {
     }
 
     .slider__label {
-      left: -3em;
-      top: -0.5em;
+      left: -40px;
+      bottom: -6px;
 
       &:before {
         left: auto;
@@ -494,8 +495,9 @@ export default {
 
 .slider__label {
   position: absolute;
-  top: -3em;
-  left: 0.5em;
+
+  bottom: 25px;
+  left: 6px;
   z-index: 999;
   padding: 0.5em;
   min-width: 3em;

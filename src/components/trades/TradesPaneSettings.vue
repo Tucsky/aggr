@@ -1,10 +1,10 @@
 <template>
   <div>
-    <div class="column mb8">
+    <div class="column mb16">
       <div class="form-group -fill">
         <label>
           Max rows
-          <span class="icon-info" title="Numbers of trades to keep visible" v-tippy></span>
+          <span class="icon-info" title="Numbers of trades to keep rendered" v-tippy></span>
         </label>
         <input
           type="number"
@@ -75,14 +75,20 @@
         <thresholds :paneId="paneId" :show-liquidations-threshold="tradeType === 'both'" />
 
         <div class="text-right mt8 mb8">
-          <a href="javascript:void(0);" class="ml4 -nowrap -text" v-tippy title="Add a threshold" @click="$store.commit(paneId + '/ADD_THRESHOLD')">
+          <a
+            href="javascript:void(0);"
+            class="btn ml4 -nowrap -text"
+            v-tippy
+            title="Add a threshold"
+            @click="$store.commit(paneId + '/ADD_THRESHOLD')"
+          >
             Add
             <i class="icon-plus ml4 text-bottom"></i>
           </a>
         </div>
 
         <div v-if="displayGifWarning" class="d-flex help-text">
-          <p class="mt0 mb0">
+          <p class="mt0 mb0 text-danger">
             <i class="icon-info mr8"></i>
             <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_ANIMATIONS')">Enable animations to show gifs</a>
           </p>
@@ -94,14 +100,42 @@
     <section class="section">
       <div class="form-group" v-if="sections.indexOf('audio') > -1">
         <div class="column section__controls">
-          <presets type="audio" title="Audio presets" :adapter="getAudioPreset" @apply="applyAudioPreset($event)" />
+          <presets
+            type="audio"
+            :adapter="getAudioPreset"
+            @apply="applyAudioPreset($event)"
+            label="Audio presets"
+            title="Save audio settings (buy and sell audios for trades & liquidations) to use on other pane"
+            v-tippy
+          />
         </div>
-        <div class="form-group mb16">
-          <label class="checkbox-control">
-            <input type="checkbox" class="form-control" :disabled="!useAudio" :checked="muted" @change="$store.commit(paneId + '/TOGGLE_MUTED')" />
-            <div></div>
-            <span>Mute this pane</span>
-          </label>
+        <div class="column mb16">
+          <div class="form-group text-nowrap">
+            <label class="checkbox-control">
+              <input type="checkbox" class="form-control" :disabled="!useAudio" :checked="muted" @change="$store.commit(paneId + '/TOGGLE_MUTED')" />
+              <div></div>
+              <span>Mute this pane</span>
+            </label>
+          </div>
+          <slider
+            class="mrauto -fill"
+            :min="-300"
+            :max="300"
+            :step="1"
+            :showCompletion="false"
+            :label="!!audioPitch"
+            :value="audioPitch"
+            @input="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
+            @reset="$store.commit(paneId + '/SET_AUDIO_PITCH', null)"
+          >
+            <template v-slot:tooltip> {{ audioPitchLabel }} </template>
+          </slider>
+          <editable
+            class="-center text-nowrap ml8"
+            style="line-height:1"
+            :content="audioPitchLabel"
+            @output="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
+          ></editable>
         </div>
         <div class="form-group" v-if="useAudio && !muted">
           <label>
@@ -116,13 +150,13 @@
         </div>
 
         <div v-if="!useAudio" class="d-flex help-text">
-          <p class="mt0 mb0">
+          <p class="mt0 mb0 text-danger">
             <i class="icon-info mr8"></i>
-            <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_AUDIO', true)">Enable audio</a>
+            <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_AUDIO', true)">Enable audio to use this feature</a>
           </p>
         </div>
       </div>
-      <div class="section__title" @click="toggleSection('audio')">Audio Threshold <i class="icon-up"></i></div>
+      <div class="section__title" @click="toggleSection('audio')">Audio <i class="icon-up"></i></div>
     </section>
 
     <section class="section">
@@ -254,6 +288,21 @@ export default class extends Vue {
     return (this.$store.state[this.paneId] as TradesPaneState).muted
   }
 
+  get audioPitch() {
+    return (this.$store.state[this.paneId] as TradesPaneState).audioPitch
+  }
+
+  get audioPitchLabel() {
+    return (
+      (this.audioPitch >= 0 ? '+' : '-') +
+      ' ' +
+      Math.abs(this.audioPitch || 0)
+        .toString()
+        .padStart(3, '0') +
+      ' hz'
+    )
+  }
+
   get multipliers() {
     return this.markets.map(market => {
       const [exchange, pair] = parseMarket(market)
@@ -296,11 +345,22 @@ export default class extends Vue {
   }
 
   getAudioPreset() {
-    return this.thresholds.map(a => ({
-      id: a.id,
-      buyAudio: a.buyAudio,
-      sellAudio: a.sellAudio
-    }))
+    const audioPreset = this.$store.state[this.paneId].thresholds.reduce((thresholds, threshold, index) => {
+      thresholds[index] = {
+        id: threshold.id,
+        buyAudio: threshold.buyAudio,
+        sellAudio: threshold.sellAudio
+      }
+
+      return thresholds
+    }, {})
+
+    audioPreset.liquidations = {
+      id: 'liquidations',
+      buyAudio: this.$store.state[this.paneId].liquidations.buyAudio,
+      sellAudio: this.$store.state[this.paneId].liquidations.sellAudio
+    }
+    return audioPreset
   }
 
   applyAudioPreset(presetData?) {
@@ -310,20 +370,35 @@ export default class extends Vue {
       defaultSettings = JSON.parse(JSON.stringify(panesSettings[this.$store.state.panes.panes[this.paneId].type as 'trades'].state)).thresholds
     }
 
-    for (let i = 0; i < this.thresholds.length; i++) {
-      let buyAudio = this.thresholds[i].buyAudio
-      let sellAudio = this.thresholds[i].sellAudio
+    let buyAudio: string
+    let sellAudio: string
 
-      if (defaultSettings && defaultSettings[i]) {
-        buyAudio = defaultSettings[i].buyAudio
-        sellAudio = defaultSettings[i].sellAudio
-      } else if (presetData && presetData[i]) {
-        buyAudio = presetData[i].buyAudio
-        sellAudio = presetData[i].sellAudio
+    for (const key of [...Object.keys(this.$store.state[this.paneId].thresholds), 'liquidations']) {
+      let threshold
+
+      if (key === 'liquidations') {
+        threshold = this.$store.state[this.paneId].liquidations
+      } else {
+        threshold = this.$store.state[this.paneId].thresholds[key]
+      }
+
+      if (!threshold) {
+        continue
+      }
+
+      buyAudio = threshold.buyAudio
+      sellAudio = threshold.sellAudio
+
+      if (defaultSettings && defaultSettings[key]) {
+        buyAudio = defaultSettings[key].buyAudio
+        sellAudio = defaultSettings[key].sellAudio
+      } else if (presetData && presetData[key]) {
+        buyAudio = presetData[key].buyAudio
+        sellAudio = presetData[key].sellAudio
       }
 
       this.$store.commit(this.paneId + '/SET_THRESHOLD_AUDIO', {
-        id: this.thresholds[i].id,
+        id: threshold.id,
         buyAudio: buyAudio,
         sellAudio: sellAudio
       })
@@ -350,6 +425,7 @@ export default class extends Vue {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    font-family: 'Barlow Semi Condensed';
   }
 
   &__action {
@@ -361,9 +437,7 @@ export default class extends Vue {
   }
 
   .market-exchange {
-    font-family: 'Barlow Semi Condensed';
     line-height: 1;
-    font-weight: 600;
   }
 
   &.-disabled {

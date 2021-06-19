@@ -25,6 +25,7 @@ export interface TradesPaneState {
   showThresholdsAsTable: boolean
   tradeType: TradeTypeFilter
   muted: boolean
+  audioPitch: number
   maxRows: number
   showLogos: boolean
   monochromeLogos: boolean
@@ -111,6 +112,8 @@ play(246.94, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.13, 0.24)`
   multipliers: {},
   showThresholdsAsTable: true,
   maxRows: 100,
+  muted: false,
+  audioPitch: null,
   showTradesPairs: false,
   tradeType: 'both',
   showLogos: true,
@@ -170,6 +173,19 @@ const mutations = {
   },
   TOGGLE_MUTED(state) {
     state.muted = !state.muted
+  },
+  SET_AUDIO_PITCH(state, value) {
+    if (typeof value === 'string') {
+      value = value.replace(/[^0-9-]/g, '')
+    }
+
+    value = parseInt(value)
+
+    if (!value) {
+      state.audioPitch = null
+    } else {
+      state.audioPitch = value
+    }
   },
   TOGGLE_MONOCHROME_LOGOS(state, value) {
     state.monochromeLogos = value ? true : false

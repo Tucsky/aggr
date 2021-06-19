@@ -262,11 +262,6 @@ class Aggregator {
     const timestamp = +new Date()
 
     for (const bucketId in this.settings.buckets) {
-      if (!this.buckets[bucketId]) {
-        console.error('bucket id doesnt exists (but exists in settings so attempted to emit bucket...)', bucketId)
-        debugger
-      }
-
       for (const market of this.settings.buckets[bucketId]) {
         if (!this.connections[market]) {
           continue

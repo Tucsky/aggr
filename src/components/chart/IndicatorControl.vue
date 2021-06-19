@@ -109,8 +109,6 @@ export default {
     transition-delay: 1s;
     font-size: 0.75em;
 
-    text-shadow: 1px 1px black;
-
     > div {
       display: inline-block;
       line-height: 1.5;

@@ -6,6 +6,7 @@ import { downloadJson, getDiff, randomString, slugify, uniqueName } from '@/util
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import * as migrations from './migrations'
 import panesSettings from '@/store/panesSettings'
+import { PanesState } from '@/store/panes'
 
 export interface AggrDB extends DBSchema {
   products: {
@@ -199,6 +200,10 @@ class WorkspacesService {
   }
 
   downloadWorkspace() {
+    if (this.workspace.states.panes) {
+      delete (this.workspace.states.panes as PanesState).marketsListeners
+    }
+
     downloadJson(this.workspace, this.workspace.id + '_' + slugify(this.workspace.name))
   }
 

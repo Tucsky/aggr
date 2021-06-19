@@ -1,7 +1,7 @@
 <template>
-  <div class="pane-prices" :class="{ [scale]: true, [mode]: true, '-bold': this.boldFont }">
-    <pane-header :paneId="paneId" />
-    <transition-group v-if="markets" :name="transitionGroupName" tag="div" class="markets-bar condensed custom-scrollbar pane">
+  <div class="pane-prices" :class="{ [mode]: true, '-bold': this.boldFont }">
+    <pane-header v-if="hovered" :paneId="paneId" />
+    <transition-group v-if="markets" :name="transitionGroupName" tag="div" class="markets-bar condensed hide-scrollbar pane">
       <div
         v-for="market in markets"
         :key="market.id"
@@ -243,10 +243,6 @@ export default class extends Mixins(PaneMixin) {
 
   &.-bold .market {
     font-weight: 600;
-  }
-
-  &.-small {
-    font-size: 0.886rem;
   }
 }
 </style>

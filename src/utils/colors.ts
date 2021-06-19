@@ -82,6 +82,10 @@ export function getColor(except = []) {
 }
 
 export function getColorByWeight(a, b, weight) {
+  if (weight > 1) {
+    return b
+  }
+
   const p = weight
   const w = p * 2 - 1
   const w1 = (w / 1 + 1) / 2
@@ -170,20 +174,18 @@ export function getAppBackgroundColor() {
 }
 
 export function getLogShade(color, percent) {
-  const transparency = typeof color[3] !== 'undefined'
   percent = Math.max(-1, Math.min(1, percent))
   const P = percent < 0
   const t = P ? 0 : percent * 255 ** 2
   const p = P ? 1 + percent : 1 - percent
   return (
-    'rgb' +
-    (transparency ? 'a(' : '(') +
+    'rgb(' +
     Math.round((p * color[0] ** 2 + t) ** 0.5) +
     ',' +
     Math.round((p * color[1] ** 2 + t) ** 0.5) +
     ',' +
     Math.round((p * color[2] ** 2 + t) ** 0.5) +
-    (transparency ? ',' + color[3] : ')')
+    ')'
   )
 }
 

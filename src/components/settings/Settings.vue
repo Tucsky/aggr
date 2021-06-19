@@ -22,10 +22,8 @@
                   <button class="btn -blue"><i class="icon-menu"></i></button>
                 </template>
                 <template v-slot:option="{ value }">
-                  <div>
-                    <span>{{ value.label }}</span>
-                    <i :class="'icon-' + value.icon"></i>
-                  </div>
+                  <span>{{ value.label }}</span>
+                  <i :class="'icon-' + value.icon"></i>
                 </template>
               </dropdown>
             </div>
@@ -47,20 +45,18 @@
                   </button>
                 </template>
                 <template v-slot:option="{ value }">
-                  <div>
-                    <i class="icon-trash -action mr16" @click.stop="removeWorkspace(value.id)"></i>
-                    <div class="flex-grow-1">
-                      <div class="dropdown-option__title">
-                        {{ value.name }} <code>{{ value.id }}</code>
-                      </div>
-                      <div
-                        v-if="value.updatedAt"
-                        class="dropdown-option__description text-muted"
-                        v-text="'last used ' + ago(value.updatedAt) + ' ago'"
-                      ></div>
+                  <i class="icon-trash -action mr16" @click.stop="removeWorkspace(value.id)"></i>
+                  <div class="flex-grow-1">
+                    <div class="dropdown-option__title">
+                      {{ value.name }} <code>{{ value.id }}</code>
                     </div>
-                    <i class="icon-external-link-square-alt ml4"></i>
+                    <div
+                      v-if="value.updatedAt"
+                      class="dropdown-option__description text-muted"
+                      v-text="'last used ' + ago(value.updatedAt) + ' ago'"
+                    ></div>
                   </div>
+                  <i class="icon-external-link-square-alt ml4"></i>
                 </template>
               </dropdown>
             </small>
@@ -203,11 +199,9 @@
                     </a>
                   </template>
                   <template v-slot:option="{ value }">
-                    <div style="font-size:1rem;">
-                      <i :class="'icon-' + value.icon" class="-fill"></i>
+                    <i :class="'icon-' + value.icon" class="-fill"></i>
 
-                      <span class="ml4">{{ value.label }}</span>
-                    </div>
+                    <span class="ml4">{{ value.label }}</span>
                   </template>
                 </dropdown>
               </span>
