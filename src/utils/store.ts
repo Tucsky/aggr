@@ -76,6 +76,11 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
 
     if (typeof pane.settings === 'object') {
       console.debug(`[store] found default settings in pane's definition -> merge into pane's module`)
+
+      if (pane.settings._id) {
+        delete pane.settings._id
+      }
+
       merge(module.state, pane.settings)
 
       delete pane.settings
