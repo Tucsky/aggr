@@ -385,6 +385,7 @@ export default class ChartController {
 
   /**
    * render watermark in chart
+   * @param {boolean} isVisible is watermark visible
    * @returns
    */
   updateWatermark(isVisible: boolean) {
