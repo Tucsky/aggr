@@ -153,6 +153,9 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/SET_GRIDLINES':
           this.updateGridlines(mutation.payload.type)
           break
+        case this.paneId + '/SET_WATERMARK':
+          this._chartController.updateWatermark()
+          break
         case this.paneId + '/SET_INDICATOR_OPTION':
           this._chartController.setIndicatorOption(mutation.payload.id, mutation.payload.key, mutation.payload.value)
           break
@@ -636,6 +639,17 @@ export default class extends Mixins(PaneMixin) {
           color: color,
           visible: show
         }
+      }
+    })
+  }
+
+  updateWatermark() {
+    const chartOptions = this.$store.state[this.paneId] as ChartPaneState
+
+    this._chartController.chartInstance.applyOptions({
+      watermark: {
+        color: chartOptions.watermarkColor,
+        visible: chartOptions.showWatermark
       }
     })
   }

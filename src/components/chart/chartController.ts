@@ -216,6 +216,11 @@ export default class ChartController {
       chartOptions.grid.horzLines.color = store.state[this.paneId].horizontalGridlinesColor
     }
 
+    if (store.state[this.paneId].showWatermark) {
+      chartOptions.watermark.visible = store.state[this.paneId].showWatermark
+      chartOptions.watermark.color = store.state[this.paneId].watermarkColor
+    }
+
     this.chartInstance = TV.createChart(containerElement, chartOptions)
     this.chartElement = containerElement
 
@@ -393,7 +398,8 @@ export default class ChartController {
     this.chartInstance.applyOptions({
       watermark: {
         text: `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0${this.watermark}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0`,
-        visible: true
+        visible: store.state[this.paneId].showWatermark,
+        color: store.state[this.paneId].watermarkColor
       }
     })
   }
