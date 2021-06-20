@@ -49,11 +49,7 @@ export async function mergeStoredState(state: any) {
     if (storedState) {
       console.debug(`[store] retrieved stored state for module ${state._id}`)
 
-      if (['panes', 'settings', 'app', 'exchanges'].indexOf(state._id) === -1) {
-        return merge(state, storedState)
-      } else {
-        return Object.assign({}, state, storedState)
-      }
+      return Object.assign({}, state, storedState)
     }
   } catch (error) {
     console.error(`[store] error retrieving stored state for module ${state._id}`, error)
@@ -81,7 +77,10 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
         delete pane.settings._id
       }
 
-      merge(module.state, pane.settings)
+      if (module.state._id === 'perp-trades') {
+        console.log('merging default into pane state', module.state, pane.settings)
+      }
+      Object.assign(module.state, pane.settings)
 
       delete pane.settings
 

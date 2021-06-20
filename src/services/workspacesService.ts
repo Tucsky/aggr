@@ -183,12 +183,12 @@ class WorkspacesService {
   cleanState(state) {
     state = JSON.parse(JSON.stringify(state))
 
-    if (store.state.panes.panes[state._id]) {
+    /* if (store.state.panes.panes[state._id]) {
       const pane = store.state.panes.panes[state._id]
       const paneSettings = JSON.parse(JSON.stringify(panesSettings[pane.type]))
 
       state = getDiff(state, paneSettings.state)
-    }
+    } */
 
     for (const prop in state) {
       if (prop[0] === '_' && prop !== '_id') {

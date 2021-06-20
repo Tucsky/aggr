@@ -268,12 +268,14 @@ export function getDiff(obj, model) {
     return obj
   }
 
+  const isArray = Array.isArray(obj)
+
   for (const prop in obj) {
     if (Array.isArray(obj) && obj[prop] && model[prop] && obj[prop].id !== model[prop].id) {
       continue
     }
 
-    if (prop !== '_id' && obj[prop] === model[prop]) {
+    if (!isArray && prop !== '_id' && obj[prop] === model[prop]) {
       delete obj[prop]
       continue
     }
