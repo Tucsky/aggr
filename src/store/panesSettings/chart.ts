@@ -49,7 +49,7 @@ const state = {
   showVerticalGridlines: false,
   verticalGridlinesColor: 'rgba(255,255,255,.1)',
   showWatermark: true,
-  watermarkColor: 'rgba(255,255, 0.1)'
+  watermarkColor: 'rgba(255,255,255,.1)'
 } as ChartPaneState
 
 const actions = {
