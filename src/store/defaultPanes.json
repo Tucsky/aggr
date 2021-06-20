@@ -48,7 +48,13 @@
           "HUOBI:btcusdt",
           "BITSTAMP:btcusd"
         ],
-        "settings": { "thresholds": [{ "amount": 100000 }] }
+        "settings": {
+          "tradeType": "trades",
+          "thresholds": [{ "amount": 100000 }],
+          "liquidations": {
+            "amount": 50000
+          }
+        }
       },
       "perp-trades": {
         "id": "perp-trades",
@@ -67,7 +73,14 @@
           "FTX:BTC-PERP",
           "BYBIT:BTCUSD"
         ],
-        "settings": { "liquidations": { "amount": 100000 } }
+        "settings": {
+          "tradeType": "trades",
+          "thresholds": [{ "amount": 100000 }],
+          "liquidations": {
+            "amount": 50000
+          },
+          "audioThreshold": 25000
+        }
       },
       "liquidations": {
         "id": "liquidations",
@@ -94,8 +107,8 @@
               "amount": 10000,
               "buyColor": "rgba(236,64,122,0.5)",
               "sellColor": "rgba(255,152,0,0.5)",
-              "buyAudio": "play(329.63, ratio / 10, ratio / 10, 0.08, .05, 'sine');",
-              "sellAudio": "play(440, ratio / 10, ratio / 10, 0.08, .05, 'sine');"
+              "buyAudio": "play(329.63, ratio / 10, ratio, 0.08, .1, 'sine');",
+              "sellAudio": "play(440, ratio / 10, ratio, 0.08, .05, 'sine');"
             },
             {
               "id": "significant",

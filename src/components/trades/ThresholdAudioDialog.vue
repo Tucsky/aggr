@@ -131,6 +131,9 @@ export default {
     audioPitch: function() {
       return this.$store.state[this.paneId].audioPitch
     },
+    audioVolume: function() {
+      return this.$store.state[this.paneId].audioVolume
+    },
     index: function() {
       return this.amounts.indexOf(this.threshold.amount)
     },
@@ -244,7 +247,7 @@ export default {
     },
     getAdapter(litteral, side) {
       try {
-        const adapter = audioService.buildAudioFunction(litteral, side, this.audioPitch, true)
+        const adapter = audioService.buildAudioFunction(litteral, side, this.audioPitch, this.audioVolume, true)
 
         this[side + 'Error'] = null
 

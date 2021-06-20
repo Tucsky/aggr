@@ -26,6 +26,7 @@ export interface TradesPaneState {
   tradeType: TradeTypeFilter
   muted: boolean
   audioPitch: number
+  audioVolume: number
   maxRows: number
   showLogos: boolean
   monochromeLogos: boolean
@@ -114,6 +115,7 @@ play(246.94, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.13, 0.24)`
   maxRows: 100,
   muted: false,
   audioPitch: null,
+  audioVolume: null,
   showTradesPairs: false,
   tradeType: 'both',
   showLogos: true,
@@ -173,18 +175,39 @@ const mutations = {
   },
   TOGGLE_MUTED(state) {
     state.muted = !state.muted
+
+    if (!state.muted && state.audioVolume === 0) {
+      state.audioVolume = null
+    }
   },
   SET_AUDIO_PITCH(state, value) {
     if (typeof value === 'string') {
-      value = value.replace(/[^0-9-]/g, '')
+      value = value.replace(/[^0-9-.]/g, '')
     }
 
-    value = parseInt(value)
+    value = +value
 
-    if (!value) {
+    if (!value || value === 1) {
       state.audioPitch = null
     } else {
       state.audioPitch = value
+    }
+  },
+  SET_AUDIO_VOLUME(state, value) {
+    if (typeof value === 'string') {
+      value = value.replace(/[^0-9-.]/g, '')
+    }
+
+    if (isNaN(+value) || value === null) {
+      state.audioVolume = null
+    } else {
+      state.audioVolume = +value
+
+      if (state.audioVolume === 0 && !state.muted) {
+        state.muted = true
+      } else if (state.audioVolume > 0 && state.muted) {
+        state.muted = false
+      }
     }
   },
   TOGGLE_MONOCHROME_LOGOS(state, value) {
@@ -257,8 +280,8 @@ const mutations = {
   ADD_THRESHOLD(state) {
     const previousThreshold = state.thresholds[state.thresholds.length - 1]
 
-    let buyAudio = `play(659.26, gain, duration, 50)`
-    let sellAudio = `play(493.88, gain, duration, 50)`
+    let buyAudio = `play(659.26, ratio, ratio, 0)`
+    let sellAudio = `play(493.88, ratio, ratio, 0)`
 
     if (previousThreshold) {
       buyAudio = previousThreshold.buyAudio

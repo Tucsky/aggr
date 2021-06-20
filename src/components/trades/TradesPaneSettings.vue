@@ -60,7 +60,6 @@
     <section class="section">
       <div v-if="sections.indexOf('thresholds') > -1">
         <div class="column section__controls">
-          <span class="-fill"></span>
           <button
             type="button"
             v-tippy
@@ -68,8 +67,16 @@
             class="btn -text -nowrap mr4"
             @click="$store.commit(paneId + '/TOGGLE_THRESHOLDS_TABLE', !showThresholdsAsTable)"
           >
-            Show as {{ showThresholdsAsTable ? 'slider' : 'table' }}
+            {{ showThresholdsAsTable ? 'table' : 'slider' }}
           </button>
+          <presets
+            type="audio"
+            :adapter="getAudioPreset"
+            @apply="applyAudioPreset($event)"
+            label="Presets"
+            title="Just the thresholds / audio"
+            v-tippy
+          />
         </div>
 
         <thresholds :paneId="paneId" :show-liquidations-threshold="tradeType === 'both'" />
@@ -99,16 +106,7 @@
 
     <section class="section">
       <div class="form-group" v-if="sections.indexOf('audio') > -1">
-        <div class="column section__controls">
-          <presets
-            type="audio"
-            :adapter="getAudioPreset"
-            @apply="applyAudioPreset($event)"
-            label="Audio presets"
-            title="Save audio settings (buy and sell audios for trades & liquidations) to use on other pane"
-            v-tippy
-          />
-        </div>
+        <div class="column section__controls"></div>
         <div class="column mb16">
           <div class="form-group text-nowrap">
             <label class="checkbox-control">
@@ -118,40 +116,47 @@
             </label>
           </div>
           <div class="-fill ml16">
-            <label class="mt8 d-block">Master volume</label>
-            <slider
-              class=" mt8 mb8"
-              :min="0"
-              :max="10"
-              :step="0.1"
-              :label="true"
-              :disabled="muted"
-              :value="audioVolume"
-              @input="$store.dispatch('settings/setAudioVolume', $event)"
-              @reset="$store.dispatch('settings/setAudioVolume', 1)"
-            >
-              <template v-slot:tooltip>{{ audioVolume }}</template>
-            </slider>
+            <label class="mt8 d-block">Pane volume</label>
+            <div class="column">
+              <slider
+                class="mrauto -fill mt8 mb8"
+                :min="0"
+                :max="10"
+                :step="0.1"
+                :label="true"
+                :disabled="muted"
+                :value="audioVolume"
+                @input="$store.commit(paneId + '/SET_AUDIO_VOLUME', $event)"
+                @reset="$store.commit(paneId + '/SET_AUDIO_VOLUME', null)"
+              >
+                <template v-slot:tooltip>× {{ audioVolume }}</template>
+              </slider>
+              <editable
+                class="-center text-nowrap ml8"
+                style="line-height:1"
+                :content="'× ' + audioVolume"
+                @output="$store.commit(paneId + '/SET_AUDIO_VOLUME', $event)"
+              ></editable>
+            </div>
             <label class="mt16 d-block">Pitch</label>
             <div class="column">
               <slider
                 class="mrauto -fill mt8 mb8"
-                :min="-300"
-                :max="300"
-                :step="1"
+                :min="0.001"
+                :max="5"
+                :step="0.01"
                 :showCompletion="false"
-                :label="!!audioPitch"
                 :disabled="muted"
                 :value="audioPitch"
                 @input="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
                 @reset="$store.commit(paneId + '/SET_AUDIO_PITCH', null)"
               >
-                <template v-slot:tooltip> {{ audioPitchLabel }} </template>
+                <template v-slot:tooltip>× {{ audioPitch }} </template>
               </slider>
               <editable
                 class="-center text-nowrap ml8"
                 style="line-height:1"
-                :content="audioPitchLabel"
+                :content="'× ' + audioPitch"
                 @output="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
               ></editable>
             </div>
@@ -239,13 +244,15 @@
 </template>
 
 <script lang="ts">
+import dialogService from '@/services/dialogService'
 import panesSettings from '@/store/panesSettings'
-import { Threshold, TradesPaneState } from '@/store/panesSettings/trades'
-import { SettingsState } from '@/store/settings'
+import { TradesPaneState } from '@/store/panesSettings/trades'
 import { formatAmount, parseMarket } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '../framework/picker/Slider.vue'
 import Thresholds from '../settings/Thresholds.vue'
+import ThresholdPresetDialog from './ThresholdPresetDialog.vue'
+import merge from 'lodash.merge'
 
 @Component({
   components: { Thresholds, Slider },
@@ -310,22 +317,16 @@ export default class extends Vue {
   }
 
   get audioPitch() {
-    return (this.$store.state[this.paneId] as TradesPaneState).audioPitch
+    return (this.$store.state[this.paneId] as TradesPaneState).audioPitch || 1
   }
 
   get audioVolume() {
-    return (this.$store.state.settings as SettingsState).audioVolume
-  }
+    const volume = (this.$store.state[this.paneId] as TradesPaneState).audioVolume
 
-  get audioPitchLabel() {
-    return (
-      (this.audioPitch >= 0 ? '+' : '-') +
-      ' ' +
-      Math.abs(this.audioPitch || 0)
-        .toString()
-        .padStart(3, '0') +
-      ' hz'
-    )
+    if (volume === null) {
+      return this.$store.state.settings.audioVolume
+    }
+    return volume
   }
 
   get multipliers() {
@@ -369,68 +370,98 @@ export default class extends Vue {
     }
   }
 
-  getAudioPreset() {
-    const audioPreset = this.$store.state[this.paneId].thresholds.reduce((thresholds, threshold, index) => {
-      thresholds[index] = {
-        id: threshold.id,
-        buyAudio: threshold.buyAudio,
-        sellAudio: threshold.sellAudio
+  async getAudioPreset() {
+    const payload = await dialogService.openAsPromise(ThresholdPresetDialog)
+
+    if (payload) {
+      if (!payload.amounts && !payload.audios && !payload.colors) {
+        this.$store.dispatch('app/showNotice', {
+          title: 'You did not select anything to save in the preset !',
+          type: 'error'
+        })
+        return
       }
 
-      return thresholds
-    }, {})
+      const audioPreset: any = {}
 
-    audioPreset.liquidations = {
-      id: 'liquidations',
-      buyAudio: this.$store.state[this.paneId].liquidations.buyAudio,
-      sellAudio: this.$store.state[this.paneId].liquidations.sellAudio
+      for (const key of [...Object.keys(this.$store.state[this.paneId].thresholds), 'liquidations']) {
+        let threshold
+
+        if (key === 'liquidations') {
+          threshold = this.$store.state[this.paneId].liquidations
+        } else {
+          threshold = this.$store.state[this.paneId].thresholds[key]
+        }
+
+        audioPreset[key] = {}
+
+        if (payload.amounts) {
+          audioPreset[key].amount = threshold.amount
+        }
+
+        if (payload.colors) {
+          audioPreset[key].buyColor = threshold.buyColor
+          audioPreset[key].sellColor = threshold.sellColor
+        }
+
+        if (payload.audios) {
+          audioPreset[key].buyAudio = threshold.buyAudio
+          audioPreset[key].sellAudio = threshold.sellAudio
+        }
+      }
+
+      return audioPreset
     }
-
-    audioPreset.audioPitch = this.audioPitch
-
-    return audioPreset
   }
 
   applyAudioPreset(presetData?) {
-    let defaultSettings: Threshold[]
+    const defaultSettings = JSON.parse(JSON.stringify(panesSettings[this.$store.state.panes.panes[this.paneId].type as 'trades'].state))
 
-    if (!presetData) {
-      defaultSettings = JSON.parse(JSON.stringify(panesSettings[this.$store.state.panes.panes[this.paneId].type as 'trades'].state)).thresholds
+    let state
+
+    if (presetData) {
+      state = {
+        thresholds: Object.keys(presetData).reduce((arr, key) => {
+          if (key === 'liquidations') {
+            return arr
+          }
+
+          arr.push(presetData[key])
+
+          return arr
+        }, []),
+
+        liquidations: presetData.liquidations
+      }
+    } else {
+      state = {
+        thresholds: defaultSettings.thresholds,
+        liquidations: defaultSettings.liquidations
+      }
     }
 
-    let buyAudio: string
-    let sellAudio: string
+    merge(this.$store.state[this.paneId], state)
 
-    this.$store.commit(this.paneId + '/SET_AUDIO_PITCH', presetData.audioPitch || 0)
-
-    for (const key of [...Object.keys(this.$store.state[this.paneId].thresholds), 'liquidations']) {
-      let threshold
-
-      if (key === 'liquidations') {
-        threshold = this.$store.state[this.paneId].liquidations
-      } else {
-        threshold = this.$store.state[this.paneId].thresholds[key]
-      }
-
-      if (!threshold) {
-        continue
-      }
-
-      buyAudio = threshold.buyAudio
-      sellAudio = threshold.sellAudio
-
-      if (defaultSettings && defaultSettings[key]) {
-        buyAudio = defaultSettings[key].buyAudio
-        sellAudio = defaultSettings[key].sellAudio
-      } else if (presetData && presetData[key]) {
-        buyAudio = presetData[key].buyAudio
-        sellAudio = presetData[key].sellAudio
-      }
-
+    if (typeof state.liquidations.buyAudio !== 'undefined') {
       this.$store.commit(this.paneId + '/SET_THRESHOLD_AUDIO', {
-        id: threshold.id,
-        buyAudio: buyAudio,
-        sellAudio: sellAudio
+        id: 'liquidations',
+        buyAudio: state.liquidations.buyAudio,
+        sellAudio: state.liquidations.sellAudio
+      })
+    }
+
+    if (typeof state.liquidations.buyColor !== 'undefined') {
+      this.$store.commit(this.paneId + '/SET_THRESHOLD_COLOR', {
+        id: 'liquidations',
+        side: 'buyColor',
+        value: state.liquidations.buyColor
+      })
+    }
+
+    if (typeof state.liquidations.amount !== 'undefined') {
+      this.$store.commit(this.paneId + '/SET_THRESHOLD_AMOUNT', {
+        id: 'liquidations',
+        value: state.liquidations.amount
       })
     }
   }

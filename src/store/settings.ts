@@ -188,7 +188,6 @@ const mutations = {
   },
   SET_AUDIO_VOLUME(state, value) {
     state.audioVolume = value
-    audioService.setVolume(value)
   },
   TOGGLE_AUDIO_COMPRESSOR(state) {
     state.audioCompressor = !state.audioCompressor

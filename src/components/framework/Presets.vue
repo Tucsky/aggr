@@ -4,12 +4,12 @@
       {{ label }}
     </template>
     <template v-slot:option="{ value }">
-      <i :class="'-lower icon-' + value.icon"></i>
+      <i v-if="value.icon" :class="'-lower icon-' + value.icon"></i>
+
+      <i v-if="value.id" class="icon-refresh -action  -lower" @click.stop="savePreset(value.label)" title="Update"></i>
+      <i v-if="value.id" class="icon-trash -action mr8 -lower" @click.stop="removePreset(value.id)" title="Delete"></i>
 
       <span>{{ value.label }}</span>
-
-      <i v-if="value.id" class="icon-refresh -action ml16 -lower" @click.stop="savePreset(value.label)" title="Update"></i>
-      <i v-if="value.id" class="icon-trash -action ml8 -lower" @click.stop="removePreset(value.id)" title="Delete"></i>
     </template>
   </dropdown>
 </template>

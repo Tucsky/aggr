@@ -130,11 +130,8 @@
         }
       }
 
-      &:first-child {
-        margin-right: 0.5rem;
-      }
-
-      + i {
+      + i,
+      + span {
         margin-left: 0.5rem;
       }
     }

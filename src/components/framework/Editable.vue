@@ -111,7 +111,7 @@ export default class extends Vue {
   }
 
   crement(direction: number) {
-    const text = (this.$el as HTMLElement).innerText.replace(/[^0-9-]/g, '')
+    const text = (this.$el as HTMLElement).innerText.replace(/[^0-9-.]/g, '')
 
     if (isNaN(text as any)) {
       return

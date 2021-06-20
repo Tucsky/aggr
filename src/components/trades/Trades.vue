@@ -152,7 +152,9 @@ export default class extends Mixins(PaneMixin) {
           break
         case this.paneId + '/SET_THRESHOLD_AUDIO':
         case this.paneId + '/SET_AUDIO_PITCH':
+        case this.paneId + '/SET_AUDIO_VOLUME':
         case 'settings/TOGGLE_AUDIO':
+        case 'settings/SET_AUDIO_VOLUME':
           this.prepareThresholdsSounds()
           this.prepareAudioThreshold()
           break
@@ -610,20 +612,21 @@ export default class extends Mixins(PaneMixin) {
 
   prepareThresholdsSounds() {
     const audioPitch = this.$store.state[this.paneId].audioPitch
+    const paneVolume = this.$store.state[this.paneId].audioVolume
 
     this._thresholdsAudios = this.thresholds.map(threshold => ({
-      buy: audioService.buildAudioFunction(threshold.buyAudio, 'buy', audioPitch),
-      sell: audioService.buildAudioFunction(threshold.sellAudio, 'sell', audioPitch)
+      buy: audioService.buildAudioFunction(threshold.buyAudio, 'buy', audioPitch, paneVolume),
+      sell: audioService.buildAudioFunction(threshold.sellAudio, 'sell', audioPitch, paneVolume)
     }))
 
     this._liquidationsAudio = {
-      buy: audioService.buildAudioFunction(this._liquidationThreshold.buyAudio, 'buy', audioPitch),
-      sell: audioService.buildAudioFunction(this._liquidationThreshold.sellAudio, 'sell', audioPitch)
+      buy: audioService.buildAudioFunction(this._liquidationThreshold.buyAudio, 'buy', audioPitch, paneVolume),
+      sell: audioService.buildAudioFunction(this._liquidationThreshold.sellAudio, 'sell', audioPitch, paneVolume)
     }
   }
 
   prepareAudioThreshold() {
-    if (!this.$store.state.settings.useAudio || this.$store.state[this.paneId].muted) {
+    if (!this.$store.state.settings.useAudio || this.$store.state[this.paneId].muted || this.$store.state[this.paneId].audioVolume === 0) {
       this._audioThreshold = Infinity
       return
     }

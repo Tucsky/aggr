@@ -15,7 +15,6 @@ class AudioService {
   tuna: any
 
   output: any
-  volume: number
 
   _play: (frequency: number, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>
   count = 0
@@ -33,8 +32,6 @@ class AudioService {
     }
 
     this.minTime = 0
-
-    this.setVolume(store.state.settings.audioVolume)
 
     Vue.nextTick(() => {
       this.bindContext()
@@ -202,7 +199,7 @@ class AudioService {
 
     const oscillatorNode = this.context.createOscillator()
     const gainNode = this.context.createGain()
-    gain = Math.min(1, gain) * this.volume
+    gain = Math.min(1, gain)
 
     oscillatorNode.frequency.value = frequency
     oscillatorNode.type = osc || 'triangle'
@@ -234,7 +231,7 @@ class AudioService {
         this.minTime = Math.max(this.minTime, this.context.currentTime)
 
         if (!delay) {
-          this.minTime += this.count > 7 ? (this.count > 14 ? (this.count > 21 ? 0.01 : 0.02) : 0.04) : 0.08
+          this.minTime += this.count > 10 ? (this.count > 20 ? 0.02 : 0.04) : 0.08
         }
       }
 
@@ -275,13 +272,17 @@ class AudioService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  buildAudioFunction(litteral, side, frequencyMultiplier?: number, test = false) {
+  buildAudioFunction(litteral, side, frequencyMultiplier: number = null, gainMultiplier: number = null, test = false) {
     litteral = `'use strict'; 
     
     ${litteral}`
 
     const FUNCTION_LOOKUP_REGEX = new RegExp(`play\\([^[]`, 'g')
     let functionMatch = null
+
+    if (gainMultiplier === null) {
+      gainMultiplier = store.state.settings.audioVolume
+    }
 
     do {
       if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(litteral))) {
@@ -292,8 +293,16 @@ class AudioService {
 
         const functionArguments = parseFunctionArguments(originalParameters)
 
-        if (frequencyMultiplier) {
-          functionArguments[0] = +functionArguments[0] + frequencyMultiplier
+        if (+functionArguments[0] && frequencyMultiplier && frequencyMultiplier !== 1) {
+          functionArguments[0] *= frequencyMultiplier
+        }
+
+        if (gainMultiplier && gainMultiplier !== 1) {
+          if (+functionArguments[1]) {
+            functionArguments[1] *= gainMultiplier
+          } else {
+            functionArguments[1] = gainMultiplier + '*' + functionArguments[1]
+          }
         }
 
         const finalParameters = functionArguments.join(',')
@@ -320,10 +329,6 @@ class AudioService {
         return new Function() as AudioFunction
       }
     }
-  }
-
-  setVolume(value: number) {
-    this.volume = value
   }
 }
 
