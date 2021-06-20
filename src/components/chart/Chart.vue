@@ -153,7 +153,7 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/SET_GRIDLINES':
           this.updateGridlines(mutation.payload.type)
           break
-        case this.paneId + 'SET_WATERMARK':
+        case this.paneId + '/SET_WATERMARK':
           this.updateWatermark()
           break
         case this.paneId + '/SET_INDICATOR_OPTION':
