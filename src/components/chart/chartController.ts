@@ -178,7 +178,7 @@ export default class ChartController {
       return output
     }, {})
 
-    this.updateWatermark(defaultChartOptions.watermark.visible)
+    this.updateWatermark()
   }
 
   /**
@@ -225,7 +225,7 @@ export default class ChartController {
     this.chartElement = containerElement
 
     this.addEnabledSeries()
-    this.updateWatermark(chartOptions.watermark.visible)
+    this.updateWatermark()
   }
 
   /**
@@ -385,10 +385,9 @@ export default class ChartController {
 
   /**
    * render watermark in chart
-   * @param {boolean} isVisible is watermark visible
    * @returns
    */
-  updateWatermark(isVisible: boolean) {
+  updateWatermark() {
     if (!this.chartInstance) {
       return
     }
@@ -399,7 +398,8 @@ export default class ChartController {
     this.chartInstance.applyOptions({
       watermark: {
         text: `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0${this.watermark}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0`,
-        visible: isVisible
+        visible: store.state[this.paneId].showWatermark,
+        color: store.state[this.paneId].watermarkColor
       }
     })
   }
