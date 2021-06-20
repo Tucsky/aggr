@@ -36,14 +36,14 @@ export default {
     Slider
   },
   props: {
-    mode: { type: String, default: 'wheel' },
     edge: { type: Number, default: 250 },
-    diameter: { type: Number, default: 180 },
+    diameter: { type: Number, default: 250 },
     satSlider: { type: Boolean, default: true },
     alpha: { type: Number, default: 1 },
     value: { type: String, default: '#fff' }
   },
   data: () => ({
+    mode: 'square',
     currentHue: 0,
     currentSat: 0,
     currentColor: '',
@@ -273,7 +273,9 @@ export default {
   flex-direction: column;
 
   &--wheel {
-    margin-top: 20px;
+    .verte-picker__origin {
+      height: 250px;
+    }
   }
 
   &__origin {

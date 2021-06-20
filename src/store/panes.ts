@@ -329,6 +329,13 @@ const actions = {
       zoom = 1
     }
 
+    const index = Object.keys(state.panes).indexOf(id)
+    const el = document.getElementsByClassName('pane')[index] as HTMLElement
+
+    if (el) {
+      el.style.fontSize = zoom ? zoom + 'rem' : ''
+    }
+
     commit('SET_PANE_ZOOM', { id, zoom })
   }
 } as ActionTree<PanesState, ModulesState>

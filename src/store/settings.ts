@@ -1,7 +1,7 @@
 import { ActionTree, Module, MutationTree } from 'vuex'
 
 import DEFAULTS_STATE from './defaultSettings.json'
-import { getColorLuminance, splitRgba } from '@/utils/colors'
+import { getColorLuminance, getLogShade, splitRgba } from '@/utils/colors'
 import { ModulesState } from '.'
 import { SlippageMode } from '@/types/test'
 import aggregatorService from '@/services/aggregatorService'
@@ -36,7 +36,7 @@ const state = Object.assign(
 ) as SettingsState
 
 const actions = {
-  async boot({ state }) {
+  async boot({ state, dispatch }) {
     aggregatorService.dispatch({
       op: 'settings.calculateSlippage',
       data: state.calculateSlippage
@@ -51,6 +51,8 @@ const actions = {
       op: 'settings.preferQuoteCurrencySize',
       data: state.preferQuoteCurrencySize
     })
+
+    dispatch('updateCSS')
 
     Vue.nextTick(() => {
       if (state.useAudio) {
@@ -71,11 +73,11 @@ const actions = {
 
     commit('ADD_RECENT_COLOR', newColor)
   },
-  setBackgroundColor({ commit, state }, rgb) {
+  setBackgroundColor({ commit, state, dispatch }, rgb) {
     commit('SET_CHART_BACKGROUND_COLOR', rgb)
 
     const backgroundLuminance = getColorLuminance(splitRgba(rgb))
-    const theme = backgroundLuminance > 175 ? 'light' : 'dark'
+    const theme = backgroundLuminance > 144 ? 'light' : 'dark'
 
     if (theme !== state.theme) {
       commit('SET_CHART_THEME', theme)
@@ -84,6 +86,39 @@ const actions = {
     if (state.textColor.length) {
       commit('SET_CHART_COLOR', '')
     }
+
+    dispatch('updateCSS')
+  },
+  updateCSS({ state }) {
+    const backgroundSide = state.theme === 'dark' ? 1 : -10
+    const colorSide = state.theme === 'dark' ? -1 : 1
+    const backgroundRgb = splitRgba(state.backgroundColor)
+
+    document.documentElement.style.setProperty('--theme-background-base', state.backgroundColor)
+    document.documentElement.style.setProperty('--theme-background-100', getLogShade(backgroundRgb, 0.02 * backgroundSide))
+    document.documentElement.style.setProperty('--theme-background-150', getLogShade(backgroundRgb, 0.05 * backgroundSide))
+    document.documentElement.style.setProperty('--theme-background-200', getLogShade(backgroundRgb, 0.075 * backgroundSide))
+    document.documentElement.style.setProperty('--theme-background-300', getLogShade(backgroundRgb, 0.1 * backgroundSide))
+    document.documentElement.style.setProperty('--theme-background-o75', `rgba(${backgroundRgb[0]}, ${backgroundRgb[1]},${backgroundRgb[2]}, .75)`)
+    document.documentElement.style.setProperty('--theme-background-o20', `rgba(${backgroundRgb[0]}, ${backgroundRgb[1]},${backgroundRgb[2]}, .2)`)
+
+    const colorInverse = state.theme !== 'light' ? 'rgb(17,17,17)' : 'rgb(246,246,246)'
+    let textColor = state.textColor
+
+    if (!textColor) {
+      textColor = state.theme === 'light' ? 'rgb(17,17,17)' : 'rgb(246,246,246)'
+    }
+
+    const textColorRgb = splitRgba(textColor)
+
+    document.documentElement.style.setProperty('--theme-color-base', textColor)
+    document.documentElement.style.setProperty('--theme-color-100', getLogShade(textColorRgb, 0.1 * colorSide))
+    document.documentElement.style.setProperty('--theme-color-150', getLogShade(textColorRgb, 0.3 * colorSide))
+    document.documentElement.style.setProperty('--theme-color-200', getLogShade(textColorRgb, 0.5 * colorSide))
+    document.documentElement.style.setProperty('--theme-color-o75', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .75)`)
+    document.documentElement.style.setProperty('--theme-color-o20', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .2)`)
+
+    document.documentElement.style.setProperty('--theme-color-inverse', colorInverse)
   },
   setQuoteCurrencySizing({ commit }, sizeInQuote: boolean) {
     commit('SET_QUOTE_CURRENCY_SIZING', sizeInQuote)

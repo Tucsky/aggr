@@ -15,7 +15,7 @@
       <div class="search">
         <div v-if="otherPanes.length" class="form-group mb8">
           <label>Choose from other panes</label>
-          <button v-for="pane of otherPanes" :key="pane.id" class="btn mb4 mr4 -dark" v-text="pane.name" @click="selectPaneMarkets(pane)"></button>
+          <button v-for="pane of otherPanes" :key="pane.id" class="btn mb4 mr4 -accent" v-text="pane.name" @click="selectPaneMarkets(pane)"></button>
         </div>
         <div class="form-group">
           <label>All products ({{ flattenedProducts.length }})</label>
@@ -60,7 +60,7 @@
           <button
             v-for="market of selection"
             :key="market"
-            class="btn -small mb4 -dark"
+            class="btn -small mb4 -accent"
             :class="{ '-green': activeMarkets.indexOf(market) !== -1 }"
             title="Click to remove"
             @click="deselectMarket(market)"

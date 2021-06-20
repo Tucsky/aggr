@@ -1,5 +1,5 @@
 <template>
-  <div class="pane-stats" :style="{ fontSize: zoom + 'em' }">
+  <div class="pane-stats">
     <pane-header v-if="hovered" :paneId="paneId" />
     <ul class="stats-buckets">
       <li v-for="(bucket, id) in data" :key="id" class="stat-bucket" @click="editStat(id)">
@@ -48,10 +48,6 @@ export default class extends Mixins(PaneMixin) {
 
   get buckets() {
     return this.$store.state[this.paneId].buckets
-  }
-
-  get zoom() {
-    return this.$store.state.panes.panes[this.paneId].zoom
   }
 
   created() {

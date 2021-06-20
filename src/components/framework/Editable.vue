@@ -94,7 +94,7 @@ export default class extends Vue {
   }
 
   onFocus() {
-    !this.focused && this.selectAll()
+    // !this.focused && this.selectAll()
 
     this.changed = false
     this.focused = true

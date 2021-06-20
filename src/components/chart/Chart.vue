@@ -30,7 +30,7 @@
       </div>
     </div>
     <div class="chart__controls">
-      <button class="chart__screenshot btn -text" @click="takeScreenshot"><i class="icon-photo"></i></button>
+      <button class="chart__screenshot btn -text" @click="takeScreenshot"><i class="icon-add-photo"></i></button>
     </div>
     <IndicatorResize v-if="resizingIndicator" :indicatorId="resizingIndicator" :paneId="paneId"></IndicatorResize>
   </div>

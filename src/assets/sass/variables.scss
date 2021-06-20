@@ -3,12 +3,13 @@ $red: rgb(239, 67, 82);
 $blue: #2196f3;
 $orange: #fbc02d;
 $dark: #171b29;
+$text: rgb(17, 17, 17);
 $pink: #e91e63;
 $purple: #3e2161;
 $base: desaturate(lighten($dark, 10%), 10%);
+$light: #d5f0e9;
 $lighter: lighten($base, 10%);
 $darker: darken($base, 10%);
-$tooltip: $lighter;
 
 $ease-out-expo: cubic-bezier(0.005, 1, 0.22, 1);
 $ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);
@@ -124,4 +125,21 @@ $exchanges: (
 
 @function unicode($str) {
   @return unquote('"') + $str + unquote('"');
+}
+
+:root {
+  --theme-background-100: #{lighten($dark, 0%)};
+  --theme-background-200: #{lighten($dark, 10%)};
+  --theme-background-150: #{lighten($dark, 30%)};
+  --theme-background-200: #{lighten($dark, 50%)};
+  --theme-background-300: #{lighten($dark, 75%)};
+  --theme-background-o75: #{rgba($dark, 0.75)};
+  --theme-background-o20: #{rgba($dark, 0.2)};
+  --theme-color-100: #{$light};
+  --theme-color-200: #{$light};
+  --theme-color-300: #{$light};
+  --theme-color-500: #{$light};
+  --theme-color-o20: #{rgba($light, 0.2)};
+  --theme-color-o75: #{rgba($light, 0.75)};
+  --theme-color-inverse: #{$dark};
 }

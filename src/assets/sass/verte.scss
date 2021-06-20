@@ -49,9 +49,9 @@
   &__inputs {
     display: flex;
 
-    .form-control {
-      width: auto;
-      margin: 0 0.1rem;
+    [contenteditable] {
+      padding: .5rem;
+      flex-grow: 1;
     }
   }
 
@@ -94,7 +94,7 @@
   background-position: 0 0, 3px -3px, 0 3px, -3px 0px;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(black, 0.1);
+  border: 1px solid var(--theme-background-200);
 
   .verte-control__color {
     top: 0;

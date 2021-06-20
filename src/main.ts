@@ -24,9 +24,6 @@ Vue.component('dropdown', Dropdown)
 Vue.component('editable', Editable)
 Vue.component('presets', Presets)
 
-import backgroundDirective from './directives/backgroundDirective'
-Vue.directive('background', backgroundDirective)
-
 new Vue({
   el: '#app',
   // router,

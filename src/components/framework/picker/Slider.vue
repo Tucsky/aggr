@@ -1,5 +1,5 @@
 <template>
-  <div class="slider" ref="wrapper" :class="{ '-vertical': vertical }">
+  <div class="slider" ref="wrapper" :class="{ '-vertical': vertical, '-disabled': disabled }">
     <div class="slider__track" ref="track" v-on="trackSlide ? { mousedown: select, touchstart: select } : {}">
       <div class="slider__fill" ref="fill"></div>
       <div v-if="showCompletion && handles[0]" class="slider__completion" :style="`width: ${handles[0].positionX}px`"></div>
@@ -18,7 +18,6 @@
         </div>
       </div>
     </div>
-    <input class="slider__input" ref="input" :type="colorCode ? 'text' : 'number'" v-show="editable" @change="updateValue($event.target.value)" />
   </div>
 </template>
 
@@ -30,13 +29,11 @@ export default {
   name: 'VerteSlider',
   props: {
     gradient: Array,
-    classes: Array,
     colorCode: { type: Boolean, default: false },
-    editable: { type: Boolean, default: false },
-    reverse: { type: Boolean, default: false },
     label: { type: Boolean, default: false },
     trackSlide: { type: Boolean, default: true },
     vertical: { type: Boolean, default: false },
+    disabled: { type: Boolean, default: false },
     min: { type: Number, default: 0 },
     max: { type: Number, default: 255 },
     step: { type: Number, default: 1 },
@@ -99,8 +96,6 @@ export default {
       this.track = this.$refs.track
       this.fill = this.$refs.fill
 
-      this.wrapper.classList.toggle('slider--editable', this.editable)
-      this.wrapper.classList.toggle('slider--reverse', this.reverse)
       if (this.classes) {
         this.wrapper.classList.add(...this.classes)
       }
@@ -337,7 +332,6 @@ export default {
         }
 
         this.currentValue = normalized
-        this.$refs.input.value = this.currentValue
 
         if (this.gradient) {
           const color = this.getHandleColor(positionPercentage)
@@ -381,7 +375,6 @@ export default {
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  z-index: 1;
 
   &.-alpha {
     .slider__track {
@@ -391,9 +384,14 @@ export default {
     }
   }
 
+  &.-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
   &:hover,
   &--dragging {
-    .slider-label {
+    .slider__label {
       visibility: visible;
       opacity: 1;
     }
@@ -418,7 +416,7 @@ export default {
         right: -0.5em;
         top: 50%;
         border-width: 0.5em 0 0.5em 0.5em;
-        border-color: transparent transparent transparent $tooltip;
+        border-color: transparent transparent transparentvar(--theme-background-100);
         transform: translate3d(-1px, -50%, 0);
       }
     }
@@ -455,7 +453,7 @@ export default {
   margin: 0;
   width: auto;
   height: 8px;
-  background: $lighter;
+  background: var(--theme-background-150);
   will-change: transfom;
   border-radius: 10px;
   cursor: pointer;
@@ -495,20 +493,22 @@ export default {
 
 .slider__label {
   position: absolute;
-
+  z-index: 1;
   bottom: 25px;
   left: 6px;
   z-index: 999;
   padding: 0.5em;
   min-width: 3em;
   border-radius: 4px;
-  background-color: $tooltip;
+  background-color: var(--theme-background-150);
   color: white;
   text-align: center;
   font-size: 14px;
   line-height: 1em;
   transform: translate(-50%, 0);
   white-space: nowrap;
+  visibility: hidden;
+  opacity: 0;
 
   &:before {
     position: absolute;
@@ -519,7 +519,7 @@ export default {
     height: 0;
     border-width: 0.5em 0.5em 0 0.5em;
     border-style: solid;
-    border-color: $tooltip transparent transparent transparent;
+    border-color: var(--theme-background-150) transparent transparent transparent;
     content: '';
     transform: translate3d(-50%, 0, 0);
   }

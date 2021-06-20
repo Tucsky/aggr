@@ -94,16 +94,16 @@
               "amount": 10000,
               "buyColor": "rgba(236,64,122,0.5)",
               "sellColor": "rgba(255,152,0,0.5)",
-              "buyAudio": "play(329.63, ratio, ratio, 0.08, .05, 'sine');",
-              "sellAudio": "play(440, ratio, ratio, 0.08, .05, 'sine');"
+              "buyAudio": "play(329.63, ratio / 10, ratio / 10, 0.08, .05, 'sine');",
+              "sellAudio": "play(440, ratio / 10, ratio / 10, 0.08, .05, 'sine');"
             },
             {
               "id": "significant",
               "amount": 25000,
               "buyColor": "rgba(236,64,122,0.6)",
               "sellColor": "rgba(255,152,0,0.7)",
-              "buyAudio": "play(329.63, ratio, ratio * 2, 0.08, .1, 'sine');",
-              "sellAudio": "play(440, ratio, ratio * 2, 0.08, .1, 'sine');"
+              "buyAudio": "play(329.63, ratio / 10, ratio, 0.08, .1, 'sine');",
+              "sellAudio": "play(440, ratio / 10, ratio, 0.08, .1, 'sine');"
             },
             {
               "id": "huge",
@@ -111,8 +111,8 @@
               "gif": "rekt",
               "buyColor": "rgba(236,64,122,0.7)",
               "sellColor": "rgba(255,152,0,0.8)",
-              "buyAudio": "play(329.63, ratio, ratio * 5, 0.08, .1, 'sine');",
-              "sellAudio": "play(440, ratio, ratio * 5, 0.08, .1, 'sine');"
+              "buyAudio": "play(329.63, ratio / 10, ratio, 0.08, .1, 'sine');",
+              "sellAudio": "play(440, ratio / 10, ratio, 0.08, .1, 'sine');"
             },
             {
               "id": "rare",
@@ -120,8 +120,8 @@
               "gif": "explosion",
               "buyColor": "rgb(156,39,176)",
               "sellColor": "rgb(255,235,59)",
-              "buyAudio": "play(329.63, ratio, ratio * 10, 0.08, .1, 'sine');",
-              "sellAudio": "play(440, ratio, ratio * 10, 0.08, .1, 'sine');"
+              "buyAudio": "play(329.63, ratio / 10, ratio, 0.08, .1, 'sine');",
+              "sellAudio": "play(440, ratio / 10, ratio, 0.08, .1, 'sine');"
             }
           ]
         }

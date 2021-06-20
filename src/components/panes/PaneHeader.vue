@@ -1,7 +1,7 @@
 <template>
   <div class="pane-header toolbar" :class="{ '-loading': loading }">
     <div class="pane-header__loader"></div>
-    <span class="mrauto" @dblclick="renamePane">{{ name }}</span>
+    <span class="ml4 mrauto" @dblclick="renamePane">{{ name }}</span>
 
     <slot />
 

@@ -2,7 +2,7 @@
   max-width: 180px;
 
   &.dark-theme {
-    background-color: $tooltip;
+    background-color: var(--theme-background-150);
   }
 
   &.transparent-theme {
@@ -26,20 +26,20 @@
 }
 
 .tippy-popper[x-placement^='bottom'] .tippy-arrow {
-  border-bottom-color: $tooltip;
+  border-bottom-color: var(--theme-background-150);
   top: -8px;
 }
 
 .tippy-popper[x-placement^='top'] .tippy-arrow {
-  border-top-color: $tooltip;
+  border-top-color: var(--theme-background-150);
   bottom: -8px;
 }
 
 .tippy-popper[x-placement^='left'] .tippy-arrow {
-  border-left-color: $tooltip;
+  border-left-color: var(--theme-background-150);
   right: -8px;
 }
 .tippy-popper[x-placement^='right'] .tippy-arrow {
-  border-right-color: $tooltip;
+  border-right-color: var(--theme-background-150);
   left: -8px;
 }

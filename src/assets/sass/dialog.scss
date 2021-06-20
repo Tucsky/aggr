@@ -11,7 +11,7 @@
   pointer-events: none;
 
   &.-mask {
-    background-color: rgba(0, 0, 0, 0.33);
+    background-color: var(--theme-background-o20);
     pointer-events: all;
   }
 
@@ -20,9 +20,9 @@
     max-width: 500px;
     font-size: 16px;
     border-radius: $border-radius-base;
-    background-color: $base;
+    background-color: var(--theme-background-100);
     box-shadow: rgba(0, 0, 0, 0.2) 0px 18px 50px -10px;
-    color: white;
+    color: var(--theme-color-100);
     overflow: hidden;
     pointer-events: all;
 
@@ -38,7 +38,7 @@
       position: relative;
       z-index: 1;
       padding: 1rem;
-      border-bottom: 1px solid $lighter;
+      border-bottom: 1px solid var(--theme-background-150);
       cursor: grab;
 
       .checkbox-control > input:not(:checked) + div {
@@ -91,7 +91,8 @@
       padding: 1rem 1rem 0;
       align-items: center;
       justify-content: flex-end;
-      border-top: 1px solid $lighter;
+      border-top: 1px solid var(--theme-background-150);
+
       margin: 1.25rem -0.9rem 0;
 
       .btn {
@@ -120,8 +121,9 @@
   &.-sticky-footer {
     footer {
       position: sticky;
-      bottom: 0;
-      background: $base;
+      bottom: -1px;
+      background-color: var(--theme-background-100);
+      box-shadow: 0 -1px var(--theme-background-150);
 
       margin: 1rem -1rem 0;
       padding: 1rem;
@@ -134,8 +136,7 @@
 
   .form-control {
     margin: 0;
-    color: white;
-    border: 1px solid $lighter;
+    border: 1px solid var(--theme-background-200);
     border-radius: 4px;
     padding: 0.5rem;
     box-sizing: border-box;
@@ -184,7 +185,7 @@
     margin: 1rem 0;
     border: 0;
     height: 0.5px;
-    background: $lighter;
+    background: var(--theme-background-150);
     flex-shrink: 0;
 
     &.-vertical {
@@ -192,15 +193,5 @@
       height: auto;
       width: 0.5px;
     }
-  }
-}
-
-#app.-light .dialog {
-  &.-mask {
-    background-color: rgba(white, 33%);
-  }
-
-  .dialog-content {
-    border: 0;
   }
 }

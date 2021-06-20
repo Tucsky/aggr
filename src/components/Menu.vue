@@ -189,7 +189,7 @@ export default class extends Vue {
     visibility: hidden;
 
     &.btn {
-      background-color: $darker;
+      background-color: var(--theme-background-100);
 
       &:hover {
         background-color: $green;

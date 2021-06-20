@@ -12,7 +12,6 @@
       '-no-animations': disableAnimations,
       '-light': theme === 'light'
     }"
-    v-background
   >
     <Notices />
     <Settings v-if="showSettings" />

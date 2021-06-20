@@ -53,6 +53,8 @@ body {
   transition: transform 0.3s $ease-out-expo;
   color: white;
   overflow: hidden;
+  background-color: var(--theme-background-base);
+  color: var(--theme-color-base);
 
   &.-loading {
     .app__layout {

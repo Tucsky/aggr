@@ -198,7 +198,7 @@ $unit: 'px'; // Feel free to change the unit.
 }
 
 .hide-scrollbar::-webkit-scrollbar-track {
-  background-color: $base;
+  background-color: var(--theme-background-100);
 }
 
 .hide-scrollbar::-webkit-scrollbar-thumb {
@@ -219,4 +219,16 @@ $unit: 'px'; // Feel free to change the unit.
 
 .text-danger {
   color: lighten($red, 10%);
+}
+
+.background-100 {
+  background-color: var(--theme-background-100);
+}
+
+.background-100 {
+  background-color: var(--theme-background-200);
+}
+
+.background-100 {
+  background-color: var(--theme-background-150);
 }

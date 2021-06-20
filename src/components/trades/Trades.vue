@@ -1,18 +1,14 @@
 <template>
-  <div
-    class="pane-trades"
-    :class="{ '-logos': this.showLogos, '-logos-colors': !this.monochromeLogos, '-slippage': this.calculateSlippage }"
-    :style="{ fontSize: zoom + 'em' }"
-  >
+  <div class="pane-trades" :class="{ '-logos': this.showLogos, '-logos-colors': !this.monochromeLogos, '-slippage': this.calculateSlippage }">
     <pane-header v-if="hovered" :paneId="paneId" />
     <ul ref="tradesContainer" class="hide-scrollbar"></ul>
     <div v-if="!tradesCount" class="trades-placeholder">
-      <div class="mt16 ml16 mr16">
+      <div class="mt16 ml16 mr16 help-text">
         <strong>Waiting for trades</strong>
 
-        <p class="help-text">No{{ tradeType === 'both' ? 'thing' : ' ' + tradeType }} matching</p>
+        <p>No{{ tradeType === 'both' ? 'thing' : ' ' + tradeType }} matching</p>
         <code v-for="market of pane.markets" :key="market" class="trades-placeholder__market">{{ market.replace(/^\w+:/, '') }}<br /></code>
-        <p class="help-text">with amount > {{ thresholds[0].amount }}</p>
+        <p>with amount > {{ thresholds[0].amount }}</p>
       </div>
     </div>
   </div>
@@ -86,10 +82,6 @@ export default class extends Mixins(PaneMixin) {
   private _enableAnimationsTimeout: number
   private _disableAnimations: boolean
   private _preferQuoteCurrencySize: boolean
-
-  get zoom() {
-    return this.$store.state.panes.panes[this.paneId].zoom
-  }
 
   get maxRows() {
     return this.$store.state[this.paneId].maxRows
@@ -279,6 +271,8 @@ export default class extends Mixins(PaneMixin) {
 
     this.tradesCount++
 
+    let animated = false
+
     const li = document.createElement('li')
     li.className = 'trade'
     li.className += ' -' + trade.exchange
@@ -301,14 +295,17 @@ export default class extends Mixins(PaneMixin) {
           li.style.backgroundImage = `url('${
             GIFS[this._liquidationThreshold.gif][Math.floor(Math.random() * (GIFS[this._liquidationThreshold.gif].length - 1))]
           }`
+
+          animated = true
         }
       }
 
-      const percentToSignificant = amount / this._significantThresholdAmount
+      const percentToSignificant = Math.min(1, amount / this._significantThresholdAmount)
 
       const luminance = this._liquidationsColor[trade.side][(percentToSignificant < 0.5 ? 'from' : 'to') + 'Luminance']
       const backgroundColor = this._liquidationsColor[trade.side].to
-      li.style.color = luminance > 170 ? 'rgba(0, 0, 0, ' + percentToSignificant + ')' : 'rgba(255, 255, 255, ' + luminance + ')'
+      li.style.color =
+        luminance > (animated ? 144 : 170) ? 'rgba(0, 0, 0, ' + percentToSignificant + ')' : 'rgba(255, 255, 255, ' + percentToSignificant + ')'
       li.style.backgroundColor =
         'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + percentToSignificant + ')'
 
@@ -345,6 +342,8 @@ export default class extends Mixins(PaneMixin) {
             if (!this._disableAnimations) {
               li.style.backgroundImage = `url('${GIFS[threshold.gif][Math.floor(Math.random() * (GIFS[threshold.gif].length - 1))]}`
             }
+
+            animated = true
           }
 
           // percentage to next threshold
@@ -361,7 +360,7 @@ export default class extends Mixins(PaneMixin) {
           // take background color and apply logarithmic shade based on amount to this._significantThresholdAmount percentage
           // darken if luminance of background is high, lighten otherwise
           li.style.color =
-            luminance > 170
+            luminance > (animated ? 144 : 170)
               ? 'rgba(0, 0, 0, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
               : 'rgba(255, 255, 255, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
 
@@ -426,7 +425,7 @@ export default class extends Mixins(PaneMixin) {
     const date = document.createElement('div')
     date.className = 'trade__time'
 
-    if (!isNaN(trade.timestamp)) {
+    if (trade.timestamp) {
       const timestamp = Math.floor(trade.timestamp / 1000) * 1000
 
       if (timestamp !== this._lastTradeTimestamp) {
@@ -668,16 +667,18 @@ export default class extends Mixins(PaneMixin) {
       return this.clearList()
     }
 
+    let resetAnimation = false
     if (!this.$store.state.settings.disableAnimations) {
-      this.$el.classList.add('-no-animations')
+      this._disableAnimations = true
+      resetAnimation = true
     }
 
     if (this._enableAnimationsTimeout) {
       clearTimeout(this._enableAnimationsTimeout)
     }
     this._enableAnimationsTimeout = setTimeout(() => {
-      if (!this.$store.state.settings.disableAnimations) {
-        this.$el.classList.remove('-no-animations')
+      if (resetAnimation) {
+        this._disableAnimations = false
       }
 
       this._enableAnimationsTimeout = null
@@ -704,13 +705,13 @@ export default class extends Mixins(PaneMixin) {
         continue
       }
 
-      const timestamp = +element.querySelector('.trade__time').getAttribute('timestamp')
+      const timestamp = element.querySelector('.trade__time').getAttribute('timestamp')
       const price = parseFloat((element.querySelector('.trade__price') as HTMLElement).innerText) || 0
       const size = parseFloat((element.querySelector('.trade__amount__base') as HTMLElement).innerText) || 0
       const side: 'buy' | 'sell' = element.classList.contains('-buy') ? 'buy' : 'sell'
 
       const trade: Trade = {
-        timestamp,
+        timestamp: (timestamp as unknown) as number,
         exchange,
         pair,
         price,
@@ -809,7 +810,7 @@ export default class extends Mixins(PaneMixin) {
   max-height: 100%;
 
   &__market {
-    opacity: 0.6;
+    color: var(--theme-color-200);
   }
 }
 
@@ -897,6 +898,7 @@ export default class extends Mixins(PaneMixin) {
 
   &.-gif {
     font-weight: 600;
+    // text-shadow: 1px 1px rgba(black, 0.5);
   }
 
   > div {

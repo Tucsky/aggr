@@ -3,7 +3,6 @@
     <template v-slot:header>
       <div>
         <div class="title">{{ title }}</div>
-        <div class="subtitle -no-grab" style="cursor:text;">{{ currentColor }}</div>
       </div>
     </template>
     <Picker :mode="picker" :alpha="alpha" v-model="currentColor"></Picker>
@@ -27,21 +26,11 @@
         <Slider :gradient="[`rgb(${rgb.red},${rgb.green},0)`, `rgb(${rgb.red},${rgb.green},255)`]" v-model="rgb.blue"> </Slider>
       </template>
       <div class="verte__inputs mt8">
-        <button class="verte__model" @click="switchModel" type="button">{{ currentModel }}</button>
-        <template v-if="currentModel === 'hsl'">
-          <input class="form-control" @change="inputChanged($event, 'hue')" :value="hsl.hue" />
-          <input class="form-control" @change="inputChanged($event, 'sat')" :value="hsl.sat" />
-          <input class="form-control" @change="inputChanged($event, 'lum')" :value="hsl.lum" />
-        </template>
-        <template v-if="currentModel === 'rgb'">
-          <input class="form-control" @change="inputChanged($event, 'red')" :value="rgb.red" />
-          <input class="form-control" @change="inputChanged($event, 'green')" :value="rgb.green" />
-          <input class="form-control" @change="inputChanged($event, 'blue')" :value="rgb.blue" />
-        </template>
-        <template v-if="currentModel === 'hex'">
-          <input class="form-control" @change="inputChanged($event, 'hex')" :value="'#' + hex.red + hex.green + hex.blue" type="text" />
-        </template>
-        <button class="verte__submit" @click="submit" type="button">
+        <button class="btn -text -accent" @click="switchModel" type="button" title="Rotate" v-tippy>
+          <i class="icon-refresh"></i>
+        </button>
+        <editable :content="typedColor" @output="inputChanged($event)" :style="{ color: currentColor }"></editable>
+        <button class="btn -text -accent" @click="submit" type="button" title="Save color" v-tippy>
           <i class="icon-check"></i>
         </button>
       </div>
@@ -74,7 +63,7 @@
 </template>
 
 <script>
-import { toRgb, toHex, toHsl, isValidHex, isValidRgb, isValidHsl, formatRgb, formatHsl, formatHex } from 'color-fns'
+import { toRgb, toHex, toHsl, isValidHex, isValidRgb, isValidHsl, formatRgb, formatHsl, formatHex, whichModel } from 'color-fns'
 import Picker from './Picker.vue'
 import Slider from './Slider.vue'
 import { warn, makeListValidator } from '../../../utils/picker'
@@ -143,13 +132,11 @@ export default {
     }
   },
   data: () => ({
-    isMenuActive: true,
-    isLoading: true,
     rgb: toRgb('#000'),
     hex: toHex('#000'),
     hsl: toHsl('#000'),
     delta: { x: 0, y: 0 },
-    currentModel: '',
+    type: 'rgb',
     internalColorHistory: []
   }),
   beforeDestroy() {
@@ -181,6 +168,17 @@ export default {
         this.selectColor(val)
       }
     },
+    typedColor() {
+      if (this.type === 'rgb') {
+        return formatRgb(this[this.type])
+      } else if (this.type === 'hsl') {
+        return formatHsl(this[this.type])
+      } else if (this.type === 'hex') {
+        return formatHex(this[this.type])
+      } else {
+        return this.currentColor
+      }
+    },
     alpha: {
       get() {
         if (!this[this.model]) {
@@ -209,7 +207,6 @@ export default {
   },
   created() {
     this.selectColor(this.value || '#000', true)
-    this.currentModel = this.model
 
     document.getElementById('app').classList.add('-picking-color')
   },
@@ -254,8 +251,8 @@ export default {
     },
     switchModel() {
       const models = ['hex', 'rgb', 'hsl']
-      const indx = models.indexOf(this.currentModel)
-      this.currentModel = models[indx + 1] || models[0]
+      const indx = models.indexOf(this.type)
+      this.type = models[indx + 1] || models[0]
     },
     submit() {
       this.$emit('beforeSubmit', this.currentColor)
@@ -266,15 +263,10 @@ export default {
     addColorToHistory(color) {
       this.$store.dispatch('settings/addRecentColor', color)
     },
-    inputChanged(event, value) {
-      const el = event.target
-      if (this.currentModel === 'hex') {
-        this.selectColor(el.value)
-        return
-      }
-      const normalized = Math.min(Math.max(el.value, el.min), el.max)
-      this[this.currentModel][value] = normalized
-      this.selectColor(this[this.currentModel])
+    inputChanged(value) {
+      this.selectColor(value)
+
+      this.type = whichModel(value)
     }
   }
 }

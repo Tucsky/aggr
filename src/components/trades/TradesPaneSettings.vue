@@ -117,25 +117,45 @@
               <span>Mute this pane</span>
             </label>
           </div>
-          <slider
-            class="mrauto -fill"
-            :min="-300"
-            :max="300"
-            :step="1"
-            :showCompletion="false"
-            :label="!!audioPitch"
-            :value="audioPitch"
-            @input="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
-            @reset="$store.commit(paneId + '/SET_AUDIO_PITCH', null)"
-          >
-            <template v-slot:tooltip> {{ audioPitchLabel }} </template>
-          </slider>
-          <editable
-            class="-center text-nowrap ml8"
-            style="line-height:1"
-            :content="audioPitchLabel"
-            @output="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
-          ></editable>
+          <div class="-fill ml16">
+            <label class="mt8 d-block">Master volume</label>
+            <slider
+              class=" mt8 mb8"
+              :min="0"
+              :max="10"
+              :step="0.1"
+              :label="true"
+              :disabled="muted"
+              :value="audioVolume"
+              @input="$store.dispatch('settings/setAudioVolume', $event)"
+              @reset="$store.dispatch('settings/setAudioVolume', 1)"
+            >
+              <template v-slot:tooltip>{{ audioVolume }}</template>
+            </slider>
+            <label class="mt16 d-block">Pitch</label>
+            <div class="column">
+              <slider
+                class="mrauto -fill mt8 mb8"
+                :min="-300"
+                :max="300"
+                :step="1"
+                :showCompletion="false"
+                :label="!!audioPitch"
+                :disabled="muted"
+                :value="audioPitch"
+                @input="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
+                @reset="$store.commit(paneId + '/SET_AUDIO_PITCH', null)"
+              >
+                <template v-slot:tooltip> {{ audioPitchLabel }} </template>
+              </slider>
+              <editable
+                class="-center text-nowrap ml8"
+                style="line-height:1"
+                :content="audioPitchLabel"
+                @output="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
+              ></editable>
+            </div>
+          </div>
         </div>
         <div class="form-group" v-if="useAudio && !muted">
           <label>
@@ -186,7 +206,7 @@
               <slider
                 style="width: 100%;min-width:150px;"
                 :min="0"
-                :max="2"
+                :max="10"
                 :label="market.multiplier !== 1"
                 :step="0.01"
                 :showCompletion="false"
@@ -221,6 +241,7 @@
 <script lang="ts">
 import panesSettings from '@/store/panesSettings'
 import { Threshold, TradesPaneState } from '@/store/panesSettings/trades'
+import { SettingsState } from '@/store/settings'
 import { formatAmount, parseMarket } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '../framework/picker/Slider.vue'
@@ -292,6 +313,10 @@ export default class extends Vue {
     return (this.$store.state[this.paneId] as TradesPaneState).audioPitch
   }
 
+  get audioVolume() {
+    return (this.$store.state.settings as SettingsState).audioVolume
+  }
+
   get audioPitchLabel() {
     return (
       (this.audioPitch >= 0 ? '+' : '-') +
@@ -360,6 +385,9 @@ export default class extends Vue {
       buyAudio: this.$store.state[this.paneId].liquidations.buyAudio,
       sellAudio: this.$store.state[this.paneId].liquidations.sellAudio
     }
+
+    audioPreset.audioPitch = this.audioPitch
+
     return audioPreset
   }
 
@@ -372,6 +400,8 @@ export default class extends Vue {
 
     let buyAudio: string
     let sellAudio: string
+
+    this.$store.commit(this.paneId + '/SET_AUDIO_PITCH', presetData.audioPitch || 0)
 
     for (const key of [...Object.keys(this.$store.state[this.paneId].thresholds), 'liquidations']) {
       let threshold

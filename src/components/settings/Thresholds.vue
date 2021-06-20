@@ -34,8 +34,38 @@
                 "
               />
             </td>
-            <td class="thresholds-table__color" :style="{ backgroundColor: threshold.buyColor }" @click="openPicker('buyColor', threshold)"></td>
-            <td class="thresholds-table__color" :style="{ backgroundColor: threshold.sellColor }" @click="openPicker('sellColor', threshold)"></td>
+            <td class="table-action">
+              <verte
+                picker="square"
+                label="Buy color"
+                menuPosition="left"
+                model="rgb"
+                :value="threshold.buyColor"
+                @input="
+                  $store.commit(paneId + '/SET_THRESHOLD_COLOR', {
+                    id: threshold.id,
+                    side: 'buyColor',
+                    value: threshold.buyColor
+                  })
+                "
+              ></verte>
+            </td>
+            <td class="table-action">
+              <verte
+                picker="square"
+                label="Sell color"
+                menuPosition="left"
+                model="rgb"
+                :value="threshold.sellColor"
+                @input="
+                  $store.commit(paneId + '/SET_THRESHOLD_COLOR', {
+                    id: threshold.id,
+                    side: 'sellColor',
+                    value: threshold.sellColor
+                  })
+                "
+              ></verte>
+            </td>
             <td
               v-if="useAudio"
               class="thresholds-table__audio table-action"
@@ -43,7 +73,7 @@
               title="Configure threshold audio"
               v-tippy
             >
-              <button class="btn  -green -small"><i class="icon-volume-high"></i></button>
+              <button class="btn  -green"><i class="icon-volume-high"></i></button>
             </td>
             <td
               v-if="thresholds.length > 2 && threshold.id !== 'liquidations' && index > 1"
@@ -52,7 +82,7 @@
               title="Remove"
               v-tippy
             >
-              <button class="btn  -red -small"><i class="icon-cross"></i></button>
+              <button class="btn  -red"><i class="icon-cross"></i></button>
             </td>
           </template>
         </tr>
@@ -91,18 +121,6 @@
             transform: 'translateX(' + this.panelCaretPosition + 'px)'
           }"
         ></div>
-        <p class="mt0 mb16 d-block">
-          <i class="icon-info -lower"></i> {{ thresholds.indexOf(selectedThreshold) > 0 ? 'For trades >' : 'Show trades above' }}
-          <editable
-            :content="selectedThreshold.amount"
-            @output="
-              $store.commit(paneId + '/SET_THRESHOLD_AMOUNT', {
-                id: selectedThreshold.id,
-                value: $event
-              })
-            "
-          ></editable>
-        </p>
         <a href="#" class="threshold-panel__close icon-cross" @click=";(selectedThresholdId = null), (editing = false)"></a>
 
         <div class="form-group mb8 threshold-panel__gif">
@@ -134,6 +152,7 @@
               <verte
                 picker="square"
                 menuPosition="left"
+                label="Buy color"
                 model="rgb"
                 :value="selectedThreshold.buyColor"
                 @input="
@@ -152,6 +171,7 @@
               <verte
                 picker="square"
                 menuPosition="left"
+                label="Sell color"
                 model="rgb"
                 :value="selectedThreshold.sellColor"
                 @input="
@@ -175,7 +195,6 @@ import { Component, Vue } from 'vue-property-decorator'
 import { formatAmount, formatPrice, sleep } from '../../utils/helpers'
 
 import dialogService from '@/services/dialogService'
-import { Threshold } from '@/store/panesSettings/trades'
 import ThresholdAudioDialog from '../trades/ThresholdAudioDialog.vue'
 
 @Component({
@@ -454,7 +473,7 @@ export default class extends Vue {
   refreshCaretPosition(selectedElement = this.selectedElement) {
     const left = parseFloat(selectedElement.style.transform.replace(/[^\d.]/g, '')) || 0
     const panelWidth = this.$refs.thresholdPanel.clientWidth
-    const caretMargin = 12
+    const caretMargin = 24
     const panelRange = (this._width - panelWidth) / 2 + caretMargin
 
     this.panelOffsetPosition = -panelRange + panelRange * 2 * (left / this._width)
@@ -500,24 +519,6 @@ export default class extends Vue {
     }
 
     this.$store.commit(this.paneId + '/DELETE_THRESHOLD', id)
-  }
-
-  openPicker(side: string, threshold: Threshold) {
-    if (!threshold[side]) {
-      this.$store.commit(this.paneId + '/SET_THRESHOLD_COLOR', {
-        id: threshold.id,
-        side: side,
-        value: '#ffffff'
-      })
-    }
-
-    dialogService.openPicker(threshold[side], color => {
-      this.$store.commit(this.paneId + '/SET_THRESHOLD_COLOR', {
-        id: threshold.id,
-        side: side,
-        value: color
-      })
-    })
   }
 
   openThresholdAudio(thresholdId) {
@@ -577,20 +578,9 @@ export default class extends Vue {
 }
 
 .thresholds-table {
-  tr {
-    &:first-child {
-      .table-input:nth-child(2) {
-        pointer-events: none;
-        background-color: rgba(white, 0.05);
-        cursor: not-allowed;
-        border-left: 1px solid transparent;
-      }
-    }
-  }
-
   &__color {
     border: 0 !important;
-    width: 2em;
+    width: 2.25rem;
     transition: box-shadow 0.2s $ease-out-expo;
     cursor: pointer;
 
@@ -661,7 +651,7 @@ export default class extends Vue {
 
 .threshold-panel {
   position: relative;
-  background-color: $lighter;
+  background-color: var(--theme-background-200);
   border-radius: 4px;
   padding: 1em;
   margin: 1.5em auto 0;
@@ -673,39 +663,8 @@ export default class extends Vue {
 
     .form-control {
       background: none;
-      border: 2px solid white;
+      border: 1px solid var(--theme-background-300);
       color: white;
-
-      &::-webkit-input-placeholder {
-        color: rgba(white, 0.55);
-      }
-
-      &:-moz-placeholder {
-        /* Mozilla Firefox 4 to 18 */
-        color: rgba(white, 0.55);
-        opacity: 1;
-      }
-
-      &::-moz-placeholder {
-        /* Mozilla Firefox 19+ */
-        color: rgba(white, 0.55);
-        opacity: 1;
-      }
-
-      &:-ms-input-placeholder {
-        /* Internet Explorer 10-11 */
-        color: rgba(white, 0.55);
-      }
-
-      &::-ms-input-placeholder {
-        /* Microsoft Edge */
-        color: rgba(white, 0.55);
-      }
-
-      &::placeholder {
-        /* Most modern browsers support this now. */
-        color: rgba(white, 0.55);
-      }
     }
   }
 
@@ -749,7 +708,7 @@ export default class extends Vue {
     top: -0.75em;
     border-left: 0.75em solid transparent;
     border-right: 0.75em solid transparent;
-    border-bottom: 0.75em solid $lighter;
+    border-bottom: 0.75em solid var(--theme-background-200);
     margin-left: -1.75em;
     transition: transform 0.2s $ease-out-expo;
   }
@@ -769,13 +728,6 @@ export default class extends Vue {
   }
 
   &.-minimum {
-    &:before {
-      content: 'Minimum for a trade to show up';
-      display: block;
-      margin-bottom: 0.25rem;
-      opacity: 0.6;
-    }
-
     .threshold-panel__gif {
       display: none;
     }

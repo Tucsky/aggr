@@ -133,6 +133,37 @@ button {
     }
   }
 
+  &.-accent {
+    background-color: var(--theme-background-200);
+    border-color: var(--theme-background-200);
+    border: 1px solid var(--theme-background-200);
+
+    &.-text {
+      color: var(--theme-background-300);
+    }
+
+    &.-outline {
+      color: var(--theme-background-300);
+      background: 0;
+
+      &:hover {
+        color: white;
+        border-color: var(--theme-background-150);
+      }
+    }
+
+    &:hover {
+      background-color: var(--theme-background-150);
+      border-color: var(--theme-background-150);
+
+      &.-text {
+        background: 0;
+        color: var(--theme-color-100);
+        border-color: transparent;
+      }
+    }
+  }
+
   &.-green {
     background-color: $green;
     border: 1px solid $green;

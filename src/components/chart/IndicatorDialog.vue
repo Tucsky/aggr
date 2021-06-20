@@ -117,7 +117,7 @@
             <label>precision</label>
             <editable
               class="form-control"
-              :content="formatOption.value.minMove"
+              :content="formatOption.value.precision"
               @output="validate(formatOption, { ...formatOption.value, precision: +$event || 1 })"
             ></editable>
           </div>
@@ -125,8 +125,9 @@
             <label>minMove</label>
             <editable
               class="form-control"
-              :content="formatOption.value.precision"
-              @output="validate(formatOption, { ...formatOption.value, minMove: +$event || 0.1 })"
+              :content="formatOption.value.minMove"
+              step="0.01"
+              @output="validate(formatOption, { ...formatOption.value, minMove: ($event || 0.1).toString() })"
             ></editable>
           </div>
         </div>

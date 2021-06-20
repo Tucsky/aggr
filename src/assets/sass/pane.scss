@@ -56,10 +56,6 @@
 
   .pane {
     background-color: rgba(white, 0.2);
-
-    &-header {
-      background-color: rgba(white, 0.5);
-    }
   }
 }
 
@@ -75,13 +71,11 @@
   top: 0;
   left: 0;
   right: 0;
-  font-size: 2rem;
-  background-color: rgba(black, 0.8);
+  font-size: 1.5rem;
+  background-color: var(--theme-background-o75);
+  backdrop-filter: blur(10px);
 
   &.toolbar {
-    font-size: 1rem;
-    height: 1.99rem;
-
     .dropdown__selected > i,
     button > i {
       padding-left: 0.5em;
@@ -116,10 +110,6 @@
     }
   }
 
-  > span {
-    padding-right: 0 !important;
-  }
-
   &__loader {
     display: none;
     position: absolute;
@@ -152,12 +142,12 @@
         display: block;
       }
       &:before {
-        background-color: rgba($blue, 0.1);
+        background-color: var(--theme-background-o20);
         animation: indeterminate-loading-bar-slow 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
       }
 
       &:after {
-        background-color: rgba($blue, 0.3);
+        background-color: var(--theme-background-o75);
         animation: indeterminate-loading-bar-fast 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
         animation-delay: 1.15s;
       }

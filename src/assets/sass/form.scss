@@ -49,7 +49,7 @@
 
 .help-text {
   line-height: 1.3;
-  color: rgba(white, 0.6);
+  opacity: 0.6;
 
   a {
     text-decoration: underline;
@@ -59,12 +59,32 @@
     line-height: 1.4;
   }
 }
+::-webkit-input-placeholder {
+  /* WebKit, Blink, Edge */
+  color: var(--theme-color-o20);
+}
+:-moz-placeholder {
+  /* Mozilla Firefox 4 to 18 */
+  color: var(--theme-color-o20);
+  opacity: 1;
+}
+::-moz-placeholder {
+  /* Mozilla Firefox 19+ */
+  color: var(--theme-color-o20);
+  opacity: 1;
+}
+:-ms-input-placeholder {
+  /* Internet Explorer 10-11 */
+  color: var(--theme-color-o20);
+}
+::-ms-input-placeholder {
+  /* Microsoft Edge */
+  color: var(--theme-color-o20);
+}
 
-.form-control::-webkit-input-placeholder,
-.form-control:-moz-placeholder,
-.form-control::-moz-placeholder,
-.form-control:-ms-input-placeholder {
-  color: red;
+::placeholder {
+  /* Most modern browsers support this now. */
+  color: var(--theme-color-o20);
 }
 
 .input-group {
@@ -262,15 +282,16 @@
 
   > div {
     padding: 0.594rem;
-    border: 1px solid $lighter;
+    border: 1px solid var(--theme-background-200);
     width: 1em;
     height: 1em;
     border-radius: 3px;
-    background-color: $lighter;
+    background-color: var(--theme-background-200);
     transition: all 0.2s $ease-out-expo;
     position: relative;
     flex-shrink: 0;
     font-size: 1rem;
+    color: white;
 
     &:before,
     &:after {
@@ -452,10 +473,6 @@ textarea.form-control {
 }
 
 #app.-light {
-  .form-group > label {
-    opacity: 0.75;
-  }
-
   .checkbox-control > div {
     border-color: rgba(0, 0, 0, 0.1);
   }

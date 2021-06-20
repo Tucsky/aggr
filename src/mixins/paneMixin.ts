@@ -22,6 +22,8 @@ export default class PaneMixin extends Vue {
     this.$el.addEventListener('mouseenter', this.showHeader)
     this.$el.addEventListener('touchstart', this.showHeader)
 
+    this.refreshZoom()
+
     this.$nextTick(() => {
       const width = this.$el.clientWidth
 
@@ -81,6 +83,11 @@ export default class PaneMixin extends Vue {
       document.removeEventListener('touchstart', this.hideHeader)
       this.$el.removeEventListener('mouseleave', this.hideHeader)
     }
+  }
+
+  refreshZoom() {
+    const zoom = this.$store.state.panes.panes[this.paneId].zoom
+    ;(this.$el as HTMLElement).style.fontSize = zoom ? zoom + 'rem' : ''
   }
 
   onResize?(newWidth: number, newHeight: number)

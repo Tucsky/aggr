@@ -1,6 +1,6 @@
 <template>
   <div id="settings" class="settings__container stack__container" @mousedown="$event.target === $el && close()">
-    <div class="stack__scroller" v-background="0.01">
+    <div class="stack__scroller background-200">
       <div class="stack__wrapper">
         <a href="#" class="stack__toggler icon-cross -text" @click="close"></a>
         <section class="section" v-if="workspace">
@@ -28,38 +28,36 @@
               </dropdown>
             </div>
 
-            <small class="help-text ">
-              <dropdown
-                class="-left mt16"
-                v-if="workspaces.length > 1"
-                :options="workspaces"
-                placeholder="Workspaces"
-                @output="loadWorkspace"
-                title="Load another workspace"
-                v-tippy
-              >
-                <template v-slot:selection>
-                  <button type="button" class="btn -blue -small" href="javascript:void(0);">
-                    <i class="icon-search"></i>
-                    <span class="ml4">Load workspaces ({{ workspaces.length }}) </span>
-                  </button>
-                </template>
-                <template v-slot:option="{ value }">
-                  <i class="icon-trash -action mr16" @click.stop="removeWorkspace(value.id)"></i>
-                  <div class="flex-grow-1">
-                    <div class="dropdown-option__title">
-                      {{ value.name }} <code>{{ value.id }}</code>
-                    </div>
-                    <div
-                      v-if="value.updatedAt"
-                      class="dropdown-option__description text-muted"
-                      v-text="'last used ' + ago(value.updatedAt) + ' ago'"
-                    ></div>
+            <dropdown
+              class="-left mt16"
+              v-if="workspaces.length > 1"
+              :options="workspaces"
+              placeholder="Workspaces"
+              @output="loadWorkspace"
+              title="Load another workspace"
+              v-tippy
+            >
+              <template v-slot:selection>
+                <button type="button" class="btn -blue -small" href="javascript:void(0);">
+                  <i class="icon-search"></i>
+                  <span class="ml4">Load workspaces ({{ workspaces.length }}) </span>
+                </button>
+              </template>
+              <template v-slot:option="{ value }">
+                <i class="icon-trash -action mr16" @click.stop="removeWorkspace(value.id)"></i>
+                <div class="flex-grow-1">
+                  <div class="dropdown-option__title">
+                    {{ value.name }} <code>{{ value.id }}</code>
                   </div>
-                  <i class="icon-external-link-square-alt ml4"></i>
-                </template>
-              </dropdown>
-            </small>
+                  <div
+                    v-if="value.updatedAt"
+                    class="dropdown-option__description text-muted"
+                    v-text="'last used ' + ago(value.updatedAt) + ' ago'"
+                  ></div>
+                </div>
+                <i class="icon-external-link-square-alt ml4"></i>
+              </template>
+            </dropdown>
           </div>
 
           <div class="section__title">
@@ -543,8 +541,6 @@ export default class extends Vue {
 
 <style lang="scss">
 .settings__container {
-  color: white;
-
   &.-stack__container {
     z-index: 10;
   }
@@ -554,7 +550,7 @@ export default class extends Vue {
   }
 
   .stack__scroller {
-    background-color: $dark;
+    background-color: var(--theme-background-100);
   }
 
   @media screen and (min-width: 500px) {
