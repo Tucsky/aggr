@@ -163,6 +163,7 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/SET_THRESHOLD_AMOUNT':
         case this.paneId + '/DELETE_THRESHOLD':
         case this.paneId + '/ADD_THRESHOLD':
+          this.prepareThresholdsSounds()
           this.prepareColorsSteps()
           this.refreshList()
           this.prepareAudioThreshold()

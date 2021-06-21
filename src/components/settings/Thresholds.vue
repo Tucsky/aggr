@@ -45,7 +45,7 @@
                   $store.commit(paneId + '/SET_THRESHOLD_COLOR', {
                     id: threshold.id,
                     side: 'buyColor',
-                    value: threshold.buyColor
+                    value: $event
                   })
                 "
               ></verte>
@@ -61,7 +61,7 @@
                   $store.commit(paneId + '/SET_THRESHOLD_COLOR', {
                     id: threshold.id,
                     side: 'sellColor',
-                    value: threshold.sellColor
+                    value: $event
                   })
                 "
               ></verte>

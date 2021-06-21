@@ -43,7 +43,6 @@ export default {
       this.dialogInstance = dialogService.openPicker(
         this.value,
         color => {
-          // this.value = color
           this.$emit('input', color)
         },
         this.label

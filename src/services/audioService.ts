@@ -32,6 +32,7 @@ class AudioService {
     }
 
     this.minTime = 0
+    this.count = 0
 
     Vue.nextTick(() => {
       this.bindContext()
@@ -231,7 +232,7 @@ class AudioService {
         this.minTime = Math.max(this.minTime, this.context.currentTime)
 
         if (!delay) {
-          this.minTime += this.count > 10 ? (this.count > 20 ? 0.02 : 0.04) : 0.08
+          this.minTime += this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
         }
       }
 
