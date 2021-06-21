@@ -166,7 +166,7 @@ export default class extends Vue {
     height: 2.5rem;
     border-radius: 50%;
     justify-content: center;
-    background-color: $darker;
+    background-color: var(--theme-background-100);
   }
 
   .menu__actions {

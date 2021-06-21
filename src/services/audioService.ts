@@ -301,7 +301,7 @@ class AudioService {
           if (+functionArguments[1]) {
             functionArguments[1] *= gainMultiplier
           } else {
-            functionArguments[1] = gainMultiplier + '*' + functionArguments[1]
+            functionArguments[1] = gainMultiplier + '*(' + functionArguments[1] + ')'
           }
         }
 

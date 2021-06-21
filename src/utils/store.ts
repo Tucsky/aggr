@@ -77,10 +77,7 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
         delete pane.settings._id
       }
 
-      if (module.state._id === 'perp-trades') {
-        console.log('merging default into pane state', module.state, pane.settings)
-      }
-      Object.assign(module.state, pane.settings)
+      merge(module.state, pane.settings)
 
       delete pane.settings
 

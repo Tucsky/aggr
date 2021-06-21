@@ -441,15 +441,14 @@ export default class SerieBuilder {
       if ((marketMatch = EXCHANGE_REGEX.exec(output))) {
         const marketName = marketMatch[1] + (marketMatch[2] ? marketMatch[2] : '')
         const marketId = marketName.replace(':', '')
-        let marketDataKey = marketMatch[3]
+        const marketDataKey = marketMatch[3]
 
         if (!markets[marketId]) {
           markets[marketId] = []
         }
 
         if (marketDataKey) {
-          marketDataKey = marketDataKey.substr(1)
-          if (markets[marketId].indexOf(marketDataKey) !== -1) {
+          if (markets[marketId].indexOf(marketDataKey) === -1) {
             markets[marketId].push(marketDataKey)
           }
         }
