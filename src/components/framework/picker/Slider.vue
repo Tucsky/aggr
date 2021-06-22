@@ -460,10 +460,6 @@ export default {
   padding: 0;
 }
 
-#app.-light .slider__track {
-  background: $green;
-}
-
 .slider__handle {
   position: relative;
   position: absolute;

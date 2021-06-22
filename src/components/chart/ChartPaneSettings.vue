@@ -8,6 +8,7 @@
         :max="10000"
         :step="100"
         :editable="false"
+        :show-completion="true"
         class="mt8"
         :value="refreshRate"
         @input="$store.commit(paneId + '/SET_REFRESH_RATE', $event)"
@@ -40,7 +41,7 @@
         <label :for="paneId + 'showVerticalGridlines'" class="-fill -center ">Vertical grid lines</label>
       </div>
     </div>
-    <div class="form-group">
+    <div class="form-group mb8">
       <div class="form-group column">
         <label class="checkbox-control" @change="$store.commit(paneId + '/SET_GRIDLINES', { type: 'horizontal', value: $event.target.checked })">
           <input type="checkbox" class="form-control" :checked="showHorizontalGridlines" :id="paneId + 'showHorizontalGridlines'" />
@@ -59,7 +60,6 @@
       </div>
     </div>
     <div class="form-group">
-      <label for="">Watermark</label>
       <div class="form-group column">
         <label class="checkbox-control" @change="$store.commit(paneId + '/SET_WATERMARK', { value: $event.target.checked })">
           <input type="checkbox" class="form-control" :checked="showWatermark" />
@@ -73,7 +73,7 @@
           :value="watermarkColor"
           @input="$event !== watermarkColor && $store.commit(paneId + '/SET_WATERMARK', { value: $event })"
         ></verte>
-        <label for="" class="-fill -center ml8">Color</label>
+        <label for="" class="-fill -center ml8">Watermark</label>
       </div>
     </div>
   </div>

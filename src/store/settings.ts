@@ -90,23 +90,25 @@ const actions = {
     dispatch('updateCSS')
   },
   updateCSS({ state }) {
-    const backgroundSide = state.theme === 'dark' ? 1 : -10
-    const colorSide = state.theme === 'dark' ? -1 : 1
+    const theme = state.theme
+    const variantMultiplier = theme === 'light' ? 0.5 : 1
+    const backgroundSide = theme === 'dark' ? 1 : -10
+    const colorSide = theme === 'dark' ? -1 : 1
     const backgroundRgb = splitRgba(state.backgroundColor)
 
     document.documentElement.style.setProperty('--theme-background-base', state.backgroundColor)
-    document.documentElement.style.setProperty('--theme-background-100', getLogShade(backgroundRgb, 0.02 * backgroundSide))
-    document.documentElement.style.setProperty('--theme-background-150', getLogShade(backgroundRgb, 0.05 * backgroundSide))
-    document.documentElement.style.setProperty('--theme-background-200', getLogShade(backgroundRgb, 0.075 * backgroundSide))
-    document.documentElement.style.setProperty('--theme-background-300', getLogShade(backgroundRgb, 0.1 * backgroundSide))
+    document.documentElement.style.setProperty('--theme-background-100', getLogShade(backgroundRgb, variantMultiplier * 0.02 * backgroundSide))
+    document.documentElement.style.setProperty('--theme-background-150', getLogShade(backgroundRgb, variantMultiplier * 0.05 * backgroundSide))
+    document.documentElement.style.setProperty('--theme-background-200', getLogShade(backgroundRgb, variantMultiplier * 0.075 * backgroundSide))
+    document.documentElement.style.setProperty('--theme-background-300', getLogShade(backgroundRgb, variantMultiplier * 0.1 * backgroundSide))
     document.documentElement.style.setProperty('--theme-background-o75', `rgba(${backgroundRgb[0]}, ${backgroundRgb[1]},${backgroundRgb[2]}, .75)`)
     document.documentElement.style.setProperty('--theme-background-o20', `rgba(${backgroundRgb[0]}, ${backgroundRgb[1]},${backgroundRgb[2]}, .2)`)
 
-    const colorInverse = state.theme !== 'light' ? 'rgb(17,17,17)' : 'rgb(246,246,246)'
+    const colorInverse = theme !== 'light' ? 'rgb(17,17,17)' : 'rgb(246,246,246)'
     let textColor = state.textColor
 
     if (!textColor) {
-      textColor = state.theme === 'light' ? 'rgb(17,17,17)' : 'rgb(246,246,246)'
+      textColor = theme === 'light' ? 'rgb(17,17,17)' : 'rgb(246,246,246)'
     }
 
     const textColorRgb = splitRgba(textColor)

@@ -706,9 +706,9 @@ export default class extends Mixins(PaneMixin) {
     ctx.fillRect(0, 0, canvas.width, headerHeight)
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, headerHeight, canvas.width, canvas.height - headerHeight)
-    ctx.drawImage(chartCanvas, 0, headerHeight)
-    ctx.fillStyle = 'rgba(0,0,0,.2)'
+    ctx.fillStyle = this.$store.state.settings.theme === 'light' ? 'rgba(255,255,255,.2)' : 'rgba(0,0,0,.2)'
     ctx.fillRect(0, headerHeight, canvas.width, canvas.height - headerHeight)
+    ctx.drawImage(chartCanvas, 0, headerHeight)
 
     ctx.fillStyle = 'black'
     ctx.font = `${textFontsize}px Share Tech Mono`
