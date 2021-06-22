@@ -797,10 +797,6 @@ export default class extends Mixins(PaneMixin) {
   font-family: 'Barlow Semi Condensed';
   z-index: 3;
   display: none;
-
-  @media (-webkit-min-device-pixel-ratio: 2) {
-    font-size: 12px;
-  }
 }
 
 .chart__layout {
