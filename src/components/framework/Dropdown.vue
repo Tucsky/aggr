@@ -7,7 +7,7 @@
       </slot>
     </div>
     <transition name="scale">
-      <div class="dropdown__options" v-if="isOpen">
+      <div ref="options" class="dropdown__options" v-if="isOpen">
         <div class="dropdown__scroller hide-scrollbar">
           <div
             class="dropdown__option"
@@ -55,6 +55,10 @@ export default class extends Vue {
 
   private _clickOutsideHandler: () => void
 
+  $refs!: {
+    options: HTMLElement
+  }
+
   toggle() {
     if (!this.isOpen) {
       this.show()
@@ -65,6 +69,10 @@ export default class extends Vue {
 
   show() {
     this.isOpen = true
+
+    this.$nextTick(() => {
+      this.ajustPlacement()
+    })
 
     this.bindClickOutside()
 
@@ -95,6 +103,20 @@ export default class extends Vue {
     if (this._clickOutsideHandler) {
       document.removeEventListener('mousedown', this._clickOutsideHandler)
       delete this._clickOutsideHandler
+    }
+  }
+
+  ajustPlacement() {
+    if (!this.$refs.options) {
+      return
+    }
+
+    const dropdown = this.$refs.options
+    
+    const rect = dropdown.getBoundingClientRect()
+
+    if (rect.y + rect.height > window.innerHeight) {
+      dropdown.classList.add('-upside-down');
     }
   }
 
