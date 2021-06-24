@@ -105,6 +105,7 @@ $icon-candlestick: '\e94d';
 $icon-refresh: '\e94e';
 $icon-music-note: '\e94f';
 $icon-minus: '\e950';
+$icon-PHEMEX: '\e951';
 
 $exchanges: (
   'BITMEX': $icon-BITMEX,
@@ -120,7 +121,8 @@ $exchanges: (
   'KRAKEN': $icon-KRAKEN,
   'DERIBIT': $icon-DERIBIT,
   'BYBIT': $icon-BYBIT,
-  'FTX': $icon-FTX
+  'FTX': $icon-FTX,
+  'PHEMEX': $icon-PHEMEX
 );
 
 @function unicode($str) {
