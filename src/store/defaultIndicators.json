@@ -122,7 +122,7 @@
   "btccvdperp": {
     "enabled": false,
     "name": "BTC CVD PERP",
-    "script": "plotline(cum((BITMEX:XBTUSD.vbuy + BITFINEX:BTCF0:USTF0.vbuy + OKEX:BTC-USDT-SWAP.vbuy + BINANCE_FUTURES:btcusdt.vbuy + BINANCE_FUTURES:btcusd_perp.vbuy + HUOBI:BTC-USD.vbuy + KRAKEN:PI_XBTUSD.vbuy + DERIBIT:BTC-PERPETUAL.vbuy + FTX:BTC-PERP.vbuy + BYBIT:BTCUSD.vbuy) - (BITMEX:XBTUSD.vsell + BITFINEX:BTCF0:USTF0.vsell + OKEX:BTC-USD-SWAP.vsell + OKEX:BTC-USDT-SWAP.vsell + BINANCE_FUTURES:btcusdt.vsell + BINANCE_FUTURES:btcusd_perp.vsell + HUOBI:BTC-USD.vsell + KRAKEN:PI_XBTUSD.vsell + DERIBIT:BTC-PERPETUAL.vsell + FTX:BTC-PERP.vsell + BYBIT:BTCUSD.vsell)))",
+    "script": "plotline(cum((BITMEX:XBTUSD.vbuy + BITFINEX:BTCF0:USTF0.vbuy + OKEX:BTC-USD-SWAP.vbuy + OKEX:BTC-USDT-SWAP.vbuy + BINANCE_FUTURES:btcusdt.vbuy + BINANCE_FUTURES:btcusd_perp.vbuy + HUOBI:BTC-USD.vbuy + KRAKEN:PI_XBTUSD.vbuy + DERIBIT:BTC-PERPETUAL.vbuy + FTX:BTC-PERP.vbuy + BYBIT:BTCUSD.vbuy) - (BITMEX:XBTUSD.vsell + BITFINEX:BTCF0:USTF0.vsell + OKEX:BTC-USD-SWAP.vsell + OKEX:BTC-USDT-SWAP.vsell + BINANCE_FUTURES:btcusdt.vsell + BINANCE_FUTURES:btcusd_perp.vsell + HUOBI:BTC-USD.vsell + KRAKEN:PI_XBTUSD.vsell + DERIBIT:BTC-PERPETUAL.vsell + FTX:BTC-PERP.vsell + BYBIT:BTCUSD.vsell)))",
     "options": {
       "priceFormat": {
         "type": "volume"
