@@ -344,9 +344,12 @@ export default class extends Mixins(PaneMixin) {
   margin: 0;
   list-style: none;
   top: 0;
-  z-index: 11;
   position: relative;
   width: 0;
+
+  .tv-lightweight-charts canvas {
+    z-index: auto;
+  }
 
   .stat-bucket {
     flex-direction: column;

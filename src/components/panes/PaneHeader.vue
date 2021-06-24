@@ -182,6 +182,23 @@ export default class extends Vue {
 
   highlightPane(value: boolean) {
     this.$el.parentElement.parentElement.classList[value ? 'add' : 'remove']('-highlight')
+
+    if (!value) {
+      this.$el.parentElement.dispatchEvent(
+        new MouseEvent('mouseleave', {
+          view: window,
+          bubbles: true,
+          cancelable: true
+        })
+      )
+      document.dispatchEvent(
+        new MouseEvent('touchstart', {
+          view: window,
+          bubbles: true,
+          cancelable: true
+        })
+      )
+    }
   }
 
   pasteSettings() {
