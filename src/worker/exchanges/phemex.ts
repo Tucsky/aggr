@@ -20,17 +20,16 @@ export default class extends Exchange {
   formatProducts(data) {
     const specs = {}
     const products = []
-    // console.log(data.data);
     const leverages = data.data.leverages;
     const currencies = data.data.currencies;
     const riskLimits = data.data.riskLimits;
     for (const product of data.data.products) {
-      // console.log(product);
       if (product.type === 'Perpetual') {
-        console.log(product);
         specs[product.symbol] = {
           type: product.type,
           contractSize: product.contractSize,
+          settleCurrency: product.settleCurrency,
+          quoteCurrency: product.quoteCurrency,
           valueScale: currencies.filter(c => c.currency === product.settleCurrency)[0].valueScale,
           priceScale: currencies.filter(c => c.currency === product.quoteCurrency)[0].valueScale,
           ratioScale: data.data.ratioScale,
@@ -42,7 +41,6 @@ export default class extends Exchange {
           maxOrderQty: product.maxOrderQty
         }
       } else if (product.type === 'Spot') {
-        console.log(product);
         specs[product.symbol] = {
           type: product.type,
           maxBaseOrderSizeEv: product.maxBaseOrderSizeEv,
@@ -129,7 +127,7 @@ export default class extends Exchange {
         if (tradeType === 'Perpetual') {
           trade.price = +(t[2] / Math.pow(10, this.specs[json.symbol].priceScale))
           trade.size = +( t[3] * this.specs[json.symbol].contractSize )
-          if (json.symbol === 'BTCUSD') {
+          if (this.specs[json.symbol].settleCurrency !== this.specs[json.symbol].quoteCurrency) {
             trade.size /= trade.price
           }
           
@@ -137,7 +135,6 @@ export default class extends Exchange {
           trade.price = +(t[2] / Math.pow(10, this.specs[json.symbol].priceScale)),
           trade.size = +(t[3] / Math.pow(10, this.specs[json.symbol].valueScale))
         }
-        console.log(trade)
         return trade
       });
       return this.emitTrades(api.id, trades)
