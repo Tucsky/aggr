@@ -54,7 +54,6 @@ export default class extends Exchange {
 
       products.push(product.symbol)
     }
-    // console.log(products, specs);
     return {
       specs,
       products,
