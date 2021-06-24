@@ -20,12 +20,10 @@ export default class extends Exchange {
   formatProducts(data) {
     const specs = {}
     const products = []
-    // console.log(data.data);
     const leverages = data.data.leverages;
     const currencies = data.data.currencies;
     const riskLimits = data.data.riskLimits;
     for (const product of data.data.products) {
-      // console.log(product);
       if (product.type === 'Perpetual') {
         console.log(product);
         specs[product.symbol] = {
@@ -56,7 +54,6 @@ export default class extends Exchange {
 
       products.push(product.symbol)
     }
-    // console.log(products, specs);
     return {
       specs,
       products,
@@ -137,7 +134,6 @@ export default class extends Exchange {
           trade.price = +(t[2] / Math.pow(10, this.specs[json.symbol].priceScale)),
           trade.size = +(t[3] / Math.pow(10, this.specs[json.symbol].valueScale))
         }
-        console.log(trade)
         return trade
       });
       return this.emitTrades(api.id, trades)
