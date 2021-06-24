@@ -2,7 +2,11 @@ import Exchange from '../exchange'
 
 export default class extends Exchange {
   id = 'PHEMEX'
-
+  leverages = []
+  currencies = []
+  riskLimits = []
+  specs = {}
+  products = []
   protected endpoints = {
     PRODUCTS: 'https://api.phemex.com/exchange/public/cfg/v2/products'
   }
@@ -14,8 +18,52 @@ export default class extends Exchange {
   }
 
   formatProducts(data) {
-    console.log(data);
-    return data.data.products.map(p => p.symbol);
+    const specs = {}
+    const products = []
+    // console.log(data.data);
+    const leverages = data.data.leverages;
+    const currencies = data.data.currencies;
+    const riskLimits = data.data.riskLimits;
+    for (const product of data.data.products) {
+      // console.log(product);
+      if (product.type === 'Perpetual') {
+        console.log(product);
+        specs[product.symbol] = {
+          type: product.type,
+          contractSize: product.contractSize,
+          valueScale: currencies.filter(c => c.currency === product.settleCurrency)[0].valueScale,
+          priceScale: currencies.filter(c => c.currency === product.quoteCurrency)[0].valueScale,
+          ratioScale: data.data.ratioScale,
+          riskLimits: riskLimits.filter(rl => rl.symbol === product.symbol).map(rl => ({ steps: rl.steps, riskLimits: rl.riskLimits })),
+          minPriceEp: product.minPricEp,
+          maxPriceEp: product.maxPriceEp,
+          lotSize: product.lotSize,
+          pricePrecision: product.pricePrecision,
+          maxOrderQty: product.maxOrderQty
+        }
+      } else if (product.type === 'Spot') {
+        console.log(product);
+        specs[product.symbol] = {
+          type: product.type,
+          maxBaseOrderSizeEv: product.maxBaseOrderSizeEv,
+          minOrderValueEv: product.minOrderValueEv,
+          valueScale: currencies.filter(c => c.currency === product.quoteCurrency)[0].valueScale,
+          priceScale: currencies.filter(c => c.currency === product.baseCurrency)[0].valueScale,
+          ratioScale: data.data.ratioScale,
+
+        }
+      }
+
+      products.push(product.symbol)
+    }
+    // console.log(products, specs);
+    return {
+      specs,
+      products,
+      leverages,
+      currencies,
+      riskLimits
+    }
   }
 
   /**
@@ -68,17 +116,31 @@ export default class extends Exchange {
     const json = JSON.parse(event.data)
     // Only care about trades
     if (json.trades !== undefined && json.type === 'incremental') {
+      const tradeType = this.specs[json.symbol].type
       const trades = json.trades.map(t => {
-        return {
+        const trade = {
           exchange: this.id,
           pair: json.symbol,
           timestamp: t[0] / 1000000,
-          price: +(json.symbol.startsWith( 's' ) ? (t[2] / 100000000) : (t[2] / 10000)),
-          size: +(json.symbol.startsWith( 's' ) ? (t[3] / 100000000) : t[3] / (t[2] / 10000)),
           side: t[1] === 'Buy' ? 'buy' : 'sell',
+          price: 0,
+          size: 0
         }
+        if (tradeType === 'Perpetual') {
+          trade.price = +(t[2] / Math.pow(10, this.specs[json.symbol].priceScale))
+          trade.size = +( t[3] * this.specs[json.symbol].contractSize )
+          if (json.symbol === 'BTCUSD') {
+            trade.size /= trade.price
+          }
+          
+        } else if (tradeType === 'Spot') {
+          trade.price = +(t[2] / Math.pow(10, this.specs[json.symbol].priceScale)),
+          trade.size = +(t[3] / Math.pow(10, this.specs[json.symbol].valueScale))
+        }
+        console.log(trade)
+        return trade
       });
-      return this.emitTrades(api.id, trades);
+      return this.emitTrades(api.id, trades)
     } else {
       return
     }
