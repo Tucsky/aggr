@@ -276,6 +276,11 @@ export default class extends Vue {
       icon: 'copy-paste',
       label: 'Duplicate',
       click: this.duplicateWorkspace
+    },
+    {
+      icon: 'upload',
+      label: 'Upload',
+      click: this.uploadWorkspace
     }
   ]
 
@@ -503,6 +508,41 @@ export default class extends Vue {
 
   async duplicateWorkspace() {
     workspacesService.duplicateWorkspace()
+  }
+
+  async uploadWorkspace() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    interface HTMLInputEvent extends Event {
+      target: HTMLInputElement & EventTarget
+    }
+
+    input.onchange = (e?: HTMLInputEvent) => {
+      const file = e.target.files[0]
+      // setting up the reader
+      const reader = new FileReader()
+      reader.readAsText(file, 'UTF-8')
+
+      // here we tell the reader what to do when it's done reading...
+      reader.onload = readerEvent => {
+        const content = readerEvent.target.result // this is the content!
+        const workspace = this.validateWorkspaceImport(content)
+        if (!workspace) {
+          return
+        }
+        if (
+          workspacesService.getWorkspace(workspace.id) &&
+          !dialogService.confirm({ message: `Workspace ${workspace.id} already exists`, ok: 'Import anyway', cancel: 'Annuler' })
+        ) {
+          return
+        }
+        if (dialogService.openAsPromise(SettingsImportConfirmation, { workspace })) {
+          this.importWorkspace(workspace)
+        }
+      }
+    }
+
+    input.click()
   }
 
   async renameWorkspace() {
