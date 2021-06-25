@@ -43,6 +43,7 @@ module.exports = {
       .end()
   },
   devServer: {
+    host: 'localhost',
     // progress: true,
     // https: true,
     // port: 8081,

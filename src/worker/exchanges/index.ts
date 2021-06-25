@@ -14,6 +14,7 @@ import Poloniex from './poloniex'
 import Deribit from './deribit'
 import Bybit from './bybit'
 import Ftx from './ftx'
+import Phemex from './phemex'
 
 export const exchanges = [
   new Bitmex(),
@@ -29,7 +30,8 @@ export const exchanges = [
   new Poloniex(),
   new Deribit(),
   new Bybit(),
-  new Ftx()
+  new Ftx(),
+  new Phemex()
 ] as Exchange[]
 
 export function getExchangeById(id: string) {

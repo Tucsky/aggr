@@ -26,7 +26,8 @@ const state = [
   'POLONIEX',
   'DERIBIT',
   'BYBIT',
-  'FTX'
+  'FTX',
+  'PHEMEX'
 ].reduce(
   (exchangesState: ExchangesState, id: string) => {
     exchangesState[id] = {}

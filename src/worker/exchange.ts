@@ -549,7 +549,7 @@ class Exchange extends EventEmitter {
     return true
   }
 
-  startKeepAlive(api, payload: { event?: string; op?: string; method?: string } = { event: 'ping' }, every = 30000) {
+  startKeepAlive(api, payload: { event?: string; op?: string; method?: string; id?: number; params?: Array<any> } = { event: 'ping' }, every = 30000) {
     if (this.keepAliveIntervals[api.url]) {
       this.stopKeepAlive(api)
     }
