@@ -41,7 +41,8 @@ class AudioService {
   }
 
   bindContext() {
-    this.context = new AudioContext()
+    // this.context = new AudioContext()
+    this.context = new ((window as any).AudioContext || (window as any).webkitAudioContext)()
 
     let checkInProgress = false
 
