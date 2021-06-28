@@ -123,6 +123,7 @@
       bottom: -1px;
       background-color: var(--theme-background-100);
       box-shadow: 0 -1px var(--theme-background-150);
+      border-top: 0;
 
       margin: 1rem -1rem 0;
       padding: 1rem;
@@ -191,6 +192,14 @@
       margin: 0 1rem;
       height: auto;
       width: 0.5px;
+    }
+  }
+}
+
+#app.-light .dialog {
+  .dialog-content {
+    textarea {
+      background-color: rgba(white, 0.5);
     }
   }
 }

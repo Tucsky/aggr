@@ -6,7 +6,7 @@
     <p class="mx0" v-html="message"></p>
     <footer>
       <a href="javascript:void(0);" class="btn -text" @click="close(false)" v-if="cancel" v-text="cancel"></a>
-      <button class="btn -large" @click="close(true)"><i class="icon-check mr4"></i> {{ ok }}</button>
+      <button class="btn -green -large" @click="close(true)"><i class="icon-check mr4"></i> {{ ok }}</button>
     </footer>
   </Dialog>
 </template>

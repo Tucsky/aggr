@@ -51,6 +51,7 @@ button {
   &.-red {
     background-color: $red;
     border: 1px solid $red;
+    color: white;
 
     &.-text {
       color: $red;
@@ -167,6 +168,7 @@ button {
   &.-green {
     background-color: $green;
     border: 1px solid $green;
+    color: white;
 
     &.-text {
       color: $green;

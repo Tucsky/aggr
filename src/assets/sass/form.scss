@@ -476,6 +476,10 @@ textarea.form-control {
   .checkbox-control > div {
     border-color: rgba(0, 0, 0, 0.1);
   }
+  
+  [contenteditable] {
+    color: black;
+  }
 }
 
 .help-block {

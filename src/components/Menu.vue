@@ -65,7 +65,7 @@
         v-tippy="{ placement: 'left', distance: 20 }"
       >
         <template v-slot:selection>
-          <div class="btn"><i class="icon-dashboard -center mr16"></i><span class="mr4">Pane</span><i class="icon-plus"></i></div>
+          <div class="btn -green"><i class="icon-dashboard -center mr16"></i><span class="mr4">Pane</span><i class="icon-plus"></i></div>
         </template>
         <template v-slot:option="{ value }">
           <span>
@@ -167,6 +167,10 @@ export default class extends Vue {
     border-radius: 50%;
     justify-content: center;
     background-color: var(--theme-background-100);
+
+    &:hover {
+      color: white;
+    }
   }
 
   .menu__actions {
@@ -193,6 +197,7 @@ export default class extends Vue {
 
       &:hover {
         background-color: $green;
+        color: white;
       }
     }
   }
@@ -200,6 +205,7 @@ export default class extends Vue {
   &.-open {
     .menu__button {
       background-color: $green;
+      color: white;
     }
 
     .menu-action {

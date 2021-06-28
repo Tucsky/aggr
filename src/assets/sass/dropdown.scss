@@ -81,6 +81,11 @@
     white-space: nowrap;
 
     cursor: pointer;
+
+    &.-upside-down {
+      bottom: 2rem;
+      top: auto;
+    }
   }
 
   &__scroller {

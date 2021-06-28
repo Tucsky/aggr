@@ -23,7 +23,7 @@
             <input ref="input" type="text" class="form-control" placeholder="search (eg: BITMEX:XBTUSD)" v-model="query" />
             <dropdown :options="filters" placeholder="Filter" title="Filters" v-tippy="{ placement: 'top' }">
               <template v-slot:selection>
-                <div class="btn" :class="{ '-text': !hasFilters, ml8: hasFilters }">
+                <div class="btn" :class="{ '-text': !hasFilters, 'ml8 -green': hasFilters }">
                   filter <i class="ml4" :class="hasFilters ? 'icon-check' : 'icon-plus'"></i>
                 </div>
               </template>
@@ -72,7 +72,7 @@
 
     <footer>
       <a href="javascript:void(0);" class="btn -text" @click="hide">Cancel</a>
-      <button class="btn -large ml8" @click="submit" v-text="submitLabel"></button>
+      <button class="btn -large ml8 -green" @click="submit" v-text="submitLabel"></button>
     </footer>
   </Dialog>
 </template>
@@ -323,5 +323,9 @@ export default {
   &__exchange {
     background-position: right;
   }
+}
+
+#app.-light .search tr:hover {
+  background-color: rgba(black, 0.1);
 }
 </style>

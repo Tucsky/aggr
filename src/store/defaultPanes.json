@@ -2,10 +2,9 @@
   "desktop": {
     "_id": "panes",
     "layout": [
-      { "x": 0, "y": 0, "w": 15, "h": 24, "i": "chart", "type": "chart" },
-      { "x": 15, "y": 0, "w": 3, "h": 24, "i": "spot-trades", "type": "trades" },
-      { "x": 18, "y": 0, "w": 3, "h": 24, "i": "perp-trades", "type": "trades" },
-      { "x": 21, "y": 0, "w": 3, "h": 24, "i": "liquidations", "type": "trades" }
+      { "x": 0, "y": 0, "w": 20, "h": 24, "i": "chart", "type": "chart" },
+      { "x": 20, "y": 0, "w": 4, "h": 18, "i": "trades", "type": "trades" },
+      { "x": 20, "y": 20, "w": 4, "h": 6, "i": "liquidations", "type": "trades" }
     ],
     "panes": {
       "chart": {
@@ -30,13 +29,12 @@
           "HUOBI:BTC-USD",
           "KRAKEN:PI_XBTUSD",
           "DERIBIT:BTC-PERPETUAL",
-          "FTX:BTC-PERP",
-          "BYBIT:BTCUSD"
+          "FTX:BTC-PERP"
         ]
       },
-      "spot-trades": {
-        "id": "spot-trades",
-        "name": "BTCUSD (SPOT)",
+      "trades": {
+        "id": "trades",
+        "name": "TRADES",
         "type": "trades",
         "markets": [
           "BITFINEX:BTCUSD",
@@ -46,21 +44,7 @@
           "COINBASE:BTC-USD",
           "POLONIEX:USDT_BTC",
           "HUOBI:btcusdt",
-          "BITSTAMP:btcusd"
-        ],
-        "settings": {
-          "tradeType": "trades",
-          "thresholds": [{ "amount": 100000 }],
-          "liquidations": {
-            "amount": 50000
-          }
-        }
-      },
-      "perp-trades": {
-        "id": "perp-trades",
-        "name": "BTCUSD (PERP)",
-        "type": "trades",
-        "markets": [
+          "BITSTAMP:btcusd",
           "BITMEX:XBTUSD",
           "BITFINEX:BTCF0:USTF0",
           "OKEX:BTC-USD-SWAP",
@@ -70,16 +54,14 @@
           "HUOBI:BTC-USD",
           "KRAKEN:PI_XBTUSD",
           "DERIBIT:BTC-PERPETUAL",
-          "FTX:BTC-PERP",
-          "BYBIT:BTCUSD"
+          "FTX:BTC-PERP"
         ],
         "settings": {
           "tradeType": "trades",
           "thresholds": [{ "amount": 100000 }],
           "liquidations": {
             "amount": 50000
-          },
-          "audioThreshold": 25000
+          }
         }
       },
       "liquidations": {

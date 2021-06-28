@@ -62,6 +62,10 @@ export default class PaneMixin extends Vue {
     }
 
     if (event) {
+      if (this.$el.parentElement.classList.contains('-highlight')) {
+        return
+      }
+
       if (event.type === 'touchstart') {
         if (this.$el.contains(event.target)) {
           return
@@ -77,8 +81,6 @@ export default class PaneMixin extends Vue {
       }
     } else {
       this.hovered = false
-
-      console.log('remove both touchstart & mouseleave listeners')
 
       document.removeEventListener('touchstart', this.hideHeader)
       this.$el.removeEventListener('mouseleave', this.hideHeader)

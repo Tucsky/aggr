@@ -2,7 +2,7 @@
   <div class="pane-trades" :class="{ '-logos': this.showLogos, '-logos-colors': !this.monochromeLogos, '-slippage': this.calculateSlippage }">
     <pane-header v-if="hovered" :paneId="paneId" />
     <ul ref="tradesContainer" class="hide-scrollbar"></ul>
-    <div v-if="!tradesCount" class="trades-placeholder">
+    <div v-if="!tradesCount" class="trades-placeholder hide-scrollbar">
       <div class="mt16 ml16 mr16 help-text">
         <strong>Waiting for trades</strong>
 
@@ -770,7 +770,7 @@ export default class extends Mixins(PaneMixin) {
   &.-logos {
     .trade__exchange {
       flex-basis: 0;
-      flex-grow: 0.3;
+      flex-grow: 0.4;
       text-align: center;
       overflow: visible;
 
@@ -810,7 +810,7 @@ export default class extends Mixins(PaneMixin) {
 .trades-placeholder {
   text-align: center;
   text-align: center;
-  overflow: hidden;
+  overflow: auto;
   max-height: 100%;
 
   &__market {
@@ -930,7 +930,7 @@ export default class extends Mixins(PaneMixin) {
   .trade__exchange {
     background-repeat: no-repeat;
     flex-grow: 0.8;
-    margin-left: 1.25rem;
+    margin-left: 1.4em;
     white-space: normal;
     word-break: inherit;
     font-size: 75%;
