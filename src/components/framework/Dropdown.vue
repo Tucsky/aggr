@@ -9,17 +9,17 @@
     <transition name="scale">
       <div ref="options" class="dropdown__options" v-if="isOpen">
         <div class="dropdown__scroller hide-scrollbar">
-          <div
+          <a
+            href="javascript:void(0)"
             class="dropdown__option"
             v-for="(value, index) in options"
             :key="index"
             :class="{ active: !alwaysShowPlaceholder && index === selected }"
-            @click="set(index, $event)"
           >
             <slot name="option" :value="value" :index="index">
               {{ value }}
             </slot>
-          </div>
+          </a>
         </div>
       </div>
     </transition>
@@ -95,16 +95,30 @@ export default class extends Vue {
       this._clickOutsideHandler = (event => {
         if (!this.$el.contains(event.target)) {
           this.hide()
+        } else {
+          let el = event.target as HTMLElement
+
+          while (el) {
+            if (el.classList.contains('dropdown__option')) {
+              this.set(event, el)
+
+              break
+            }
+
+            el = el.parentElement
+          }
         }
       }).bind(this)
 
-      document.addEventListener('mousedown', this._clickOutsideHandler)
+      document.addEventListener('mouseup', this._clickOutsideHandler)
+      document.addEventListener('touchend', this._clickOutsideHandler)
     }
   }
 
   unbindClickOutside() {
     if (this._clickOutsideHandler) {
-      document.removeEventListener('mousedown', this._clickOutsideHandler)
+      document.removeEventListener('mouseup', this._clickOutsideHandler)
+      document.removeEventListener('touchend', this._clickOutsideHandler)
       delete this._clickOutsideHandler
     }
   }
@@ -123,7 +137,13 @@ export default class extends Vue {
     }
   }
 
-  set(index, event: Event) {
+  set(event: Event, el: HTMLElement) {
+    let index = Array.prototype.indexOf.call(el.parentElement.children, el)
+
+    if (!Array.isArray(this.options)) {
+      index = Object.keys(this.options)[index]
+    }
+
     // this.selected = index
     if (this.options && this.options[index] && typeof this.options[index].click === 'function') {
       this.options[index].click(event, this.options[index])
