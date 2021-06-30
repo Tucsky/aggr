@@ -115,14 +115,14 @@ export const defaultAreaOptions = {
 }
 
 export const defaultCloudAreaOptions = {
-  positiveColor: 'rgba( 76, 175, 80, 0.1)',
-  negativeColor: 'rgba( 255, 82, 82, 0.1)',
+  positiveColor: 'rgba(76,175,80,0.1)',
+  negativeColor: 'rgba(255,82,82,0.1)',
   higherLineColor: '#4CAF50',
   higherLineStyle: LineType.Simple,
-  higherLineWidth: 3,
+  higherLineWidth: 1,
   lowerLineColor: '#FF5252',
   lowerLineStyle: LineType.Simple,
-  lowerLineWidth: 3
+  lowerLineWidth: 1
 }
 
 export const defaultBarOptions = {

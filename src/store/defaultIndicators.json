@@ -121,7 +121,7 @@
   },
   "btccvdperp": {
     "enabled": false,
-    "name": "BTC CVD PERP",
+    "name": "CVD (BTC PERP)",
     "script": "plotline(cum((BITMEX:XBTUSD.vbuy + BITFINEX:BTCF0:USTF0.vbuy + OKEX:BTC-USD-SWAP.vbuy + OKEX:BTC-USDT-SWAP.vbuy + BINANCE_FUTURES:btcusdt.vbuy + BINANCE_FUTURES:btcusd_perp.vbuy + HUOBI:BTC-USD.vbuy + KRAKEN:PI_XBTUSD.vbuy + DERIBIT:BTC-PERPETUAL.vbuy + FTX:BTC-PERP.vbuy + BYBIT:BTCUSD.vbuy) - (BITMEX:XBTUSD.vsell + BITFINEX:BTCF0:USTF0.vsell + OKEX:BTC-USD-SWAP.vsell + OKEX:BTC-USDT-SWAP.vsell + BINANCE_FUTURES:btcusdt.vsell + BINANCE_FUTURES:btcusd_perp.vsell + HUOBI:BTC-USD.vsell + KRAKEN:PI_XBTUSD.vsell + DERIBIT:BTC-PERPETUAL.vsell + FTX:BTC-PERP.vsell + BYBIT:BTCUSD.vsell)))",
     "options": {
       "priceFormat": {
@@ -133,7 +133,7 @@
   },
   "btccvdspot": {
     "enabled": false,
-    "name": "BTC CVD SPOT",
+    "name": "CVD (BTC SPOT)",
     "script": "plotline(cum((BITFINEX:BTCUSD.vbuy+ BINANCE:btcusdt.vbuy+ OKEX:BTC-USDT.vbuy+ KRAKEN:XBT/USD.vbuy+ COINBASE:BTC-USD.vbuy+ POLONIEX:USDT_BTC.vbuy+ HUOBI:btcusdt.vbuy+ BITSTAMP:btcusd.vbuy) - (BITFINEX:BTCUSD.vsell +BINANCE:btcusdt.vsell +OKEX:BTC-USDT.vsell +KRAKEN:XBT/USD.vsell +COINBASE:BTC-USD.vsell +POLONIEX:USDT_BTC.vsell +HUOBI:btcusdt.vsell +BITSTAMP:btcusd.vsell)))",
     "options": {
       "priceFormat": {
@@ -186,6 +186,18 @@
       "priceScaleId": "right",
       "spotColor": "#81c784",
       "futuresColor": "#ec407a"
+    }
+  },
+  "ichimoku": {
+    "enabled": false,
+    "script": "conversionLine=(lowest($price.low, options.conversionLineLength) + highest($price.high, options.conversionLineLength)) / 2\nbaseLine=(lowest($price.low, options.baseLineLength) + highest($price.high, options.baseLineLength)) / 2\nleadLineOne=(conversionLine + baseLine) / 2\nleadLineTwo=(lowest($price.low, options.laggingSpanTwoLength) + highest($price.high, options.laggingSpanTwoLength)) / 2\nplotcloudarea(leadLineTwo, leadLineOne, offset=options.displacement)",
+    "name": "Ichimoku",
+    "options": {
+      "baseLineLength": 26,
+      "conversionLineLength": 9,
+      "displacement": 24,
+      "laggingSpanTwoLength": 52,
+      "priceScaleId": "right"
     }
   }
 }

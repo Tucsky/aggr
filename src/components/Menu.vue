@@ -56,16 +56,11 @@
         <i v-if="!useAudio" class="icon-volume-off"></i>
         <i v-else class="icon-volume-medium" :class="{ 'icon-volume-high': audioVolume > 1 }"></i>
       </button>
-      <dropdown
-        class="menu-action"
-        :options="paneTypes"
-        placeholder="tf."
-        @output="addPane"
-        title="Add pane to workspace"
-        v-tippy="{ placement: 'left', distance: 20 }"
-      >
+      <dropdown class="menu-action" :options="paneTypes" placeholder="tf." @output="addPane" selectionClass="-green">
         <template v-slot:selection>
-          <div class="btn -green"><i class="icon-dashboard -center mr16"></i><span class="mr4">Pane</span><i class="icon-plus"></i></div>
+          <i class="icon-dashboard -center mr16"></i>
+          <span class="mr4">Pane</span>
+          <i class="icon-plus"></i>
         </template>
         <template v-slot:option="{ value }">
           <span>
@@ -157,8 +152,8 @@ export default class extends Vue {
 <style lang="scss">
 .menu {
   position: fixed;
-  bottom: 1rem;
-  right: 1rem;
+  bottom: 1.5rem;
+  right: 1.5rem;
   z-index: 2;
 
   .menu__button {

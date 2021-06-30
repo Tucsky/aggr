@@ -21,14 +21,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="indicator of filteredIndicators"
-                :key="indicator.id"
-                @click="selectIndicator(indicator)"
-                :title="indicator.description"
-                v-tippy="{ placement: 'right' }"
-                class="-action"
-              >
+              <tr v-for="indicator of filteredIndicators" :key="indicator.id" @click="selectIndicator(indicator)" class="-action">
                 <td class="table-input" v-text="indicator.displayName || indicator.name"></td>
                 <td class="table-input" v-text="indicator.updatedAt ? ago(indicator.updatedAt) + ' ago' : 'Never'"></td>
                 <td class="table-action" @click.stop="removeIndicator(indicator)">

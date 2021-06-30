@@ -21,12 +21,14 @@
           <label>All products ({{ flattenedProducts.length }})</label>
           <div class="mb8 d-flex">
             <input ref="input" type="text" class="form-control" placeholder="search (eg: BITMEX:XBTUSD)" v-model="query" />
-            <dropdown :options="filters" placeholder="Filter" title="Filters" v-tippy="{ placement: 'top' }">
-              <template v-slot:selection>
-                <div class="btn" :class="{ '-text': !hasFilters, 'ml8 -green': hasFilters }">
-                  filter <i class="ml4" :class="hasFilters ? 'icon-check' : 'icon-plus'"></i>
-                </div>
-              </template>
+            <dropdown
+              :options="filters"
+              placeholder="Filter"
+              title="Filters"
+              v-tippy="{ placement: 'top' }"
+              :selectionClass="!hasFilters ? '-text' : 'ml8 -green'"
+            >
+              <template v-slot:selection> filter <i class="ml4" :class="hasFilters ? 'icon-check' : 'icon-plus'"></i> </template>
               <template v-slot:option="{ index, value }">
                 <div @click="toggleFilter(index)">
                   <i class="icon-check" v-if="value"></i>

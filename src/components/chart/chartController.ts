@@ -98,6 +98,7 @@ export interface IndicatorReference {
   plotIndex: number
 }
 export interface Renderer {
+  timeframe: number
   timestamp: number
   localTimestamp: number
   length: number
@@ -829,7 +830,7 @@ export default class ChartController {
         continue
       }
 
-      const timestamp = Math.floor(trade.timestamp / 1000 / store.state[this.paneId].timeframe) * store.state[this.paneId].timeframe
+      const timestamp = Math.floor(trade.timestamp / 1000 / this.activeRenderer.timeframe) * this.activeRenderer.timeframe
 
       if (!this.activeRenderer || this.activeRenderer.timestamp < timestamp) {
         if (this.activeRenderer) {
@@ -1215,6 +1216,7 @@ export default class ChartController {
     const renderer: Renderer = {
       timestamp: firstBarTimestamp,
       localTimestamp: firstBarTimestamp + this.timezoneOffset,
+      timeframe: store.state[this.paneId].timeframe,
       length: 1,
       indicators: {},
       sources: {},

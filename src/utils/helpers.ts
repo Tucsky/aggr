@@ -287,3 +287,20 @@ export function getDiff(obj, model) {
 
   return obj
 }
+
+export function isElementInteractive(el: HTMLElement) {
+  let count = 0
+  while (el) {
+    if (el.tagName === 'A' || el.tagName === 'BUTTON') {
+      return true
+    }
+
+    count++
+
+    el = el.parentElement
+  }
+
+  console.log(count)
+
+  return false
+}

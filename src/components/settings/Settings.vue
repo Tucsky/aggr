@@ -17,9 +17,9 @@
                 <small class="text-muted">created {{ workspace.createdAt }} ago</small>
               </div>
 
-              <dropdown class="ml8" :options="workspaceMenu" placeholder="Workspaces" title="Workspace tools" v-tippy>
+              <dropdown class="ml8" :options="workspaceMenu" placeholder="Workspaces" title="Workspace tools" selectionClass="-blue" v-tippy>
                 <template v-slot:selection>
-                  <button class="btn -blue"><i class="icon-menu"></i></button>
+                  <i class="icon-menu"></i>
                 </template>
                 <template v-slot:option="{ value }">
                   <span>{{ value.label }}</span>
@@ -184,18 +184,21 @@
           <div class="form-group">
             <div v-if="version" class="column">
               <div class="-grow">
-                v{{ version }}
-                <sup class="version-date">{{ buildDate }}</sup>
+                <button class="btn -text">
+                  v{{ version }} <sup class="version-date">{{ buildDate }}</sup>
+                </button>
               </div>
-              <a href="javascript:void(0);" @click="reset()">reset</a>
-              <i class="pipe">|</i>
+              <button class="btn -text" @click="reset()">reset</button>
+              <i class="pipe -center">|</i>
               <span>
-                <dropdown :options="donationMenu" title="Support the project" class="-top -text-left" v-tippy>
-                  <template v-slot:selection>
-                    <a href="javascript:void(0);">
-                      donate
-                    </a>
-                  </template>
+                <dropdown
+                  :options="donationMenu"
+                  title="Support the project"
+                  placeholder="donate"
+                  class="-top -text-left"
+                  selectionClass="-text"
+                  v-tippy
+                >
                   <template v-slot:option="{ value }">
                     <i :class="'icon-' + value.icon" class="-fill"></i>
 
@@ -636,12 +639,16 @@ export default class extends Vue {
 
     .version-date {
       opacity: 0.75;
-      line-height: 0;
+      line-height: 1;
+      position: relative;
+      top: -0.5em;
+      left: 0.25em;
     }
 
     .pipe {
       opacity: 0.5;
       margin: 0 0.25rem;
+      line-height: 1;
     }
 
     .settings__browse-import {

@@ -19,19 +19,21 @@
         </template>
       </dropdown>
     </pane-header>
-    <div class="chart__container" ref="chartContainer"></div>
-    <div class="chart__indicators">
-      <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" />
+    <div class="chart__overlay" v-if="hovered">
+      <div class="chart__indicators">
+        <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" />
 
-      <div class="column mt8">
-        <a href="javascript:void(0);" @click="addIndicator" v-tippy="{ placement: 'bottom' }" title="Add" class="mr4 -text">
-          <i class="icon-plus"></i>
-        </a>
+        <div class="column mt8">
+          <a href="javascript:void(0);" @click="addIndicator" v-tippy="{ placement: 'bottom' }" title="Add" class="mr4 -text">
+            <i class="icon-plus"></i>
+          </a>
+        </div>
+      </div>
+      <div class="chart__controls" :style="{ marginRight: priceWidth + 'px' }">
+        <button class="chart__screenshot btn -text" @click="takeScreenshot"><i class="icon-add-photo"></i></button>
       </div>
     </div>
-    <div class="chart__controls">
-      <button class="chart__screenshot btn -text" @click="takeScreenshot"><i class="icon-add-photo"></i></button>
-    </div>
+    <div class="chart__container" ref="chartContainer"></div>
     <IndicatorResize v-if="resizingIndicator" :indicatorId="resizingIndicator" :paneId="paneId"></IndicatorResize>
   </div>
 </template>
@@ -68,6 +70,7 @@ import { getColorLuminance, joinRgba, splitRgba } from '@/utils/colors'
 export default class extends Mixins(PaneMixin) {
   reachedEnd = false
   loading = false
+  priceWidth = 40
 
   private _onStoreMutation: () => void
   private _keepAliveTimeout: number
@@ -656,8 +659,7 @@ export default class extends Mixins(PaneMixin) {
 
   positionControls() {
     const priceAxisCanvas = this.$refs.chartContainer.querySelector('td:last-child canvas:nth-child(2)') as HTMLElement
-    const chartControls = this.$el.querySelector('.chart__controls') as HTMLElement
-    chartControls.style.marginRight = priceAxisCanvas.clientWidth + 'px'
+    this.priceWidth = priceAxisCanvas.clientWidth
   }
 
   takeScreenshot() {
@@ -767,11 +769,6 @@ export default class extends Mixins(PaneMixin) {
 
 <style lang="scss" scoped>
 .pane-chart {
-  &:hover .chart__indicators,
-  &:hover .chart__controls {
-    display: block;
-  }
-
   &.-loading {
     cursor: wait;
   }
@@ -791,12 +788,24 @@ export default class extends Mixins(PaneMixin) {
 }
 
 .chart__indicators {
-  position: absolute;
-  top: 3em;
-  left: 1em;
   font-family: 'Barlow Semi Condensed';
-  z-index: 3;
-  display: none;
+}
+
+.chart__overlay {
+  > div {
+    position: absolute;
+    top: 2.75rem;
+    font-family: 'Barlow Semi Condensed';
+    z-index: 3;
+
+    &:first-child {
+      left: 1rem;
+    }
+
+    &:last-child {
+      right: 1em;
+    }
+  }
 }
 
 .chart__layout {
@@ -808,17 +817,6 @@ export default class extends Mixins(PaneMixin) {
   z-index: 3;
 }
 
-.chart__controls {
-  position: absolute;
-  top: 2.5rem;
-  right: 1rem;
-  z-index: 2;
-  display: none;
-
-  @media screen and (max-width: 767px) {
-    display: none;
-  }
-}
 .btn.-text {
   &.-text {
     opacity: 0.5;

@@ -1,11 +1,11 @@
 <template>
   <div class="dropdown">
     <div v-if="label" class="dropdown__label" @click="toggle" v-html="label"></div>
-    <div class="dropdown__selected" @click="toggle">
+    <button class="dropdown__selected btn" @click="toggle" :class="selectionClass">
       <slot name="selection" :item="options[selected]" :placeholder="placeholder">
         {{ (alwaysShowPlaceholder && options[selected]) || placeholder || 'Selection' }}
       </slot>
-    </div>
+    </button>
     <transition name="scale">
       <div ref="options" class="dropdown__options" v-if="isOpen">
         <div class="dropdown__scroller hide-scrollbar">
@@ -46,6 +46,9 @@ import { Component, Vue } from 'vue-property-decorator'
     },
     alwaysShowPlaceholder: {
       default: true
+    },
+    selectionClass: {
+      required: false
     }
   }
 })
@@ -112,11 +115,11 @@ export default class extends Vue {
     }
 
     const dropdown = this.$refs.options
-    
+
     const rect = dropdown.getBoundingClientRect()
 
     if (rect.y + rect.height > window.innerHeight) {
-      dropdown.classList.add('-upside-down');
+      dropdown.classList.add('-upside-down')
     }
   }
 

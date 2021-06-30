@@ -1,5 +1,10 @@
 .vue-grid-layout {
   .vue-grid-item {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
     > .vue-resizable-handle {
       display: none;
       width: auto;
@@ -66,7 +71,7 @@
 .pane-header {
   display: flex;
   position: absolute;
-  z-index: 3;
+  z-index: 4;
   top: 0;
   left: 0;
   right: 0;

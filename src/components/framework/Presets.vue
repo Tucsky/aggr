@@ -1,8 +1,5 @@
 <template>
-  <dropdown :options="presets" @output="onSelect" class="mrauto form-control">
-    <template v-slot:selection>
-      {{ label }}
-    </template>
+  <dropdown :options="presets" @output="onSelect" :placeholder="label" class="mrauto" selectionClass="ml0">
     <template v-slot:option="{ value }">
       <i v-if="value.icon" :class="'-lower icon-' + value.icon"></i>
 
