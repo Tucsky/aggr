@@ -139,6 +139,7 @@ export default class ChartController {
   chartCache: ChartCache
   markets: { [identifier: string]: true }
   timezoneOffset = 0
+  timeframe: number
 
   // private loadedSeries: { [id: string]: IndicatorApi } = {}
   private activeChunk: Chunk
@@ -152,6 +153,7 @@ export default class ChartController {
 
   constructor(id: string) {
     this.paneId = id
+    this.timeframe = store.state[this.paneId].timeframe
 
     this.chartCache = new ChartCache()
     this.serieBuilder = new SerieBuilder()
@@ -709,6 +711,8 @@ export default class ChartController {
     this.chartCache.clear()
     this.clearData()
     this.clearChart()
+
+    this.timeframe = store.state[this.paneId].timeframe
   }
 
   /**
@@ -830,7 +834,7 @@ export default class ChartController {
         continue
       }
 
-      const timestamp = Math.floor(trade.timestamp / 1000 / this.activeRenderer.timeframe) * this.activeRenderer.timeframe
+      const timestamp = Math.floor(trade.timestamp / 1000 / this.timeframe) * this.timeframe
 
       if (!this.activeRenderer || this.activeRenderer.timestamp < timestamp) {
         if (this.activeRenderer) {
