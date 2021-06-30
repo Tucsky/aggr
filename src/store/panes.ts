@@ -329,8 +329,7 @@ const actions = {
       zoom = 1
     }
 
-    const index = Object.keys(state.panes).indexOf(id)
-    const el = document.getElementsByClassName('pane')[index] as HTMLElement
+    const el = document.getElementById(id) as HTMLElement
 
     if (el) {
       el.style.fontSize = zoom ? zoom + 'rem' : ''

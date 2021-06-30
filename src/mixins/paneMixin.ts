@@ -19,6 +19,8 @@ export default class PaneMixin extends Vue {
   }
 
   mounted() {
+    this.$el.id = this.paneId
+
     this.$el.addEventListener('mouseenter', this.showHeader)
     this.$el.addEventListener('touchstart', this.showHeader)
 
