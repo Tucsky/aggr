@@ -223,10 +223,8 @@ export default class SerieBuilder {
 
   parseVariables(output, variables): string {
     let variableMatch = null
-    let free = 0
     do {
       if ((variableMatch = VARIABLE_REGEX.exec(output))) {
-        free++
         const variableName = variableMatch[1]
         const variableLength = +variableMatch[2] || 1
 
@@ -242,7 +240,7 @@ export default class SerieBuilder {
 
         output = output.replace(new RegExp(`(${VARIABLES_VAR_NAME}\\[${variables.length - 1}\\])\\(${variable.length}\\)\\s*=\\s*`), '$1=')
       }
-    } while (variableMatch && free < 5)
+    } while (variableMatch)
 
     output = this.determineVariablesType(output, variables)
 
