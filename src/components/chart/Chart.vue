@@ -675,11 +675,13 @@ export default class extends Mixins(PaneMixin) {
 
     if (!isNaN(+timeframe)) {
       timeframe = getHms(this.timeframe * 1000).toUpperCase()
+    } else {
+      timeframe = parseInt(timeframe) + ' TICKS'
     }
 
-    const text = this.markets.join(', ') + ' | ' + timeframe
+    const text = timeframe
 
-    const zoom = this.$store.state.panes.panes[this.paneId].zoom || 0
+    const zoom = this.$store.state.panes.panes[this.paneId].zoom || 1
 
     const textPadding = 16 * zoom
     const textFontsize = 16 * zoom
@@ -708,15 +710,14 @@ export default class extends Mixins(PaneMixin) {
 
     lines.push(currentLine)
 
-    const lineHeight = Math.round(textPadding + textPadding * 0.25)
+    const lineHeight = Math.round(textPadding)
     const headerHeight = Math.round(textPadding * 2 + lines.length * lineHeight)
     canvas.height = chartCanvas.height + headerHeight
 
     const backgroundColor = this.$store.state.settings.backgroundColor
-    const backgroundColorBase = getComputedStyle(document.documentElement).getPropertyValue('--theme-background-base')
     const backgroundColor300 = getComputedStyle(document.documentElement).getPropertyValue('--theme-background-300')
 
-    ctx.fillStyle =  'white'
+    ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, canvas.width, headerHeight)
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, headerHeight, canvas.width, canvas.height - headerHeight)

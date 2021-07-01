@@ -15,70 +15,76 @@
       </button>
       <button class="btn -text -white mlauto" @click="showHelp">doc <i class="icon-external-link-square-alt ml4"></i></button>
     </div>
-    <div class="form-group mb16 mt16">
-      <div class="d-flex mb4">
-        <label for class="mrauto -center">
-          Input
-        </label>
-      </div>
-      <textarea
-        ref="behaveInput"
-        class="form-control"
-        rows="10"
-        :value="script"
-        @blur="updateScript($event.target.value)"
-        spellcheck="false"
-      ></textarea>
-      <p v-if="error" class="form-feedback"><i class="icon-warning mr4"></i> {{ error }}</p>
-    </div>
-    <hr />
-    <div class="column w-100">
-      <div v-if="colorOptions.length">
-        <div v-for="(option, index) in colorOptions" :key="index" class="column form-group -fill mr16 mb8">
-          <label v-if="option.label !== false" class="-center  -nowrap mr16">{{ option.label }}</label>
-          <verte
-            class="flex-grow-1"
-            picker="square"
-            menuPosition="left"
-            :label="option.label"
-            model="rgb"
-            :value="currentValues[option.key]"
-            @input="currentValues[option.key] !== $event && validate(option, $event)"
-          ></verte>
-        </div>
-      </div>
-      <div v-if="otherOptions.length" class=" -fill">
-        <div v-for="option in otherOptions" :key="option.key" class="form-group mb16">
-          <label v-if="option.label !== false">
-            {{ option.label }}
-            <i v-if="helps[option.key]" class="icon-info" v-tippy :title="helps[option.key]"></i>
+    <div class="d-flex mobile-dir-col-desktop-dir-row">
+      <div class="form-group mb16 mt16">
+        <div class="d-flex mb4">
+          <label for class="mrauto -center">
+            Input
           </label>
-
-          <dropdown
-            v-if="option.key === 'lineType'"
-            class="form-control -left -center"
-            :selected="currentValues[option.key]"
-            :options="{ 0: 'Simple', 1: 'with steps' }"
-            placeholder="lineType"
-            @output="validate(option, $event)"
-          ></dropdown>
-          <dropdown
-            v-else-if="/linestyle$/i.test(option.key)"
-            class="form-control -left -center"
-            :selected="currentValues[option.key]"
-            :options="{ 0: 'Solid', 1: 'Dotted', 2: 'Dashed', 3: 'LargeDashed', 4: 'SparseDotted' }"
-            placeholder="lineStyle"
-            @output="validate(option, $event)"
-          ></dropdown>
-          <template v-else-if="option.type === 'string' || option.type === 'number'">
-            <editable class="form-control" :content="currentValues[option.key]" @output="validate(option, $event)"></editable>
-          </template>
-          <template v-else-if="option.type === 'boolean'">
-            <label class="checkbox-control">
-              <input type="checkbox" class="form-control" :checked="currentValues[option.key]" @change="validate(option, $event.target.checked)" />
-              <div></div>
+        </div>
+        <textarea
+          ref="behaveInput"
+          class="form-control"
+          rows="10"
+          cols="50"
+          :value="script"
+          @blur="updateScript($event.target.value)"
+          spellcheck="false"
+        ></textarea>
+        <p v-if="error" class="form-feedback"><i class="icon-warning mr4"></i> {{ error }}</p>
+      </div>
+      <hr class="-horizontal" />
+      <hr class="-vertical mb8" />
+      <div class="column w-100">
+        <div v-if="colorOptions.length">
+          <div v-for="(option, index) in colorOptions" :key="index" class="column form-group -fill mr16 mb8">
+            <label v-if="option.label !== false" class="-center  -nowrap mr16">{{ option.label }}</label>
+            <verte
+              class="flex-grow-1"
+              picker="square"
+              menuPosition="left"
+              :label="option.label"
+              model="rgb"
+              :value="currentValues[option.key]"
+              @input="currentValues[option.key] !== $event && validate(option, $event)"
+            ></verte>
+          </div>
+        </div>
+        <div v-if="otherOptions.length" class=" -fill">
+          <div v-for="option in otherOptions" :key="option.key" class="form-group mb16">
+            <label v-if="option.label !== false">
+              {{ option.label }}
+              <i v-if="helps[option.key]" class="icon-info" v-tippy :title="helps[option.key]"></i>
             </label>
-          </template>
+
+            <dropdown
+              v-if="option.key === 'lineType'"
+              class="-left -center"
+              :selected="currentValues[option.key]"
+              :options="{ 0: 'Simple', 1: 'with steps' }"
+              selectionClass="-outline form-control"
+              placeholder="lineType"
+              @output="validate(option, $event)"
+            ></dropdown>
+            <dropdown
+              v-else-if="/linestyle$/i.test(option.key)"
+              class="-left -center"
+              :selected="currentValues[option.key]"
+              :options="{ 0: 'Solid', 1: 'Dotted', 2: 'Dashed', 3: 'LargeDashed', 4: 'SparseDotted' }"
+              selectionClass="-outline form-control"
+              placeholder="lineStyle"
+              @output="validate(option, $event)"
+            ></dropdown>
+            <template v-else-if="option.type === 'string' || option.type === 'number'">
+              <editable class="form-control" :content="currentValues[option.key]" @output="validate(option, $event)"></editable>
+            </template>
+            <template v-else-if="option.type === 'boolean'">
+              <label class="checkbox-control">
+                <input type="checkbox" class="form-control" :checked="currentValues[option.key]" @change="validate(option, $event.target.checked)" />
+                <div></div>
+              </label>
+            </template>
+          </div>
         </div>
       </div>
     </div>
@@ -106,10 +112,11 @@
         <div class="form-group mb16">
           <label>price format</label>
           <dropdown
-            class="form-control -left -center"
+            class="-left -center"
             :selected="formatOption.value.type"
             :options="{ price: 'Price', volume: 'Volume', percent: 'Percent' }"
             placeholder="lineType"
+            selectionClass="-outline form-control"
             @output="validate(formatOption, { ...formatOption.value, type: $event })"
           ></dropdown>
         </div>

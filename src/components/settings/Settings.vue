@@ -64,6 +64,13 @@
             Workspace
           </div>
         </section>
+        <section class="section" v-if="hits">
+          <div class="section__title">
+            <div>Msg/s</div>
+            <div class="flex-grow-1"></div>
+            <strong v-text="hits"></strong>
+          </div>
+        </section>
 
         <section class="section">
           <div v-if="settings.indexOf('list') > -1" class="settings-section settings-trades">
@@ -228,6 +235,8 @@ import OtherSettings from './OtherSettings.vue'
 import workspacesService from '@/services/workspacesService'
 import { Workspace } from '@/types/test'
 import Dropdown from '../framework/Dropdown.vue'
+import aggregatorService from '@/services/aggregatorService'
+import { APPLICATION_START_TIME } from '@/utils/constants'
 
 @Component({
   name: 'Settings',
@@ -286,6 +295,8 @@ export default class extends Vue {
       click: this.uploadWorkspace
     }
   ]
+  hits = 0
+  private _hitsTimeout: number
 
   get exchanges() {
     return this.$store.getters['exchanges/getExchanges']
@@ -329,6 +340,10 @@ export default class extends Vue {
 
   async created() {
     await this.getWorkspaces()
+
+    if (process.env.NODE_ENV !== 'production') {
+      this.getHits()
+    }
   }
 
   mounted() {
@@ -337,6 +352,10 @@ export default class extends Vue {
 
   beforeDestroy() {
     this.unbindDrop()
+
+    if (this._hitsTimeout) {
+      clearTimeout(this._hitsTimeout)
+    }
   }
 
   bindDrop() {
@@ -347,6 +366,17 @@ export default class extends Vue {
   unbindDrop() {
     document.body.removeEventListener('drop', this.handleDrop)
     document.body.removeEventListener('dragover', this.handleDrop)
+  }
+
+  getHits() {
+    this._hitsTimeout = setTimeout(async () => {
+      const hits = (await aggregatorService.dispatchAsync({ op: 'hits' })) as any
+      const elapsed = +new Date() - APPLICATION_START_TIME
+      console.log(hits, elapsed)
+      this.hits = Math.round(hits / (elapsed / 1000))
+
+      this.getHits()
+    }, 1000)
   }
 
   handleDrop(e: DragEvent) {
