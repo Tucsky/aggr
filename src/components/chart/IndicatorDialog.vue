@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="close" class="serie-dialog -medium" :mask="!resizing">
+  <Dialog @clickOutside="close" class="serie-dialog -auto" :mask="!resizing">
     <template v-slot:header>
       <div class="title">
         <div @dblclick="renameIndicator">{{ name }}</div>
@@ -493,7 +493,7 @@ export default {
         input: this.description
       })
 
-      if (description !== this.description) {
+      if (description !== null && description !== this.description) {
         await store.commit(this.paneId + '/UPDATE_DESCRIPTION', { id: this.indicatorId, description })
       }
     },

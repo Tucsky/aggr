@@ -45,6 +45,7 @@
   color: inherit;
   font-family: inherit;
   font-size: 1rem;
+  height: 2.5em;
 }
 
 .help-text {
@@ -442,6 +443,7 @@ textarea.form-control {
   font-size: 14px;
   font-family: $font-monospace;
   line-height: 1.5;
+  height: auto;
 }
 
 .serie__scale-margins {

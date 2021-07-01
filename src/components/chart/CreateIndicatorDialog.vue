@@ -45,10 +45,11 @@
         <div class="form-group mb16">
           <label>Scale with</label>
           <dropdown
-            class="form-control -left -center"
+            class="-left -center"
             :selected="priceScaleId"
             :options="availableScales"
             placeholder="Default scale"
+            selectionClass="-outline form-control"
             @output="priceScaleId = $event"
           ></dropdown>
         </div>

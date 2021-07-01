@@ -44,6 +44,7 @@ export const defaultChartOptions = {
   },
   timeScale: {
     barSpacing: 3,
+    minBarSpacing: 0,
     rightOffset: 12,
     lockVisibleTimeRangeOnResize: true,
     rightBarStaysOnScroll: true,

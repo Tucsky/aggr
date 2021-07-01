@@ -84,6 +84,7 @@ import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
 import { getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
+import aggregatorService from '@/services/aggregatorService'
 
 export default {
   mixins: [DialogMixin],
@@ -197,6 +198,18 @@ export default {
     }
 
     this.originalSelection = this.selection.slice()
+
+    for (const exchange of this.$store.getters['exchanges/getExchanges']) {
+      if (!this.$store.state.exchanges[exchange].fetched) {
+        aggregatorService.dispatch({
+          op: 'products',
+          data: {
+            exchange: exchange,
+            data: null
+          }
+        })
+      }
+    }
   },
   mounted() {
     this.$nextTick(() => {

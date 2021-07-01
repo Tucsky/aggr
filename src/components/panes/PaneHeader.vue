@@ -14,7 +14,7 @@
       :options="timeframes"
       :selected="timeframe"
       placeholder="tf."
-      @output="$store.commit(paneId + '/SET_TIMEFRAME', +$event)"
+      @output="$store.commit(paneId + '/SET_TIMEFRAME', $event)"
     >
       <template v-slot:selection="{ item }">
         <span>{{ item }}</span>
@@ -26,6 +26,24 @@
     </button>
 
     <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
+      <template v-slot:option-1>
+        <div class="column" @mouseup.prevent @touchend.prevent>
+          <span class="flex-grow-1 mr16 -center">Zoom</span>
+          <button class="btn -text" @click="zoomOut">
+            <i class="icon-minus"></i>
+          </button>
+          <div
+            class="btn text-monospace"
+            :class="{ '-green': zoom != 1, '-text': zoom === 1 }"
+            @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 0 })"
+          >
+            × {{ zoom.toFixed(1) }}
+          </div>
+          <button class="btn -text" @click="zoomIn">
+            <i class="icon-plus"></i>
+          </button>
+        </div>
+      </template>
       <template v-slot:option="{ value }">
         <div>
           <i class="-lower" :class="'icon-' + value.icon"></i>
@@ -75,6 +93,12 @@ import PricesPaneDialog from '../prices/PricesPaneDialog.vue'
 export default class extends Vue {
   paneId: string
   timeframes = {
+    '21t': '21 ticks',
+    '50t': '50 ticks',
+    '89t': '89 ticks',
+    '100t': '100 ticks',
+    '200t': '200 ticks',
+    '1000t': '1000 ticks',
     1: '1s',
     3: '3s',
     5: '5s',
@@ -98,14 +122,7 @@ export default class extends Vue {
       click: this.duplicatePane
     },
     {
-      icon: 'plus',
-      label: 'Zoom in',
-      click: this.zoomIn
-    },
-    {
-      icon: 'minus',
-      label: 'Zoom out',
-      click: this.zoomOut
+      label: 'Zoom'
     },
     {
       icon: 'trash',
@@ -154,18 +171,12 @@ export default class extends Vue {
     this.$store.dispatch('app/showSearch', { paneId: this.paneId })
   }
 
-  zoomIn(event: Event) {
-    this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: 0.1 })
-
-    event.preventDefault()
-    event.stopPropagation()
+  zoomIn() {
+    this.$store.dispatch('panes/changeZoom', { id: this.paneId, zoom: 0.1 })
   }
 
-  zoomOut(event: Event) {
-    this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: -0.1 })
-
-    event.preventDefault()
-    event.stopPropagation()
+  zoomOut() {
+    this.$store.dispatch('panes/changeZoom', { id: this.paneId, zoom: -0.1 })
   }
 
   removePane() {

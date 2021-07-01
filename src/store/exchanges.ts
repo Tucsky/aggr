@@ -8,29 +8,16 @@ import { ModulesState } from '.'
 export interface ExchangeSettings {
   disabled?: boolean
   hidden?: boolean
+  fetched?: boolean
 }
 
 export type ExchangesState = { [exchangeId: string]: ExchangeSettings } & { _id: string; _exchanges: string[] }
 
-const state = [
-  'BITMEX',
-  'BINANCE_FUTURES',
-  'KRAKEN',
-  'HUOBI',
-  'BINANCE',
-  'BITFINEX',
-  'BITSTAMP',
-  'COINBASE',
-  'HITBTC',
-  'OKEX',
-  'POLONIEX',
-  'DERIBIT',
-  'BYBIT',
-  'FTX',
-  'PHEMEX'
-].reduce(
+const state = process.env.VUE_APP_EXCHANGES.split(',').reduce(
   (exchangesState: ExchangesState, id: string) => {
-    exchangesState[id] = {}
+    exchangesState[id.toUpperCase()] = {
+      fetched: false
+    }
 
     return exchangesState
   },
@@ -51,6 +38,7 @@ const actions = {
 
     for (const id of getters.getExchanges) {
       state._exchanges.push(id)
+      state[id].fetched = false
       this.commit('app/EXCHANGE_UPDATED', id)
     }
 
@@ -114,6 +102,9 @@ const mutations = {
     }
 
     Vue.set(state[id], 'hidden', hidden)
+  },
+  SET_FETCHED: (state, id: string) => {
+    Vue.set(state[id], 'fetched', true)
   }
 } as MutationTree<ExchangesState>
 

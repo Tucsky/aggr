@@ -90,8 +90,7 @@ export default class PaneMixin extends Vue {
   }
 
   refreshZoom() {
-    const zoom = this.$store.state.panes.panes[this.paneId].zoom
-    ;(this.$el as HTMLElement).style.fontSize = zoom ? zoom + 'rem' : ''
+    this.$store.dispatch('panes/refreshZoom', this.paneId)
   }
 
   onResize?(newWidth: number, newHeight: number)

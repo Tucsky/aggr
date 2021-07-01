@@ -19,18 +19,18 @@
         </template>
       </dropdown>
     </pane-header>
-    <div class="chart__overlay" v-if="hovered">
+    <div class="chart__overlay">
       <div class="chart__indicators">
         <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" />
 
         <div class="column mt8">
-          <a href="javascript:void(0);" @click="addIndicator" v-tippy="{ placement: 'bottom' }" title="Add" class="mr4 -text">
+          <a href="javascript:void(0);" @click="addIndicator" v-tippy="{ placement: 'bottom' }" title="Add" class="btn mr4 -text">
             <i class="icon-plus"></i>
           </a>
         </div>
       </div>
       <div class="chart__controls" :style="{ marginRight: priceWidth + 'px' }">
-        <button class="chart__screenshot btn -text" @click="takeScreenshot"><i class="icon-add-photo"></i></button>
+        <button class="chart__screenshot btn -text -large" @click="takeScreenshot"><i class="icon-add-photo"></i></button>
       </div>
     </div>
     <div class="chart__container" ref="chartContainer"></div>
@@ -251,7 +251,11 @@ export default class extends Mixins(PaneMixin) {
     }
 
     const visibleRange = this._chartController.getVisibleRange() as TimeRange
-    const timeframe = +(this.$store.state[this.paneId] as ChartPaneState).timeframe
+    const timeframe = (this.$store.state[this.paneId] as ChartPaneState).timeframe
+
+    if (isNaN(+timeframe)) {
+      return Promise.reject('unsupported-timeframe')
+    }
 
     if (!rangeToFetch) {
       const barsCount = Math.ceil(window.innerWidth / 2)
@@ -667,12 +671,18 @@ export default class extends Mixins(PaneMixin) {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
 
-    const text = this.markets.join(', ') + ' | ' + getHms(this.timeframe * 1000).toUpperCase()
+    let timeframe = this.timeframe as any
 
-    const isHRS = window.devicePixelRatio > 1
+    if (!isNaN(+timeframe)) {
+      timeframe = getHms(this.timeframe * 1000).toUpperCase()
+    }
 
-    const textPadding = isHRS ? 14 : 8
-    const textFontsize = isHRS ? 16 : 10
+    const text = this.markets.join(', ') + ' | ' + timeframe
+
+    const zoom = this.$store.state.panes.panes[this.paneId].zoom || 0
+
+    const textPadding = 16 * zoom
+    const textFontsize = 16 * zoom
     canvas.width = chartCanvas.width
     ctx.font = `${textFontsize}px Share Tech Mono`
     ctx.textAlign = 'left'
@@ -703,8 +713,10 @@ export default class extends Mixins(PaneMixin) {
     canvas.height = chartCanvas.height + headerHeight
 
     const backgroundColor = this.$store.state.settings.backgroundColor
+    const backgroundColorBase = getComputedStyle(document.documentElement).getPropertyValue('--theme-background-base')
+    const backgroundColor300 = getComputedStyle(document.documentElement).getPropertyValue('--theme-background-300')
 
-    ctx.fillStyle = 'white'
+    ctx.fillStyle =  'white'
     ctx.fillRect(0, 0, canvas.width, headerHeight)
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, headerHeight, canvas.width, canvas.height - headerHeight)
@@ -712,7 +724,7 @@ export default class extends Mixins(PaneMixin) {
     ctx.fillRect(0, headerHeight, canvas.width, canvas.height - headerHeight)
     ctx.drawImage(chartCanvas, 0, headerHeight)
 
-    ctx.fillStyle = 'black'
+    ctx.fillStyle = backgroundColor300
     ctx.font = `${textFontsize}px Share Tech Mono`
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
@@ -724,7 +736,7 @@ export default class extends Mixins(PaneMixin) {
         ctx.fillStyle = '#2196f3'
         ctx.fillText(date, textPadding, textPadding)
         offset = dateWidth
-        ctx.fillStyle = 'black'
+        ctx.fillStyle = backgroundColor300
       }
 
       ctx.fillText(lines[i], offset + textPadding, textPadding + lineHeight * i)
@@ -769,6 +781,10 @@ export default class extends Mixins(PaneMixin) {
 
 <style lang="scss" scoped>
 .pane-chart {
+  &:hover .chart__overlay {
+    display: block;
+  }
+
   &.-loading {
     cursor: wait;
   }
@@ -792,6 +808,8 @@ export default class extends Mixins(PaneMixin) {
 }
 
 .chart__overlay {
+  display: none;
+
   > div {
     position: absolute;
     top: 2.75rem;

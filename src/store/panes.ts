@@ -322,20 +322,29 @@ const actions = {
 
     commit('ADD_GRID_ITEM', gridItem)
   },
-  setZoom({ state, commit }, { id, zoom }: { id: string; zoom: number }) {
+  setZoom({ state, commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
+    commit('SET_PANE_ZOOM', { id, zoom })
+
+    dispatch('refreshZoom', id)
+  },
+  changeZoom({ state, commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
     if (zoom) {
       zoom = (state.panes[id].zoom || 1) + zoom
     } else {
       zoom = 1
     }
 
+    commit('SET_PANE_ZOOM', { id, zoom })
+
+    dispatch('refreshZoom', id)
+  },
+  refreshZoom({ state }, id: string) {
+    const zoom = state.panes[id].zoom
     const el = document.getElementById(id) as HTMLElement
 
     if (el) {
       el.style.fontSize = zoom ? zoom + 'rem' : ''
     }
-
-    commit('SET_PANE_ZOOM', { id, zoom })
   }
 } as ActionTree<PanesState, ModulesState>
 

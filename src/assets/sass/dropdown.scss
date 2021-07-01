@@ -22,17 +22,20 @@
   display: inline-flex;
   align-items: center;
 
-  &.form-control {
-    .dropdown__selected:after {
+  &__selected.form-control {
+    &:after {
       content: unicode($icon-down);
+      transform: rotateZ(180deg);
       font-family: 'icon';
       padding: 0 0.2em;
       position: relative;
       top: 1px;
+      line-height: 1;
+      transition: transform 0.2s cubic-bezier(0, 1.4, 1, 1);
     }
 
-    .dropdown__option {
-      font-family: 'Barlow';
+    &:last-child:after {
+      transform: none;
     }
   }
 
@@ -68,7 +71,7 @@
   &__options {
     font-size: 1rem;
     position: absolute;
-    top: 1rem;
+    top: 2rem;
     right: 0.6em;
     overflow: hidden;
     text-align: right;
@@ -147,8 +150,8 @@
     }
 
     > div {
-      padding: 0.75em 1.4em 0.75em 2em;
-      margin: -0.75em -1.4em -0.75em -2em;
+      padding: 0;
+      margin: 0;
     }
   }
 

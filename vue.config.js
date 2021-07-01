@@ -1,10 +1,17 @@
-// let BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
-
+const fs = require('fs')
 process.env.VUE_APP_VERSION = require('./package.json').version
 
 const date = new Date()
 process.env.VUE_APP_BUILD_DATE = date.getDate() + ' ' + date.toLocaleString('en-US', { month: 'short' }).toLowerCase()
+const exchanges = []
 
+fs.readdirSync('./src/worker/exchanges/').forEach(file => {
+  if (/\w+\.ts$/.test(file)) {
+    exchanges.push(file.replace(/\.ts$/, ''))
+  }
+})
+
+process.env.VUE_APP_EXCHANGES = exchanges.join(',')
 process.env.VUE_APP_PROXY_URL = process.env.PROXY_URL
 process.env.VUE_APP_API_URL = process.env.API_URL
 process.env.VUE_APP_API_SUPPORTED_PAIRS = process.env.API_SUPPORTED_PAIRS

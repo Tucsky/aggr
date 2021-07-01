@@ -107,6 +107,10 @@ $unit: 'px'; // Feel free to change the unit.
   font-family: 'Barlow Semi Condensed';
 }
 
+.text-monospace {
+  font-family: $font-monospace !important;
+}
+
 .text-lowercase {
   text-transform: lowercase;
 }
