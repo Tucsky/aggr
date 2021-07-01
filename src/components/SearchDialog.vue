@@ -26,15 +26,14 @@
               placeholder="Filter"
               title="Filters"
               v-tippy="{ placement: 'top' }"
+              @output="toggleFilter($event)"
               :selectionClass="!hasFilters ? '-text' : 'ml8 -green'"
             >
               <template v-slot:selection> filter <i class="ml4" :class="hasFilters ? 'icon-check' : 'icon-plus'"></i> </template>
               <template v-slot:option="{ index, value }">
-                <div @click="toggleFilter(index)">
-                  <i class="icon-check" v-if="value"></i>
+                <i class="icon-check mr8" v-if="value"></i>
 
-                  {{ index }}
-                </div>
+                {{ index }}
               </template>
             </dropdown>
           </div>
