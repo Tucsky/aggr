@@ -27,7 +27,7 @@
 
     <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
       <template v-slot:option-1>
-        <div class="column" @mouseup.prevent @touchend.prevent>
+        <div class="column" @mousedown.prevent>
           <span class="flex-grow-1 mr16 -center">Zoom</span>
           <button class="btn -text" @click="zoomOut">
             <i class="icon-minus"></i>

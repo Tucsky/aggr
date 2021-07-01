@@ -113,15 +113,13 @@ export default class extends Vue {
         }
       }).bind(this)
 
-      document.addEventListener('mouseup', this._clickOutsideHandler)
-      document.addEventListener('touchend', this._clickOutsideHandler)
+      document.addEventListener('mousedown', this._clickOutsideHandler)
     }
   }
 
   unbindClickOutside() {
     if (this._clickOutsideHandler) {
-      document.removeEventListener('mouseup', this._clickOutsideHandler)
-      document.removeEventListener('touchend', this._clickOutsideHandler)
+      document.removeEventListener('mousedown', this._clickOutsideHandler)
       delete this._clickOutsideHandler
     }
   }
