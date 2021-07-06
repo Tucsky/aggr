@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="close" class="pane-dialog" @mousedown="clickOutsideClose = false" @mouseup="clickOutsideClose = true">
+  <Dialog @clickOutside="close" class="pane-dialog -auto" @mousedown="clickOutsideClose = false" @mouseup="clickOutsideClose = true">
     <template v-slot:header>
       <div class="title">
         <div>Threshold</div>
@@ -19,39 +19,16 @@
       <blockquote>
         <code>
           play(<br /><span class="ml8" v-tippy title="Frequency (hz)">frequency: number</span>,<br />
-          <span class="ml8" v-tippy title="Gain (volume, 0 is muted and 1 is a loud)">gain: number</span>,<br />
-          <span class="ml8" v-tippy title="Duration (duration of the song in seconds)">duration: number</span>,<br />
-          <span class="ml8" v-tippy title="Delay song by n second">wait?: number</span>,<br />
-          <span class="ml8" v-tippy title="Fade in/out (duration in second)">fadeInDuration?: number</span>,<br />
-          <span class="ml8" v-tippy title="Oscillator type (default to sine, either sine, square, triangle, or sawtooth)"
-            >oscillatorType?: 'sine' | 'triangle' | 'square' | 'sawtooth'</span
-          ><br />
+          <span class="ml8" v-tippy title="Gain (volume, 0 is muted and 1 is max, anything above 1 will sound saturated)">gain: number</span>,<br />
+          <span class="ml8" v-tippy title="FadeOut (gain to endGain duration)">fadeOut: number</span>,<br />
+          <span class="ml8" v-tippy title="Delay song by n second">delay?: number</span>,<br />
+          <span class="ml8" v-tippy title="FadeIn (startGain to gain duration)">fadeIn?: number</span>,<br />
+          <span class="ml8" v-tippy title="HoldDuration (time at gain)">holdDuration?: number</span>,<br />
+          <span class="ml8" v-tippy title="Oscillator (type of wave, either sine, square, triangle, or sawtooth)">osc?: number</span>,<br />
+          <span class="ml8" v-tippy title="StartGain (cannot be 0, but should be close to 0 like 0.0001)">startGain?: number</span>,<br />
+          <span class="ml8" v-tippy title="EndGain (cannot be 0, but should be close to 0 like 0.0001)">endGain?: number</span><br />
           )
         </code>
-      </blockquote>
-      <br /><br />
-
-      Example<br />
-
-      <blockquote>
-        // trigger 2 different 600ms frequency sounds, 80ms at a time<br />
-        <code
-          >play(<span v-tippy title="Frequency">659.26</span>,
-          <span v-tippy title="Calculated gain (from trade size relative to thresholds)">gain * 0.5</span>,
-          <span v-tippy title="Calculated duration (from trade size relative to thresholds)">duration</span>,
-          <span v-tippy title="Wait (.08s before playing)">80</span>)</code
-        ><br />
-        <code
-          >play(<span v-tippy title="Frequency">830.6</span>,
-          <span v-tippy title="Calculated gain (from trade size relative to thresholds)">gain * 1.25</span>,
-          <span v-tippy title="Calculated duration (from trade size relative to thresholds)">duration</span>,
-          <span v-tippy title="Wait (.08s before playing)">80</span>)</code
-        ><br />
-      </blockquote>
-
-      <blockquote>
-        // using js Math functions<br />
-        <code>play(1256, Math.log(1 + gain / 10) , 1, 0, .1, 'square')</code>
       </blockquote>
     </div>
     <div class="form-group mb16">
@@ -59,11 +36,28 @@
         When buy
       </label>
       <div class="d-flex">
-        <textarea ref="behaveBuy" class="form-control" :value="buyAudio" @blur="setInput($event.target.value, 'buy')" spellcheck="false"></textarea>
-        <button class="btn -green" @click="test('buy')">
+        <button v-if="buyAudio !== threshold.buyAudio" class="btn -green mr4" @click="testOriginal('buy', $event)" title="Original" v-tippy>
+          <i class="icon-volume-high"></i>
+        </button>
+        <textarea
+          cols="20"
+          rows="4"
+          ref="behaveBuy"
+          class="form-control"
+          :value="buyAudio"
+          @blur="setInput($event.target.value, 'buy')"
+          spellcheck="false"
+        ></textarea>
+        <button class="btn -green ml4" @click="testCustom('buy', $event)" title="Custom">
           <i class="icon-volume-high"></i>
         </button>
       </div>
+
+      <small class="help-text">
+        <i class="icon-info -lower mr4"></i>
+        <code>play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
+      </small>
+
       <p v-if="buyError" class="form-feedback"><i class="icon-warning mr4"></i> {{ buyError }}</p>
     </div>
     <div class="form-group mb16">
@@ -71,20 +65,32 @@
         When sell
       </label>
       <div class="d-flex">
+        <button v-if="sellAudio !== threshold.sellAudio" class="btn -red mr4" @click="testOriginal('sell', $event)" title="Original" v-tippy>
+          <i class="icon-volume-high"></i>
+        </button>
         <textarea
+          cols="20"
+          rows="4"
           ref="behaveSell"
           class="form-control"
           :value="sellAudio"
           @blur="setInput($event.target.value, 'sell')"
           spellcheck="false"
         ></textarea>
-        <button class="btn -red" @click="test('sell')">
+        <button class="btn -red ml4" @click="testCustom('sell', $event)">
           <i class="icon-volume-high"></i>
         </button>
       </div>
+
+      <small class="help-text">
+        <i class="icon-info -lower mr4"></i>
+        <code>play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
+      </small>
+
       <p v-if="sellError" class="form-feedback"><i class="icon-warning mr4"></i> {{ sellError }}</p>
     </div>
     <footer>
+      <a href="javascript:void(0);" class="btn -text mrauto" @click="restartWebAudio()">Stop all</a>
       <a href="javascript:void(0);" class="btn -text" @click="close(false)">Cancel</a>
       <button class="btn -large" @click="saveInputs()"><i class="icon-check mr4"></i> Save</button>
     </footer>
@@ -200,8 +206,21 @@ export default {
 
       return true
     },
-    test(side) {
-      let percent
+    testCustom(side, event) {
+      const litteral = this[side + 'Audio']
+
+      this.test(litteral, side, event)
+    },
+    testOriginal(side, event) {
+      const litteral = this.threshold[side + 'Audio']
+
+      this.test(litteral, side, event)
+    },
+    restartWebAudio() {
+      audioService.reconnect()
+    },
+    test(litteral, side, event) {
+      let percent = 1
       let level
       let amount
 
@@ -216,20 +235,17 @@ export default {
 
         const range = this.max - this.min
 
-        if (range) {
+        if (event.shiftKey || !range) {
+          amount = this.min
+        } else {
           amount = this.min + Math.random() * range
           percent = amount / this.amounts[1]
-        } else {
-          amount = this.min
-          percent = 1
         }
 
         level = i
       }
 
       if (amount) {
-        const litteral = this[side + 'Audio']
-
         const adapter = this.getAdapter(litteral, side)
 
         adapter(audioService.play.bind(audioService), percent, side, level)

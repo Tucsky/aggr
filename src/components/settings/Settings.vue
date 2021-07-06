@@ -35,16 +35,15 @@
               placeholder="Workspaces"
               @output="loadWorkspace"
               title="Load another workspace"
+              selectionClass="-blue -small"
               v-tippy
             >
               <template v-slot:selection>
-                <button type="button" class="btn -blue -small" href="javascript:void(0);">
-                  <i class="icon-search"></i>
-                  <span class="ml4">Load workspaces ({{ workspaces.length }}) </span>
-                </button>
+                <i class="icon-search"></i>
+                <span class="ml4">Load workspaces ({{ workspaces.length }}) </span>
               </template>
               <template v-slot:option="{ value }">
-                <i class="icon-trash -action mr16" @click.stop="removeWorkspace(value.id)"></i>
+                <i class="icon-trash -action mr16" @mousedown.stop @click.stop="removeWorkspace(value.id)"></i>
                 <div class="flex-grow-1">
                   <div class="dropdown-option__title">
                     {{ value.name }} <code>{{ value.id }}</code>
@@ -295,7 +294,7 @@ export default class extends Vue {
       click: this.uploadWorkspace
     }
   ]
-  hits = 0
+  hits = null
   private _hitsTimeout: number
 
   get exchanges() {
@@ -369,11 +368,14 @@ export default class extends Vue {
   }
 
   getHits() {
+    if (this.hits === null) {
+      this.hits = '...'
+    }
+
     this._hitsTimeout = setTimeout(async () => {
       const hits = (await aggregatorService.dispatchAsync({ op: 'hits' })) as any
       const elapsed = +new Date() - APPLICATION_START_TIME
-      console.log(hits, elapsed)
-      this.hits = Math.round(hits / (elapsed / 1000))
+      this.hits = (hits / (elapsed / 1000)).toFixed()
 
       this.getHits()
     }, 1000)

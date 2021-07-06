@@ -891,6 +891,7 @@ export default class extends Mixins(PaneMixin) {
   &.-level-2 {
     height: 1.75em;
     font-size: 1em;
+    font-weight: 600;
   }
 
   &.-level-3 {
@@ -898,11 +899,6 @@ export default class extends Mixins(PaneMixin) {
     box-shadow: 0 0 20px rgba(black, 0.5);
     z-index: 1;
     font-size: 1.125em;
-  }
-
-  &.-gif {
-    font-weight: 600;
-    // text-shadow: 1px 1px rgba(black, 0.5);
   }
 
   > div {

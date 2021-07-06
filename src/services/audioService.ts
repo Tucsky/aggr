@@ -1,10 +1,20 @@
 import Vue from 'vue'
 import Tuna from 'tunajs'
 import store from '../store'
-import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
+import { findClosingBracketMatchIndex, parseFunctionArguments, randomString } from '@/utils/helpers'
 
 export type AudioFunction = (
-  play: (frequency: number, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>,
+  play: (
+    frequency?: number,
+    gain?: number,
+    fadeOut?: number,
+    delay?: number,
+    fadeIn?: number,
+    holdDuration?: number,
+    osc?: string,
+    startGain?: number,
+    endGain?: number
+  ) => Promise<void>,
   ratio: number,
   side: 'buy' | 'sell',
   level: number
@@ -16,9 +26,20 @@ class AudioService {
 
   output: any
 
-  _play: (frequency: number, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>
+  _play: (
+    frequency?: number,
+    gain?: number,
+    fadeOut?: number,
+    delay?: number,
+    fadeIn?: number,
+    holdDuration?: number,
+    osc?: string,
+    startGain?: number,
+    endGain?: number
+  ) => Promise<void>
   count = 0
   minTime = 0
+  debug = false
 
   constructor() {
     this._play = this.play.bind(this)
@@ -194,56 +215,136 @@ class AudioService {
     }
   }
 
-  async play([frequency, gain, duration, delay, ramp, osc]) {
+  async play(
+    frequency?: number,
+    gain?: number,
+    fadeOut?: number,
+    delay?: number,
+    fadeIn?: number,
+    holdDuration?: number,
+    osc?: OscillatorType,
+    startGain?: number,
+    endGain?: number
+  ) {
     if (this.context.state !== 'running') {
       return
     }
 
     const oscillatorNode = this.context.createOscillator()
     const gainNode = this.context.createGain()
-    gain = Math.min(1, gain)
 
     oscillatorNode.frequency.value = frequency
     oscillatorNode.type = osc || 'triangle'
+
+    const id = randomString()
 
     oscillatorNode.onended = () => {
       oscillatorNode.disconnect()
       gainNode.disconnect()
       this.count--
+      this.debug && console.log(id, 'ended.', this.context.currentTime.toFixed(2) + 's')
     }
 
-    this.count++
+    if (this.debug) {
+      console.log(
+        id,
+        '[' + this.context.currentTime.toFixed(2) + ', ' + this.count + ']',
+        'play',
+        'frequency',
+        frequency,
+        'gain',
+        gain,
+        'holdDuration',
+        holdDuration,
+        'delay',
+        delay,
+        'fadeIn',
+        fadeIn,
+        'startGain',
+        startGain,
+        'fadeOut',
+        fadeOut,
+        'endGain',
+        endGain,
+        'osc',
+        osc
+      )
+    }
 
     gainNode.connect(this.output)
     oscillatorNode.connect(gainNode)
 
-    if (ramp) {
-      gainNode.gain.value = 0.0001
-      gainNode.gain.exponentialRampToValueAtTime(gain, this.context.currentTime + delay + ramp)
-      setTimeout(() => {
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, this.context.currentTime + duration)
-      }, (delay + ramp) * 1000)
-
-      oscillatorNode.start(this.context.currentTime + delay)
-      oscillatorNode.stop(this.context.currentTime + delay + ramp + duration)
+    if (!this.minTime || !this.count) {
+      this.minTime = this.context.currentTime
     } else {
-      if (!this.minTime) {
-        this.minTime = this.context.currentTime
-      } else {
-        this.minTime = Math.max(this.minTime, this.context.currentTime)
+      this.minTime = Math.max(this.minTime, this.context.currentTime)
 
-        if (!delay) {
-          this.minTime += this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
-        }
+      if (!delay) {
+        const cueTime = this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
+
+        console.log('add cue time', cueTime, this.count)
+        this.minTime += cueTime
+      }
+    }
+    this.count++
+
+    const time = this.minTime + delay
+    const offset = time - this.context.currentTime
+    this.debug && console.log(id, `\t offset === ${offset.toFixed(2) + 's'}`)
+    oscillatorNode.start(time)
+    oscillatorNode.stop(time + fadeIn + holdDuration + fadeOut)
+    this.debug && console.log(id, `\t start at ${time.toFixed(2) + 's'}, end at ${(time + fadeIn + holdDuration + fadeOut).toFixed(2) + 's'}`)
+
+    if (fadeIn) {
+      gainNode.gain.setValueAtTime(startGain, this.context.currentTime)
+
+      gainNode.gain.exponentialRampToValueAtTime(gain, time + fadeIn)
+      if (this.debug) {
+        console.log(
+          id,
+          `\t [${this.context.currentTime.toFixed(2)}] exponentialRampToValueAtTime ${startGain} -> ${gain} (${time.toFixed(2) + 's'} to ${(
+            time + fadeIn
+          ).toFixed(2) + 's'})`
+        )
       }
 
-      const time = this.minTime + delay
+      if (fadeOut) {
+        gainNode.gain.setValueAtTime(gain, time + fadeIn + holdDuration)
 
+        gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
+
+        setTimeout(() => {
+          if (this.debug) {
+            console.log(
+              id,
+              `\t[${this.context.currentTime.toFixed(2)}] exponentialRampToValueAtTime ${gain} -> ${endGain} (${(
+                time +
+                fadeIn +
+                holdDuration
+              ).toFixed(2)}s to ${(this.context.currentTime + fadeOut).toFixed(2)}s)`
+            )
+          }
+        }, (offset + fadeIn + holdDuration) * 1000)
+      }
+    } else {
+      this.debug && console.log(id, `\t set base gain ${gain}`)
       gainNode.gain.setValueAtTime(gain, time)
-      gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration)
 
-      oscillatorNode.start(time)
-      oscillatorNode.stop(0.2 + time + duration)
+      if (fadeOut) {
+        if (this.debug) {
+          console.log(
+            id,
+            `\t [${this.context.currentTime.toFixed(2)}] exponentialRampToValueAtTime ${gain} -> ${endGain} (${time.toFixed(2) + 's'} to ${(
+              time +
+              fadeIn +
+              holdDuration +
+              fadeOut
+            ).toFixed(2)}s)`
+          )
+        }
+
+        gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
+      }
     }
   }
 
@@ -279,7 +380,7 @@ class AudioService {
     
     ${litteral}`
 
-    const FUNCTION_LOOKUP_REGEX = new RegExp(`play\\([^[]`, 'g')
+    const FUNCTION_LOOKUP_REGEX = /play\(/g
     let functionMatch = null
 
     if (gainMultiplier === null) {
@@ -289,11 +390,48 @@ class AudioService {
     do {
       if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(litteral))) {
         const originalParameters = litteral.slice(
-          functionMatch.index + functionMatch[0].length - 1,
-          findClosingBracketMatchIndex(litteral, functionMatch.index + functionMatch[0].length - 2)
+          functionMatch.index + functionMatch[0].length,
+          findClosingBracketMatchIndex(litteral, functionMatch.index + functionMatch[0].length - 1)
         )
 
         const functionArguments = parseFunctionArguments(originalParameters)
+
+        const defaultArguments = [
+          329.63, // frequency
+          1, // gain
+          1, // fadeOut
+          0, // delay
+          0, // fadeIn
+          0, // holdDuration
+          `'triangle'`, // osc
+          0.0001, // startGain
+          0.0001 // endGain
+        ]
+
+        for (let i = 0; i < defaultArguments.length; i++) {
+          let argumentValue = defaultArguments[i]
+          if (typeof functionArguments[i] !== 'undefined') {
+            if (typeof functionArguments[i] === 'string') {
+              functionArguments[i] = functionArguments[i].trim()
+
+              if (/^('|").*('|")$/.test(functionArguments[i]) && typeof defaultArguments[i] === 'number') {
+                functionArguments[i] = defaultArguments[i]
+              }
+            }
+
+            try {
+              argumentValue = JSON.parse(functionArguments[i])
+            } catch (error) {
+              argumentValue = functionArguments[i]
+            }
+
+            if (argumentValue === null || argumentValue === '') {
+              argumentValue = defaultArguments[i]
+            }
+          }
+
+          functionArguments[i] = argumentValue
+        }
 
         if (+functionArguments[0] && frequencyMultiplier && frequencyMultiplier !== 1) {
           functionArguments[0] *= frequencyMultiplier
@@ -309,7 +447,7 @@ class AudioService {
 
         const finalParameters = functionArguments.join(',')
 
-        litteral = litteral.replace('(' + originalParameters, '([' + finalParameters + ']')
+        litteral = litteral.replace('(' + originalParameters + ')', '(' + finalParameters + ')')
       }
     } while (functionMatch)
 

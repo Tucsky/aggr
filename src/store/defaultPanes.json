@@ -1,160 +1,142 @@
 {
-  "desktop": {
-    "_id": "panes",
-    "layout": [
-      { "x": 0, "y": 0, "w": 20, "h": 24, "i": "chart", "type": "chart" },
-      { "x": 20, "y": 0, "w": 4, "h": 18, "i": "trades", "type": "trades" },
-      { "x": 20, "y": 20, "w": 4, "h": 6, "i": "liquidations", "type": "trades" }
+  "_id": "panes",
+  "layouts": {
+    "lg": [
+      { "i": "chart", "type": "chart", "x": 0, "y": 0, "w": 20, "h": 24 },
+      { "i": "trades", "type": "trades", "x": 20, "y": 0, "w": 4, "h": 20 },
+      { "i": "liquidations", "type": "trades", "x": 20, "y": 20, "w": 4, "h": 4 }
     ],
-    "panes": {
-      "chart": {
-        "id": "chart",
-        "name": "Chart",
-        "type": "chart",
-        "markets": [
-          "BITFINEX:BTCUSD",
-          "BINANCE:btcusdt",
-          "OKEX:BTC-USDT",
-          "KRAKEN:XBT/USD",
-          "COINBASE:BTC-USD",
-          "POLONIEX:USDT_BTC",
-          "HUOBI:btcusdt",
-          "BITSTAMP:btcusd",
-          "BITMEX:XBTUSD",
-          "BITFINEX:BTCF0:USTF0",
-          "OKEX:BTC-USD-SWAP",
-          "OKEX:BTC-USDT-SWAP",
-          "BINANCE_FUTURES:btcusdt",
-          "BINANCE_FUTURES:btcusd_perp",
-          "HUOBI:BTC-USD",
-          "KRAKEN:PI_XBTUSD",
-          "DERIBIT:BTC-PERPETUAL",
-          "FTX:BTC-PERP"
-        ]
-      },
-      "trades": {
-        "id": "trades",
-        "name": "TRADES",
-        "type": "trades",
-        "markets": [
-          "BITFINEX:BTCUSD",
-          "BINANCE:btcusdt",
-          "OKEX:BTC-USDT",
-          "KRAKEN:XBT/USD",
-          "COINBASE:BTC-USD",
-          "POLONIEX:USDT_BTC",
-          "HUOBI:btcusdt",
-          "BITSTAMP:btcusd",
-          "BITMEX:XBTUSD",
-          "BITFINEX:BTCF0:USTF0",
-          "OKEX:BTC-USD-SWAP",
-          "OKEX:BTC-USDT-SWAP",
-          "BINANCE_FUTURES:btcusdt",
-          "BINANCE_FUTURES:btcusd_perp",
-          "HUOBI:BTC-USD",
-          "KRAKEN:PI_XBTUSD",
-          "DERIBIT:BTC-PERPETUAL",
-          "FTX:BTC-PERP"
-        ],
-        "settings": {
-          "tradeType": "trades",
-          "thresholds": [{ "amount": 100000 }],
-          "liquidations": {
-            "amount": 50000
-          }
-        }
-      },
-      "liquidations": {
-        "id": "liquidations",
-        "name": "REKTS",
-        "type": "trades",
-        "markets": [
-          "BITMEX:XBTUSD",
-          "BITFINEX:BTCF0:USTF0",
-          "OKEX:BTC-USD-SWAP",
-          "OKEX:BTC-USDT-SWAP",
-          "BINANCE_FUTURES:btcusdt",
-          "BINANCE_FUTURES:btcusd_perp",
-          "HUOBI:BTC-USD",
-          "KRAKEN:PI_XBTUSD",
-          "DERIBIT:BTC-PERPETUAL",
-          "FTX:BTC-PERP",
-          "BYBIT:BTCUSD"
-        ],
-        "settings": {
-          "tradeType": "liquidations",
-          "thresholds": [
-            {
-              "id": "threshold",
-              "amount": 10000,
-              "buyColor": "rgba(236,64,122,0.5)",
-              "sellColor": "rgba(255,152,0,0.5)",
-              "buyAudio": "play(329.63, ratio / 10, ratio, 0.08, .1, 'sine');",
-              "sellAudio": "play(440, ratio / 10, ratio, 0.08, .05, 'sine');"
-            },
-            {
-              "id": "significant",
-              "amount": 25000,
-              "buyColor": "rgba(236,64,122,0.6)",
-              "sellColor": "rgba(255,152,0,0.7)",
-              "buyAudio": "play(329.63, ratio / 10, ratio, 0.08, .1, 'sine');",
-              "sellAudio": "play(440, ratio / 10, ratio, 0.08, .1, 'sine');"
-            },
-            {
-              "id": "huge",
-              "amount": 100000,
-              "gif": "rekt",
-              "buyColor": "rgba(236,64,122,0.7)",
-              "sellColor": "rgba(255,152,0,0.8)",
-              "buyAudio": "play(329.63, ratio / 10, ratio, 0.08, .1, 'sine');",
-              "sellAudio": "play(440, ratio / 10, ratio, 0.08, .1, 'sine');"
-            },
-            {
-              "id": "rare",
-              "amount": 1000000,
-              "gif": "explosion",
-              "buyColor": "rgb(156,39,176)",
-              "sellColor": "rgb(255,235,59)",
-              "buyAudio": "play(329.63, ratio / 10, ratio, 0.08, .1, 'sine');",
-              "sellAudio": "play(440, ratio / 10, ratio, 0.08, .1, 'sine');"
-            }
-          ]
-        }
-      }
-    },
-    "marketsListeners": {}
+    "md": [
+      { "i": "chart", "type": "chart", "x": 0, "y": 0, "w": 13, "h": 16 },
+      { "i": "trades", "type": "trades", "x": 13, "y": 0, "w": 3, "h": 14 },
+      { "i": "liquidations", "type": "trades", "x": 13, "y": 14, "w": 3, "h": 2 }
+    ],
+    "sm": [
+      { "i": "chart", "type": "chart", "x": 0, "y": 0, "w": 10, "h": 12 },
+      { "i": "trades", "type": "trades", "x": 10, "y": 0, "w": 2, "h": 10 },
+      { "i": "liquidations", "type": "trades", "x": 10, "y": 10, "w": 2, "h": 2 }
+    ],
+    "xs": [
+      { "i": "chart", "type": "chart", "x": 0, "y": 0, "w": 8, "h": 3 },
+      { "i": "trades", "type": "trades", "x": 0, "y": 3, "w": 8, "h": 4 },
+      { "i": "liquidations", "type": "trades", "x": 0, "y": 7, "w": 8, "h": 1 }
+    ]
   },
-  "mobile": {
-    "_id": "panes",
-    "layout": [{ "x": 0, "y": 0, "w": 24, "h": 24, "i": "trades", "type": "trades" }],
-    "panes": {
-      "trades": {
-        "id": "trades",
-        "name": "TRADES",
-        "type": "trades",
-        "markets": [
-          "BITFINEX:BTCUSD",
-          "BINANCE:btcusdt",
-          "OKEX:BTC-USDT",
-          "KRAKEN:XBT/USD",
-          "COINBASE:BTC-USD",
-          "POLONIEX:USDT_BTC",
-          "HUOBI:btcusdt",
-          "BITSTAMP:btcusd",
-          "BITMEX:XBTUSD",
-          "BITFINEX:BTCF0:USTF0",
-          "OKEX:BTC-USD-SWAP",
-          "OKEX:BTC-USDT-SWAP",
-          "BINANCE_FUTURES:btcusdt",
-          "BINANCE_FUTURES:btcusd_perp",
-          "HUOBI:BTC-USD",
-          "KRAKEN:PI_XBTUSD",
-          "DERIBIT:BTC-PERPETUAL",
-          "FTX:BTC-PERP",
-          "BYBIT:BTCUSD"
-        ]
+  "panes": {
+    "chart": {
+      "id": "chart",
+      "name": "Chart",
+      "type": "chart",
+      "markets": [
+        "BITFINEX:BTCUSD",
+        "BINANCE:btcusdt",
+        "OKEX:BTC-USDT",
+        "KRAKEN:XBT/USD",
+        "COINBASE:BTC-USD",
+        "POLONIEX:USDT_BTC",
+        "HUOBI:btcusdt",
+        "BITSTAMP:btcusd",
+        "BITMEX:XBTUSD",
+        "BITFINEX:BTCF0:USTF0",
+        "OKEX:BTC-USD-SWAP",
+        "OKEX:BTC-USDT-SWAP",
+        "BINANCE_FUTURES:btcusdt",
+        "BINANCE_FUTURES:btcusd_perp",
+        "HUOBI:BTC-USD",
+        "KRAKEN:PI_XBTUSD",
+        "DERIBIT:BTC-PERPETUAL",
+        "FTX:BTC-PERP"
+      ]
+    },
+    "trades": {
+      "id": "trades",
+      "name": "TRADES",
+      "type": "trades",
+      "markets": [
+        "BITFINEX:BTCUSD",
+        "BINANCE:btcusdt",
+        "OKEX:BTC-USDT",
+        "KRAKEN:XBT/USD",
+        "COINBASE:BTC-USD",
+        "POLONIEX:USDT_BTC",
+        "HUOBI:btcusdt",
+        "BITSTAMP:btcusd",
+        "BITMEX:XBTUSD",
+        "BITFINEX:BTCF0:USTF0",
+        "OKEX:BTC-USD-SWAP",
+        "OKEX:BTC-USDT-SWAP",
+        "BINANCE_FUTURES:btcusdt",
+        "BINANCE_FUTURES:btcusd_perp",
+        "HUOBI:BTC-USD",
+        "KRAKEN:PI_XBTUSD",
+        "DERIBIT:BTC-PERPETUAL",
+        "FTX:BTC-PERP"
+      ],
+      "settings": {
+        "tradeType": "trades",
+        "thresholds": [{ "amount": 100000 }],
+        "liquidations": {
+          "amount": 50000
+        }
       }
     },
-    "marketsListeners": {}
-  }
+    "liquidations": {
+      "id": "liquidations",
+      "name": "REKTS",
+      "type": "trades",
+      "markets": [
+        "BITMEX:XBTUSD",
+        "BITFINEX:BTCF0:USTF0",
+        "OKEX:BTC-USD-SWAP",
+        "OKEX:BTC-USDT-SWAP",
+        "BINANCE_FUTURES:btcusdt",
+        "BINANCE_FUTURES:btcusd_perp",
+        "HUOBI:BTC-USD",
+        "KRAKEN:PI_XBTUSD",
+        "DERIBIT:BTC-PERPETUAL",
+        "FTX:BTC-PERP",
+        "BYBIT:BTCUSD"
+      ],
+      "settings": {
+        "tradeType": "liquidations",
+        "thresholds": [
+          {
+            "id": "threshold",
+            "amount": 10000,
+            "buyColor": "rgba(236,64,122,0.5)",
+            "sellColor": "rgba(255,152,0,0.5)",
+            "buyAudio": "var srqtR = Math.min(1, Math.sqrt(ratio) / 4)\nplay(329.63, srqtR, srqtR,,,,'sine')\nplay(329.63, srqtR, srqtR,0.08,,,'sine')",
+            "sellAudio": "var srqtR = Math.min(1, Math.sqrt(ratio) / 6)\nplay(440, srqtR, srqtR,,,,'sine')\nplay(440, srqtR, srqtR,0.08,,,'sine')"
+          },
+          {
+            "id": "significant",
+            "amount": 25000,
+            "buyColor": "rgba(236,64,122,0.6)",
+            "sellColor": "rgba(255,152,0,0.7)",
+            "buyAudio": "var srqtR = Math.min(1, Math.sqrt(ratio) / 4)\nplay(329.63, srqtR, srqtR,,,,'sine')\nplay(329.63, srqtR, srqtR,0.08,,,'sine')",
+            "sellAudio": "var srqtR = Math.min(1, Math.sqrt(ratio) / 6)\nplay(440, srqtR, srqtR,,,,'sine')\nplay(440, srqtR, srqtR,0.08,,,'sine')"
+          },
+          {
+            "id": "huge",
+            "amount": 100000,
+            "gif": "rekt",
+            "buyColor": "rgba(236,64,122,0.7)",
+            "sellColor": "rgba(255,152,0,0.8)",
+            "buyAudio": "var srqtR = Math.min(1, Math.sqrt(ratio) / 4)\nplay(329.63, srqtR, srqtR,,,,'sine')\nplay(329.63, srqtR, srqtR,0.08,,,'sine')",
+            "sellAudio": "var srqtR = Math.min(1, Math.sqrt(ratio) / 6)\nplay(440, srqtR, srqtR,,,,'sine')\nplay(440, srqtR, srqtR,0.08,,,'sine')"
+          },
+          {
+            "id": "rare",
+            "amount": 1000000,
+            "gif": "explosion",
+            "buyColor": "rgb(156,39,176)",
+            "sellColor": "rgb(255,235,59)",
+            "buyAudio": "var srqtR = Math.min(1, Math.sqrt(ratio) / 4)\nplay(329.63, srqtR, srqtR,,,,'sine')\nplay(329.63, srqtR, srqtR,0.08,,,'sine')",
+            "sellAudio": "var srqtR = Math.min(1, Math.sqrt(ratio) / 6)\nplay(440, srqtR, srqtR,,,,'sine')\nplay(440, srqtR, srqtR,0.08,,,'sine')"
+          }
+        ]
+      }
+    }
+  },
+  "marketsListeners": {}
 }

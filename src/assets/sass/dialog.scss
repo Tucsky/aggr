@@ -73,13 +73,6 @@
       letter-spacing: 0;
     }
 
-    textarea {
-      width: 100%;
-      max-width: 100%;
-      flex-grow: 1;
-      background-color: rgba(black, 0.2);
-    }
-
     p {
       white-space: pre-wrap;
       line-height: 1.4;
@@ -132,16 +125,6 @@
     .dialog-body {
       padding-bottom: 0;
     }
-  }
-
-  .form-control {
-    margin: 0;
-    border: 1px solid var(--theme-background-200);
-    border-radius: 4px;
-    padding: 0.5rem;
-    box-sizing: border-box;
-    width: 100%;
-    letter-spacing: 0;
   }
 
   .verte-control {

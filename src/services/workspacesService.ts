@@ -2,10 +2,9 @@ import defaultIndicators from '@/store/defaultIndicators.json'
 import store, { boot } from '@/store'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
 import { GifsStorage, Preset, PresetType, ProductsStorage, Workspace } from '@/types/test'
-import { downloadJson, getDiff, randomString, slugify, uniqueName } from '@/utils/helpers'
+import { downloadJson, randomString, slugify, uniqueName } from '@/utils/helpers'
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
-import * as migrations from './migrations'
-import panesSettings from '@/store/panesSettings'
+import { databaseUpgrades, workspaceUpgrades } from './migrations'
 import { PanesState } from '@/store/panes'
 
 export interface AggrDB extends DBSchema {
@@ -37,20 +36,25 @@ class WorkspacesService {
   db: IDBPDatabase<AggrDB>
   workspace: Workspace
   urlStrategy = 'history'
+  latestDatabaseVersion: any
+  latestWorkspaceVersion: any
 
   constructor() {
     if (/github\.io/.test(window.location.hostname)) {
       this.urlStrategy = 'hash'
     }
+
+    this.latestDatabaseVersion = Math.max.apply(null, Object.keys(databaseUpgrades))
+    this.latestWorkspaceVersion = Math.max.apply(null, Object.keys(workspaceUpgrades))
   }
 
   async createDatabase() {
-    console.log(`[idb] openDB 'aggr'`)
+    console.log(`[idb] openDB 'aggr' (latest database v${this.latestDatabaseVersion} workspace v${this.latestWorkspaceVersion})`)
 
     let promiseOfUpgrade: Promise<void>
 
     return new Promise<IDBPDatabase<AggrDB>>(resolve => {
-      openDB<AggrDB>('aggr', 2, {
+      openDB<AggrDB>('aggr', this.latestDatabaseVersion, {
         upgrade: (db, oldVersion, newVersion, tx) => {
           console.debug(`[idb] upgrade received`, oldVersion, '->', newVersion)
 
@@ -65,7 +69,10 @@ class WorkspacesService {
 
           for (let i = oldVersion ? oldVersion + 1 : oldVersion; i <= newVersion; i++) {
             console.debug(`[idb] migrating v${i}`)
-            migrations['v' + i](db)
+
+            if (typeof databaseUpgrades[i] === 'function') {
+              databaseUpgrades[i](db)
+            }
           }
         },
         blocked() {
@@ -153,6 +160,8 @@ class WorkspacesService {
   }
 
   async setCurrentWorkspace(workspace: Workspace) {
+    this.upgradeWorkspace(workspace)
+
     this.workspace = workspace
 
     if (this.urlStrategy === 'hash') {
@@ -166,6 +175,22 @@ class WorkspacesService {
     await boot(workspace)
 
     return workspace
+  }
+
+  upgradeWorkspace(workspace: Workspace) {
+    if (typeof workspace.version === 'undefined') {
+      workspace.version = 0
+    }
+
+    while (workspace.version < this.latestWorkspaceVersion) {
+      console.log(`[workspace] upgrade workspace ${workspace.id} (${workspace.version} -> ${workspace.version + 1})`)
+
+      workspace.version++
+
+      if (typeof workspaceUpgrades[workspace.version] === 'function') {
+        workspaceUpgrades[workspace.version](workspace)
+      }
+    }
   }
 
   async saveState(stateId, state: any) {
@@ -284,6 +309,7 @@ class WorkspacesService {
     const timestamp = +new Date()
 
     const workspace: Workspace = {
+      version: this.latestWorkspaceVersion,
       createdAt: timestamp,
       updatedAt: null,
       name: null,

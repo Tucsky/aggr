@@ -56,8 +56,8 @@ const state = {
     amount: 100000,
     buyColor: 'rgb(103,58,183)',
     sellColor: 'rgb(103,58,183)',
-    buyAudio: `play(329.63, ratio, ratio * 2, 0, 0.1, 'sine')`,
-    sellAudio: `play(440, ratio, ratio * 2, 0, 0.1, 'sine')`
+    buyAudio: "var srqtR = Math.min(1, Math.sqrt(ratio) / 4)\nplay(329.63, srqtR, srqtR,,,,'sine')\nplay(329.63, srqtR, srqtR,0.08,,,'sine')",
+    sellAudio: "var srqtR = Math.min(1, Math.sqrt(ratio) / 6)\nplay(440, srqtR, srqtR,,,,'sine')\nplay(440, srqtR, srqtR,0.08,,,'sine')"
   },
   thresholds: [
     {
