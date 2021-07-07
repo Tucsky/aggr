@@ -251,8 +251,18 @@ class AudioService {
       }
     })
   }
-
-  async playurl(url?: string, startTime?: number, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) {
+  
+  async playurl(
+    url?: string, 
+    startTime?: number, 
+    gain?: number, 
+    fadeOut?: number, 
+    delay?: number, 
+    fadeIn?: number, 
+    holdDuration?: number, 
+    startGain?: number, 
+    endGain?: number
+  ) {
     if (this.context.state !== 'running') {
       return
     }
@@ -366,11 +376,11 @@ class AudioService {
     this.minTime += cueTime
 
     const offset = time - this.context.currentTime
-    oscillatorNode.start(time)
-    oscillatorNode.stop(.2 + time + fadeIn + holdDuration + fadeOut)
+    oscillatorNode.start(time - .05)
+    oscillatorNode.stop(time + fadeIn + holdDuration + fadeOut)
 
     if (fadeIn) {
-      gainNode.gain.setValueAtTime(startGain, this.context.currentTime)
+      gainNode.gain.setValueAtTime(startGain, time - .05)
 
       gainNode.gain.exponentialRampToValueAtTime(gain, time + fadeIn)
 
@@ -382,7 +392,7 @@ class AudioService {
         }, (offset + fadeIn + holdDuration) * 1000)
       }
     } else {
-      gainNode.gain.setValueAtTime(gain, time)
+      gainNode.gain.setValueAtTime(gain, time - .05)
 
       if (fadeOut) {
         gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
@@ -435,7 +445,7 @@ class AudioService {
     if (gainMultiplier === null) {
       gainMultiplier = store.state.settings.audioVolume
     }
-
+    
     try {
       do {
         if ((frequencyMatch = FUNCTION_LOOKUP_REGEX_FREQUENCY.exec(litteral))) {

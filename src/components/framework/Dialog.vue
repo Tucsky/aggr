@@ -3,6 +3,7 @@
     <div
       ref="dialogContent"
       class="dialog-content"
+      :class="contentClass"
       @click.stop
       :style="{ transform: `translate(${delta.x}px, ${delta.y}px)` }"
       @mousedown="onMouseDown"
@@ -43,6 +44,9 @@ import { getEventCords } from '../../utils/picker'
       required: false
     },
     bodyClass: {
+      required: false
+    },
+    contentClass: {
       required: false
     },
     startPosition: {

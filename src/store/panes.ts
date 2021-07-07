@@ -7,18 +7,20 @@ import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '.'
 import panesSettings from './panesSettings'
 import defaultPanes from './defaultPanes.json'
+import { BREAKPOINTS_COLS, BREAKPOINTS_WIDTHS } from '@/utils/constants'
 
 export type PaneType = 'trades' | 'chart' | 'stats' | 'counters' | 'prices'
 export type MarketsListeners = { [market: string]: number }
 
 export type ResponsiveLayouts = { [breakpoint: string]: GridItem[] }
 export interface GridItem {
-  x: number
-  y: number
-  w: number
-  h: number
+  x?: number
+  y?: number
+  w?: number
+  h?: number
   i: string
   type: string
+  isolated?: boolean
 }
 
 export interface Pane {
@@ -39,8 +41,27 @@ export interface PanesState {
 const state: PanesState = defaultPanes
 
 const getters = {
-  getNextGridItemCooordinates: () => {
-    return { x: 0, y: 0 }
+  currentLayout: state => {
+    const breakpoints = Object.keys(state.layouts).reduce((cols, breakpoint) => {
+      cols[breakpoint] = BREAKPOINTS_WIDTHS[breakpoint]
+      return cols
+    }, {})
+
+    // sort by layout size
+    const keys = Object.keys(breakpoints).sort((a, b) => {
+      return BREAKPOINTS_COLS[b] - BREAKPOINTS_COLS[a]
+    })
+
+    // ensure smallest is level 0 layout
+    breakpoints[keys[keys.length - 1]] = 0
+
+    const width = window.innerWidth
+
+    for (const breakpoint of keys) {
+      if (width > breakpoints[breakpoint]) {
+        return breakpoint
+      }
+    }
   }
 } as GetterTree<PanesState, ModulesState>
 
@@ -109,19 +130,16 @@ const actions = {
       localStorage.removeItem(id)
     })
   },
-  appendPaneGridItem({ commit, getters }, { id, type }: { id: string; type: PaneType }) {
-    const { x, y } = getters.getNextGridItemCooordinates
+  appendPaneGridItem({ commit }, { id, type }: { id: string; type: PaneType }) {
+    for (const breakpoint in state.layouts) {
+      const item: GridItem = {
+        i: id,
+        type
+      }
 
-    const gridItem: GridItem = {
-      i: id,
-      x,
-      y,
-      w: 4,
-      h: 4,
-      type
+      console.log('add grid item', item.i, 'on layout', breakpoint)
+      commit('ADD_GRID_ITEM', { breakpoint, item })
     }
-
-    commit('ADD_GRID_ITEM', gridItem)
   },
   removePaneGridItems({ commit, state }, id: string) {
     for (const breakpoint in state.layouts) {
@@ -129,6 +147,7 @@ const actions = {
 
       if (item) {
         const index = state.layouts[breakpoint].indexOf(item)
+        console.log('remove grid item', item.i, 'on layout', breakpoint, 'at index', index)
         commit('REMOVE_GRID_ITEM', { breakpoint, index })
       }
     }
@@ -341,6 +360,41 @@ const actions = {
     } else {
       el.classList.remove('-large')
     }
+  },
+  toggleResponsive({ state, getters }) {
+    const breakpoints = Object.keys(state.layouts)
+    const currentLayout = getters.currentLayout
+    console.log('[toggleResponsive] currentLayout', currentLayout)
+
+    if (breakpoints.length > 1) {
+      for (const breakpoint in state.layouts) {
+        if (breakpoint !== currentLayout) {
+          console.log('delete layout', breakpoint)
+          Vue.delete(state.layouts, breakpoint)
+        }
+      }
+    } else {
+      for (const breakpoint in BREAKPOINTS_WIDTHS) {
+        const cols = BREAKPOINTS_COLS[breakpoint]
+        if (breakpoint === currentLayout) {
+          continue
+        }
+
+        const coeficient = cols / BREAKPOINTS_COLS[currentLayout]
+        console.log('create layout', breakpoint, 'at x', coeficient, 'of', currentLayout)
+
+        const layout = JSON.parse(JSON.stringify(state.layouts[currentLayout]))
+
+        for (const pane of layout) {
+          pane.x = Math.round(pane.x * coeficient)
+          pane.y = Math.round(pane.y * coeficient)
+          pane.w = Math.round(pane.w * coeficient)
+          pane.h = Math.round(pane.h * coeficient)
+        }
+
+        Vue.set(state.layouts, breakpoint, layout)
+      }
+    }
   }
 } as ActionTree<PanesState, ModulesState>
 
@@ -352,13 +406,84 @@ const mutations = {
     Vue.delete(state.panes, id)
   },
   ADD_GRID_ITEM: (state, { breakpoint, item }) => {
+    if (typeof item.x === 'undefined') {
+      const cols = BREAKPOINTS_COLS[breakpoint]
+      const size = 4
+
+      const items = state.layouts[breakpoint].slice().sort((a, b) => a.x + a.y * 2 - (b.x + b.y * 2))
+
+      console.log('add grid item', 'layout', breakpoint, 'breakpoint cols', cols, 'optimal width', size)
+
+      const columns = []
+
+      for (let x = 0; x < cols; x += size) {
+        console.log('looking for max y in col', x, '(size', size, ')')
+        let y = 0
+        for (const item of items) {
+          if (
+            (item.x >= x && item.x < x + size) ||
+            (item.x + item.w > x && item.x + item.w < x + size) ||
+            (item.x < x && item.x + item.w >= x + size)
+          ) {
+            y = Math.max(y, item.y + item.h)
+            console.log('item', item.i, item.x, item.y, item.w, item.h, 'is in, min y for this col is now', y)
+            continue
+          }
+        }
+
+        columns.push(y)
+      }
+
+      item.y = Math.min.apply(null, columns)
+      item.x = columns.indexOf(Math.min.apply(null, columns)) * size
+
+      if (item.y >= cols) {
+        for (const item of state.layouts[breakpoint]) {
+          item.y += size
+        }
+
+        item.y = 0
+        item.x = 0
+      }
+
+      item.w = size
+      item.h = size
+    }
+
     state.layouts[breakpoint].unshift(item)
   },
   REMOVE_GRID_ITEM: (state, { breakpoint, index }) => {
     state.layouts[breakpoint].splice(index, 1)
   },
-  UPDATE_LAYOUT: (state, { breakpoint, items }: { breakpoint: string; items: GridItem[] }) => {
-    state.layouts[breakpoint] = items
+  UPDATE_ITEM: (state, { breakpoint, item }: { breakpoint: string; item: GridItem }) => {
+    const targetCols = BREAKPOINTS_COLS[breakpoint]
+    console.log('update item', item.i, item)
+
+    for (const _breakpoint in state.layouts) {
+      const _item = state.layouts[_breakpoint].find(_item => item.i === _item.i)
+
+      const layoutCols = BREAKPOINTS_COLS[_breakpoint]
+      const coeficient = layoutCols / targetCols
+      const isCurrent = coeficient === 1
+
+      if (!isCurrent && _item.isolated) {
+        console.log('item', _item.i, 'on layout', _breakpoint, 'is isolated: abort')
+        continue
+      }
+      // const index = state.layouts[_breakpoint].indexOf(_item)
+
+      console.log('update item', _item.i, 'on layout', _breakpoint, 'coef', coeficient, item === _item ? 'is original' : '')
+
+      _item.x = Math.floor(item.x * coeficient)
+      _item.y = Math.floor(item.y * coeficient)
+      _item.w = Math.floor(item.w * coeficient)
+      _item.h = Math.floor(item.h * coeficient)
+
+      if (isCurrent && !_item.isolated) {
+        console.log('flag item as "isolated"')
+        _item.isolated = true
+      }
+    }
   },
   SET_MARKETS_LISTENERS: (state, marketsListeners: MarketsListeners) => {
     state.marketsListeners = marketsListeners

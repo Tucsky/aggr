@@ -3,8 +3,8 @@
     <template v-slot:option="{ value }">
       <i v-if="value.icon" :class="'-lower icon-' + value.icon"></i>
 
-      <i v-if="value.id" class="icon-refresh -action  -lower" @click.stop="savePreset(value.label)" title="Update"></i>
-      <i v-if="value.id" class="icon-trash -action mr8 -lower" @click.stop="removePreset(value.id)" title="Delete"></i>
+      <i v-if="value.id" class="icon-refresh -action  -lower" @mousedown.stop @click.stop="savePreset(value.label)" title="Update"></i>
+      <i v-if="value.id" class="icon-trash -action mr8 -lower" @mousedown.stop @click.stop="removePreset(value.id)" title="Delete"></i>
 
       <span>{{ value.label }}</span>
     </template>

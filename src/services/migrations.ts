@@ -47,10 +47,7 @@ export const workspaceUpgrades = {
     const layout = workspace.states.panes.layout
 
     workspace.states.panes.layouts = {
-      xs: JSON.parse(JSON.stringify(layout)),
-      sm: JSON.parse(JSON.stringify(layout)),
-      md: JSON.parse(JSON.stringify(layout)),
-      lg: layout
+      lg: JSON.parse(JSON.stringify(layout)),
     }
 
     delete workspace.states.panes.layout

@@ -1,68 +1,75 @@
 <template>
-  <Dialog @clickOutside="close" class="-sticky-footer -small">
+  <Dialog @clickOutside="close" class="-sticky-footer" contentClass="settings">
     <template v-slot:header>
       <div class="title">
         Settings
-        <div class="subtitle" v-if="hits"><i class="icon-bolt"></i> <strong v-text="hits"></strong> Messages per seconds</div>
+        <div class="subtitle" v-if="hits"><i class="icon-bolt"></i> <strong v-text="hits"></strong> messages /seconds</div>
       </div>
       <div class="column -center"></div>
     </template>
     <section class="section" v-if="workspace">
-      <dropdown :options="workspaceMenu" placeholder="Workspaces" title="Workspace tools" selectionClass="-blue -large w-100 column" v-tippy>
-        <template v-slot:selection>
-          <i class="icon-dashboard -center mr16"></i>
+      <div v-if="settings.indexOf('workspaces') > -1">
+        <div class="column">
+          <dropdown :options="activeWorkspaceMenu" title="Current workspace" selectionClass="-blue -large w-100 column" class="w-100" v-tippy>
+            <template v-slot:selection>
+              <i class="icon-dashboard -center mr16"></i>
 
-          <div class="-fill text-left">
-            <div class="column">
-              <div class="-center">{{ workspace.name }}</div>
-              <small
-                ><code class="-center">{{ workspace.id }}</code></small
-              >
-              <div class="-fill"></div>
-            </div>
-            <small class="text-muted">created {{ workspace.createdAt }} ago</small>
-          </div>
-          <i class="icon-menu"></i>
-        </template>
-        <template v-slot:option="{ value }">
-          <span>{{ value.label }}</span>
-          <i :class="'icon-' + value.icon"></i>
-        </template>
-      </dropdown>
+              <div class="-fill text-left">
+                <div class="column">
+                  <div class="-center">{{ workspace.name }}</div>
+                  <small
+                    ><code class="-center">{{ workspace.id }}</code></small
+                  >
+                  <div class="-fill"></div>
+                </div>
+                <small class="text-muted">created {{ workspace.createdAt }} ago</small>
+              </div>
+              <i class="icon-cog"></i>
+            </template>
+            <template v-slot:option="{ value }">
+              <span>{{ value.label }}</span>
+              <i :class="'icon-' + value.icon"></i>
+            </template>
+          </dropdown>
+          <dropdown :options="workspacesToolsMenu" title="Add workspace" selectionClass="-text" v-tippy>
+            <template v-slot:selection>
+              <i class="icon-menu"></i>
+            </template>
+            <template v-slot:option="{ value }">
+              <span>{{ value.label }}</span>
+              <i :class="'icon-' + value.icon"></i>
+            </template>
+          </dropdown>
+        </div>
+        <table v-if="workspaces.length" class="table">
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Name</th>
+              <th>Use</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="workspace of workspaces" :key="workspace.id" class="-action" @click="loadWorkspace(workspace.id)">
+              <td class="table-input"><code v-text="workspace.id"></code></td>
+              <td class="table-input table-ellipsis text-nowrap" v-text="workspace.name" :title="workspace.name" v-tippy></td>
+              <td class="table-input"><small v-text="'' + ago(workspace.updatedAt) + ' ago'"></small></td>
+              <td class="table-action">
+                <button class="btn  -red -small" @click.stop="removeWorkspace(workspace.id)"><i class="icon-trash"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-      <dropdown
-        class="-left mt16"
-        v-if="workspaces.length > 1"
-        :options="workspaces"
-        placeholder="Workspaces"
-        @output="loadWorkspace"
-        title="Load another workspace"
-        selectionClass="-blue -small"
-        v-tippy
-      >
-        <template v-slot:selection>
-          <i class="icon-search"></i>
-          <span class="ml4">Load workspaces ({{ workspaces.length }}) </span>
-        </template>
-        <template v-slot:option="{ value }">
-          <i class="icon-trash -action mr16" @mousedown.stop @click.stop="removeWorkspace(value.id)"></i>
-          <div class="flex-grow-1">
-            <div class="dropdown-option__title">
-              {{ value.name }} <code>{{ value.id }}</code>
-            </div>
-            <div v-if="value.updatedAt" class="dropdown-option__description text-muted" v-text="'last used ' + ago(value.updatedAt) + ' ago'"></div>
-          </div>
-          <i class="icon-external-link-square-alt ml4"></i>
-        </template>
-      </dropdown>
-
-      <div class="section__title">
+      <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'workspaces')">
         Workspace
+        <i class="icon-up"></i>
       </div>
     </section>
 
     <section class="section">
-      <div v-if="settings.indexOf('list') > -1" class="settings-section settings-trades">
+      <div v-if="settings.indexOf('list') > -1" class="settings-trades">
         <div class="form-group mb8">
           <label class="checkbox-control -aggr" @change="$store.commit('settings/TOGGLE_AGGREGATION', $event.target.checked)">
             <input type="checkbox" class="form-control" :checked="aggregateTrades" />
@@ -120,7 +127,7 @@
     </section>
 
     <section class="section">
-      <div v-if="settings.indexOf('chart') > -1" class="settings-section settings-chart">
+      <div v-if="settings.indexOf('chart') > -1" class="settings-chart">
         <div class="form-group mb16">
           <label class="checkbox-control flex-left">
             <input
@@ -326,7 +333,7 @@ export default {
         }
       ]
 
-      this.workspaceMenu = [
+      this.activeWorkspaceMenu = [
         {
           icon: 'trash',
           label: 'Remove',
@@ -346,11 +353,19 @@ export default {
           icon: 'copy-paste',
           label: 'Duplicate',
           click: this.duplicateWorkspace
-        },
+        }
+      ]
+
+      this.workspacesToolsMenu = [
         {
           icon: 'upload',
-          label: 'Upload',
+          label: 'Upload template',
           click: this.uploadWorkspace
+        },
+        {
+          icon: 'plus',
+          label: 'New workspace',
+          click: this.createBlankWorkspace
         }
       ]
     },
@@ -476,9 +491,7 @@ export default {
       return workspace
     },
 
-    async loadWorkspace(index) {
-      const id = this.workspaces[index].id
-
+    async loadWorkspace(id) {
       const workspace = await workspacesService.getWorkspace(id)
 
       await workspacesService.setCurrentWorkspace(workspace)
@@ -527,6 +540,12 @@ export default {
 
     async duplicateWorkspace() {
       workspacesService.duplicateWorkspace()
+    },
+
+    async createBlankWorkspace() {
+      const workspace = await workspacesService.createWorkspace()
+
+      await workspacesService.setCurrentWorkspace(workspace)
     },
 
     async uploadWorkspace() {
@@ -597,6 +616,10 @@ export default {
 </script>
 
 <style lang="scss">
+.settings {
+  width: 360px;
+}
+
 .settings__footer {
   margin-top: auto;
   background: 0 !important;

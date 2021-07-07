@@ -172,16 +172,6 @@
     }
   }
 
-  &.-animations input ~ div {
-    &:before {
-      content: unicode($icon-cross);
-    }
-
-    &:after {
-      content: unicode($icon-magic);
-    }
-  }
-
   &.-auto input {
     ~ div {
       width: auto;

@@ -40,7 +40,7 @@ store.subscribe((mutation, state: any) => {
   }
 })
 
-export async function boot(workspace?: Workspace) {
+export async function boot(workspace?: Workspace, previousWorkspaceId?: string) {
   await progress(true)
 
   console.log(`[store] booting on workspace "${workspace.name}" (${workspace.id})`)
@@ -50,14 +50,14 @@ export async function boot(workspace?: Workspace) {
 
     store.dispatch('app/setBooted', false)
 
-    await progress(`unload workspace`)
+    await progress(`unloading ${previousWorkspaceId}`)
 
-    await sleep(500)
+    await sleep(100)
 
     const markets = Object.keys(store.state.panes.marketsListeners)
 
     if (markets.length) {
-      await progress(`disconnect from ` + markets.slice(0, 3).join(', ') + (markets.length - 3 > 0 ? ' + ' + (markets.length - 3) + ' others' : ''))
+      // await progress(`disconnect from ` + markets.slice(0, 3).join(', ') + (markets.length - 3 > 0 ? ' + ' + (markets.length - 3) + ' others' : ''))
 
       await aggregatorService.disconnect(markets)
     }
@@ -70,17 +70,17 @@ export async function boot(workspace?: Workspace) {
 
   await progress(`loading core module`)
   registerModule('app', modules['app'])
-  await sleep(100)
+  await sleep(10)
   await store.dispatch('app/boot')
 
   await progress(`setting up workspace`)
   registerModule('settings', modules['settings'])
-  await sleep(100)
+  await sleep(10)
   await store.dispatch('settings/boot')
 
   await progress(`loading panes`)
   registerModule('panes', modules['panes'])
-  await sleep(100)
+  await sleep(10)
   await store.dispatch('panes/boot')
 
   for (const paneId in modules.panes.state.panes) {

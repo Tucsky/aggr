@@ -122,6 +122,11 @@
         opacity: 1;
       }
     }
+
+    .dropdown .dropdown__options .dropdown__option {
+      padding-left: 1em;
+      padding-right: 1em;
+    }
   }
 
   &__loader {
