@@ -26,16 +26,17 @@
     </button>
 
     <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
-      <template v-slot:option-1>
+      <template v-slot:option-0>
         <div class="column" @mousedown.prevent>
-          <span class="flex-grow-1 mr16 -center">Zoom</span>
-          <button class="btn -green" @click="zoomOut">
+          <div class="btn -green" @click="zoomOut">
             <i class="icon-minus"></i>
-          </button>
-          <div class="btn text-monospace" @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 0 })">× {{ zoom.toFixed(1) }}</div>
-          <button class="btn -green" @click="zoomIn">
+          </div>
+          <div class="btn -text text-monospace" @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 0 })" style="display: block">
+            × {{ zoom.toFixed(1) }}
+          </div>
+          <div class="btn -green" @click="zoomIn">
             <i class="icon-plus"></i>
-          </button>
+          </div>
         </div>
       </template>
       <template v-slot:option="{ value }">
@@ -116,12 +117,12 @@ export default class extends Vue {
   }
   menu = [
     {
+      label: 'Zoom'
+    },
+    {
       icon: 'copy-paste',
       label: 'Duplicate pane',
       click: this.duplicatePane
-    },
-    {
-      label: 'Zoom'
     },
     {
       icon: 'trash',

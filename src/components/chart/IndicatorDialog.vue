@@ -41,7 +41,6 @@
             <div v-for="(option, index) in colorOptions" :key="index" class="column form-group -fill mr8 mb8">
               <label v-if="option.label !== false" class="-center  -nowrap mr16">{{ option.label }}</label>
               <verte
-                class="flex-grow-1"
                 picker="square"
                 menuPosition="left"
                 :label="option.label"

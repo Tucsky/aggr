@@ -73,7 +73,7 @@
           :value="watermarkColor"
           @input="$event !== watermarkColor && $store.commit(paneId + '/SET_WATERMARK', { value: $event })"
         ></verte>
-        <label for="" class="-fill -center ml8">Watermark</label>
+        <label for="" class="-fill -center">Watermark</label>
       </div>
     </div>
   </div>

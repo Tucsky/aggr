@@ -215,7 +215,7 @@ class AudioService {
     }
   }
 
-  async play(
+  play(
     frequency?: number,
     gain?: number,
     fadeOut?: number,
@@ -262,11 +262,11 @@ class AudioService {
     this.minTime += cueTime
 
     const offset = time - this.context.currentTime
-    oscillatorNode.start(time)
-    oscillatorNode.stop(.2 + time + fadeIn + holdDuration + fadeOut)
+    oscillatorNode.start(time - .05)
+    oscillatorNode.stop(time + fadeIn + holdDuration + fadeOut)
 
     if (fadeIn) {
-      gainNode.gain.setValueAtTime(startGain, this.context.currentTime)
+      gainNode.gain.setValueAtTime(startGain, time - .05)
 
       gainNode.gain.exponentialRampToValueAtTime(gain, time + fadeIn)
 
@@ -278,7 +278,7 @@ class AudioService {
         }, (offset + fadeIn + holdDuration) * 1000)
       }
     } else {
-      gainNode.gain.setValueAtTime(gain, time)
+      gainNode.gain.setValueAtTime(gain, time - .05)
 
       if (fadeOut) {
         gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
@@ -342,8 +342,8 @@ class AudioService {
           0, // fadeIn
           .1, // holdDuration
           `'triangle'`, // osc
-          0.00001, // startGain
-          0.00001 // endGain
+          0.0001, // startGain
+          0.0001 // endGain
         ]
 
         for (let i = 0; i < defaultArguments.length; i++) {

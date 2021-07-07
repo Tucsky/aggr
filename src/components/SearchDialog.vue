@@ -36,15 +36,15 @@
             </template>
           </dropdown>
         </div>
-        <table v-if="results.length">
+        <table v-if="results.length" class="table">
           <tbody>
-            <div v-for="market of results" :key="market" @click="selectMarket(market)">
-              <td class="icon search__exchange" :class="'icon-' + market.split(':')[0]"></td>
+            <tr v-for="market of results" :key="market" @click="selectMarket(market)" class="-action">
+              <td class="icon search__exchange text-center" :class="'icon-' + market.split(':')[0]"></td>
               <td v-text="market"></td>
-              <td>
+              <td class=" text-center">
                 <i v-if="historicalMarkets.indexOf(market) !== -1" class="icon-candlestick"></i>
               </td>
-            </div>
+            </tr>
           </tbody>
         </table>
         <div class="text-danger" v-else>
@@ -212,17 +212,7 @@ export default {
 
     this.originalSelection = this.selection.slice()
 
-    for (const exchange of this.$store.getters['exchanges/getExchanges']) {
-      if (!this.$store.state.exchanges[exchange].fetched) {
-        aggregatorService.dispatch({
-          op: 'products',
-          data: {
-            exchange: exchange,
-            data: null
-          }
-        })
-      }
-    }
+    this.ensureProducts()
   },
   mounted() {
     this.$nextTick(() => {
@@ -318,6 +308,25 @@ export default {
       setTimeout(() => {
         element.style.height = '0px'
       })
+    },
+
+    async ensureProducts() {
+      for (const exchange of this.$store.getters['exchanges/getExchanges']) {
+        if (!this.$store.state.exchanges[exchange].fetched) {
+          await aggregatorService.dispatch({
+            op: 'fetch-products',
+            data: this.id
+          })
+
+          aggregatorService.dispatch({
+            op: 'products',
+            data: {
+              exchange: exchange,
+              data: null
+            }
+          })
+        }
+      }
     }
   }
 }
@@ -384,17 +393,8 @@ export default {
     padding: 0.25rem 0.33rem;
   }
 
-  tr:hover {
-    background-color: rgba(white, 0.1);
-    cursor: pointer;
-  }
-
   &__exchange {
     background-position: right;
   }
-}
-
-#app.-light .search tr:hover {
-  background-color: rgba(black, 0.1);
 }
 </style>

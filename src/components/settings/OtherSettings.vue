@@ -18,9 +18,22 @@
     </div>
     <div class="form-group mb8">
       <label class="checkbox-control -animations">
-        <input type="checkbox" class="form-control" :checked="disableAnimations" @change="$store.commit('settings/TOGGLE_ANIMATIONS')" />
+        <input type="checkbox" class="form-control" :checked="animationsEnabled" @change="$store.commit('settings/TOGGLE_ANIMATIONS')" />
         <div></div>
-        <span>Animation are {{ disableAnimations ? 'disabled globally 🚀' : 'enabled ✨' }}</span>
+        <span>
+          <small class="d-block text-muted" v-text="animationsEnabled ? 'UI animations are enabled ✨' : 'UI animations are disabled 🚀'"></small>
+          <span class="d-block mt4" v-text="animationsEnabled ? 'Disable animations' : 'Enable animations'"></span>
+        </span>
+      </label>
+    </div>
+    <div class="form-group mb8">
+      <label class="checkbox-control">
+        <input type="checkbox" class="form-control" :checked="responsiveEnabled" @change="$store.dispatch('panes/toggleResponsive')" />
+        <div></div>
+        <span>
+          <small class="d-block text-muted" v-text="responsiveEnabled ? 'Responsive layouts are enabled' : 'Only 1 layout per workspace'"></small>
+          <span class="d-block mt4" v-text="responsiveEnabled ? 'Disable responsive' : 'Enable responsive'"></span>
+        </span>
       </label>
     </div>
   </div>
@@ -37,8 +50,12 @@ export default class extends Vue {
     return this.$store.state.settings.decimalPrecision
   }
 
-  get disableAnimations() {
-    return this.$store.state.settings.disableAnimations
+  get animationsEnabled() {
+    return !this.$store.state.settings.disableAnimations
+  }
+
+  get responsiveEnabled() {
+    return Object.keys(this.$store.state.panes.layouts).length > 1
   }
 }
 </script>

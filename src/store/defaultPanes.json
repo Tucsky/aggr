@@ -2,24 +2,9 @@
   "_id": "panes",
   "layouts": {
     "lg": [
-      { "i": "chart", "type": "chart", "x": 0, "y": 0, "w": 20, "h": 24 },
-      { "i": "trades", "type": "trades", "x": 20, "y": 0, "w": 4, "h": 20 },
-      { "i": "liquidations", "type": "trades", "x": 20, "y": 20, "w": 4, "h": 4 }
-    ],
-    "md": [
-      { "i": "chart", "type": "chart", "x": 0, "y": 0, "w": 13, "h": 16 },
-      { "i": "trades", "type": "trades", "x": 13, "y": 0, "w": 3, "h": 14 },
-      { "i": "liquidations", "type": "trades", "x": 13, "y": 14, "w": 3, "h": 2 }
-    ],
-    "sm": [
-      { "i": "chart", "type": "chart", "x": 0, "y": 0, "w": 10, "h": 12 },
-      { "i": "trades", "type": "trades", "x": 10, "y": 0, "w": 2, "h": 10 },
-      { "i": "liquidations", "type": "trades", "x": 10, "y": 10, "w": 2, "h": 2 }
-    ],
-    "xs": [
-      { "i": "chart", "type": "chart", "x": 0, "y": 0, "w": 8, "h": 3 },
-      { "i": "trades", "type": "trades", "x": 0, "y": 3, "w": 8, "h": 4 },
-      { "i": "liquidations", "type": "trades", "x": 0, "y": 7, "w": 8, "h": 1 }
+      { "i": "chart", "type": "chart", "x": 0, "y": 0, "w": 20, "h": 24, "isolated": true },
+      { "i": "trades", "type": "trades", "x": 20, "y": 0, "w": 4, "h": 20, "isolated": true },
+      { "i": "liquidations", "type": "trades", "x": 20, "y": 20, "w": 4, "h": 4, "isolated": true }
     ]
   },
   "panes": {
@@ -74,7 +59,11 @@
       ],
       "settings": {
         "tradeType": "trades",
-        "thresholds": [{ "amount": 100000 }],
+        "thresholds": [
+          {
+            "amount": 100000
+          }
+        ],
         "liquidations": {
           "amount": 50000
         }

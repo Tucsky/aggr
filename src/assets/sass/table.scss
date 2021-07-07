@@ -39,6 +39,12 @@
     }
   }
 
+  &-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 1px;
+  }
+
   &-action {
     border: 0;
     cursor: pointer;
@@ -70,6 +76,10 @@
   tr {
     &.-action {
       cursor: pointer;
+
+      &:hover {
+        background-color: rgba(white, 0.1);
+      }
     }
 
     &.-divider {
@@ -88,7 +98,7 @@
     }
 
     + tr > td {
-      border-left: 1px solid var(--theme-color-o20);
+      //border-left: 1px solid var(--theme-color-o20);
       border-top: 1px solid var(--theme-color-o20);
 
       &:first-child {
@@ -99,7 +109,7 @@
 
   td {
     + td {
-      border-left: 1px solid var(--theme-color-o20);
+      //border-left: 1px solid var(--theme-color-o20);
       border-top: 1px solid var(--theme-color-o20);
     }
   }
@@ -107,4 +117,8 @@
   tr:last-child > td {
     border-bottom: 0;
   }
+}
+
+#app.-light .table tr.-action:hover {
+  background-color: rgba(black, 0.1);
 }

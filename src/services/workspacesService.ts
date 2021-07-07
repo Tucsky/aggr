@@ -160,6 +160,12 @@ class WorkspacesService {
   }
 
   async setCurrentWorkspace(workspace: Workspace) {
+    let previousWorkspaceId
+
+    if (this.workspace) {
+      previousWorkspaceId = this.workspace.id
+    }
+
     this.upgradeWorkspace(workspace)
 
     this.workspace = workspace
@@ -172,7 +178,7 @@ class WorkspacesService {
 
     localStorage.setItem('workspace', this.workspace.id)
 
-    await boot(workspace)
+    await boot(workspace, previousWorkspaceId)
 
     return workspace
   }

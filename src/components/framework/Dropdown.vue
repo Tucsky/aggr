@@ -133,7 +133,7 @@ export default class extends Vue {
 
     const rect = dropdown.getBoundingClientRect()
 
-    if (rect.y + rect.height > window.innerHeight) {
+    if (rect.y + rect.height + 32 > window.innerHeight) {
       dropdown.classList.add('-upside-down')
     }
   }

@@ -68,6 +68,9 @@ export default class PaneMixin extends Vue {
     }
 
     if (event) {
+      if (this.$el.parentElement.classList.contains('-highlight')) {
+        return
+      }
       if (event.type === 'touchend') {
         if (this.$el.contains(event.target)) {
           return

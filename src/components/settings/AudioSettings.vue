@@ -21,8 +21,8 @@
         </div>
       </div>
 
-      <div class="column mt8" v-if="useAudio">
-        <div class="form-group">
+      <div class="d-flex mt8" v-if="useAudio">
+        <div class="form-group mr8">
           <label
             class="checkbox-control checkbox-control-input -auto"
             v-tippy
@@ -37,7 +37,7 @@
             <div on="compressor" off="compressor"></div>
           </label>
         </div>
-        <div class="form-group">
+        <div class="form-group mr8">
           <label
             class="checkbox-control checkbox-control-input -auto"
             v-tippy
@@ -52,7 +52,7 @@
             <div on="filter" off="filter"></div>
           </label>
         </div>
-        <div class="form-group">
+        <div class="form-group mr8">
           <label
             class="checkbox-control checkbox-control-input -auto"
             v-tippy
@@ -67,7 +67,7 @@
             <div on="delay" off="delay"></div>
           </label>
         </div>
-        <div class="form-group">
+        <div class="form-group mr8">
           <label
             class="checkbox-control checkbox-control-input -auto"
             v-tippy

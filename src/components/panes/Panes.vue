@@ -3,8 +3,8 @@
     ref="grid"
     :layout="layout"
     :responsive-layouts="layouts"
-    :cols="{ lg: 24, md: 16, sm: 12, xs: 8 }"
-    :breakpoints="{ lg: 1024, md: 768, sm: 480, xs: 0 }"
+    :cols="cols"
+    :breakpoints="breakpoints"
     :row-height="rowHeight"
     :margin="[0, 0]"
     :vertical-compact="true"
@@ -25,7 +25,7 @@
       :i="gridItem.i"
       @container-resized="onContainerResized"
       @resized="onItemResized"
-      @moved="onItemMoved"
+      @moved="updateItem"
     >
       <component v-if="layoutReady && $store.state[gridItem.i]._booted" class="pane" ref="panes" :is="gridItem.type" :paneId="gridItem.i"></component>
     </grid-item>
@@ -44,6 +44,7 @@ import Trades from '../trades/Trades.vue'
 import Stats from '../stats/Stats.vue'
 import Counters from '../counters/Counters.vue'
 import Prices from '../prices/Prices.vue'
+import { BREAKPOINTS_COLS, BREAKPOINTS_WIDTHS } from '@/utils/constants'
 
 @Component({
   components: { GridLayout: VueGridLayout.GridLayout, GridItem: VueGridLayout.GridItem, Chart, Trades, Stats, Counters, Prices }
@@ -54,6 +55,7 @@ export default class extends Vue {
   layoutReady = false
   rowHeight = 80
   layout = null
+  cols = null
 
   private _resizeTimeout: number
 
@@ -66,11 +68,36 @@ export default class extends Vue {
     return this.$store.state.panes.panes
   }
 
+  protected get sortedBreakpoints() {
+    return Object.keys(this.breakpoints).sort((a, b) => {
+      return BREAKPOINTS_COLS[b] - BREAKPOINTS_COLS[a]
+    })
+  }
+
+  protected get breakpoints() {
+    const breakpoints = Object.keys(this.$store.state.panes.layouts).reduce((cols, breakpoint) => {
+      cols[breakpoint] = BREAKPOINTS_WIDTHS[breakpoint]
+      return cols
+    }, {})
+
+    const keys = Object.keys(breakpoints).sort((a, b) => {
+      return BREAKPOINTS_COLS[b] - BREAKPOINTS_COLS[a]
+    })
+
+    breakpoints[keys[keys.length - 1]] = 0
+
+    console.log('active breakpoints', breakpoints)
+
+    return breakpoints
+  }
+
   protected get layouts() {
     return this.$store.state.panes.layouts
   }
 
   created() {
+    this.cols = BREAKPOINTS_COLS
+
     this.layout = this.layouts[this.updateCellSize()]
   }
 
@@ -82,7 +109,7 @@ export default class extends Vue {
     window.addEventListener('resize', this.updateCellSize)
   }
 
-  updateCellSize(event?: Event) {
+  updateCellSize(event?: any) {
     if (this._resizeTimeout) {
       clearTimeout(this._resizeTimeout)
     }
@@ -94,12 +121,22 @@ export default class extends Vue {
 
       const width = window.innerWidth
       const height = window.innerHeight
-      const breakpoint = width >= 1024 ? 'lg' : width > 768 ? 'md' : width > 480 ? 'sm' : 'xs'
-      const rowNum = width >= 1024 ? 24 : width > 768 ? 16 : width > 480 ? 12 : 8
+      const breakpoints = this.breakpoints
+
+      let breakpointId = null
+
+      for (const id of this.sortedBreakpoints) {
+        if (width > breakpoints[id]) {
+          breakpointId = id
+          break
+        }
+      }
+
+      const rowNum = BREAKPOINTS_COLS[breakpointId]
 
       this.rowHeight = height / rowNum
 
-      return breakpoint
+      return breakpointId
     }
   }
 
@@ -129,17 +166,13 @@ export default class extends Vue {
 
   onItemResized(id, h, w, hPx, wPx) {
     this.resizePane(id, +hPx, +wPx)
-
-    this.$store.commit('panes/UPDATE_LAYOUT', {
-      breakpoint: this.$refs.grid.lastBreakpoint,
-      items: this.layout
-    })
+    this.updateItem(id)
   }
 
-  onItemMoved() {
-    this.$store.commit('panes/UPDATE_LAYOUT', {
+  updateItem(id) {
+    this.$store.commit('panes/UPDATE_ITEM', {
       breakpoint: this.$refs.grid.lastBreakpoint,
-      items: this.layout
+      item: this.layout.find(item => item.i === id)
     })
   }
 
