@@ -223,10 +223,8 @@ export default class SerieBuilder {
 
   parseVariables(output, variables): string {
     let variableMatch = null
-    let free = 0
     do {
       if ((variableMatch = VARIABLE_REGEX.exec(output))) {
-        free++
         const variableName = variableMatch[1]
         const variableLength = +variableMatch[2] || 1
 
@@ -242,7 +240,7 @@ export default class SerieBuilder {
 
         output = output.replace(new RegExp(`(${VARIABLES_VAR_NAME}\\[${variables.length - 1}\\])\\(${variable.length}\\)\\s*=\\s*`), '$1=')
       }
-    } while (variableMatch && free < 5)
+    } while (variableMatch)
 
     output = this.determineVariablesType(output, variables)
 
@@ -294,13 +292,18 @@ export default class SerieBuilder {
     let seriePoint = `${pointVariable} = `
 
     const expectedInput = SERIE_TYPES[serieType]
+    let timeProperty = `renderer.localTimestamp`
+
+    if (serieOptions.offset) {
+      timeProperty += `+renderer.timeframe*${serieOptions.offset}`
+    }
 
     // tranform input into valid lightweight-charts data point
     if (args.length === 1 && args[0][0] === '{' && /time:/.test(args[0])) {
       seriePoint += args[0]
     } else if (expectedInput === 'ohlc') {
       if (args.length === 4) {
-        seriePoint += `{ time: renderer.localTimestamp, open: ${args[0]}, high: ${args[1]}, low: ${args[2]}, close: ${args[3]} }`
+        seriePoint += `{ time: ${timeProperty}, open: ${args[0]}, high: ${args[1]}, low: ${args[2]}, close: ${args[3]} }`
       } else if (args.length === 1) {
         seriePoint += args[0]
       } else {
@@ -308,13 +311,13 @@ export default class SerieBuilder {
       }
     } else if (expectedInput === 'range') {
       if (args.length === 2) {
-        seriePoint += `{ time: renderer.localTimestamp, lowerValue: ${args[0]}, higherValue: ${args[1]} }`
+        seriePoint += `{ time: ${timeProperty}, lowerValue: ${args[0]}, higherValue: ${args[1]} }`
       } else {
         throw new Error(`invalid input for function ${match[1]}, expected 2 arguments (lowerValue and higherValue)`)
       }
     } else if (expectedInput === 'number') {
       if (args.length === 1) {
-        seriePoint += `{ time: renderer.localTimestamp, value: ${args[0]} }`
+        seriePoint += `{ time: ${timeProperty}, value: ${args[0]} }`
       } else {
         throw new Error(`invalid input for function ${match[1]}, expected 1 value (number)`)
       }
@@ -434,7 +437,7 @@ export default class SerieBuilder {
     }
 
     const EXCHANGE_REGEX = /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{5,})(:[\w]{4,})?\.?([a-z]{4,})?\b/
-    
+
     let marketMatch = null
 
     do {
@@ -708,6 +711,7 @@ export default class SerieBuilder {
     }
 
     const renderer: Renderer = previousRenderer || {
+      timeframe: 10,
       timestamp: null,
       localTimestamp: null,
       length: 1,

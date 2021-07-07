@@ -784,6 +784,8 @@ export default class extends Mixins(PaneMixin) {
 
 <style lang="scss">
 .pane-trades {
+  font-weight: 400;
+
   ul {
     margin: 0;
     padding: 0;
@@ -799,12 +801,23 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
+  &.-large {
+    font-weight: 500;
+    .trade {
+      padding-top: 4px;
+      padding-bottom: 6px;
+    }
+  }
+
   &.-logos {
     .trade__exchange {
       flex-basis: 0;
-      flex-grow: 0.4;
-      text-align: center;
+      flex-grow: 0.25;
       overflow: visible;
+      text-align: right;
+      margin: 0;
+      padding: 0;
+      font-size: 100%;
 
       &:before {
         font-family: 'icon';
@@ -823,7 +836,7 @@ export default class extends Mixins(PaneMixin) {
     &.-logos-colors {
       .trade__exchange {
         height: 1em;
-        background-position: center;
+        background-position: right;
 
         &:before {
           display: none;
@@ -858,7 +871,7 @@ export default class extends Mixins(PaneMixin) {
   background-blend-mode: overlay;
   position: relative;
   align-items: center;
-  padding: 0 0.5em 2px;
+  padding: 1px 0.5em 3px;
 
   &:after {
     content: '';
@@ -923,6 +936,7 @@ export default class extends Mixins(PaneMixin) {
   &.-level-2 {
     height: 1.75em;
     font-size: 1em;
+    font-weight: 600;
   }
 
   &.-level-3 {
@@ -932,17 +946,13 @@ export default class extends Mixins(PaneMixin) {
     font-size: 1.125em;
   }
 
-  &.-gif {
-    font-weight: 600;
-    // text-shadow: 1px 1px rgba(black, 0.5);
-  }
-
   > div {
     flex-basis: 0;
     flex-grow: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    text-align: center;
   }
 
   .trade__side {
@@ -961,26 +971,35 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__exchange {
     background-repeat: no-repeat;
-    flex-grow: 0.8;
-    margin-left: 1.4em;
+    flex-grow: 0.5;
     white-space: normal;
     word-break: inherit;
     font-size: 75%;
     line-height: 1;
+    text-align: center;
+    margin-right: 0;
+    margin-left: auto;
+    padding-left: 1em;
   }
 
-  .trade__price:after {
-    content: attr(slippage);
-    font-size: 80%;
-    position: relative;
-    top: -2px;
-    left: 2px;
-    opacity: 0.75;
-    font-weight: 400;
+  .trade__price {
+    flex-grow: 0.5;
+
+    &:after {
+      content: attr(slippage);
+      font-size: 80%;
+      position: relative;
+      top: -2px;
+      left: 2px;
+      opacity: 0.75;
+      font-weight: 400;
+    }
   }
 
   .trade__amount {
+    text-align: right;
     position: relative;
+    flex-grow: 0.4;
 
     > span {
       max-width: 100%;
@@ -992,11 +1011,13 @@ export default class extends Mixins(PaneMixin) {
 
       &.trade__amount__quote {
         position: absolute;
+        margin: auto;
       }
 
       &.trade__amount__base {
         transform: translateX(25%);
         opacity: 0;
+        text-align: left;
       }
     }
 

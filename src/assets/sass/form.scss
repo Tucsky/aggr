@@ -35,16 +35,19 @@
 
 .form-control {
   background: 0;
-  padding: 0.5rem;
-  border-radius: 3px;
-  border: 0;
-  width: calc(100% - 16px);
-  letter-spacing: -0.5px;
   min-width: 0;
-  margin: 0;
   color: inherit;
   font-family: inherit;
   font-size: 1rem;
+  margin: 0;
+  border: 1px solid var(--theme-background-200);
+  border-radius: 4px;
+  padding: 0.5rem;
+  box-sizing: border-box;
+
+  &.btn {
+    border: 1px solid var(--theme-background-200);
+  }
 }
 
 .help-text {
@@ -439,9 +442,15 @@ input[type='range'] {
 }
 
 textarea.form-control {
-  font-size: 14px;
   font-family: $font-monospace;
   line-height: 1.5;
+  height: auto;
+  font-size: 12px;
+  width: 100%;
+  max-width: 100%;
+  flex-grow: 1;
+  padding: 1em;
+  background-color: rgba(black, 0.2);
 }
 
 .serie__scale-margins {
@@ -476,7 +485,7 @@ textarea.form-control {
   .checkbox-control > div {
     border-color: rgba(0, 0, 0, 0.1);
   }
-  
+
   [contenteditable] {
     color: black;
   }

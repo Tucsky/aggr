@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="hide" medium class="-sticky-footer -auto">
+  <Dialog @clickOutside="hide" class="-sticky-footer -auto" bodyClass="d-flex mobile-dir-col-desktop-dir-row">
     <template v-slot:header>
       <div class="title" v-if="paneId">
         {{ paneName }}'s MARKETS
@@ -11,63 +11,71 @@
       </div>
       <div class="column -center"></div>
     </template>
-    <div class="d-flex mobile-dir-col-desktop-dir-row">
-      <div class="search">
-        <div v-if="otherPanes.length" class="form-group mb8">
-          <label>Choose from other panes</label>
-          <button v-for="pane of otherPanes" :key="pane.id" class="btn mb4 mr4 -accent" v-text="pane.name" @click="selectPaneMarkets(pane)"></button>
-        </div>
-        <div class="form-group">
-          <label>All products ({{ flattenedProducts.length }})</label>
-          <div class="mb8 d-flex">
-            <input ref="input" type="text" class="form-control" placeholder="search (eg: BITMEX:XBTUSD)" v-model="query" />
-            <dropdown :options="filters" placeholder="Filter" title="Filters" v-tippy="{ placement: 'top' }">
-              <template v-slot:selection>
-                <div class="btn" :class="{ '-text': !hasFilters, 'ml8 -green': hasFilters }">
-                  filter <i class="ml4" :class="hasFilters ? 'icon-check' : 'icon-plus'"></i>
-                </div>
-              </template>
-              <template v-slot:option="{ index, value }">
-                <div @click="toggleFilter(index)">
-                  <i class="icon-check" v-if="value"></i>
+    <div class="search">
+      <div v-if="otherPanes.length" class="form-group mb8">
+        <label>Choose from other panes</label>
+        <button v-for="pane of otherPanes" :key="pane.id" class="btn mb4 mr4 -accent" v-text="pane.name" @click="selectPaneMarkets(pane)"></button>
+      </div>
+      <div class="form-group">
+        <label>All products ({{ flattenedProducts.length }})</label>
+        <div class="mb8 d-flex">
+          <input ref="input" type="text" class="form-control" placeholder="search (eg: BITMEX:XBTUSD)" v-model="query" />
+          <dropdown
+            :options="filters"
+            placeholder="Filter"
+            title="Filters"
+            v-tippy="{ placement: 'top' }"
+            @output="toggleFilter($event)"
+            :selectionClass="!hasFilters ? '-text' : 'ml8 -green'"
+          >
+            <template v-slot:selection> filter <i class="ml4" :class="hasFilters ? 'icon-check' : 'icon-plus'"></i> </template>
+            <template v-slot:option="{ index, value }">
+              <i class="icon-check mr8" v-if="value"></i>
 
-                  {{ index }}
-                </div>
-              </template>
-            </dropdown>
-          </div>
-          <table v-if="results.length">
-            <tbody>
-              <tr v-for="market of results" :key="market" @click="selectMarket(market)" class="-action">
-                <td class="icon search__exchange" :class="'icon-' + market.split(':')[0]"></td>
-                <td v-text="market"></td>
-                <td>
-                  <i v-if="historicalMarkets.indexOf(market) !== -1" class="icon-candlestick"></i>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="text-danger" v-else>
-            <p>No results</p>
-          </div>
+              {{ index }}
+            </template>
+          </dropdown>
+        </div>
+        <table v-if="results.length">
+          <tbody>
+            <div v-for="market of results" :key="market" @click="selectMarket(market)">
+              <td class="icon search__exchange" :class="'icon-' + market.split(':')[0]"></td>
+              <td v-text="market"></td>
+              <td>
+                <i v-if="historicalMarkets.indexOf(market) !== -1" class="icon-candlestick"></i>
+              </td>
+            </div>
+          </tbody>
+        </table>
+        <div class="text-danger" v-else>
+          <p>No results</p>
         </div>
       </div>
-      <hr class="-horizontal" />
-      <hr class="-vertical mb8" />
-      <div class="form-group selection">
-        <label class="text-nowrap">Selection <code v-if="paneId" class="-filled" v-text="paneName"></code></label>
-        <div class="selection__items mt8">
+    </div>
+    <hr class="-horizontal" />
+    <hr class="-vertical mb8" />
+    <div class="form-group selection">
+      <label class="text-nowrap">Selection <code v-if="paneId" class="-filled" v-text="paneName"></code></label>
+      <transition-group
+        :name="transitionGroupName"
+        @beforeEnter="beforeEnter"
+        @enter="enter"
+        @afterEnter="afterEnter"
+        @beforeLeave="beforeLeave"
+        @leave="leave"
+        class="selection__items mt8"
+        tag="div"
+      >
+        <div v-for="market of selection" :key="market">
           <button
-            v-for="market of selection"
-            :key="market"
-            class="btn -small mb4 -accent"
+            class="mb4 btn -small  -accent"
             :class="{ '-green': activeMarkets.indexOf(market) !== -1 }"
             title="Click to remove"
             @click="deselectMarket(market)"
             v-text="market"
           ></button>
         </div>
-      </div>
+      </transition-group>
     </div>
 
     <footer>
@@ -82,6 +90,7 @@ import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
 import { getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
+import aggregatorService from '@/services/aggregatorService'
 
 export default {
   mixins: [DialogMixin],
@@ -105,6 +114,13 @@ export default {
     }
   }),
   computed: {
+    transitionGroupName() {
+      if (!this.$store.state.settings.disableAnimations) {
+        return 'slide-notice'
+      } else {
+        return null
+      }
+    },
     otherPanes() {
       return Object.keys(this.$store.state.panes.panes)
         .filter(a => a !== this.paneId)
@@ -195,6 +211,18 @@ export default {
     }
 
     this.originalSelection = this.selection.slice()
+
+    for (const exchange of this.$store.getters['exchanges/getExchanges']) {
+      if (!this.$store.state.exchanges[exchange].fetched) {
+        aggregatorService.dispatch({
+          op: 'products',
+          data: {
+            exchange: exchange,
+            data: null
+          }
+        })
+      }
+    }
   },
   mounted() {
     this.$nextTick(() => {
@@ -254,12 +282,53 @@ export default {
     },
     toggleFilter(key) {
       this.$set(this.filters, key, !this.filters[key])
+    },
+
+    beforeEnter(element) {
+      element.style.height = '0px'
+    },
+
+    enter(element) {
+      const wrapper = element.children[0]
+
+      const height = wrapper.offsetHeight + 'px'
+
+      element.dataset.height = height
+
+      setTimeout(() => {
+        element.style.height = height
+      }, 100)
+    },
+
+    afterEnter(element) {
+      element.style.height = ''
+    },
+
+    beforeLeave(element) {
+      if (typeof element.dataset.height === 'undefined') {
+        const wrapper = element.children[0]
+
+        element.dataset.height = wrapper.offsetHeight + 'px'
+      }
+
+      element.style.height = element.dataset.height
+    },
+
+    leave(element) {
+      setTimeout(() => {
+        element.style.height = '0px'
+      })
     }
   }
 }
 </script>
 <style lang="scss" scoped>
 .selection {
+  position: sticky;
+  top: 0;
+  place-self: flex-start;
+  padding-bottom: 90px;
+
   &__items {
     display: flex;
     flex-direction: column;

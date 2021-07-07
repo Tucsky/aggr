@@ -57,6 +57,11 @@ class Exchange extends EventEmitter {
    */
   clearReconnectionDelayTimeout = {}
 
+  /*
+    Number of messages received since start
+  */
+  count = 0
+
   constructor() {
     super()
   }
@@ -168,6 +173,8 @@ class Exchange extends EventEmitter {
     this.apis.push(api)
 
     api.onmessage = event => {
+      this.count++
+
       if (this.onMessage(event, api) === true) {
         api._timestamp = +new Date()
       }
@@ -549,7 +556,11 @@ class Exchange extends EventEmitter {
     return true
   }
 
-  startKeepAlive(api, payload: { event?: string; op?: string; method?: string; id?: number; params?: Array<any> } = { event: 'ping' }, every = 30000) {
+  startKeepAlive(
+    api,
+    payload: { event?: string; op?: string; method?: string; id?: number; params?: Array<any> } = { event: 'ping' },
+    every = 30000
+  ) {
     if (this.keepAliveIntervals[api.url]) {
       this.stopKeepAlive(api)
     }

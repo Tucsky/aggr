@@ -636,6 +636,13 @@ self.addEventListener('message', (event: any) => {
         aggregator.bindTradesEvent()
       }
       break
+    case 'hits':
+      ctx.postMessage({
+        op: 'hits',
+        trackingId: payload.trackingId,
+        data: exchanges.reduce((hits, exchanges) => hits + exchanges.count, 0)
+      })
+      break
     case 'unload':
       console.log(`[worker] unloading port`)
       break

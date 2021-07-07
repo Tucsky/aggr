@@ -98,6 +98,8 @@ export interface IndicatorReference {
   plotIndex: number
 }
 export interface Renderer {
+  type: 'time' | 'tick'
+  timeframe: number
   timestamp: number
   localTimestamp: number
   length: number
@@ -138,6 +140,8 @@ export default class ChartController {
   chartCache: ChartCache
   markets: { [identifier: string]: true }
   timezoneOffset = 0
+  timeframe: number
+  type: 'time' | 'tick'
 
   // private loadedSeries: { [id: string]: IndicatorApi } = {}
   private activeChunk: Chunk
@@ -156,6 +160,7 @@ export default class ChartController {
     this.serieBuilder = new SerieBuilder()
 
     this.setMarkets(store.state.panes.panes[this.paneId].markets)
+    this.setTimeframe(store.state[this.paneId].timeframe)
     this.setTimezoneOffset(store.state.settings.timezoneOffset)
   }
 
@@ -179,6 +184,16 @@ export default class ChartController {
     }, {})
 
     this.updateWatermark()
+  }
+
+  setTimeframe(timeframe) {
+    if (/t$/.test(timeframe)) {
+      this.type = 'tick'
+    } else {
+      this.type = 'time'
+    }
+
+    this.timeframe = parseInt(timeframe)
   }
 
   /**
@@ -708,6 +723,8 @@ export default class ChartController {
     this.chartCache.clear()
     this.clearData()
     this.clearChart()
+
+    this.setTimeframe(store.state[this.paneId].timeframe)
   }
 
   /**
@@ -829,7 +846,20 @@ export default class ChartController {
         continue
       }
 
-      const timestamp = Math.floor(trade.timestamp / 1000 / store.state[this.paneId].timeframe) * store.state[this.paneId].timeframe
+      let timestamp
+      if (this.activeRenderer) {
+        if (this.activeRenderer.type === 'time') {
+          timestamp = Math.floor(trade.timestamp / 1000 / this.timeframe) * this.timeframe
+        } else {
+          if (this.activeRenderer.bar.cbuy + this.activeRenderer.bar.csell > this.timeframe) {
+            timestamp = this.activeRenderer.timestamp + this.timeframe
+          } else {
+            timestamp = this.activeRenderer.timestamp
+          }
+        }
+      } else {
+        timestamp = +new Date() / 1000
+      }
 
       if (!this.activeRenderer || this.activeRenderer.timestamp < timestamp) {
         if (this.activeRenderer) {
@@ -1215,6 +1245,8 @@ export default class ChartController {
     const renderer: Renderer = {
       timestamp: firstBarTimestamp,
       localTimestamp: firstBarTimestamp + this.timezoneOffset,
+      timeframe: this.timeframe,
+      type: this.type,
       length: 1,
       indicators: {},
       sources: {},

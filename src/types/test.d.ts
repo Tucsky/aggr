@@ -86,6 +86,7 @@ export interface GifsStorage {
   data: string[]
 }
 export interface Workspace {
+  version?: number
   createdAt: number
   updatedAt: number
   id: string

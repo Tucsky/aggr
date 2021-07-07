@@ -56,8 +56,8 @@ const state = {
     amount: 100000,
     buyColor: 'rgb(103,58,183)',
     sellColor: 'rgb(103,58,183)',
-    buyAudio: `play(329.63, ratio, ratio * 2, 0, 0.1, 'sine')`,
-    sellAudio: `play(440, ratio, ratio * 2, 0, 0.1, 'sine')`
+    buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR,,,,'sine')\nplay(329.63, srqtR, srqtR,0.08,,,'sine')",
+    sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR,,,,'sine')\nplay(440, srqtR, srqtR,0.08,,,'sine')"
   },
   thresholds: [
     {
@@ -65,18 +65,18 @@ const state = {
       amount: 100000,
       buyColor: 'rgba(119, 148, 92, 0.5)',
       sellColor: 'rgba(239, 67, 82, 0.5)',
-      buyAudio: `play(659.26, Math.sqrt(ratio) / 10, 0.1 + Math.sqrt(ratio) * 0.23, 0)`,
-      sellAudio: `play(493.88, Math.sqrt(ratio * 1.5) / 10, 0.1 + Math.sqrt(ratio) * 0.23, 0)`
+      buyAudio: `play(659.26, gain / 10, 0.2 + ratio * 0.5)`,
+      sellAudio: `play(493.88, gain * 1.5 / 10, 0.2 + ratio * 0.5)`
     },
     {
       id: 'significant',
       amount: 250000,
       buyColor: 'rgb(100, 157, 102)',
       sellColor: 'rgb(239, 67, 82)',
-      buyAudio: `play(659.26, 0.05 + Math.sqrt(ratio) / 10, 0.1 + ratio * 0.23, 0);
-play(830.6, 0.05 + Math.sqrt(ratio) / 10, 0.1 + ratio * 0.23, 0.08)`,
-      sellAudio: `play(493.88, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.1, 0);
-play(392, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.23, 0.08)`
+      buyAudio: `play(659.26, 0.05 + gain / 10, 0.2 + ratio * 0.23);
+play(830.6, 0.05 + gain / 10, 0.2 + ratio * 0.23, 0.08)`,
+      sellAudio: `play(493.88, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23);
+play(392, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23, 0.08)`
     },
     {
       id: 'huge',
@@ -84,14 +84,14 @@ play(392, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.23, 0.08)`
       gif: 'cash',
       buyColor: 'rgb(59, 202, 109)',
       sellColor: 'rgb(235, 30, 47)',
-      buyAudio: `play(659.26, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.23, 0);
-play(830.6, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.23, 0.08);
-play(987.76, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.23, 0.16);
-play(1318.52, 0.05 + Math.sqrt(ratio) / 10, 0.1 + ratio * 0.23, 0.24)`,
-      sellAudio: `play(493.88, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.23, 0);
-play(369.99, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.2, 0.08);
-play(293.66, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.2, 0.16);
-play(246.94, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.23, 0.24)`
+      buyAudio: `play(659.26, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0);
+play(830.6, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0.08);
+play(987.76, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0.16);
+play(1318.52, 0.05 + gain / 10, 0.1 + ratio * 0.23, 0.24)`,
+      sellAudio: `play(493.88, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0);
+play(369.99, 0.05 + gain * 1.5 / 10, 0.2, 0.08);
+play(293.66, 0.05 + gain * 1.5 / 10, 0.2, 0.16);
+play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.23, 0.24)`
     },
     {
       id: 'rare',
@@ -99,14 +99,14 @@ play(246.94, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.23, 0.24)`
       gif: 'explosion',
       buyColor: 'rgb(0, 255, 127)',
       sellColor: 'rgb(217, 31, 28)',
-      buyAudio: `play(659.26, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.13, 0);
-play(830.6, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.13, 0.08);
-play(987.76, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.13, 0.16);
-play(1318.52, 0.05 + Math.sqrt(ratio) / 10, 0.1 + ratio * 0.13, 0.24)`,
-      sellAudio: `play(493.88, 0.05 + Math.sqrt(ratio) / 25, 0.1 + ratio * 0.13, 0);
-play(369.99, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.2, 0.08);
-play(293.66, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.2, 0.16);
-play(246.94, 0.05 + Math.sqrt(ratio * 1.5) / 10, 0.1 + ratio * 0.13, 0.24)`
+      buyAudio: `play(659.26, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0);
+play(830.6, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0.08);
+play(987.76, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0.16);
+play(1318.52, 0.05 + gain / 10, 0.1 + ratio * 0.13, 0.24)`,
+      sellAudio: `play(493.88, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0);
+play(369.99, 0.05 + gain * 1.5 / 10, 0.2, 0.08);
+play(293.66, 0.05 + gain * 1.5 / 10, 0.2, 0.16);
+play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.13, 0.24)`
     }
   ],
   audioThreshold: null,

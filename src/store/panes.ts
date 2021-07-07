@@ -6,22 +6,23 @@ import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '.'
 import panesSettings from './panesSettings'
-import { mobile, desktop } from './defaultPanes.json'
+import defaultPanes from './defaultPanes.json'
 
 export type PaneType = 'trades' | 'chart' | 'stats' | 'counters' | 'prices'
 export type MarketsListeners = { [market: string]: number }
 
+export type ResponsiveLayouts = { [breakpoint: string]: GridItem[] }
 export interface GridItem {
   x: number
   y: number
   w: number
   h: number
   i: string
-  type: PaneType
+  type: string
 }
 
 export interface Pane {
-  type: PaneType
+  type: string
   id: string
   name: string
   zoom?: number
@@ -30,39 +31,16 @@ export interface Pane {
 }
 
 export interface PanesState {
-  layout?: GridItem[]
+  layouts?: ResponsiveLayouts
   panes: { [paneId: string]: Pane }
   marketsListeners: MarketsListeners
 }
 
-let state: PanesState
-
-if (window.innerWidth < 640) {
-  state = mobile as PanesState
-} else {
-  state = desktop as PanesState
-}
+const state: PanesState = defaultPanes
 
 const getters = {
-  getNextGridItemCooordinates: state => {
-    let x = -1
-    let y = 0
-
-    for (const gridItem of state.layout.slice().sort((a, b) => a.x + a.y * 2 - (b.x + b.y * 2))) {
-      if (gridItem.x + gridItem.y * 2 - (x + y * 2) >= 4) {
-        break
-      }
-
-      x = (gridItem.x + gridItem.w) % 24
-      y = (gridItem.y + gridItem.h) % 24
-    }
-
-    const baseIndex = x + y * 2 + 1
-
-    x = baseIndex % 24
-    y = Math.floor(baseIndex / 24)
-
-    return { x, y }
+  getNextGridItemCooordinates: () => {
+    return { x: 0, y: 0 }
   }
 } as GetterTree<PanesState, ModulesState>
 
@@ -146,11 +124,13 @@ const actions = {
     commit('ADD_GRID_ITEM', gridItem)
   },
   removePaneGridItems({ commit, state }, id: string) {
-    const gridItem = state.layout.find(gridItem => gridItem.i === id)
+    for (const breakpoint in state.layouts) {
+      const item = state.layouts[breakpoint].find(item => item.i === id)
 
-    if (gridItem) {
-      const index = state.layout.indexOf(gridItem)
-      commit('REMOVE_GRID_ITEM', index)
+      if (item) {
+        const index = state.layouts[breakpoint].indexOf(item)
+        commit('REMOVE_GRID_ITEM', { breakpoint, index })
+      }
     }
   },
   async refreshMarketsListeners({ commit, state }) {
@@ -301,12 +281,19 @@ const actions = {
       title: `Duplicated pane ${id}`
     })
   },
-  async resetPane({ state, commit }, { id, data }: { id: string; data?: any }) {
-    const gridItem = state.layout.find(item => item.i === id)
+  async resetPane({ state, commit, dispatch }, { id, data }: { id: string; data?: any }) {
+    // copy this pane on every breakpoints
+    const breakpointsItems = Object.keys(state.layouts).reduce((items, breakpoint) => {
+      const item = state.layouts[breakpoint].find(item => item.i === id)
+
+      items[breakpoint] = item
+
+      return items
+    }, {})
 
     const pane = JSON.parse(JSON.stringify(state.panes[id]))
 
-    commit('REMOVE_GRID_ITEM', state.layout.indexOf(gridItem))
+    dispatch('removePaneGridItems', id)
 
     this.unregisterModule(id)
 
@@ -320,23 +307,40 @@ const actions = {
 
     await registerModule(id, {}, true, pane)
 
-    commit('ADD_GRID_ITEM', gridItem)
+    // add back pane items
+    for (const breakpoint in breakpointsItems) {
+      commit('ADD_GRID_ITEM', { breakpoint, item: breakpointsItems[breakpoint] })
+    }
   },
-  setZoom({ state, commit }, { id, zoom }: { id: string; zoom: number }) {
+  setZoom({ commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
+    commit('SET_PANE_ZOOM', { id, zoom })
+
+    dispatch('refreshZoom', id)
+  },
+  changeZoom({ state, commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
     if (zoom) {
       zoom = (state.panes[id].zoom || 1) + zoom
     } else {
       zoom = 1
     }
 
-    const index = Object.keys(state.panes).indexOf(id)
-    const el = document.getElementsByClassName('pane')[index] as HTMLElement
+    commit('SET_PANE_ZOOM', { id, zoom })
+
+    dispatch('refreshZoom', id)
+  },
+  refreshZoom({ state }, id: string) {
+    const zoom = state.panes[id].zoom
+    const el = document.getElementById(id) as HTMLElement
 
     if (el) {
       el.style.fontSize = zoom ? zoom + 'rem' : ''
     }
 
-    commit('SET_PANE_ZOOM', { id, zoom })
+    if (zoom > 1) {
+      el.classList.add('-large')
+    } else {
+      el.classList.remove('-large')
+    }
   }
 } as ActionTree<PanesState, ModulesState>
 
@@ -347,14 +351,14 @@ const mutations = {
   REMOVE_PANE: (state, id: string) => {
     Vue.delete(state.panes, id)
   },
-  ADD_GRID_ITEM: (state, gridItem: GridItem) => {
-    state.layout.unshift(gridItem)
+  ADD_GRID_ITEM: (state, { breakpoint, item }) => {
+    state.layouts[breakpoint].unshift(item)
   },
-  REMOVE_GRID_ITEM: (state, index: number) => {
-    state.layout.splice(index, 1)
+  REMOVE_GRID_ITEM: (state, { breakpoint, index }) => {
+    state.layouts[breakpoint].splice(index, 1)
   },
-  UPDATE_LAYOUT: (state, layout: GridItem[]) => {
-    state.layout = layout
+  UPDATE_LAYOUT: (state, { breakpoint, items }: { breakpoint: string; items: GridItem[] }) => {
+    state.layouts[breakpoint] = items
   },
   SET_MARKETS_LISTENERS: (state, marketsListeners: MarketsListeners) => {
     state.marketsListeners = marketsListeners

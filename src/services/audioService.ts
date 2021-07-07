@@ -5,14 +5,24 @@ import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/he
 import { context } from 'tone'
 
 export type AudioFunction = (
-  play: (frequency: number, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>,
+  play: (
+    frequency?: number,
+    gain?: number,
+    fadeOut?: number,
+    delay?: number,
+    fadeIn?: number,
+    holdDuration?: number,
+    osc?: string,
+    startGain?: number,
+    endGain?: number
+  ) => Promise<void>,
   ratio: number,
   side: 'buy' | 'sell',
   level: number
 ) => void
 
 export type AudioURLFunction = (
-  playurl: (url: string, gain: number, duration: number) => Promise<void>,
+  playurl: (url?: string, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) => Promise<void>,
   ratio: number,
   side: 'buy' | 'sell',
   level: number
@@ -24,10 +34,21 @@ class AudioService {
 
   output: any
 
-  _play: (frequency: number, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>
-  _playurl: (url: string, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>
+  _play: (
+    frequency?: number,
+    gain?: number,
+    fadeOut?: number,
+    delay?: number,
+    fadeIn?: number,
+    holdDuration?: number,
+    osc?: string,
+    startGain?: number,
+    endGain?: number
+  ) => Promise<void>
+  _playurl: (url?: string, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) => Promise<void>
   count = 0
   minTime = 0
+  debug = false
 
   constructor() {
     this._play = this.play.bind(this)
@@ -221,13 +242,12 @@ class AudioService {
     })
   }
 
-  async playurl([url, gain, duration, delay]) {
+  async playurl(url?: string, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number,endGain?: number) {
     if (this.context.state !== 'running') {
       return
     }
     // Create a gain node and buffersource
     const gainNode = this.context.createGain();
-    gain = Math.min(1, gain)
     const source = this.context.createBufferSource();
 
     this.loadSoundBuffer(url).then( (buffer : AudioBuffer) => {
@@ -236,18 +256,6 @@ class AudioService {
       source.connect(gainNode);
       // Connect the gain node to the destination.
       gainNode.connect(this.output);
-      if (!this.minTime) {
-        this.minTime = this.context.currentTime
-      } else {
-        this.minTime = Math.max(this.minTime, this.context.currentTime)
-
-        if (!delay) {
-          this.minTime += this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
-        }
-      }
-      const time = this.minTime + delay
-      gainNode.gain.setValueAtTime(gain, time)
-      gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration)
 
       source.onended = () => {
         gainNode.disconnect()
@@ -255,20 +263,69 @@ class AudioService {
       }
       this.count++
 
+
+      let cueTime = 0
+
+      if (!this.minTime) {
+        this.minTime = this.context.currentTime
+      } else {
+        this.minTime = Math.max(this.minTime, this.context.currentTime)
+        if (!delay) {
+          cueTime = this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
+        }
+      }
+
+      const time = this.minTime + cueTime + delay
+
+      this.minTime += cueTime
+
+      const offset = time - this.context.currentTime
+      
       source.start(time)
-      source.stop(0.2 + time + duration)
+      source.stop(0.2 + time + holdDuration)
+
+      if (fadeIn) {
+        gainNode.gain.setValueAtTime(startGain, this.context.currentTime)
+
+        gainNode.gain.exponentialRampToValueAtTime(gain, time + fadeIn)
+
+        if (fadeOut) {
+          gainNode.gain.setValueAtTime(gain, time + fadeIn + holdDuration)
+
+          setTimeout(() => {
+            gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
+          }, (offset + fadeIn + holdDuration) * 1000)
+        }
+      } else {
+        gainNode.gain.setValueAtTime(gain, time)
+
+        if (fadeOut) {
+          gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
+        }
+      }
+
     })
 
     
   }
-  async play([frequency, gain, duration, delay, ramp, osc]) {
+
+  async play(
+    frequency?: number,
+    gain?: number,
+    fadeOut?: number,
+    delay?: number,
+    fadeIn?: number,
+    holdDuration?: number,
+    osc?: OscillatorType,
+    startGain?: number,
+    endGain?: number
+  ) {
     if (this.context.state !== 'running') {
       return
     }
 
     const oscillatorNode = this.context.createOscillator()
     const gainNode = this.context.createGain()
-    gain = Math.min(1, gain)
 
     oscillatorNode.frequency.value = frequency
     oscillatorNode.type = osc || 'triangle'
@@ -279,38 +336,47 @@ class AudioService {
       this.count--
     }
 
-    this.count++
-
     gainNode.connect(this.output)
     oscillatorNode.connect(gainNode)
+    this.count++
 
-    if (ramp) {
-      gainNode.gain.value = 0.0001
-      gainNode.gain.exponentialRampToValueAtTime(gain, this.context.currentTime + delay + ramp)
-      setTimeout(() => {
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, this.context.currentTime + duration)
-      }, (delay + ramp) * 1000)
+    let cueTime = 0
 
-      oscillatorNode.start(this.context.currentTime + delay)
-      oscillatorNode.stop(this.context.currentTime + delay + ramp + duration)
+    if (!this.minTime) {
+      this.minTime = this.context.currentTime
     } else {
-      if (!this.minTime) {
-        this.minTime = this.context.currentTime
-      } else {
-        this.minTime = Math.max(this.minTime, this.context.currentTime)
-
-        if (!delay) {
-          this.minTime += this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
-        }
+      this.minTime = Math.max(this.minTime, this.context.currentTime)
+      if (!delay) {
+        cueTime = this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
       }
+    }
 
-      const time = this.minTime + delay
+    const time = this.minTime + cueTime + delay
 
+    this.minTime += cueTime
+
+    const offset = time - this.context.currentTime
+    oscillatorNode.start(time)
+    oscillatorNode.stop(.2 + time + fadeIn + holdDuration + fadeOut)
+
+    if (fadeIn) {
+      gainNode.gain.setValueAtTime(startGain, this.context.currentTime)
+
+      gainNode.gain.exponentialRampToValueAtTime(gain, time + fadeIn)
+
+      if (fadeOut) {
+        gainNode.gain.setValueAtTime(gain, time + fadeIn + holdDuration)
+
+        setTimeout(() => {
+          gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
+        }, (offset + fadeIn + holdDuration) * 1000)
+      }
+    } else {
       gainNode.gain.setValueAtTime(gain, time)
-      gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration)
 
-      oscillatorNode.start(time)
-      oscillatorNode.stop(0.2 + time + duration)
+      if (fadeOut) {
+        gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
+      }
     }
   }
 
@@ -343,7 +409,7 @@ class AudioService {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   buildAudioFunction(litteral, side, frequencyMultiplier: number = null, gainMultiplier: number = null, test = false) {
     litteral = `'use strict'; 
-    
+    var gain = Math.sqrt(ratio);
     ${litteral}`
 
     const FUNCTION_LOOKUP_REGEX_FREQUENCY = new RegExp(/play\([^[]/, 'g')
@@ -388,9 +454,96 @@ class AudioService {
           )
 
           const functionArguments = parseFunctionArguments(originalParameters)
+
+          if (isUrlMatch) {
+
+            const defaultArguments = [
+              "https://ia902807.us.archive.org/27/items/blackpinkepitunes01boombayah/01.%20DDU-DU%20DDU-DU%20%28BLACKPINK%20ARENA%20TOUR%202018%20_SPECIAL%20FINAL%20IN%20KYOCERA%20DOME%20OSAKA_%29.mp3", // url
+              1, // gain
+              1, // fadeOut
+              null, // delay
+              0, // fadeIn
+              .1, // holdDuration
+              `'triangle'`, // osc
+              0.00001, // startGain
+              0.00001 // endGain
+            ]
+
+            for (let i = 0; i < defaultArguments.length; i++) {
+              let argumentValue = defaultArguments[i]
+              if (typeof functionArguments[i] !== 'undefined') {
+                if (typeof functionArguments[i] === 'string') {
+                  functionArguments[i] = functionArguments[i].trim()
+
+                  if (/^('|").*('|")$/.test(functionArguments[i]) && typeof defaultArguments[i] === 'number') {
+                    functionArguments[i] = defaultArguments[i]
+                  }
+                }
+
+                try {
+                  argumentValue = JSON.parse(functionArguments[i])
+                } catch (error) {
+                  argumentValue = functionArguments[i]
+                }
+
+                if (argumentValue === null || argumentValue === '') {
+                  argumentValue = defaultArguments[i]
+                }
+              }
+
+              if (argumentValue === null) {
+                functionArguments[i] = 'null'
+              } else {
+                functionArguments[i] = argumentValue
+              }
+            }
+          } else if (isFrequencyMatch) {
+            const defaultArguments = [
+              329.63, // frequency
+              1, // gain
+              1, // fadeOut
+              null, // delay
+              0, // fadeIn
+              .1, // holdDuration
+              `'triangle'`, // osc
+              0.00001, // startGain
+              0.00001 // endGain
+            ]
+
+            for (let i = 0; i < defaultArguments.length; i++) {
+              let argumentValue = defaultArguments[i]
+              if (typeof functionArguments[i] !== 'undefined') {
+                if (typeof functionArguments[i] === 'string') {
+                  functionArguments[i] = functionArguments[i].trim()
+
+                  if (/^('|").*('|")$/.test(functionArguments[i]) && typeof defaultArguments[i] === 'number') {
+                    functionArguments[i] = defaultArguments[i]
+                  }
+                }
+
+                try {
+                  argumentValue = JSON.parse(functionArguments[i])
+                } catch (error) {
+                  argumentValue = functionArguments[i]
+                }
+
+                if (argumentValue === null || argumentValue === '') {
+                  argumentValue = defaultArguments[i]
+                }
+              }
+
+              if (argumentValue === null) {
+                functionArguments[i] = 'null'
+              } else {
+                functionArguments[i] = argumentValue
+              }
+            }
+          }
+
+
           // console.log(functionArguments)
           
-          if (!isUrlMatch && isFrequencyMatch) {
+          if (!wasUrlMatch && wasFrequencyMatch) {
             if (+functionArguments[0] && frequencyMultiplier && frequencyMultiplier !== 1) {
               functionArguments[0] *= frequencyMultiplier
             }

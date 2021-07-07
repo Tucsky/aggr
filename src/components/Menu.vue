@@ -4,13 +4,7 @@
       <i class="icon-menu"></i>
     </button>
     <div class="menu__actions">
-      <button
-        class="menu-action btn"
-        type="button"
-        @click="$store.commit('app/TOGGLE_SETTINGS')"
-        title="General settings"
-        v-tippy="{ placement: 'left', distance: 20 }"
-      >
+      <button class="menu-action btn" type="button" @click="showSettings" title="General settings" v-tippy="{ placement: 'left', distance: 20 }">
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>
       </button>
@@ -56,16 +50,11 @@
         <i v-if="!useAudio" class="icon-volume-off"></i>
         <i v-else class="icon-volume-medium" :class="{ 'icon-volume-high': audioVolume > 1 }"></i>
       </button>
-      <dropdown
-        class="menu-action"
-        :options="paneTypes"
-        placeholder="tf."
-        @output="addPane"
-        title="Add pane to workspace"
-        v-tippy="{ placement: 'left', distance: 20 }"
-      >
+      <dropdown class="menu-action" :options="paneTypes" placeholder="tf." @output="addPane" selectionClass="-green">
         <template v-slot:selection>
-          <div class="btn -green"><i class="icon-dashboard -center mr16"></i><span class="mr4">Pane</span><i class="icon-plus"></i></div>
+          <i class="icon-dashboard -center mr16"></i>
+          <span class="mr4">Pane</span>
+          <i class="icon-plus"></i>
         </template>
         <template v-slot:option="{ value }">
           <span>
@@ -90,9 +79,11 @@
 </template>
 
 <script lang="ts">
+import dialogService from '@/services/dialogService'
 import { PaneType } from '@/store/panes'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from './framework/picker/Slider.vue'
+import SettingsDialog from './settings/SettingsDialog.vue'
 
 @Component({
   name: 'Header',
@@ -144,6 +135,10 @@ export default class extends Vue {
     }, 500)
   }
 
+  showSettings() {
+    dialogService.open(SettingsDialog)
+  }
+
   toggleMenu() {
     this.open = !this.open
   }
@@ -157,8 +152,8 @@ export default class extends Vue {
 <style lang="scss">
 .menu {
   position: fixed;
-  bottom: 1rem;
-  right: 1rem;
+  bottom: 1.5rem;
+  right: 1.5rem;
   z-index: 2;
 
   .menu__button {

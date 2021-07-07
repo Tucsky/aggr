@@ -10,6 +10,10 @@
     <div class="d-flex flex-middle mt8">
       <i class="icon-info mr16"></i>
       <div class="mr16">
+        <small class="text-muted">Version</small>
+        <div>v{{ workspace.version || 0 }}</div>
+      </div>
+      <div class="mr16">
         <small class="text-muted">Created at</small>
         <div>{{ createdAt }} ago</div>
       </div>
@@ -19,7 +23,7 @@
       </div>
     </div>
     <div v-if="panes.length" class="form-group mt16">
-      <label>Panes</label>
+      <label>Panels</label>
       <div v-for="pane in panes" :key="pane.id" class="column flex-middle">
         <i class="icon-pile mr8"></i>
         <strong>{{ pane.type.toUpperCase() }}</strong>
@@ -67,18 +71,23 @@ export default {
         return Object.keys(this.workspace.states.panes.panes).map(id => ({
           id,
           name: this.workspace.states.panes.panes[id].name,
-          type: this.workspace.states.panes.panes[id].type
+          type: this.workspace.states.panes.panes[id].type,
+          markets: this.workspace.states.panes.panes[id].markets
         }))
       }
 
       return []
     },
     markets() {
-      if (this.workspace.states.panes && this.workspace.states.panes.marketsListeners) {
-        return Object.keys(this.workspace.states.panes.marketsListeners)
-      }
+      return this.panes.reduce((markets, pane) => {
+        for (const market of pane.markets) {
+          if (markets.indexOf(market) === -1) {
+            markets.push(market)
+          }
+        }
 
-      return []
+        return markets
+      }, [])
     }
   },
   components: {

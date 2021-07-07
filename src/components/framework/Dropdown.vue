@@ -1,25 +1,28 @@
 <template>
   <div class="dropdown">
     <div v-if="label" class="dropdown__label" @click="toggle" v-html="label"></div>
-    <div class="dropdown__selected" @click="toggle">
+    <button class="dropdown__selected btn" @click="toggle" :class="selectionClass">
       <slot name="selection" :item="options[selected]" :placeholder="placeholder">
         {{ (alwaysShowPlaceholder && options[selected]) || placeholder || 'Selection' }}
       </slot>
-    </div>
-    <transition name="scale">
+    </button>
+    <transition name="dropdown">
       <div ref="options" class="dropdown__options" v-if="isOpen">
         <div class="dropdown__scroller hide-scrollbar">
-          <div
+          <a
+            href="javascript:void(0)"
             class="dropdown__option"
             v-for="(value, index) in options"
             :key="index"
             :class="{ active: !alwaysShowPlaceholder && index === selected }"
-            @click="set(index, $event)"
           >
-            <slot name="option" :value="value" :index="index">
+            <slot v-if="$slots['option-' + index]" :name="'option-' + index">
               {{ value }}
             </slot>
-          </div>
+            <slot v-else name="option" :value="value" :index="index">
+              {{ value }}
+            </slot>
+          </a>
         </div>
       </div>
     </transition>
@@ -46,6 +49,9 @@ import { Component, Vue } from 'vue-property-decorator'
     },
     alwaysShowPlaceholder: {
       default: true
+    },
+    selectionClass: {
+      required: false
     }
   }
 })
@@ -92,6 +98,18 @@ export default class extends Vue {
       this._clickOutsideHandler = (event => {
         if (!this.$el.contains(event.target)) {
           this.hide()
+        } else {
+          let el = event.target as HTMLElement
+
+          while (el) {
+            if (el.classList.contains('dropdown__option')) {
+              this.set(event, el)
+
+              break
+            }
+
+            el = el.parentElement
+          }
         }
       }).bind(this)
 
@@ -112,15 +130,21 @@ export default class extends Vue {
     }
 
     const dropdown = this.$refs.options
-    
+
     const rect = dropdown.getBoundingClientRect()
 
     if (rect.y + rect.height > window.innerHeight) {
-      dropdown.classList.add('-upside-down');
+      dropdown.classList.add('-upside-down')
     }
   }
 
-  set(index, event: Event) {
+  set(event: Event, el: HTMLElement) {
+    let index = Array.prototype.indexOf.call(el.parentElement.children, el)
+
+    if (!Array.isArray(this.options)) {
+      index = Object.keys(this.options)[index]
+    }
+
     // this.selected = index
     if (this.options && this.options[index] && typeof this.options[index].click === 'function') {
       this.options[index].click(event, this.options[index])

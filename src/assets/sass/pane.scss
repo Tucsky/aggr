@@ -1,5 +1,12 @@
 .vue-grid-layout {
   .vue-grid-item {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    box-sizing: border-box;
+    touch-action: none;
+
     > .vue-resizable-handle {
       display: none;
       width: auto;
@@ -29,6 +36,12 @@
     &.vue-grid-placeholder {
       background-color: $blue;
       opacity: 0.4;
+    }
+
+    &.resizing {
+      .pane-header {
+        display: none;
+      }
     }
 
     &.-highlight {
@@ -61,12 +74,14 @@
 .pane {
   position: relative;
   background-color: rgba(black, 0.2);
+  width: 100%;
+  height: 100%;
 }
 
 .pane-header {
   display: flex;
   position: absolute;
-  z-index: 3;
+  z-index: 4;
   top: 0;
   left: 0;
   right: 0;

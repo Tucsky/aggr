@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="close" class="-medium">
+  <Dialog @clickOutside="close" class="-auto">
     <template v-slot:header>
       <div class="title">Add indicator</div>
       <div class="column -center"></div>
@@ -21,14 +21,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="indicator of filteredIndicators"
-                :key="indicator.id"
-                @click="selectIndicator(indicator)"
-                :title="indicator.description"
-                v-tippy="{ placement: 'right' }"
-                class="-action"
-              >
+              <tr v-for="indicator of filteredIndicators" :key="indicator.id" @click="selectIndicator(indicator)" class="-action">
                 <td class="table-input" v-text="indicator.displayName || indicator.name"></td>
                 <td class="table-input" v-text="indicator.updatedAt ? ago(indicator.updatedAt) + ' ago' : 'Never'"></td>
                 <td class="table-action" @click.stop="removeIndicator(indicator)">
@@ -52,10 +45,11 @@
         <div class="form-group mb16">
           <label>Scale with</label>
           <dropdown
-            class="form-control -left -center"
+            class="-left -center"
             :selected="priceScaleId"
             :options="availableScales"
             placeholder="Default scale"
+            selectionClass="-outline form-control"
             @output="priceScaleId = $event"
           ></dropdown>
         </div>
