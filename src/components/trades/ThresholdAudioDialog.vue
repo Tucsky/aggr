@@ -263,12 +263,7 @@ export default {
       }
 
       if (amount) {
-        const adapter = this.getAdapter(litteral, side)
-        if (adapter.toString().includes('function anonymous(play,')) {
-          adapter(audioService.play.bind(audioService), percent, side, level)
-        } else if (adapter.toString().includes('function anonymous(playurl,')) {
-          adapter(audioService.playurl.bind(audioService), percent, side, level)
-        }
+        this.getAdapter(litteral, side)(audioService, percent, side, level)
 
         this.$store.dispatch('app/showNotice', {
           id: 'testing-threshold-audio',
