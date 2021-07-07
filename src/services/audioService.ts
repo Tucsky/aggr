@@ -538,7 +538,6 @@ class AudioService {
           }
 
 
-          // console.log(functionArguments)
           
           if (!wasUrlMatch && wasFrequencyMatch) {
             if (+functionArguments[0] && frequencyMultiplier && frequencyMultiplier !== 1) {

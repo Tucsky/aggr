@@ -263,7 +263,6 @@ export default {
 
       if (amount) {
         const adapter = this.getAdapter(litteral, side)
-        console.log(adapter)
         if (adapter.toString().includes('function anonymous(play,')) {
           adapter(audioService.play.bind(audioService), percent, side, level)
         } else if (adapter.toString().includes('function anonymous(playurl,')) {
