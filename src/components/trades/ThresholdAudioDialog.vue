@@ -34,6 +34,7 @@
       <blockquote>
         <code>
           playurl(<br /><span class="ml8" v-tippy title="URL (.mp3|.wav|.ogg) (https://archive.org/details/audio)">url: string</span>,<br />
+          <span class="ml8" v-tippy title="StartTime (start audio at 'x' seconds)">startTime: number</span>,<br />
           <span class="ml8" v-tippy title="Gain (volume, 0 is muted and 1 is max, anything above 1 will sound saturated)">gain: number</span>,<br />
           <span class="ml8" v-tippy title="FadeOut (gain to endGain duration)">fadeOut: number</span>,<br />
           <span class="ml8" v-tippy title="Delay song by n second">delay?: number</span>,<br />
@@ -72,7 +73,7 @@
       <small class="help-text">
         <i class="icon-info -lower mr4"></i>
         <code v-if="buyAudio.startsWith('play(')">play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
-        <code v-else-if="buyAudio.startsWith('playurl(')">playurl(url,gain,fadeOut,delay,fadeIn,holdDuration,startGain,endGain)</code>
+        <code v-else-if="buyAudio.startsWith('playurl(')">playurl(url,startTime,gain,fadeOut,delay,fadeIn,holdDuration,startGain,endGain)</code>
       </small>
 
       <p v-if="buyError" class="form-feedback"><i class="icon-warning mr4"></i> {{ buyError }}</p>
@@ -102,7 +103,7 @@
       <small class="help-text">
         <i class="icon-info -lower mr4"></i>
         <code v-if="sellAudio.startsWith('play(')">play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
-        <code v-else-if="sellAudio.startsWith('playurl(')">playurl(url,gain,fadeOut,delay,fadeIn,holdDuration,startGain,endGain)</code>
+        <code v-else-if="sellAudio.startsWith('playurl(')">playurl(url,startTime,gain,fadeOut,delay,fadeIn,holdDuration,startGain,endGain)</code>
       </small>
 
       <p v-if="sellError" class="form-feedback"><i class="icon-warning mr4"></i> {{ sellError }}</p>

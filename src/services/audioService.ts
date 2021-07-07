@@ -21,7 +21,7 @@ export type AudioFunction = (
 ) => void
 
 export type AudioURLFunction = (
-  playurl: (url?: string, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) => Promise<void>,
+  playurl: (url?: string, startTime?: number, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) => Promise<void>,
   ratio: number,
   side: 'buy' | 'sell',
   level: number
@@ -44,7 +44,7 @@ class AudioService {
     startGain?: number,
     endGain?: number
   ) => Promise<void>
-  _playurl: (url?: string, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) => Promise<void>
+  _playurl: (url?: string, startTime?: number, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) => Promise<void>
   count = 0
   minTime = 0
   debug = false
@@ -241,7 +241,7 @@ class AudioService {
     })
   }
 
-  async playurl(url?: string, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number,endGain?: number) {
+  async playurl(url?: string, startTime?: number, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) {
     if (this.context.state !== 'running') {
       return
     }
@@ -280,7 +280,7 @@ class AudioService {
 
       const offset = time - this.context.currentTime
       
-      source.start(time)
+      source.start(time, startTime)
       source.stop(0.2 + time + holdDuration)
 
       if (fadeIn) {
@@ -445,7 +445,7 @@ class AudioService {
           isFrequencyMatch = false
         }
         if (functionMatch) {
-          console.log(functionMatch)
+          // console.log(functionMatch)
           const originalParameters = litteral.slice(
             functionMatch.index + functionMatch[0].length,
             findClosingBracketMatchIndex(litteral, functionMatch.index + functionMatch[0].length - 1)
@@ -457,6 +457,7 @@ class AudioService {
 
             const defaultArguments = [
               `'https://ia902807.us.archive.org/27/items/blackpinkepitunes01boombayah/01.%20DDU-DU%20DDU-DU%20%28BLACKPINK%20ARENA%20TOUR%202018%20_SPECIAL%20FINAL%20IN%20KYOCERA%20DOME%20OSAKA_%29.mp3'`, // url
+              0, // startTime
               1, // gain
               1, // fadeOut
               null, // delay
