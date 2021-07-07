@@ -2,9 +2,17 @@ import Vue from 'vue'
 import Tuna from 'tunajs'
 import store from '../store'
 import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
+import { context } from 'tone'
 
 export type AudioFunction = (
   play: (frequency: number, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>,
+  ratio: number,
+  side: 'buy' | 'sell',
+  level: number
+) => void
+
+export type AudioURLFunction = (
+  playurl: (url: string, gain: number, duration: number) => Promise<void>,
   ratio: number,
   side: 'buy' | 'sell',
   level: number
@@ -17,11 +25,13 @@ class AudioService {
   output: any
 
   _play: (frequency: number, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>
+  _playurl: (url: string, gain: number, duration: number, length?: number, ramp?: number, osc?: string) => Promise<void>
   count = 0
   minTime = 0
 
   constructor() {
     this._play = this.play.bind(this)
+    this._playurl = this.playurl.bind(this)
   }
 
   connect() {
@@ -194,6 +204,68 @@ class AudioService {
     }
   }
 
+  loadSoundBuffer(url) {
+    return new Promise( (resolve, reject) => {
+      if (store.state.app.soundBuffers[url] === undefined) {
+          // if (process.env.VUE_APP_PROXY_URL) {
+          //   url = process.env.VUE_APP_PROXY_URL + url
+          // }
+          fetch(url).then(res => res.arrayBuffer()).then(arrayBuffer => {
+            this.context.decodeAudioData(arrayBuffer).then(audioBuffer => {
+              store.dispatch('app/saveSoundBuffer', { url, audioBuffer })
+              resolve(audioBuffer)
+            }).catch(error => {
+              reject(error)
+            })
+          }).catch(error => {
+            reject(error)
+          })
+      } else {
+        resolve(store.state.app.soundBuffers[url])
+      }
+    })
+  }
+
+  async playurl([url, gain, duration, delay]) {
+    if (this.context.state !== 'running') {
+      return
+    }
+    // Create a gain node and buffersource
+    const gainNode = this.context.createGain();
+    gain = Math.min(1, gain)
+    const source = this.context.createBufferSource();
+
+    this.loadSoundBuffer(url).then( (buffer : AudioBuffer) => {
+      source.buffer = buffer
+      // Connect the source to the gain node.
+      source.connect(gainNode);
+      // Connect the gain node to the destination.
+      gainNode.connect(this.output);
+      if (!this.minTime) {
+        this.minTime = this.context.currentTime
+      } else {
+        this.minTime = Math.max(this.minTime, this.context.currentTime)
+
+        if (!delay) {
+          this.minTime += this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
+        }
+      }
+      const time = this.minTime + delay
+      gainNode.gain.setValueAtTime(gain, time)
+      gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration)
+
+      source.onended = () => {
+        gainNode.disconnect()
+        this.count--
+      }
+      this.count++
+
+      source.start(time)
+      source.stop(0.2 + time + duration)
+    })
+
+    
+  }
   async play([frequency, gain, duration, delay, ramp, osc]) {
     if (this.context.state !== 'running') {
       return
@@ -279,42 +351,76 @@ class AudioService {
     
     ${litteral}`
 
-    const FUNCTION_LOOKUP_REGEX = new RegExp(`play\\([^[]`, 'g')
+    const FUNCTION_LOOKUP_REGEX_FREQUENCY = new RegExp(/play\([^[]/, 'g')
+    const FUNCTION_LOOKUP_REGEX_URL = new RegExp(/playurl\([^[]/, 'g')
+    let frequencyMatch = null
+    let isFrequencyMatch = false
+    let wasFrequencyMatch = false
+    let urlMatch = null
+    let isUrlMatch = false
+    let wasUrlMatch = false
     let functionMatch = null
 
     if (gainMultiplier === null) {
       gainMultiplier = store.state.settings.audioVolume
     }
-
-    do {
-      if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(litteral))) {
-        const originalParameters = litteral.slice(
-          functionMatch.index + functionMatch[0].length - 1,
-          findClosingBracketMatchIndex(litteral, functionMatch.index + functionMatch[0].length - 2)
-        )
-
-        const functionArguments = parseFunctionArguments(originalParameters)
-
-        if (+functionArguments[0] && frequencyMultiplier && frequencyMultiplier !== 1) {
-          functionArguments[0] *= frequencyMultiplier
-        }
-
-        if (gainMultiplier && gainMultiplier !== 1) {
-          if (+functionArguments[1]) {
-            functionArguments[1] *= gainMultiplier
-          } else {
-            functionArguments[1] = gainMultiplier + '*(' + functionArguments[1] + ')'
-          }
-        }
-
-        const finalParameters = functionArguments.join(',')
-
-        litteral = litteral.replace('(' + originalParameters, '([' + finalParameters + ']')
-      }
-    } while (functionMatch)
-
     try {
-      return new Function('play', 'ratio', 'side', 'level', litteral) as AudioFunction
+      do {
+        if ((frequencyMatch = FUNCTION_LOOKUP_REGEX_FREQUENCY.exec(litteral))) {
+          // console.log('frequency regex match')
+          functionMatch = frequencyMatch
+          isFrequencyMatch = true
+          isUrlMatch = false
+          // console.log(functionMatch)
+        } else if ((urlMatch = FUNCTION_LOOKUP_REGEX_URL.exec(litteral))) {
+          // console.log('url regex match')
+          functionMatch = urlMatch
+          isUrlMatch = true
+          isFrequencyMatch = false
+          // console.log(functionMatch)
+        } else {
+          functionMatch = null
+          wasUrlMatch = isUrlMatch
+          isUrlMatch = false
+          wasFrequencyMatch = isFrequencyMatch
+          isFrequencyMatch = false
+        }
+        if (functionMatch) {
+          // console.log(functionMatch)
+          const originalParameters = litteral.slice(
+            functionMatch.index + functionMatch[0].length - 1,
+            findClosingBracketMatchIndex(litteral, functionMatch.index + functionMatch[0].length - 2)
+          )
+
+          const functionArguments = parseFunctionArguments(originalParameters)
+          // console.log(functionArguments)
+          
+          if (!isUrlMatch && isFrequencyMatch) {
+            if (+functionArguments[0] && frequencyMultiplier && frequencyMultiplier !== 1) {
+              functionArguments[0] *= frequencyMultiplier
+            }
+          }
+
+          if (gainMultiplier && gainMultiplier !== 1) {
+            if (+functionArguments[1]) {
+              functionArguments[1] *= gainMultiplier
+            } else {
+              functionArguments[1] = gainMultiplier + '*(' + functionArguments[1] + ')'
+            }
+          }
+
+          const finalParameters = functionArguments.join(',')
+
+          litteral = litteral.replace('(' + originalParameters, '([' + finalParameters + ']')
+        }
+      } while (functionMatch)
+      if (wasFrequencyMatch) {
+        return new Function('play', 'ratio', 'side', 'level', litteral) as AudioFunction
+      } else if (wasUrlMatch) {
+        return new Function('playurl', 'ratio', 'side', 'level', litteral) as AudioURLFunction
+      } else {
+        return new Function() as AudioFunction
+      }
     } catch (error) {
       console.warn('invalid audio script', litteral)
 
@@ -331,6 +437,8 @@ class AudioService {
         return new Function() as AudioFunction
       }
     }
+    
+    
   }
 }
 
