@@ -335,6 +335,12 @@ const actions = {
     if (el) {
       el.style.fontSize = zoom ? zoom + 'rem' : ''
     }
+
+    if (zoom > 1) {
+      el.classList.add('-large')
+    } else {
+      el.classList.remove('-large')
+    }
   }
 } as ActionTree<PanesState, ModulesState>
 

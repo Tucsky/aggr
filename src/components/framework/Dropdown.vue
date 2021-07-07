@@ -6,7 +6,7 @@
         {{ (alwaysShowPlaceholder && options[selected]) || placeholder || 'Selection' }}
       </slot>
     </button>
-    <transition name="scale">
+    <transition name="dropdown">
       <div ref="options" class="dropdown__options" v-if="isOpen">
         <div class="dropdown__scroller hide-scrollbar">
           <a

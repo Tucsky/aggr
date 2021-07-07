@@ -4,13 +4,7 @@
       <i class="icon-menu"></i>
     </button>
     <div class="menu__actions">
-      <button
-        class="menu-action btn"
-        type="button"
-        @click="$store.commit('app/TOGGLE_SETTINGS')"
-        title="General settings"
-        v-tippy="{ placement: 'left', distance: 20 }"
-      >
+      <button class="menu-action btn" type="button" @click="showSettings" title="General settings" v-tippy="{ placement: 'left', distance: 20 }">
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>
       </button>
@@ -85,9 +79,11 @@
 </template>
 
 <script lang="ts">
+import dialogService from '@/services/dialogService'
 import { PaneType } from '@/store/panes'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from './framework/picker/Slider.vue'
+import SettingsDialog from './settings/SettingsDialog.vue'
 
 @Component({
   name: 'Header',
@@ -137,6 +133,10 @@ export default class extends Vue {
     setTimeout(() => {
       window.close()
     }, 500)
+  }
+
+  showSettings() {
+    dialogService.open(SettingsDialog)
   }
 
   toggleMenu() {

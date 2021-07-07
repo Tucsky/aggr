@@ -96,31 +96,6 @@ body {
   }
 }
 
-.stack__container {
-  transform: none;
-  overflow: hidden;
-  z-index: 2;
-}
-
-.stack__scroller {
-  overflow: auto;
-  position: relative;
-}
-
-.stack__toggler {
-  position: absolute;
-  right: 0;
-  top: 0;
-  font-size: 18px;
-  opacity: 0.2;
-  padding: 0.5em;
-  z-index: 1;
-
-  &:hover {
-    opacity: 1;
-  }
-}
-
 .stack__wrapper {
   padding: 0.5em;
   position: relative;
@@ -177,7 +152,7 @@ body {
   }
 
   > div {
-    margin-right: 0.5em;
+    margin-right: 8px;
     flex-grow: 1;
 
     > .btn {
@@ -374,6 +349,7 @@ code {
 
   @media screen and (min-width: 768px) {
     flex-direction: row;
+    flex-wrap: wrap;
 
     .divider.-horizontal,
     hr.-horizontal {

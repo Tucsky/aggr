@@ -35,7 +35,6 @@ export interface AppState {
   isBooted: boolean
   isLoading: boolean
   redirectUrl: string
-  showSettings: boolean
   showSearch: boolean
   historicalMarkets: string[]
   indexedProducts: { [exchangeId: string]: string[] }
@@ -60,7 +59,6 @@ const state = {
   redirectUrl: null,
   optimalDecimal: null,
   pairs: [],
-  showSettings: false,
   showSearch: false,
   activeExchanges: {},
   activeMarkets: [],
@@ -273,9 +271,6 @@ const mutations = {
   },
   TOGGLE_SEARCH(state, value) {
     state.showSearch = typeof value === 'boolean' ? value : !state.showSearch
-  },
-  TOGGLE_SETTINGS(state, value) {
-    state.showSettings = typeof value === 'boolean' ? value : !state.showSettings
   },
   SET_OPTIMAL_DECIMAL(state, value) {
     state.optimalDecimal = value

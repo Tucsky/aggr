@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="close" class="-medium">
+  <Dialog @clickOutside="close" class="-auto">
     <template v-slot:header>
       <div class="title">Add indicator</div>
       <div class="column -center"></div>

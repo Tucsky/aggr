@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Tuna from 'tunajs'
 import store from '../store'
-import { findClosingBracketMatchIndex, parseFunctionArguments, randomString } from '@/utils/helpers'
+import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
 
 export type AudioFunction = (
   play: (
@@ -236,113 +236,51 @@ class AudioService {
     oscillatorNode.frequency.value = frequency
     oscillatorNode.type = osc || 'triangle'
 
-    const id = randomString()
-
     oscillatorNode.onended = () => {
       oscillatorNode.disconnect()
       gainNode.disconnect()
       this.count--
-      this.debug && console.log(id, 'ended.', this.context.currentTime.toFixed(2) + 's')
-    }
-
-    if (this.debug) {
-      console.log(
-        id,
-        '[' + this.context.currentTime.toFixed(2) + ', ' + this.count + ']',
-        'play',
-        'frequency',
-        frequency,
-        'gain',
-        gain,
-        'holdDuration',
-        holdDuration,
-        'delay',
-        delay,
-        'fadeIn',
-        fadeIn,
-        'startGain',
-        startGain,
-        'fadeOut',
-        fadeOut,
-        'endGain',
-        endGain,
-        'osc',
-        osc
-      )
     }
 
     gainNode.connect(this.output)
     oscillatorNode.connect(gainNode)
+    this.count++
 
-    if (!this.minTime || !this.count) {
+    let cueTime = 0
+
+    if (!this.minTime) {
       this.minTime = this.context.currentTime
     } else {
       this.minTime = Math.max(this.minTime, this.context.currentTime)
-
-      if (!delay) {
-        const cueTime = this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
-
-        console.log('add cue time', cueTime, this.count)
-        this.minTime += cueTime
+      if (delay === null) {
+        cueTime = this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
       }
     }
-    this.count++
 
-    const time = this.minTime + delay
+    const time = this.minTime + cueTime + delay
+
+    this.minTime += cueTime * 0.75
+
     const offset = time - this.context.currentTime
-    this.debug && console.log(id, `\t offset === ${offset.toFixed(2) + 's'}`)
     oscillatorNode.start(time)
     oscillatorNode.stop(time + fadeIn + holdDuration + fadeOut)
-    this.debug && console.log(id, `\t start at ${time.toFixed(2) + 's'}, end at ${(time + fadeIn + holdDuration + fadeOut).toFixed(2) + 's'}`)
 
     if (fadeIn) {
       gainNode.gain.setValueAtTime(startGain, this.context.currentTime)
 
       gainNode.gain.exponentialRampToValueAtTime(gain, time + fadeIn)
-      if (this.debug) {
-        console.log(
-          id,
-          `\t [${this.context.currentTime.toFixed(2)}] exponentialRampToValueAtTime ${startGain} -> ${gain} (${time.toFixed(2) + 's'} to ${(
-            time + fadeIn
-          ).toFixed(2) + 's'})`
-        )
-      }
 
       if (fadeOut) {
-        gainNode.gain.setValueAtTime(gain, time + fadeIn + holdDuration)
-
-        gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
+        gainNode.gain.setValueAtTime(gain, time + fadeIn + holdDuration + 0.5)
 
         setTimeout(() => {
-          if (this.debug) {
-            console.log(
-              id,
-              `\t[${this.context.currentTime.toFixed(2)}] exponentialRampToValueAtTime ${gain} -> ${endGain} (${(
-                time +
-                fadeIn +
-                holdDuration
-              ).toFixed(2)}s to ${(this.context.currentTime + fadeOut).toFixed(2)}s)`
-            )
-          }
+          gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
         }, (offset + fadeIn + holdDuration) * 1000)
       }
     } else {
-      this.debug && console.log(id, `\t set base gain ${gain}`)
       gainNode.gain.setValueAtTime(gain, time)
 
       if (fadeOut) {
-        if (this.debug) {
-          console.log(
-            id,
-            `\t [${this.context.currentTime.toFixed(2)}] exponentialRampToValueAtTime ${gain} -> ${endGain} (${time.toFixed(2) + 's'} to ${(
-              time +
-              fadeIn +
-              holdDuration +
-              fadeOut
-            ).toFixed(2)}s)`
-          )
-        }
-
         gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
       }
     }
@@ -377,7 +315,7 @@ class AudioService {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   buildAudioFunction(litteral, side, frequencyMultiplier: number = null, gainMultiplier: number = null, test = false) {
     litteral = `'use strict'; 
-    
+    var gain = Math.sqrt(ratio);
     ${litteral}`
 
     const FUNCTION_LOOKUP_REGEX = /play\(/g
@@ -400,12 +338,12 @@ class AudioService {
           329.63, // frequency
           1, // gain
           1, // fadeOut
-          0, // delay
+          null, // delay
           0, // fadeIn
           0, // holdDuration
           `'triangle'`, // osc
-          0.0001, // startGain
-          0.0001 // endGain
+          0.00001, // startGain
+          0.00001 // endGain
         ]
 
         for (let i = 0; i < defaultArguments.length; i++) {
@@ -430,7 +368,11 @@ class AudioService {
             }
           }
 
-          functionArguments[i] = argumentValue
+          if (argumentValue === null) {
+            functionArguments[i] = 'null'
+          } else {
+            functionArguments[i] = argumentValue
+          }
         }
 
         if (+functionArguments[0] && frequencyMultiplier && frequencyMultiplier !== 1) {
@@ -438,10 +380,12 @@ class AudioService {
         }
 
         if (gainMultiplier && gainMultiplier !== 1) {
-          if (+functionArguments[1]) {
-            functionArguments[1] *= gainMultiplier
-          } else {
-            functionArguments[1] = gainMultiplier + '*(' + functionArguments[1] + ')'
+          for (let i = 1; i <= 2; i++) {
+            if (+functionArguments[1]) {
+              functionArguments[1] *= gainMultiplier
+            } else {
+              functionArguments[1] = gainMultiplier + '*(' + functionArguments[1] + ')'
+            }
           }
         }
 

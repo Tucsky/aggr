@@ -38,6 +38,12 @@
       opacity: 0.4;
     }
 
+    &.resizing {
+      .pane-header {
+        display: none;
+      }
+    }
+
     &.-highlight {
       z-index: 1;
 

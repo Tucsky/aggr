@@ -6,7 +6,7 @@
     <p class="mx0" v-if="question">{{ question }}</p>
     <form @submit.prevent="submit">
       <div class="form-group">
-        <input ref="input" type="text" class="form-control" v-model="value" />
+        <input ref="input" type="text" class="form-control w-100" v-model="value" />
       </div>
 
       <footer>

@@ -29,17 +29,11 @@
       <template v-slot:option-1>
         <div class="column" @mousedown.prevent>
           <span class="flex-grow-1 mr16 -center">Zoom</span>
-          <button class="btn -text" @click="zoomOut">
+          <button class="btn -green" @click="zoomOut">
             <i class="icon-minus"></i>
           </button>
-          <div
-            class="btn text-monospace"
-            :class="{ '-green': zoom != 1, '-text': zoom === 1 }"
-            @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 0 })"
-          >
-            × {{ zoom.toFixed(1) }}
-          </div>
-          <button class="btn -text" @click="zoomIn">
+          <div class="btn text-monospace" @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 0 })">× {{ zoom.toFixed(1) }}</div>
+          <button class="btn -green" @click="zoomIn">
             <i class="icon-plus"></i>
           </button>
         </div>

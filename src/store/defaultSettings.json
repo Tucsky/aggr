@@ -1,7 +1,7 @@
 {
   "preferQuoteCurrencySize": true,
   "aggregateTrades": true,
-  "disableAnimations": true,
+  "disableAnimations": false,
   "calculateSlippage": null,
   "decimalPrecision": null,
   "theme": "dark",

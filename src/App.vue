@@ -14,7 +14,6 @@
     }"
   >
     <Notices />
-    <Settings v-if="showSettings" />
     <div class="app__wrapper">
       <Menu />
 
@@ -32,7 +31,6 @@ import aggregatorService from './services/aggregatorService'
 
 import Notices from './components/framework/Notices.vue'
 import Menu from './components/Menu.vue'
-import Settings from './components/settings/Settings.vue'
 
 import Panes from '@/components/panes/Panes.vue'
 
@@ -46,7 +44,6 @@ import { Notice } from './store/app'
   name: 'App',
   components: {
     Menu,
-    Settings,
     Notices,
     Panes
   }
@@ -64,10 +61,6 @@ export default class extends Vue {
     }
 
     return pairs[0].pair
-  }
-
-  get showSettings() {
-    return this.$store.state.app.showSettings
   }
 
   get showSearch() {

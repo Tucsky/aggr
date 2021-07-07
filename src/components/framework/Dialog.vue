@@ -17,7 +17,7 @@
           </a>
         </div>
       </header>
-      <div class="dialog-body hide-scrollbar">
+      <div class="dialog-body hide-scrollbar" :class="bodyClass">
         <slot></slot>
       </div>
     </div>
@@ -35,20 +35,14 @@ import { getEventCords } from '../../utils/picker'
     open: {
       type: Boolean
     },
-    small: {
-      type: Boolean
-    },
-    medium: {
-      type: Boolean
-    },
-    large: {
-      type: Boolean
-    },
     mask: {
       type: Boolean,
       default: true
     },
     headerBackground: {
+      required: false
+    },
+    bodyClass: {
       required: false
     },
     startPosition: {
