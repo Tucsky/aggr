@@ -14,7 +14,7 @@
       <button class="btn -text mlauto" @click="showHelp = !showHelp"><i class="icon-down" :class="{ 'icon-up': this.showHelp }"></i> help</button>
     </div>
     <div class="help-block mb16" v-if="showHelp">
-      Write a sequence of sounds using the play() function
+      Write a sequence of sounds using the play() or playurl() function
 
       <blockquote>
         <code>
@@ -30,6 +30,22 @@
           )
         </code>
       </blockquote>
+
+      <blockquote>
+        <code>
+          playurl(<br /><span class="ml8" v-tippy title="URL (.mp3|.wav|.ogg) (https://archive.org/details/audio)">url: string</span>,<br />
+          <span class="ml8" v-tippy title="Gain (volume, 0 is muted and 1 is max, anything above 1 will sound saturated)">gain: number</span>,<br />
+          <span class="ml8" v-tippy title="FadeOut (gain to endGain duration)">fadeOut: number</span>,<br />
+          <span class="ml8" v-tippy title="Delay song by n second">delay?: number</span>,<br />
+          <span class="ml8" v-tippy title="FadeIn (startGain to gain duration)">fadeIn?: number</span>,<br />
+          <span class="ml8" v-tippy title="HoldDuration (time at gain)">holdDuration?: number</span>,<br />
+          <span class="ml8" v-tippy title="StartGain (cannot be 0, but should be close to 0 like 0.0001)">startGain?: number</span>,<br />
+          <span class="ml8" v-tippy title="EndGain (cannot be 0, but should be close to 0 like 0.0001)">endGain?: number</span><br />
+          )
+        </code>
+      </blockquote>
+
+
     </div>
     <div class="form-group mb16">
       <label for>
@@ -247,6 +263,7 @@ export default {
 
       if (amount) {
         const adapter = this.getAdapter(litteral, side)
+        console.log(adapter)
         if (adapter.toString().includes('function anonymous(play,')) {
           adapter(audioService.play.bind(audioService), percent, side, level)
         } else if (adapter.toString().includes('function anonymous(playurl,')) {

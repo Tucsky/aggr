@@ -412,8 +412,8 @@ class AudioService {
     var gain = Math.sqrt(ratio);
     ${litteral}`
 
-    const FUNCTION_LOOKUP_REGEX_FREQUENCY = new RegExp(/play\([^[]/, 'g')
-    const FUNCTION_LOOKUP_REGEX_URL = new RegExp(/playurl\([^[]/, 'g')
+    const FUNCTION_LOOKUP_REGEX_FREQUENCY = /play\(/g
+    const FUNCTION_LOOKUP_REGEX_URL = /playurl\(/g
     let frequencyMatch = null
     let isFrequencyMatch = false
     let wasFrequencyMatch = false
@@ -425,6 +425,7 @@ class AudioService {
     if (gainMultiplier === null) {
       gainMultiplier = store.state.settings.audioVolume
     }
+
     try {
       do {
         if ((frequencyMatch = FUNCTION_LOOKUP_REGEX_FREQUENCY.exec(litteral))) {
@@ -432,13 +433,11 @@ class AudioService {
           functionMatch = frequencyMatch
           isFrequencyMatch = true
           isUrlMatch = false
-          // console.log(functionMatch)
         } else if ((urlMatch = FUNCTION_LOOKUP_REGEX_URL.exec(litteral))) {
           // console.log('url regex match')
           functionMatch = urlMatch
           isUrlMatch = true
           isFrequencyMatch = false
-          // console.log(functionMatch)
         } else {
           functionMatch = null
           wasUrlMatch = isUrlMatch
@@ -447,10 +446,10 @@ class AudioService {
           isFrequencyMatch = false
         }
         if (functionMatch) {
-          // console.log(functionMatch)
+          console.log(functionMatch)
           const originalParameters = litteral.slice(
-            functionMatch.index + functionMatch[0].length - 1,
-            findClosingBracketMatchIndex(litteral, functionMatch.index + functionMatch[0].length - 2)
+            functionMatch.index + functionMatch[0].length,
+            findClosingBracketMatchIndex(litteral, functionMatch.index + functionMatch[0].length - 1)
           )
 
           const functionArguments = parseFunctionArguments(originalParameters)
@@ -458,13 +457,12 @@ class AudioService {
           if (isUrlMatch) {
 
             const defaultArguments = [
-              "https://ia902807.us.archive.org/27/items/blackpinkepitunes01boombayah/01.%20DDU-DU%20DDU-DU%20%28BLACKPINK%20ARENA%20TOUR%202018%20_SPECIAL%20FINAL%20IN%20KYOCERA%20DOME%20OSAKA_%29.mp3", // url
+              `'https://ia902807.us.archive.org/27/items/blackpinkepitunes01boombayah/01.%20DDU-DU%20DDU-DU%20%28BLACKPINK%20ARENA%20TOUR%202018%20_SPECIAL%20FINAL%20IN%20KYOCERA%20DOME%20OSAKA_%29.mp3'`, // url
               1, // gain
               1, // fadeOut
               null, // delay
               0, // fadeIn
               .1, // holdDuration
-              `'triangle'`, // osc
               0.00001, // startGain
               0.00001 // endGain
             ]
@@ -550,16 +548,18 @@ class AudioService {
           }
 
           if (gainMultiplier && gainMultiplier !== 1) {
-            if (+functionArguments[1]) {
-              functionArguments[1] *= gainMultiplier
-            } else {
-              functionArguments[1] = gainMultiplier + '*(' + functionArguments[1] + ')'
+            for (let i = 1; i <= 2; i++) {
+              if (+functionArguments[1]) {
+                functionArguments[1] *= gainMultiplier
+              } else {
+                functionArguments[1] = gainMultiplier + '*(' + functionArguments[1] + ')'
+              }
             }
           }
 
           const finalParameters = functionArguments.join(',')
 
-          litteral = litteral.replace('(' + originalParameters, '([' + finalParameters + ']')
+          litteral = litteral.replace('(' + originalParameters + ')', '(' + finalParameters + ')')
         }
       } while (functionMatch)
       if (wasFrequencyMatch) {
