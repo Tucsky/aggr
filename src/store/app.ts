@@ -27,11 +27,6 @@ interface NoticeButton {
   click?: Function
 }
 
-interface SoundBuffer {
-  url: string,
-  buffer: AudioBuffer
-}
-
 export interface NoticesState {
   notices: Notice[]
 }
@@ -56,7 +51,6 @@ export interface AppState {
   quoteCurrency: string
   quoteCurrencySymbol: string
   paneClipboard: string
-  soundBuffers: SoundBuffer[]
 }
 
 const state = {
@@ -79,8 +73,7 @@ const state = {
   baseCurrencySymbol: '฿',
   quoteCurrency: 'dollar',
   quoteCurrencySymbol: '$',
-  paneClipboard: null,
-  soundBuffers: []
+  paneClipboard: null
 } as AppState
 
 const actions = {
@@ -239,9 +232,6 @@ const actions = {
     }
 
     commit('TOGGLE_SEARCH', false)
-  },
-  saveSoundBuffer({ commit }, { url, buffer }) {
-    commit('SET_SOUND_BUFFER', {url, buffer})
   }
 } as ActionTree<AppState, ModulesState>
 
@@ -341,9 +331,6 @@ const mutations = {
   },
   SET_PANE_CLIPBOARD(state, settings: string) {
     state.paneClipboard = settings
-  },
-  SET_SOUND_BUFFER(state, { url, buffer }) {
-    state.soundBuffers[url] = buffer
   }
 } as MutationTree<AppState>
 
