@@ -31,7 +31,7 @@
         <input type="checkbox" class="form-control" :checked="responsiveEnabled" @change="$store.dispatch('panes/toggleResponsive')" />
         <div></div>
         <span>
-          <small class="d-block text-muted" v-text="responsiveEnabled ? 'Responsive layouts are enabled' : 'Only 1 layout per workspace'"></small>
+          <small class="d-block text-muted" v-text="responsiveEnabled ? 'Responsive layouts are enabled' : 'Keep same layout'"></small>
           <span class="d-block mt4" v-text="responsiveEnabled ? 'Disable responsive' : 'Enable responsive'"></span>
         </span>
       </label>

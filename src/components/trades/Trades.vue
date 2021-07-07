@@ -947,7 +947,7 @@ export default class extends Mixins(PaneMixin) {
     text-align: center;
     margin-right: 0;
     margin-left: auto;
-    padding-left: 1em;
+    padding-left: 1.5em;
   }
 
   .trade__price {

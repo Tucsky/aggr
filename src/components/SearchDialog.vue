@@ -6,20 +6,20 @@
         <div class="subtitle">Choose which markets <u>this pane</u> should listen to</div>
       </div>
       <div class="title" v-else>
-        ALL PANES MARKETS
-        <div class="subtitle">Change <u>all</u> panes markets regardless of their current configuration</div>
+        SELECT MARKETS (ALL)
+        <div class="subtitle">Choose which markets <u>all</u> panes should listen to</div>
       </div>
       <div class="column -center"></div>
     </template>
     <div class="search">
-      <div v-if="otherPanes.length" class="form-group mb8">
+      <div v-if="otherPanes.length" class="form-group search__copy mb8">
         <label>Choose from other panes</label>
         <button v-for="pane of otherPanes" :key="pane.id" class="btn mb4 mr4 -accent" v-text="pane.name" @click="selectPaneMarkets(pane)"></button>
       </div>
       <div class="form-group">
         <label>All products ({{ flattenedProducts.length }})</label>
         <div class="mb8 d-flex">
-          <input ref="input" type="text" class="form-control" placeholder="search (eg: BITMEX:XBTUSD)" v-model="query" />
+          <input ref="input" type="text" class="form-control flex-grow-1" placeholder="search (eg: BITMEX:XBTUSD)" v-model="query" />
           <dropdown
             :options="filters"
             placeholder="Filter"
@@ -54,8 +54,11 @@
     </div>
     <hr class="-horizontal" />
     <hr class="-vertical mb8" />
-    <div class="form-group selection">
-      <label class="text-nowrap">Selection <code v-if="paneId" class="-filled" v-text="paneName"></code></label>
+    <div class="form-group selection hide-scrollbar">
+      <label class="text-nowrap"
+        >Selection <code v-if="paneId" class="-filled" v-text="paneName"></code>
+        <button class="btn -text -small" @click="clearSelection"><i class="icon-cross -higher"></i></button
+      ></label>
       <transition-group
         :name="transitionGroupName"
         @beforeEnter="beforeEnter"
@@ -327,6 +330,10 @@ export default {
           })
         }
       }
+    },
+
+    clearSelection() {
+      this.selection.splice(0, this.selection.length)
     }
   }
 }
@@ -338,45 +345,36 @@ export default {
   place-self: flex-start;
   padding-bottom: 90px;
 
-  &__items {
-    display: flex;
-    flex-direction: column;
-    place-items: flex-end;
-  }
-
-  .btn {
-    text-transform: none;
-
-    i {
-      display: none;
-    }
-
-    &.-added {
-      &:after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        opacity: 0;
-        background-color: white;
-        animation: 1s $ease-out-expo highlight;
-        pointer-events: none;
-      }
-    }
-  }
-
   @media screen and (min-width: 768px) {
     text-align: right;
   }
 
-  @media screen and (max-width: 767px) {
-    flex-direction: row;
-    flex-wrap: wrap;
+  &__items {
+    display: flex;
+    flex-direction: column;
+    place-items: flex-end;
 
     .btn {
-      margin-right: 4px;
+      text-transform: none;
+
+      i {
+        display: none;
+      }
+
+      &.-added {
+        &:after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          opacity: 0;
+          background-color: white;
+          animation: 1s $ease-out-expo highlight;
+          pointer-events: none;
+        }
+      }
     }
   }
 }
@@ -395,6 +393,48 @@ export default {
 
   &__exchange {
     background-position: right;
+  }
+}
+@media screen and (max-width: 767px) {
+  .selection {
+    order: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-height: 140px;
+    overflow: auto;
+    top: -1rem;
+    flex-shrink: 0;
+    padding: 1rem 0;
+    background-color: var(--theme-background-100);
+    box-shadow: 0 1px var(--theme-background-150);
+    margin-top: -1rem;
+    width: 100%;
+    margin-bottom: 1rem;
+
+    &__items {
+      flex-direction: row;
+      flex-wrap: wrap;
+      place-items: auto;
+      justify-content: flex-start;
+
+      .btn {
+        margin-right: 4px;
+        margin-bottom: 4px;
+      }
+    }
+  }
+  hr.-horizontal {
+    display: none;
+  }
+  .search {
+    order: 2;
+
+    &__copy {
+      display: none;
+    }
+  }
+  footer {
+    order: 3;
   }
 }
 </style>
