@@ -22,7 +22,7 @@ import { getColorByWeight, getColorLuminance, getAppBackgroundColor, splitRgba }
 
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
-import audioService, { AudioFunction, AudioURLFunction } from '../../services/audioService'
+import audioService, { AudioFunction } from '../../services/audioService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
 import { Trade } from '@/types/test'
@@ -49,8 +49,8 @@ interface ThresholdColorsBySide {
 }
 
 interface ThresholdAudiosBySide {
-  buy: AudioFunction | AudioURLFunction
-  sell: AudioFunction | AudioURLFunction
+  buy: AudioFunction
+  sell: AudioFunction
 }
 
 @Component({
@@ -262,21 +262,7 @@ export default class extends Mixins(PaneMixin) {
       if (amount >= this._minimumThresholdAmount * multiplier) {
         this.appendRow(trade, amount, multiplier)
       } else if (amount > this._audioThreshold) {
-        if (this._thresholdsAudios[0][trade.side].toString().includes('function anonymous(play,')) {
-          ;(this._thresholdsAudios[0][trade.side] as AudioFunction)(
-            audioService._play,
-            amount / (this._significantThresholdAmount * multiplier),
-            trade.side,
-            0
-          )
-        } else if (this._thresholdsAudios[0][trade.side].toString().includes('function anonymous(playurl,')) {
-          ;(this._thresholdsAudios[0][trade.side] as AudioURLFunction)(
-            audioService._playurl,
-            amount / (this._significantThresholdAmount * multiplier),
-            trade.side,
-            0
-          )
-        }
+        this._thresholdsAudios[0][trade.side](audioService, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
       }
     }
   }
@@ -327,21 +313,7 @@ export default class extends Mixins(PaneMixin) {
         'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + percentToSignificant + ')'
 
       if (amount > this._audioThreshold) {
-        if (this._liquidationsAudio[trade.side].toString().includes('function anonymous(play,')) {
-          ;(this._liquidationsAudio[trade.side] as AudioFunction)(
-            audioService._play,
-            amount / (this._significantThresholdAmount * multiplier),
-            trade.side,
-            0
-          )
-        } else if (this._liquidationsAudio[trade.side].toString().includes('function anonymous(playurl,')) {
-          ;(this._liquidationsAudio[trade.side] as AudioURLFunction)(
-            audioService._playurl,
-            amount / (this._significantThresholdAmount * multiplier),
-            trade.side,
-            0
-          )
-        }
+        this._liquidationsAudio[trade.side](audioService, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
       }
     } else {
       if (trade.liquidation) {
@@ -396,11 +368,7 @@ export default class extends Mixins(PaneMixin) {
               : 'rgba(255, 255, 255, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
 
           if (amount > this._audioThreshold) {
-            if (this._thresholdsAudios[0][trade.side].toString().includes('function anonymous(play,')) {
-              ;(this._thresholdsAudios[0][trade.side] as AudioFunction)(audioService._play, percentToSignificant, trade.side, 0)
-            } else if (this._thresholdsAudios[0][trade.side].toString().includes('function anonymous(playurl,')) {
-              ;(this._thresholdsAudios[0][trade.side] as AudioURLFunction)(audioService._playurl, percentToSignificant, trade.side, 0)
-            }
+            this._thresholdsAudios[0][trade.side](audioService, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
           }
 
           break

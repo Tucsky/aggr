@@ -3,55 +3,59 @@ import Tuna from 'tunajs'
 import store from '../store'
 import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
 
+
 export type AudioFunction = (
-  play: (
-    frequency?: number,
-    gain?: number,
-    fadeOut?: number,
-    delay?: number,
-    fadeIn?: number,
-    holdDuration?: number,
-    osc?: string,
-    startGain?: number,
-    endGain?: number
-  ) => Promise<void>,
+  audioService: AudioService,
+  // audioType: AudioType,
+  // play: (
+  //   frequency?: number,
+  //   gain?: number,
+  //   fadeOut?: number,
+  //   delay?: number,
+  //   fadeIn?: number,
+  //   holdDuration?: number,
+  //   osc?: string,
+  //   startGain?: number,
+  //   endGain?: number
+  // ) => Promise<void>,
   ratio: number,
   side: 'buy' | 'sell',
   level: number
 ) => void
 
-export type AudioURLFunction = (
-  playurl: (url?: string, startTime?: number, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) => Promise<void>,
-  ratio: number,
-  side: 'buy' | 'sell',
-  level: number
-) => void
+// export type AudioURLFunction = (
+//   playurl: (url?: string, startTime?: number, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) => Promise<void>,
+//   ratio: number,
+//   side: 'buy' | 'sell',
+//   level: number
+// ) => void
 
 class AudioService {
+  static savedAudioBuffers: {}
   context: AudioContext
   tuna: any
 
   output: any
 
-  _play: (
-    frequency?: number,
-    gain?: number,
-    fadeOut?: number,
-    delay?: number,
-    fadeIn?: number,
-    holdDuration?: number,
-    osc?: string,
-    startGain?: number,
-    endGain?: number
-  ) => Promise<void>
-  _playurl: (url?: string, startTime?: number, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) => Promise<void>
+  // _play: (
+  //   frequency?: number,
+  //   gain?: number,
+  //   fadeOut?: number,
+  //   delay?: number,
+  //   fadeIn?: number,
+  //   holdDuration?: number,
+  //   osc?: string,
+  //   startGain?: number,
+  //   endGain?: number
+  // ) => Promise<void>
+  // _playurl: (url?: string, startTime?: number, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) => Promise<void>
   count = 0
   minTime = 0
   debug = false
 
   constructor() {
-    this._play = this.play.bind(this)
-    this._playurl = this.playurl.bind(this)
+    // this._play = this.play.bind(this)
+    // this._playurl = this.playurl.bind(this)
   }
 
   connect() {
@@ -229,15 +233,19 @@ class AudioService {
       // if (process.env.VUE_APP_PROXY_URL) {
       //   url = process.env.VUE_APP_PROXY_URL + url
       // }
-      fetch(url).then(res => res.arrayBuffer()).then(arrayBuffer => {
-        this.context.decodeAudioData(arrayBuffer).then(audioBuffer => {
-          resolve(audioBuffer)
+      if (AudioService.savedAudioBuffers[url] === undefined)
+        fetch(url).then(res => res.arrayBuffer()).then(arrayBuffer => {
+          this.context.decodeAudioData(arrayBuffer).then(audioBuffer => {
+            AudioService.savedAudioBuffers[url] = audioBuffer
+            resolve(audioBuffer)
+          }).catch(error => {
+            reject(error)
+          })
         }).catch(error => {
           reject(error)
         })
-      }).catch(error => {
-        reject(error)
-      })
+      else
+        resolve(AudioService.savedAudioBuffers[url])
     })
   }
 
@@ -558,13 +566,11 @@ class AudioService {
 
           const finalParameters = functionArguments.join(',')
 
-          litteral = litteral.replace('(' + originalParameters + ')', '(' + finalParameters + ')')
+          litteral = litteral.replace('(' + originalParameters + ')', '(' + finalParameters + ')').replace('play(', 'audioService[\'play\'](').replace('playurl(', 'audioService[\'playurl\'](')
         }
       } while (functionMatch)
-      if (wasFrequencyMatch) {
-        return new Function('play', 'ratio', 'side', 'level', litteral) as AudioFunction
-      } else if (wasUrlMatch) {
-        return new Function('playurl', 'ratio', 'side', 'level', litteral) as AudioURLFunction
+      if (wasFrequencyMatch || wasUrlMatch) {
+        return new Function('audioService', 'ratio', 'side', 'level', litteral) as AudioFunction
       } else {
         return new Function() as AudioFunction
       }
