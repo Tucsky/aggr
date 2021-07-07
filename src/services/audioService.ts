@@ -3,6 +3,8 @@ import Tuna from 'tunajs'
 import store from '../store'
 import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
 
+const savedAudioBuffers = {}
+
 
 export type AudioFunction = (
   audioService: AudioService,
@@ -31,7 +33,7 @@ export type AudioFunction = (
 // ) => void
 
 class AudioService {
-  static savedAudioBuffers: {}
+  static savedAudioBuffers = {}
   context: AudioContext
   tuna: any
 
@@ -233,7 +235,7 @@ class AudioService {
       // if (process.env.VUE_APP_PROXY_URL) {
       //   url = process.env.VUE_APP_PROXY_URL + url
       // }
-      if (AudioService.savedAudioBuffers[url] === undefined)
+      if (AudioService.savedAudioBuffers[url] === undefined || !(AudioService.savedAudioBuffers[url] instanceof AudioBuffer)) {
         fetch(url).then(res => res.arrayBuffer()).then(arrayBuffer => {
           this.context.decodeAudioData(arrayBuffer).then(audioBuffer => {
             AudioService.savedAudioBuffers[url] = audioBuffer
@@ -244,8 +246,9 @@ class AudioService {
         }).catch(error => {
           reject(error)
         })
-      else
+      } else {
         resolve(AudioService.savedAudioBuffers[url])
+      }
     })
   }
 
@@ -257,7 +260,7 @@ class AudioService {
     const gainNode = this.context.createGain();
     const source = this.context.createBufferSource();
 
-    this.loadSoundBuffer(url).then( (buffer : AudioBuffer) => {
+    this.loadSoundBuffer(url).then((buffer: AudioBuffer) => {
       source.buffer = buffer
       // Connect the source to the gain node.
       source.connect(gainNode);
@@ -564,11 +567,13 @@ class AudioService {
             }
           }
 
-          const finalParameters = functionArguments.join(',')
+          const finalParameters = functionArguments.join(', ')
 
-          litteral = litteral.replace('(' + originalParameters + ')', '(' + finalParameters + ')').replace('play(', 'audioService[\'play\'](').replace('playurl(', 'audioService[\'playurl\'](')
+          litteral = litteral.replace('(' + originalParameters + ')', '(' + finalParameters + ')')
         }
       } while (functionMatch)
+      litteral = litteral.replaceAll('play(', 'audioService[\'play\'](')
+      litteral = litteral.replaceAll('playurl(', 'audioService[\'playurl\'](')
       if (wasFrequencyMatch || wasUrlMatch) {
         return new Function('audioService', 'ratio', 'side', 'level', litteral) as AudioFunction
       } else {
