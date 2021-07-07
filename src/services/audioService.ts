@@ -205,24 +205,19 @@ class AudioService {
   }
 
   loadSoundBuffer(url) {
-    return new Promise( (resolve, reject) => {
-      if (store.state.app.soundBuffers[url] === undefined) {
-          // if (process.env.VUE_APP_PROXY_URL) {
-          //   url = process.env.VUE_APP_PROXY_URL + url
-          // }
-          fetch(url).then(res => res.arrayBuffer()).then(arrayBuffer => {
-            this.context.decodeAudioData(arrayBuffer).then(audioBuffer => {
-              store.dispatch('app/saveSoundBuffer', { url, audioBuffer })
-              resolve(audioBuffer)
-            }).catch(error => {
-              reject(error)
-            })
-          }).catch(error => {
-            reject(error)
-          })
-      } else {
-        resolve(store.state.app.soundBuffers[url])
-      }
+    return new Promise((resolve, reject) => {
+      // if (process.env.VUE_APP_PROXY_URL) {
+      //   url = process.env.VUE_APP_PROXY_URL + url
+      // }
+      fetch(url).then(res => res.arrayBuffer()).then(arrayBuffer => {
+        this.context.decodeAudioData(arrayBuffer).then(audioBuffer => {
+          resolve(audioBuffer)
+        }).catch(error => {
+          reject(error)
+        })
+      }).catch(error => {
+        reject(error)
+      })
     })
   }
 
