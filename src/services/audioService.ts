@@ -2,7 +2,6 @@ import Vue from 'vue'
 import Tuna from 'tunajs'
 import store from '../store'
 import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
-import { context } from 'tone'
 
 export type AudioFunction = (
   play: (
