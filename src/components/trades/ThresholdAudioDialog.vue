@@ -71,7 +71,8 @@
 
       <small class="help-text">
         <i class="icon-info -lower mr4"></i>
-        <code>play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
+        <code v-if="buyAudio.startsWith('play(')">play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
+        <code v-else-if="buyAudio.startsWith('playurl(')">playurl(url,gain,fadeOut,delay,fadeIn,holdDuration,startGain,endGain)</code>
       </small>
 
       <p v-if="buyError" class="form-feedback"><i class="icon-warning mr4"></i> {{ buyError }}</p>
@@ -100,7 +101,8 @@
 
       <small class="help-text">
         <i class="icon-info -lower mr4"></i>
-        <code>play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
+        <code v-if="sellAudio.startsWith('play(')">play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
+        <code v-else-if="sellAudio.startsWith('playurl(')">playurl(url,gain,fadeOut,delay,fadeIn,holdDuration,startGain,endGain)</code>
       </small>
 
       <p v-if="sellError" class="form-feedback"><i class="icon-warning mr4"></i> {{ sellError }}</p>
