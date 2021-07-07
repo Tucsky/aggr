@@ -252,18 +252,18 @@ class AudioService {
       this.minTime = this.context.currentTime
     } else {
       this.minTime = Math.max(this.minTime, this.context.currentTime)
-      if (delay === null) {
+      if (!delay) {
         cueTime = this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
       }
     }
 
     const time = this.minTime + cueTime + delay
 
-    this.minTime += cueTime * 0.75
+    this.minTime += cueTime
 
     const offset = time - this.context.currentTime
     oscillatorNode.start(time)
-    oscillatorNode.stop(time + fadeIn + holdDuration + fadeOut)
+    oscillatorNode.stop(.2 + time + fadeIn + holdDuration + fadeOut)
 
     if (fadeIn) {
       gainNode.gain.setValueAtTime(startGain, this.context.currentTime)
@@ -271,7 +271,7 @@ class AudioService {
       gainNode.gain.exponentialRampToValueAtTime(gain, time + fadeIn)
 
       if (fadeOut) {
-        gainNode.gain.setValueAtTime(gain, time + fadeIn + holdDuration + 0.5)
+        gainNode.gain.setValueAtTime(gain, time + fadeIn + holdDuration)
 
         setTimeout(() => {
           gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
@@ -340,7 +340,7 @@ class AudioService {
           1, // fadeOut
           null, // delay
           0, // fadeIn
-          0, // holdDuration
+          .1, // holdDuration
           `'triangle'`, // osc
           0.00001, // startGain
           0.00001 // endGain

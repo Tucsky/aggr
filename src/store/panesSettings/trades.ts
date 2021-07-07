@@ -65,17 +65,17 @@ const state = {
       amount: 100000,
       buyColor: 'rgba(119, 148, 92, 0.5)',
       sellColor: 'rgba(239, 67, 82, 0.5)',
-      buyAudio: `play(659.26, gain / 20, 0.3 + gain * 0.23)`,
-      sellAudio: `play(493.88, gain * 1.5 / 20, 0.3 + gain * 0.23)`
+      buyAudio: `play(659.26, gain / 10, 0.2 + ratio * 0.5)`,
+      sellAudio: `play(493.88, gain * 1.5 / 10, 0.2 + ratio * 0.5)`
     },
     {
       id: 'significant',
       amount: 250000,
       buyColor: 'rgb(100, 157, 102)',
       sellColor: 'rgb(239, 67, 82)',
-      buyAudio: `play(659.26, 0.05 + gain / 10, 0.2 + ratio * 0.23, 0);
+      buyAudio: `play(659.26, 0.05 + gain / 10, 0.2 + ratio * 0.23);
 play(830.6, 0.05 + gain / 10, 0.2 + ratio * 0.23, 0.08)`,
-      sellAudio: `play(493.88, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23, 0);
+      sellAudio: `play(493.88, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23);
 play(392, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23, 0.08)`
     },
     {
