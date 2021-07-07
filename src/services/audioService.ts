@@ -559,7 +559,7 @@ class AudioService {
 
 
           
-          if (!wasUrlMatch && wasFrequencyMatch) {
+          if (!isUrlMatch && isFrequencyMatch) {
             if (+functionArguments[0] && frequencyMultiplier && frequencyMultiplier !== 1) {
               functionArguments[0] *= frequencyMultiplier
             }
