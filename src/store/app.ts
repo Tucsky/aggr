@@ -297,7 +297,11 @@ const mutations = {
     state.buildDate = value
   },
   INDEX_EXCHANGE_PRODUCTS(state, { exchange, products }: { exchange: string; products: string[] }) {
-    state.indexedProducts[exchange] = products.map(p => exchange + ':' + p)
+    Vue.set(
+      state.indexedProducts,
+      exchange,
+      products.map(p => exchange + ':' + p)
+    )
   },
   ADD_ACTIVE_MARKET(state, { exchange, pair }: { exchange: string; pair: string }) {
     const market = state.activeMarkets.find(m => m.exchange === exchange && m.pair === pair)

@@ -133,13 +133,10 @@ export default class extends Vue {
     setTimeout(() => {
       window.close()
     }, 500)
-
-    this.toggleMenu()
   }
 
   showSettings() {
     dialogService.open(SettingsDialog)
-    this.toggleMenu()
   }
 
   toggleMenu() {
@@ -148,7 +145,6 @@ export default class extends Vue {
 
   addPane(type: PaneType) {
     this.$store.dispatch('panes/addPane', { type })
-    this.toggleMenu()
   }
 }
 </script>

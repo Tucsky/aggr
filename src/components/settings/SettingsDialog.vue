@@ -10,7 +10,7 @@
     <section class="section" v-if="workspace">
       <div v-if="settings.indexOf('workspaces') > -1">
         <div class="column">
-          <dropdown :options="activeWorkspaceMenu" title="Current workspace" selectionClass="-blue -large w-100 column" class="w-100" v-tippy>
+          <dropdown :options="activeWorkspaceMenu" selectionClass="-blue -large w-100 column" class="w-100">
             <template v-slot:selection>
               <i class="icon-dashboard -center mr16"></i>
 
@@ -31,7 +31,7 @@
               <i :class="'icon-' + value.icon"></i>
             </template>
           </dropdown>
-          <dropdown :options="workspacesToolsMenu" title="Add workspace" selectionClass="-text" v-tippy>
+          <dropdown :options="workspacesToolsMenu" selectionClass="-text">
             <template v-slot:selection>
               <i class="icon-menu"></i>
             </template>
@@ -717,78 +717,5 @@ export default {
       opacity: 1;
     }
   }
-}
-
-.selection {
-  position: sticky;
-  top: 0;
-
-  &__items {
-    display: flex;
-    flex-direction: column;
-    place-items: flex-end;
-  }
-
-  .btn {
-    text-transform: none;
-
-    i {
-      display: none;
-    }
-
-    &.-added {
-      &:after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        opacity: 0;
-        background-color: white;
-        animation: 1s $ease-out-expo highlight;
-        pointer-events: none;
-      }
-    }
-  }
-
-  @media screen and (min-width: 768px) {
-    text-align: right;
-  }
-
-  @media screen and (max-width: 767px) {
-    flex-direction: row;
-    flex-wrap: wrap;
-
-    .btn {
-      margin-right: 4px;
-    }
-  }
-}
-.search {
-  flex-grow: 1;
-
-  table {
-    border: 0;
-    border-collapse: collapse;
-    width: 100%;
-  }
-
-  td {
-    padding: 0.25rem 0.33rem;
-  }
-
-  tr:hover {
-    background-color: rgba(white, 0.1);
-    cursor: pointer;
-  }
-
-  &__exchange {
-    background-position: right;
-  }
-}
-
-#app.-light .search tr:hover {
-  background-color: rgba(black, 0.1);
 }
 </style>
