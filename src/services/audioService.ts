@@ -3,8 +3,6 @@ import Tuna from 'tunajs'
 import store from '../store'
 import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
 
-const savedAudioBuffers = {}
-
 
 export type AudioFunction = (
   audioService: AudioService,
