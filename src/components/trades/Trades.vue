@@ -281,7 +281,7 @@ export default class extends Mixins(PaneMixin) {
     li.className += ' -' + trade.exchange
 
     li.className += ' -' + trade.side
-
+    
     if (trade.liquidation && this._tradeType === 'both') {
       li.className += ' -liquidation'
 
@@ -307,8 +307,12 @@ export default class extends Mixins(PaneMixin) {
 
       const luminance = this._liquidationsColor[trade.side][(percentToSignificant < 0.5 ? 'from' : 'to') + 'Luminance']
       const backgroundColor = this._liquidationsColor[trade.side].to
+
       li.style.color =
-        luminance > (animated ? 144 : 170) ? 'rgba(0, 0, 0, ' + percentToSignificant + ')' : 'rgba(255, 255, 255, ' + percentToSignificant + ')'
+        luminance > (animated ? 144 : 170)
+          ? 'rgba(0, 0, 0, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
+          : 'rgba(255, 255, 255, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
+
       li.style.backgroundColor =
         'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + percentToSignificant + ')'
 
