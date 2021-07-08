@@ -281,7 +281,7 @@ export default class extends Mixins(PaneMixin) {
     li.className += ' -' + trade.exchange
 
     li.className += ' -' + trade.side
-    
+
     if (trade.liquidation && this._tradeType === 'both') {
       li.className += ' -liquidation'
 

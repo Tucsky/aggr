@@ -38,7 +38,7 @@ export interface PanesState {
   marketsListeners: MarketsListeners
 }
 
-const state: PanesState = defaultPanes
+const state: PanesState = JSON.parse(JSON.stringify(defaultPanes))
 
 const getters = {
   currentLayout: state => {

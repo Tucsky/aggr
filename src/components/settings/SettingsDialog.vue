@@ -422,6 +422,7 @@ export default {
             workspace
           })
         ) {
+          await this.close()
           this.importWorkspace(workspace)
         }
       }
@@ -572,7 +573,9 @@ export default {
             return
           }
           if (dialogService.openAsPromise(SettingsImportConfirmation, { workspace })) {
-            this.importWorkspace(workspace)
+            this.close().then(() => {
+              this.importWorkspace(workspace)
+            })
           }
         }
       }

@@ -1,4 +1,5 @@
 import defaultIndicators from '@/store/defaultIndicators.json'
+import defaultPresets from '@/store/defaultPresets.json'
 import store, { boot } from '@/store'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
 import { GifsStorage, Preset, PresetType, ProductsStorage, Workspace } from '@/types/test'
@@ -38,6 +39,7 @@ class WorkspacesService {
   urlStrategy = 'history'
   latestDatabaseVersion: any
   latestWorkspaceVersion: any
+  defaultInserted = false
 
   constructor() {
     if (/github\.io/.test(window.location.hostname)) {
@@ -107,9 +109,23 @@ class WorkspacesService {
 
       window.location.reload()
     }
+
+    if (!this.defaultInserted) {
+      // add default presets and indicators post database creation
+      setTimeout(() => {
+        this.insertDefault(this.db)
+      }, 3000)
+    }
   }
 
   async insertDefault(db: IDBPDatabase<AggrDB>) {
+    this.defaultInserted = true
+
+    await this.insertDefaultIndicators(db)
+    await this.insertDefaultPresets(db)
+  }
+
+  async insertDefaultIndicators(db: IDBPDatabase<AggrDB>) {
     const now = +new Date()
     const tx = db.transaction('indicators', 'readwrite')
 
@@ -123,7 +139,7 @@ class WorkspacesService {
         continue
       }
 
-      console.log(`[idb] insert default indicator ${id}`)
+      console.log(`[idb/defaultIndicators] insert default indicator ${id}`)
 
       await tx.store.add({ ...serie, id, createdAt: now, updatedAt: null })
 
@@ -131,7 +147,32 @@ class WorkspacesService {
     }
 
     if (added) {
-      console.debug(`[idb] ${added} indicators added`)
+      console.debug(`[idb/defaultIndicators] ${added} indicators added`)
+    }
+
+    await tx.done
+  }
+
+  async insertDefaultPresets(db: IDBPDatabase<AggrDB>) {
+    const tx = db.transaction('presets', 'readwrite')
+
+    const existing = await tx.store.getAllKeys()
+    let added = 0
+
+    for (const preset of defaultPresets as Preset[]) {
+      if (existing.indexOf(preset.name) !== -1) {
+        continue
+      }
+
+      console.log(`[idb/defaultPresets] insert default preset ${preset.name}`)
+
+      await tx.store.add(preset)
+
+      added++
+    }
+
+    if (added) {
+      console.debug(`[idb/defaultPresets] ${added} presets added`)
     }
 
     await tx.done
