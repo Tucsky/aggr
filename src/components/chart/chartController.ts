@@ -564,6 +564,14 @@ export default class ChartController {
           }
         }
 
+        if (indicator.options.priceScaleId === 'right') {
+          this.chartInstance.applyOptions({
+            rightPriceScale: {
+              scaleMargins: serieOptions.scaleMargins
+            }
+          })
+        }
+
         const api = this.chartInstance[apiMethodName](serieOptions) as IndicatorApi
 
         api.id = serie.id

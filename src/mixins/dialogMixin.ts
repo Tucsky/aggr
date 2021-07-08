@@ -27,7 +27,7 @@ export default {
         return
       }
 
-      if (data) {
+      if (typeof data !== 'undefined' && data !== null) {
         this.output = data
       }
 

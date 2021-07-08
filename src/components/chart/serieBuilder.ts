@@ -716,11 +716,11 @@ export default class SerieBuilder {
       localTimestamp: null,
       length: 1,
       bar: {
-        vbuy: 0,
-        vsell: 0,
-        cbuy: 0,
-        csell: 0,
-        lbuy: 0,
+        vbuy: 11,
+        vsell: 22,
+        cbuy: 2,
+        csell: 3,
+        lbuy: 1,
         lsell: 0
       },
       sources: {},

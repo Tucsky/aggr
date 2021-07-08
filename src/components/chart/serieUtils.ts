@@ -243,6 +243,24 @@ export function avg$(state, values) {
 }
 
 /**
+ * sum state
+ */
+export const sum = {
+  count: 0,
+  sum: 0,
+  points: []
+}
+/**
+ * sum
+ * @param {SerieMemory} memory
+ * @param {number} value
+ */
+export function sum$(state, value) {
+  state.output = value
+  return state.sum + value
+}
+
+/**
  * simple moving average (SMA) state
  */
 export const sma = {
