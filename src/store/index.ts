@@ -85,6 +85,7 @@ export async function boot(workspace?: Workspace, previousWorkspaceId?: string) 
 
   for (const paneId in modules.panes.state.panes) {
     await progress(`registering pane module ${paneId}`)
+    console.log(modules.panes.state.panes[paneId])
     await registerModule(paneId, {}, false, modules.panes.state.panes[paneId])
   }
 

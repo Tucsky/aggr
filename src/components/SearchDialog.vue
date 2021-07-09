@@ -12,10 +12,6 @@
       <div class="column -center"></div>
     </template>
     <div class="search">
-      <div v-if="otherPanes.length" class="form-group search__copy mb8">
-        <label>Choose from other panes</label>
-        <button v-for="pane of otherPanes" :key="pane.id" class="btn mb4 mr4 -accent" v-text="pane.name" @click="selectPaneMarkets(pane)"></button>
-      </div>
       <div class="form-group">
         <label>All products ({{ flattenedProducts.length }})</label>
         <div class="mb8 d-flex">
@@ -35,27 +31,57 @@
               {{ index }}
             </template>
           </dropdown>
+          <dropdown
+            :options="otherPanes"
+            placeholder="Filter"
+            title="Filters"
+            v-tippy="{ placement: 'top' }"
+            @output="selectPaneMarkets($event)"
+            selectionClass="-text"
+          >
+            <template v-slot:selection> panes <i class="icon-pile ml4"></i></template>
+            <template v-slot:option="{ value }">
+              {{ value.name }}
+            </template>
+          </dropdown>
         </div>
         <table v-if="results.length" class="table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>exchange</th>
+              <th>pair</th>
+              <th>type</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr v-for="market of results" :key="market" @click="selectMarket(market)" class="-action">
-              <td class="icon search__exchange text-center" :class="'icon-' + market.split(':')[0]"></td>
-              <td v-text="market"></td>
+            <tr v-for="market of results" :key="market.id" @click="selectMarket(market.id)" class="-action">
+              <td class="icon search__exchange text-center" :class="'icon-' + market.exchange"></td>
+              <td v-text="market.exchange"></td>
+              <td v-text="market.pair"></td>
+              <td v-text="market.type"></td>
               <td class=" text-center">
-                <i v-if="historicalMarkets.indexOf(market) !== -1" class="icon-candlestick"></i>
+                <i v-if="historicalMarkets.indexOf(market.id) !== -1" class="icon-candlestick"></i>
               </td>
             </tr>
           </tbody>
         </table>
         <div class="text-danger" v-else>
           <p>No results</p>
+          <div v-if="filters.historical" class="color-100">
+            <p class="form-feedback">Want to see more <i class="icon-candlestick"></i> historical markets supported here ?</p>
+            <p class="d-flex ">
+              <dono-dropdown class="-left " /> <span class="-center text-muted mb4">or</span>
+              <a class="btn -text" href="https://github.com/Tucsky/aggr-server" target="_blank">Get your own data</a>
+            </p>
+          </div>
         </div>
       </div>
     </div>
     <hr class="-horizontal" />
     <hr class="-vertical mb8" />
     <div class="form-group selection hide-scrollbar">
-      <label class="text-nowrap"
+      <label class="text-nowrap" for="ok"
         >Selection <code v-if="paneId" class="-filled" v-text="paneName"></code>
         <button class="btn -text -small" @click="clearSelection"><i class="icon-cross -higher"></i></button
       ></label>
@@ -90,6 +116,7 @@
 
 <script>
 import Dialog from '@/components/framework/Dialog.vue'
+import DonoDropdown from '@/components/settings/DonoDropdown.vue'
 import DialogMixin from '@/mixins/dialogMixin'
 import { getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
@@ -98,7 +125,8 @@ import aggregatorService from '@/services/aggregatorService'
 export default {
   mixins: [DialogMixin],
   components: {
-    Dialog
+    Dialog,
+    DonoDropdown
   },
   props: {
     query: {
@@ -113,7 +141,10 @@ export default {
     selection: [],
     originalSelection: [],
     filters: {
-      historical: false
+      historical: false,
+      perpetuals: false,
+      futures: false,
+      spots: false
     }
   }),
   computed: {
@@ -185,15 +216,27 @@ export default {
     },
     filteredProducts() {
       return this.flattenedProducts.filter(a => {
-        if (this.filters.historical) {
-          return this.historicalMarkets.indexOf(a) !== -1
+        if (this.filters.historical && this.historicalMarkets.indexOf(a.id) === -1) {
+          return false
+        }
+
+        if (this.filters.futures && a.type !== 'futures') {
+          return false
+        }
+
+        if (this.filters.perpetuals && a.type !== 'perp') {
+          return false
+        }
+
+        if (this.filters.spots && a.type !== 'spot') {
+          return false
         }
 
         return true
       })
     },
     results: function() {
-      return this.filteredProducts.filter(a => this.selection.indexOf(a) === -1 && this.queryFilter.test(a)).slice(0, 100)
+      return this.filteredProducts.filter(a => this.selection.indexOf(a.id) === -1 && this.queryFilter.test(a.id)).slice(0, 100)
     },
     hasFilters() {
       return this.filters.historical
@@ -230,8 +273,10 @@ export default {
           .filter((v, i, a) => a.indexOf(v) === i).length > 1
       )
     },
-    selectPaneMarkets(pane) {
+    selectPaneMarkets(paneId) {
       this.selection.splice(0, this.selection.length)
+
+      const pane = this.otherPanes[paneId]
 
       for (let i = 0; i < pane.markets.length; i++) {
         this.selection.push(pane.markets[i])
@@ -274,27 +319,43 @@ export default {
       this.$store.dispatch('app/hideSearch')
     },
     toggleFilter(key) {
+      const types = ['spots', 'perpetuals', 'futures']
+
+      if (types.indexOf(key) !== -1) {
+        for (const type of types) {
+          if (type === key) {
+            continue
+          }
+          this.filters[type] = false
+        }
+      }
+
       this.$set(this.filters, key, !this.filters[key])
     },
 
     beforeEnter(element) {
       element.style.height = '0px'
+      element.style.width = '0px'
     },
 
     enter(element) {
       const wrapper = element.children[0]
 
       const height = wrapper.offsetHeight + 'px'
+      const width = wrapper.offsetWidth + 'px'
 
       element.dataset.height = height
+      element.dataset.width = width
 
       setTimeout(() => {
         element.style.height = height
+        element.style.width = width
       }, 100)
     },
 
     afterEnter(element) {
       element.style.height = ''
+      element.style.width = ''
     },
 
     beforeLeave(element) {
@@ -303,13 +364,21 @@ export default {
 
         element.dataset.height = wrapper.offsetHeight + 'px'
       }
-
       element.style.height = element.dataset.height
+
+      if (typeof element.dataset.width === 'undefined') {
+        const wrapper = element.children[0]
+
+        element.dataset.width = wrapper.offsetWidth + 'px'
+      }
+
+      element.style.width = element.dataset.width
     },
 
     leave(element) {
       setTimeout(() => {
         element.style.height = '0px'
+        element.style.width = '0px'
       })
     },
 
@@ -344,6 +413,7 @@ export default {
   top: 0;
   place-self: flex-start;
   padding-bottom: 90px;
+  min-width: 180px;
 
   @media screen and (min-width: 768px) {
     text-align: right;
@@ -380,6 +450,7 @@ export default {
 }
 .search {
   flex-grow: 1;
+  place-self: start;
 
   table {
     border: 0;
@@ -428,6 +499,7 @@ export default {
   }
   .search {
     order: 2;
+    width: 100%;
 
     &__copy {
       display: none;

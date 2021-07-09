@@ -225,6 +225,10 @@ $unit: 'px'; // Feel free to change the unit.
   color: lighten($red, 10%);
 }
 
+.color-100 {
+  color: var(--theme-color-100);
+}
+
 .background-100 {
   background-color: var(--theme-background-100);
 }

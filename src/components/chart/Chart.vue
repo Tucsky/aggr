@@ -716,8 +716,9 @@ export default class extends Mixins(PaneMixin) {
 
     const backgroundColor = this.$store.state.settings.backgroundColor
     const backgroundColor300 = getComputedStyle(document.documentElement).getPropertyValue('--theme-background-300')
+    const backgroundColor100 = getComputedStyle(document.documentElement).getPropertyValue('--theme-background-100')
 
-    ctx.fillStyle = 'white'
+    ctx.fillStyle = backgroundColor100
     ctx.fillRect(0, 0, canvas.width, headerHeight)
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, headerHeight, canvas.width, canvas.height - headerHeight)

@@ -1,7 +1,7 @@
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
 import { capitalizeFirstLetter, getBucketId, sleep, slugify, uniqueName } from '@/utils/helpers'
-import { registerModule } from '@/utils/store'
+import { registerModule, syncState } from '@/utils/store'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '.'
@@ -131,8 +131,9 @@ const actions = {
       localStorage.removeItem(id)
     })
   },
-  appendPaneGridItem({ commit }, { id, type }: { id: string; type: PaneType }) {
-    for (const breakpoint in state.layouts) {
+  appendPaneGridItem({ commit, state }, { id, type }: { id: string; type: PaneType }) {
+    const breakpoints = Object.keys(state.layouts)
+    for (const breakpoint of breakpoints) {
       const item: GridItem = {
         i: id,
         type
@@ -353,13 +354,15 @@ const actions = {
     const el = document.getElementById(id) as HTMLElement
 
     if (el) {
-      el.style.fontSize = zoom ? zoom + 'rem' : ''
-    }
+      const parent = el.parentElement
 
-    if (zoom > 1) {
-      el.classList.add('-large')
-    } else {
-      el.classList.remove('-large')
+      parent.style.fontSize = zoom ? zoom + 'rem' : ''
+
+      if (zoom > 1) {
+        el.classList.add('-large')
+      } else {
+        el.classList.remove('-large')
+      }
     }
   },
   async toggleResponsive({ state, getters }) {
@@ -443,6 +446,8 @@ const actions = {
       }
     }
 
+    await syncState(state)
+
     return true
   }
 } as ActionTree<PanesState, ModulesState>
@@ -499,7 +504,8 @@ const mutations = {
       item.h = size
     }
 
-    state.layouts[breakpoint].unshift(item)
+    state.layouts[breakpoint].push(item)
+    Vue.set(state.layouts, breakpoint, state.layouts[breakpoint])
   },
   REMOVE_GRID_ITEM: (state, { breakpoint, index }) => {
     state.layouts[breakpoint].splice(index, 1)

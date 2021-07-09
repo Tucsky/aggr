@@ -56,6 +56,7 @@ export default class extends Vue {
   rowHeight = 80
   layout = null
   cols = null
+  breakpoint = null
 
   private _resizeTimeout: number
 
@@ -65,6 +66,7 @@ export default class extends Vue {
   }
 
   protected get panes() {
+    debugger
     return this.$store.state.panes.panes
   }
 
@@ -92,30 +94,36 @@ export default class extends Vue {
   }
 
   protected get layouts() {
-    return this.$store.state.panes.layouts
+    const layouts = this.$store.state.panes.layouts
+    if (this.breakpoint) {
+      this.layout = layouts[this.breakpoint]
+    }
+    return layouts
   }
 
   created() {
     this.cols = BREAKPOINTS_COLS
 
-    this.layout = this.layouts[this.updateCellSize()]
+    this.getLayout()
+
+    this.layout = this.layouts[this.breakpoint]
   }
 
   mounted() {
-    window.addEventListener('resize', this.updateCellSize)
+    window.addEventListener('resize', this.getLayout)
   }
 
   beforeDestroy() {
-    window.addEventListener('resize', this.updateCellSize)
+    window.addEventListener('resize', this.getLayout)
   }
 
-  updateCellSize(event?: any) {
+  getLayout(event?: any) {
     if (this._resizeTimeout) {
       clearTimeout(this._resizeTimeout)
     }
 
     if (event) {
-      this._resizeTimeout = window.setTimeout(this.updateCellSize.bind(this), 200)
+      this._resizeTimeout = window.setTimeout(this.getLayout.bind(this), 200)
     } else {
       this._resizeTimeout = null
 
@@ -136,7 +144,7 @@ export default class extends Vue {
 
       this.rowHeight = height / rowNum
 
-      return breakpointId
+      this.breakpoint = breakpointId
     }
   }
 

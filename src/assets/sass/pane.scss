@@ -12,17 +12,23 @@
       width: auto;
       height: auto;
       background: 0;
-      font-size: 1rem;
-      padding: 0.5rem;
-      width: 2rem;
-      height: 2rem;
+      font-size: 1em;
+      padding: 0em 3em 3em 0em;
+      width: 2em;
+      height: 2em;
       opacity: 0.5;
+      line-height: 0.5em;
+      text-align: center;
+      z-index: 4;
 
       &:before {
         font-family: 'icon';
         content: $icon-up;
         transform: rotateZ(-225deg) scale(1);
         display: block;
+        font-size: 2em;
+        width: 1em;
+        height: 1em;
       }
 
       &:hover {

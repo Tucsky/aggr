@@ -1,7 +1,7 @@
 <template>
   <div class="pane-counters">
     <pane-header v-if="hovered" :paneId="paneId" />
-    <ul class="counters">
+    <ul class="counters hide-scrollbar">
       <li v-for="(step, index) in activeSteps" :key="index" v-bind:duration="step.duration" class="counter">
         <div class="counter__side -buy" v-bind:style="{ width: (step.buy / (step.buy + step.sell)) * 100 + '%' }">
           <span v-if="!countersCount">{{ formatAmount(step.buy) }}</span>
@@ -258,28 +258,31 @@ export default class extends Mixins(PaneMixin) {
   list-style: none;
   margin: 0;
   padding: 0;
-  pointer-events: none;
+  height: 100%;
+  overflow: auto;
 }
 
 .counter {
   display: flex;
   position: relative;
+  flex-grow: 1;
+  min-height: 2em;
 
   &:before {
     content: attr(duration);
     position: absolute;
     left: 50%;
-    transform: translateX(-50%);
-    margin-top: 0.55em;
+    top: 50%;
+    transform: translate(-50%, -50%);
     background-color: rgba(black, 0.1);
-    border-radius: 3px;
-    padding: 0.34em 0.4em;
+    border-radius: 4px;
+    padding: 0.25em;
     font-size: 0.85em;
     text-align: center;
     pointer-events: none;
     line-height: 1;
     color: rgba(white, 0.75);
-    font-family: monospace;
+    font-family: $font-monospace;
   }
 
   .highlight {

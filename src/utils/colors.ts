@@ -1,3 +1,5 @@
+import store from '@/store'
+
 export const PALETTE = [
   '#F44336',
   '#FF9800',
@@ -138,11 +140,28 @@ export function getColorLuminance(color, backgroundColor?: number[]) {
 }
 
 export function splitRgba(string, backgroundColor?: number[]) {
-  const match = string.match(/rgba?\((\d+)[\s,]*(\d+)[\s,]*(\d+)(?:[\s,]*([\d.]+))?\)/)
+  let match
+  let color
+  try {
+    match = string.match(/rgba?\((\d+)[\s,]*(\d+)[\s,]*(\d+)(?:[\s,]*([\d.]+))?\)/)
 
-  let color = [+match[1], +match[2], +match[3]]
+    if (!match) {
+      throw new Error('invalid color')
+    }
 
-  if (typeof match[4] !== 'undefined') {
+    color = [+match[1], +match[2], +match[3]]
+  } catch (error) {
+    store.dispatch('app/showNotice', {
+      title: `${string} isn't a valid color<br>${error.message}`,
+      type: 'error',
+      timeout: 0 
+    })
+
+    color = [0, 0, 0]
+  }
+
+
+  if (match && typeof match[4] !== 'undefined') {
     color.push(+match[4])
 
     if (backgroundColor) {

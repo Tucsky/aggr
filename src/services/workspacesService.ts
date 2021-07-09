@@ -1,5 +1,6 @@
 import defaultIndicators from '@/store/defaultIndicators.json'
 import defaultPresets from '@/store/defaultPresets.json'
+import defaultPanes from '@/store/defaultPanes.json'
 import store, { boot } from '@/store'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
 import { GifsStorage, Preset, PresetType, ProductsStorage, Workspace } from '@/types/test'
@@ -361,7 +362,7 @@ class WorkspacesService {
       updatedAt: null,
       name: null,
       id: null,
-      states: {}
+      states: JSON.parse(JSON.stringify(defaultPanes))
     }
 
     await this.makeUniqueWorkspace(workspace)
