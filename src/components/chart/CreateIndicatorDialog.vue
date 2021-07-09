@@ -8,7 +8,7 @@
       <template v-if="indicators.length">
         <div class="form-group">
           <label>Choose from existing indicator</label>
-          <div class="d-flex mb4">
+          <div class="d-flex mb8">
             <input type="text" class="form-control" placeholder="search" v-model="query" />
             <div v-text="indicators.length" class="-center text-muted ml16"></div>
           </div>

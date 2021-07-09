@@ -17,7 +17,7 @@
     </div>
     <div class="d-flex mobile-dir-col-desktop-dir-row">
       <div class="form-group mb0 mt16">
-        <div class="d-flex mb4">
+        <div class="d-flex mb8">
           <label for class="mrauto -center">
             Input
           </label>

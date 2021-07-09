@@ -776,8 +776,8 @@ export default class extends Mixins(PaneMixin) {
   &.-large {
     font-weight: 500;
     .trade {
-      padding-top: 4px;
-      padding-bottom: 6px;
+      padding-top: 3px;
+      padding-bottom: 5px;
     }
   }
 

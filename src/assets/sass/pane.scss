@@ -20,12 +20,13 @@
 
       &:before {
         font-family: 'icon';
-        content: $icon-resize;
+        content: $icon-up;
+        transform: rotateZ(-225deg) scale(1);
+        display: block;
       }
 
       &:hover {
         opacity: 1;
-        background-color: rgba(white, 0.2);
       }
     }
 
