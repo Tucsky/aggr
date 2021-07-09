@@ -130,13 +130,14 @@ $exchanges: (
 }
 
 :root {
-  --theme-background-100: #{lighten($dark, 0%)};
-  --theme-background-200: #{lighten($dark, 10%)};
+  --theme-background-base: #{lighten($dark, 0%)};
+  --theme-background-100: #{lighten($dark, 10%)};
   --theme-background-150: #{lighten($dark, 30%)};
   --theme-background-200: #{lighten($dark, 50%)};
   --theme-background-300: #{lighten($dark, 75%)};
   --theme-background-o75: #{rgba($dark, 0.75)};
   --theme-background-o20: #{rgba($dark, 0.2)};
+  --theme-color-base: #{$light};
   --theme-color-100: #{$light};
   --theme-color-200: #{$light};
   --theme-color-300: #{$light};

@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [3.0.2] - 2021-07-09
+
+### Added
+- Responsive panes
+- Phemex exchange
+- Tick charts
+- Presets charts
+
+### Changed
+- Audio play() accept fadeIn and fadeOut
+
+## [3.0.1] - 2021-06-20
+
+### Added
+- Audio presets
+- Pane presets
+- Audio pitch
+- Pane volume
+- Zoom pane
+
 ## [3.0] - 2021-06-04
 
 ### Added

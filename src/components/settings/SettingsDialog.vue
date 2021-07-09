@@ -3,7 +3,7 @@
     <template v-slot:header>
       <div class="title">
         Settings
-        <div class="subtitle" v-if="hits"><i class="icon-bolt"></i> <strong v-text="hits"></strong> messages /seconds</div>
+        <div class="subtitle" v-if="hits"><i class="icon-bolt"></i> <code v-text="hits"></code> messages /s</div>
       </div>
       <div class="column -center"></div>
     </template>
@@ -17,9 +17,9 @@
               <div class="-fill text-left">
                 <div class="column">
                   <div class="-center">{{ workspace.name }}</div>
-                  <small
-                    ><code class="-center">{{ workspace.id }}</code></small
-                  >
+                  <small class="-center">
+                    <code>{{ workspace.id }}</code>
+                  </small>
                   <div class="-fill"></div>
                 </div>
                 <small class="text-muted">created {{ workspace.createdAt }} ago</small>
@@ -33,7 +33,7 @@
           </dropdown>
           <dropdown :options="workspacesToolsMenu" selectionClass="-text">
             <template v-slot:selection>
-              <i class="icon-menu"></i>
+              <i class="icon-plus"></i>
             </template>
             <template v-slot:option="{ value }">
               <span>{{ value.label }}</span>

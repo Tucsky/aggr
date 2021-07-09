@@ -146,7 +146,7 @@ export function splitRgba(string, backgroundColor?: number[]) {
     match = string.match(/rgba?\((\d+)[\s,]*(\d+)[\s,]*(\d+)(?:[\s,]*([\d.]+))?\)/)
 
     if (!match) {
-      throw new Error('invalid color')
+      throw new Error()
     }
 
     color = [+match[1], +match[2], +match[3]]
@@ -156,6 +156,8 @@ export function splitRgba(string, backgroundColor?: number[]) {
       type: 'error',
       timeout: 0 
     })
+
+    console.error(error);
 
     color = [0, 0, 0]
   }

@@ -1,7 +1,8 @@
 import store from '../store'
 
-const progressContainer = document.getElementById('progress')
-const progressTask = progressContainer.children[0] as HTMLElement
+export const progressTask = {
+  text: ''
+}
 
 export function formatAmount(amount, decimals?: number) {
   const negative = amount < 0
@@ -184,14 +185,13 @@ export function parseMarket(market: string) {
 }
 
 export async function progress(task: string | boolean) {
-  if (typeof task === 'boolean') {
-    progressContainer.style.display = task ? 'flex' : 'none'
-    return
-  }
-
   console.info(task)
 
-  progressTask.innerText = task
+  if (task === false) {
+    progressTask.text = null
+  } else {
+    progressTask.text = task as string
+  }
 }
 
 export function openBase64InNewTab(data, mimeType) {

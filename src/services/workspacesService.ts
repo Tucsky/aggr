@@ -4,7 +4,7 @@ import defaultPanes from '@/store/defaultPanes.json'
 import store, { boot } from '@/store'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
 import { GifsStorage, Preset, PresetType, ProductsStorage, Workspace } from '@/types/test'
-import { downloadJson, randomString, slugify, uniqueName } from '@/utils/helpers'
+import { downloadJson, progress, randomString, slugify, uniqueName } from '@/utils/helpers'
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import { databaseUpgrades, workspaceUpgrades } from './migrations'
 import { PanesState } from '@/store/panes'
@@ -53,6 +53,7 @@ class WorkspacesService {
 
   async createDatabase() {
     console.log(`[idb] openDB 'aggr' (latest database v${this.latestDatabaseVersion} workspace v${this.latestWorkspaceVersion})`)
+    progress('init database')
 
     let promiseOfUpgrade: Promise<void>
 
@@ -98,7 +99,12 @@ class WorkspacesService {
 
           return resolve(db)
         })
-        .catch(err => console.error(err))
+        .catch(err => {
+          console.log(err)
+          debugger
+          this.reset()
+          window.location.reload()
+        })
     })
   }
 
@@ -491,13 +497,15 @@ class WorkspacesService {
   }
 
   async reset() {
-    this.db.close()
-    this.db = null
-    this.workspace = null
-
-    localStorage.removeItem('workspace')
+    if (this.db) {
+      this.db.close()
+      this.db = null
+      this.workspace = null
+    }
 
     await deleteDB('aggr')
+
+    localStorage.removeItem('workspace')
   }
 }
 

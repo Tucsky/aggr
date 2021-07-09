@@ -97,7 +97,7 @@ const actions = {
     const backgroundRgb = splitRgba(state.backgroundColor)
 
     document.documentElement.style.setProperty('--theme-background-base', state.backgroundColor)
-    document.documentElement.style.setProperty('--theme-background-100', getLogShade(backgroundRgb, variantMultiplier * 0.02 * backgroundSide))
+    document.documentElement.style.setProperty('--theme-background-100', getLogShade(backgroundRgb, variantMultiplier * 0.015 * backgroundSide))
     document.documentElement.style.setProperty('--theme-background-150', getLogShade(backgroundRgb, variantMultiplier * 0.05 * backgroundSide))
     document.documentElement.style.setProperty('--theme-background-200', getLogShade(backgroundRgb, variantMultiplier * 0.075 * backgroundSide))
     document.documentElement.style.setProperty('--theme-background-300', getLogShade(backgroundRgb, variantMultiplier * 0.1 * backgroundSide))
