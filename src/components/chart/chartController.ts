@@ -1308,7 +1308,7 @@ export default class ChartController {
             instruction.state.points.push(instruction.state.output)
             instruction.state.sum += instruction.state.output
 
-            if (instruction.state.count > instruction.arg) {
+            if (instruction.state.count > (instruction.arg as number) - 1) {
               instruction.state.sum -= instruction.state.points.shift()
               instruction.state.count--
             }

@@ -767,12 +767,6 @@ export default class extends Mixins(PaneMixin) {
     -webkit-transform: translateZ(0);
   }
 
-  &.-slippage {
-    .trade__price {
-      flex-grow: 1.5;
-    }
-  }
-
   &.-large {
     font-weight: 500;
     .trade {
