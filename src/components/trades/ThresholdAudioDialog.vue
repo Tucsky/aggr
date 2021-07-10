@@ -71,7 +71,7 @@
       <small class="help-text">
         <i class="icon-info -lower mr4"></i>
         <code v-if="buyAudio.startsWith('play(')">play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
-        <code v-else-if="buyAudio.startsWith('playurl(')">playurl(url,startTime,gain,fadeOut,delay,fadeIn,holdDuration,startGain,endGain)</code>
+        <code v-else-if="buyAudio.startsWith('playurl(')">playurl(url,gain,holdDuration,delay,startTime,fadeIn,fadeOut,startGain,endGain)</code>
       </small>
 
       <p v-if="buyError" class="form-feedback"><i class="icon-warning mr4"></i> {{ buyError }}</p>

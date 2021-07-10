@@ -220,66 +220,64 @@ class AudioService {
     startGain?: number,
     endGain?: number
   ) {
-    if (this.context.state !== 'running') {
+    if (this.context.state !== 'running' || !AudioService.savedAudioBuffers[url]) {
       return
     }
     // Create a gain node and buffersource
     const gainNode = this.context.createGain()
     const source = this.context.createBufferSource()
 
-    this.loadSoundBuffer(url).then((buffer: AudioBuffer) => {
-      source.buffer = buffer
-      // Connect the source to the gain node.
-      source.connect(gainNode)
-      // Connect the gain node to the destination.
-      gainNode.connect(this.output)
+    source.buffer = AudioService.savedAudioBuffers[url]
+    // Connect the source to the gain node.
+    source.connect(gainNode)
+    // Connect the gain node to the destination.
+    gainNode.connect(this.context.destination)
 
-      source.onended = () => {
-        gainNode.disconnect()
-        this.count--
+    source.onended = () => {
+      gainNode.disconnect()
+      this.count--
+    }
+    this.count++
+
+    let cueTime = 0
+
+    if (!this.minTime) {
+      this.minTime = this.context.currentTime
+    } else {
+      this.minTime = Math.max(this.minTime, this.context.currentTime)
+      if (!delay) {
+        cueTime = this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
       }
-      this.count++
+    }
 
-      let cueTime = 0
+    const time = this.minTime + cueTime + delay
 
-      if (!this.minTime) {
-        this.minTime = this.context.currentTime
-      } else {
-        this.minTime = Math.max(this.minTime, this.context.currentTime)
-        if (!delay) {
-          cueTime = this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
-        }
-      }
+    this.minTime += cueTime
 
-      const time = this.minTime + cueTime + delay
+    const offset = time - this.context.currentTime
 
-      this.minTime += cueTime
+    source.start(time, startTime)
+    source.stop(0.2 + time + holdDuration)
 
-      const offset = time - this.context.currentTime
+    if (fadeIn) {
+      gainNode.gain.setValueAtTime(startGain, this.context.currentTime)
 
-      source.start(time, startTime)
-      source.stop(0.2 + time + holdDuration)
+      gainNode.gain.exponentialRampToValueAtTime(gain, time + fadeIn)
 
-      if (fadeIn) {
-        gainNode.gain.setValueAtTime(startGain, this.context.currentTime)
+      if (fadeOut) {
+        gainNode.gain.setValueAtTime(gain, time + fadeIn + holdDuration)
 
-        gainNode.gain.exponentialRampToValueAtTime(gain, time + fadeIn)
-
-        if (fadeOut) {
-          gainNode.gain.setValueAtTime(gain, time + fadeIn + holdDuration)
-
-          setTimeout(() => {
-            gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
-          }, (offset + fadeIn + holdDuration) * 1000)
-        }
-      } else {
-        gainNode.gain.setValueAtTime(gain, time)
-
-        if (fadeOut) {
+        setTimeout(() => {
           gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
-        }
+        }, (offset + fadeIn + holdDuration) * 1000)
       }
-    })
+    } else {
+      gainNode.gain.setValueAtTime(gain, time)
+
+      if (fadeOut) {
+        gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
+      }
+    }
   }
 
   async play(
@@ -440,8 +438,13 @@ class AudioService {
               if (typeof functionArguments[i] === 'string') {
                 functionArguments[i] = functionArguments[i].trim()
 
-                if (/^('|").*('|")$/.test(functionArguments[i]) && typeof defaultArguments[i] === 'number') {
+                const stringProvided = /^('|").*('|")$/.test(functionArguments[i])
+                const defaultExpectedString = /^('|").*('|")$/.test(defaultArguments[i])
+
+                if (stringProvided && !defaultExpectedString) {
                   functionArguments[i] = defaultArguments[i]
+                } else if (!stringProvided && defaultExpectedString) {
+                  functionArguments[i] = `'${functionArguments[i]}'`
                 }
               }
 
