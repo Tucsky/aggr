@@ -140,6 +140,10 @@ export function getColorLuminance(color, backgroundColor?: number[]) {
 }
 
 export function splitRgba(string, backgroundColor?: number[]) {
+  if (string[0] === '#') {
+    return hexToRgb(string)
+  }
+
   let match
   let color
   try {

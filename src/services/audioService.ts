@@ -246,7 +246,7 @@ class AudioService {
     } else {
       this.minTime = Math.max(this.minTime, this.context.currentTime)
       if (!delay) {
-        cueTime = this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
+        cueTime = this.count > 10 ? (this.count > 20 ? (this.count > 200 ? 0.01 : 0.02) : 0.04) : 0.08
       }
     }
 

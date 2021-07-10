@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project will be documented here.
 
 
 ## [3.0.2] - 2021-07-09
@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 - Responsive panes
 - Phemex exchange
 - Tick charts
-- Presets charts
+- Audio playurl()
 
 ### Changed
 - Audio play() accept fadeIn and fadeOut

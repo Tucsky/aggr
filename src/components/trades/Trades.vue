@@ -17,7 +17,7 @@
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 
-import { formatPrice, formatAmount, slugify, sleep } from '../../utils/helpers'
+import { formatPrice, formatAmount, slugify } from '../../utils/helpers'
 import { getColorByWeight, getColorLuminance, getAppBackgroundColor, splitRgba } from '../../utils/colors'
 
 import aggregatorService from '@/services/aggregatorService'
@@ -126,7 +126,7 @@ export default class extends Mixins(PaneMixin) {
   created() {
     this.cacheFilters()
 
-    this.retrieveStoredGifs()
+    this.loadThresholdsGifs()
     this.prepareColorsSteps()
     this.prepareThresholdsSounds()
     this.prepareAudioThreshold()
@@ -147,7 +147,7 @@ export default class extends Mixins(PaneMixin) {
           }
           break
         case this.paneId + '/SET_THRESHOLD_GIF':
-          this.fetchGifByKeyword(mutation.payload.value, mutation.payload.isDeleted)
+          this.retrieveThresholdGifs(mutation.payload.value)
           this.refreshList()
           break
         case this.paneId + '/SET_THRESHOLD_AUDIO':
@@ -454,109 +454,87 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  async retrieveStoredGifs(refresh = false) {
+  async loadThresholdsGifs() {
     for (const threshold of this.thresholds) {
       if (!threshold.gif || GIFS[threshold.gif]) {
         continue
       }
 
-      const slug = slugify(threshold.gif)
-
-      const storage = await workspacesService.getGifs(slug)
-
-      if (!refresh && storage && +new Date() - storage.timestamp < 1000 * 60 * 60 * 24 * 7) {
-        GIFS[threshold.gif] = storage.data
-      } else if (!PROMISES_OF_GIFS[threshold.gif]) {
-        this.fetchGifByKeyword(threshold.gif)
-      }
-    }
-
-    // this.playSample()
-  }
-
-  async playSample() {
-    this._audioThreshold = Infinity
-
-    const pairs = ['btcusdt', 'btcusdt_perp', 'BTC-PERP', 'BTC-PERPETUAL']
-    const exchanges = ['BINANCE', 'BINANCE_FUTURES', 'BITMEX']
-
-    for (let i = 0; i < 300; i++) {
-      const threshold = this.thresholds[Math.floor(Math.random() * this.thresholds.length)]
-      const thresholdIndex = this.thresholds.indexOf(threshold)
-      const max = thresholdIndex < this.thresholds.length - 1 ? this.thresholds[thresholdIndex + 1].amount - 1 : threshold.amount * 10
-      const amount = threshold.amount + (max - threshold.amount) * Math.random()
-
-      this.appendRow(
-        {
-          timestamp: +new Date(),
-          side: Math.random() > 0.5 ? 'buy' : 'sell',
-          exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
-          pair: pairs[Math.floor(Math.random() * exchanges.length)],
-          price: 57000,
-          size: amount / 57000
-        },
-        amount,
-        1
-      )
-
-      await sleep(Math.random() * 500)
+      this.retrieveThresholdGifs(threshold.gif)
     }
   }
 
-  async fetchGifByKeyword(keyword: string, isDeleted = false) {
-    if (!keyword || !GIFS) {
-      return
-    }
-
-    const slug = slugify(keyword)
+  async retrieveThresholdGifs(gif, isDeleted = false) {
+    const slug = slugify(gif)
 
     if (isDeleted) {
-      if (GIFS[keyword]) {
+      if (GIFS[gif]) {
         this.$store.dispatch('app/showNotice', {
-          title: 'Removed ' + GIFS[keyword].length + ' gifs about "' + slug + '"',
+          title: 'Removed ' + GIFS[gif].length + ' gifs about "' + gif + '"',
           type: 'info'
         })
 
-        delete GIFS[keyword]
+        delete GIFS[gif]
       }
 
       await workspacesService.deleteGifs(slug)
 
+      return Promise.resolve()
+    }
+
+    const storage = await workspacesService.getGifs(slug)
+    let gifs
+
+    if (storage && +new Date() - storage.timestamp < 1000 * 60 * 60 * 24 * 7) {
+      gifs = storage.data
+    } else if (!PROMISES_OF_GIFS[gif]) {
+      gifs = await this.fetchGifByKeyword(gif)
+    }
+
+    if (gifs) {
+      GIFS[gif] = gifs
+    }
+  }
+
+  async fetchGifByKeyword(gif: string) {
+    if (!gif || !GIFS) {
       return
     }
 
-    const promise = fetch('https://g.tenor.com/v1/search?q=' + keyword + '&key=LIVDSRZULELA&limit=100&key=DF3B0979C761')
+    const slug = slugify(gif)
+
+    const promise = fetch('https://g.tenor.com/v1/search?q=' + gif + '&key=LIVDSRZULELA&limit=100&key=DF3B0979C761')
       .then(res => res.json())
       .then(async res => {
         if (!res.results || !res.results.length) {
           return
         }
 
-        GIFS[keyword] = []
+        GIFS[gif] = []
 
         for (const item of res.results) {
-          GIFS[keyword].push(item.media[0].gif.url)
+          GIFS[gif].push(item.media[0].tinygif.url)
         }
 
         this.$store.dispatch('app/showNotice', {
-          title: 'Downloaded ' + GIFS[keyword].length + ' gifs about "' + slug + '"',
+          title: 'Downloaded ' + GIFS[gif].length + ' gifs about "' + gif + '"',
           type: 'success'
         })
 
         await workspacesService.saveGifs({
           slug,
-          keyword,
+          keyword: gif,
           timestamp: +new Date(),
-          data: GIFS[keyword]
+          data: GIFS[gif]
         })
 
-        return GIFS[keyword]
+        return GIFS[gif]
       })
       .finally(() => {
-        delete PROMISES_OF_GIFS[keyword]
+        delete PROMISES_OF_GIFS[gif]
       })
 
-    PROMISES_OF_GIFS[keyword] = promise
+    PROMISES_OF_GIFS[gif] = promise
 
     return promise
   }

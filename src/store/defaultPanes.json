@@ -108,7 +108,7 @@
           {
             "id": "huge",
             "amount": 100000,
-            "gif": "rekt",
+            "gif": "rip coffin",
             "buyColor": "rgba(236,64,122,0.7)",
             "sellColor": "rgba(255,152,0,0.8)",
             "buyAudio": "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*8,0.08,,,'sine')",
@@ -117,7 +117,7 @@
           {
             "id": "rare",
             "amount": 1000000,
-            "gif": "explosion",
+            "gif": "rip coffin",
             "buyColor": "rgb(156,39,176)",
             "sellColor": "rgb(255,235,59)",
             "buyAudio": "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",

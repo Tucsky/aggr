@@ -717,6 +717,7 @@ export default class extends Mixins(PaneMixin) {
     const backgroundColor = this.$store.state.settings.backgroundColor
     const backgroundColor300 = getComputedStyle(document.documentElement).getPropertyValue('--theme-background-300')
     const backgroundColor100 = getComputedStyle(document.documentElement).getPropertyValue('--theme-background-100')
+    const color100 = getComputedStyle(document.documentElement).getPropertyValue('--theme-color-100')
 
     ctx.fillStyle = backgroundColor100
     ctx.fillRect(0, 0, canvas.width, headerHeight)
@@ -735,10 +736,10 @@ export default class extends Mixins(PaneMixin) {
       let offset = 0
 
       if (i === 0) {
-        ctx.fillStyle = '#2196f3'
+        ctx.fillStyle = color100
         ctx.fillText(date, textPadding, textPadding)
         offset = dateWidth
-        ctx.fillStyle = backgroundColor300
+        ctx.fillStyle = color100
       }
 
       ctx.fillText(lines[i], offset + textPadding, textPadding + lineHeight * i)
@@ -769,7 +770,7 @@ export default class extends Mixins(PaneMixin) {
       }
 
       ctx.fillStyle = color
-      ctx.fillText(indicator.name.toUpperCase(), textPadding, headerHeight + textPadding + index * lineHeight)
+      ctx.fillText(indicator.name.toUpperCase(), textPadding, headerHeight + textPadding + index * lineHeight * 1.2)
     })
 
     const dataURL = canvas.toDataURL('image/png')
