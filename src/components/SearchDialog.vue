@@ -447,7 +447,7 @@ export default {
       }
 
       const raw = event.clipboardData.getData('text/plain')
-      const markets = raw.split(',').filter(a => /^.{4,}:.{4,24}$/.test(a))
+      const markets = raw.split(',').filter(a => /^.{3,}:.{4,32}$/.test(a))
 
       if (!markets.length) {
         return
