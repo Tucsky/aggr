@@ -14,7 +14,7 @@
       <button class="btn -text mlauto" @click="showHelp = !showHelp"><i class="icon-down" :class="{ 'icon-up': this.showHelp }"></i> help</button>
     </div>
     <div class="help-block mb16" v-if="showHelp">
-      Write a sequence of sounds using the play() function
+      Write a sequence of sounds using the play() or playurl() function
 
       <blockquote>
         <code>
@@ -25,6 +25,21 @@
           <span class="ml8" v-tippy title="FadeIn (startGain to gain duration)">fadeIn?: number</span>,<br />
           <span class="ml8" v-tippy title="HoldDuration (time at gain)">holdDuration?: number</span>,<br />
           <span class="ml8" v-tippy title="Oscillator (type of wave, either sine, square, triangle, or sawtooth)">osc?: number</span>,<br />
+          <span class="ml8" v-tippy title="StartGain (cannot be 0, but should be close to 0 like 0.0001)">startGain?: number</span>,<br />
+          <span class="ml8" v-tippy title="EndGain (cannot be 0, but should be close to 0 like 0.0001)">endGain?: number</span><br />
+          )
+        </code>
+      </blockquote>
+
+      <blockquote>
+        <code>
+          playurl(<br /><span class="ml8" v-tippy title="URL (.mp3|.wav|.ogg) (https://archive.org/details/audio)">url: string</span>,<br />
+          <span class="ml8" v-tippy title="Gain (volume, 0 is muted and 1 is max, anything above 1 will sound saturated)">gain: number</span>,<br />
+          <span class="ml8" v-tippy title="HoldDuration (time at gain)">holdDuration?: number</span>,<br />
+          <span class="ml8" v-tippy title="Delay song by n second">delay?: number</span>,<br />
+          <span class="ml8" v-tippy title="StartTime (start audio at 'x' seconds)">startTime: number</span>,<br />
+          <span class="ml8" v-tippy title="FadeIn (startGain to gain duration)">fadeIn?: number</span>,<br />
+          <span class="ml8" v-tippy title="FadeOut (gain to endGain duration)">fadeOut: number</span>,<br />
           <span class="ml8" v-tippy title="StartGain (cannot be 0, but should be close to 0 like 0.0001)">startGain?: number</span>,<br />
           <span class="ml8" v-tippy title="EndGain (cannot be 0, but should be close to 0 like 0.0001)">endGain?: number</span><br />
           )
@@ -55,7 +70,8 @@
 
       <small class="help-text">
         <i class="icon-info -lower mr4"></i>
-        <code>play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
+        <code v-if="buyAudio.startsWith('play(')">play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
+        <code v-else-if="buyAudio.startsWith('playurl(')">playurl(url,gain,holdDuration,delay,startTime,fadeIn,fadeOut,startGain,endGain)</code>
       </small>
 
       <p v-if="buyError" class="form-feedback"><i class="icon-warning mr4"></i> {{ buyError }}</p>
@@ -84,7 +100,8 @@
 
       <small class="help-text">
         <i class="icon-info -lower mr4"></i>
-        <code>play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
+        <code v-if="sellAudio.startsWith('play(')">play(frequency,gain,fadeOut,delay,fadeIn,holdDuration,osc,startGain,endGain)</code>
+        <code v-else-if="sellAudio.startsWith('playurl(')">playurl(url,startTime,gain,fadeOut,delay,fadeIn,holdDuration,startGain,endGain)</code>
       </small>
 
       <p v-if="sellError" class="form-feedback"><i class="icon-warning mr4"></i> {{ sellError }}</p>
@@ -219,7 +236,7 @@ export default {
     restartWebAudio() {
       audioService.reconnect()
     },
-    test(litteral, side, event) {
+    async test(litteral, side, event) {
       let percent = 1
       let level
       let amount
@@ -246,9 +263,7 @@ export default {
       }
 
       if (amount) {
-        const adapter = this.getAdapter(litteral, side)
-
-        adapter(audioService.play.bind(audioService), percent, side, level)
+        ;(await this.getAdapter(litteral, side))(audioService, percent, side, level)
 
         this.$store.dispatch('app/showNotice', {
           id: 'testing-threshold-audio',
@@ -261,9 +276,9 @@ export default {
     formatAmount(amount) {
       return formatAmount(amount)
     },
-    getAdapter(litteral, side) {
+    async getAdapter(litteral, side) {
       try {
-        const adapter = audioService.buildAudioFunction(litteral, side, this.audioPitch, this.audioVolume, true)
+        const adapter = await audioService.buildAudioFunction(litteral, side, this.audioPitch, this.audioVolume, true)
 
         this[side + 'Error'] = null
 

@@ -154,14 +154,13 @@ export function splitRgba(string, backgroundColor?: number[]) {
     store.dispatch('app/showNotice', {
       title: `${string} isn't a valid color<br>${error.message}`,
       type: 'error',
-      timeout: 0 
+      timeout: 0
     })
 
-    console.error(error);
+    console.error(error)
 
     color = [0, 0, 0]
   }
-
 
   if (match && typeof match[4] !== 'undefined') {
     color.push(+match[4])
