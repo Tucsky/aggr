@@ -1,7 +1,8 @@
 import store from '../store'
 
-const progressContainer = document.getElementById('progress')
-const progressTask = progressContainer.children[0] as HTMLElement
+export const progressTask = {
+  text: ''
+}
 
 export function formatAmount(amount, decimals?: number) {
   const negative = amount < 0
@@ -184,14 +185,13 @@ export function parseMarket(market: string) {
 }
 
 export async function progress(task: string | boolean) {
-  if (typeof task === 'boolean') {
-    progressContainer.style.display = task ? 'flex' : 'none'
-    return
-  }
-
   console.info(task)
 
-  progressTask.innerText = task
+  if (task === false) {
+    progressTask.text = null
+  } else {
+    progressTask.text = task as string
+  }
 }
 
 export function openBase64InNewTab(data, mimeType) {
@@ -298,4 +298,37 @@ export function isElementInteractive(el: HTMLElement) {
   }
 
   return false
+}
+
+export function fallbackCopyTextToClipboard(text) {
+  const textArea = document.createElement('textarea')
+  textArea.value = text
+
+  // Avoid scrolling to bottom
+  textArea.style.top = '0'
+  textArea.style.left = '0'
+  textArea.style.position = 'fixed'
+
+  document.body.appendChild(textArea)
+  textArea.focus()
+  textArea.select()
+
+  try {
+    const successful = document.execCommand('copy')
+    const msg = successful ? 'successful' : 'unsuccessful'
+    console.log('Fallback: Copying text command was ' + msg)
+  } catch (err) {
+    console.error('Fallback: Oops, unable to copy', err)
+  }
+
+  document.body.removeChild(textArea)
+}
+
+export function copyTextToClipboard(text) {
+  if (!navigator.clipboard) {
+    fallbackCopyTextToClipboard(text)
+    return Promise.resolve()
+  }
+
+  return navigator.clipboard.writeText(text)
 }

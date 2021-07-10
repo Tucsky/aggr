@@ -69,6 +69,7 @@
           v-if="showWatermark"
           picker="square"
           menuPosition="left"
+          class="mr8"
           model="rgb"
           :value="watermarkColor"
           @input="$event !== watermarkColor && $store.commit(paneId + '/SET_WATERMARK', { value: $event })"

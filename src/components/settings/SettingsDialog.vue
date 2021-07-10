@@ -3,7 +3,7 @@
     <template v-slot:header>
       <div class="title">
         Settings
-        <div class="subtitle" v-if="hits"><i class="icon-bolt"></i> <strong v-text="hits"></strong> messages /seconds</div>
+        <div class="subtitle" v-if="hits"><i class="icon-bolt"></i> <code v-text="hits"></code> messages /s</div>
       </div>
       <div class="column -center"></div>
     </template>
@@ -17,9 +17,9 @@
               <div class="-fill text-left">
                 <div class="column">
                   <div class="-center">{{ workspace.name }}</div>
-                  <small
-                    ><code class="-center">{{ workspace.id }}</code></small
-                  >
+                  <small class="-center">
+                    <code>{{ workspace.id }}</code>
+                  </small>
                   <div class="-fill"></div>
                 </div>
                 <small class="text-muted">created {{ workspace.createdAt }} ago</small>
@@ -33,7 +33,7 @@
           </dropdown>
           <dropdown :options="workspacesToolsMenu" selectionClass="-text">
             <template v-slot:selection>
-              <i class="icon-menu"></i>
+              <i class="icon-plus"></i>
             </template>
             <template v-slot:option="{ value }">
               <span>{{ value.label }}</span>
@@ -183,28 +183,22 @@
       </div>
     </section>
 
-    <section class="section mt16 settings__footer">
+    <footer class="section mt16 settings__footer">
       <div class="form-group">
         <div v-if="version" class="column">
           <div class="-grow">
-            <button class="btn -text">
+            <button class="btn -text pl0">
               v{{ version }} <sup class="version-date">{{ buildDate }}</sup>
             </button>
           </div>
           <button class="btn -text" @click="reset()">reset</button>
           <i class="pipe -center">|</i>
           <span>
-            <dropdown :options="donationMenu" title="Support the project" placeholder="donate" class="-top -text-left" selectionClass="-text" v-tippy>
-              <template v-slot:option="{ value }">
-                <i :class="'icon-' + value.icon" class="-fill"></i>
-
-                <span class="ml4">{{ value.label }}</span>
-              </template>
-            </dropdown>
+            <dono-dropdown class="-top -text-left" />
           </span>
         </div>
       </div>
-    </section>
+    </footer>
   </Dialog>
 </template>
 
@@ -212,6 +206,7 @@
 import { ago } from '../../utils/helpers'
 
 import Exchange from './Exchange.vue'
+import DonoDropdown from './DonoDropdown.vue'
 import SettingsImportConfirmation from './ImportConfirmation.vue'
 
 import dialogService from '../../services/dialogService'
@@ -232,6 +227,7 @@ export default {
     Exchange,
     AudioSettings,
     OtherSettings,
+    DonoDropdown,
     Dropdown
   },
   data() {
@@ -315,24 +311,6 @@ export default {
     },
 
     createMenus() {
-      this.donationMenu = [
-        {
-          label: 'with Bitcoin',
-          icon: 'bitcoin',
-          click: () => window.open('bitcoin:3PK1bBK8sG3zAjPBPD7g3PL14Ndux3zWEz')
-        },
-        {
-          label: 'with Monero',
-          icon: 'xmr',
-          click: () => window.open('monero:48NJj3RJDo33zMLaudQDdM8G6MfPrQbpeZU2YnRN2Ep6hbKyYRrS2ZSdiAKpkUXBcjD2pKiPqXtQmSZjZM7fC6YT6CMmoX6')
-        },
-        {
-          label: 'with other coin',
-          icon: 'COINBASE',
-          click: () => window.open('https://commerce.coinbase.com/checkout/c58bd003-5e47-4cfb-ae25-5292f0a0e1e8')
-        }
-      ]
-
       this.activeWorkspaceMenu = [
         {
           icon: 'trash',
@@ -422,6 +400,7 @@ export default {
             workspace
           })
         ) {
+          await this.close()
           this.importWorkspace(workspace)
         }
       }
@@ -572,7 +551,9 @@ export default {
             return
           }
           if (dialogService.openAsPromise(SettingsImportConfirmation, { workspace })) {
-            this.importWorkspace(workspace)
+            this.close().then(() => {
+              this.importWorkspace(workspace)
+            })
           }
         }
       }
@@ -622,7 +603,6 @@ export default {
 
 .settings__footer {
   margin-top: auto;
-  background: 0 !important;
 
   .form-group {
     flex-basis: auto;

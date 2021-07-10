@@ -1,8 +1,10 @@
 import defaultIndicators from '@/store/defaultIndicators.json'
+import defaultPresets from '@/store/defaultPresets.json'
+import defaultPanes from '@/store/defaultPanes.json'
 import store, { boot } from '@/store'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
 import { GifsStorage, Preset, PresetType, ProductsStorage, Workspace } from '@/types/test'
-import { downloadJson, randomString, slugify, uniqueName } from '@/utils/helpers'
+import { downloadJson, progress, randomString, slugify, uniqueName } from '@/utils/helpers'
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import { databaseUpgrades, workspaceUpgrades } from './migrations'
 import { PanesState } from '@/store/panes'
@@ -38,6 +40,7 @@ class WorkspacesService {
   urlStrategy = 'history'
   latestDatabaseVersion: any
   latestWorkspaceVersion: any
+  defaultInserted = false
 
   constructor() {
     if (/github\.io/.test(window.location.hostname)) {
@@ -50,6 +53,7 @@ class WorkspacesService {
 
   async createDatabase() {
     console.log(`[idb] openDB 'aggr' (latest database v${this.latestDatabaseVersion} workspace v${this.latestWorkspaceVersion})`)
+    progress('init database')
 
     let promiseOfUpgrade: Promise<void>
 
@@ -95,7 +99,12 @@ class WorkspacesService {
 
           return resolve(db)
         })
-        .catch(err => console.error(err))
+        .catch(err => {
+          console.log(err)
+          debugger
+          this.reset()
+          window.location.reload()
+        })
     })
   }
 
@@ -107,9 +116,23 @@ class WorkspacesService {
 
       window.location.reload()
     }
+
+    if (!this.defaultInserted) {
+      // add default presets and indicators post database creation
+      setTimeout(() => {
+        this.insertDefault(this.db)
+      }, 3000)
+    }
   }
 
   async insertDefault(db: IDBPDatabase<AggrDB>) {
+    this.defaultInserted = true
+
+    await this.insertDefaultIndicators(db)
+    await this.insertDefaultPresets(db)
+  }
+
+  async insertDefaultIndicators(db: IDBPDatabase<AggrDB>) {
     const now = +new Date()
     const tx = db.transaction('indicators', 'readwrite')
 
@@ -123,7 +146,7 @@ class WorkspacesService {
         continue
       }
 
-      console.log(`[idb] insert default indicator ${id}`)
+      console.log(`[idb/defaultIndicators] insert default indicator ${id}`)
 
       await tx.store.add({ ...serie, id, createdAt: now, updatedAt: null })
 
@@ -131,7 +154,32 @@ class WorkspacesService {
     }
 
     if (added) {
-      console.debug(`[idb] ${added} indicators added`)
+      console.debug(`[idb/defaultIndicators] ${added} indicators added`)
+    }
+
+    await tx.done
+  }
+
+  async insertDefaultPresets(db: IDBPDatabase<AggrDB>) {
+    const tx = db.transaction('presets', 'readwrite')
+
+    const existing = await tx.store.getAllKeys()
+    let added = 0
+
+    for (const preset of defaultPresets as Preset[]) {
+      if (existing.indexOf(preset.name) !== -1) {
+        continue
+      }
+
+      console.log(`[idb/defaultPresets] insert default preset ${preset.name}`)
+
+      await tx.store.add(preset)
+
+      added++
+    }
+
+    if (added) {
+      console.debug(`[idb/defaultPresets] ${added} presets added`)
     }
 
     await tx.done
@@ -320,7 +368,7 @@ class WorkspacesService {
       updatedAt: null,
       name: null,
       id: null,
-      states: {}
+      states: JSON.parse(JSON.stringify(defaultPanes))
     }
 
     await this.makeUniqueWorkspace(workspace)
@@ -449,13 +497,15 @@ class WorkspacesService {
   }
 
   async reset() {
-    this.db.close()
-    this.db = null
-    this.workspace = null
-
-    localStorage.removeItem('workspace')
+    if (this.db) {
+      this.db.close()
+      this.db = null
+      this.workspace = null
+    }
 
     await deleteDB('aggr')
+
+    localStorage.removeItem('workspace')
   }
 }
 

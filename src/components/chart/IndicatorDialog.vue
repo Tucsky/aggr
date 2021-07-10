@@ -16,8 +16,8 @@
       <button class="btn -text -white mlauto" @click="showHelp">doc <i class="icon-external-link-square-alt ml4"></i></button>
     </div>
     <div class="d-flex mobile-dir-col-desktop-dir-row">
-      <div class="form-group mb0 mt16">
-        <div class="d-flex mb4">
+      <div class="form-group mb0">
+        <div class="d-flex mb8">
           <label for class="mrauto -center">
             Input
           </label>

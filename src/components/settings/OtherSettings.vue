@@ -28,7 +28,7 @@
     </div>
     <div class="form-group mb8">
       <label class="checkbox-control">
-        <input type="checkbox" class="form-control" :checked="responsiveEnabled" @change="$store.dispatch('panes/toggleResponsive')" />
+        <input type="checkbox" class="form-control" v-model="responsiveEnabled" @change="toggleResponsive" />
         <div></div>
         <span>
           <small class="d-block text-muted" v-text="responsiveEnabled ? 'Responsive layouts are enabled' : 'Keep same layout'"></small>
@@ -46,6 +46,8 @@ import { Component, Vue } from 'vue-property-decorator'
   name: 'OtherSettings'
 })
 export default class extends Vue {
+  responsiveEnabled: boolean = null
+
   get decimalPrecision() {
     return this.$store.state.settings.decimalPrecision
   }
@@ -54,8 +56,18 @@ export default class extends Vue {
     return !this.$store.state.settings.disableAnimations
   }
 
-  get responsiveEnabled() {
-    return Object.keys(this.$store.state.panes.layouts).length > 1
+  created() {
+    this.responsiveEnabled = Object.keys(this.$store.state.panes.layouts).length > 1
+  }
+
+  async toggleResponsive() {
+    const success = await this.$store.dispatch('panes/toggleResponsive')
+
+    console.log('success', success)
+
+    if (!success) {
+      this.responsiveEnabled = !this.responsiveEnabled
+    }
   }
 }
 </script>

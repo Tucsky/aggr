@@ -1,13 +1,14 @@
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
 import { capitalizeFirstLetter, getBucketId, sleep, slugify, uniqueName } from '@/utils/helpers'
-import { registerModule } from '@/utils/store'
+import { registerModule, syncState } from '@/utils/store'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '.'
 import panesSettings from './panesSettings'
 import defaultPanes from './defaultPanes.json'
 import { BREAKPOINTS_COLS, BREAKPOINTS_WIDTHS } from '@/utils/constants'
+import dialogService from '@/services/dialogService'
 
 export type PaneType = 'trades' | 'chart' | 'stats' | 'counters' | 'prices'
 export type MarketsListeners = { [market: string]: number }
@@ -38,7 +39,7 @@ export interface PanesState {
   marketsListeners: MarketsListeners
 }
 
-const state: PanesState = defaultPanes
+const state: PanesState = JSON.parse(JSON.stringify(defaultPanes))
 
 const getters = {
   currentLayout: state => {
@@ -130,8 +131,9 @@ const actions = {
       localStorage.removeItem(id)
     })
   },
-  appendPaneGridItem({ commit }, { id, type }: { id: string; type: PaneType }) {
-    for (const breakpoint in state.layouts) {
+  appendPaneGridItem({ commit, state }, { id, type }: { id: string; type: PaneType }) {
+    const breakpoints = Object.keys(state.layouts)
+    for (const breakpoint of breakpoints) {
       const item: GridItem = {
         i: id,
         type
@@ -352,18 +354,22 @@ const actions = {
     const el = document.getElementById(id) as HTMLElement
 
     if (el) {
-      el.style.fontSize = zoom ? zoom + 'rem' : ''
-    }
+      const parent = el.parentElement
 
-    if (zoom > 1) {
-      el.classList.add('-large')
-    } else {
-      el.classList.remove('-large')
+      parent.style.fontSize = zoom ? zoom + 'rem' : ''
+
+      if (zoom > 1) {
+        el.classList.add('-large')
+      } else {
+        el.classList.remove('-large')
+      }
     }
   },
-  toggleResponsive({ state, getters }) {
+  async toggleResponsive({ state, getters }) {
     const breakpoints = Object.keys(state.layouts)
+    const panes = Object.keys(state.panes)
     const currentLayout = getters.currentLayout
+
     console.log('[toggleResponsive] currentLayout', currentLayout)
 
     if (breakpoints.length > 1) {
@@ -374,27 +380,75 @@ const actions = {
         }
       }
     } else {
-      for (const breakpoint in BREAKPOINTS_WIDTHS) {
-        const cols = BREAKPOINTS_COLS[breakpoint]
-        if (breakpoint === currentLayout) {
-          continue
+      let overrideWithResponsiveLayout = false
+
+      if (getBucketId(panes) === getBucketId(['chart', 'liquidations', 'trades'])) {
+        overrideWithResponsiveLayout = await dialogService.confirm({
+          message: 'Override current layout with official responsive one ?',
+          ok: 'Yes override',
+          cancel: 'Create layouts using this one as base'
+        })
+
+        if (overrideWithResponsiveLayout === null) {
+          // cancel toggleResponsive
+          return false
         }
-
-        const coeficient = cols / BREAKPOINTS_COLS[currentLayout]
-        console.log('create layout', breakpoint, 'at x', coeficient, 'of', currentLayout)
-
-        const layout = JSON.parse(JSON.stringify(state.layouts[currentLayout]))
-
-        for (const pane of layout) {
-          pane.x = Math.round(pane.x * coeficient)
-          pane.y = Math.round(pane.y * coeficient)
-          pane.w = Math.round(pane.w * coeficient)
-          pane.h = Math.round(pane.h * coeficient)
+      }
+      if (overrideWithResponsiveLayout) {
+        state.layouts = {
+          xl: [
+            { i: 'chart', type: 'chart', x: 0, y: 0, w: 28, h: 32, isolated: true },
+            { i: 'trades', type: 'trades', x: 28, y: 0, w: 4, h: 26, isolated: true },
+            { i: 'liquidations', type: 'trades', x: 28, y: 26, w: 4, h: 6, isolated: true }
+          ],
+          lg: [
+            { i: 'chart', type: 'chart', x: 0, y: 0, w: 20, h: 24, isolated: true },
+            { i: 'trades', type: 'trades', x: 20, y: 0, w: 4, h: 20, isolated: true },
+            { i: 'liquidations', type: 'trades', x: 20, y: 20, w: 4, h: 4, isolated: true }
+          ],
+          md: [
+            { i: 'chart', type: 'chart', x: 0, y: 0, w: 13, h: 16, isolated: true },
+            { i: 'trades', type: 'trades', x: 13, y: 0, w: 3, h: 14, isolated: true },
+            { i: 'liquidations', type: 'trades', x: 13, y: 14, w: 3, h: 2, isolated: true }
+          ],
+          sm: [
+            { i: 'chart', type: 'chart', x: 0, y: 0, w: 12, h: 5, isolated: true },
+            { i: 'trades', type: 'trades', x: 0, y: 5, w: 8, h: 7, isolated: true },
+            { i: 'liquidations', type: 'trades', x: 8, y: 5, w: 4, h: 7, isolated: true }
+          ],
+          xs: [
+            { i: 'chart', type: 'chart', x: 0, y: 0, w: 8, h: 3, isolated: true },
+            { i: 'trades', type: 'trades', x: 0, y: 3, w: 8, h: 4, isolated: true },
+            { i: 'liquidations', type: 'trades', x: 0, y: 7, w: 8, h: 1, isolated: true }
+          ]
         }
+      } else {
+        for (const breakpoint in BREAKPOINTS_WIDTHS) {
+          const cols = BREAKPOINTS_COLS[breakpoint]
+          if (breakpoint === currentLayout) {
+            continue
+          }
 
-        Vue.set(state.layouts, breakpoint, layout)
+          const coeficient = cols / BREAKPOINTS_COLS[currentLayout]
+          console.log('create layout', breakpoint, 'at x', coeficient, 'of', currentLayout)
+
+          const layout = JSON.parse(JSON.stringify(state.layouts[currentLayout]))
+
+          for (const pane of layout) {
+            pane.x = Math.round(pane.x * coeficient)
+            pane.y = Math.round(pane.y * coeficient)
+            pane.w = Math.round(pane.w * coeficient)
+            pane.h = Math.round(pane.h * coeficient)
+          }
+
+          Vue.set(state.layouts, breakpoint, layout)
+        }
       }
     }
+
+    await syncState(state)
+
+    return true
   }
 } as ActionTree<PanesState, ModulesState>
 
@@ -450,7 +504,8 @@ const mutations = {
       item.h = size
     }
 
-    state.layouts[breakpoint].unshift(item)
+    state.layouts[breakpoint].push(item)
+    Vue.set(state.layouts, breakpoint, state.layouts[breakpoint])
   },
   REMOVE_GRID_ITEM: (state, { breakpoint, index }) => {
     state.layouts[breakpoint].splice(index, 1)

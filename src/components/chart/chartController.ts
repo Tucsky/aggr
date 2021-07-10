@@ -564,6 +564,14 @@ export default class ChartController {
           }
         }
 
+        if (indicator.options.priceScaleId === 'right') {
+          this.chartInstance.applyOptions({
+            rightPriceScale: {
+              scaleMargins: serieOptions.scaleMargins
+            }
+          })
+        }
+
         const api = this.chartInstance[apiMethodName](serieOptions) as IndicatorApi
 
         api.id = serie.id
@@ -1300,7 +1308,7 @@ export default class ChartController {
             instruction.state.points.push(instruction.state.output)
             instruction.state.sum += instruction.state.output
 
-            if (instruction.state.count > instruction.arg) {
+            if (instruction.state.count > (instruction.arg as number) - 1) {
               instruction.state.sum -= instruction.state.points.shift()
               instruction.state.count--
             }

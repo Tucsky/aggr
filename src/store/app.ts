@@ -300,7 +300,33 @@ const mutations = {
     Vue.set(
       state.indexedProducts,
       exchange,
-      products.map(p => exchange + ':' + p)
+      products.map(pair => {
+        const id = exchange + ':' + pair
+        let type = 'spot'
+
+        if (/\d{2}$/.test(pair)) {
+          type = 'futures'
+        } else if (exchange === 'HUOBI' && /_(CQ|NW|CQ|NQ)$/.test(pair)) {
+          type = 'futures'
+        } else if (exchange === 'HUOBI' && /-/.test(pair)) {
+          type = 'perp'
+        } else if (exchange === 'BINANCE_FUTURES') {
+          type = 'perp'
+        } else if (exchange === 'BITFINEX' && /F0$/.test(pair)) {
+          type = 'perp'
+        } else if (exchange === 'PHEMEX' && pair[0] !== 's') {
+          type = 'perp'
+        } else if (exchange === 'BITMEX' || exchange === 'BYBIT' || /(-|_)swap$|(-|_|:)perp/i.test(pair)) {
+          type = 'perp'
+        }
+
+        return {
+          id,
+          pair,
+          exchange,
+          type
+        }
+      })
     )
   },
   ADD_ACTIVE_MARKET(state, { exchange, pair }: { exchange: string; pair: string }) {

@@ -307,8 +307,12 @@ export default class extends Mixins(PaneMixin) {
 
       const luminance = this._liquidationsColor[trade.side][(percentToSignificant < 0.5 ? 'from' : 'to') + 'Luminance']
       const backgroundColor = this._liquidationsColor[trade.side].to
+
       li.style.color =
-        luminance > (animated ? 144 : 170) ? 'rgba(0, 0, 0, ' + percentToSignificant + ')' : 'rgba(255, 255, 255, ' + percentToSignificant + ')'
+        luminance > (animated ? 144 : 170)
+          ? 'rgba(0, 0, 0, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
+          : 'rgba(255, 255, 255, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
+
       li.style.backgroundColor =
         'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + percentToSignificant + ')'
 
@@ -763,17 +767,11 @@ export default class extends Mixins(PaneMixin) {
     -webkit-transform: translateZ(0);
   }
 
-  &.-slippage {
-    .trade__price {
-      flex-grow: 1.5;
-    }
-  }
-
   &.-large {
     font-weight: 500;
     .trade {
-      padding-top: 4px;
-      padding-bottom: 6px;
+      padding-top: 3px;
+      padding-bottom: 5px;
     }
   }
 

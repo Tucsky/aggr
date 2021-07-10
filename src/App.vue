@@ -22,6 +22,9 @@
       </div>
     </div>
   </div>
+  <div id="app" v-else>
+    <div v-if="showStuck" class="px8 py8">💡 Can't load app ? <button class="btn -text" @click="resetAndReload">reset everything</button></div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -37,8 +40,9 @@ import Panes from '@/components/panes/Panes.vue'
 import upFavicon from './assets/up.png'
 import downFavicon from './assets/down.png'
 
-import { formatPrice } from './utils/helpers'
+import { formatPrice, progressTask } from './utils/helpers'
 import { Notice } from './store/app'
+import workspacesService from './services/workspacesService'
 
 @Component({
   name: 'App',
@@ -50,8 +54,10 @@ import { Notice } from './store/app'
 })
 export default class extends Vue {
   price: string = null
+  showStuck = false
 
   private _faviconElement: HTMLLinkElement
+  private _stuckTimeout: number
 
   get pair() {
     const pairs = this.$store.state.app.activeMarkets
@@ -111,6 +117,10 @@ export default class extends Vue {
     return this.$store.state.settings.disableAnimations
   }
 
+  get progressTask() {
+    return progressTask
+  }
+
   mounted() {
     aggregatorService.on('notice', (notice: Notice) => {
       this.$store.dispatch('app/showNotice', notice)
@@ -118,6 +128,10 @@ export default class extends Vue {
     aggregatorService.on('prices', this.updatePrice)
 
     document.addEventListener('keydown', this.onDocumentKeyPress)
+
+    this._stuckTimeout = setTimeout(() => {
+      this.showStuck = true
+    }, 3000)
   }
 
   beforeDestroy() {
@@ -206,6 +220,11 @@ export default class extends Vue {
     if (/^[a-z0-9]$/i.test(event.key)) {
       this.$store.dispatch('app/showSearch')
     }
+  }
+
+  async resetAndReload() {
+    await workspacesService.reset()
+    window.location.reload()
   }
 }
 </script>

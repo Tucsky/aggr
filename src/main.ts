@@ -4,6 +4,10 @@ import VueTippy, { TippyComponent } from 'vue-tippy'
 import './assets/sass/app.scss'
 import store from './store'
 
+(window as any).resetDatabase = () => {
+  alert('set');
+}
+
 Vue.use(VueTippy, {
   maxWidth: '200px',
   duration: 0,
