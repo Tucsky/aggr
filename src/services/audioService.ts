@@ -3,31 +3,7 @@ import Tuna from 'tunajs'
 import store from '../store'
 import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
 
-export type AudioFunction = (
-  audioService: AudioService,
-  // audioType: AudioType,
-  // play: (
-  //   frequency?: number,
-  //   gain?: number,
-  //   fadeOut?: number,
-  //   delay?: number,
-  //   fadeIn?: number,
-  //   holdDuration?: number,
-  //   osc?: string,
-  //   startGain?: number,
-  //   endGain?: number
-  // ) => Promise<void>,
-  ratio: number,
-  side: 'buy' | 'sell',
-  level: number
-) => void
-
-// export type AudioURLFunction = (
-//   playurl: (url?: string, startTime?: number, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) => Promise<void>,
-//   ratio: number,
-//   side: 'buy' | 'sell',
-//   level: number
-// ) => void
+export type AudioFunction = (audioService: AudioService, ratio: number, side: 'buy' | 'sell', level: number) => void
 
 class AudioService {
   static savedAudioBuffers = {}
@@ -35,27 +11,8 @@ class AudioService {
   tuna: any
 
   output: any
-
-  // _play: (
-  //   frequency?: number,
-  //   gain?: number,
-  //   fadeOut?: number,
-  //   delay?: number,
-  //   fadeIn?: number,
-  //   holdDuration?: number,
-  //   osc?: string,
-  //   startGain?: number,
-  //   endGain?: number
-  // ) => Promise<void>
-  // _playurl: (url?: string, startTime?: number, gain?: number, fadeOut?: number, delay?: number, fadeIn?: number, holdDuration?: number, startGain?: number, endGain?: number) => Promise<void>
   count = 0
   minTime = 0
-  debug = false
-
-  constructor() {
-    // this._play = this.play.bind(this)
-    // this._playurl = this.playurl.bind(this)
-  }
 
   connect() {
     console.log(`[sfx] connect`)
@@ -229,9 +186,6 @@ class AudioService {
 
   loadSoundBuffer(url) {
     return new Promise((resolve, reject) => {
-      // if (process.env.VUE_APP_PROXY_URL) {
-      //   url = process.env.VUE_APP_PROXY_URL + url
-      // }
       if (AudioService.savedAudioBuffers[url] === undefined || !(AudioService.savedAudioBuffers[url] instanceof AudioBuffer)) {
         fetch(url)
           .then(res => res.arrayBuffer())
@@ -257,8 +211,8 @@ class AudioService {
 
   async playurl(
     url?: string,
-    startTime?: number,
     gain?: number,
+    startTime?: number,
     fadeOut?: number,
     delay?: number,
     fadeIn?: number,
@@ -426,19 +380,12 @@ class AudioService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  buildAudioFunction(litteral, side, frequencyMultiplier: number = null, gainMultiplier: number = null, test = false) {
+  async buildAudioFunction(litteral, side, frequencyMultiplier: number = null, gainMultiplier: number = null, test = false) {
     litteral = `'use strict'; 
     var gain = Math.sqrt(ratio);
     ${litteral}`
 
-    const FUNCTION_LOOKUP_REGEX_FREQUENCY = /play\(/g
-    const FUNCTION_LOOKUP_REGEX_URL = /playurl\(/g
-    let frequencyMatch = null
-    let isFrequencyMatch = false
-    let wasFrequencyMatch = false
-    let urlMatch = null
-    let isUrlMatch = false
-    let wasUrlMatch = false
+    const FUNCTION_LOOKUP_REGEX = /(play|playurl)\(/g
     let functionMatch = null
 
     if (gainMultiplier === null) {
@@ -447,24 +394,7 @@ class AudioService {
 
     try {
       do {
-        if ((frequencyMatch = FUNCTION_LOOKUP_REGEX_FREQUENCY.exec(litteral))) {
-          // console.log('frequency regex match')
-          functionMatch = frequencyMatch
-          isFrequencyMatch = true
-          isUrlMatch = false
-        } else if ((urlMatch = FUNCTION_LOOKUP_REGEX_URL.exec(litteral))) {
-          // console.log('url regex match')
-          functionMatch = urlMatch
-          isUrlMatch = true
-          isFrequencyMatch = false
-        } else {
-          functionMatch = null
-          wasUrlMatch = isUrlMatch
-          isUrlMatch = false
-          wasFrequencyMatch = isFrequencyMatch
-          isFrequencyMatch = false
-        }
-        if (functionMatch) {
+        if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(litteral))) {
           // console.log(functionMatch)
           const originalParameters = litteral.slice(
             functionMatch.index + functionMatch[0].length,
@@ -473,49 +403,14 @@ class AudioService {
 
           const functionArguments = parseFunctionArguments(originalParameters)
 
-          if (isUrlMatch) {
-            const defaultArguments = [
-              `'https://ia902807.us.archive.org/27/items/blackpinkepitunes01boombayah/01.%20DDU-DU%20DDU-DU%20%28BLACKPINK%20ARENA%20TOUR%202018%20_SPECIAL%20FINAL%20IN%20KYOCERA%20DOME%20OSAKA_%29.mp3'`, // url
-              0, // startTime
-              1, // gain
-              1, // fadeOut
-              null, // delay
-              0, // fadeIn
-              0.1, // holdDuration
-              0.00001, // startGain
-              0.00001 // endGain
-            ]
+          if (!functionArguments) {
+            throw new Error('invalid argument(s) for ' + functionMatch[0] + ' function')
+          }
 
-            for (let i = 0; i < defaultArguments.length; i++) {
-              let argumentValue = defaultArguments[i]
-              if (typeof functionArguments[i] !== 'undefined') {
-                if (typeof functionArguments[i] === 'string') {
-                  functionArguments[i] = functionArguments[i].trim()
+          let defaultArguments
 
-                  if (/^('|").*('|")$/.test(functionArguments[i]) && typeof defaultArguments[i] === 'number') {
-                    functionArguments[i] = defaultArguments[i]
-                  }
-                }
-
-                try {
-                  argumentValue = JSON.parse(functionArguments[i])
-                } catch (error) {
-                  argumentValue = functionArguments[i]
-                }
-
-                if (argumentValue === null || argumentValue === '') {
-                  argumentValue = defaultArguments[i]
-                }
-              }
-
-              if (argumentValue === null) {
-                functionArguments[i] = 'null'
-              } else {
-                functionArguments[i] = argumentValue
-              }
-            }
-          } else if (isFrequencyMatch) {
-            const defaultArguments = [
+          if (functionMatch[1] === 'play') {
+            defaultArguments = [
               329.63, // frequency
               1, // gain
               1, // fadeOut
@@ -526,41 +421,55 @@ class AudioService {
               0.0001, // startGain
               0.0001 // endGain
             ]
+          } else {
+            defaultArguments = [
+              `'https://ia902807.us.archive.org/27/items/blackpinkepitunes01boombayah/01.%20DDU-DU%20DDU-DU%20%28BLACKPINK%20ARENA%20TOUR%202018%20_SPECIAL%20FINAL%20IN%20KYOCERA%20DOME%20OSAKA_%29.mp3'`, // url
+              1, // gain
+              0, // startTime
+              1, // fadeOut
+              null, // delay
+              0, // fadeIn
+              0.1, // holdDuration
+              0.00001, // startGain
+              0.00001 // endGain
+            ]
+          }
 
-            for (let i = 0; i < defaultArguments.length; i++) {
-              let argumentValue = defaultArguments[i]
-              if (typeof functionArguments[i] !== 'undefined') {
-                if (typeof functionArguments[i] === 'string') {
-                  functionArguments[i] = functionArguments[i].trim()
+          for (let i = 0; i < defaultArguments.length; i++) {
+            let argumentValue = defaultArguments[i]
+            if (typeof functionArguments[i] !== 'undefined') {
+              if (typeof functionArguments[i] === 'string') {
+                functionArguments[i] = functionArguments[i].trim()
 
-                  if (/^('|").*('|")$/.test(functionArguments[i]) && typeof defaultArguments[i] === 'number') {
-                    functionArguments[i] = defaultArguments[i]
-                  }
-                }
-
-                try {
-                  argumentValue = JSON.parse(functionArguments[i])
-                } catch (error) {
-                  argumentValue = functionArguments[i]
-                }
-
-                if (argumentValue === null || argumentValue === '') {
-                  argumentValue = defaultArguments[i]
+                if (/^('|").*('|")$/.test(functionArguments[i]) && typeof defaultArguments[i] === 'number') {
+                  functionArguments[i] = defaultArguments[i]
                 }
               }
 
-              if (argumentValue === null) {
-                functionArguments[i] = 'null'
-              } else {
-                functionArguments[i] = argumentValue
+              try {
+                argumentValue = JSON.parse(functionArguments[i])
+              } catch (error) {
+                argumentValue = functionArguments[i]
               }
+
+              if (argumentValue === null || argumentValue === '') {
+                argumentValue = defaultArguments[i]
+              }
+            }
+
+            if (argumentValue === null) {
+              functionArguments[i] = 'null'
+            } else {
+              functionArguments[i] = argumentValue
             }
           }
 
-          if (!isUrlMatch && isFrequencyMatch) {
+          if (functionMatch[1] === 'play') {
             if (+functionArguments[0] && frequencyMultiplier && frequencyMultiplier !== 1) {
               functionArguments[0] *= frequencyMultiplier
             }
+          } else {
+            await this.loadSoundBuffer(functionArguments[0].slice(1, functionArguments[0].length - 1))
           }
 
           if (gainMultiplier && gainMultiplier !== 1) {
@@ -578,13 +487,11 @@ class AudioService {
           litteral = litteral.replace('(' + originalParameters + ')', '(' + finalParameters + ')')
         }
       } while (functionMatch)
+
       litteral = litteral.replaceAll('play(', "audioService['play'](")
       litteral = litteral.replaceAll('playurl(', "audioService['playurl'](")
-      if (wasFrequencyMatch || wasUrlMatch) {
-        return new Function('audioService', 'ratio', 'side', 'level', litteral) as AudioFunction
-      } else {
-        return new Function() as AudioFunction
-      }
+
+      return new Function('audioService', 'ratio', 'side', 'level', litteral) as AudioFunction
     } catch (error) {
       console.warn('invalid audio script', litteral)
 
@@ -594,7 +501,7 @@ class AudioService {
         store.dispatch('app/showNotice', {
           id: 'audio-script-error',
           type: 'error',
-          title: `Please check that ${side} audio script is syntactically correct. `,
+          title: `Please check that ${side} audio script is syntactically correct.` + (error.message ? `<br>${error.message}` : ''),
           timeout: 60000
         })
 

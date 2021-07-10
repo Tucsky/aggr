@@ -236,7 +236,7 @@ export default {
     restartWebAudio() {
       audioService.reconnect()
     },
-    test(litteral, side, event) {
+    async test(litteral, side, event) {
       let percent = 1
       let level
       let amount
@@ -263,7 +263,7 @@ export default {
       }
 
       if (amount) {
-        this.getAdapter(litteral, side)(audioService, percent, side, level)
+        (await this.getAdapter(litteral, side))(audioService, percent, side, level)
 
         this.$store.dispatch('app/showNotice', {
           id: 'testing-threshold-audio',
@@ -276,9 +276,9 @@ export default {
     formatAmount(amount) {
       return formatAmount(amount)
     },
-    getAdapter(litteral, side) {
+    async getAdapter(litteral, side) {
       try {
-        const adapter = audioService.buildAudioFunction(litteral, side, this.audioPitch, this.audioVolume, true)
+        const adapter = await audioService.buildAudioFunction(litteral, side, this.audioPitch, this.audioVolume, true)
 
         this[side + 'Error'] = null
 
