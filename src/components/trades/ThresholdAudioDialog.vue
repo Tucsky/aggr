@@ -34,12 +34,12 @@
       <blockquote>
         <code>
           playurl(<br /><span class="ml8" v-tippy title="URL (.mp3|.wav|.ogg) (https://archive.org/details/audio)">url: string</span>,<br />
-          <span class="ml8" v-tippy title="StartTime (start audio at 'x' seconds)">startTime: number</span>,<br />
           <span class="ml8" v-tippy title="Gain (volume, 0 is muted and 1 is max, anything above 1 will sound saturated)">gain: number</span>,<br />
-          <span class="ml8" v-tippy title="FadeOut (gain to endGain duration)">fadeOut: number</span>,<br />
-          <span class="ml8" v-tippy title="Delay song by n second">delay?: number</span>,<br />
-          <span class="ml8" v-tippy title="FadeIn (startGain to gain duration)">fadeIn?: number</span>,<br />
           <span class="ml8" v-tippy title="HoldDuration (time at gain)">holdDuration?: number</span>,<br />
+          <span class="ml8" v-tippy title="Delay song by n second">delay?: number</span>,<br />
+          <span class="ml8" v-tippy title="StartTime (start audio at 'x' seconds)">startTime: number</span>,<br />
+          <span class="ml8" v-tippy title="FadeIn (startGain to gain duration)">fadeIn?: number</span>,<br />
+          <span class="ml8" v-tippy title="FadeOut (gain to endGain duration)">fadeOut: number</span>,<br />
           <span class="ml8" v-tippy title="StartGain (cannot be 0, but should be close to 0 like 0.0001)">startGain?: number</span>,<br />
           <span class="ml8" v-tippy title="EndGain (cannot be 0, but should be close to 0 like 0.0001)">endGain?: number</span><br />
           )
@@ -263,7 +263,7 @@ export default {
       }
 
       if (amount) {
-        (await this.getAdapter(litteral, side))(audioService, percent, side, level)
+        ;(await this.getAdapter(litteral, side))(audioService, percent, side, level)
 
         this.$store.dispatch('app/showNotice', {
           id: 'testing-threshold-audio',

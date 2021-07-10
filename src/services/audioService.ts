@@ -212,11 +212,11 @@ class AudioService {
   async playurl(
     url?: string,
     gain?: number,
-    startTime?: number,
-    fadeOut?: number,
-    delay?: number,
-    fadeIn?: number,
     holdDuration?: number,
+    delay?: number,
+    startTime?: number,
+    fadeIn?: number,
+    fadeOut?: number,
     startGain?: number,
     endGain?: number
   ) {
@@ -395,7 +395,6 @@ class AudioService {
     try {
       do {
         if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(litteral))) {
-          // console.log(functionMatch)
           const originalParameters = litteral.slice(
             functionMatch.index + functionMatch[0].length,
             findClosingBracketMatchIndex(litteral, functionMatch.index + functionMatch[0].length - 1)
@@ -425,11 +424,11 @@ class AudioService {
             defaultArguments = [
               `'https://ia902807.us.archive.org/27/items/blackpinkepitunes01boombayah/01.%20DDU-DU%20DDU-DU%20%28BLACKPINK%20ARENA%20TOUR%202018%20_SPECIAL%20FINAL%20IN%20KYOCERA%20DOME%20OSAKA_%29.mp3'`, // url
               1, // gain
-              0, // startTime
-              1, // fadeOut
+              1, // holdDuration
               null, // delay
+              0, // startTime
               0, // fadeIn
-              0.1, // holdDuration
+              0, // fadeOut
               0.00001, // startGain
               0.00001 // endGain
             ]
