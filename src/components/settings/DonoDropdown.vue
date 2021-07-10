@@ -1,5 +1,5 @@
 <template>
-  <dropdown :options="donationMenu" title="Support the project" placeholder="donate" selectionClass="-text" v-tippy>
+  <dropdown :options="donationMenu" :placeholder="label" selectionClass="-text">
     <template v-slot:option="{ value }">
       <i :class="'icon-' + value.icon" class="-fill"></i>
 
@@ -11,7 +11,13 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 
-@Component({})
+@Component({
+  props: {
+    label: {
+      default: 'donate'
+    }
+  }
+})
 export default class extends Vue {
   donationMenu = [
     {

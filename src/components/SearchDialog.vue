@@ -13,8 +13,7 @@
     </template>
     <div class="search">
       <div class="form-group">
-        <label>All products ({{ flattenedProducts.length }})</label>
-        <div class="mb8 d-flex">
+        <div class="mb0 d-flex">
           <input ref="input" type="text" class="form-control flex-grow-1" placeholder="search (eg: BITMEX:XBTUSD)" v-model="query" />
           <dropdown
             :options="filters"
@@ -45,6 +44,8 @@
             </template>
           </dropdown>
         </div>
+      </div>
+      <div class="search__results hide-scrollbar">
         <table v-if="results.length" class="table">
           <thead>
             <tr>
@@ -55,35 +56,45 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="market of results" :key="market.id" @click="selectMarket(market.id)" class="-action">
+            <tr
+              v-for="(market, index) of results"
+              :key="market.id"
+              @click="selectMarket(market.id)"
+              :class="{ active: activeIndex === index }"
+              class="-action"
+            >
               <td class="icon search__exchange text-center" :class="'icon-' + market.exchange"></td>
               <td v-text="market.exchange"></td>
               <td v-text="market.pair"></td>
               <td v-text="market.type"></td>
               <td class=" text-center">
-                <i v-if="historicalMarkets.indexOf(market.id) !== -1" class="icon-candlestick"></i>
+                <i v-if="historicalMarkets.indexOf(market.id) !== -1" class="icon-candlestick icon-lower"></i>
               </td>
             </tr>
           </tbody>
         </table>
-        <div class="text-danger" v-else>
-          <p>No results</p>
+        <div class="text-danger search__no-result" v-else>
+          <p class="mt0 mb0">
+            No results
+            <template v-if="hasFilters"> (<button class="btn -text color-100 pl0 pr0" @click="clearFilters">delete filters</button>)</template>
+          </p>
           <div v-if="filters.historical" class="color-100">
-            <p class="form-feedback">Want to see more <i class="icon-candlestick"></i> historical markets supported here ?</p>
-            <p class="d-flex ">
-              <dono-dropdown class="-left " /> <span class="-center text-muted mb4">or</span>
-              <a class="btn -text" href="https://github.com/Tucsky/aggr-server" target="_blank">Get your own data</a>
+            <p class="color-100 mb0">In need for more <i class="icon-candlestick"></i> historical data ?</p>
+            <p class="d-flex mt0 color-100">
+              <a class="btn -text" href="https://github.com/Tucsky/aggr-server" target="_blank">Run your own</a>
+              <dono-dropdown label="support the project" class="-left " />
             </p>
           </div>
         </div>
       </div>
     </div>
     <hr class="-horizontal" />
-    <hr class="-vertical mb8" />
+    <hr class="-vertical mb8 ml0 mr0 pl0 pr0" />
     <div class="form-group selection hide-scrollbar">
-      <label class="text-nowrap" for="ok"
+      <label class="text-nowrap mt16 mr16 mb0 ml16" for="ok"
         >Selection <code v-if="paneId" class="-filled" v-text="paneName"></code>
-        <button class="btn -text -small" @click="clearSelection"><i class="icon-cross -higher"></i></button
+        <button class="btn -text" @click="clearSelection"><i class="icon-cross"></i></button
+        ><button class="btn -text" @click="copySelection"><i class="icon-stamp"></i></button
       ></label>
       <transition-group
         :name="transitionGroupName"
@@ -92,7 +103,7 @@
         @afterEnter="afterEnter"
         @beforeLeave="beforeLeave"
         @leave="leave"
-        class="selection__items mt8"
+        class="selection__items"
         tag="div"
       >
         <div v-for="market of selection" :key="market">
@@ -118,7 +129,7 @@
 import Dialog from '@/components/framework/Dialog.vue'
 import DonoDropdown from '@/components/settings/DonoDropdown.vue'
 import DialogMixin from '@/mixins/dialogMixin'
-import { getBucketId } from '@/utils/helpers'
+import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import aggregatorService from '@/services/aggregatorService'
 
@@ -140,6 +151,7 @@ export default {
     markets: [],
     selection: [],
     originalSelection: [],
+    activeIndex: null,
     filters: {
       historical: false,
       perpetuals: false,
@@ -236,10 +248,10 @@ export default {
       })
     },
     results: function() {
-      return this.filteredProducts.filter(a => this.selection.indexOf(a.id) === -1 && this.queryFilter.test(a.id)).slice(0, 100)
+      return this.filteredProducts.filter(a => this.selection.indexOf(a.id) === -1 && this.queryFilter.test(a.id)).slice(0, 50)
     },
     hasFilters() {
-      return this.filters.historical
+      return !!Object.values(this.filters).find(a => !!a)
     }
   },
   watch: {
@@ -264,6 +276,13 @@ export default {
     this.$nextTick(() => {
       this.$refs.input.focus()
     })
+
+    document.addEventListener('paste', this.onPaste)
+    document.addEventListener('keydown', this.onKeydown)
+  },
+  beforeDestroy() {
+    document.removeEventListener('paste', this.onPaste)
+    document.removeEventListener('keydown', this.onKeydown)
   },
   methods: {
     containMultipleMarketsConfigurations() {
@@ -403,17 +422,83 @@ export default {
 
     clearSelection() {
       this.selection.splice(0, this.selection.length)
+    },
+
+    copySelection() {
+      copyTextToClipboard(this.selection.join(','))
+
+      this.$store.dispatch('app/showNotice', {
+        id: 'products-clipboard',
+        title: `Copied ${this.selection.length} product(s) to clipboard`
+      })
+    },
+
+    clearFilters() {
+      for (const id in this.filters) {
+        this.filters[id] = false
+      }
+    },
+
+    onPaste(event) {
+      if (document.activeElement) {
+        if (document.activeElement.tagName === 'INPUT') {
+          return
+        }
+      }
+
+      const raw = event.clipboardData.getData('text/plain')
+      const markets = raw.split(',').filter(a => /^.{4,}:.{4,24}$/.test(a))
+
+      if (!markets.length) {
+        return
+      }
+
+      this.selection = markets
+    },
+
+    onKeydown(event) {
+      switch (event.key) {
+        case 'Enter':
+          event.preventDefault()
+          if (this.results[this.activeIndex]) {
+            this.selectMarket(this.results[this.activeIndex].id)
+          }
+          break
+
+        case 'ArrowDown':
+        case 'ArrowUp':
+          if (this.results.length) {
+            if (event.key === 'ArrowUp') {
+              this.activeIndex = Math.max(0, this.activeIndex - 1)
+            } else {
+              if (this.activeIndex === null) {
+                this.activeIndex = 0
+              } else {
+                this.activeIndex = Math.min(this.results.length - 1, this.activeIndex + 1)
+              }
+            }
+          }
+          break
+      }
     }
   }
 }
 </script>
 <style lang="scss" scoped>
 .selection {
-  position: sticky;
-  top: 0;
-  place-self: flex-start;
+  place-self: stretch;
   padding-bottom: 90px;
-  min-width: 180px;
+  min-width: 240px;
+  overflow: auto;
+  max-height: 59vh;
+  padding: 0;
+
+  .slide-notice-enter-active {
+    transition: all 0.2s $ease-elastic, height 0.2s $ease-out-expo;
+  }
+  .slide-notice-leave-active {
+    transition: all 0.2s $ease-out-expo;
+  }
 
   @media screen and (min-width: 768px) {
     text-align: right;
@@ -423,6 +508,7 @@ export default {
     display: flex;
     flex-direction: column;
     place-items: flex-end;
+    padding: 1rem;
 
     .btn {
       text-transform: none;
@@ -430,27 +516,16 @@ export default {
       i {
         display: none;
       }
-
-      &.-added {
-        &:after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          opacity: 0;
-          background-color: white;
-          animation: 1s $ease-out-expo highlight;
-          pointer-events: none;
-        }
-      }
     }
   }
 }
 .search {
+  overflow: auto;
+  max-height: 59vh;
+  padding: 0;
   flex-grow: 1;
-  place-self: start;
+  display: flex;
+  flex-direction: column;
 
   table {
     border: 0;
@@ -458,12 +533,29 @@ export default {
     width: 100%;
   }
 
+  tr.active {
+    background-color: red;
+  }
+
   td {
-    padding: 0.25rem 0.33rem;
+    padding: 0.35em 0.5em 0.6em;
   }
 
   &__exchange {
     background-position: right;
+  }
+
+  .form-group {
+    padding: 1rem;
+  }
+
+  .search__results {
+    padding: 0;
+    overflow: auto;
+  }
+
+  .search__no-result {
+    padding: 1rem;
   }
 }
 @media screen and (max-width: 767px) {
@@ -480,7 +572,6 @@ export default {
     box-shadow: 0 1px var(--theme-background-150);
     margin-top: -1rem;
     width: 100%;
-    margin-bottom: 1rem;
 
     &__items {
       flex-direction: row;

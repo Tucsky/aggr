@@ -81,7 +81,6 @@
     footer {
       display: flex;
       padding: 1rem 1rem 0;
-      align-items: center;
       justify-content: flex-end;
       border-top: 1px solid var(--theme-background-150);
 
@@ -112,19 +111,22 @@
 
   &.-sticky-footer {
     footer {
-      position: sticky;
-      bottom: -1px;
       background-color: var(--theme-background-100);
-      box-shadow: 0 -1px var(--theme-background-150);
-      border-top: 0;
       flex-basis: 100%;
 
-      margin: 1rem -1rem 0;
+      margin: 0;
       padding: 1rem;
+
+      position: sticky;
+      bottom: 0;
+    }
+
+    section {
+      margin: 0;
     }
 
     .dialog-body {
-      padding-bottom: 0;
+      padding: 0;
 
       @media screen and (min-width: 768px) {
         flex-wrap: wrap;

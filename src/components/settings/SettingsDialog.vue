@@ -183,11 +183,11 @@
       </div>
     </section>
 
-    <section class="section mt16 settings__footer">
+    <footer class="section mt16 settings__footer">
       <div class="form-group">
         <div v-if="version" class="column">
           <div class="-grow">
-            <button class="btn -text">
+            <button class="btn -text pl0">
               v{{ version }} <sup class="version-date">{{ buildDate }}</sup>
             </button>
           </div>
@@ -198,7 +198,7 @@
           </span>
         </div>
       </div>
-    </section>
+    </footer>
   </Dialog>
 </template>
 
@@ -603,7 +603,6 @@ export default {
 
 .settings__footer {
   margin-top: auto;
-  background: 0 !important;
 
   .form-group {
     flex-basis: auto;
