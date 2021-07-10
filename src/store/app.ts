@@ -306,9 +306,7 @@ const mutations = {
 
         if (/\d{2}$/.test(pair)) {
           type = 'futures'
-        } else if (exchange === 'HUOBI' && /_(CQ|NW|CQ|NQ)$/.test(pair)) {
-          type = 'futures'
-        } else if (exchange === 'HUOBI' && /-/.test(pair)) {
+        } else if (exchange === 'BITMEX' || exchange === 'BYBIT' || /(-|_)swap$|(-|_|:)perp/i.test(pair)) {
           type = 'perp'
         } else if (exchange === 'BINANCE_FUTURES') {
           type = 'perp'
@@ -316,7 +314,11 @@ const mutations = {
           type = 'perp'
         } else if (exchange === 'PHEMEX' && pair[0] !== 's') {
           type = 'perp'
-        } else if (exchange === 'BITMEX' || exchange === 'BYBIT' || /(-|_)swap$|(-|_|:)perp/i.test(pair)) {
+        } else if (exchange === 'HUOBI' && /_(CQ|NW|CQ|NQ)$/.test(pair)) {
+          type = 'futures'
+        } else if (exchange === 'HUOBI' && /-/.test(pair)) {
+          type = 'perp'
+        } else if (exchange === 'KRAKEN' && /PI_/.test(pair)) {
           type = 'perp'
         }
 

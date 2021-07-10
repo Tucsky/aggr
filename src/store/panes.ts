@@ -302,7 +302,7 @@ const actions = {
       title: `Duplicated pane ${id}`
     })
   },
-  async resetPane({ state, commit, dispatch }, { id, data }: { id: string; data?: any }) {
+  async resetPane({ state, commit, dispatch, rootState }, { id, data }: { id: string; data?: any }) {
     // copy this pane on every breakpoints
     const breakpointsItems = Object.keys(state.layouts).reduce((items, breakpoint) => {
       const item = state.layouts[breakpoint].find(item => item.i === id)
@@ -314,14 +314,24 @@ const actions = {
 
     const pane = JSON.parse(JSON.stringify(state.panes[id]))
 
-    dispatch('removePaneGridItems', id)
+    let currentPaneState
+
+    if (data && typeof data === 'object') {
+      currentPaneState = Object.assign({}, rootState[id], data)
+    }
+
+    //dispatch('removePaneGridItems', id)
+
+    rootState[id]._booted = false
+
+    await sleep(100)
 
     this.unregisterModule(id)
 
     await workspacesService.removeState(id)
 
-    if (data && typeof data === 'object') {
-      await workspacesService.saveState(id, data)
+    if (currentPaneState) {
+      await workspacesService.saveState(id, currentPaneState)
     }
 
     await sleep(100)
@@ -329,9 +339,9 @@ const actions = {
     await registerModule(id, {}, true, pane)
 
     // add back pane items
-    for (const breakpoint in breakpointsItems) {
+    /*for (const breakpoint in breakpointsItems) {
       commit('ADD_GRID_ITEM', { breakpoint, item: breakpointsItems[breakpoint] })
-    }
+    }*/
   },
   setZoom({ commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
     commit('SET_PANE_ZOOM', { id, zoom })

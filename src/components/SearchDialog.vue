@@ -14,7 +14,7 @@
     <div class="search">
       <div class="form-group">
         <div class="mb0 d-flex">
-          <input ref="input" type="text" class="form-control flex-grow-1" placeholder="search (eg: BITMEX:XBTUSD)" v-model="query" />
+          <input ref="input" type="text" class="form-control flex-grow-1" placeholder="eg: BITMEX:XBTUSD" v-model="query" />
           <dropdown
             :options="filters"
             placeholder="Filter"
@@ -74,15 +74,16 @@
           </tbody>
         </table>
         <div class="text-danger search__no-result" v-else>
-          <p class="mt0 mb0">
+          <p class="mt0 mb0 px16 pb0">
             No results
             <template v-if="hasFilters"> (<button class="btn -text color-100 pl0 pr0" @click="clearFilters">delete filters</button>)</template>
           </p>
-          <div v-if="filters.historical" class="color-100">
-            <p class="color-100 mb0">In need for more <i class="icon-candlestick"></i> historical data ?</p>
-            <p class="d-flex mt0 color-100">
-              <a class="btn -text" href="https://github.com/Tucsky/aggr-server" target="_blank">Run your own</a>
+          <div v-if="filters.historical" class="color-100 px16 pt0">
+            <p class="color-100 mb0">In need for more historical data ?</p>
+            <p class="mt0 color-100">
+              <a class="btn -text" href="https://github.com/Tucsky/aggr-server" target="_blank">Run your own aggr</a>
               <dono-dropdown label="support the project" class="-left " />
+              <a class="btn -text" href="https://github.com/Tucsky/aggr/discussions" target="_blank">Discuss about it on github</a>
             </p>
           </div>
         </div>
@@ -520,7 +521,6 @@ export default {
   }
 }
 .search {
-  overflow: auto;
   max-height: 59vh;
   padding: 0;
   flex-grow: 1;
@@ -534,7 +534,17 @@ export default {
   }
 
   tr.active {
-    background-color: red;
+    background-color: rgba(white, 0.2) !important;
+  }
+
+  td:first-child,
+  th:first-child {
+    padding-left: 1rem;
+  }
+
+  td:last-child,
+  th:last-child {
+    padding-right: 1rem;
   }
 
   td {
@@ -550,12 +560,14 @@ export default {
   }
 
   .search__results {
-    padding: 0;
     overflow: auto;
   }
 
-  .search__no-result {
-    padding: 1rem;
+  @media screen and (min-width: 768px) {
+    .search__results,
+    .search__no-result {
+      height: 100%;
+    }
   }
 }
 @media screen and (max-width: 767px) {

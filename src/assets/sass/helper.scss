@@ -138,6 +138,10 @@ $unit: 'px'; // Feel free to change the unit.
 .d-flex {
   display: flex;
 
+  &.-column {
+    flex-direction: column;
+  }
+
   > .-fill {
     flex-basis: 100%;
     max-width: 100%;
@@ -157,10 +161,6 @@ $unit: 'px'; // Feel free to change the unit.
 
   > .-nowrap {
     white-space: nowrap;
-  }
-
-  > .-column {
-    flex-direction: column;
   }
 
   > .-unshrinkable {

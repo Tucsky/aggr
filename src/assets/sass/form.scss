@@ -435,13 +435,17 @@ textarea.form-control {
   font-family: $font-monospace;
   line-height: 1.5;
   height: auto;
-  font-size: 12px;
   width: 100%;
   max-width: 100%;
   flex-grow: 1;
   padding: 1em;
   background-color: rgba(black, 0.4);
-  border-radius: 1em;
+  border-radius: 4px;
+  font-size: 14px;
+  
+  @media (-webkit-min-device-pixel-ratio: 2) {
+    font-size: 12px;
+  }
 }
 
 .serie__scale-margins {

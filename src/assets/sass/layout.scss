@@ -1,6 +1,6 @@
 html {
   font-size: 16px;
-  
+
   @media (-webkit-min-device-pixel-ratio: 2) {
     font-size: 14px;
   }
@@ -69,6 +69,13 @@ body {
       transition: opacity 5s $ease-elastic;
       opacity: 0.9;
     }
+  }
+
+  .app-loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 }
 

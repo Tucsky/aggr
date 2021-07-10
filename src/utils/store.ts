@@ -47,8 +47,7 @@ export async function mergeStoredState(state: any) {
     const storedState = await workspacesService.getState(state._id)
 
     if (storedState) {
-      console.debug(`[store] retrieved stored state for module ${state._id}`)
-
+      console.debug(`[store] retrieved stored state for module ${state._id}`, 'Object.assign', storedState, 'into', state)
       return Object.assign({}, state, storedState)
     }
   } catch (error) {
@@ -71,7 +70,7 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
     console.debug(`[store] module created using pane's type "${pane.type}"`)
 
     if (typeof pane.settings === 'object') {
-      console.debug(`[store] found default settings in pane's definition -> merge into pane's module`)
+      console.debug(`[store] found default settings in pane's definition -> merge into pane's module`, pane.settings, 'into', module.state)
 
       if (pane.settings._id) {
         delete pane.settings._id
@@ -79,9 +78,7 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
 
       merge(module.state, pane.settings)
 
-      //delete pane.settings
-
-      syncState(module.state)
+      delete pane.settings
     }
   }
 
@@ -97,6 +94,8 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
     console.debug(`[store] booting module ${id}`)
     await store.dispatch(id + '/boot')
   }
+
+  syncState(module.state)
 }
 
 export const normalizeSymbol = (symbol: string) => {

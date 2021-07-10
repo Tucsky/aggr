@@ -66,7 +66,6 @@ export default class extends Vue {
   }
 
   protected get panes() {
-    debugger
     return this.$store.state.panes.panes
   }
 

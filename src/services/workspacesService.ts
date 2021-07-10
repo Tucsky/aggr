@@ -101,7 +101,6 @@ class WorkspacesService {
         })
         .catch(err => {
           console.log(err)
-          debugger
           this.reset()
           window.location.reload()
         })
@@ -368,7 +367,9 @@ class WorkspacesService {
       updatedAt: null,
       name: null,
       id: null,
-      states: JSON.parse(JSON.stringify(defaultPanes))
+      states: {
+        panes: JSON.parse(JSON.stringify(defaultPanes))
+      }
     }
 
     await this.makeUniqueWorkspace(workspace)

@@ -23,12 +23,28 @@
     </div>
   </div>
   <div id="app" v-else>
-    <div v-if="showStuck" class="px8 py8">💡 Can't load app ? <button class="btn -text" @click="resetAndReload">reset everything</button></div>
+    <div class="app-loader d-flex -column">
+      <div v-if="showStuck" class="px8 py8">💡 Stuck here ? <button class="btn -text" @click="resetAndReload">reset everything</button></div>
+      <div class="lds-spinner -center">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Watch } from 'vue-property-decorator'
 
 import aggregatorService from './services/aggregatorService'
 
@@ -43,6 +59,7 @@ import downFavicon from './assets/down.png'
 import { formatPrice, progressTask } from './utils/helpers'
 import { Notice } from './store/app'
 import workspacesService from './services/workspacesService'
+import dialogService from './services/dialogService'
 
 @Component({
   name: 'App',
@@ -74,7 +91,17 @@ export default class extends Vue {
   }
 
   get isBooted() {
-    return this.$store.state.app && this.$store.state.app.isBooted
+    const isBooted = this.$store.state.app && this.$store.state.app.isBooted
+
+    clearTimeout(this._stuckTimeout)
+
+    if (!isBooted) {
+      this._stuckTimeout = setTimeout(() => {
+        this.showStuck = true
+      }, 3000)
+    }
+
+    return isBooted
   }
 
   get isLoading() {
@@ -128,10 +155,6 @@ export default class extends Vue {
     aggregatorService.on('prices', this.updatePrice)
 
     document.addEventListener('keydown', this.onDocumentKeyPress)
-
-    this._stuckTimeout = setTimeout(() => {
-      this.showStuck = true
-    }, 3000)
   }
 
   beforeDestroy() {
@@ -223,8 +246,10 @@ export default class extends Vue {
   }
 
   async resetAndReload() {
-    await workspacesService.reset()
-    window.location.reload()
+    if (await dialogService.confirm('Are you sure ?')) {
+      await workspacesService.reset()
+      window.location.reload()
+    }
   }
 }
 </script>

@@ -1,3 +1,5 @@
 module.exports = {
-  presets: ['@vue/cli-plugin-babel/preset']
+  presets: [
+    ['@vue/app', { bundlePolyfills: false, exclude: ['transform-async-to-generator', 'transform-regenerator', 'proposal-async-generator-functions'] }]
+  ]
 }
