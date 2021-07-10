@@ -262,7 +262,7 @@ export default class extends Mixins(PaneMixin) {
       if (amount >= this._minimumThresholdAmount * multiplier) {
         this.appendRow(trade, amount, multiplier)
       } else if (amount > this._audioThreshold) {
-        this._thresholdsAudios[0][trade.side](audioService._play, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
+        this._thresholdsAudios[0][trade.side](audioService, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
       }
     }
   }
@@ -317,7 +317,7 @@ export default class extends Mixins(PaneMixin) {
         'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + percentToSignificant + ')'
 
       if (amount > this._audioThreshold) {
-        this._liquidationsAudio[trade.side](audioService._play, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
+        this._liquidationsAudio[trade.side](audioService, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
       }
     } else {
       if (trade.liquidation) {
@@ -372,7 +372,7 @@ export default class extends Mixins(PaneMixin) {
               : 'rgba(255, 255, 255, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
 
           if (amount > this._audioThreshold) {
-            this._thresholdsAudios[i][trade.side](audioService._play, percentToSignificant, trade.side, i)
+            this._thresholdsAudios[i][trade.side](audioService, percentToSignificant, trade.side, i)
           }
 
           break
@@ -615,18 +615,22 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  prepareThresholdsSounds() {
+  async prepareThresholdsSounds() {
     const audioPitch = this.$store.state[this.paneId].audioPitch
     const paneVolume = this.$store.state[this.paneId].audioVolume
 
-    this._thresholdsAudios = this.thresholds.map(threshold => ({
-      buy: audioService.buildAudioFunction(threshold.buyAudio, 'buy', audioPitch, paneVolume),
-      sell: audioService.buildAudioFunction(threshold.sellAudio, 'sell', audioPitch, paneVolume)
-    }))
+    this._thresholdsAudios = []
+
+    for (let i = 0; i < this.thresholds.length; i++) {
+      this._thresholdsAudios[i] = {
+        buy: await audioService.buildAudioFunction(this.thresholds[i].buyAudio, 'buy', audioPitch, paneVolume),
+        sell: await audioService.buildAudioFunction(this.thresholds[i].sellAudio, 'sell', audioPitch, paneVolume)
+      }
+    }
 
     this._liquidationsAudio = {
-      buy: audioService.buildAudioFunction(this._liquidationThreshold.buyAudio, 'buy', audioPitch, paneVolume),
-      sell: audioService.buildAudioFunction(this._liquidationThreshold.sellAudio, 'sell', audioPitch, paneVolume)
+      buy: await audioService.buildAudioFunction(this._liquidationThreshold.buyAudio, 'buy', audioPitch, paneVolume),
+      sell: await audioService.buildAudioFunction(this._liquidationThreshold.sellAudio, 'sell', audioPitch, paneVolume)
     }
   }
 
