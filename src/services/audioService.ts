@@ -3,7 +3,6 @@ import Tuna from 'tunajs'
 import store from '../store'
 import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
 
-
 export type AudioFunction = (
   audioService: AudioService,
   // audioType: AudioType,
@@ -234,53 +233,58 @@ class AudioService {
       //   url = process.env.VUE_APP_PROXY_URL + url
       // }
       if (AudioService.savedAudioBuffers[url] === undefined || !(AudioService.savedAudioBuffers[url] instanceof AudioBuffer)) {
-        fetch(url).then(res => res.arrayBuffer()).then(arrayBuffer => {
-          this.context.decodeAudioData(arrayBuffer).then(audioBuffer => {
-            AudioService.savedAudioBuffers[url] = audioBuffer
-            resolve(audioBuffer)
-          }).catch(error => {
+        fetch(url)
+          .then(res => res.arrayBuffer())
+          .then(arrayBuffer => {
+            this.context
+              .decodeAudioData(arrayBuffer)
+              .then(audioBuffer => {
+                AudioService.savedAudioBuffers[url] = audioBuffer
+                resolve(audioBuffer)
+              })
+              .catch(error => {
+                reject(error)
+              })
+          })
+          .catch(error => {
             reject(error)
           })
-        }).catch(error => {
-          reject(error)
-        })
       } else {
         resolve(AudioService.savedAudioBuffers[url])
       }
     })
   }
-  
+
   async playurl(
-    url?: string, 
-    startTime?: number, 
-    gain?: number, 
-    fadeOut?: number, 
-    delay?: number, 
-    fadeIn?: number, 
-    holdDuration?: number, 
-    startGain?: number, 
+    url?: string,
+    startTime?: number,
+    gain?: number,
+    fadeOut?: number,
+    delay?: number,
+    fadeIn?: number,
+    holdDuration?: number,
+    startGain?: number,
     endGain?: number
   ) {
     if (this.context.state !== 'running') {
       return
     }
     // Create a gain node and buffersource
-    const gainNode = this.context.createGain();
-    const source = this.context.createBufferSource();
+    const gainNode = this.context.createGain()
+    const source = this.context.createBufferSource()
 
     this.loadSoundBuffer(url).then((buffer: AudioBuffer) => {
       source.buffer = buffer
       // Connect the source to the gain node.
-      source.connect(gainNode);
+      source.connect(gainNode)
       // Connect the gain node to the destination.
-      gainNode.connect(this.output);
+      gainNode.connect(this.output)
 
       source.onended = () => {
         gainNode.disconnect()
         this.count--
       }
       this.count++
-
 
       let cueTime = 0
 
@@ -298,7 +302,7 @@ class AudioService {
       this.minTime += cueTime
 
       const offset = time - this.context.currentTime
-      
+
       source.start(time, startTime)
       source.stop(0.2 + time + holdDuration)
 
@@ -321,10 +325,7 @@ class AudioService {
           gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
         }
       }
-
     })
-
-    
   }
 
   async play(
@@ -374,11 +375,11 @@ class AudioService {
     this.minTime += cueTime
 
     const offset = time - this.context.currentTime
-    oscillatorNode.start(time - .05)
+    oscillatorNode.start(time - 0.05)
     oscillatorNode.stop(time + fadeIn + holdDuration + fadeOut)
 
     if (fadeIn) {
-      gainNode.gain.setValueAtTime(startGain, time - .05)
+      gainNode.gain.setValueAtTime(startGain, time - 0.05)
 
       gainNode.gain.exponentialRampToValueAtTime(gain, time + fadeIn)
 
@@ -390,7 +391,7 @@ class AudioService {
         }, (offset + fadeIn + holdDuration) * 1000)
       }
     } else {
-      gainNode.gain.setValueAtTime(gain, time - .05)
+      gainNode.gain.setValueAtTime(gain, time - 0.05)
 
       if (fadeOut) {
         gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
@@ -443,7 +444,7 @@ class AudioService {
     if (gainMultiplier === null) {
       gainMultiplier = store.state.settings.audioVolume
     }
-    
+
     try {
       do {
         if ((frequencyMatch = FUNCTION_LOOKUP_REGEX_FREQUENCY.exec(litteral))) {
@@ -473,7 +474,6 @@ class AudioService {
           const functionArguments = parseFunctionArguments(originalParameters)
 
           if (isUrlMatch) {
-
             const defaultArguments = [
               `'https://ia902807.us.archive.org/27/items/blackpinkepitunes01boombayah/01.%20DDU-DU%20DDU-DU%20%28BLACKPINK%20ARENA%20TOUR%202018%20_SPECIAL%20FINAL%20IN%20KYOCERA%20DOME%20OSAKA_%29.mp3'`, // url
               0, // startTime
@@ -481,7 +481,7 @@ class AudioService {
               1, // fadeOut
               null, // delay
               0, // fadeIn
-              .1, // holdDuration
+              0.1, // holdDuration
               0.00001, // startGain
               0.00001 // endGain
             ]
@@ -521,10 +521,10 @@ class AudioService {
               1, // fadeOut
               null, // delay
               0, // fadeIn
-              .1, // holdDuration
+              0, // holdDuration
               `'triangle'`, // osc
-              0.00001, // startGain
-              0.00001 // endGain
+              0.0001, // startGain
+              0.0001 // endGain
             ]
 
             for (let i = 0; i < defaultArguments.length; i++) {
@@ -557,8 +557,6 @@ class AudioService {
             }
           }
 
-
-          
           if (!isUrlMatch && isFrequencyMatch) {
             if (+functionArguments[0] && frequencyMultiplier && frequencyMultiplier !== 1) {
               functionArguments[0] *= frequencyMultiplier
@@ -580,8 +578,8 @@ class AudioService {
           litteral = litteral.replace('(' + originalParameters + ')', '(' + finalParameters + ')')
         }
       } while (functionMatch)
-      litteral = litteral.replaceAll('play(', 'audioService[\'play\'](')
-      litteral = litteral.replaceAll('playurl(', 'audioService[\'playurl\'](')
+      litteral = litteral.replaceAll('play(', "audioService['play'](")
+      litteral = litteral.replaceAll('playurl(', "audioService['playurl'](")
       if (wasFrequencyMatch || wasUrlMatch) {
         return new Function('audioService', 'ratio', 'side', 'level', litteral) as AudioFunction
       } else {
@@ -603,8 +601,6 @@ class AudioService {
         return new Function() as AudioFunction
       }
     }
-    
-    
   }
 }
 
