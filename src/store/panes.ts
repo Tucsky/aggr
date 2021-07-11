@@ -87,7 +87,7 @@ const actions = {
       return
     }
 
-    const name = options.name || `${capitalizeFirstLetter(options.type)}'s pane`
+    const name = options.name || ''
     const id = uniqueName(slugify(name), Object.keys(state.panes))
 
     const pane: Pane = {
@@ -293,8 +293,6 @@ const actions = {
 
     const options = JSON.parse(JSON.stringify(state.panes[id]))
     options.settings = JSON.parse(JSON.stringify(rootState[id]))
-
-    options.name += ' copy'
 
     dispatch('addPane', options)
 

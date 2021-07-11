@@ -446,3 +446,8 @@ $iconpath: '../fonts';
     content: $icon-PHEMEX; 
   }
 }
+.icon-transfer {
+  &:before {
+    content: $icon-transfer; 
+  }
+}

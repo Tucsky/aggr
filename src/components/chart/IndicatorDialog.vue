@@ -155,6 +155,9 @@
       <button class="btn -blue mr16 mlauto" v-tippy title="Duplicate" @click="duplicateIndicator">
         <i class="icon-copy-paste"></i>
       </button>
+      <button class="btn -blue mr16" v-tippy title="Transfer indicator" @click="transferIndicator">
+        <i class="icon-transfer"></i>
+      </button>
       <button class="btn -red" v-tippy title="Unload indicator" @click="removeIndicator">
         <i class="icon-cross"></i>
       </button>
@@ -534,6 +537,9 @@ export default {
         },
         'serie'
       )
+    },
+    transferIndicator() {
+      this.$store.dispatch(this.paneId + '/transferIndicator', this.indicatorSettings)
     },
     toggleSection(id) {
       const index = this.sections.indexOf(id)

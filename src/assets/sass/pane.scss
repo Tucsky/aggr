@@ -37,8 +37,12 @@
       }
     }
 
-    &:hover > .vue-resizable-handle {
-      display: block;
+    &:hover {
+      z-index: 1;
+      
+      > .vue-resizable-handle {
+        display: block;
+      }
     }
 
     &.vue-grid-placeholder {
@@ -96,6 +100,10 @@
   font-size: 1.5rem;
   background-color: var(--theme-background-o75);
   backdrop-filter: blur(10px);
+
+  @media screen and (min-width: 1024px) {
+    font-size: 1.75rem;
+  }
 
   &.toolbar {
     .dropdown__selected > i,

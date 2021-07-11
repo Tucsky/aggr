@@ -55,6 +55,18 @@ export default class PaneMixin extends Vue {
 
     this.hovered = true
 
+    const offsetTop = parseFloat(this.$el.parentElement.style.transform.match(/,\s*(\d+)px\s*,/)[1])
+
+    if (offsetTop) {
+      this.$nextTick(() => {
+        const paneHeader = this.$el.querySelector('.pane-header') as HTMLElement
+
+        if (paneHeader) {
+          paneHeader.style.transform = 'translateY(-100%)'
+        }
+      })
+    }
+
     if (event.type === 'touchend') {
       document.addEventListener('touchend', this.hideHeader)
     } else {

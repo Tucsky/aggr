@@ -30,9 +30,13 @@ Checkout [CHANGELOG.md](CHANGELOG.md) for details about the recent updates.
 
 The app is written in Vue.js, use the javascript WebSocket interface to connect to the exchanges API and listen to the trades events.
 
-Within a worker, the raw trades are dispatched from each Exchange to the Aggregator, whose purpose is to group the trades by time, market and side of trade. The worker regularly send the result of the aggregation to the UI along with some statistics about the market activity (sums of volume, counts by sides and liquidations).
+The aggregator are process raw trades in the Worker for each Exchange, whose purpose is to group the trades by time, market and side of trade. The worker regularly send the aggregated trades to the UI along with some statistics about the market activity (sums of volume, counts by sides and liquidations).
 
 ## How to install & run locally
+
+If you want to use with your own data, edit /.env.local with <code>API_URL=your url</code> and build the app (<code>npm run build</code>).
+
+For development, just as any vuejs project
 
 1. Clone the repo
 
@@ -57,7 +61,6 @@ npm run serve
 
 This will automatically open a browser window at localhost:8080
 
-Otherwise can build the application (production)
 
 ```bash
 npm run build
@@ -69,24 +72,26 @@ and access the dist/index.html directly in the browser later without having to r
 ## Configuration
 SignificantTrades is now using Vue Cli which allows you to configure the client using .env file.
 
-Create a <code>.env.local</code> or <code>.env.development</code> or <code>.env.production</code> file inside <code>/</code> folder.
+Create a <code>.env.local</code> or <code>.env.development</code> or <code>.env.production</code> (.env.local if you don't know) file inside root folder.
 
   
 |key| description |default value|
 |--|--|--|
-|<code>PROXY_URL</code>|Redirect HTTP requests from app through a proxy<br>If the <code>PROXY_URL</code> is set to https://cors.aggr.trade/, the app will retrieve Binance's products through this url : https://cors.aggr.trade/https://api.binance.com/api/v3/exchangeInfo |http://localhost:8080/|
+|<code>API_SUPPORTED_PAIRS</code>|Markets supported by the server instance provided in <code>API_URL</code><br>Write the full market names separated by a comma COINBASE:BTC-USD,BINANCE:btcusdt|null|
 |<code>API_URL</code>|Server instance url.<br>As of now only used to fetch historical data for the chart component.<br>Example: http://localhost:3000/historical/{from}/{to}/{timeframe}/{markets} |null|
-|<code>API_SUPPORTED_PAIRS</code>|Markets supported by the server instance provided in <code>API_URL</code><br>Write the full market names (EXCHANGE:pair) like so : COINBASE:BTC-USD,BINANCE:btcusdt|null|
-
+|<code>PROXY_URL</code>|Redirect HTTP requests from app through a proxy<br>If the <code>PROXY_URL</code> is set to https://cors.aggr.trade/, the app will retrieve Binance's products through this url : https://cors.aggr.trade/https://api.binance.com/api/v3/exchangeInfo |http://localhost:8080/|
 
 ## Implement historical data
 You can use this project without historical data just by opening the app in your browser, as getting trades from exchanges is made directly in the browser using websocket api.
 
-However, in order to show historical data you will need to setup your own server that will collect and distribute data on demand.
+In order to show historical data YOU WILL need to setup your own server to provide the data using aggr-server.
 
-The current code for the server part now located in a separated repository [aggr-server](https://github.com/Tucsky/aggr-server).
+See [aggr-server repository](https://github.com/Tucsky/aggr-server).
 
 Let's say you have a server instance running on port 3000, start the client with an environment variable `API_URL=http://localhost:3000/{from}/{to}/{timeframe}/{markets} npm run serve`
+
+## Disclaimer
+If you plan to use real money with this, USE AT YOUR OWN RISK.
 
 ## Support this project !
 BTC [3PK1bBK8sG3zAjPBPD7g3PL14Ndux3zWEz](bitcoin:3PK1bBK8sG3zAjPBPD7g3PL14Ndux3zWEz)<br>

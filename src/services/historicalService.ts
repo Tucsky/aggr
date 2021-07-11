@@ -1,3 +1,4 @@
+import { parseMarket } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import store from '../store'
@@ -92,9 +93,9 @@ class HistoricalService extends EventEmitter {
         markets.splice(marketIndex, 1)
       }
 
-      const market: string[] = data[i].market.split(':')
-      data[i].exchange = market.shift()
-      data[i].pair = market.join(':')
+      const [exchange, pair] = parseMarket(data[i].market)
+      data[i].exchange = exchange
+      data[i].pair = pair
       delete data[i].market
     }
 

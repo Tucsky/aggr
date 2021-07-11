@@ -64,6 +64,7 @@ import TradesPaneDialog from '../trades/TradesPaneDialog.vue'
 import ChartPaneDialog from '../chart/ChartPaneDialog.vue'
 import StatsPaneDialog from '../stats/StatsPaneDialog.vue'
 import PricesPaneDialog from '../prices/PricesPaneDialog.vue'
+import { parseMarket } from '@/utils/helpers'
 
 @Component({
   name: 'PaneHeader',
@@ -132,7 +133,14 @@ export default class extends Vue {
   ]
 
   get name() {
-    return this.$store.state.panes.panes[this.paneId].name || this.paneId
+    const name = this.$store.state.panes.panes[this.paneId].name
+
+    if (!name) {
+      const [, pair] = parseMarket(this.$store.state.panes.panes[this.paneId].markets[0])
+      return pair + ' - ' + this.$store.state.panes.panes[this.paneId].type
+    }
+
+    return name
   }
 
   get zoom() {
@@ -220,7 +228,7 @@ export default class extends Vue {
       input: this.name
     })
 
-    if (name && name !== this.name) {
+    if (name !== this.name) {
       this.$store.commit('panes/SET_PANE_NAME', { id: this.paneId, name: name })
     }
   }

@@ -1,6 +1,7 @@
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import { Pane } from '@/store/panes'
+import { parseMarket } from '@/utils/helpers'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 
@@ -20,7 +21,14 @@ export default class PaneDialogMixin extends Vue {
   }
 
   get name() {
-    return this.$store.state.panes.panes[this.paneId].name
+    const name = this.$store.state.panes.panes[this.paneId].name
+
+    if (!name) {
+      const [, pair] = parseMarket(this.$store.state.panes.panes[this.paneId].markets[0])
+      return pair + ' - ' + this.$store.state.panes.panes[this.paneId].type
+    }
+
+    return name
   }
 
   set name(value: string) {
@@ -33,7 +41,7 @@ export default class PaneDialogMixin extends Vue {
       input: this.name
     })
 
-    if (name && name !== this.name) {
+    if (name !== this.name) {
       this.name = name
     }
   }

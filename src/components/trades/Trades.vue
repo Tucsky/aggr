@@ -699,11 +699,12 @@ export default class extends Mixins(PaneMixin) {
       const price = parseFloat((element.querySelector('.trade__price') as HTMLElement).innerText) || 0
       const size = parseFloat((element.querySelector('.trade__amount__base') as HTMLElement).innerText) || 0
       const side: 'buy' | 'sell' = element.classList.contains('-buy') ? 'buy' : 'sell'
+      const symbol = (element.querySelector('.trade__pair') as HTMLElement).innerText
 
       const trade: Trade = {
         timestamp: (timestamp as unknown) as number,
         exchange,
-        pair,
+        pair: symbol ? symbol : pair,
         price,
         size,
         side
@@ -909,6 +910,12 @@ export default class extends Mixins(PaneMixin) {
     font-size: 1em;
     position: absolute;
     font-weight: 600;
+  }
+
+  .trade__pair {
+    text-align: left !important;
+    margin-left: 0.5em;
+    flex-grow: 0.66 !important;
   }
 
   .icon-currency,

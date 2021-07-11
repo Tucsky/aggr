@@ -5,6 +5,7 @@ import { scheduleSync } from '@/utils/store'
 import { SeriesOptions, SeriesType } from 'lightweight-charts'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
+import { ModulesState } from '..'
 
 export interface IndicatorSettings {
   id?: string
@@ -35,7 +36,7 @@ export interface ChartPaneState {
   watermarkColor: string
 }
 
-const getters = {} as GetterTree<ChartPaneState, ChartPaneState>
+const getters = {} as GetterTree<ChartPaneState, ModulesState>
 
 const state = {
   indicatorsErrors: {},
@@ -149,10 +150,13 @@ const actions = {
 
     await sleep(100)
   },
-  async saveIndicator({ state, commit }, id) {
+  async saveIndicator({ state, commit, dispatch }, id) {
     commit('FLAG_INDICATOR_AS_SAVED', id)
 
     workspacesService.saveIndicator(state.indicators[id])
+
+    
+    await dispatch('transferIndicator', state.indicators[id])
   },
   async renameIndicator({ commit, state, dispatch }, { id, name }) {
     const newId = uniqueName(slugify(name), Object.keys(state.indicators))
@@ -169,8 +173,23 @@ const actions = {
   },
   resizeIndicator({ commit }, id) {
     commit('TOGGLE_INDICATOR_RESIZE', id)
+  },
+  transferIndicator({ state, rootState }, indicator: IndicatorSettings) {
+    for (const paneId in rootState.panes.panes) {
+      if (paneId === state._id || rootState.panes.panes[paneId].type !== 'chart') {
+        continue
+      }
+
+      const otherPaneIndicator = rootState[paneId].indicators[indicator.id] as IndicatorSettings
+
+      if (!otherPaneIndicator.unsavedChanges) {
+        otherPaneIndicator.options = indicator.options
+
+        this.commit(paneId + '/SET_INDICATOR_SCRIPT', {id: indicator.id})
+      }
+    }
   }
-} as ActionTree<ChartPaneState, ChartPaneState>
+} as ActionTree<ChartPaneState, ModulesState>
 
 const mutations = {
   SET_REFRESH_RATE(state, value) {
@@ -241,10 +260,14 @@ const mutations = {
 
     Vue.delete(state.indicators[id].options, key)
   },
-  SET_INDICATOR_SCRIPT(state, { id, value }) {
-    this.commit(state._id + '/FLAG_INDICATOR_AS_UNSAVED', id)
+  SET_INDICATOR_SCRIPT(state, payload) {
+    if (typeof payload.value === 'undefined') {
+      return
+    }
 
-    Vue.set(state.indicators[id], 'script', value)
+    this.commit(state._id + '/FLAG_INDICATOR_AS_UNSAVED', payload.id)
+
+    Vue.set(state.indicators[payload.id], 'script', payload.value)
   },
   FLAG_INDICATOR_AS_UNSAVED(state, id) {
     Vue.set(state.indicators[id], 'unsavedChanges', true)
@@ -272,4 +295,4 @@ export default {
   getters,
   actions,
   mutations
-} as Module<ChartPaneState, ChartPaneState>
+} as Module<ChartPaneState, ModulesState>
