@@ -133,11 +133,16 @@ export default class extends Vue {
   ]
 
   get name() {
-    const name = this.$store.state.panes.panes[this.paneId].name
+    let name = this.$store.state.panes.panes[this.paneId].name
+    const markets = this.$store.state.panes.panes[this.paneId].markets
 
     if (!name) {
-      const [, pair] = parseMarket(this.$store.state.panes.panes[this.paneId].markets[0])
-      return pair
+      if (markets.length) {
+        const [, pair] = parseMarket(markets[0])
+        return pair
+      } else {
+        name = this.paneId
+      }
     }
 
     return name

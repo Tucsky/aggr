@@ -695,11 +695,13 @@ export default class extends Mixins(PaneMixin) {
         continue
       }
 
+      const pairElement = element.querySelector('.trade__pair') as HTMLElement
+
       const timestamp = element.querySelector('.trade__time').getAttribute('timestamp')
       const price = parseFloat((element.querySelector('.trade__price') as HTMLElement).innerText) || 0
       const size = parseFloat((element.querySelector('.trade__amount__base') as HTMLElement).innerText) || 0
       const side: 'buy' | 'sell' = element.classList.contains('-buy') ? 'buy' : 'sell'
-      const symbol = (element.querySelector('.trade__pair') as HTMLElement).innerText
+      const symbol = pairElement ? pairElement.innerText : null
 
       const trade: Trade = {
         timestamp: (timestamp as unknown) as number,

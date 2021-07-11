@@ -88,7 +88,7 @@ const actions = {
     }
 
     const name = options.name || ''
-    const id = uniqueName(slugify(name), Object.keys(state.panes))
+    const id = uniqueName(slugify(name || options.type), Object.keys(state.panes))
 
     const pane: Pane = {
       id,
