@@ -1,6 +1,6 @@
 {
   "preferQuoteCurrencySize": true,
-  "aggregationLength": 100,
+  "aggregationLength": 1,
   "disableAnimations": false,
   "calculateSlippage": null,
   "decimalPrecision": null,
