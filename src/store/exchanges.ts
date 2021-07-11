@@ -29,7 +29,7 @@ const state = process.env.VUE_APP_EXCHANGES.split(',').reduce(
 state._id = 'exchanges'
 
 const getters = {
-  getExchanges: state => Object.keys(state).filter(id => !/^_/.test(id))
+  getExchanges: state => Object.keys(state).filter(id => id !== 'INDEX' && !/^_/.test(id))
 } as GetterTree<ExchangesState, ModulesState>
 
 const actions = {
