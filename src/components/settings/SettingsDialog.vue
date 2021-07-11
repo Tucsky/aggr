@@ -70,11 +70,11 @@
 
     <section class="section">
       <div v-if="settings.indexOf('list') > -1" class="settings-trades">
-        <div class="form-group mb8">
-          <label class="checkbox-control -aggr" @change="$store.commit('settings/TOGGLE_AGGREGATION', $event.target.checked)">
-            <input type="checkbox" class="form-control" :checked="aggregateTrades" />
-            <div></div>
-            <span>Trades aggregation is {{ aggregateTrades ? 'enabled' : 'disabled' }}</span>
+        <div class="form-group column mb8">
+          <label class="checkbox-control -aggr -auto flex-grow-1">
+            <input type="checkbox" class="form-control" :checked="true" @click.prevent="$store.commit('settings/TOGGLE_AGGREGATION')" />
+            <div :on="aggregationLength + 'ms'" off="No aggregation"></div>
+            <span v-if="aggregationLength">{{ aggregationLength }}ms aggregation</span>
           </label>
         </div>
 
@@ -266,8 +266,8 @@ export default {
       return this.$store.state.settings.textColor
     },
 
-    aggregateTrades() {
-      return this.$store.state.settings.aggregateTrades
+    aggregationLength() {
+      return this.$store.state.settings.aggregationLength
     },
 
     preferQuoteCurrencySize() {
@@ -489,6 +489,10 @@ export default {
 
       const isCurrent = this.workspace && this.workspace.id === workspace.id
 
+      if (isCurrent) {
+        await this.close()
+      }
+
       if (!(await dialogService.confirm(`Delete workspace ${workspace.name} ?`))) {
         return
       }
@@ -505,12 +509,9 @@ export default {
         await workspacesService.setCurrentWorkspace(nextWorkspace)
       }
 
-      return this.getWorkspaces()
-    },
-
-    async createWorkspace() {
-      const workspace = await workspacesService.createWorkspace()
-      await workspacesService.setCurrentWorkspace(workspace)
+      if (!isCurrent) {
+        return this.getWorkspaces()
+      }
     },
 
     async exportWorkspace() {
@@ -522,6 +523,7 @@ export default {
     },
 
     async createBlankWorkspace() {
+      await this.close()
       const workspace = await workspacesService.createWorkspace()
 
       await workspacesService.setCurrentWorkspace(workspace)
@@ -538,7 +540,7 @@ export default {
         reader.readAsText(file, 'UTF-8')
 
         // here we tell the reader what to do when it's done reading...
-        reader.onload = readerEvent => {
+        reader.onload = async readerEvent => {
           const content = readerEvent.target.result // this is the content!
           const workspace = this.validateWorkspaceImport(content)
           if (!workspace) {
@@ -546,11 +548,12 @@ export default {
           }
           if (
             workspacesService.getWorkspace(workspace.id) &&
-            !dialogService.confirm({ message: `Workspace ${workspace.id} already exists`, ok: 'Import anyway', cancel: 'Annuler' })
+            !(await dialogService.confirm({ message: `Workspace ${workspace.id} already exists`, ok: 'Import anyway', cancel: 'Annuler' }))
           ) {
             return
           }
-          if (dialogService.openAsPromise(SettingsImportConfirmation, { workspace })) {
+
+          if (await dialogService.openAsPromise(SettingsImportConfirmation, { workspace })) {
             this.close().then(() => {
               this.importWorkspace(workspace)
             })

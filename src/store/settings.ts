@@ -3,25 +3,23 @@ import { ActionTree, Module, MutationTree } from 'vuex'
 import DEFAULTS_STATE from './defaultSettings.json'
 import { getColorLuminance, getLogShade, splitRgba } from '@/utils/colors'
 import { ModulesState } from '.'
-import { SlippageMode } from '@/types/test'
+import { AggregationLength, SlippageMode } from '@/types/test'
 import aggregatorService from '@/services/aggregatorService'
 import audioService from '@/services/audioService'
 import Vue from 'vue'
 
+export type AudioFilters = { [id: string]: boolean }
 export interface SettingsState {
   preferQuoteCurrencySize?: boolean
   calculateSlippage?: SlippageMode
-  aggregateTrades?: boolean
+  aggregationLength?: AggregationLength
   theme?: string
   backgroundColor?: string
   textColor?: string
   timezoneOffset?: number
   useAudio?: boolean
   audioVolume?: number
-  audioFilter?: boolean
-  audioCompressor?: boolean
-  audioPingPong?: boolean
-  audioDelay?: boolean
+  audioFilters?: AudioFilters
   settings?: string[]
   recentColors?: string[]
   disableAnimations?: boolean
@@ -43,8 +41,8 @@ const actions = {
     })
 
     aggregatorService.dispatch({
-      op: 'settings.aggregateTrades',
-      data: state.aggregateTrades
+      op: 'settings.aggregationLength',
+      data: state.aggregationLength
     })
 
     aggregatorService.dispatch({
@@ -159,12 +157,16 @@ const mutations = {
       data: state.calculateSlippage
     })
   },
-  TOGGLE_AGGREGATION(state, value) {
-    state.aggregateTrades = value ? true : false
+  TOGGLE_AGGREGATION(state) {
+    const values: AggregationLength[] = [0, 1, 10, 100, 1000]
+
+    const index = Math.max(0, values.indexOf(state.aggregationLength))
+
+    state.aggregationLength = values[(index + 1) % values.length]
 
     aggregatorService.dispatch({
-      op: 'settings.aggregateTrades',
-      data: state.aggregateTrades
+      op: 'settings.aggregationLength',
+      data: state.aggregationLength
     })
   },
   TOGGLE_ANIMATIONS(state) {
@@ -191,20 +193,8 @@ const mutations = {
   SET_AUDIO_VOLUME(state, value) {
     state.audioVolume = value
   },
-  TOGGLE_AUDIO_COMPRESSOR(state) {
-    state.audioCompressor = !state.audioCompressor
-    audioService.reconnect()
-  },
-  TOGGLE_AUDIO_FILTER(state) {
-    state.audioFilter = !state.audioFilter
-    audioService.reconnect()
-  },
-  TOGGLE_AUDIO_DELAY(state) {
-    state.audioDelay = !state.audioDelay
-    audioService.reconnect()
-  },
-  TOGGLE_AUDIO_PING_PONG(state) {
-    state.audioPingPong = !state.audioPingPong
+  SET_AUDIO_FILTER(state, { id, value }: { id: string; value: boolean }) {
+    state.audioFilters[id] = value
     audioService.reconnect()
   },
   SET_CHART_BACKGROUND_COLOR(state, value) {

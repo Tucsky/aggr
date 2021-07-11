@@ -7,7 +7,7 @@ const ctx: Worker = self as any
 class Aggregator {
   public settings: AggregatorSettings = {
     calculateSlippage: null,
-    aggregateTrades: null,
+    aggregationLength: null,
     preferQuoteCurrencySize: null,
     buckets: {}
   }
@@ -45,14 +45,14 @@ class Aggregator {
     for (const exchange of exchanges) {
       exchange.off('trades')
 
-      if (this.settings.aggregateTrades) {
+      if (this.settings.aggregationLength > 0) {
         exchange.on('trades', this.aggregateTrades.bind(this))
       } else {
         exchange.on('trades', this.emitTrades.bind(this))
       }
     }
 
-    if (this.settings.aggregateTrades) {
+    if (this.settings.aggregationLength > 0) {
       this.startAggrInterval()
       console.debug(`[worker] bind trades: aggregation`)
     } else {
@@ -179,7 +179,7 @@ class Aggregator {
       if (this.onGoingAggregations[market]) {
         const aggTrade = this.onGoingAggregations[market]
 
-        if (aggTrade.timestamp === trade.timestamp && aggTrade.side === trade.side) {
+        if (aggTrade.timestamp + this.settings.aggregationLength > trade.timestamp && aggTrade.side === trade.side) {
           aggTrade.size += trade.size
           aggTrade.prices += trade.price * trade.size
           aggTrade.price = trade.price
@@ -216,7 +216,7 @@ class Aggregator {
       }
     }
 
-    if (this.settings.aggregateTrades) {
+    if (this.settings.aggregationLength > 0) {
       trade.price = Math.max(trade.price, trade.originalPrice)
     }
 
@@ -247,7 +247,7 @@ class Aggregator {
   }
 
   emitPendingTrades() {
-    if (this.settings.aggregateTrades) {
+    if (this.settings.aggregationLength > 0) {
       this.timeoutExpiredAggregations()
     }
 
@@ -630,9 +630,9 @@ self.addEventListener('message', (event: any) => {
     case 'settings.preferQuoteCurrencySize':
       aggregator.settings.preferQuoteCurrencySize = payload.data
       break
-    case 'settings.aggregateTrades':
-      if (aggregator.settings.aggregateTrades !== payload.data) {
-        aggregator.settings.aggregateTrades = payload.data
+    case 'settings.aggregationLength':
+      if (aggregator.settings.aggregationLength !== payload.data) {
+        aggregator.settings.aggregationLength = payload.data
         aggregator.bindTradesEvent()
       }
       break

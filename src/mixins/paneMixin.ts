@@ -62,7 +62,7 @@ export default class PaneMixin extends Vue {
         const paneHeader = this.$el.querySelector('.pane-header') as HTMLElement
 
         if (paneHeader) {
-          paneHeader.style.transform = 'translateY(-100%)'
+          paneHeader.style.transform = 'translateY(-50%)'
         }
       })
     }

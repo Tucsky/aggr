@@ -7,6 +7,51 @@ export type AudioFunction = (audioService: AudioService, ratio: number, side: 'b
 
 class AudioService {
   static savedAudioBuffers = {}
+
+  filtersOptions = {
+    HighPassFilter: {
+      frequency: 800, //20 to 22050
+      Q: 10, //0.001 to 100
+      gain: -10, //-40 to 40 (in decibels)
+      filterType: 'highpass', //lowpass, highpass, bandpass, lowshelf, highshelf, peaking, notch, allpass
+      bypass: 0
+    },
+    LowPassFilter: {
+      frequency: 1500, //20 to 22050
+      Q: 1, //0.001 to 100
+      gain: 0, //-40 to 40 (in decibels)
+      filterType: 'lowpass', //lowpass, highpass, bandpass, lowshelf, highshelf, peaking, notch, allpass
+      bypass: 0
+    },
+    Compressor: {
+      threshold: -1, //-100 to 0
+      makeupGain: 1, //0 and up (in decibels)
+      attack: 1, //0 to 1000
+      release: 0, //0 to 3000
+      ratio: 4, //1 to 20
+      knee: 5, //0 to 40
+      automakeup: true, //true/false
+      bypass: 0
+    },
+    Delay: {
+      feedback: 0.3, //0 to 1+
+      delayTime: 160 //1 to 10000 milliseconds
+    },
+    PingPongDelay: {
+      wetLevel: 0.3, //0 to 1
+      feedback: 0.01, //0 to 1
+      delayTimeLeft: 175, //1 to 10000 (milliseconds)
+      delayTimeRight: 100 //1 to 10000 (milliseconds)
+    },
+    Chorus: {
+      rate: 1.5, //0.01 to 8+
+      feedback: 0.4, //0 to 1+
+      depth: 0.7, //0 to 1
+      delay: 0.0045, //0 to 1
+      bypass: 0 //the value 1 starts the effect as bypassed, 0 or 1
+    }
+  }
+
   context: AudioContext
   tuna: any
 
@@ -111,55 +156,18 @@ class AudioService {
 
     const effects = []
 
-    if (store.state.settings.audioPingPong) {
-      effects.push(
-        new this.tuna.PingPongDelay({
-          wetLevel: 0.6, //0 to 1
-          feedback: 0.01, //0 to 1
-          delayTimeLeft: 175, //1 to 10000 (milliseconds)
-          delayTimeRight: 100 //1 to 10000 (milliseconds)
-        })
-      )
-    }
+    for (const id in this.filtersOptions) {
+      if (!store.state.settings.audioFilters[id]) {
+        continue
+      }
 
-    if (store.state.settings.audioDelay) {
-      effects.push(
-        new this.tuna.Delay({
-          feedback: 0.3, //0 to 1+
-          delayTime: 80, //1 to 10000 milliseconds
-          wetLevel: 0.3, //0 to 1+
-          dryLevel: 0.5, //0 to 1+
-          cutoff: 2000, //cutoff frequency of the built in lowpass-filter. 20 to 22050
-          bypass: 1
-        })
-      )
-    }
+      let name = id
 
-    if (store.state.settings.audioCompressor) {
-      effects.push(
-        new this.tuna.Compressor({
-          threshold: -1, //-100 to 0
-          makeupGain: 1, //0 and up (in decibels)
-          attack: 1, //0 to 1000
-          release: 0, //0 to 3000
-          ratio: 4, //1 to 20
-          knee: 5, //0 to 40
-          automakeup: true, //true/false
-          bypass: 0
-        })
-      )
-    }
+      if (id === 'HighPassFilter' || id === 'LowPassFilter') {
+        name = 'Filter'
+      }
 
-    if (store.state.settings.audioFilter) {
-      effects.push(
-        new this.tuna.Filter({
-          frequency: 800, //20 to 22050
-          Q: 10, //0.001 to 100
-          gain: -10, //-40 to 40 (in decibels)
-          filterType: 'highpass', //lowpass, highpass, bandpass, lowshelf, highshelf, peaking, notch, allpass
-          bypass: 0
-        })
-      )
+      effects.push(new this.tuna[name](this.filtersOptions[id]))
     }
 
     if (effects.length) {
@@ -231,7 +239,7 @@ class AudioService {
     // Connect the source to the gain node.
     source.connect(gainNode)
     // Connect the gain node to the destination.
-    gainNode.connect(this.context.destination)
+    gainNode.connect(this.output)
 
     source.onended = () => {
       gainNode.disconnect()

@@ -1,6 +1,6 @@
 {
   "preferQuoteCurrencySize": true,
-  "aggregateTrades": true,
+  "aggregationLength": 100,
   "disableAnimations": false,
   "calculateSlippage": null,
   "decimalPrecision": null,
@@ -10,10 +10,13 @@
   "timezoneOffset": 0,
   "useAudio": false,
   "audioVolume": 1,
-  "audioDelay": false,
-  "audioPingPong": true,
-  "audioCompressor": false,
-  "audioFilter": true,
+  "audioFilters": {
+    "PingPongDelay": true,
+    "Compressor": false,
+    "Delay": false,
+    "HighPassFilter": true,
+    "LowPassFilter": false
+  },
   "settings": ["other", "workspaces", "chart", "stats", "counters", "audio"],
   "recentColors": []
 }

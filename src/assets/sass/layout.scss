@@ -302,6 +302,14 @@ code {
     background-color: rgba(black, 0.05);
   }
 
+  .section__horizontal-scroll {
+    overflow: auto;
+    margin-right: -1em;
+    margin-left: -1em;
+    padding-left: 1em;
+    padding-right: 1em;
+  }
+
   .section__controls {
     position: absolute;
     right: 1rem;

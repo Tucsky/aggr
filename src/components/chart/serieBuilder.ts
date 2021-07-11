@@ -240,7 +240,7 @@ export default class SerieBuilder {
 
         output = output.replace(new RegExp(`(${VARIABLES_VAR_NAME}\\[${variables.length - 1}\\])\\(${variable.length}\\)\\s*=\\s*`), '$1=')
       }
-    } while (variableMatch)
+    } while (variableMatch && variables.length < 20)
 
     output = this.determineVariablesType(output, variables)
 

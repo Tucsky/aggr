@@ -147,7 +147,12 @@ class WorkspacesService {
 
       console.log(`[idb/defaultIndicators] insert default indicator ${id}`)
 
-      await tx.store.add({ ...serie, id, createdAt: now, updatedAt: null })
+      try {
+        await tx.store.add({ ...serie, id, createdAt: now, updatedAt: null })
+      } catch (error) {
+        console.error(error)
+        throw error
+      }
 
       added++
     }

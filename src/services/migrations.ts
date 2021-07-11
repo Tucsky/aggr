@@ -102,5 +102,20 @@ export const workspaceUpgrades = {
         upgradeThreshold(threshold, paneId)
       }
     }
+  },
+  2: (workspace: Workspace) => {
+    workspace.states.settings.audioFilters = {
+      HighPassFilter: !!workspace.states.settings.audioFilter,
+      LowPassFilter: false,
+      Compressor: !!workspace.states.settings.audioCompressor,
+      Delay: !!workspace.states.settings.audioDelay,
+      PingPongDelay: !!workspace.states.settings.audioPingPong,
+      Chorus: false
+    }
+
+    delete workspace.states.settings.audioFilter
+    delete workspace.states.settings.audioCompressor
+    delete workspace.states.settings.audioPingPong
+    delete workspace.states.settings.audioDelay
   }
 }
