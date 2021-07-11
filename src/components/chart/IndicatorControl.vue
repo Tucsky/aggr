@@ -13,7 +13,7 @@
       <button class="btn -small" @click="remove" v-tippy title="Disable"><i class="icon-cross"></i></button>
     </div>
     <div v-if="showLegend" class="indicator__legend">
-      <div v-for="serie of series" :key="serie" :id="indicator.id + serie"></div>
+      <div v-for="serie of series" :key="serie" :id="paneId + indicator.id + serie"></div>
     </div>
     <div v-if="error">
       <i class="icon-warning ml4 mr8"></i>

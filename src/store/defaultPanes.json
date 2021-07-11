@@ -10,7 +10,7 @@
   "panes": {
     "chart": {
       "id": "chart",
-      "name": "Chart",
+      "name": "",
       "type": "chart",
       "markets": [
         "BITFINEX:BTCUSD",
@@ -35,7 +35,7 @@
     },
     "trades": {
       "id": "trades",
-      "name": "TRADES",
+      "name": "",
       "type": "trades",
       "markets": [
         "BITFINEX:BTCUSD",

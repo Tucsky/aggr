@@ -40,7 +40,7 @@
           >
             <template v-slot:selection> panes <i class="icon-pile ml4"></i></template>
             <template v-slot:option="{ value }">
-              {{ value.name }}
+              {{ value.name || value.id }}
             </template>
           </dropdown>
         </div>
@@ -175,7 +175,7 @@ export default {
     },
     paneName() {
       if (this.paneId) {
-        return this.$store.state.panes.panes[this.paneId].name
+        return this.$store.state.panes.panes[this.paneId].name || this.paneId
       } else {
         return null
       }
@@ -534,7 +534,7 @@ export default {
   }
 
   tr.active {
-    background-color: rgba(white, 0.2) !important;
+    background-color: rgba(black, 0.2) !important;
   }
 
   td:first-child,

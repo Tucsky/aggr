@@ -420,7 +420,7 @@ export default class extends Mixins(PaneMixin) {
 
       for (let j = 0; j < this._chartController.loadedIndicators[i].apis.length; j++) {
         const api = this._chartController.loadedIndicators[i].apis[j]
-        const id = indicator.id + api.id
+        const id = this.paneId + indicator.id + api.id
 
         if (!this._legendElements[id]) {
           continue
@@ -598,7 +598,7 @@ export default class extends Mixins(PaneMixin) {
     await this.$nextTick()
 
     for (let i = 0; i < series.length; i++) {
-      const id = indicatorId + series[i]
+      const id = this.paneId + indicatorId + series[i]
 
       if (this._legendElements[id]) {
         continue
@@ -620,8 +620,10 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
+    const prefix = this.paneId + indicatorId
+
     for (const legendId in this._legendElements) {
-      if (legendId.indexOf(indicatorId) === 0) {
+      if (legendId.indexOf(prefix) === 0) {
         delete this._legendElements[legendId]
       }
     }

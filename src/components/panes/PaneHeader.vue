@@ -137,7 +137,7 @@ export default class extends Vue {
 
     if (!name) {
       const [, pair] = parseMarket(this.$store.state.panes.panes[this.paneId].markets[0])
-      return pair + ' - ' + this.$store.state.panes.panes[this.paneId].type
+      return pair
     }
 
     return name
