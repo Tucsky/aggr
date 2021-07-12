@@ -1,7 +1,7 @@
 import { PaneType } from '@/store/panes'
 
 export type SlippageMode = false | 'price' | 'bps'
-export type AggregationLength = 0 | 1 | 10 | 100 | 1000
+export type AggregationLength = 0 | 1 | 10 | 100 | 1000
 
 declare module 'test.worker' {
   // You need to change `Worker`, if you specified a different value for the `workerType` option

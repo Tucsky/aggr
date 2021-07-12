@@ -90,7 +90,7 @@ export const workspaceUpgrades = {
     }
 
     for (const paneId in workspace.states.panes.panes) {
-      if (workspace.states.panes.panes[paneId].type !== 'trades') {
+      if (workspace.states.panes.panes[paneId].type !== 'trades' || !workspace.states[paneId]) {
         continue
       }
 
@@ -104,6 +104,10 @@ export const workspaceUpgrades = {
     }
   },
   2: (workspace: Workspace) => {
+    if (!workspace.states.settings) {
+      return
+    }
+
     workspace.states.settings.audioFilters = {
       HighPassFilter: !!workspace.states.settings.audioFilter,
       LowPassFilter: false,

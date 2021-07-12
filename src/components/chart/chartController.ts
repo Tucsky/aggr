@@ -423,7 +423,7 @@ export default class ChartController {
   updateFontSize() {
     this.chartInstance.applyOptions({
       layout: {
-        fontSize: 13 * (store.state.panes.panes[this.paneId].zoom || 1)
+        fontSize: 12 * (store.state.panes.panes[this.paneId].zoom || 1)
       }
     })
   }

@@ -3,30 +3,16 @@
     <button class="menu__button btn" @click="toggleMenu">
       <i class="icon-menu"></i>
     </button>
-    <div class="menu__actions">
-      <button class="menu-action btn" type="button" @click="showSettings" title="General settings" v-tippy="{ placement: 'left', distance: 20 }">
+    <div class="menu__actions" @click="onClickItem">
+      <button class="menu-action btn" type="button" @click="showSettings">
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>
       </button>
-      <a
-        class="menu-action btn"
-        type="button"
-        target="_blank"
-        href="https://github.com/Tucsky/aggr"
-        title="Github"
-        v-tippy="{ placement: 'left', distance: 20 }"
-      >
+      <a class="menu-action btn" type="button" target="_blank" href="https://github.com/Tucsky/aggr">
         <span class="mr4">Github</span>
         <i class="icon-external-link-square-alt"></i>
       </a>
-      <button
-        class="menu-action btn"
-        type="button"
-        v-if="!isPopupMode"
-        @click="openAsPopup"
-        title="Open as popup"
-        v-tippy="{ placement: 'left', distance: 20 }"
-      >
+      <button class="menu-action btn" type="button" v-if="!isPopupMode" @click="openAsPopup">
         <span class="mr4">Popup</span>
         <i class="icon-external-link-square-alt"></i>
       </button>
@@ -50,7 +36,7 @@
         <i v-if="!useAudio" class="icon-volume-off"></i>
         <i v-else class="icon-volume-medium" :class="{ 'icon-volume-high': audioVolume > 1 }"></i>
       </button>
-      <dropdown class="menu-action" :options="paneTypes" placeholder="tf." @output="addPane" selectionClass="-green">
+      <dropdown class="menu-action" :options="paneTypes" placeholder="tf." @output="addPane" selectionClass="-green" @click.stop>
         <template v-slot:selection>
           <i class="icon-dashboard -center mr16"></i>
           <span class="mr4">Pane</span>
@@ -64,13 +50,7 @@
           <i class="icon-plus mr4"></i>
         </template>
       </dropdown>
-      <button
-        class="menu-action btn"
-        type="button"
-        @click="$store.dispatch('app/showSearch')"
-        title="Choose exchanges / pairs"
-        v-tippy="{ placement: 'left', distance: 20 }"
-      >
+      <button class="menu-action btn" type="button" @click="$store.dispatch('app/showSearch')">
         <span class="mr4">Search</span>
         <i class="icon-search"></i>
       </button>
@@ -145,6 +125,14 @@ export default class extends Vue {
 
   addPane(type: PaneType) {
     this.$store.dispatch('panes/addPane', { type })
+  }
+
+  onClickItem(event) {
+    if (event.target.classList.contains('dropdown__selected') || event.target.parentElement.classList.contains('dropdown__selected')) {
+      return
+    }
+
+    this.toggleMenu()
   }
 }
 </script>

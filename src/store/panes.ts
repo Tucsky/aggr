@@ -1,12 +1,13 @@
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
-import { capitalizeFirstLetter, getBucketId, sleep, slugify, uniqueName } from '@/utils/helpers'
+import { getBucketId, sleep, slugify, uniqueName } from '@/utils/helpers'
 import { registerModule, syncState } from '@/utils/store'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '.'
 import panesSettings from './panesSettings'
 import defaultPanes from './defaultPanes.json'
+import defaultLayouts from './defaultLayouts.json'
 import { BREAKPOINTS_COLS, BREAKPOINTS_WIDTHS } from '@/utils/constants'
 import dialogService from '@/services/dialogService'
 
@@ -69,6 +70,18 @@ const getters = {
 const actions = {
   async boot({ state }) {
     state.marketsListeners = {}
+
+    if (!Object.keys(state.layouts).length) {
+      const isMobile = window.innerWidth < 768
+
+      if (isMobile) {
+        state.layouts = defaultLayouts
+      } else {
+        state.layouts = {
+          lg: defaultLayouts.lg
+        }
+      }
+    }
   },
   async addPane({ commit, dispatch, state }, options: Pane & { settings?: any }) {
     if (!options || !options.type) {
@@ -392,7 +405,7 @@ const actions = {
 
       if (getBucketId(panes) === getBucketId(['chart', 'liquidations', 'trades'])) {
         overrideWithResponsiveLayout = await dialogService.confirm({
-          message: 'Override current layout with official responsive one ?',
+          message: 'Override current layout with official responsive ?<br>(chart + trades + rekts)',
           ok: 'Yes override',
           cancel: 'Create layouts using this one as base'
         })

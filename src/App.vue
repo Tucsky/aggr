@@ -247,9 +247,17 @@ export default class extends Vue {
   }
 
   async resetAndReload() {
-    if (await dialogService.confirm('Are you sure ?')) {
+    const response = await dialogService.confirm({
+      message: 'Are you sure ?',
+      ok: 'Reset settings',
+      cancel: 'Download settings'
+    })
+
+    if (response === true) {
       await workspacesService.reset()
       window.location.reload()
+    } else if (response === false) {
+      workspacesService.downloadWorkspace()
     }
   }
 }

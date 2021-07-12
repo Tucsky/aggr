@@ -70,7 +70,7 @@
             {{ showThresholdsAsTable ? 'table' : 'slider' }}
           </button>
           <presets
-            type="audio"
+            type="threshold"
             :adapter="getAudioPreset"
             @apply="applyAudioPreset($event)"
             label="Presets"
@@ -247,7 +247,7 @@
 import dialogService from '@/services/dialogService'
 import panesSettings from '@/store/panesSettings'
 import { TradesPaneState } from '@/store/panesSettings/trades'
-import { formatAmount, parseMarket } from '@/utils/helpers'
+import { formatAmount, parseMarket, randomString } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '../framework/picker/Slider.vue'
 import Thresholds from '../settings/Thresholds.vue'
@@ -420,10 +420,29 @@ export default class extends Vue {
     let state
 
     if (presetData) {
+      let previousAmount = this.$store.state[this.paneId].thresholds[0].amount
+
       state = {
         thresholds: Object.keys(presetData).reduce((arr, key) => {
           if (key === 'liquidations') {
             return arr
+          }
+
+          if (!this.$store.state[this.paneId].thresholds[key]) {
+            presetData[key].id = randomString()
+            if (typeof presetData[key].amount === 'undefined') {
+              presetData[key].amount = previousAmount
+            }
+            if (typeof presetData[key].buyColor === 'undefined') {
+              presetData[key].buyColor = 'rgb(0, 255, 0)'
+              presetData[key].sellColor = 'rgb(255, 0, 0)'
+            }
+            if (typeof presetData[key].buyAudio === 'undefined') {
+              presetData[key].buyAudio = ''
+              presetData[key].sellAudio = ''
+            }
+          } else {
+            previousAmount = this.$store.state[this.paneId].thresholds[key].amount
           }
 
           arr.push(presetData[key])

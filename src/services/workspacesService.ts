@@ -474,11 +474,11 @@ class WorkspacesService {
     return this.db.put('indicators', indicator)
   }
 
-  getIndicator(id: string) {
+  getIndicator(id: string): Promise<IndicatorSettings> {
     return this.db.get('indicators', id)
   }
 
-  getIndicators() {
+  getIndicators(): Promise<IndicatorSettings[]> {
     return this.db.getAllFromIndex('indicators', 'name')
   }
 
@@ -490,7 +490,7 @@ class WorkspacesService {
     return this.db.put('presets', preset)
   }
 
-  async getPreset(id: string) {
+  async getPreset(id: string): Promise<Preset> {
     return this.db.get('presets', id)
   }
 

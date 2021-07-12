@@ -41,5 +41,31 @@
         }
       ]
     }
+  },
+  {
+    "name": "threshold:bongo 🥁",
+    "type": "threshold",
+    "data": {
+      "0": {
+        "buyAudio": "playurl(https://d7d3471nr939s.cloudfront.net/DeepHouseSessions_Noiz_SP/MP3/One+Shots/Bongo_08_73_SP.mp3?cb=6cfb91bb-f15f-432a-bfae-17ef22b22005, gain * .75)",
+        "sellAudio": "playurl(https://d7d3471nr939s.cloudfront.net/DeepHouseSessions_Noiz_SP/MP3/One+Shots/Bongo_13_73_SP.mp3?cb=6ff3b374-9c98-4d3e-9f8e-4f02eef40c8e, gain * .75)"
+      },
+      "1": {
+        "buyAudio": "playurl(https://d7d3471nr939s.cloudfront.net/SaharanRhythms_Noiz_SP/MP3/One+Shots/BongoHighFlam_SP_223_01.mp3?cb=4d88d832-850d-4ad1-9e89-a23b3cbdfb89, gain)",
+        "sellAudio": "playurl(https://d7d3471nr939s.cloudfront.net/SaharanRhythms_Noiz_SP/MP3/One+Shots/BongoLowFlamQuiet_SP_223_01.mp3?cb=ae87962f-a948-484e-a2dc-392c41f14105, gain)"
+      },
+      "2": {
+        "buyAudio": "playurl(https://d7d3471nr939s.cloudfront.net/SaharanRhythms_Noiz_SP/MP3/One+Shots/BongoHighRoll_SP_223_01.mp3?cb=6d81f0bb-9e13-4404-aae5-02bce10d2a0a, gain)",
+        "sellAudio": "playurl(https://d7d3471nr939s.cloudfront.net/SaharanRhythms_Noiz_SP/MP3/One+Shots/BongoLowRoll_SP_223_01.mp3?cb=39110d56-d2cd-4be7-8e1f-d2f1c9f677cf, gain)"
+      },
+      "3": {
+        "buyAudio": "playurl(https://d7d3471nr939s.cloudfront.net/CinematicPercussion_Noiiz_SP/MP3/One+Shots/Chimes+&+Bells/TubularBell_5_Mallet_395_SP.mp3?cb=2baef87d-892e-4704-8068-26d15072850c, gain / 2, 30)",
+        "sellAudio": "playurl(https://d7d3471nr939s.cloudfront.net/CinematicPercussion_Noiiz_SP/MP3/One+Shots/Chimes+&+Bells/TubularBell_7_Mallet_395_SP.mp3?cb=dfd72abd-0bdc-4d0e-8085-dea85017a49c, gain / 2, 20)"
+      },
+      "liquidations": {
+        "buyAudio": "playurl(https://d7d3471nr939s.cloudfront.net/PlasticDrums_Noiiz/MP3/One+Shots/Kitchen+Kit/D_WaterBottleTom_01_631.mp3?cb=d1d46d16-81be-4674-875c-6c55cb54c797, gain)",
+        "sellAudio": "playurl(https://d7d3471nr939s.cloudfront.net/PlasticDrums_Noiiz/MP3/One+Shots/Kitchen+Kit/C%23_PlasticBottleKick_01_631.mp3?cb=eb673166-02a6-43b9-8187-daf05ea65a16, gain)"
+      }
+    }
   }
 ]

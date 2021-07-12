@@ -324,6 +324,29 @@ export function fallbackCopyTextToClipboard(text) {
   document.body.removeChild(textArea)
 }
 
+export function browseFile(): Promise<string | ArrayBuffer> {
+  const input = document.createElement('input')
+  input.type = 'file'
+
+  return new Promise((resolve, reject) => {
+    input.onchange = (event: any) => {
+      if (!event.target.files.length) {
+        reject()
+      }
+
+      const file = event.target.files[0]
+      const reader = new FileReader()
+      reader.readAsText(file, 'UTF-8')
+
+      reader.onload = async readerEvent => {
+        resolve(readerEvent.target.result)
+      }
+    }
+
+    input.click()
+  })
+}
+
 export function copyTextToClipboard(text) {
   if (!navigator.clipboard) {
     fallbackCopyTextToClipboard(text)

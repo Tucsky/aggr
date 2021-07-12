@@ -155,7 +155,6 @@ const actions = {
 
     workspacesService.saveIndicator(state.indicators[id])
 
-    
     await dispatch('transferIndicator', state.indicators[id])
   },
   async renameIndicator({ commit, state, dispatch }, { id, name }) {
@@ -185,7 +184,7 @@ const actions = {
       if (!otherPaneIndicator.unsavedChanges) {
         otherPaneIndicator.options = indicator.options
 
-        this.commit(paneId + '/SET_INDICATOR_SCRIPT', {id: indicator.id})
+        this.commit(paneId + '/SET_INDICATOR_SCRIPT', { id: indicator.id })
       }
     }
   }

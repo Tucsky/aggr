@@ -77,6 +77,23 @@
   },
   "volume_delta": {
     "name": "Volume Δ",
+    "script": "plothistogram({ time: time, value: Math.abs(vbuy-vsell), color: vbuy - vsell > 0 ? options.upColor : options.downColor})",
+    "options": {
+      "priceFormat": {
+        "type": "volume"
+      },
+      "upColor": "#3BCA6D",
+      "downColor": "#EB1E2F",
+      "priceScaleId": "volume",
+      "scaleMargins": {
+        "top": 0.91,
+        "bottom": 0
+      }
+    }
+  },
+  "volume_buy_sell": {
+    "enabled": false,
+    "name": "Buy/sells volume",
     "script": "plotcloudarea(-vsell, vbuy)\nplotline(0, color=rgba(255,255,255,.25), lineStyle=2)",
     "options": {
       "priceFormat": {
@@ -202,7 +219,7 @@
   },
   "bollinger_bands": {
     "enabled": false,
-    "script": "a = sma(Math.pow($price.close,2),options.length)\nb = Math.pow(sum($price.close,options.length),2)/Math.pow(options.length,2)\nstdev = Math.sqrt(a - b)\nsrc = $price.close\n\nbasis = sma($price.close, options.length)\ndev = options.mult * stdev\nupper = basis + dev\nlower = basis - dev\n\nplotline(basis, color=options.basisColor)\nplotcloudarea(upper, lower)",
+    "script": "a = sma(Math.pow($price.close,2),options.length)\nb = Math.pow(sum($price.close,options.length),2)/Math.pow(options.length,2)\nstdev = Math.sqrt(a - b)\nsrc = $price.close\n\nbasis = sma($price.close, options.length)\ndev = options.mult * stdev\nupper = basis + dev\nlower = basis - dev\n\nplotline(basis, color=options.basisColor)\nplotcloudarea(lower, upper)",
     "name": "Bollinger Bands",
     "options": {
       "priceScaleId": "right",

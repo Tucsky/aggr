@@ -451,3 +451,8 @@ $iconpath: '../fonts';
     content: $icon-transfer; 
   }
 }
+.icon-eraser {
+  &:before {
+    content: $icon-eraser; 
+  }
+}

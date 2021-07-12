@@ -1,10 +1,14 @@
 <template>
   <dropdown :options="presets" @output="onSelect" :placeholder="label" class="mrauto" selectionClass="ml0">
+    <template v-slot:option-0>
+      <div class="column" @mousedown.prevent>
+        <div class="btn -green" @click="savePreset"><i class="icon-plus"></i></div>
+        <div class="btn -blue" @click="uploadPreset"><i class="icon-upload"></i></div>
+        <div class="btn -red" @click="applyDefault"><i class="icon-eraser mr4"></i> Reset</div>
+      </div>
+    </template>
     <template v-slot:option="{ value }">
       <i v-if="value.icon" :class="'-lower icon-' + value.icon"></i>
-
-      <i v-if="value.id" class="icon-refresh -action  -lower" @mousedown.stop @click.stop="savePreset(value.label)" title="Update"></i>
-      <i v-if="value.id" class="icon-trash -action mr8 -lower" @mousedown.stop @click.stop="removePreset(value.id)" title="Delete"></i>
 
       <span>{{ value.label }}</span>
     </template>
@@ -14,9 +18,11 @@
 <script lang="ts">
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import { PresetType } from '@/types/test'
+import { Preset, PresetType } from '@/types/test'
 import { Component, Vue } from 'vue-property-decorator'
 import Dropdown from '@/components/framework/Dropdown.vue'
+import PresetDialog from '../settings/PresetDialog.vue'
+import { browseFile } from '@/utils/helpers'
 
 @Component({
   components: { Dropdown },
@@ -36,25 +42,14 @@ export default class extends Vue {
   type: PresetType
   adapter: Function
 
-  presets = [
-    {
-      icon: 'plus',
-      label: 'Save as',
-      click: this.savePreset
-    },
-    {
-      icon: 'warning',
-      label: 'Apply default',
-      click: this.applyDefault
-    }
-  ] as any
+  presets = [{}] as any
 
   created() {
     this.getPresets()
   }
 
   async getPresets() {
-    this.presets.splice(2, this.presets.length)
+    this.presets.splice(1, this.presets.length)
 
     const keys = (await workspacesService.getPresetsKeysByType(this.type)) as string[]
 
@@ -76,7 +71,11 @@ export default class extends Vue {
 
     const preset = await workspacesService.getPreset(this.presets[index].id)
 
-    this.$emit('apply', preset.data)
+    if (await dialogService.openAsPromise(PresetDialog, { preset })) {
+      this.applyPreset(preset)
+    } else {
+      await this.getPresets()
+    }
   }
 
   async savePreset(name?: string) {
@@ -120,12 +119,45 @@ export default class extends Vue {
     }
   }
 
-  async removePreset(id) {
-    if (await dialogService.confirm('Remove preset ' + id + ' ?')) {
-      await workspacesService.removePreset(id)
+  async applyPreset(preset: Preset) {
+    this.$emit('apply', preset.data)
+  }
 
-      await this.getPresets()
+  async uploadPreset() {
+    const content = await browseFile()
+
+    let preset
+
+    try {
+      if (typeof content === 'string') {
+        preset = JSON.parse(content)
+      } else {
+        throw new Error('invalid file, must be text/json')
+      }
+
+      if (!preset.data) {
+        throw new Error('preset is empty')
+      }
+
+      if (preset.type !== this.type) {
+        throw new Error('preset is not ' + this.type + ' type')
+      }
+    } catch (error) {
+      this.$store.dispatch('app/showNotice', {
+        title: `Couldn't import preset : ${error.message}`,
+        type: 'error'
+      })
+      return
     }
+
+    await workspacesService.savePreset(preset)
+
+    this.$store.dispatch('app/showNotice', {
+      title: `Preset ${preset.name} imported successfully`,
+      type: 'info'
+    })
+
+    await this.getPresets()
   }
 }
 </script>

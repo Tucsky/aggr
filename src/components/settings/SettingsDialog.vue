@@ -203,7 +203,7 @@
 </template>
 
 <script>
-import { ago } from '../../utils/helpers'
+import { ago, browseFile } from '../../utils/helpers'
 
 import Exchange from './Exchange.vue'
 import DonoDropdown from './DonoDropdown.vue'
@@ -530,38 +530,26 @@ export default {
     },
 
     async uploadWorkspace() {
-      const input = document.createElement('input')
-      input.type = 'file'
+      const content = await browseFile()
 
-      input.onchange = e => {
-        const file = e.target.files[0]
-        // setting up the reader
-        const reader = new FileReader()
-        reader.readAsText(file, 'UTF-8')
+      const workspace = this.validateWorkspaceImport(content)
 
-        // here we tell the reader what to do when it's done reading...
-        reader.onload = async readerEvent => {
-          const content = readerEvent.target.result // this is the content!
-          const workspace = this.validateWorkspaceImport(content)
-          if (!workspace) {
-            return
-          }
-          if (
-            workspacesService.getWorkspace(workspace.id) &&
-            !(await dialogService.confirm({ message: `Workspace ${workspace.id} already exists`, ok: 'Import anyway', cancel: 'Annuler' }))
-          ) {
-            return
-          }
-
-          if (await dialogService.openAsPromise(SettingsImportConfirmation, { workspace })) {
-            this.close().then(() => {
-              this.importWorkspace(workspace)
-            })
-          }
-        }
+      if (!workspace) {
+        return
       }
 
-      input.click()
+      if (
+        workspacesService.getWorkspace(workspace.id) &&
+        !(await dialogService.confirm({ message: `Workspace ${workspace.id} already exists`, ok: 'Import anyway', cancel: 'Annuler' }))
+      ) {
+        return
+      }
+
+      if (await dialogService.openAsPromise(SettingsImportConfirmation, { workspace })) {
+        this.close().then(() => {
+          this.importWorkspace(workspace)
+        })
+      }
     },
 
     async renameWorkspace() {

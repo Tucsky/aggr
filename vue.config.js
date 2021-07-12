@@ -10,7 +10,7 @@ fs.readdirSync('./src/worker/exchanges/').forEach(file => {
     exchanges.push(file.replace(/\.ts$/, ''))
   }
 })
-console.log(exchanges);
+console.log(exchanges)
 process.env.VUE_APP_EXCHANGES = exchanges.join(',')
 process.env.VUE_APP_PROXY_URL = process.env.PROXY_URL
 process.env.VUE_APP_API_URL = process.env.API_URL

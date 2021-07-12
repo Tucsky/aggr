@@ -20,7 +20,7 @@
       <label class="checkbox-control">
         <input type="checkbox" class="form-control" :checked="autoHideHeaders" @change="$store.commit('settings/TOGGLE_AUTO_HIDE_HEADERS')" />
         <div></div>
-        <span>Toggle headers visibility</span>
+        <span>Auto hide headers</span>
       </label>
     </div>
     <div class="form-group mb8">

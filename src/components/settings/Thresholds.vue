@@ -127,7 +127,7 @@
           <label>Show gif</label>
           <input
             type="text"
-            class="form-control"
+            class="form-control w-100"
             :value="selectedThreshold.gif"
             @change="
               $store.commit(paneId + '/SET_THRESHOLD_GIF', {
