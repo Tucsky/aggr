@@ -83,10 +83,9 @@ export async function boot(workspace?: Workspace, previousWorkspaceId?: string) 
   await sleep(10)
   await store.dispatch('panes/boot')
 
-  for (const paneId in modules.panes.state.panes) {
+  for (const paneId in store.state.panes.panes) {
     await progress(`registering pane module ${paneId}`)
-    console.log(modules.panes.state.panes[paneId])
-    await registerModule(paneId, {}, false, modules.panes.state.panes[paneId])
+    await registerModule(paneId, {}, false, store.state.panes.panes[paneId])
   }
 
   store.dispatch('app/setBooted')
@@ -94,7 +93,7 @@ export async function boot(workspace?: Workspace, previousWorkspaceId?: string) 
   await progress(`registering exchanges`)
   await registerModule('exchanges', modules['exchanges'])
 
-  for (const paneId in modules.panes.state.panes) {
+  for (const paneId in store.state.panes.panes) {
     await progress(`booting module ${paneId}`)
 
     try {
