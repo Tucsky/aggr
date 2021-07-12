@@ -370,3 +370,27 @@ export function avg_heikinashi$(state, renderer) {
   state.output = { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }
   return state.output
 }
+
+/**
+ * standard deviation state
+ */
+export const stdev = {
+  count: 0,
+  sum: 0,
+  points: []
+}
+/**
+ * standard deviation (stdev)
+ * @param {SerieMemory} memory
+ * @param {number} value
+ */
+export function stdev$(state, value) {
+  state.output = value
+  if (state.count > 1)
+  {
+    const n = state.points.length
+    const mean = state.points.reduce((a, b) => a + b) / n
+    return Math.sqrt(state.points.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n)
+  }
+  return 0
+}
