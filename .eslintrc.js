@@ -3,13 +3,7 @@ module.exports = {
   env: {
     node: true
   },
-  extends: [
-    'plugin:vue/essential',
-    'eslint:recommended',
-    '@vue/typescript/recommended',
-    '@vue/prettier',
-    '@vue/prettier/@typescript-eslint'
-  ],
+  extends: ['plugin:vue/essential', 'eslint:recommended', '@vue/typescript/recommended', '@vue/prettier', '@vue/prettier/@typescript-eslint'],
   parserOptions: {
     ecmaVersion: 2020
   },
@@ -21,4 +15,4 @@ module.exports = {
     '@typescript-eslint/no-var-requires': 0,
     camelcase: 'off'
   }
-};
+}

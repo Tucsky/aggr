@@ -20,9 +20,9 @@ export default class extends Exchange {
   formatProducts(data) {
     const specs = {}
     const products = []
-    const leverages = data.data.leverages;
-    const currencies = data.data.currencies;
-    const riskLimits = data.data.riskLimits;
+    const leverages = data.data.leverages
+    const currencies = data.data.currencies
+    const riskLimits = data.data.riskLimits
     for (const product of data.data.products) {
       if (product.type === 'Perpetual') {
         specs[product.symbol] = {
@@ -47,8 +47,7 @@ export default class extends Exchange {
           minOrderValueEv: product.minOrderValueEv,
           valueScale: currencies.filter(c => c.currency === product.quoteCurrency)[0].valueScale,
           priceScale: currencies.filter(c => c.currency === product.baseCurrency)[0].valueScale,
-          ratioScale: data.data.ratioScale,
-
+          ratioScale: data.data.ratioScale
         }
       }
 
@@ -77,9 +76,7 @@ export default class extends Exchange {
       JSON.stringify({
         id: 1234,
         method: 'trade.subscribe',
-        params: [
-          pair
-        ]
+        params: [pair]
       })
     )
 
@@ -100,9 +97,7 @@ export default class extends Exchange {
       JSON.stringify({
         id: 1234,
         method: 'trade.unsubscribe',
-        params: [
-          pair
-        ]
+        params: [pair]
       })
     )
 
@@ -125,17 +120,16 @@ export default class extends Exchange {
         }
         if (tradeType === 'Perpetual') {
           trade.price = +(t[2] / Math.pow(10, this.specs[json.symbol].priceScale))
-          trade.size = +( t[3] * this.specs[json.symbol].contractSize )
+          trade.size = +(t[3] * this.specs[json.symbol].contractSize)
           if (this.specs[json.symbol].settleCurrency !== this.specs[json.symbol].quoteCurrency) {
             trade.size /= trade.price
           }
-          
         } else if (tradeType === 'Spot') {
-          trade.price = +(t[2] / Math.pow(10, this.specs[json.symbol].priceScale)),
-          trade.size = +(t[3] / Math.pow(10, this.specs[json.symbol].valueScale))
+          ;(trade.price = +(t[2] / Math.pow(10, this.specs[json.symbol].priceScale))),
+            (trade.size = +(t[3] / Math.pow(10, this.specs[json.symbol].valueScale)))
         }
         return trade
-      });
+      })
       return this.emitTrades(api.id, trades)
     } else {
       return

@@ -121,7 +121,7 @@ export async function getProducts(exchangeId: string, endpoints?: string[]): Pro
     if (!store.state.exchanges[exchangeId].fetched) {
       store.commit('exchanges/SET_FETCHED', exchangeId)
     }
-    
+
     indexProducts(exchangeId, productsData)
   }
 

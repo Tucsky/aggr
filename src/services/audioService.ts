@@ -421,7 +421,7 @@ class AudioService {
               1, // fadeOut
               null, // delay
               0, // fadeIn
-              .1, // holdDuration
+              0.1, // holdDuration
               `'triangle'`, // osc
               0.0001, // startGain
               0.0001 // endGain

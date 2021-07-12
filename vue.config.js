@@ -97,7 +97,7 @@ module.exports = {
     }
   },
   pwa: {
-    name: 'SignificantTrades',
+    name: 'AGGR',
     themeColor: '#43a047',
     msTileColor: '#43a047'
   }

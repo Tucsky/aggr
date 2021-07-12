@@ -84,7 +84,9 @@ const actions = {
     })
   },
   renameBucket({ commit, state }, { id, name }) {
-    const otherNames = Object.keys(state.buckets).filter(_id => _id !== id).map(id => state.buckets[id].name)
+    const otherNames = Object.keys(state.buckets)
+      .filter(_id => _id !== id)
+      .map(id => state.buckets[id].name)
 
     name = uniqueName(name, otherNames)
 

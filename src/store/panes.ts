@@ -313,16 +313,7 @@ const actions = {
       title: `Duplicated pane ${id}`
     })
   },
-  async resetPane({ state, commit, dispatch, rootState }, { id, data }: { id: string; data?: any }) {
-    // copy this pane on every breakpoints
-    const breakpointsItems = Object.keys(state.layouts).reduce((items, breakpoint) => {
-      const item = state.layouts[breakpoint].find(item => item.i === id)
-
-      items[breakpoint] = item
-
-      return items
-    }, {})
-
+  async resetPane({ state, rootState }, { id, data }: { id: string; data?: any }) {
     const pane = JSON.parse(JSON.stringify(state.panes[id]))
 
     let currentPaneState
@@ -330,8 +321,6 @@ const actions = {
     if (data && typeof data === 'object') {
       currentPaneState = Object.assign({}, rootState[id], data)
     }
-
-    //dispatch('removePaneGridItems', id)
 
     rootState[id]._booted = false
 
@@ -348,11 +337,6 @@ const actions = {
     await sleep(100)
 
     await registerModule(id, {}, true, pane)
-
-    // add back pane items
-    /*for (const breakpoint in breakpointsItems) {
-      commit('ADD_GRID_ITEM', { breakpoint, item: breakpointsItems[breakpoint] })
-    }*/
   },
   setZoom({ commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
     commit('SET_PANE_ZOOM', { id, zoom })
