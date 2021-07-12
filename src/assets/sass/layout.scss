@@ -285,7 +285,7 @@ code {
   font-family: $font-monospace;
 
   &.-filled {
-    background-color: rgba(black, .2);
+    background-color: rgba(black, 0.2);
     color: var(--theme-color-base);
     border-radius: 4px;
     padding: 0.25rem;

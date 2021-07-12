@@ -29,7 +29,7 @@
           </a>
         </div>
       </div>
-      <div class="chart__controls" :style="{ marginRight: priceWidth / 16 + 'em' }">
+      <div class="chart__controls" :style="{ marginRight: priceWidth / 15 + 'em' }">
         <button class="chart__screenshot btn -text -large" @click="takeScreenshot"><i class="icon-add-photo"></i></button>
       </div>
     </div>
@@ -467,7 +467,14 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
-    this._chartController.chartInstance.resize(this.$refs.chartContainer.clientWidth, this.$refs.chartContainer.clientHeight)
+    this.$nextTick(() => {
+      let headerHeight = 0
+
+      if  (!this.$store.state.settings.autoHideHeaders) {
+        headerHeight = this.$store.state.panes.panes[this.paneId].zoom * 16
+      }
+      this._chartController.chartInstance.resize(this.$el.clientWidth, this.$el.clientHeight - headerHeight)
+    })
   }
 
   onPan(visibleLogicalRange) {
@@ -853,6 +860,12 @@ export default class extends Mixins(PaneMixin) {
     &:hover {
       opacity: 1;
     }
+  }
+}
+
+#app.-auto-hide-headers {
+  .chart__overlay > div {
+    top: 3.5em !important;
   }
 }
 </style>
