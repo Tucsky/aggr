@@ -24,6 +24,7 @@ export interface SettingsState {
   recentColors?: string[]
   disableAnimations?: boolean
   decimalPrecision?: number
+  autoHideHeaders?: boolean
 }
 
 const state = Object.assign(
@@ -99,7 +100,9 @@ const actions = {
     document.documentElement.style.setProperty('--theme-background-150', getLogShade(backgroundRgb, variantMultiplier * 0.05 * backgroundSide))
     document.documentElement.style.setProperty('--theme-background-200', getLogShade(backgroundRgb, variantMultiplier * 0.075 * backgroundSide))
     document.documentElement.style.setProperty('--theme-background-300', getLogShade(backgroundRgb, variantMultiplier * 0.1 * backgroundSide))
-    document.documentElement.style.setProperty('--theme-background-o75', `rgba(${backgroundRgb[0]}, ${backgroundRgb[1]},${backgroundRgb[2]}, .75)`)
+
+    const background100 = splitRgba(document.documentElement.style.getPropertyValue('--theme-background-100'))
+    document.documentElement.style.setProperty('--theme-background-o75', `rgba(${background100[0]}, ${background100[1]},${background100[2]}, .75)`)
     document.documentElement.style.setProperty('--theme-background-o20', `rgba(${backgroundRgb[0]}, ${backgroundRgb[1]},${backgroundRgb[2]}, .2)`)
 
     const colorInverse = theme !== 'light' ? 'rgb(17,17,17)' : 'rgb(246,246,246)'
@@ -217,6 +220,9 @@ const mutations = {
   },
   SET_DECIMAL_PRECISION(state, value) {
     state.decimalPrecision = value
+  },
+  TOGGLE_AUTO_HIDE_HEADERS(state) {
+    state.autoHideHeaders = !state.autoHideHeaders
   }
 } as MutationTree<SettingsState>
 

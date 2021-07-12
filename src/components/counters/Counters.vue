@@ -1,6 +1,6 @@
 <template>
   <div class="pane-counters">
-    <pane-header v-if="hovered" :paneId="paneId" />
+    <pane-header :paneId="paneId" />
     <ul class="counters hide-scrollbar">
       <li v-for="(step, index) in activeSteps" :key="index" v-bind:duration="step.duration" class="counter">
         <div class="counter__side -buy" v-bind:style="{ width: (step.buy / (step.buy + step.sell)) * 100 + '%' }">

@@ -453,7 +453,7 @@ export default {
   margin: 0;
   width: auto;
   height: 8px;
-  background: var(--theme-background-150);
+  background: var(--theme-background-200);
   will-change: transfom;
   border-radius: 10px;
   cursor: pointer;

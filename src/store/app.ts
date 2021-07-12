@@ -217,7 +217,7 @@ const actions = {
 
     commit('SET_CURRENCIES', currencies)
   },
-  showSearch({ commit }, { paneId, query }: { paneId?: string; query?: string } = { query: '', paneId: null }) {
+  showSearch({ commit, state }, { paneId, query }: { paneId?: string; query?: string } = { query: '', paneId: null }) {
     if (state.showSearch) {
       return
     }
@@ -226,7 +226,7 @@ const actions = {
 
     dialogService.open(SearchDialog, { query, paneId })
   },
-  hideSearch({ commit }) {
+  hideSearch({ commit, state }) {
     if (!state.showSearch) {
       return
     }

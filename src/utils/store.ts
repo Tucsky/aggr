@@ -55,7 +55,7 @@ export async function mergeStoredState(state: any) {
     workspacesService.removeState(state._id)
   }
 
-  return Object.assign({}, state)
+  return state
 }
 
 export async function registerModule(id, module: Module<any, any>, boot?: boolean, pane?: Pane) {
@@ -77,9 +77,9 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
       }
 
       merge(module.state, pane.settings)
-
-      delete pane.settings
     }
+  } else {
+    module = { ...module, state: JSON.parse(JSON.stringify(module.state)) }
   }
 
   if (module.state._id) {

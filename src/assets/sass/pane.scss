@@ -38,22 +38,17 @@
     }
 
     &:hover {
-      z-index: 1;
-
       > .vue-resizable-handle {
         display: block;
+      }
+
+      .toolbar {
+        display: flex;
       }
     }
 
     &.vue-grid-placeholder {
-      background-color: $blue;
-      opacity: 0.4;
-    }
-
-    &.resizing {
-      .pane-header {
-        display: none;
-      }
+      background-color: var(--theme-background-300);
     }
 
     &.-highlight {
@@ -65,8 +60,47 @@
         .pane-header {
           display: flex;
           z-index: 15;
+
+          .toolbar {
+            display: flex;
+          }
         }
       }
+    }
+  }
+}
+
+#app.-auto-hide-headers {
+  .pane {
+    .pane-header {
+      display: none;
+      position: absolute;
+      opacity: 0.75;
+
+      &__name {
+        opacity: 1;
+      }
+
+      .toolbar {
+        display: flex;
+      }
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+
+    &:hover {
+      .pane-header {
+        display: flex;
+      }
+    }
+  }
+
+  .vue-grid-item.-highlight {
+    .pane-header {
+      display: flex;
+      opacity: 1;
     }
   }
 }
@@ -88,57 +122,35 @@
   background-color: rgba(black, 0.2);
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .pane-header {
   display: flex;
-  position: absolute;
+  position: relative;
   z-index: 4;
   top: 0;
   left: 0;
   right: 0;
-  font-size: 1.5rem;
-  background-color: var(--theme-background-o75);
-  backdrop-filter: blur(10px);
+  font-size: 1.5em;
+  height: 1.5em;
+  background-color: var(--theme-background-100);
+  align-items: stretch;
+  flex-shrink: 0;
 
-  &.toolbar {
-    .dropdown__selected > i,
-    button > i {
-      padding-left: 0.5em;
-      padding-right: 0.5em;
-      padding-top: 0.4em;
-      padding-bottom: 0.5em;
-      font-size: 0.75em;
-    }
+  .toolbar {
+    display: none;
+  }
 
-    > span,
-    > button > span,
-    .dropdown > .dropdown__selected > span {
-      opacity: 1;
-    }
-
-    > span.title-top-left {
-      align-self: flex-start;
-      padding: 0.75em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex-grow: 1;
-    }
-
-    button,
-    .dropdown__selected {
-      opacity: 0.5;
-
-      &:hover {
-        opacity: 1;
-      }
-    }
-
-    .dropdown .dropdown__options .dropdown__option {
-      padding-left: 1em;
-      padding-right: 1em;
-    }
+  &__name {
+    opacity: 0.75;
+    font-family: 'Barlow Semi Condensed';
+    font-size: 0.64em;
+    align-self: center;
+    display: block;
+    line-height: 1;
+    padding: 0 0.4em 0.1em;
   }
 
   &__loader {

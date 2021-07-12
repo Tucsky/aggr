@@ -241,6 +241,7 @@ export default class ChartController {
 
     this.addEnabledSeries()
     this.updateWatermark()
+    this.updateFontSize()
   }
 
   /**
@@ -415,6 +416,14 @@ export default class ChartController {
         text: `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0${this.watermark}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0`,
         visible: store.state[this.paneId].showWatermark,
         color: store.state[this.paneId].watermarkColor
+      }
+    })
+  }
+
+  updateFontSize() {
+    this.chartInstance.applyOptions({
+      layout: {
+        fontSize: 13 * (store.state.panes.panes[this.paneId].zoom || 1)
       }
     })
   }

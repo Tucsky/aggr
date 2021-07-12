@@ -1,6 +1,6 @@
 <template>
   <div class="pane-prices" :class="{ [mode]: true, '-bold': this.boldFont }">
-    <pane-header v-if="hovered" :paneId="paneId" />
+    <pane-header :paneId="paneId" />
     <transition-group v-if="markets" :name="transitionGroupName" tag="div" class="markets-bar condensed hide-scrollbar pane">
       <div
         v-for="market in markets"

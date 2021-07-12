@@ -29,7 +29,7 @@
         <button class="btn -text -accent" @click="switchModel" type="button" title="Rotate" v-tippy>
           <i class="icon-refresh"></i>
         </button>
-        <editable :content="typedColor" @output="inputChanged($event)" :style="{ color: currentColor }"></editable>
+        <editable :content="typedColor" @output="inputChanged($event)"></editable>
         <button class="btn -text -accent" @click="submit" type="button" title="Save color" v-tippy>
           <i class="icon-check"></i>
         </button>

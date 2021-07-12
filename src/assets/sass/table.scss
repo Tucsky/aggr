@@ -9,7 +9,7 @@
       padding: 0.42rem 0.5rem;
       font-weight: 400;
       border-bottom: 0;
-      color: rgba(white, 0.6);
+      opacity: .6;
     }
   }
 
@@ -99,7 +99,7 @@
 
     + tr > td {
       //border-left: 1px solid var(--theme-color-o20);
-      border-top: 1px solid var(--theme-color-o20);
+      border-top: 1px solid var(--theme-background-200);
 
       &:first-child {
         border-left: 0;
@@ -110,7 +110,7 @@
   td {
     + td {
       //border-left: 1px solid var(--theme-color-o20);
-      border-top: 1px solid var(--theme-color-o20);
+      border-top: 1px solid var(--theme-background-200);
     }
   }
 

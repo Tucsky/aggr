@@ -4,6 +4,7 @@
   "disableAnimations": false,
   "calculateSlippage": null,
   "decimalPrecision": null,
+  "autoHideHeaders": false,
   "theme": "dark",
   "backgroundColor": "rgb(23,27,41)",
   "textColor": "",

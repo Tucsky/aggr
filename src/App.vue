@@ -10,6 +10,7 @@
     :class="{
       '-loading': isLoading,
       '-no-animations': disableAnimations,
+      '-auto-hide-headers': autoHideHeaders,
       '-light': theme === 'light'
     }"
   >
@@ -108,12 +109,12 @@ export default class extends Vue {
     return this.$store.state.app.isLoading
   }
 
-  get backgroundColor() {
-    return this.$store.state.settings.backgroundColor
-  }
-
   get theme() {
     return this.$store.state.settings.theme
+  }
+
+  get autoHideHeaders() {
+    return this.$store.state.settings.autoHideHeaders
   }
 
   get markets() {

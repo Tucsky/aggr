@@ -114,7 +114,7 @@ body {
   }
 
   code {
-    background-color: rgba(black, 0.1);
+    background-color: rgba(black, 0.2);
     font-weight: 400;
     padding: 3px 4px;
     line-height: 1;
@@ -285,7 +285,7 @@ code {
   font-family: $font-monospace;
 
   &.-filled {
-    background-color: var(--theme-background-o75);
+    background-color: rgba(black, .2);
     color: var(--theme-color-base);
     border-radius: 4px;
     padding: 0.25rem;
@@ -389,4 +389,9 @@ code {
   100% {
     opacity: 0;
   }
+}
+
+.tv-lightweight-charts.-absolute {
+  position: absolute;
+  top: 0;
 }

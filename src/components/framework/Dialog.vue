@@ -13,7 +13,7 @@
         <div class="dialog-controls">
           <slot name="controls"></slot>
 
-          <a href="javascript:void(0);" class="dialog-controls__close -link -text" @click="close" @touchend="close">
+          <a href="javascript:void(0);" class="dialog-controls__close -link -text -no-grab" @click="close" @touchend="close">
             <i class="icon-cross"></i>
           </a>
         </div>

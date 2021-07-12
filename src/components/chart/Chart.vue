@@ -1,6 +1,6 @@
 <template>
   <div class="pane-chart">
-    <pane-header v-if="hovered" :loading="loading" :paneId="paneId" :showTimeframe="true">
+    <pane-header :loading="loading" :paneId="paneId" :showTimeframe="true">
       <dropdown
         :options="{
           //clear: { label: 'Clear', click: clear },
@@ -29,7 +29,7 @@
           </a>
         </div>
       </div>
-      <div class="chart__controls" :style="{ marginRight: priceWidth + 'px' }">
+      <div class="chart__controls" :style="{ marginRight: priceWidth / 16 + 'em' }">
         <button class="chart__screenshot btn -text -large" @click="takeScreenshot"><i class="icon-add-photo"></i></button>
       </div>
     </div>
@@ -134,6 +134,11 @@ export default class extends Mixins(PaneMixin) {
 
             this.clear()
             this.fetch()
+          }
+          break
+        case 'panes/SET_PANE_ZOOM':
+          if (mutation.payload.id === this.paneId) {
+            this._chartController.updateFontSize()
           }
           break
         case this.paneId + '/SET_TIMEFRAME':
@@ -462,7 +467,7 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
-    this._chartController.chartInstance.resize(this.$el.clientWidth, this.$el.clientHeight)
+    this._chartController.chartInstance.resize(this.$refs.chartContainer.clientWidth, this.$refs.chartContainer.clientHeight)
   }
 
   onPan(visibleLogicalRange) {
@@ -748,7 +753,7 @@ export default class extends Mixins(PaneMixin) {
     }
 
     const luminance = getColorLuminance(splitRgba(backgroundColor))
-    const textColor = luminance < 170 ? 'white' : 'black'
+    const textColor = luminance < 170 ? '#ffffff' : '#000000'
 
     Object.values(this.indicators).forEach((indicator, index) => {
       const options = indicator.options as any
@@ -798,7 +803,7 @@ export default class extends Mixins(PaneMixin) {
 .chart__container {
   position: relative;
   width: 100%;
-  height: 100%;
+  flex-grow: 1;
 
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -814,19 +819,20 @@ export default class extends Mixins(PaneMixin) {
 
 .chart__overlay {
   display: none;
+  position: relative;
 
   > div {
     position: absolute;
-    top: 2.75rem;
+    top: 1em;
     font-family: 'Barlow Semi Condensed';
     z-index: 3;
 
     &:first-child {
-      left: 1rem;
+      left: 0.75em;
     }
 
     &:last-child {
-      right: 1em;
+      right: 0.75em;
     }
   }
 }

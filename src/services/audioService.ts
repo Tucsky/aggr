@@ -38,7 +38,7 @@ class AudioService {
       delayTime: 160 //1 to 10000 milliseconds
     },
     PingPongDelay: {
-      wetLevel: 0.3, //0 to 1
+      wetLevel: 0.6, //0 to 1
       feedback: 0.01, //0 to 1
       delayTimeLeft: 175, //1 to 10000 (milliseconds)
       delayTimeRight: 100 //1 to 10000 (milliseconds)
@@ -421,7 +421,7 @@ class AudioService {
               1, // fadeOut
               null, // delay
               0, // fadeIn
-              0, // holdDuration
+              .1, // holdDuration
               `'triangle'`, // osc
               0.0001, // startGain
               0.0001 // endGain

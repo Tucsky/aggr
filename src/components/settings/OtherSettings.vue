@@ -17,6 +17,13 @@
       </label>
     </div>
     <div class="form-group mb8">
+      <label class="checkbox-control">
+        <input type="checkbox" class="form-control" :checked="autoHideHeaders" @change="$store.commit('settings/TOGGLE_AUTO_HIDE_HEADERS')" />
+        <div></div>
+        <span>Toggle headers visibility</span>
+      </label>
+    </div>
+    <div class="form-group mb8">
       <label class="checkbox-control -animations">
         <input type="checkbox" class="form-control" :checked="animationsEnabled" @change="$store.commit('settings/TOGGLE_ANIMATIONS')" />
         <div></div>
@@ -54,6 +61,10 @@ export default class extends Vue {
 
   get animationsEnabled() {
     return !this.$store.state.settings.disableAnimations
+  }
+
+  get autoHideHeaders() {
+    return this.$store.state.settings.autoHideHeaders
   }
 
   created() {

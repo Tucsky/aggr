@@ -1,6 +1,6 @@
 <template>
   <div class="pane-trades" :class="{ '-logos': this.showLogos, '-logos-colors': !this.monochromeLogos, '-slippage': this.calculateSlippage }">
-    <pane-header v-if="hovered" :paneId="paneId" />
+    <pane-header :paneId="paneId" />
     <ul ref="tradesContainer" class="hide-scrollbar"></ul>
     <div v-if="!tradesCount" class="trades-placeholder hide-scrollbar">
       <div class="mt16 ml16 mr16 help-text">

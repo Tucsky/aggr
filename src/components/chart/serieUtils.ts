@@ -322,3 +322,51 @@ export function ema$(state, value, length) {
 
   return state.output
 }
+
+export const avg_heikinashi = {
+  count: 0,
+  points: []
+}
+
+export function avg_heikinashi$(state, renderer) {
+  let nbSources = 0
+
+  state.open = 0
+  state.high = 0
+  state.low = 0
+  state.close = 0
+
+  for (const identifier in renderer.sources) {
+    if (renderer.sources[identifier].open === null) {
+      continue
+    }
+
+    state.open += renderer.sources[identifier].open
+    state.high += renderer.sources[identifier].high
+    state.low += renderer.sources[identifier].low
+    state.close += renderer.sources[identifier].close
+
+    nbSources++
+  }
+
+  if (!nbSources) {
+    nbSources = 1
+  }
+
+  state.high /= nbSources
+  state.low /= nbSources
+  state.close /= nbSources
+
+  if (state.count > 0) {
+    const prevPoint = state.points[state.points.length - 1]
+    state.open = (prevPoint.open + prevPoint.close) / 2
+    state.close = 0.25 * (state.open + state.high + state.low + state.close)
+
+    state.low = Math.min(state.open, state.low, state.close)
+    state.high = Math.max(state.open, state.high, state.close)
+  } else {
+    state.open /= nbSources
+  }
+  state.output = { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }
+  return state.output
+}

@@ -1,6 +1,6 @@
 <template>
   <div class="pane-stats">
-    <pane-header v-if="hovered" :paneId="paneId" />
+    <pane-header :paneId="paneId" />
     <ul class="stats-buckets">
       <li v-for="(bucket, id) in data" :key="id" class="stat-bucket" @click="editStat(id)">
         <div class="stat-bucket__name">{{ bucket.name }}</div>
@@ -316,10 +316,6 @@ export default class extends Mixins(PaneMixin) {
 <style lang="scss">
 .pane-stats {
   position: relative;
-
-  &:hover .stats-buckets {
-    transform: translateY(1.5rem);
-  }
 }
 
 .stats-chart {

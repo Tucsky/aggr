@@ -109,7 +109,7 @@
       >
         <div v-for="market of selection" :key="market">
           <button
-            class="mb4 btn -small  -accent"
+            class="mb4 btn -small  -accent mr4"
             :class="{ '-green': activeMarkets.indexOf(market) !== -1 }"
             title="Click to remove"
             @click="deselectMarket(market)"
@@ -489,7 +489,8 @@ export default {
 .selection {
   place-self: stretch;
   padding-bottom: 90px;
-  min-width: 240px;
+  width: 240px;
+  max-width: 240px;
   overflow: auto;
   max-height: 59vh;
   padding: 0;
@@ -507,9 +508,11 @@ export default {
 
   &__items {
     display: flex;
-    flex-direction: column;
-    place-items: flex-end;
+    flex-direction: row;
+    flex-wrap: wrap;
     padding: 1rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 
     .btn {
       text-transform: none;
@@ -584,6 +587,7 @@ export default {
     box-shadow: 0 1px var(--theme-background-150);
     margin-top: -1rem;
     width: 100%;
+    max-width: none;
 
     &__items {
       flex-direction: row;

@@ -1,55 +1,55 @@
 <template>
-  <div class="pane-header toolbar" :class="{ '-loading': loading }">
+  <div class="pane-header d-flex" :class="{ '-loading': loading }">
     <div class="pane-header__loader"></div>
-    <span class="ml4 mrauto" data-hide-header @dblclick="renamePane">{{ name }}</span>
+    <span class="pane-header__name ml4 mrauto" data-hide-header @dblclick="renamePane">{{ name }}</span>
+    <div class="toolbar">
+      <slot />
+      <button type="button" v-if="showSearch" @click="openSearch">
+        <i class="icon-search"></i>
+      </button>
 
-    <slot />
+      <dropdown
+        v-if="showTimeframe"
+        :options="timeframes"
+        :selected="timeframe"
+        placeholder="tf."
+        @output="$store.commit(paneId + '/SET_TIMEFRAME', $event)"
+      >
+        <template v-slot:selection="{ item }">
+          <span>{{ item }}</span>
+        </template>
+      </dropdown>
 
-    <button type="button" v-if="showSearch" @click="openSearch">
-      <i class="icon-search"></i>
-    </button>
+      <button type="button" @click="openSettings">
+        <i class="icon-cog"></i>
+      </button>
 
-    <dropdown
-      v-if="showTimeframe"
-      :options="timeframes"
-      :selected="timeframe"
-      placeholder="tf."
-      @output="$store.commit(paneId + '/SET_TIMEFRAME', $event)"
-    >
-      <template v-slot:selection="{ item }">
-        <span>{{ item }}</span>
-      </template>
-    </dropdown>
-
-    <button type="button" @click="openSettings">
-      <i class="icon-cog"></i>
-    </button>
-
-    <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
-      <template v-slot:option-0>
-        <div class="column" @mousedown.prevent>
-          <div class="btn -green" @click="zoomOut">
-            <i class="icon-minus"></i>
+      <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
+        <template v-slot:option-0>
+          <div class="column" @mousedown.prevent>
+            <div class="btn -green" @click="zoomOut">
+              <i class="icon-minus"></i>
+            </div>
+            <div class="btn -text text-monospace" @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 0 })" style="display: block">
+              × {{ zoom.toFixed(1) }}
+            </div>
+            <div class="btn -green" @click="zoomIn">
+              <i class="icon-plus"></i>
+            </div>
           </div>
-          <div class="btn -text text-monospace" @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 0 })" style="display: block">
-            × {{ zoom.toFixed(1) }}
-          </div>
-          <div class="btn -green" @click="zoomIn">
-            <i class="icon-plus"></i>
-          </div>
-        </div>
-      </template>
-      <template v-slot:option="{ value }">
-        <div>
-          <i class="-lower" :class="'icon-' + value.icon"></i>
+        </template>
+        <template v-slot:option="{ value }">
+          <div>
+            <i class="-lower" :class="'icon-' + value.icon"></i>
 
-          <span>{{ value.label }}</span>
-        </div>
-      </template>
-      <template v-slot:selection>
-        <i class="icon-more"></i>
-      </template>
-    </dropdown>
+            <span>{{ value.label }}</span>
+          </div>
+        </template>
+        <template v-slot:selection>
+          <i class="icon-more"></i>
+        </template>
+      </dropdown>
+    </div>
   </div>
 </template>
 
@@ -119,6 +119,11 @@ export default class extends Vue {
   menu = [
     {
       label: 'Zoom'
+    },
+    {
+      icon: 'cog',
+      label: 'Settings',
+      click: this.openSettings
     },
     {
       icon: 'copy-paste',
