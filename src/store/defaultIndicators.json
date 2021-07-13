@@ -30,6 +30,36 @@
       "slowColor": "#90caf9"
     }
   },
+  "test": {
+    "enabled": false,
+    "name": "Test {fastLength} {mediumLength} {slowLength}",
+    "displayName": "Test 50 100 200",
+    "script": "plotline(sma($price.close, options.fastLength), color=options.fastColor)\nplotline(sma($price.close, options.mediumLength), color=options.mediumColor)\nplotline(sma($price.close, options.slowLength), color=options.slowColor)",
+    "options": {
+      "priceScaleId": "right",
+      "fastLength": 50,
+      "mediumLength": 100,
+      "slowLength": 200,
+      "fastColor": "#42a5f5",
+      "mediumColor": "#64b5f6",
+      "slowColor": "#90caf9"
+    }
+  },
+  "test2": {
+    "enabled": false,
+    "name": "test2 {fastLength} {mediumLength} {slowLength}",
+    "displayName": "test2 50 100 200",
+    "script": "plotline(sma($price.close, options.fastLength), color=options.fastColor)\nplotline(sma($price.close, options.mediumLength), color=options.mediumColor)\nplotline(sma($price.close, options.slowLength), color=options.slowColor)",
+    "options": {
+      "priceScaleId": "right",
+      "fastLength": 50,
+      "mediumLength": 100,
+      "slowLength": 200,
+      "fastColor": "#42a5f5",
+      "mediumColor": "#64b5f6",
+      "slowColor": "#90caf9"
+    }
+  },
   "emas": {
     "enabled": false,
     "name": "Emas {fastLength} {mediumLength} {slowLength}",
@@ -58,6 +88,20 @@
       "fastColor": "#42a5f5",
       "mediumColor": "#64b5f6",
       "slowColor": "#90caf9"
+    }
+  },
+  "bbands": {
+    "enabled": false,
+    "name": "bbands {length} {multi}",
+    "displayName": "bbands 20 2",
+    "script": "ma = sma($price.close, options.length)\nstd = stdev($price.close, options.length)\nplotline(ma, color=options.basisColor)\nplotline(ma + options.multi * std, color=options.upperColor)\nplotline(ma - options.multi * std, color=options.lowerColor)",
+    "options": {
+      "priceScaleId": "right",
+      "length": 20,
+      "multi": 2,
+      "basisColor": "#29A0B1",
+      "upperColor": "#98D7C2",
+      "lowerColor": "#98D7C2"
     }
   },
   "volume": {
