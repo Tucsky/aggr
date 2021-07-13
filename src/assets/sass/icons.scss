@@ -456,3 +456,8 @@ $iconpath: '../fonts';
     content: $icon-eraser; 
   }
 }
+.icon-github {
+  &:before {
+    content: $icon-github;
+  }
+}

@@ -124,7 +124,17 @@ export default class extends Vue {
   }
 
   async uploadPreset() {
-    const content = await browseFile()
+    let content
+
+    try {
+      content = await browseFile()
+    } catch (error) {
+      this.$store.dispatch('app/showNotice', {
+        title: error.message,
+        type: 'error'
+      })
+      return
+    }
 
     let preset
 

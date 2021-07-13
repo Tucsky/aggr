@@ -42,6 +42,10 @@ button {
     background: 0;
   }
 
+  &[disabled] {
+    pointer-events: none;
+  }
+
   &.-icon {
     width: 2rem;
     height: 2rem;

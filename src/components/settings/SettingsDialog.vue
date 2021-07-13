@@ -288,28 +288,13 @@ export default {
     }
   },
 
-  mounted() {
-    this.bindDrop()
-  },
-
   beforeDestroy() {
-    this.unbindDrop()
-
     if (this._hitsTimeout) {
       clearTimeout(this._hitsTimeout)
     }
   },
+
   methods: {
-    bindDrop() {
-      document.body.addEventListener('drop', this.handleDrop)
-      document.body.addEventListener('dragover', this.handleDrop)
-    },
-
-    unbindDrop() {
-      document.body.removeEventListener('drop', this.handleDrop)
-      document.body.removeEventListener('dragover', this.handleDrop)
-    },
-
     createMenus() {
       this.activeWorkspaceMenu = [
         {
@@ -360,51 +345,6 @@ export default {
 
         this.getHits()
       }, 1000)
-    },
-
-    handleDrop(e) {
-      e.preventDefault()
-
-      if (e.type !== 'drop') {
-        return false
-      }
-
-      const files = e.dataTransfer.files
-
-      if (!files || !files.length) {
-        return
-      }
-
-      const reader = new FileReader()
-
-      reader.onload = async ({ target }) => {
-        const workspace = this.validateWorkspaceImport(target.result)
-
-        if (!workspace) {
-          return
-        }
-
-        if (
-          (await workspacesService.getWorkspace(workspace.id)) &&
-          !(await dialogService.confirm({
-            message: `Workspace ${workspace.id} already exists`,
-            ok: 'Import anyway',
-            cancel: 'Annuler'
-          }))
-        ) {
-          return
-        }
-
-        if (
-          await dialogService.openAsPromise(SettingsImportConfirmation, {
-            workspace
-          })
-        ) {
-          await this.close()
-          this.importWorkspace(workspace)
-        }
-      }
-      reader.readAsText(files[0])
     },
 
     async importWorkspace(workspace) {
@@ -539,7 +479,7 @@ export default {
       }
 
       if (
-        workspacesService.getWorkspace(workspace.id) &&
+        (await workspacesService.getWorkspace(workspace.id)) &&
         !(await dialogService.confirm({ message: `Workspace ${workspace.id} already exists`, ok: 'Import anyway', cancel: 'Annuler' }))
       ) {
         return

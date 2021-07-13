@@ -83,7 +83,9 @@
             <p class="mt0 color-100">
               <a class="btn -text" href="https://github.com/Tucsky/aggr-server" target="_blank">Run your own aggr</a>
               <dono-dropdown label="support the project" class="-left " />
-              <a class="btn -text" href="https://github.com/Tucsky/aggr/discussions" target="_blank">Discuss about it on github</a>
+              <a class="btn -text" href="https://github.com/Tucsky/aggr/discussions" target="_blank"
+                >Suggest it on github <i class="icon-github"></i
+              ></a>
             </p>
           </div>
         </div>

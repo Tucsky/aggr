@@ -87,8 +87,6 @@ export default class extends Vue {
 
     breakpoints[keys[keys.length - 1]] = 0
 
-    console.log('active breakpoints', breakpoints)
-
     return breakpoints
   }
 

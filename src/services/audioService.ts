@@ -262,30 +262,7 @@ class AudioService {
 
     this.minTime += cueTime
 
-    const offset = time - this.context.currentTime
-
-    source.start(time, startTime)
-    source.stop(0.2 + time + holdDuration)
-
-    if (fadeIn) {
-      gainNode.gain.setValueAtTime(startGain, this.context.currentTime)
-
-      gainNode.gain.exponentialRampToValueAtTime(gain, time + fadeIn)
-
-      if (fadeOut) {
-        gainNode.gain.setValueAtTime(gain, time + fadeIn + holdDuration)
-
-        setTimeout(() => {
-          gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
-        }, (offset + fadeIn + holdDuration) * 1000)
-      }
-    } else {
-      gainNode.gain.setValueAtTime(gain, time)
-
-      if (fadeOut) {
-        gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
-      }
-    }
+    this.schedule(source, gainNode, gain, startGain, time, fadeIn, holdDuration, fadeOut, endGain, startTime)
   }
 
   async play(
@@ -306,18 +283,17 @@ class AudioService {
     const oscillatorNode = this.context.createOscillator()
     const gainNode = this.context.createGain()
 
-    oscillatorNode.frequency.value = frequency
-    oscillatorNode.type = osc || 'triangle'
-
     oscillatorNode.onended = () => {
-      oscillatorNode.disconnect()
       gainNode.disconnect()
       this.count--
     }
+    this.count++
+
+    oscillatorNode.frequency.value = frequency
+    oscillatorNode.type = osc || 'triangle'
 
     gainNode.connect(this.output)
     oscillatorNode.connect(gainNode)
-    this.count++
 
     let cueTime = 0
 
@@ -334,12 +310,24 @@ class AudioService {
 
     this.minTime += cueTime
 
-    const offset = time - this.context.currentTime
-    oscillatorNode.start(time - 0.05)
-    oscillatorNode.stop(time + fadeIn + holdDuration + fadeOut)
+    // fadeOut = fadeOut / 2 + fadeOut * relativeGain
+
+    this.schedule(oscillatorNode, gainNode, gain, startGain, time, fadeIn, holdDuration, fadeOut, endGain)
+  }
+
+  schedule(source, gainNode, gain, startGain, time, fadeIn, holdDuration, fadeOut, endGain, startTime?: number) {
+    const realtimeOffset = time - this.context.currentTime
+
+    if (typeof startTime !== 'undefined') {
+      source.start(time, startTime)
+    } else {
+      source.start(time)
+    }
+
+    source.stop(0.2 + time + fadeIn + holdDuration + fadeOut)
 
     if (fadeIn) {
-      gainNode.gain.setValueAtTime(startGain, time - 0.05)
+      gainNode.gain.setValueAtTime(startGain, time)
 
       gainNode.gain.exponentialRampToValueAtTime(gain, time + fadeIn)
 
@@ -348,10 +336,10 @@ class AudioService {
 
         setTimeout(() => {
           gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
-        }, (offset + fadeIn + holdDuration) * 1000)
+        }, (realtimeOffset + fadeIn + holdDuration) * 1000)
       }
     } else {
-      gainNode.gain.setValueAtTime(gain, time - 0.05)
+      gainNode.gain.setValueAtTime(gain, time)
 
       if (fadeOut) {
         gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)

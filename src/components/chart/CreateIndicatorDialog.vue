@@ -16,14 +16,12 @@
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Updated</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="indicator of filteredIndicators" :key="indicator.id" @click="selectIndicator(indicator)" class="-action">
                 <td class="table-input" v-text="indicator.displayName || indicator.name"></td>
-                <td class="table-input" v-text="indicator.updatedAt ? ago(indicator.updatedAt) + ' ago' : 'Never'"></td>
                 <td class="table-action" @click.stop="removeIndicator(indicator)">
                   <button class="btn  -red -small"><i class="icon-cross"></i></button>
                 </td>

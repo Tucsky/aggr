@@ -99,7 +99,7 @@ class HistoricalService extends EventEmitter {
       delete data[i].market
     }
 
-    markets.length && console.warn('missing markets', markets.join(', '))
+    // markets.length && console.warn('missing markets', markets.join(', '))
 
     for (const id of markets) {
       // const market: string[] = id.split(':')

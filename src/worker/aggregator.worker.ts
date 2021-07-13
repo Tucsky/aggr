@@ -22,7 +22,7 @@ class Aggregator {
   connectionsCount = 0
 
   constructor() {
-    console.warn(`[worker.aggr] new instance`)
+    console.info(`[worker.aggr] new instance`)
 
     this.bindExchanges()
     this.startPriceInterval()

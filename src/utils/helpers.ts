@@ -1,3 +1,4 @@
+import dialogService from '@/services/dialogService'
 import store from '../store'
 
 export const progressTask = {
@@ -185,12 +186,12 @@ export function parseMarket(market: string) {
 }
 
 export async function progress(task: string | boolean) {
-  console.info(task)
-
   if (task === false) {
     progressTask.text = null
   } else {
     progressTask.text = task as string
+
+    console.info(task)
   }
 }
 
@@ -325,13 +326,13 @@ export function fallbackCopyTextToClipboard(text) {
 }
 
 export function browseFile(): Promise<string | ArrayBuffer> {
-  const input = document.createElement('input')
+  const input = document.createElement('input') as HTMLInputElement
   input.type = 'file'
 
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     input.onchange = (event: any) => {
       if (!event.target.files.length) {
-        reject()
+        throw new Error('Invalid selection')
       }
 
       const file = event.target.files[0]
@@ -339,7 +340,20 @@ export function browseFile(): Promise<string | ArrayBuffer> {
       reader.readAsText(file, 'UTF-8')
 
       reader.onload = async readerEvent => {
-        resolve(readerEvent.target.result)
+        return dialogService
+          .confirm({
+            title: 'Disclaimer',
+            message: `Aggr disclaims all liability for damages , consequential or otherwise,<br>arising out of or in connection with the current import.`,
+            ok: 'I understand',
+            cancel: 'Cancel import'
+          })
+          .then(accepted => {
+            if (accepted) {
+              resolve(readerEvent.target.result)
+            } else {
+              throw new Error('Rejected disclaimer')
+            }
+          })
       }
     }
 

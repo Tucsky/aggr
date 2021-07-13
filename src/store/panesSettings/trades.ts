@@ -73,10 +73,10 @@ const state = {
       amount: 250000,
       buyColor: 'rgb(100, 157, 102)',
       sellColor: 'rgb(239, 67, 82)',
-      buyAudio: `play(659.26, 0.05 + gain / 10, 0.2 + ratio * 0.23);
-play(830.6, 0.05 + gain / 10, 0.2 + ratio * 0.23, 0.08)`,
-      sellAudio: `play(493.88, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23);
-play(392, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23, 0.08)`
+      buyAudio: `play(659.26, 0.05 + gain / 10, 0.2 + ratio * 0.23,0,,0);
+play(830.6, 0.05 + gain / 10, 0.2 + ratio * 0.23, 0.08,,0)`,
+      sellAudio: `play(493.88, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23,0,,0);
+play(392, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23, 0.08,,0)`
     },
     {
       id: 'huge',
@@ -84,14 +84,14 @@ play(392, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23, 0.08)`
       gif: 'cash',
       buyColor: 'rgb(59, 202, 109)',
       sellColor: 'rgb(235, 30, 47)',
-      buyAudio: `play(659.26, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0);
-play(830.6, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0.08);
-play(987.76, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0.16);
-play(1318.52, 0.05 + gain / 10, 0.1 + ratio * 0.23, 0.24)`,
-      sellAudio: `play(493.88, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0);
-play(369.99, 0.05 + gain * 1.5 / 10, 0.2, 0.08);
-play(293.66, 0.05 + gain * 1.5 / 10, 0.2, 0.16);
-play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.23, 0.24)`
+      buyAudio: `play(659.26, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0,,0);
+play(830.6, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0.08,,0);
+play(987.76, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0.16,,0);
+play(1318.52, 0.05 + gain / 10, 0.1 + ratio * 0.23, 0.24,,0)`,
+      sellAudio: `play(493.88, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0,,0);
+play(369.99, 0.05 + gain * 1.5 / 10, 0.2, 0.08,,0);
+play(293.66, 0.05 + gain * 1.5 / 10, 0.2, 0.16,,0);
+play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.23, 0.24,,0)`
     },
     {
       id: 'rare',
@@ -99,14 +99,14 @@ play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.23, 0.24)`
       gif: 'explosion',
       buyColor: 'rgb(0, 255, 127)',
       sellColor: 'rgb(217, 31, 28)',
-      buyAudio: `play(659.26, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0);
-play(830.6, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0.08);
-play(987.76, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0.16);
-play(1318.52, 0.05 + gain / 10, 0.1 + ratio * 0.13, 0.24)`,
-      sellAudio: `play(493.88, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0);
-play(369.99, 0.05 + gain * 1.5 / 10, 0.2, 0.08);
-play(293.66, 0.05 + gain * 1.5 / 10, 0.2, 0.16);
-play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.13, 0.24)`
+      buyAudio: `play(659.26, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0,,0);
+play(830.6, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0.08,,0);
+play(987.76, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0.16,,0);
+play(1318.52, 0.05 + gain / 10, 0.1 + ratio * 0.13, 0.24,,0)`,
+      sellAudio: `play(493.88, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0,,0);
+play(369.99, 0.05 + gain * 1.5 / 10, 0.2, 0.08,,0);
+play(293.66, 0.05 + gain * 1.5 / 10, 0.2, 0.16,,0);
+play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.13, 0.24,,0)`
     }
   ],
   audioThreshold: null,

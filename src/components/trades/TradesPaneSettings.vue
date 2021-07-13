@@ -69,14 +69,7 @@
           >
             {{ showThresholdsAsTable ? 'table' : 'slider' }}
           </button>
-          <presets
-            type="threshold"
-            :adapter="getAudioPreset"
-            @apply="applyAudioPreset($event)"
-            label="Presets"
-            title="Just the thresholds / audio"
-            v-tippy
-          />
+          <presets type="threshold" :adapter="getAudioPreset" @apply="applyAudioPreset($event)" label="Presets" />
         </div>
 
         <thresholds :paneId="paneId" :show-liquidations-threshold="tradeType === 'both'" />
