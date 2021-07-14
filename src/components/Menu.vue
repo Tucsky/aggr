@@ -8,10 +8,6 @@
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>
       </button>
-      <button class="menu-action btn" type="button" @click.stop="$store.commit('app/TOGGLE_FEEDS')">
-        <span class="mr4" v-text="pauseFeeds ? 'Resume' : 'Pause'"></span>
-        <i class="icon-pause" :class="{ 'icon-eject': pauseFeeds }"></i>
-      </button>
       <tippy to="myTrigger" :interactive="true" :delay="[0, 400]" :distance="20" placement="left" :theme="'transparent'">
         <div class="mt4 mb4 text-nowrap">
           <slider
@@ -98,10 +94,6 @@ export default class extends Vue {
 
   get audioVolume() {
     return this.$store.state.settings.audioVolume
-  }
-
-  get pauseFeeds() {
-    return this.$store.state.app.pauseFeeds
   }
 
   showSettings() {

@@ -624,17 +624,6 @@ self.addEventListener('message', (event: any) => {
     case 'settings.calculateSlippage':
       aggregator.settings.calculateSlippage = payload.data
       break
-    case 'settings.pauseFeeds':
-      if (payload.data) {
-        aggregator.clearInterval('aggr')
-        aggregator.clearInterval('stats')
-        aggregator.clearInterval('price')
-      } else {
-        aggregator.startAggrInterval()
-        aggregator.startStatsInterval()
-        aggregator.startPriceInterval()
-      }
-      break
     case 'settings.preferQuoteCurrencySize':
       aggregator.settings.preferQuoteCurrencySize = payload.data
       break

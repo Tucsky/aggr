@@ -465,13 +465,8 @@ $iconpath: '../fonts';
     content: $icon-github;
   }
 }
-.icon-pause {
+.icon-enlarge {
   &:before {
-    content: $icon-pause;
-  }
-}
-.icon-eject {
-  &:before {
-    content: $icon-eject;
+    content: $icon-enlarge;
   }
 }

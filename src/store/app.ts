@@ -51,7 +51,6 @@ export interface AppState {
   baseCurrencySymbol: string
   quoteCurrency: string
   quoteCurrencySymbol: string
-  pauseFeeds: boolean
 }
 
 const state = {
@@ -74,7 +73,6 @@ const state = {
   baseCurrencySymbol: '฿',
   quoteCurrency: 'dollar',
   quoteCurrencySymbol: '$',
-  pauseFeeds: false
 } as AppState
 
 const actions = {
@@ -361,14 +359,6 @@ const mutations = {
     state.baseCurrencySymbol = currencies.baseSymbol
     state.quoteCurrency = currencies.quote
     state.quoteCurrencySymbol = currencies.quoteSymbol
-  },
-  TOGGLE_FEEDS(state) {
-    state.pauseFeeds = !state.pauseFeeds
-
-    aggregatorService.dispatch({
-      op: 'settings.pauseFeeds',
-      data: state.pauseFeeds
-    })
   }
 } as MutationTree<AppState>
 

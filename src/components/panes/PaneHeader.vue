@@ -4,8 +4,11 @@
     <span class="pane-header__name ml4 mrauto" data-hide-header @dblclick="renamePane">{{ name }}</span>
     <div class="toolbar">
       <slot />
-      <button type="button" v-if="showSearch" @click="openSearch">
+      <button type="button" @click="openSearch">
         <i class="icon-search"></i>
+      </button>
+      <button type="button" @click="maximizePane">
+        <i class="icon-enlarge"></i>
       </button>
 
       <dropdown
@@ -67,10 +70,6 @@ import { parseMarket } from '@/utils/helpers'
   props: {
     paneId: {
       type: String
-    },
-    showSearch: {
-      type: Boolean,
-      default: true
     },
     showTimeframe: {
       type: Boolean,
@@ -214,6 +213,14 @@ export default class extends Vue {
 
   highlightPane(value: boolean) {
     this.$el.parentElement.parentElement.classList[value ? 'add' : 'remove']('-highlight')
+  }
+
+  maximizePane() {
+    this.$el.parentElement.parentElement.classList.toggle('-maximized')
+
+    const cls = Event as any
+
+    window.dispatchEvent(new cls('resize'))
   }
 
   async renamePane() {

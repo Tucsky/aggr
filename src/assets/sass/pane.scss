@@ -67,6 +67,19 @@
         }
       }
     }
+
+    &.-maximized {
+      width: 100% !important;
+      height: 100% !important;
+      position: absolute !important;
+      transform: none !important;
+      background: var(--theme-background-base);
+      z-index: 1;
+
+      > .vue-resizable-handle {
+        display: none;
+      }
+    }
   }
 }
 

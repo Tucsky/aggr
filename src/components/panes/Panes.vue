@@ -58,6 +58,7 @@ export default class extends Vue {
   cols = null
   breakpoint = null
 
+  private _maximizedPaneId
   private _resizeTimeout: number
 
   $refs!: {
@@ -114,7 +115,12 @@ export default class extends Vue {
     window.addEventListener('resize', this.getLayout)
   }
 
-  getLayout(event?: any) {
+  getLayout(event?: Event) {
+    if (event && !event.isTrusted) {
+      this.resizeMaximizedPane()
+      return
+    }
+
     if (this._resizeTimeout) {
       clearTimeout(this._resizeTimeout)
     }
@@ -143,6 +149,36 @@ export default class extends Vue {
 
       this.breakpoint = breakpointId
     }
+  }
+
+  resizeMaximizedPane() {
+    let maximizedItem: HTMLElement
+
+    if (!this._maximizedPaneId) {
+      maximizedItem = document.getElementsByClassName('-maximized')[0] as HTMLElement
+    } else {
+      maximizedItem = document.getElementById(this._maximizedPaneId).parentElement
+    }
+
+    this.$nextTick(() => {
+      if (maximizedItem) {
+        const maximizedPaneId = maximizedItem.children[0].id
+        let width
+        let height
+
+        if (!this._maximizedPaneId) {
+          width = maximizedItem.clientWidth
+          height = maximizedItem.clientHeight
+          this._maximizedPaneId = maximizedPaneId
+        } else {
+          width = parseFloat(maximizedItem.style.width)
+          height = parseFloat(maximizedItem.style.height)
+          this._maximizedPaneId = null
+        }
+        console.log('resizePane.', maximizedPaneId, height, width, this._maximizedPaneId ? 'MAXIMIZED' : 'NORMAL')
+        this.resizePane(maximizedPaneId, height, width)
+      }
+    })
   }
 
   onBreakpointChanged(newBreakpoint) {
