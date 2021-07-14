@@ -8,13 +8,9 @@
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>
       </button>
-      <a class="menu-action btn" type="button" target="_blank" href="https://github.com/Tucsky/aggr">
-        <span class="mr4">Github</span>
-        <i class="icon-external-link-square-alt"></i>
-      </a>
-      <button class="menu-action btn" type="button" v-if="!isPopupMode" @click="openAsPopup">
-        <span class="mr4">Popup</span>
-        <i class="icon-external-link-square-alt"></i>
+      <button class="menu-action btn" type="button" @click.stop="$store.commit('app/TOGGLE_FEEDS')">
+        <span class="mr4" v-text="pauseFeeds ? 'Resume' : 'Pause'"></span>
+        <i class="icon-pause" :class="{ 'icon-eject': pauseFeeds }"></i>
       </button>
       <tippy to="myTrigger" :interactive="true" :delay="[0, 400]" :distance="20" placement="left" :theme="'transparent'">
         <div class="mt4 mb4 text-nowrap">
@@ -73,7 +69,6 @@ import SettingsDialog from './settings/SettingsDialog.vue'
 })
 export default class extends Vue {
   open = false
-  isPopupMode = window.opener !== null
   paneTypes = {
     chart: {
       title: 'Chart',
@@ -105,14 +100,8 @@ export default class extends Vue {
     return this.$store.state.settings.audioVolume
   }
 
-  openAsPopup() {
-    const name = this.$store.state.app.activeMarkets.map(market => market.pair).join('+')
-
-    window.open(window.location.href, `sig${name}`, 'toolbar=no,status=no,width=350,height=500')
-
-    setTimeout(() => {
-      window.close()
-    }, 500)
+  get pauseFeeds() {
+    return this.$store.state.app.pauseFeeds
   }
 
   showSettings() {

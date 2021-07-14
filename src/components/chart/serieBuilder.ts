@@ -194,13 +194,15 @@ export default class SerieBuilder {
         const closingParenthesisIndex = findClosingBracketMatchIndex(input, paranthesisMatch.index, /\(|{|\[/, /\)|}|\]/)
         const contentWithinParenthesis = input.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/\n/g, ' ')
 
-        input =
-          input.slice(0, paranthesisMatch.index) +
-          input.slice(paranthesisMatch.index, paranthesisMatch.index + 1) +
-          contentWithinParenthesis +
-          input.slice(closingParenthesisIndex, closingParenthesisIndex + 1) +
-          (lineBreakIt ? '\n' : '') +
-          input.slice(closingParenthesisIndex + 1, input.length)
+        if (/if|for/.test(input.slice(paranthesisMatch.index - 2, 2))) {
+          input =
+            input.slice(0, paranthesisMatch.index) +
+            input.slice(paranthesisMatch.index, paranthesisMatch.index + 1) +
+            contentWithinParenthesis +
+            input.slice(closingParenthesisIndex, closingParenthesisIndex + 1) +
+            (lineBreakIt ? '\n' : '') +
+            input.slice(closingParenthesisIndex + 1, input.length)
+        }
 
         PARANTHESIS_REGEX.lastIndex = closingParenthesisIndex
       }
@@ -252,7 +254,8 @@ export default class SerieBuilder {
     const serieType = match[1].replace(/^plot/, '')
 
     // serie arguments eg. sma($price.close,options.smaLength),color=red
-    const rawFunctionArguments = output.slice(match.index + match[1].length + 1, findClosingBracketMatchIndex(output, match.index + match[1].length))
+    const closingBracketIndex = findClosingBracketMatchIndex(output, match.index + match[1].length)
+    const rawFunctionArguments = output.slice(match.index + match[1].length + 1, closingBracketIndex)
 
     // full function call eg. plotline(sma($price.close,options.smaLength),color=red)
     const rawFunctionInstruction = match[1] + '(' + rawFunctionArguments + ')'
@@ -396,7 +399,12 @@ export default class SerieBuilder {
         const targetFunction = seriesUtils[functionName + '$']
 
         if (!targetFunction) {
-          throw new Error(`function ${functionName} doesn't exists`)
+          if (/for|if/i.test(functionName)) {
+            FUNCTION_LOOKUP_REGEX.lastIndex = functionMatch.index + functionMatch[0].length
+            continue
+          } else {
+            throw new Error(`function ${functionName} doesn't exists`)
+          }
         }
 
         const start = functionMatch.index

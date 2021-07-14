@@ -1,8 +1,10 @@
 <template>
   <Dialog @clickOutside="close" class="serie-dialog -auto" :mask="!resizing">
     <template v-slot:header>
-      <div class="title">
-        <div @dblclick="renameIndicator">{{ name }}</div>
+      <div>
+        <div class="title">
+          <div @dblclick="renameIndicator">{{ name }}</div>
+        </div>
         <div v-if="description" class="subtitle pl0" v-text="description" @dblclick="editDescription"></div>
         <code v-else class="subtitle -filled" v-text="indicatorId" @dblclick="editDescription"></code>
       </div>
@@ -16,22 +18,60 @@
       <button class="btn -text -white mlauto" @click="showHelp">doc <i class="icon-external-link-square-alt ml4"></i></button>
     </div>
     <div class="d-flex mobile-dir-col-desktop-dir-row">
-      <div class="form-group mb0">
-        <div class="d-flex mb8">
-          <label for class="mrauto -center">
-            Input
-          </label>
+      <div>
+        <div class="form-group mb16">
+          <div class="d-flex mb8">
+            <label for class="mrauto -center">
+              Input
+            </label>
+          </div>
+          <textarea
+            ref="behaveInput"
+            class="form-control"
+            rows="10"
+            cols="50"
+            :value="script"
+            @blur="updateScript($event.target.value)"
+            spellcheck="false"
+          ></textarea>
+          <p v-if="error" class="form-feedback"><i class="icon-warning mr4"></i> {{ error }}</p>
         </div>
-        <textarea
-          ref="behaveInput"
-          class="form-control"
-          rows="10"
-          cols="50"
-          :value="script"
-          @blur="updateScript($event.target.value)"
-          spellcheck="false"
-        ></textarea>
-        <p v-if="error" class="form-feedback"><i class="icon-warning mr4"></i> {{ error }}</p>
+        <div v-if="otherOptions.length" class="d-flex -fill" style="max-width: 400px;flex-wrap:wrap;">
+          <div v-for="option in otherOptions" :key="option.key" class="form-group mb16 mr16">
+            <label v-if="option.label !== false">
+              {{ option.label }}
+              <i v-if="helps[option.key]" class="icon-info" v-tippy :title="helps[option.key]"></i>
+            </label>
+
+            <dropdown
+              v-if="option.key === 'lineType'"
+              class="-left -center"
+              :selected="currentValues[option.key]"
+              :options="{ 0: 'Simple', 1: 'with steps' }"
+              selectionClass="-outline form-control"
+              placeholder="lineType"
+              @output="validate(option, $event)"
+            ></dropdown>
+            <dropdown
+              v-else-if="/linestyle$/i.test(option.key)"
+              class="-left -center"
+              :selected="currentValues[option.key]"
+              :options="{ 0: 'Solid', 1: 'Dotted', 2: 'Dashed', 3: 'LargeDashed', 4: 'SparseDotted' }"
+              selectionClass="-outline form-control"
+              placeholder="lineStyle"
+              @output="validate(option, $event)"
+            ></dropdown>
+            <template v-else-if="option.type === 'string' || option.type === 'number'">
+              <editable class="form-control" :content="currentValues[option.key]" @output="validate(option, $event)"></editable>
+            </template>
+            <template v-else-if="option.type === 'boolean'">
+              <label class="checkbox-control">
+                <input type="checkbox" class="form-control" :checked="currentValues[option.key]" @change="validate(option, $event.target.checked)" />
+                <div></div>
+              </label>
+            </template>
+          </div>
+        </div>
       </div>
       <hr class="-horizontal" />
       <hr class="-vertical mb8" />
@@ -50,51 +90,21 @@
               ></verte>
             </div>
           </div>
-          <div v-if="otherOptions.length" class=" -fill">
-            <div v-for="option in otherOptions" :key="option.key" class="form-group mb16">
-              <label v-if="option.label !== false">
-                {{ option.label }}
-                <i v-if="helps[option.key]" class="icon-info" v-tippy :title="helps[option.key]"></i>
-              </label>
-
-              <dropdown
-                v-if="option.key === 'lineType'"
-                class="-left -center"
-                :selected="currentValues[option.key]"
-                :options="{ 0: 'Simple', 1: 'with steps' }"
-                selectionClass="-outline form-control"
-                placeholder="lineType"
-                @output="validate(option, $event)"
-              ></dropdown>
-              <dropdown
-                v-else-if="/linestyle$/i.test(option.key)"
-                class="-left -center"
-                :selected="currentValues[option.key]"
-                :options="{ 0: 'Solid', 1: 'Dotted', 2: 'Dashed', 3: 'LargeDashed', 4: 'SparseDotted' }"
-                selectionClass="-outline form-control"
-                placeholder="lineStyle"
-                @output="validate(option, $event)"
-              ></dropdown>
-              <template v-else-if="option.type === 'string' || option.type === 'number'">
-                <editable class="form-control" :content="currentValues[option.key]" @output="validate(option, $event)"></editable>
-              </template>
-              <template v-else-if="option.type === 'boolean'">
-                <label class="checkbox-control">
-                  <input
-                    type="checkbox"
-                    class="form-control"
-                    :checked="currentValues[option.key]"
-                    @change="validate(option, $event.target.checked)"
-                  />
-                  <div></div>
-                </label>
-              </template>
-            </div>
-          </div>
         </div>
 
         <section v-if="positionOption" class="section">
           <div v-if="sections.indexOf('position') > -1">
+            <div class="form-group mb16">
+              <label>Scale with <i class="icon-info" v-tippy :title="helps.priceScaleId"></i></label>
+              <dropdown
+                class="-left -center"
+                :selected="currentValues.priceScaleId"
+                :options="availableScales"
+                placeholder="Default scale"
+                selectionClass="-outline form-control"
+                @output="validate('priceScaleId', $event)"
+              ></dropdown>
+            </div>
             <div class="column">
               <div class="form-group mb16">
                 <label>top <i class="icon-info" v-tippy :title="helps['scaleMargins.top']"></i></label>
@@ -173,7 +183,7 @@ import dialogService from '../../services/dialogService'
 import workspacesService from '../../services/workspacesService'
 import merge from 'lodash.merge'
 
-const ignoredOptionsKeys = ['crosshairMarkerVisible', 'minLength', 'visible']
+const ignoredOptionsKeys = ['crosshairMarkerVisible', 'minLength', 'visible', 'priceScaleId']
 
 export default {
   props: ['paneId', 'indicatorId'],
@@ -200,26 +210,23 @@ export default {
     }
   }),
   computed: {
-    indicatorSettings: function() {
-      return store.state[this.paneId].indicators[this.indicatorId]
-    },
     displayName: function() {
-      return this.indicatorSettings.displayName
+      return store.state[this.paneId].indicators[this.indicatorId].displayName
     },
     description: function() {
-      return this.indicatorSettings.description
+      return store.state[this.paneId].indicators[this.indicatorId].description
     },
     unsavedChanges() {
-      return this.indicatorSettings.unsavedChanges
+      return store.state[this.paneId].indicators[this.indicatorId].unsavedChanges
     },
     error: function() {
       return store.state[this.paneId].indicatorsErrors[this.indicatorId]
     },
     name() {
-      return this.indicatorSettings.displayName || this.indicatorSettings.name
+      return store.state[this.paneId].indicators[this.indicatorId].displayName || store.state[this.paneId].indicators[this.indicatorId].name
     },
     script: function() {
-      return this.indicatorSettings.script
+      return store.state[this.paneId].indicators[this.indicatorId].script
     },
     positionOption() {
       return {
@@ -239,6 +246,21 @@ export default {
     },
     resizing() {
       return store.state[this.paneId].resizingIndicator === this.indicatorId
+    },
+    availableScales() {
+      return Object.values(this.$store.state[this.paneId].indicators).reduce(
+        (scales, indicator) => {
+          if (indicator.id !== this.indicatorId && indicator.options && indicator.options.priceScaleId && !scales[indicator.options.priceScaleId]) {
+            scales[indicator.options.priceScaleId] = indicator.name || indicator.id
+          }
+
+          return scales
+        },
+        {
+          [this.indicatorId]: 'Own scale',
+          right: 'Right scale (main)'
+        }
+      )
     }
   },
   created() {
@@ -246,6 +268,8 @@ export default {
       this.refreshPlotTypes()
       this.refreshOptions()
     })
+
+    this.getValue('priceScaleId')
   },
   mounted() {
     this.$nextTick(function() {
@@ -327,14 +351,14 @@ export default {
       return value
     },
     getValue(key) {
-      if (!this.indicatorSettings) {
+      /*if (!store.state[this.paneId].indicators[this.indicatorId]) {
         return null
-      }
+      }*/
 
       let preferedValue
 
-      if (typeof this.indicatorSettings.options[key] !== 'undefined') {
-        preferedValue = this.indicatorSettings.options[key]
+      if (typeof store.state[this.paneId].indicators[this.indicatorId].options[key] !== 'undefined') {
+        preferedValue = store.state[this.paneId].indicators[this.indicatorId].options[key]
       }
 
       const defaultValue = this.getDefaultValue(key)
@@ -409,7 +433,7 @@ export default {
         .filter((t, index, self) => self.indexOf(t) === index && defaultPlotsOptions[t])
     },
     refreshOptions(script) {
-      const defaultIndicatorOptionsKeys = Object.keys(this.indicatorSettings.options)
+      const defaultIndicatorOptionsKeys = Object.keys(store.state[this.paneId].indicators[this.indicatorId].options)
 
       const scriptOptionsKeys = this.getScriptOptions(script || this.script)
 
@@ -484,6 +508,22 @@ export default {
           i--
         }
       }
+
+      this.otherOptions = this.otherOptions.sort((a, b) => {
+        let order = 0
+
+        if (a.key > b.key) {
+          order++
+        } else if (a.key < b.key) {
+          order--
+        }
+
+        if (a.type === 'boolean' && a.type !== 'boolean') {
+          order += 10
+        }
+
+        return order
+      })
     },
     async removeIndicator() {
       await this.close()
@@ -493,7 +533,7 @@ export default {
     async renameIndicator() {
       const name = await dialogService.prompt({
         action: 'Rename',
-        input: this.indicatorSettings.name
+        input: store.state[this.paneId].indicators[this.indicatorId].name
       })
 
       if (name && name !== this.name) {
@@ -512,7 +552,7 @@ export default {
       }
     },
     async duplicateIndicator() {
-      const settings = merge({}, this.indicatorSettings)
+      const settings = merge({}, store.state[this.paneId].indicators[this.indicatorId])
 
       settings.id += '-copy'
       settings.name += ' copy'
@@ -536,7 +576,7 @@ export default {
       )
     },
     transferIndicator() {
-      this.$store.dispatch(this.paneId + '/transferIndicator', this.indicatorSettings)
+      this.$store.dispatch(this.paneId + '/transferIndicator', store.state[this.paneId].indicators[this.indicatorId])
     },
     toggleSection(id) {
       const index = this.sections.indexOf(id)

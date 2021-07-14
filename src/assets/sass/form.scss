@@ -47,6 +47,7 @@
 
   &.btn {
     border: 1px solid var(--theme-background-200);
+    line-height: inherit;
   }
 }
 
@@ -440,11 +441,16 @@ textarea.form-control {
   flex-grow: 1;
   padding: 1em;
   background-color: rgba(black, 0.4);
+  border-color: rgba(black, 0.25);
   border-radius: 4px;
   font-size: 14px;
-  
+
   @media (-webkit-min-device-pixel-ratio: 2) {
     font-size: 12px;
+  }
+
+  &:focus {
+    border-color: $blue;
   }
 }
 
@@ -487,9 +493,10 @@ textarea.form-control {
 }
 
 .help-block {
-  background-color: rgba(black, 0.2);
-  color: rgba(255, 255, 255, 0.5);
-  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--theme-color-o75);
+  padding: 2rem;
+  margin: 1rem -1rem;
 
   code,
   strong {

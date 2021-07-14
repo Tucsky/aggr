@@ -21,6 +21,7 @@
     "lodash.merge": "^4.6.2",
     "pako": "^1.0.6",
     "register-service-worker": "^1.7.1",
+    "serviceworker-webpack-plugin": "^1.0.1",
     "tone": "^14.7.77",
     "tunajs": "^1.0.13",
     "vue": "^2.6.11",

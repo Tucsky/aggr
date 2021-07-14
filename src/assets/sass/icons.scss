@@ -34,6 +34,10 @@ $iconpath: '../fonts';
   &.-large {
     font-size: 1.5rem;
   }
+
+  &.-small {
+    font-size: .75em;
+  }
 }
 
 .icon-bitcoin {
@@ -459,5 +463,15 @@ $iconpath: '../fonts';
 .icon-github {
   &:before {
     content: $icon-github;
+  }
+}
+.icon-pause {
+  &:before {
+    content: $icon-pause;
+  }
+}
+.icon-eject {
+  &:before {
+    content: $icon-eject;
   }
 }

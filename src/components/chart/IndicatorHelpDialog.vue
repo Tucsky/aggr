@@ -1,8 +1,11 @@
 <template>
   <Dialog @clickOutside="close" class="serie-dialog" :mask="false" :startPosition="{ x: 0.33 }">
     <template v-slot:header>
-      <div class="title">
-        Documentation
+      <div>
+        <div class="title">
+          Documentation
+        </div>
+
         <div class="subtitle">Indicators</div>
       </div>
     </template>
@@ -25,7 +28,8 @@
           Examples<br />
           <code v-tippy title="Output moving average of the input number">plotline(sma(BITMEX:XBTUSD.close, 50))</code><br />
           <code v-tippy title="Output exponential moving average of the input number">plotline(ema(BITMEX:XBTUSD.close, 50))</code><br />
-          <code v-tippy title="Average all sources in bar">plotline(avg_close(bar))</code><br />
+          <code v-tippy title="Average all sources in bar into OHLC">plotline(avg_close(bar))</code><br />
+          <code v-tippy title="Average all sources in bar into OHLC">plotcandlestick(avg_heikinashi(bar))</code><br />
         </p>
       </div>
       <div class="section__title" @click="toggleSection('formula')">Scripting <i class="icon-up"></i></div>

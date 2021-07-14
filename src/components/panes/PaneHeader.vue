@@ -20,10 +20,6 @@
         </template>
       </dropdown>
 
-      <button type="button" @click="openSettings">
-        <i class="icon-cog"></i>
-      </button>
-
       <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
         <template v-slot:option-0>
           <div class="column" @mousedown.prevent>
@@ -126,13 +122,18 @@ export default class extends Vue {
       click: this.openSettings
     },
     {
+      icon: 'search',
+      label: 'Markets',
+      click: this.openSearch
+    },
+    {
       icon: 'copy-paste',
-      label: 'Duplicate pane',
+      label: 'Duplicate',
       click: this.duplicatePane
     },
     {
       icon: 'trash',
-      label: 'Remove pane',
+      label: 'Remove',
       click: this.removePane
     }
   ]
@@ -197,8 +198,10 @@ export default class extends Vue {
     this.$store.dispatch('panes/changeZoom', { id: this.paneId, zoom: -0.1 })
   }
 
-  removePane() {
-    this.$store.dispatch('panes/removePane', this.paneId)
+  async removePane() {
+    if (await dialogService.confirm(`Supprimer ${this.paneId} ?`)) {
+      this.$store.dispatch('panes/removePane', this.paneId)
+    }
   }
 
   duplicatePane() {
@@ -211,25 +214,6 @@ export default class extends Vue {
 
   highlightPane(value: boolean) {
     this.$el.parentElement.parentElement.classList[value ? 'add' : 'remove']('-highlight')
-  }
-
-  pasteSettings() {
-    let settings: any
-
-    try {
-      settings = JSON.parse(this.$store.state.app.paneClipboard)
-    } catch (error) {
-      this.$store.dispatch('app/showNotice', {
-        title: 'No pane settings to paste',
-        type: 'error'
-      })
-      return
-    }
-
-    this.$store.dispatch('panes/applySettings', {
-      id: this.paneId,
-      settings: settings
-    })
   }
 
   async renamePane() {

@@ -310,8 +310,6 @@ class AudioService {
 
     this.minTime += cueTime
 
-    // fadeOut = fadeOut / 2 + fadeOut * relativeGain
-
     this.schedule(oscillatorNode, gainNode, gain, startGain, time, fadeIn, holdDuration, fadeOut, endGain)
   }
 

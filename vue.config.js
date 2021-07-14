@@ -1,4 +1,7 @@
 const fs = require('fs')
+const path = require('path')
+const ServiceWorkerWebpackPlugin = require('serviceworker-webpack-plugin')
+
 process.env.VUE_APP_VERSION = require('./package.json').version
 
 const date = new Date()
@@ -10,7 +13,6 @@ fs.readdirSync('./src/worker/exchanges/').forEach(file => {
     exchanges.push(file.replace(/\.ts$/, ''))
   }
 })
-console.log(exchanges)
 process.env.VUE_APP_EXCHANGES = exchanges.join(',')
 process.env.VUE_APP_PROXY_URL = process.env.PROXY_URL
 process.env.VUE_APP_API_URL = process.env.API_URL
@@ -19,6 +21,13 @@ process.env.VUE_APP_API_SUPPORTED_PAIRS = process.env.API_SUPPORTED_PAIRS
 module.exports = {
   productionSourceMap: false,
   publicPath: process.env.PUBLIC_PATH || '/',
+  configureWebpack: {
+    plugins: [
+      new ServiceWorkerWebpackPlugin({
+        entry: path.join(__dirname, 'src/sw.js')
+      })
+    ]
+  },
   /*configureWebpack: config => {
     if (process.env.NODE_ENV === 'development') {
       config.devtool = 'eval-source-map'

@@ -6,7 +6,7 @@
           //clear: { label: 'Clear', click: clear },
           //trim: { label: 'Trim', click: refreshChart },
           render: { label: 'Render', click: renderChart },
-          reset: { label: 'Reset', click: resetChart }
+          reset: { label: 'Reload', click: resetChart }
         }"
       >
         <template v-slot:option="{ value }">
@@ -208,6 +208,7 @@ export default class extends Mixins(PaneMixin) {
 
   mounted() {
     this.createChart()
+    this._chartController.setupQueue()
 
     this.keepAlive()
   }
@@ -215,7 +216,6 @@ export default class extends Mixins(PaneMixin) {
   async createChart() {
     await this.$nextTick()
 
-    this._chartController.setupQueue()
     this._chartController.createChart(this.$refs.chartContainer)
 
     await this.$nextTick()
@@ -259,7 +259,8 @@ export default class extends Mixins(PaneMixin) {
     const timeframe = (this.$store.state[this.paneId] as ChartPaneState).timeframe
 
     if (isNaN(+timeframe)) {
-      return Promise.reject('unsupported-timeframe')
+      this.reachedEnd = true
+      return
     }
 
     if (!rangeToFetch) {

@@ -64,7 +64,7 @@
     }
 
     .subtitle {
-      display: block;
+      display: inline-block;
       margin-top: 0.25rem;
       font-size: 80%;
       opacity: 0.75;
@@ -85,10 +85,6 @@
       border-top: 1px solid var(--theme-background-150);
 
       margin: 1.25rem -0.9rem 0;
-
-      .btn {
-        margin-left: 0.4rem;
-      }
     }
 
     section {

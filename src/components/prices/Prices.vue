@@ -1,5 +1,5 @@
 <template>
-  <div class="pane-prices" :class="{ [mode]: true, '-bold': this.boldFont }">
+  <div class="pane-prices" :class="{ [mode]: true, '-bold': this.boldFont }" @mouseenter="pauseSort = true" @mouseleave="pauseSort = false">
     <pane-header :paneId="paneId" />
     <transition-group v-if="markets" :name="transitionGroupName" tag="div" class="markets-bar condensed hide-scrollbar pane">
       <div
@@ -8,7 +8,7 @@
         class="market"
         :class="{ ['-' + market.exchange]: true, ['-' + market.status]: true, '-hidden': exchanges[market.exchange].hidden }"
         :title="market.id"
-        @click="$store.commit('settings/TOGGLE_EXCHANGE', market.exchange)"
+        @click="$store.dispatch('exchanges/toggleExchangeVisibility', market.exchange)"
       >
         <div v-if="showPairs" class="market__pair" v-text="market.pair"></div>
         <div class="market__price" v-text="formatPrice(market.price)"></div>
@@ -35,6 +35,7 @@ type MarketsBarMarketStatus = 'pending' | 'idle' | 'up' | 'down' | 'neutral'
 })
 export default class extends Mixins(PaneMixin) {
   mode = '-vertical'
+  pauseSort = false
   markets: (Market & { price: number; status: MarketsBarMarketStatus })[] = null
 
   @Watch('pane.markets')
@@ -133,10 +134,12 @@ export default class extends Mixins(PaneMixin) {
       }
     }
 
-    if (this.mode === '-horizontal') {
-      this.markets = this.markets.sort((a, b) => a.price - b.price)
-    } else {
-      this.markets = this.markets.sort((a, b) => b.price - a.price)
+    if (!this.pauseSort) {
+      if (this.mode === '-horizontal') {
+        this.markets = this.markets.sort((a, b) => a.price - b.price)
+      } else {
+        this.markets = this.markets.sort((a, b) => b.price - a.price)
+      }
     }
   }
 
@@ -172,7 +175,7 @@ export default class extends Mixins(PaneMixin) {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .markets-bar {
   display: flex;
   flex-direction: row;
@@ -224,6 +227,9 @@ export default class extends Mixins(PaneMixin) {
     &.-pending {
       background-color: rgba(white, 0.2);
       opacity: 0.5;
+    }
+    &.-hidden {
+      text-decoration: line-through;
     }
   }
 }

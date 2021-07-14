@@ -56,11 +56,7 @@ class Aggregator {
       this.startAggrInterval()
       console.debug(`[worker] bind trades: aggregation`)
     } else {
-      if (this['_aggrInterval']) {
-        this.clearInterval(this['_aggrInterval'])
-        this['_aggrInterval'] = null
-        console.debug(`[worker] stopped aggrInterval timer`)
-      }
+      this.clearInterval('aggr')
 
       // clear pending aggregations
       this.timeoutExpiredAggregations()
@@ -130,7 +126,7 @@ class Aggregator {
     if (activeBuckets.length && !this.activeBuckets.length) {
       this.startStatsInterval()
     } else if (this.activeBuckets.length && !activeBuckets.length && this['_statsInterval']) {
-      this.clearInterval(this['_statsInterval'])
+      this.clearInterval('stats')
       this['_statsInterval'] = null
       console.debug(`[worker] stopped statsInterval timer`)
     }
@@ -541,7 +537,7 @@ class Aggregator {
       return
     }
     console.debug(`[worker] started _aggrInterval timer`)
-    this['._aggrInterval'] = self.setInterval(this.emitPendingTrades.bind(this), 50)
+    this['_aggrInterval'] = self.setInterval(this.emitPendingTrades.bind(this), 50)
   }
 
   startStatsInterval() {
@@ -555,6 +551,7 @@ class Aggregator {
 
   clearInterval(name: string) {
     if (this['_' + name + 'Interval']) {
+      console.log('stopped', name, 'timer')
       clearInterval(this['_' + name + 'Interval'])
       this['_' + name + 'Interval'] = null
     }
@@ -626,6 +623,17 @@ self.addEventListener('message', (event: any) => {
       break
     case 'settings.calculateSlippage':
       aggregator.settings.calculateSlippage = payload.data
+      break
+    case 'settings.pauseFeeds':
+      if (payload.data) {
+        aggregator.clearInterval('aggr')
+        aggregator.clearInterval('stats')
+        aggregator.clearInterval('price')
+      } else {
+        aggregator.startAggrInterval()
+        aggregator.startStatsInterval()
+        aggregator.startPriceInterval()
+      }
       break
     case 'settings.preferQuoteCurrencySize':
       aggregator.settings.preferQuoteCurrencySize = payload.data

@@ -24,8 +24,12 @@ export default class PaneDialogMixin extends Vue {
     const name = this.$store.state.panes.panes[this.paneId].name
 
     if (!name) {
-      const [, pair] = parseMarket(this.$store.state.panes.panes[this.paneId].markets[0])
-      return pair + ' - ' + this.$store.state.panes.panes[this.paneId].type
+      if (!name && this.$store.state.panes.panes[this.paneId].markets.length) {
+        const [, pair] = parseMarket(this.$store.state.panes.panes[this.paneId].markets[0])
+        return pair + ' - ' + this.$store.state.panes.panes[this.paneId].type
+      } else {
+        return this.paneId
+      }
     }
 
     return name

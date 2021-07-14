@@ -3,11 +3,11 @@
     <template v-slot:header>
       <div class="title">Import settings</div>
     </template>
-    <div class="form-group">
+    <div class="form-group mb16">
       <label>Name</label>
-      <input type="text" class="form-control" v-model="workspace.name" />
+      <input type="text" class="form-control w-100" v-model="workspace.name" />
     </div>
-    <div class="d-flex flex-middle mt8">
+    <div class="d-flex flex-middle">
       <i class="icon-info mr16"></i>
       <div class="mr16">
         <small class="text-muted">Version</small>
@@ -25,8 +25,8 @@
     <div v-if="panes.length" class="form-group mt16">
       <label>Panels</label>
       <div v-for="pane in panes" :key="pane.id" class="column flex-middle">
-        <i class="icon-pile mr8"></i>
-        <strong>{{ pane.type.toUpperCase() }}</strong>
+        <i class="icon-plus mr8 -small"></i>
+        <span>{{ pane.type.toUpperCase() }}</span>
         <small class="ml4">
           <code>{{ pane.id }}</code>
         </small>
@@ -39,7 +39,7 @@
       </button>
     </div>
     <footer>
-      <a href="javascript:void(0);" class="btn -text" @click="close(false)">Cancel</a>
+      <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
       <button class="btn -large" @click="close(workspace)">IMPORT & LOAD</button>
     </footer>
   </Dialog>

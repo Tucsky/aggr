@@ -1,12 +1,14 @@
 <template>
   <Dialog @clickOutside="hide" class="-sticky-footer -auto" bodyClass="d-flex mobile-dir-col-desktop-dir-row">
     <template v-slot:header>
-      <div class="title" v-if="paneId">
-        {{ paneName }}'s MARKETS
+      <div v-if="paneId">
+        <div class="title">{{ paneName }}'s MARKETS</div>
         <div class="subtitle">Choose which markets <u>this pane</u> should listen to</div>
       </div>
-      <div class="title" v-else>
-        SELECT MARKETS (ALL)
+      <div v-else>
+        <div class="title">
+          SELECT MARKETS (ALL)
+        </div>
         <div class="subtitle">Choose which markets <u>all</u> panes should listen to</div>
       </div>
       <div class="column -center"></div>

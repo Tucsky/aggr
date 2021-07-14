@@ -1,3 +1,4 @@
+import aggregatorService from '@/services/aggregatorService'
 import dialogService from '@/services/dialogService'
 import { Market } from '@/types/test'
 import { randomString } from '@/utils/helpers'
@@ -50,7 +51,7 @@ export interface AppState {
   baseCurrencySymbol: string
   quoteCurrency: string
   quoteCurrencySymbol: string
-  paneClipboard: string
+  pauseFeeds: boolean
 }
 
 const state = {
@@ -73,7 +74,7 @@ const state = {
   baseCurrencySymbol: '฿',
   quoteCurrency: 'dollar',
   quoteCurrencySymbol: '$',
-  paneClipboard: null
+  pauseFeeds: false
 } as AppState
 
 const actions = {
@@ -361,8 +362,13 @@ const mutations = {
     state.quoteCurrency = currencies.quote
     state.quoteCurrencySymbol = currencies.quoteSymbol
   },
-  SET_PANE_CLIPBOARD(state, settings: string) {
-    state.paneClipboard = settings
+  TOGGLE_FEEDS(state) {
+    state.pauseFeeds = !state.pauseFeeds
+
+    aggregatorService.dispatch({
+      op: 'settings.pauseFeeds',
+      data: state.pauseFeeds
+    })
   }
 } as MutationTree<AppState>
 

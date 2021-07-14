@@ -14,6 +14,7 @@
             :max="10"
             :step="0.1"
             :editable="false"
+            :label="true"
             :value="audioVolume"
             @input="$store.dispatch('settings/setAudioVolume', $event)"
             @reset="$store.dispatch('settings/setAudioVolume', 1)"

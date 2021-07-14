@@ -4,6 +4,12 @@ import VueTippy, { TippyComponent } from 'vue-tippy'
 import './assets/sass/app.scss'
 import store from './store'
 
+import runtime from 'serviceworker-webpack-plugin/lib/runtime';
+ 
+if ('serviceWorker' in navigator) {
+  const registration = runtime.register();
+}
+
 Vue.use(VueTippy, {
   maxWidth: '200px',
   duration: 0,

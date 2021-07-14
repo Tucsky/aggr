@@ -1,8 +1,10 @@
 <template>
   <Dialog @clickOutside="close" class="-sticky-footer" contentClass="settings">
-    <template v-slot:header>
-      <div class="title">
-        Settings
+    <template v-slot:header
+      ><div>
+        <div class="title">
+          Settings
+        </div>
         <div class="subtitle" v-if="hits"><i class="icon-bolt"></i> <code v-text="hits"></code> messages /s</div>
       </div>
       <div class="column -center"></div>
@@ -63,7 +65,7 @@
       </div>
 
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'workspaces')">
-        Workspace
+        Workspaces
         <i class="icon-up"></i>
       </div>
     </section>
@@ -113,7 +115,7 @@
         </div>
       </div>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'list')">
-        Trades list
+        Trades
         <i class="icon-up"></i>
       </div>
     </section>
@@ -191,11 +193,13 @@
               v{{ version }} <sup class="version-date">{{ buildDate }}</sup>
             </button>
           </div>
-          <button class="btn -text" @click="reset()">reset</button>
+          <a class="btn -text" href="https://github.com/Tucsky/aggr" target="_blank">github</a>
           <i class="pipe -center">|</i>
           <span>
             <dono-dropdown class="-top -text-left" />
           </span>
+          <i class="pipe -center">|</i>
+          <button class="btn -text" @click="reset()">reset</button>
         </div>
       </div>
     </footer>
@@ -411,6 +415,8 @@ export default {
     },
 
     async loadWorkspace(id) {
+      await this.close()
+
       const workspace = await workspacesService.getWorkspace(id)
 
       await workspacesService.setCurrentWorkspace(workspace)

@@ -375,6 +375,7 @@ export default {
   display: flex;
   align-items: center;
   box-sizing: border-box;
+  z-index: 1;
 
   &.-alpha {
     .slider__track {
@@ -489,7 +490,6 @@ export default {
 
 .slider__label {
   position: absolute;
-  z-index: 1;
   bottom: 25px;
   left: 6px;
   z-index: 999;

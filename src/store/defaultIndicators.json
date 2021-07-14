@@ -17,8 +17,8 @@
   },
   "smas": {
     "enabled": false,
-    "name": "Smas {fastLength} {mediumLength} {slowLength}",
-    "displayName": "Smas 50 100 200",
+    "name": "SMA {fastLength} {mediumLength} {slowLength}",
+    "displayName": "SMA 50 100 200",
     "script": "plotline(sma($price.close, options.fastLength), color=options.fastColor)\nplotline(sma($price.close, options.mediumLength), color=options.mediumColor)\nplotline(sma($price.close, options.slowLength), color=options.slowColor)",
     "options": {
       "priceScaleId": "right",
@@ -32,8 +32,8 @@
   },
   "emas": {
     "enabled": false,
-    "name": "Emas {fastLength} {mediumLength} {slowLength}",
-    "displayName": "Emas 50 100 200",
+    "name": "EMA {fastLength} {mediumLength} {slowLength}",
+    "displayName": "EMA 50 100 200",
     "script": "plotline(ema($price.close, options.fastLength), color=options.fastColor)\nplotline(ema($price.close, options.mediumLength), color=options.mediumColor)\nplotline(ema($price.close, options.slowLength), color=options.slowColor)",
     "options": {
       "priceScaleId": "right",
@@ -47,8 +47,8 @@
   },
   "cmas": {
     "enabled": false,
-    "name": "Cmas {fastLength} {mediumLength} {slowLength}",
-    "displayName": "Cmas 50 100 200",
+    "name": "CMA {fastLength} {mediumLength} {slowLength}",
+    "displayName": "CMA 50 100 200",
     "script": "plotline(cma($price.close, options.fastLength), color=options.fastColor)\nplotline(cma($price.close, options.mediumLength), color=options.mediumColor)\nplotline(cma($price.close, options.slowLength), color=options.slowColor)",
     "options": {
       "priceScaleId": "right",
@@ -116,8 +116,8 @@
         "type": "volume"
       },
       "priceScaleId": "volume_liquidations",
-      "upColor": "rgba(103,58,183,0.69)",
-      "downColor": "rgba(255,235,59,0.79)",
+      "upColor": "rgb(255,76,243)",
+      "downColor": "rgb(255,183,77)",
       "scaleMargins": {
         "top": 0.81,
         "bottom": 0.1
@@ -133,7 +133,7 @@
       "priceFormat": {
         "type": "volume"
       },
-      "color": "#ffe100"
+      "color": "#3BCA6D"
     }
   },
   "btccvdperp": {
@@ -225,7 +225,12 @@
       "priceScaleId": "right",
       "mult": 2,
       "length": 20,
-      "basisColor": "rgba(255,255,255,.5)"
+      "lineStyle": 2,
+      "basisColor": "rgba(66,165,245,0.5)",
+      "positiveColor": "rgba(0,0,0,0.1)",
+      "negativeColor": "rgba(0,0,0,0.1)",
+      "lowerLineColor": "rgba(66,165,245,0.5)",
+      "higherLineColor": "rgba(66,165,245,0.5)"
     }
   }
 }

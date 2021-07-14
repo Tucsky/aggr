@@ -1,8 +1,10 @@
 <template>
   <Dialog @clickOutside="close" class="pane-dialog -auto" @mousedown="clickOutsideClose = false" @mouseup="clickOutsideClose = true">
     <template v-slot:header>
-      <div class="title">
-        <div>Threshold</div>
+      <div>
+        <div class="title">
+          <div>Threshold</div>
+        </div>
 
         <div class="subtitle">{{ thresholdId }} {{ formatAmount(threshold.amount) }}</div>
       </div>
@@ -17,33 +19,45 @@
       Write a sequence of sounds using the play() or playurl() function
 
       <blockquote>
-        <code>
-          play(<br /><span class="ml8" v-tippy title="Frequency (hz)">frequency: number</span>,<br />
-          <span class="ml8" v-tippy title="Gain (volume, 0 is muted and 1 is max, anything above 1 will sound saturated)">gain: number</span>,<br />
-          <span class="ml8" v-tippy title="FadeOut (gain to endGain duration)">fadeOut: number</span>,<br />
-          <span class="ml8" v-tippy title="Delay song by n second">delay?: number</span>,<br />
-          <span class="ml8" v-tippy title="FadeIn (startGain to gain duration)">fadeIn?: number</span>,<br />
-          <span class="ml8" v-tippy title="HoldDuration (time at gain)">holdDuration?: number</span>,<br />
-          <span class="ml8" v-tippy title="Oscillator (type of wave, either sine, square, triangle, or sawtooth)">osc?: number</span>,<br />
-          <span class="ml8" v-tippy title="StartGain (cannot be 0, but should be close to 0 like 0.0001)">startGain?: number</span>,<br />
-          <span class="ml8" v-tippy title="EndGain (cannot be 0, but should be close to 0 like 0.0001)">endGain?: number</span><br />
-          )
-        </code>
+        play(<br /><span class="ml8" v-tippy title="Frequency (hz)"><code class="-filled">frequency</code>: number</span>,<br />
+        <span class="ml8" v-tippy title="Gain (volume, 0 is muted and 1 is max, anything above 1 will sound saturated)"
+          ><code class="-filled">gain</code>: number</span
+        >,<br />
+        <span class="ml8" v-tippy title="FadeOut (gain to endGain duration)"><code class="-filled">fadeOut</code>: number</span>,<br />
+        <span class="ml8" v-tippy title="Delay song by n second"><code class="-filled">delay</code>?: number</span>,<br />
+        <span class="ml8" v-tippy title="FadeIn (startGain to gain duration)"><code class="-filled">fadeIn</code>?: number</span>,<br />
+        <span class="ml8" v-tippy title="HoldDuration (time at gain)"><code class="-filled">holdDuration</code>?: number</span>,<br />
+        <span class="ml8" v-tippy title="Oscillator (type of wave, either sine, square, triangle, or sawtooth)"
+          ><code class="-filled">osc</code>?: number</span
+        >,<br />
+        <span class="ml8" v-tippy title="StartGain (cannot be 0, but should be close to 0 like 0.0001)"
+          ><code class="-filled">startGain</code>?: number</span
+        >,<br />
+        <span class="ml8" v-tippy title="EndGain (cannot be 0, but should be close to 0 like 0.0001)"
+          ><code class="-filled">endGain</code>?: number</span
+        ><br />
+        )
       </blockquote>
 
       <blockquote>
-        <code>
-          playurl(<br /><span class="ml8" v-tippy title="URL (.mp3|.wav|.ogg) (https://archive.org/details/audio)">url: string</span>,<br />
-          <span class="ml8" v-tippy title="Gain (volume, 0 is muted and 1 is max, anything above 1 will sound saturated)">gain: number</span>,<br />
-          <span class="ml8" v-tippy title="HoldDuration (time at gain)">holdDuration?: number</span>,<br />
-          <span class="ml8" v-tippy title="Delay song by n second">delay?: number</span>,<br />
-          <span class="ml8" v-tippy title="StartTime (start audio at 'x' seconds)">startTime: number</span>,<br />
-          <span class="ml8" v-tippy title="FadeIn (startGain to gain duration)">fadeIn?: number</span>,<br />
-          <span class="ml8" v-tippy title="FadeOut (gain to endGain duration)">fadeOut: number</span>,<br />
-          <span class="ml8" v-tippy title="StartGain (cannot be 0, but should be close to 0 like 0.0001)">startGain?: number</span>,<br />
-          <span class="ml8" v-tippy title="EndGain (cannot be 0, but should be close to 0 like 0.0001)">endGain?: number</span><br />
-          )
-        </code>
+        playurl(<br /><span class="ml8" v-tippy title="URL (.mp3|.wav|.ogg) (https://archive.org/details/audio)"
+          ><code class="-filled">url</code>: string</span
+        >,<br />
+        <span class="ml8" v-tippy title="Gain (volume, 0 is muted and 1 is max, anything above 1 will sound saturated)"
+          ><code class="-filled">gain</code>: number</span
+        >,<br />
+        <span class="ml8" v-tippy title="HoldDuration (time at gain)"><code class="-filled">holdDuration</code>?: number</span>,<br />
+        <span class="ml8" v-tippy title="Delay song by n second"><code class="-filled">delay</code>?: number</span>,<br />
+        <span class="ml8" v-tippy title="StartTime (start audio at 'x' seconds)"><code class="-filled">startTime</code>: number</span>,<br />
+        <span class="ml8" v-tippy title="FadeIn (startGain to gain duration)"><code class="-filled">fadeIn</code>?: number</span>,<br />
+        <span class="ml8" v-tippy title="FadeOut (gain to endGain duration)"><code class="-filled">fadeOut</code>: number</span>,<br />
+        <span class="ml8" v-tippy title="StartGain (cannot be 0, but should be close to 0 like 0.0001)"
+          ><code class="-filled">startGain</code>?: number</span
+        >,<br />
+        <span class="ml8" v-tippy title="EndGain (cannot be 0, but should be close to 0 like 0.0001)"
+          ><code class="-filled">endGain</code>?: number</span
+        ><br />
+        )
       </blockquote>
     </div>
     <div class="form-group mb16">
@@ -108,7 +122,7 @@
     </div>
     <footer>
       <a href="javascript:void(0);" class="btn -text mrauto" @click="restartWebAudio()">Stop all</a>
-      <a href="javascript:void(0);" class="btn -text" @click="close(false)">Cancel</a>
+      <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
       <button class="btn -large" @click="saveInputs()"><i class="icon-check mr4"></i> Save</button>
     </footer>
   </Dialog>

@@ -229,12 +229,12 @@ export default class extends Vue {
 
     &.-left {
       top: 1em;
-      left: 1em;
+      left: 20%;
     }
 
     &.-right {
       bottom: 1em;
-      right: 4em;
+      right: 20%;
     }
   }
 

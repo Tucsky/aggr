@@ -1,14 +1,16 @@
 <template>
   <Dialog @clickOutside="close">
     <template v-slot:header>
-      <div class="title">
-        <div @dblclick="renamePreset" v-text="name"></div>
+      <div>
+        <div class="title">
+          <div @dblclick="renamePreset" v-text="name"></div>
+        </div>
         <div class="subtitle" v-text="preset.type"></div>
       </div>
     </template>
 
     <form @submit.prevent="apply">
-      <p class="mt0">What's included :</p>
+      <p class="mt0">Saved settings for :</p>
       <ul>
         <li v-for="prop of dataProperties" :key="prop">
           <code v-text="prop"></code>
@@ -63,12 +65,10 @@ export default {
     },
     retrieveDataProperties(obj) {
       for (const prop in obj) {
-        if (isNaN(prop) && this.dataProperties.indexOf(prop) === -1) {
-          this.dataProperties.push(prop)
-        }
-
         if (obj[prop] && typeof obj[prop] === 'object') {
           this.retrieveDataProperties(obj[prop])
+        } else if (isNaN(prop) && this.dataProperties.indexOf(prop) === -1) {
+          this.dataProperties.push(prop)
         }
       }
     },

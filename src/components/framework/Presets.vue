@@ -4,7 +4,7 @@
       <div class="column" @mousedown.prevent>
         <div class="btn -green" @click="savePreset"><i class="icon-plus"></i></div>
         <div class="btn -blue" @click="uploadPreset"><i class="icon-upload"></i></div>
-        <div class="btn -red" @click="applyDefault"><i class="icon-eraser mr4"></i> Reset</div>
+        <div class="btn -red" @click="applyDefault"><i class="icon-eraser mr4"></i> Default</div>
       </div>
     </template>
     <template v-slot:option="{ value }">
