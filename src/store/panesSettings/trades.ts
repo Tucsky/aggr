@@ -65,8 +65,8 @@ const state = {
       amount: 100000,
       buyColor: 'rgba(119, 148, 92, 0.5)',
       sellColor: 'rgba(239, 67, 82, 0.5)',
-      buyAudio: `play(659.26, gain / 10, 0.2 + ratio * 0.3)`,
-      sellAudio: `play(493.88, gain * 1.5 / 10, 0.2 + ratio * 0.3)`
+      buyAudio: `play(659.26, gain / 10, 0.1 + gain / 6)`,
+      sellAudio: `play(493.88, gain * 1.5 / 10, 0.1 + gain / 6)`
     },
     {
       id: 'significant',

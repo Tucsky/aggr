@@ -114,8 +114,8 @@
             "gif": "rip coffin",
             "buyColor": "rgb(156,39,176)",
             "sellColor": "rgb(255,235,59)",
-            "buyAudio": "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",
-            "sellAudio": "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR,0,,,'sine')\nplay(440, srqtR, srqtR*10,0.08,,,'sine')"
+            "buyAudio": "var srqtR = Math.min(1, gain / 10)\nplay(329.63, srqtR, 1,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",
+            "sellAudio": "var srqtR = Math.min(1, gain / 10)\nplay(440, srqtR, 1,0,,,'sine')\nplay(440, srqtR, srqtR*10,0.08,,,'sine')"
           }
         ]
       }

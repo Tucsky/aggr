@@ -1,4 +1,5 @@
-self.addEventListener('fetch', () => console.log('fetch'))
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+self.addEventListener('fetch', () => {})
 
 self.addEventListener('install', function(e) {
   e.waitUntil(

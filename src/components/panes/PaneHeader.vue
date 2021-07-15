@@ -7,8 +7,8 @@
       <button type="button" @click="openSearch">
         <i class="icon-search"></i>
       </button>
-      <button type="button" @click="maximizePane">
-        <i class="icon-enlarge"></i>
+      <button type="button" @click="openSettings">
+        <i class="icon-cog"></i>
       </button>
 
       <dropdown
@@ -116,13 +116,13 @@ export default class extends Vue {
       label: 'Zoom'
     },
     {
-      icon: 'cog',
-      label: 'Settings',
-      click: this.openSettings
+      icon: 'enlarge',
+      label: 'Maximize',
+      click: this.maximizePane
     },
     {
       icon: 'search',
-      label: 'Markets',
+      label: 'Add markets',
       click: this.openSearch
     },
     {

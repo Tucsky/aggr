@@ -2,7 +2,7 @@
   <div class="pane-trades" :class="{ '-logos': this.showLogos, '-logos-colors': !this.monochromeLogos, '-slippage': this.calculateSlippage }">
     <pane-header :paneId="paneId" />
     <ul ref="tradesContainer" class="hide-scrollbar"></ul>
-    <div v-if="!tradesCount" class="trades-placeholder hide-scrollbar">
+    <div v-if="showPlaceholder" class="trades-placeholder hide-scrollbar">
       <div class="mt16 ml16 mr16 help-text">
         <strong>Waiting for trades</strong>
 
@@ -58,12 +58,13 @@ interface ThresholdAudiosBySide {
   name: 'Trades'
 })
 export default class extends Mixins(PaneMixin) {
-  tradesCount = 0
+  showPlaceholder = true
 
   private _onStoreMutation: () => void
 
   // cache all thoses vuex property (via cacheFilters when component load / a settings is updated)
   // so they the getters don't get re evaluated on each trades
+  private _tradesCount = 0
   private _thresholdsColors: ThresholdColorsBySide[]
   private _thresholdsAudios: ThresholdAudiosBySide[]
   private _liquidationsAudio: ThresholdAudiosBySide
@@ -130,6 +131,8 @@ export default class extends Mixins(PaneMixin) {
     this.prepareColorsSteps()
     this.prepareThresholdsSounds()
     this.prepareAudioThreshold()
+
+    this._tradesCount = 0
 
     aggregatorService.on('trades', this.onTrades)
 
@@ -202,8 +205,9 @@ export default class extends Mixins(PaneMixin) {
 
     this._timeAgoInterval = setInterval(() => {
       const elements = this.$el.getElementsByClassName('-timestamp')
+      const length = elements.length
 
-      if (!elements.length) {
+      if (!length) {
         return
       }
 
@@ -213,7 +217,7 @@ export default class extends Mixins(PaneMixin) {
 
       let previousRowTimeAgo
 
-      for (let i = 0; i < elements.length; i++) {
+      for (let i = 0; i < length; i++) {
         const milliseconds = now - (elements[i] as any).getAttribute('timestamp')
         const txt = timeAgo(milliseconds)
 
@@ -268,11 +272,11 @@ export default class extends Mixins(PaneMixin) {
   }
 
   appendRow(trade: Trade, amount, multiplier) {
-    if (!this.tradesCount) {
-      this.$forceUpdate()
+    if (!this._tradesCount) {
+      this.showPlaceholder = false
     }
 
-    this.tradesCount++
+    this._tradesCount++
 
     let animated = false
 
@@ -419,11 +423,11 @@ export default class extends Mixins(PaneMixin) {
 
     const amount_quote = document.createElement('span')
     amount_quote.className = 'trade__amount__quote'
-    amount_quote.innerHTML = `<span class="icon-quote"></span> <span>${formatAmount(trade.price * trade.size)}</span>`
+    amount_quote.innerHTML = '<span class="icon-quote"></span> <span>' + formatAmount(trade.price * trade.size) + '</span>'
 
     const amount_base = document.createElement('span')
     amount_base.className = 'trade__amount__base'
-    amount_base.innerHTML = `<span class="icon-base"></span> <span>${formatAmount(trade.size)}</span>`
+    amount_base.innerHTML = '<span class="icon-base"></span> <span>' + formatAmount(trade.size) + '</span>'
 
     amount_div.appendChild(amount_quote)
     amount_div.appendChild(amount_base)
@@ -448,8 +452,8 @@ export default class extends Mixins(PaneMixin) {
 
     this.$refs.tradesContainer.prepend(li)
 
-    while (this.tradesCount > this.maxRows) {
-      this.tradesCount--
+    if (this._tradesCount > this.maxRows) {
+      this._tradesCount--
       this.$refs.tradesContainer.removeChild(this.$refs.tradesContainer.lastChild)
     }
   }
@@ -649,11 +653,12 @@ export default class extends Mixins(PaneMixin) {
 
   clearList() {
     this.$refs.tradesContainer.innerHTML = ''
-    this.tradesCount = 0
+    this._tradesCount = 0
+    this.showPlaceholder = true
   }
 
   refreshList() {
-    if (!this.tradesCount) {
+    if (!this._tradesCount) {
       return this.clearList()
     }
 
