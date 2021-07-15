@@ -218,6 +218,10 @@ export default class extends Mixins(PaneMixin) {
       let previousRowTimeAgo
 
       for (let i = 0; i < length; i++) {
+        if (typeof elements[i] === 'undefined') {
+          break
+        }
+
         const milliseconds = now - (elements[i] as any).getAttribute('timestamp')
         const txt = timeAgo(milliseconds)
 

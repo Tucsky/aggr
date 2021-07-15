@@ -77,7 +77,7 @@
           @blur="setInput($event.target.value, 'buy')"
           spellcheck="false"
         ></textarea>
-        <button class="btn -green ml4" @click="testCustom('buy', $event)" title="Custom">
+        <button class="btn -green ml4" @click="testCustom('buy', $event)" @dblclick="doTheLoop('buy')" title="Custom">
           <i class="icon-volume-high"></i>
         </button>
       </div>
@@ -107,7 +107,7 @@
           @blur="setInput($event.target.value, 'sell')"
           spellcheck="false"
         ></textarea>
-        <button class="btn -red ml4" @click="testCustom('sell', $event)">
+        <button class="btn -red ml4" @click="testCustom('sell', $event)" @dblclick="doTheLoop('sell')">
           <i class="icon-volume-high"></i>
         </button>
       </div>
@@ -195,6 +195,11 @@ export default {
     this.$nextTick(() => this.initBehave())
   },
   beforeDestroy() {
+    if (this.looping) {
+      clearTimeout(this.looping)
+      this.looping = false
+    }
+
     for (const behave of this._behaves) {
       behave.destroy()
     }
@@ -238,14 +243,31 @@ export default {
       return true
     },
     testCustom(side, event) {
+      if (this.looping) {
+        clearTimeout(this.looping)
+        this.looping = false
+      }
+
       const litteral = this[side + 'Audio']
 
       this.test(litteral, side, event)
     },
     testOriginal(side, event) {
+      if (this.looping) {
+        clearTimeout(this.looping)
+        this.looping = false
+      }
+
       const litteral = this.threshold[side + 'Audio']
 
       this.test(litteral, side, event)
+    },
+    doTheLoop(side) {
+      this.looping = setTimeout(() => {
+        this.test(this.threshold[side + 'Audio'], side)
+
+        this.doTheLoop(side)
+      }, Math.random() * 100)
     },
     restartWebAudio() {
       audioService.reconnect()
@@ -266,7 +288,7 @@ export default {
 
         const range = this.max - this.min
 
-        if (event.shiftKey || !range) {
+        if ((event && event.shiftKey) || !range) {
           amount = this.min
         } else {
           amount = this.min + Math.random() * range
@@ -279,12 +301,14 @@ export default {
       if (amount) {
         ;(await this.getAdapter(litteral, side))(audioService, percent, side, level)
 
-        this.$store.dispatch('app/showNotice', {
-          id: 'testing-threshold-audio',
-          type: side === 'buy' ? 'success' : 'error',
-          title: 'NOW PLAYING : ' + formatAmount(amount) + ' ' + side.toUpperCase() + ' trade',
-          timeout: 1000
-        })
+        if (event) {
+          this.$store.dispatch('app/showNotice', {
+            id: 'testing-threshold-audio',
+            type: side === 'buy' ? 'success' : 'error',
+            title: 'NOW PLAYING : ' + formatAmount(amount) + ' ' + side.toUpperCase() + ' trade',
+            timeout: 1000
+          })
+        }
       }
     },
     formatAmount(amount) {
