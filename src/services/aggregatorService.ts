@@ -3,7 +3,7 @@ import { AggregatorPayload } from '@/types/test'
 import { parseMarket, randomString } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
-import Worker from 'worker-loader!@/worker/aggregator.worker'
+import Worker from 'worker-loader!@/worker/aggregator'
 import { getProducts } from './productsService'
 import workspacesService from './workspacesService'
 

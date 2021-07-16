@@ -40,18 +40,6 @@
       ><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KLNCBF7" height="0" width="0" style="display: none; visibility: hidden"></iframe
     ></noscript>
     <!-- End Google Tag Manager (noscript) -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker
-          .register('./sw.js')
-          .then(function(reg) {
-            console.log('Successfully registered service worker', reg)
-          })
-          .catch(function(err) {
-            console.warn('Error whilst registering service worker', err)
-          })
-      }
-    </script>
 
     <noscript>
       <strong

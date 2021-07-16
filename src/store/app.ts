@@ -1,4 +1,3 @@
-import aggregatorService from '@/services/aggregatorService'
 import dialogService from '@/services/dialogService'
 import { Market } from '@/types/test'
 import { randomString } from '@/utils/helpers'
@@ -72,7 +71,7 @@ const state = {
   baseCurrency: 'coin',
   baseCurrencySymbol: '฿',
   quoteCurrency: 'dollar',
-  quoteCurrencySymbol: '$',
+  quoteCurrencySymbol: '$'
 } as AppState
 
 const actions = {

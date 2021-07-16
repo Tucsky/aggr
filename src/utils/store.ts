@@ -47,7 +47,6 @@ export async function mergeStoredState(state: any) {
     const storedState = await workspacesService.getState(state._id)
 
     if (storedState) {
-      console.debug(`[store] retrieved stored state for module ${state._id}`, 'Object.assign', storedState, 'into', state)
       return Object.assign({}, state, storedState)
     }
   } catch (error) {
