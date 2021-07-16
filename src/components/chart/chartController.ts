@@ -318,11 +318,11 @@ export default class ChartController {
   }
 
   optionRequiresRedraw(key: string) {
-    const redrawOptions = /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor/i
+    /*const redrawOptions = /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor/i
 
     if (redrawOptions.test(key)) {
       return true
-    }
+    }*/
 
     const noRedrawOptions = /color|priceFormat|scaleMargins|linetype|width|style|visible/i
 
@@ -762,7 +762,6 @@ export default class ChartController {
    */
   clearIndicatorSeries(indicator: LoadedIndicator) {
     for (let i = 0; i < indicator.apis.length; i++) {
-      indicator.apis[i].setData([])
       indicator.apis[i].setData([])
     }
   }

@@ -164,7 +164,7 @@ export default class extends Vue {
   get timeframe() {
     return this.$store.state[this.paneId].timeframe
   }
-  
+
   openSettings() {
     switch (this.type) {
       case 'counters':

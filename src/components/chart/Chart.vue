@@ -208,7 +208,6 @@ export default class extends Mixins(PaneMixin) {
 
   mounted() {
     this.createChart()
-    this._chartController.setupQueue()
 
     this.keepAlive()
   }
@@ -225,6 +224,8 @@ export default class extends Mixins(PaneMixin) {
     await this.fetch()
 
     this.positionControls()
+
+    this._chartController.setupQueue()
   }
 
   destroyChart() {
