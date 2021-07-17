@@ -1,5 +1,5 @@
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
-import { getHms, parseMarket, deepSet, camelize } from '../../utils/helpers'
+import { getHms, parseMarket, deepSet, camelize, getTimeframeForHuman } from '../../utils/helpers'
 import { defaultChartOptions, defaultPlotsOptions, defaultSerieOptions, getChartOptions } from './chartOptions'
 import store from '../../store'
 import * as seriesUtils from './serieUtils'
@@ -194,6 +194,8 @@ export default class ChartController {
     }
 
     this.timeframe = parseInt(timeframe)
+
+    this.updateWatermark()
   }
 
   /**
@@ -413,7 +415,9 @@ export default class ChartController {
      */
     this.chartInstance.applyOptions({
       watermark: {
-        text: `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0${this.watermark}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0`,
+        text: `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0${this.watermark +
+          ' | ' +
+          getTimeframeForHuman(store.state[this.paneId].timeframe)}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0`,
         visible: store.state[this.paneId].showWatermark,
         color: store.state[this.paneId].watermarkColor
       }
@@ -742,6 +746,92 @@ export default class ChartController {
     this.clearChart()
 
     this.setTimeframe(store.state[this.paneId].timeframe)
+  }
+
+  resample(timeframe: number) {
+    console.log(`[chart/${this.paneId}/controller] resample to ${timeframe}`)
+
+    this.setTimeframe(timeframe)
+
+    if (!this.chartCache.chunks.length) {
+      return
+    }
+
+    const newBar = function(source, destination, timestamp) {
+      if (typeof source.close === 'number') {
+        destination.open = destination.high = destination.low = destination.close = source.close
+      } else if (typeof destination.close === 'undefined' || destination.close === null) {
+        destination.open = destination.high = destination.low = destination.close = null
+
+        destination.vbuy = 0
+        destination.vsell = 0
+        destination.cbuy = 0
+        destination.csell = 0
+        destination.lbuy = 0
+        destination.lsell = 0
+      }
+
+      destination.timestamp = timestamp
+
+      return destination
+    }
+
+    const markets = {}
+
+    for (let i = 0; i < this.chartCache.chunks.length; i++) {
+      for (let j = 0; j < this.chartCache.chunks[i].bars.length; j++) {
+        const bar = this.chartCache.chunks[i].bars[j]
+
+        const market = bar.exchange + bar.pair
+        let barTimestamp = Math.floor(bar.timestamp / this.timeframe) * this.timeframe
+        if (this.activeRenderer.type !== 'time' && markets[market] && markets[market].cbuy + markets[market].csell > this.timeframe) {
+          barTimestamp = markets[market].timestamp + this.timeframe
+        }
+
+        if (!markets[market] || markets[market].timestamp < barTimestamp) {
+          if (markets[market]) {
+            markets[market] = newBar(markets[market], bar, barTimestamp)
+          } else {
+            markets[market] = newBar({}, bar, barTimestamp)
+          }
+          continue
+        }
+
+        if (typeof markets[market].open === null) {
+          markets[market].open = bar.open
+          markets[market].high = bar.high
+          markets[market].low = bar.low
+          markets[market].close = bar.close
+        }
+
+        markets[market].vbuy += bar.vbuy
+        markets[market].vsell += bar.vsell
+        markets[market].cbuy += bar.cbuy
+        markets[market].csell += bar.csell
+        markets[market].lbuy += bar.lbuy
+        markets[market].lsell += bar.lsell
+        markets[market].close = bar.close
+        markets[market].high = Math.max(markets[market].high, bar.high, bar.open, bar.close)
+        markets[market].low = Math.min(markets[market].low, bar.low, bar.open, bar.close)
+
+        this.chartCache.chunks[i].bars.splice(j--, 1)
+      }
+
+      if (i && this.chartCache.chunks[i].bars.length < MAX_BARS_PER_CHUNKS) {
+        if (this.chartCache.chunks[i].bars.length) {
+          const available = MAX_BARS_PER_CHUNKS - this.chartCache.chunks[i - 1].bars.length
+
+          if (available) {
+            this.chartCache.chunks[i - 1].bars = this.chartCache.chunks[i - 1].bars.concat(this.chartCache.chunks[i].bars.splice(0, available))
+          }
+        }
+
+        if (!this.chartCache.chunks[i].bars.length) {
+          this.chartCache.chunks.splice(i, 1)
+          i--
+        }
+      }
+    }
   }
 
   /**

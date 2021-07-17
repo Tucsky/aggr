@@ -187,6 +187,20 @@ const actions = {
         this.commit(paneId + '/SET_INDICATOR_SCRIPT', { id: indicator.id })
       }
     }
+  },
+  async rollbackIndicator({ state, commit }, indicatorId) {
+    const savedIndicator = await workspacesService.getIndicator(indicatorId)
+
+    if (!savedIndicator) {
+      this.dispatch('app/showNotice', {
+        title: `Indicator ${indicatorId} doesn't exist in your library, nothing to rollback to.`,
+        type: 'error'
+      })
+      return
+    }
+
+    state.indicators[indicatorId] = savedIndicator
+    commit('SET_INDICATOR_SCRIPT', { id: indicatorId })
   }
 } as ActionTree<ChartPaneState, ModulesState>
 

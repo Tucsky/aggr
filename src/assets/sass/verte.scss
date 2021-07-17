@@ -68,7 +68,8 @@
   .dialog-content {
     width: 250px;
     min-width: 0;
-    background-color: black;
+    background-color: transparent;
+    
     color: white;
 
     header,
@@ -80,6 +81,7 @@
   .dialog-body {
     padding: 0;
     overflow: auto;
+    background-color: black;
   }
 }
 

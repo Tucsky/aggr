@@ -5,6 +5,7 @@ import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
 import SearchDialog from '../components/SearchDialog.vue'
+import TimeframeDialog from '../components/TimeframeDialog.vue'
 
 export interface Notice {
   id?: string
@@ -50,6 +51,7 @@ export interface AppState {
   baseCurrencySymbol: string
   quoteCurrency: string
   quoteCurrencySymbol: string
+  focusedPaneId: string
 }
 
 const state = {
@@ -71,7 +73,8 @@ const state = {
   baseCurrency: 'coin',
   baseCurrencySymbol: '฿',
   quoteCurrency: 'dollar',
-  quoteCurrencySymbol: '$'
+  quoteCurrencySymbol: '$',
+  focusedPaneId: null
 } as AppState
 
 const actions = {
@@ -224,6 +227,15 @@ const actions = {
 
     dialogService.open(SearchDialog, { query, paneId })
   },
+  showTimeframe({ commit, state, rootState }) {
+    if (state.showSearch || !state.focusedPaneId || !rootState[state.focusedPaneId]) {
+      return
+    }
+    
+    commit('TOGGLE_SEARCH', true)
+
+    dialogService.open(TimeframeDialog)
+  },
   hideSearch({ commit, state }) {
     if (!state.showSearch) {
       return
@@ -358,6 +370,9 @@ const mutations = {
     state.baseCurrencySymbol = currencies.baseSymbol
     state.quoteCurrency = currencies.quote
     state.quoteCurrencySymbol = currencies.quoteSymbol
+  },
+  SET_FOCUSED_PANE(state, id: string) {
+    state.focusedPaneId = id
   }
 } as MutationTree<AppState>
 

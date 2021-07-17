@@ -7,7 +7,7 @@
     :breakpoints="breakpoints"
     :row-height="rowHeight"
     :margin="[0, 0]"
-    :vertical-compact="true"
+    :vertical-compact="false"
     :use-css-transforms="true"
     :responsive="true"
     @breakpoint-changed="onBreakpointChanged"

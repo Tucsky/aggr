@@ -57,6 +57,9 @@
               <td class="table-input table-ellipsis text-nowrap" v-text="workspace.name" :title="workspace.name" v-tippy></td>
               <td class="table-input"><small v-text="'' + ago(workspace.updatedAt) + ' ago'"></small></td>
               <td class="table-action">
+                <button class="btn  -text" @click.stop="openWorkspace(workspace.id)"><i class="icon-external-link-square-alt"></i></button>
+              </td>
+              <td class="table-action">
                 <button class="btn  -red -small" @click.stop="removeWorkspace(workspace.id)"><i class="icon-trash"></i></button>
               </td>
             </tr>
@@ -422,6 +425,11 @@ export default {
       await workspacesService.setCurrentWorkspace(workspace)
 
       this.getWorkspaces()
+    },
+
+    openWorkspace(id) {
+      const url = window.location.href.replace(this.workspace.id, id)
+      window.open(url)
     },
 
     async removeWorkspace(id) {

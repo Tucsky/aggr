@@ -2,6 +2,7 @@
   <div class="pane-header d-flex" :class="{ '-loading': loading }">
     <div class="pane-header__loader"></div>
     <span class="pane-header__name ml4 mrauto" data-hide-header @dblclick="renamePane">{{ name }}</span>
+    <div class="flex-grow-1" @dblclick="maximizePane"></div>
     <div class="toolbar">
       <slot />
       <button type="button" @click="openSearch">
@@ -10,18 +11,6 @@
       <button type="button" @click="openSettings">
         <i class="icon-cog"></i>
       </button>
-
-      <dropdown
-        v-if="showTimeframe"
-        :options="timeframes"
-        :selected="timeframe"
-        placeholder="tf."
-        @output="$store.commit(paneId + '/SET_TIMEFRAME', $event)"
-      >
-        <template v-slot:selection="{ item }">
-          <span>{{ item }}</span>
-        </template>
-      </dropdown>
 
       <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
         <template v-slot:option-0>
@@ -71,10 +60,6 @@ import { parseMarket } from '@/utils/helpers'
     paneId: {
       type: String
     },
-    showTimeframe: {
-      type: Boolean,
-      default: false
-    },
     loading: {
       type: Boolean,
       default: false
@@ -83,34 +68,6 @@ import { parseMarket } from '@/utils/helpers'
 })
 export default class extends Vue {
   paneId: string
-  timeframes = {
-    '21t': '21 ticks',
-    '50t': '50 ticks',
-    '89t': '89 ticks',
-    '100t': '100 ticks',
-    '144t': '144 ticks',
-    '200t': '200 ticks',
-    '233t': '233 ticks',
-    '377t': '377 ticks',
-    '610t': '610 ticks',
-    '1000t': '1000 ticks',
-    '1597t': '1597 ticks',
-    1: '1s',
-    3: '3s',
-    5: '5s',
-    10: '10s',
-    30: '30s',
-    60: '1m',
-    [60 * 3]: '3m',
-    [60 * 5]: '5m',
-    [60 * 15]: '15m',
-    [60 * 21]: '21m',
-    [60 * 60]: '1h',
-    [60 * 60 * 2]: '2h',
-    [60 * 60 * 4]: '4h',
-    [60 * 60 * 8]: '8h',
-    [60 * 60 * 24]: '1d'
-  }
   menu = [
     {
       label: 'Zoom'
@@ -161,10 +118,6 @@ export default class extends Vue {
     return this.$store.state.panes.panes[this.paneId].type
   }
 
-  get timeframe() {
-    return this.$store.state[this.paneId].timeframe
-  }
-
   openSettings() {
     switch (this.type) {
       case 'counters':
@@ -205,10 +158,6 @@ export default class extends Vue {
 
   duplicatePane() {
     this.$store.dispatch('panes/duplicatePane', this.paneId)
-  }
-
-  copySettings() {
-    this.$store.dispatch('panes/copySettings', this.paneId)
   }
 
   highlightPane(value: boolean) {

@@ -227,7 +227,7 @@ export default class extends Vue {
     }
 
     if (
-      this.showSearch ||
+      this.$store.state.app.showSearch ||
       event.metaKey ||
       event.ctrlKey ||
       event.altKey ||
@@ -241,8 +241,10 @@ export default class extends Vue {
 
     event = event || (window.event as any)
 
-    if (/^[a-z0-9]$/i.test(event.key)) {
+    if (/^[a-z]$/i.test(event.key)) {
       this.$store.dispatch('app/showSearch')
+    } else if (/^[0-9]$/i.test(event.key)) {
+      this.$store.dispatch('app/showTimeframe')
     }
   }
 

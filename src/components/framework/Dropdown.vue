@@ -30,6 +30,7 @@
 </template>
 
 <script lang="ts">
+import { getScrollParent } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 
 @Component({
@@ -131,9 +132,13 @@ export default class extends Vue {
 
     const dropdown = this.$refs.options
 
-    const rect = dropdown.getBoundingClientRect()
+    const dropdownRect = dropdown.getBoundingClientRect()
 
-    if (rect.y + rect.height + 32 > window.innerHeight) {
+    const container = getScrollParent(dropdown) || document.getElementById('app')
+
+    const containerRect = container.getBoundingClientRect()
+
+    if (dropdownRect.y + dropdownRect.height + 32 > containerRect.y + containerRect.height) {
       dropdown.classList.add('-upside-down')
     }
   }

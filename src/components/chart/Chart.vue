@@ -1,6 +1,6 @@
 <template>
   <div class="pane-chart">
-    <pane-header :loading="loading" :paneId="paneId" :showTimeframe="true">
+    <pane-header :loading="loading" :paneId="paneId">
       <dropdown
         :options="{
           //clear: { label: 'Clear', click: clear },
@@ -16,6 +16,12 @@
         </template>
         <template v-slot:selection>
           <span>Debug</span>
+        </template>
+      </dropdown>
+
+      <dropdown :options="timeframes" :selected="timeframe" placeholder="tf." @output="$store.commit(paneId + '/SET_TIMEFRAME', $event)">
+        <template v-slot:selection>
+          <span>{{ timeframeForHuman }}</span>
         </template>
       </dropdown>
     </pane-header>
@@ -43,7 +49,7 @@ import { Component, Mixins } from 'vue-property-decorator'
 
 import ChartController, { TimeRange } from './chartController'
 
-import { formatPrice, formatAmount, formatTime, getHms, formatBytes, openBase64InNewTab } from '../../utils/helpers'
+import { formatPrice, formatAmount, formatTime, getHms, formatBytes, openBase64InNewTab, getTimeframeForHuman } from '../../utils/helpers'
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
 import { getCustomColorsOptions } from './chartOptions'
 
@@ -72,19 +78,40 @@ export default class extends Mixins(PaneMixin) {
   loading = false
   priceWidth = 40
 
+  timeframes = {
+    '21t': '21 ticks',
+    '50t': '50 ticks',
+    '89t': '89 ticks',
+    '100t': '100 ticks',
+    '144t': '144 ticks',
+    '200t': '200 ticks',
+    '233t': '233 ticks',
+    '377t': '377 ticks',
+    '610t': '610 ticks',
+    '1000t': '1000 ticks',
+    '1597t': '1597 ticks',
+    1: '1s',
+    3: '3s',
+    5: '5s',
+    10: '10s',
+    30: '30s',
+    60: '1m',
+    [60 * 3]: '3m',
+    [60 * 5]: '5m',
+    [60 * 15]: '15m',
+    [60 * 21]: '21m',
+    [60 * 60]: '1h',
+    [60 * 60 * 2]: '2h',
+    [60 * 60 * 4]: '4h',
+    [60 * 60 * 8]: '8h',
+    [60 * 60 * 24]: '1d'
+  }
+
   private _onStoreMutation: () => void
   private _keepAliveTimeout: number
   private _onPanTimeout: number
   private _chartController: ChartController
   private _legendElements: { [id: string]: HTMLElement }
-
-  get markets() {
-    return this.$store.state.panes.panes[this.paneId].markets
-  }
-
-  get timeframe() {
-    return (this.$store.state[this.paneId] as ChartPaneState).timeframe
-  }
 
   get indicators() {
     return (this.$store.state[this.paneId] as ChartPaneState).indicators
@@ -98,8 +125,12 @@ export default class extends Mixins(PaneMixin) {
     return (this.$store.state[this.paneId] as ChartPaneState).showLegend
   }
 
-  get timezoneOffset() {
-    return this.$store.state.settings.timezoneOffset
+  get timeframe() {
+    return this.$store.state[this.paneId].timeframe
+  }
+
+  get timeframeForHuman() {
+    return getTimeframeForHuman(this.timeframe)
   }
 
   $refs!: {
@@ -108,6 +139,7 @@ export default class extends Mixins(PaneMixin) {
 
   created() {
     this._chartController = new ChartController(this.paneId)
+
     this._legendElements = {}
 
     this._onStoreMutation = this.$store.subscribe(mutation => {
@@ -121,7 +153,7 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.chartInstance.applyOptions(getCustomColorsOptions())
           break
         case 'settings/SET_TIMEZONE_OFFSET':
-          this._chartController.setTimezoneOffset(this.timezoneOffset)
+          this._chartController.setTimezoneOffset(this.$store.state.settings.timezoneOffset)
           this._chartController.clearChart()
           this._chartController.renderAll()
           break
@@ -142,8 +174,7 @@ export default class extends Mixins(PaneMixin) {
           }
           break
         case this.paneId + '/SET_TIMEFRAME':
-          this.clear()
-          this.fetch()
+          this.setTimeframe(mutation.payload)
           break
         case this.paneId + '/SET_REFRESH_RATE':
           this._chartController.clearQueue()
@@ -250,7 +281,7 @@ export default class extends Mixins(PaneMixin) {
       return Promise.reject('already-fetching')
     }
 
-    const historicalMarkets = historicalService.getHistoricalMarktets(this.markets)
+    const historicalMarkets = historicalService.getHistoricalMarktets(this.$store.state.panes.panes[this.paneId].markets)
 
     if (!historicalMarkets.length) {
       return Promise.reject('unsupported-markets')
@@ -272,7 +303,7 @@ export default class extends Mixins(PaneMixin) {
       if (this._chartController.chartCache.cacheRange && this._chartController.chartCache.cacheRange.from) {
         leftTime = this._chartController.chartCache.cacheRange.from
       } else if (visibleRange && visibleRange.from) {
-        leftTime = visibleRange.from + this.timezoneOffset / 1000
+        leftTime = visibleRange.from + this.$store.state.settings.timezoneOffset / 1000
       } else {
         leftTime = +new Date() / 1000
       }
@@ -557,7 +588,7 @@ export default class extends Mixins(PaneMixin) {
 
     const barsToLoad = Math.abs(visibleLogicalRange.from)
     const rangeToFetch = {
-      from: this._chartController.chartCache.cacheRange.from - barsToLoad * this.timeframe,
+      from: this._chartController.chartCache.cacheRange.from - barsToLoad * this.$store.state[this.paneId].timeframe,
       to: this._chartController.chartCache.cacheRange.from
     }
 
@@ -596,6 +627,21 @@ export default class extends Mixins(PaneMixin) {
 
   clear() {
     this._chartController.clear()
+
+    this.reachedEnd = false
+  }
+
+  setTimeframe(newTimeframe) {
+    const timeframe = parseInt(newTimeframe)
+    const type = newTimeframe[newTimeframe.length - 1] === 't' ? 'tick' : 'time'
+
+    if (this._chartController.timeframe < timeframe && type === this._chartController.type) {
+      this._chartController.resample(newTimeframe)
+      this._chartController.renderAll()
+    } else {
+      this._chartController.clear()
+      this.fetch()
+    }
 
     this.reachedEnd = false
   }
@@ -688,10 +734,10 @@ export default class extends Mixins(PaneMixin) {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
 
-    let timeframe = this.timeframe as any
+    let timeframe = this.$store.state[this.paneId].timeframe as any
 
     if (!isNaN(+timeframe)) {
-      timeframe = getHms(this.timeframe * 1000).toUpperCase()
+      timeframe = getHms(timeframe * 1000).toUpperCase()
     } else {
       timeframe = parseInt(timeframe) + ' TICKS'
     }

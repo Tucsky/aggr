@@ -369,3 +369,30 @@ export function copyTextToClipboard(text) {
 
   return navigator.clipboard.writeText(text)
 }
+
+export function getTimeframeForHuman(timeframe) {
+  const normalized = timeframe.toString().trim()
+
+  if (normalized[normalized.length - 1] === 't') {
+    return parseInt(normalized) + ' TICKS'
+  } else if (!isNaN(normalized)) {
+    return getHms(normalized * 1000)
+  }
+
+  return null
+}
+
+export function getScrollParent(node) {
+  if (node == null) {
+    return null
+  }
+
+  const overflowY = window.getComputedStyle(node).overflowY
+  const isScrollable = overflowY !== 'visible' && overflowY !== 'hidden'
+
+  if (isScrollable && node.scrollHeight > node.clientHeight) {
+    return node
+  } else {
+    return getScrollParent(node.parentNode)
+  }
+}

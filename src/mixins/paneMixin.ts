@@ -30,10 +30,20 @@ export default class PaneMixin extends Vue {
         this.onResize(width, this.$el.clientHeight)
       }
     })
+
+    this.$el.addEventListener('mousedown', this.focusPane)
+  }
+
+  beforeDestroy() {
+    this.$el.removeEventListener('mousedown', this.focusPane)
   }
 
   refreshZoom() {
     this.$store.dispatch('panes/refreshZoom', this.paneId)
+  }
+
+  focusPane() {
+    this.$store.commit('app/SET_FOCUSED_PANE', this.paneId)
   }
 
   onResize?(newWidth: number, newHeight: number)

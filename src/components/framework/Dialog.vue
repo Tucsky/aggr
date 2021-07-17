@@ -8,7 +8,7 @@
       :style="{ transform: `translate(${delta.x}px, ${delta.y}px)` }"
       @mousedown="onMouseDown"
     >
-      <header @mousedown="handleDrag" @touchstart="handleDrag" :style="{ color: headerColor, background: headerBackground }">
+      <header v-if="header" @mousedown="handleDrag" @touchstart="handleDrag" :style="{ color: headerColor, background: headerBackground }">
         <slot name="header"></slot>
         <div class="dialog-controls">
           <slot name="controls"></slot>
@@ -37,6 +37,10 @@ import { getEventCords } from '../../utils/picker'
       type: Boolean
     },
     mask: {
+      type: Boolean,
+      default: true
+    },
+    header: {
       type: Boolean,
       default: true
     },

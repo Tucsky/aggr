@@ -143,6 +143,12 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/TOGGLE_TRADE_TYPE':
           this.cacheFilters()
           break
+        case this.paneId + '/SET_MAX_ROWS':
+          while (this._tradesCount > this.maxRows) {
+            this.$refs.tradesContainer.removeChild(this.$refs.tradesContainer.lastChild)
+            this._tradesCount--
+          }
+          break
         case 'panes/SET_PANE_MARKETS':
           if (mutation.payload.id === this.paneId) {
             this.cacheFilters()
@@ -890,12 +896,12 @@ export default class extends Mixins(PaneMixin) {
 
   &.-level-1 {
     height: 1.5em;
-    font-size: 0.875em;
+    font-size: 1em;
   }
 
   &.-level-2 {
     height: 1.75em;
-    font-size: 1em;
+    font-size: 1.125em;
     font-weight: 600;
   }
 
@@ -903,7 +909,7 @@ export default class extends Mixins(PaneMixin) {
     height: 2em;
     box-shadow: 0 0 20px rgba(black, 0.5);
     z-index: 1;
-    font-size: 1.125em;
+    font-size: 1.25em;
   }
 
   > div {

@@ -12,9 +12,19 @@
       <div class="column -center"></div>
     </template>
     <div class="d-flex mb16">
-      <button v-if="unsavedChanges" class="btn -text" href="javascript:void(0)" @click="$store.dispatch(paneId + '/saveIndicator', indicatorId)">
-        <i class="icon-info mr4"></i> unsaved changes
-      </button>
+      <template v-if="unsavedChanges">
+        <button
+          v-if="unsavedChanges"
+          class="btn -green"
+          href="javascript:void(0)"
+          @click="$store.dispatch(paneId + '/saveIndicator', indicatorId)"
+          v-tippy
+          title="Save it to use / sync with other panes"
+        >
+          <i class="icon-info mr4"></i> Save changes
+        </button>
+        <button class="btn -text" @click="rollbackIndicator"><i class="icon-eraser"></i></button
+      ></template>
       <button class="btn -text -white mlauto" @click="showHelp">doc <i class="icon-external-link-square-alt ml4"></i></button>
     </div>
     <div class="d-flex mobile-dir-col-desktop-dir-row">
@@ -162,11 +172,10 @@
 
     <hr />
     <div class="form-group column">
-      <button class="btn -blue mr16 mlauto" v-tippy title="Duplicate" @click="duplicateIndicator">
-        <i class="icon-copy-paste"></i>
-      </button>
-      <button class="btn -red" v-tippy title="Unload indicator" @click="removeIndicator">
-        <i class="icon-cross"></i>
+      <presets type="indicator" class="mr8 -left" :adapter="getIndicatorPreset" @apply="applyIndicatorPreset($event)" label="Presets" />
+      <button class="btn -red" v-tippy title="Unload indicator" @click="removeIndicator"><i class="icon-cross mr4"></i> Unload</button>
+      <button class="btn -text ml8 mrauto" v-tippy title="Duplicate" @click="duplicateIndicator">
+        <i class="icon-copy-paste mr4"></i> Make a copy
       </button>
     </div>
   </Dialog>
@@ -180,8 +189,8 @@ import Behave from 'behave-js'
 import IndicatorDialog from './IndicatorDialog.vue'
 import SerieHelpDialog from './IndicatorHelpDialog.vue'
 import dialogService from '../../services/dialogService'
-import workspacesService from '../../services/workspacesService'
 import merge from 'lodash.merge'
+import IndicatorPresetDialog from './IndicatorPresetDialog.vue'
 
 const ignoredOptionsKeys = ['crosshairMarkerVisible', 'minLength', 'visible', 'priceScaleId']
 
@@ -552,17 +561,14 @@ export default {
       }
     },
     async duplicateIndicator() {
-      const settings = merge({}, store.state[this.paneId].indicators[this.indicatorId])
+      const indicator = merge({}, store.state[this.paneId].indicators[this.indicatorId])
 
-      settings.id += '-copy'
-      settings.name += ' copy'
-      delete settings.updatedAt
-      delete settings.createdAt
+      indicator.id += '-copy'
+      indicator.name += ' copy'
+      delete indicator.updatedAt
+      delete indicator.createdAt
 
-      const id = await workspacesService.saveIndicator(settings)
-      const serie = await workspacesService.getIndicator(id)
-
-      this.$store.dispatch(this.paneId + '/addIndicator', serie)
+      this.$store.dispatch(this.paneId + '/addIndicator', indicator)
 
       await this.close()
 
@@ -570,13 +576,13 @@ export default {
         IndicatorDialog,
         {
           paneId: this.paneId,
-          indicatorId: id
+          indicatorId: indicator.id
         },
         'serie'
       )
     },
-    transferIndicator() {
-      this.$store.dispatch(this.paneId + '/transferIndicator', store.state[this.paneId].indicators[this.indicatorId])
+    rollbackIndicator() {
+      this.$store.dispatch(this.paneId + '/rollbackIndicator', this.indicatorId)
     },
     toggleSection(id) {
       const index = this.sections.indexOf(id)
@@ -604,6 +610,68 @@ export default {
           fence: false
         })
       })
+    },
+    async getIndicatorPreset() {
+      const payload = await dialogService.openAsPromise(IndicatorPresetDialog)
+
+      if (payload) {
+        if (!payload.colors && !payload.script && !payload.values) {
+          this.$store.dispatch('app/showNotice', {
+            title: 'You did not select anything to save in the preset !',
+            type: 'error'
+          })
+          return
+        }
+
+        const indicatorPreset = {
+          options: {}
+        }
+
+        const ignoreKeys = ['scaleMargins', 'priceFormat', 'visible']
+
+        if (payload.values) {
+          for (const key of this.otherOptionsKeys) {
+            if (ignoreKeys.indexOf(key) !== -1) {
+              continue
+            }
+            indicatorPreset.options[key] = this.getValue(key)
+          }
+        }
+
+        if (payload.colors) {
+          for (const key of this.colorOptionsKeys) {
+            if (ignoreKeys.indexOf(key) !== -1) {
+              continue
+            }
+            indicatorPreset.options[key] = this.getValue(key)
+          }
+        }
+
+        if (payload.script) {
+          indicatorPreset.script = this.script
+        }
+
+        return indicatorPreset
+      }
+    },
+    applyIndicatorPreset(presetData) {
+      const indicator = this.$store.state[this.paneId].indicators[this.indicatorId]
+
+      if (presetData) {
+        merge(indicator, presetData)
+      } else {
+        const keys = this.otherOptionsKeys.concat(this.colorOptionsKeys)
+
+        for (const key of keys) {
+          const defaultValue = this.getDefaultValue(key)
+
+          if (typeof defaultValue !== 'undefined') {
+            indicator.options[key] = defaultValue
+          }
+        }
+      }
+
+      this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', { id: this.indicatorId })
     }
   }
 }

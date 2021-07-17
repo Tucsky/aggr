@@ -1,4 +1,4 @@
-import { MAX_CHUNKS } from '../../utils/constants'
+import { MAX_BARS_PER_CHUNKS, MAX_CHUNKS } from '../../utils/constants'
 import { getHms } from '../../utils/helpers'
 import { Bar, TimeRange } from './chartController'
 
