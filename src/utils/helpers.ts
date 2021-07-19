@@ -387,6 +387,10 @@ export function getScrollParent(node) {
     return null
   }
 
+  if (node.id === 'app') {
+    return node
+  }
+
   const overflowY = window.getComputedStyle(node).overflowY
   const isScrollable = overflowY !== 'visible' && overflowY !== 'hidden'
 

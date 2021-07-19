@@ -81,6 +81,96 @@ const actions = {
     commit('TOGGLE_EXCHANGE_VISIBILITY', id)
 
     this.commit('app/EXCHANGE_UPDATED', id)
+  },
+  indexExchangeProducts(noop, { exchange, symbols }: { exchange: string; symbols: string[] }) {
+    const products = []
+
+    const baseRegex = '([a-z0-9]{2,})'
+    const quoteRegexKnown = '(eur|usd|usdt|usdc|tusd)'
+    const quoteRegexOthers = '([a-z0-9]{3,})'
+
+    const baseQuoteLookup1 = new RegExp(`^${baseRegex}[^a-z0-9]?${quoteRegexKnown}$`, 'i')
+    const baseQuoteLookup2 = new RegExp(`^${baseRegex}[^a-z0-9]?${quoteRegexOthers}$`, 'i')
+    const baseQuoteLookup1Inverted = new RegExp(`^${quoteRegexKnown}[^a-z0-9]?${baseRegex}$`, 'i')
+    const baseQuoteLookup2Inverted = new RegExp(`^${quoteRegexOthers}[^a-z0-9]?${baseRegex}$`, 'i')
+
+    for (let i = 0; i < symbols.length; i++) {
+      const symbol = symbols[i]
+      const id = exchange + ':' + symbol
+      let type = 'spot'
+
+      if (/\d{2}$/.test(symbol)) {
+        type = 'future'
+      } else if (exchange === 'BITMEX' || exchange === 'BYBIT' || /(-|_)swap$|(-|_|:)perp/i.test(symbol)) {
+        type = 'perp'
+      } else if (exchange === 'BINANCE_FUTURES') {
+        type = 'perp'
+      } else if (exchange === 'BITFINEX' && /F0$/.test(symbol)) {
+        type = 'perp'
+      } else if (exchange === 'PHEMEX' && symbol[0] !== 's') {
+        type = 'perp'
+      } else if (exchange === 'HUOBI' && /_(CQ|NW|CQ|NQ)$/.test(symbol)) {
+        type = 'future'
+      } else if (exchange === 'HUOBI' && /-/.test(symbol)) {
+        type = 'perp'
+      } else if (exchange === 'KRAKEN' && /PI_/.test(symbol)) {
+        type = 'perp'
+      }
+
+      let localSymbol = symbol
+        .replace(/-PERP(ETUAL)?/i, '-USD')
+        .replace(/[^a-z0-9](perp|swap|perpetual)$/i, '')
+        .replace(/[^a-z0-9]\d+$/i, '')
+
+      let match
+
+      if (exchange === 'POLONIEX') {
+        match = localSymbol.match(baseQuoteLookup1Inverted)
+
+        if (!match) {
+          match = localSymbol.match(baseQuoteLookup2Inverted)
+        }
+      } else {
+        match = localSymbol.match(baseQuoteLookup1)
+
+        if (!match) {
+          match = localSymbol.match(baseQuoteLookup2)
+        }
+      }
+
+      if (!match && (exchange === 'DERIBIT' || exchange === 'FTX' || exchange === 'HUOBI')) {
+        match = localSymbol.match(/(\w+)[^a-z0-9]/i)
+
+        if (match) {
+          match[2] = match[1]
+        }
+      }
+
+      let base
+      let quote
+
+      if (match) {
+        base = match[1]
+        quote = match[2]
+
+        localSymbol = base + quote.replace(/usdt/i, 'usd')
+      }
+
+      products.push({
+        id,
+        base,
+        quote,
+        pair: symbol,
+        local: localSymbol,
+        exchange,
+        type
+      })
+    }
+
+    this.commit('app/INDEX_EXCHANGE_PRODUCTS', {
+      exchange,
+      products
+    })
   }
 } as ActionTree<ExchangesState, ModulesState>
 

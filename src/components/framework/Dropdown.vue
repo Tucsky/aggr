@@ -51,6 +51,9 @@ import { Component, Vue } from 'vue-property-decorator'
     alwaysShowPlaceholder: {
       default: true
     },
+    autoClose: {
+      default: true
+    },
     selectionClass: {
       required: false
     }
@@ -58,6 +61,7 @@ import { Component, Vue } from 'vue-property-decorator'
 })
 export default class extends Vue {
   options: any
+  autoClose: boolean
   isOpen = false
 
   private _clickOutsideHandler: () => void
@@ -158,7 +162,9 @@ export default class extends Vue {
     if (!event.defaultPrevented) {
       this.$emit('output', index)
 
-      this.hide()
+      if (this.autoClose) {
+        this.hide()
+      }
     }
   }
 }

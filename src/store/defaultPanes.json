@@ -24,7 +24,9 @@
         "HUOBI:BTC-USD",
         "KRAKEN:PI_XBTUSD",
         "DERIBIT:BTC-PERPETUAL",
-        "FTX:BTC-PERP"
+        "FTX:BTC-PERP",
+        "FTX:BTC/USD",
+        "FTX:BTC/USDT"
       ]
     },
     "trades": {
@@ -49,7 +51,9 @@
         "HUOBI:BTC-USD",
         "KRAKEN:PI_XBTUSD",
         "DERIBIT:BTC-PERPETUAL",
-        "FTX:BTC-PERP"
+        "FTX:BTC-PERP",
+        "FTX:BTC/USD",
+        "FTX:BTC/USDT"
       ],
       "settings": {
         "tradeType": "trades",

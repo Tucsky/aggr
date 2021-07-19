@@ -278,13 +278,13 @@ export default class extends Mixins(PaneMixin) {
    */
   fetch(rangeToFetch?: TimeRange) {
     if (this.loading) {
-      return Promise.reject('already-fetching')
+      return
     }
 
     const historicalMarkets = historicalService.getHistoricalMarktets(this.$store.state.panes.panes[this.paneId].markets)
 
     if (!historicalMarkets.length) {
-      return Promise.reject('unsupported-markets')
+      return
     }
 
     const visibleRange = this._chartController.getVisibleRange() as TimeRange

@@ -32,6 +32,13 @@ export interface NoticesState {
   notices: Notice[]
 }
 
+export interface Product {
+  id: string
+  pair: string
+  exchange: string
+  type: string
+}
+
 export interface AppState {
   isBooted: boolean
   isLoading: boolean
@@ -52,6 +59,7 @@ export interface AppState {
   quoteCurrency: string
   quoteCurrencySymbol: string
   focusedPaneId: string
+  searchFilters: any
 }
 
 const state = {
@@ -74,7 +82,14 @@ const state = {
   baseCurrencySymbol: '฿',
   quoteCurrency: 'dollar',
   quoteCurrencySymbol: '$',
-  focusedPaneId: null
+  focusedPaneId: null,
+  searchFilters: {
+    historical: false,
+    spots: true,
+    perpetuals: true,
+    futures: false,
+    normalize: true
+  }
 } as AppState
 
 const actions = {
@@ -231,7 +246,7 @@ const actions = {
     if (state.showSearch || !state.focusedPaneId || !rootState[state.focusedPaneId]) {
       return
     }
-    
+
     commit('TOGGLE_SEARCH', true)
 
     dialogService.open(TimeframeDialog)
@@ -306,40 +321,8 @@ const mutations = {
   SET_BUILD_DATE(state, value) {
     state.buildDate = value
   },
-  INDEX_EXCHANGE_PRODUCTS(state, { exchange, products }: { exchange: string; products: string[] }) {
-    Vue.set(
-      state.indexedProducts,
-      exchange,
-      products.map(pair => {
-        const id = exchange + ':' + pair
-        let type = 'spot'
-
-        if (/\d{2}$/.test(pair)) {
-          type = 'futures'
-        } else if (exchange === 'BITMEX' || exchange === 'BYBIT' || /(-|_)swap$|(-|_|:)perp/i.test(pair)) {
-          type = 'perp'
-        } else if (exchange === 'BINANCE_FUTURES') {
-          type = 'perp'
-        } else if (exchange === 'BITFINEX' && /F0$/.test(pair)) {
-          type = 'perp'
-        } else if (exchange === 'PHEMEX' && pair[0] !== 's') {
-          type = 'perp'
-        } else if (exchange === 'HUOBI' && /_(CQ|NW|CQ|NQ)$/.test(pair)) {
-          type = 'futures'
-        } else if (exchange === 'HUOBI' && /-/.test(pair)) {
-          type = 'perp'
-        } else if (exchange === 'KRAKEN' && /PI_/.test(pair)) {
-          type = 'perp'
-        }
-
-        return {
-          id,
-          pair,
-          exchange,
-          type
-        }
-      })
-    )
+  INDEX_EXCHANGE_PRODUCTS(state, { exchange, products }: { exchange: string; products: Product[] }) {
+    Vue.set(state.indexedProducts, exchange, products)
   },
   ADD_ACTIVE_MARKET(state, { exchange, pair }: { exchange: string; pair: string }) {
     const market = state.activeMarkets.find(m => m.exchange === exchange && m.pair === pair)
@@ -373,6 +356,20 @@ const mutations = {
   },
   SET_FOCUSED_PANE(state, id: string) {
     state.focusedPaneId = id
+  },
+  TOGGLE_SEARCH_FILTER(state, key: string) {
+    Vue.set(state.searchFilters, key, !state.searchFilters[key])
+  },
+  CLEAR_SEARCH_FILTERS(state) {
+    for (const key in state.searchFilters) {
+      if (key === 'normalize') {
+        continue
+      }
+
+      state.searchFilters[key] = false
+    }
+
+    Vue.set(state, 'searchFilters', state.searchFilters)
   }
 } as MutationTree<AppState>
 

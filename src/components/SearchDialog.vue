@@ -16,14 +16,18 @@
     <div class="search">
       <div class="form-group">
         <div class="mb0 d-flex">
-          <input ref="input" type="text" class="form-control flex-grow-1" placeholder="eg: BITMEX:XBTUSD" v-model="query" />
+          <div class="input-group flex-grow-1">
+            <input ref="input" type="text" class="form-control" placeholder="eg: BITMEX:XBTUSD" v-model="query" />
+            <!--<button v-if="canFeelLucky" class="btn -text" title="I'm feeling lucky 🍀" v-tippy @click="imFeelingLucky">
+              <i class="icon-magic"></i>
+            </button>-->
+          </div>
           <dropdown
-            :options="filters"
+            :options="searchFilters"
             placeholder="Filter"
-            title="Filters"
-            v-tippy="{ placement: 'top' }"
             @output="toggleFilter($event)"
-            :selectionClass="!hasFilters ? '-text' : 'ml8 -green'"
+            :auto-close="false"
+            :selection-class="!hasFilters ? '-text' : 'ml8 -green'"
           >
             <template v-slot:selection> filter <i class="ml4" :class="hasFilters ? 'icon-check' : 'icon-plus'"></i> </template>
             <template v-slot:option="{ index, value }">
@@ -69,9 +73,12 @@
               <td v-text="market.exchange"></td>
               <td v-text="market.pair"></td>
               <td v-text="market.type"></td>
-              <td class=" text-center">
+              <td class="text-center">
                 <i v-if="historicalMarkets.indexOf(market.id) !== -1" class="icon-candlestick icon-lower"></i>
               </td>
+            </tr>
+            <tr v-if="results.length > 0 && results.length <= 25" class="-action" @click="addAll">
+              <td colspan="100%">add all ({{ results.length }}) ☝</td>
             </tr>
           </tbody>
         </table>
@@ -80,7 +87,7 @@
             No results
             <template v-if="hasFilters"> (<button class="btn -text color-100 pl0 pr0" @click="clearFilters">delete filters</button>)</template>
           </p>
-          <div v-if="filters.historical" class="color-100 px16 pt0">
+          <div v-if="searchFilters.historical" class="color-100 px16 pt0">
             <p class="color-100 mb0">In need for more historical data ?</p>
             <p class="mt0 color-100">
               <a class="btn -text" href="https://github.com/Tucsky/aggr-server" target="_blank">Run your own aggr</a>
@@ -156,13 +163,7 @@ export default {
     markets: [],
     selection: [],
     originalSelection: [],
-    activeIndex: null,
-    filters: {
-      historical: false,
-      perpetuals: false,
-      futures: false,
-      spots: false
-    }
+    activeIndex: null
   }),
   computed: {
     transitionGroupName() {
@@ -219,6 +220,19 @@ export default {
 
       return label ? label + ' markets' : 'OK'
     },
+    canFeelLucky() {
+      return this.query.replace(/\W/g, '').length > 4
+    },
+    searchFilters() {
+      return this.$store.state.app.searchFilters
+    },
+    hasFilters() {
+      const hasHistorical = this.searchFilters.historical
+      const hasSpot = this.searchFilters.spots
+      const hasPerpetuals = this.searchFilters.perpetuals
+      const hasFutures = this.searchFilters.futures
+      return hasHistorical || hasSpot || hasPerpetuals || hasFutures
+    },
     historicalMarkets() {
       return this.$store.state.app.historicalMarkets
     },
@@ -229,23 +243,31 @@ export default {
       return Array.prototype.concat(...Object.values(this.indexedProducts))
     },
     queryFilter: function() {
-      return new RegExp(this.query.replace(/[ ,]/g, '|'), 'i')
+      const multiQuery = this.query.replace(/[ ,]/g, '|')
+
+      if (this.searchFilters.normalize) {
+        return new RegExp('^' + multiQuery, 'i')
+      } else {
+        return new RegExp(multiQuery, 'i')
+      }
     },
     filteredProducts() {
+      const hasHistorical = this.searchFilters.historical
+      const hasSpot = this.searchFilters.spots
+      const hasPerpetuals = this.searchFilters.perpetuals
+      const hasFutures = this.searchFilters.futures
+      const hasTypeFilters = hasSpot || hasPerpetuals || hasFutures
+
       return this.flattenedProducts.filter(a => {
-        if (this.filters.historical && this.historicalMarkets.indexOf(a.id) === -1) {
+        if (hasHistorical && this.historicalMarkets.indexOf(a.id) === -1) {
           return false
         }
 
-        if (this.filters.futures && a.type !== 'futures') {
-          return false
-        }
+        if (hasTypeFilters) {
+          if ((hasFutures && a.type === 'future') || (hasPerpetuals && a.type === 'perp') || (hasSpot && a.type === 'spot')) {
+            return true
+          }
 
-        if (this.filters.perpetuals && a.type !== 'perp') {
-          return false
-        }
-
-        if (this.filters.spots && a.type !== 'spot') {
           return false
         }
 
@@ -253,10 +275,11 @@ export default {
       })
     },
     results: function() {
-      return this.filteredProducts.filter(a => this.selection.indexOf(a.id) === -1 && this.queryFilter.test(a.id)).slice(0, 50)
-    },
-    hasFilters() {
-      return !!Object.values(this.filters).find(a => !!a)
+      const isNormalized = this.searchFilters.normalize
+
+      return this.filteredProducts
+        .filter(a => this.selection.indexOf(a.id) === -1 && (isNormalized ? this.queryFilter.test(a.local) : this.queryFilter.test(a.id)))
+        .slice(0, 50)
     }
   },
   watch: {
@@ -298,11 +321,13 @@ export default {
       )
     },
     selectPaneMarkets(paneId) {
-      this.selection.splice(0, this.selection.length)
-
       const pane = this.otherPanes[paneId]
 
       for (let i = 0; i < pane.markets.length; i++) {
+        if (this.selection.indexOf(pane.markets[i]) !== -1) {
+          continue
+        }
+
         this.selection.push(pane.markets[i])
       }
     },
@@ -343,18 +368,7 @@ export default {
       this.$store.dispatch('app/hideSearch')
     },
     toggleFilter(key) {
-      const types = ['spots', 'perpetuals', 'futures']
-
-      if (types.indexOf(key) !== -1) {
-        for (const type of types) {
-          if (type === key) {
-            continue
-          }
-          this.filters[type] = false
-        }
-      }
-
-      this.$set(this.filters, key, !this.filters[key])
+      this.$store.commit('app/TOGGLE_SEARCH_FILTER', key)
     },
 
     beforeEnter(element) {
@@ -439,9 +453,7 @@ export default {
     },
 
     clearFilters() {
-      for (const id in this.filters) {
-        this.filters[id] = false
-      }
+      this.$store.commit('app/CLEAR_SEARCH_FILTERS')
     },
 
     onPaste(event) {
@@ -484,6 +496,18 @@ export default {
             }
           }
           break
+      }
+    },
+
+    addAll() {
+      for (let i = 0; i < this.results.length; i++) {
+        if (this.selection.indexOf(this.results[i].id) !== -1) {
+          continue
+        }
+
+        this.selection.push(this.results[i].id)
+
+        i--
       }
     }
   }
@@ -568,6 +592,7 @@ export default {
 
   .search__results {
     overflow: auto;
+    min-height: 100px;
   }
 
   @media screen and (min-width: 768px) {

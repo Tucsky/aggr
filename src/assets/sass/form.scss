@@ -92,23 +92,17 @@
 }
 
 .input-group {
-  display: flex;
+  position: relative;
 
   > .form-control {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
+    width: 100%;
   }
 
-  > .checkbox-control {
-    align-items: stretch;
-
-    > div {
-      height: 100%;
-      padding: 0 1.25em;
-      width: auto;
-      border-top-left-radius: 0;
-      border-bottom-left-radius: 0;
-    }
+  > .btn {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
   }
 }
 

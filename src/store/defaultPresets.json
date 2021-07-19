@@ -38,7 +38,7 @@
           "sellColor": "rgb(255,235,59)",
           "buyAudio": "var srqtR = Math.min(1, gain / 10)\nplay(329.63, srqtR, 1,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",
           "sellAudio": "var srqtR = Math.min(1, gain / 10)\nplay(440, srqtR, 1,0,,,'sine')\nplay(440, srqtR, srqtR*10,0.08,,,'sine')"
-      }
+        }
       ]
     }
   },
@@ -65,6 +65,24 @@
       "liquidations": {
         "buyAudio": "playurl(https://d7d3471nr939s.cloudfront.net/PlasticDrums_Noiiz/MP3/One+Shots/Kitchen+Kit/D_WaterBottleTom_01_631.mp3?cb=d1d46d16-81be-4674-875c-6c55cb54c797, gain)",
         "sellAudio": "playurl(https://d7d3471nr939s.cloudfront.net/PlasticDrums_Noiiz/MP3/One+Shots/Kitchen+Kit/C%23_PlasticBottleKick_01_631.mp3?cb=eb673166-02a6-43b9-8187-daf05ea65a16, gain)"
+      }
+    }
+  },
+  {
+    "name": "indicator:classic",
+    "type": "indicator",
+    "data": {
+      "options": {
+        "upColor": "rgba(100, 157, 102, 0)",
+        "downColor": "rgb(156,52,62)",
+        "borderUpColor": "rgb(59, 202, 109)",
+        "borderDownColor": "rgb(239,67,82)",
+        "wickUpColor": "rgb(59, 202, 109)",
+        "wickDownColor": "rgb(239,67,82)",
+        "borderVisible": true,
+        "lastValueVisible": true,
+        "priceLineColor": "rgba(255, 255, 255, .5)",
+        "priceLineVisible": true
       }
     }
   }
