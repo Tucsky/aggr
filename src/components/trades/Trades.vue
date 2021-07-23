@@ -324,11 +324,11 @@ export default class extends Mixins(PaneMixin) {
 
       li.style.color =
         luminance > (animated ? 144 : 170)
-          ? 'rgba(0, 0, 0, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
-          : 'rgba(255, 255, 255, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
+          ? 'rgba(0, 0, 0, ' + Math.min(1, 0.33 + percentToSignificant) + ')'
+          : 'rgba(255, 255, 255, ' + Math.min(1, 0.33 + percentToSignificant) + ')'
 
       li.style.backgroundColor =
-        'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + percentToSignificant + ')'
+        'rgba(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + percentToSignificant + ')'
 
       if (amount > this._audioThreshold) {
         this._liquidationsAudio[trade.side](audioService, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
@@ -370,7 +370,6 @@ export default class extends Mixins(PaneMixin) {
           // percentage to next threshold
           const percentToNextThreshold = (Math.max(amount, color.threshold) - color.threshold) / color.range
           const percentToSignificant = amount / this._significantThresholdAmount
-
           // 0-255 luminance of nearest color
           const luminance = color[trade.side][(percentToNextThreshold < 0.5 ? 'from' : 'to') + 'Luminance']
 
@@ -382,8 +381,8 @@ export default class extends Mixins(PaneMixin) {
           // darken if luminance of background is high, lighten otherwise
           li.style.color =
             luminance > (animated ? 144 : 170)
-              ? 'rgba(0, 0, 0, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
-              : 'rgba(255, 255, 255, ' + Math.min(1, 0.25 + percentToSignificant) + ')'
+              ? 'rgba(0, 0, 0, ' + Math.min(1, 0.33 + percentToSignificant) + ')'
+              : 'rgba(255, 255, 255, ' + Math.min(1, 0.33 + percentToSignificant) + ')'
 
           if (amount > this._audioThreshold) {
             this._thresholdsAudios[i][trade.side](audioService, percentToSignificant, trade.side, i)
