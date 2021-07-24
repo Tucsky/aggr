@@ -14,13 +14,12 @@
       </div>
 
       <div class="timeframe-for-human">
-        <code v-if="valid" v-text="'= ' + timeframeForHuman"></code>
-        <code v-else class="form-feedback">Invalid timeframe</code>
+        <code v-if="valid" class="text-muted" v-text="'= ' + timeframeForHuman"></code>
+        <code v-else class="form-feedback">Unknown timeframe</code>
       </div>
 
       <footer>
-        <a href="javascript:void(0);" class="btn -text" @click="close(false)">Cancel</a>
-        <button type="submit" class="btn -green ml8 -large"><i class="icon-check mr4"></i> OK</button>
+        <button type="submit" class="btn -green ml8 -large">Go</button>
       </footer>
     </form>
   </Dialog>
@@ -136,6 +135,7 @@ export default {
       font-family: $font-monospace;
       text-align: center;
       padding: 0.5em;
+      border: 0;
     }
 
     .timeframe-for-human {

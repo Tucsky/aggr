@@ -89,7 +89,7 @@ export default class extends Vue {
     }
 
     if (event.which === 38 || event.which === 40) {
-      this.crement(event.which === 40 ? 1 : -1)
+      this.crement((event.which === 40 ? 1 : -1) * (event.shiftKey ? 100 : 1))
     }
   }
 
@@ -121,7 +121,7 @@ export default class extends Vue {
     const min = typeof this.min === 'undefined' ? 0 : this.min
     const step = this.step || 1
     const precision = countDecimals(step)
-    const change = step * (direction > 0 ? -1 : 1)
+    const change = step * direction * -1
     const value = +Math.max(min, Math.min(max, +text + change)).toFixed(precision)
 
     this.$emit('output', value)
@@ -134,7 +134,7 @@ export default class extends Vue {
 
     event.preventDefault()
 
-    this.crement(Math.sign(event.deltaY))
+    this.crement(Math.sign(event.deltaY) * (event.shiftKey ? 100 : 1))
   }
 }
 </script>

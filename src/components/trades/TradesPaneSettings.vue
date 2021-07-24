@@ -223,7 +223,7 @@
         </a>-->
           </div>
         </div>
-        <a v-else href="javascript:void(0);" @click="$store.dispatch('app/showSearch', { paneId })">
+        <a v-else href="javascript:void(0);" @click="$store.dispatch('app/showSearch', paneId)">
           Add markets to pane
         </a>
       </div>

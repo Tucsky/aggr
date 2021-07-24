@@ -70,8 +70,8 @@
       "color": "rgba(255, 255, 255, .15)",
       "priceScaleId": "volume",
       "scaleMargins": {
-        "top": 0.91,
-        "bottom": 0
+        "top": 0.75,
+        "bottom": 0.05
       }
     }
   },
@@ -86,8 +86,8 @@
       "downColor": "#EB1E2F",
       "priceScaleId": "volume",
       "scaleMargins": {
-        "top": 0.91,
-        "bottom": 0
+        "top": 0.75,
+        "bottom": 0.05
       }
     }
   },
@@ -103,8 +103,8 @@
       "downColor": "#EB1E2F",
       "priceScaleId": "volume",
       "scaleMargins": {
-        "top": 0.91,
-        "bottom": 0
+        "top": 0.75,
+        "bottom": 0.05
       }
     }
   },
@@ -119,8 +119,8 @@
       "upColor": "rgb(255,76,243)",
       "downColor": "rgb(255,183,77)",
       "scaleMargins": {
-        "top": 0.81,
-        "bottom": 0.1
+        "top": 0.96,
+        "bottom": 0.01
       }
     }
   },
@@ -133,7 +133,11 @@
       "priceFormat": {
         "type": "volume"
       },
-      "color": "#3BCA6D"
+      "color": "#3BCA6D",
+      "scaleMargins": {
+        "top": 0.75,
+        "bottom": 0.0
+      }
     }
   },
   "btccvdperp": {

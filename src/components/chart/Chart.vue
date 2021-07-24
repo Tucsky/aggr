@@ -3,9 +3,8 @@
     <pane-header :loading="loading" :paneId="paneId">
       <dropdown
         :options="{
-          //clear: { label: 'Clear', click: clear },
-          //trim: { label: 'Trim', click: refreshChart },
           render: { label: 'Render', click: renderChart },
+          trim: { label: 'Trim', click: trimChart },
           reset: { label: 'Reload', click: resetChart }
         }"
       >
@@ -552,18 +551,28 @@ export default class extends Mixins(PaneMixin) {
 
   keepAlive() {
     if (this._keepAliveTimeout) {
-      this._chartController.chartCache.trim()
-
-      this._chartController.renderAll()
+      this.trimChart()
+      this.renderChart()
     }
 
-    this._keepAliveTimeout = setTimeout(this.keepAlive.bind(this), 1000 * 60 * 30)
+    this._keepAliveTimeout = setTimeout(this.keepAlive.bind(this), 1000 * 60 * 5)
   }
 
   refreshChart() {
-    this._chartController.chartCache.trim()
-
+    this.trimChart()
     this.renderChart()
+  }
+
+  trimChart() {
+    const visibleRange = this._chartController.getVisibleRange() as TimeRange
+
+    let end
+
+    if (visibleRange) {
+      end = visibleRange.from - (visibleRange.to - visibleRange.from)
+    }
+
+    this._chartController.chartCache.trim(end)
   }
 
   renderChart() {
@@ -635,7 +644,11 @@ export default class extends Mixins(PaneMixin) {
     const timeframe = parseInt(newTimeframe)
     const type = newTimeframe[newTimeframe.length - 1] === 't' ? 'tick' : 'time'
 
-    if (this._chartController.timeframe < timeframe && type === this._chartController.type) {
+    if (
+      this._chartController.timeframe < timeframe &&
+      type === this._chartController.type &&
+      Number.isInteger(timeframe / this._chartController.timeframe)
+    ) {
       this._chartController.resample(newTimeframe)
       this._chartController.renderAll()
     } else {

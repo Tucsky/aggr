@@ -43,7 +43,7 @@ const state = {
   indicators: {},
   resizingIndicator: null,
   timeframe: 10,
-  refreshRate: 500,
+  refreshRate: 1000,
   showLegend: true,
   showHorizontalGridlines: false,
   horizontalGridlinesColor: 'rgba(255,255,255,.1)',

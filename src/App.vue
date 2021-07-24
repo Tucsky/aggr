@@ -51,6 +51,7 @@ import aggregatorService from './services/aggregatorService'
 
 import Notices from './components/framework/Notices.vue'
 import Menu from './components/Menu.vue'
+import SettingsImportConfirmation from './components/settings/ImportConfirmation.vue'
 
 import Panes from '@/components/panes/Panes.vue'
 
@@ -150,6 +151,7 @@ export default class extends Vue {
   }
 
   mounted() {
+    this.bindDropFile()
     aggregatorService.on('notice', (notice: Notice) => {
       this.$store.dispatch('app/showNotice', notice)
     })
@@ -159,6 +161,7 @@ export default class extends Vue {
   }
 
   beforeDestroy() {
+    this.unbindDropFile()
     this.stopUpdatingPrice()
   }
 
@@ -261,6 +264,59 @@ export default class extends Vue {
     } else if (response === false) {
       workspacesService.downloadWorkspace()
     }
+  }
+
+  bindDropFile() {
+    document.body.addEventListener('drop', this.handleDrop)
+    document.body.addEventListener('dragover', this.handleDrop)
+  }
+
+  unbindDropFile() {
+    document.body.removeEventListener('drop', this.handleDrop)
+    document.body.removeEventListener('dragover', this.handleDrop)
+  }
+  handleDrop(e) {
+    e.preventDefault()
+
+    if (e.type !== 'drop') {
+      return false
+    }
+
+    const files = e.dataTransfer.files
+
+    if (!files || !files.length) {
+      return
+    }
+
+    const reader = new FileReader()
+
+    reader.onload = async ({ target }) => {
+      const workspace = workspacesService.validateWorkspace(target.result)
+
+      if (!workspace) {
+        return
+      }
+
+      if (
+        (await workspacesService.getWorkspace(workspace.id)) &&
+        !(await dialogService.confirm({
+          message: `Workspace ${workspace.id} already exists`,
+          ok: 'Import anyway',
+          cancel: 'Annuler'
+        }))
+      ) {
+        return
+      }
+
+      if (
+        await dialogService.openAsPromise(SettingsImportConfirmation, {
+          workspace
+        })
+      ) {
+        workspacesService.importAndSetWorkspace(workspace)
+      }
+    }
+    reader.readAsText(files[0])
   }
 }
 </script>

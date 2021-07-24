@@ -502,6 +502,53 @@ class WorkspacesService {
     return this.db.getAllKeys('presets', IDBKeyRange.bound(type, type + '|', true, true))
   }
 
+  async importAndSetWorkspace(workspace) {
+    await this.setCurrentWorkspace(await this.importWorkspace(workspace))
+
+    this.getWorkspaces()
+  }
+
+  validateWorkspace(raw) {
+    let workspace = null
+
+    try {
+      workspace = JSON.parse(raw)
+    } catch (error) {
+      store.dispatch('app/showNotice', {
+        type: 'error',
+        title: `The workspace you provided couldn't be parsed<br>${error.message}`
+      })
+
+      return
+    }
+
+    if (!workspace.id) {
+      store.dispatch('app/showNotice', {
+        type: 'error',
+        title: `The workspace you provided has no ID`
+      })
+      return
+    }
+
+    if (!workspace.name) {
+      store.dispatch('app/showNotice', {
+        type: 'error',
+        title: `The workspace you provided has no name`
+      })
+      return
+    }
+
+    if (!workspace.states || Object.keys(workspace.states).length === 0) {
+      store.dispatch('app/showNotice', {
+        type: 'error',
+        title: `The workspace you provided is empty`
+      })
+      return
+    }
+
+    return workspace
+  }
+
   async reset() {
     if (this.db) {
       this.db.close()

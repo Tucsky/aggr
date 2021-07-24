@@ -1,4 +1,3 @@
-import { MAX_BARS_PER_CHUNKS, MAX_CHUNKS } from '../../utils/constants'
 import { getHms } from '../../utils/helpers'
 import { Bar, TimeRange } from './chartController'
 
@@ -65,16 +64,11 @@ export default class ChartCache {
     this.cacheRange.from = this.cacheRange.to = null
   }
 
-  trim() {
-    if (this.chunks.length > MAX_CHUNKS) {
-      const previousStart = this.chunks[0].from
-
-      console.log(`[chartCache/trim] remove ${this.chunks.length - MAX_CHUNKS} expired chunks (max: ${MAX_CHUNKS})`)
-      this.chunks.splice(0, this.chunks.length - MAX_CHUNKS)
-
-      console.log(`\t-> decrease this.cacheRange (start) by ${getHms(this.chunks[0].from - previousStart)}`)
-
-      this.cacheRange.from = this.chunks[0].from
+  trim(end) {
+    while (this.chunks[0] && this.chunks[0].to < end) {
+      this.chunks.splice(0, 1)
     }
+
+    this.cacheRange.from = this.chunks[0].from
   }
 }

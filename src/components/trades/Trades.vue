@@ -327,8 +327,7 @@ export default class extends Mixins(PaneMixin) {
           ? 'rgba(0, 0, 0, ' + Math.min(1, 0.33 + percentToSignificant) + ')'
           : 'rgba(255, 255, 255, ' + Math.min(1, 0.33 + percentToSignificant) + ')'
 
-      li.style.backgroundColor =
-        'rgba(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ', ' + percentToSignificant + ')'
+      li.style.backgroundColor = 'rgb(' + backgroundColor[0] + ', ' + backgroundColor[1] + ', ' + backgroundColor[2] + ')'
 
       if (amount > this._audioThreshold) {
         this._liquidationsAudio[trade.side](audioService, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
@@ -1012,6 +1011,8 @@ export default class extends Mixins(PaneMixin) {
     font-size: 75%;
     font-weight: 400;
     overflow: visible;
+    position: absolute;
+    right: 0.5em;
   }
 }
 

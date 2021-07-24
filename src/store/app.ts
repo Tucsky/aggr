@@ -233,14 +233,18 @@ const actions = {
 
     commit('SET_CURRENCIES', currencies)
   },
-  showSearch({ commit, state }, { paneId, query }: { paneId?: string; query?: string } = { query: '', paneId: null }) {
+  showSearch({ commit, state }, paneId?: string) {
     if (state.showSearch) {
       return
     }
 
     commit('TOGGLE_SEARCH', true)
 
-    dialogService.open(SearchDialog, { query, paneId })
+    if (typeof paneId === 'undefined' && state.focusedPaneId) {
+      paneId = state.focusedPaneId
+    }
+
+    dialogService.open(SearchDialog, { paneId })
   },
   showTimeframe({ commit, state, rootState }) {
     if (state.showSearch || !state.focusedPaneId || !rootState[state.focusedPaneId]) {
