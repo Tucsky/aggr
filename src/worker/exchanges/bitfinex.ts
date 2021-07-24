@@ -149,7 +149,7 @@ export default class extends Exchange {
               timestamp: parseInt(a[2]),
               price: this.prices[api.id + pair],
               size: Math.abs(a[5]),
-              side: a[5] > 1 ? 'buy' : 'sell',
+              side: a[5] > 1 ? 'sell' : 'buy',
               liquidation: true
             }
           })
