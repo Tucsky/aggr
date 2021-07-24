@@ -1,4 +1,3 @@
-import { getHms } from '../../utils/helpers'
 import { Bar, TimeRange } from './chartController'
 
 export interface Chunk {

@@ -589,7 +589,7 @@ export default class ChartController {
 
         api.id = serie.id
 
-        this.seriesIndicatorsMap[serie.id.replace(/\W/g, '')] = {
+        this.seriesIndicatorsMap[serie.id] = {
           indicatorId: indicator.id,
           plotIndex: i
         }

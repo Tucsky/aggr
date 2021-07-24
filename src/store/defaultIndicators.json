@@ -62,16 +62,17 @@
   },
   "volume": {
     "name": "Volume",
-    "script": "plothistogram(vbuy + vsell, id=totalvolume)",
+    "script": "plothistogram({ time: time, value: vbuy + vsell, color: vbuy > vsell ? options.upColor : options.downColor})",
     "options": {
       "priceFormat": {
         "type": "volume"
       },
-      "color": "rgba(255, 255, 255, .15)",
+      "upColor": "rgba(59, 202, 109, .5)",
+      "downColor": "rgba(235, 30, 47, .5)",
       "priceScaleId": "volume",
       "scaleMargins": {
         "top": 0.75,
-        "bottom": 0.05
+        "bottom": 0.1
       }
     }
   },
@@ -87,7 +88,7 @@
       "priceScaleId": "volume",
       "scaleMargins": {
         "top": 0.75,
-        "bottom": 0.05
+        "bottom": 0.1
       }
     }
   },
@@ -104,7 +105,7 @@
       "priceScaleId": "volume",
       "scaleMargins": {
         "top": 0.75,
-        "bottom": 0.05
+        "bottom": 0.1
       }
     }
   },
@@ -119,7 +120,7 @@
       "upColor": "rgb(255,76,243)",
       "downColor": "rgb(255,183,77)",
       "scaleMargins": {
-        "top": 0.96,
+        "top": 0.91,
         "bottom": 0.01
       }
     }
@@ -136,7 +137,7 @@
       "color": "#3BCA6D",
       "scaleMargins": {
         "top": 0.75,
-        "bottom": 0.0
+        "bottom": 0.1
       }
     }
   },
