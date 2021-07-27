@@ -67,7 +67,17 @@ npm run build
 ```
 
 and access the dist/index.html directly in the browser later without having to run a command
-  
+
+### Docker
+
+build your own aggr client docker:
+
+```bash
+git clone https://github.com/Tucsky/aggr
+cd aggr
+docker build -t aggr-chart .
+```
+you need to set the API_URL as environment variable for your own installation, if you want to use that.
 
 ## Configuration
 SignificantTrades is now using Vue Cli which allows you to configure the client using .env file.
