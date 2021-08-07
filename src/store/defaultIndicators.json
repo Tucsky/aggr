@@ -7,12 +7,12 @@
       "priceLineVisible": true,
       "lastValueVisible": true,
       "borderVisible": true,
-      "upColor": "rgba(33, 150, 243, 0)",
-      "borderUpColor": "rgb(255, 255, 255)",
-      "wickUpColor": "rgba(255, 255, 255, .45)",
-      "downColor": "rgba(66, 165, 245, .47)",
-      "borderDownColor": "rgb(255, 255, 255, .33)",
-      "wickDownColor": "rgb(100, 181, 246, .53)"
+      "upColor": "rgba(100, 157, 102, 0)",
+      "downColor": "rgb(156,52,62)",
+      "borderUpColor": "rgb(59, 202, 109)",
+      "borderDownColor": "rgb(239,67,82)",
+      "wickUpColor": "rgb(59, 202, 109)",
+      "wickDownColor": "rgb(239,67,82)"
     }
   },
   "smas": {

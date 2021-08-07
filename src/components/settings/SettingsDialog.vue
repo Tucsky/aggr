@@ -12,7 +12,7 @@
     <section class="section" v-if="workspace">
       <div v-if="settings.indexOf('workspaces') > -1">
         <div class="column">
-          <dropdown :options="activeWorkspaceMenu" selectionClass="-blue -large w-100 column" class="w-100">
+          <dropdown :options="activeWorkspaceMenu" selectionClass="-blue -large -cases w-100 column" class="w-100">
             <template v-slot:selection>
               <i class="icon-dashboard -center mr16"></i>
 

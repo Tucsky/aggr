@@ -124,6 +124,7 @@ interface RendererIndicatorData {
   variables: IndicatorVariable[]
   functions: IndicatorFunction[]
   plotsOptions?: any[]
+  minLength?: number
 }
 
 export default class ChartController {
@@ -654,7 +655,8 @@ export default class ChartController {
       series: [],
       functions,
       variables,
-      plotsOptions: plots.map(p => p.options)
+      plotsOptions: plots.map(p => p.options),
+      minLength: indicator.options.minLength
     }
 
     // update indicator series with plotoptions
@@ -1302,7 +1304,9 @@ export default class ChartController {
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       const indicator = this.loadedIndicators[i]
       const serieData = renderer.indicators[indicator.id]
-      this.loadedIndicators[i].adapter(renderer, serieData.functions, serieData.variables, indicator.apis, indicator.options, seriesUtils)
+
+      
+      this.loadedIndicators[i].adapter(renderer, serieData.functions, serieData.variables, renderer.length >= serieData.minLength ? indicator.apis : indicator.apisNoop, indicator.options, seriesUtils)
     }
   }
 
@@ -1327,6 +1331,7 @@ export default class ChartController {
 
       for (let i = 0; i < serieData.series.length; i++) {
         if (
+          renderer.length < serieData.minLength ||
           !serieData.series[i] ||
           (typeof serieData.series[i].value !== 'undefined' && serieData.series[i].value === null) ||
           (typeof serieData.series[i].lowerValue !== 'undefined' && serieData.series[i].lowerValue === null) ||

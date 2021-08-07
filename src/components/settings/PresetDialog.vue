@@ -20,7 +20,7 @@
       <footer>
         <button type="button" class="btn -text -red mrauto ml0" @click="deletePreset"><i class="icon-cross mr4"></i> Delete</button>
         <button type="button" class="btn -text" @click="downloadPreset"><i class="icon-download mr4"></i> Download</button>
-        <button type="submit" class="btn -large"><i class="icon-check mr4"></i> Apply</button>
+        <button type="submit" class="btn -large ml16"><i class="icon-check mr4"></i> Apply</button>
       </footer>
     </form>
   </Dialog>

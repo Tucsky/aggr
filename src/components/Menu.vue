@@ -42,7 +42,7 @@
           <i class="icon-plus mr4"></i>
         </template>
       </dropdown>
-      <button class="menu-action btn" type="button" @click="$store.dispatch('app/showSearch')">
+      <button class="menu-action btn" type="button" @click="$store.dispatch('app/showSearch', null)">
         <span class="mr4">Search</span>
         <i class="icon-search"></i>
       </button>

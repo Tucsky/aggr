@@ -45,6 +45,7 @@ export interface AppState {
   redirectUrl: string
   showSearch: boolean
   historicalMarkets: string[]
+  apiSupportedTimeframes: number[]
   indexedProducts: { [exchangeId: string]: string[] }
   activeExchanges: { [exchangeId: string]: boolean }
   activeMarkets: Market[]
@@ -73,6 +74,7 @@ const state = {
   activeMarkets: [],
   notices: [],
   historicalMarkets: [],
+  apiSupportedTimeframes: [],
   indexedProducts: {},
   proxyUrl: null,
   apiUrl: null,
@@ -95,6 +97,7 @@ const state = {
 const actions = {
   async boot({ commit }) {
     commit('SET_API_SUPPORTED_PAIRS', process.env.VUE_APP_API_SUPPORTED_PAIRS)
+    commit('SET_API_SUPPORTED_TIMEFRAMES', process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES)
     commit('SET_VERSION', process.env.VUE_APP_VERSION)
     commit('SET_BUILD_DATE', process.env.VUE_APP_BUILD_DATE)
     commit('SET_API_URL', process.env.VUE_APP_API_URL)
@@ -317,6 +320,13 @@ const mutations = {
       state.historicalMarkets = value.split(',').map(a => a.trim())
     } else {
       state.historicalMarkets = value
+    }
+  },
+  SET_API_SUPPORTED_TIMEFRAMES(state, value) {
+    if (value && value.trim()) {
+      state.apiSupportedTimeframes = value.split(',')
+    } else {
+      state.apiSupportedTimeframes = []
     }
   },
   SET_VERSION(state, value) {

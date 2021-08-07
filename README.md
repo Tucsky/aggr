@@ -88,6 +88,7 @@ Create a <code>.env.local</code> or <code>.env.development</code> or <code>.env.
 |key| description |default value|
 |--|--|--|
 |<code>API_SUPPORTED_PAIRS</code>|Markets supported by the server instance provided in <code>API_URL</code><br>Write the full market names separated by a comma COINBASE:BTC-USD,BINANCE:btcusdt|null|
+|<code>API_SUPPORTED_TIMEFRAMES</code>|Timeframes supported by the server instance provided in <code>API_URL</code><br>Write the timeframe (seconds) separated by a comma 5,10,15,30,60,180,300,900,1800,3600,7200,14400,21600,86400|null|
 |<code>API_URL</code>|Server instance url.<br>As of now only used to fetch historical data for the chart component.<br>Example: http://localhost:3000/historical/{from}/{to}/{timeframe}/{markets} |null|
 |<code>PROXY_URL</code>|Redirect HTTP requests from app through a proxy<br>If the <code>PROXY_URL</code> is set to https://cors.aggr.trade/, the app will retrieve Binance's products through this url : https://cors.aggr.trade/https://api.binance.com/api/v3/exchangeInfo |http://localhost:8080/|
 

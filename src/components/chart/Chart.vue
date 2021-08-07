@@ -93,16 +93,17 @@ export default class extends Mixins(PaneMixin) {
     3: '3s',
     5: '5s',
     10: '10s',
+    15: '15s',
     30: '30s',
     60: '1m',
     [60 * 3]: '3m',
     [60 * 5]: '5m',
     [60 * 15]: '15m',
-    [60 * 21]: '21m',
+    [60 * 30]: '30m',
     [60 * 60]: '1h',
     [60 * 60 * 2]: '2h',
     [60 * 60 * 4]: '4h',
-    [60 * 60 * 8]: '8h',
+    [60 * 60 * 6]: '6h',
     [60 * 60 * 24]: '1d'
   }
 
@@ -283,6 +284,10 @@ export default class extends Mixins(PaneMixin) {
     const historicalMarkets = historicalService.getHistoricalMarktets(this.$store.state.panes.panes[this.paneId].markets)
 
     if (!historicalMarkets.length) {
+      return
+    }
+
+    if (this.$store.state.app.apiSupportedTimeframes.indexOf(this.timeframe) === -1) {
       return
     }
 
@@ -615,6 +620,8 @@ export default class extends Mixins(PaneMixin) {
       (!this._chartController.chartCache.cacheRange.from || rangeToFetch.to <= this._chartController.chartCache.cacheRange.from)
     ) {
       this.fetch(rangeToFetch)
+
+      return true
     } else {
       console.warn(
         `[chart/pan] wont fetch this range\n\t-> rangeToFetch.to (${formatTime(rangeToFetch.to)}) > chart.chartCache.cacheRange.from (${formatTime(
@@ -626,7 +633,11 @@ export default class extends Mixins(PaneMixin) {
         console.warn('(might trigger redraw with more cached chunks here...)')
 
         this._chartController.renderAll()
+
+        return true
       }
+
+      return false
     }
   }
 
@@ -651,6 +662,7 @@ export default class extends Mixins(PaneMixin) {
     ) {
       this._chartController.resample(newTimeframe)
       this._chartController.renderAll()
+      this.fetchOrRecover(this._chartController.chartInstance.timeScale().getVisibleLogicalRange())
     } else {
       this._chartController.clear()
       this.fetch()
@@ -788,20 +800,17 @@ export default class extends Mixins(PaneMixin) {
 
     const lineHeight = Math.round(textPadding)
     const headerHeight = Math.round(textPadding * 2 + lines.length * lineHeight)
-    canvas.height = chartCanvas.height + headerHeight
+    canvas.height = chartCanvas.height
 
     const backgroundColor = this.$store.state.settings.backgroundColor
     const backgroundColor300 = getComputedStyle(document.documentElement).getPropertyValue('--theme-background-300')
-    const backgroundColor100 = getComputedStyle(document.documentElement).getPropertyValue('--theme-background-100')
     const color100 = getComputedStyle(document.documentElement).getPropertyValue('--theme-color-100')
 
-    ctx.fillStyle = backgroundColor100
-    ctx.fillRect(0, 0, canvas.width, headerHeight)
     ctx.fillStyle = backgroundColor
-    ctx.fillRect(0, headerHeight, canvas.width, canvas.height - headerHeight)
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.fillStyle = this.$store.state.settings.theme === 'light' ? 'rgba(255,255,255,.2)' : 'rgba(0,0,0,.2)'
-    ctx.fillRect(0, headerHeight, canvas.width, canvas.height - headerHeight)
-    ctx.drawImage(chartCanvas, 0, headerHeight)
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(chartCanvas, 0, 0)
 
     ctx.fillStyle = backgroundColor300
     ctx.font = `${textFontsize}px Share Tech Mono`

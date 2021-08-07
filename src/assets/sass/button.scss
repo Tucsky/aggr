@@ -46,6 +46,10 @@ button {
     pointer-events: none;
   }
 
+  &.-cases {
+    text-transform: none;
+  }
+
   &.-icon {
     width: 2rem;
     height: 2rem;

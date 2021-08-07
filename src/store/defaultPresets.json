@@ -69,7 +69,7 @@
     }
   },
   {
-    "name": "indicator:classic",
+    "name": "indicator:green/red candles",
     "type": "indicator",
     "data": {
       "options": {
@@ -83,6 +83,60 @@
         "lastValueVisible": true,
         "priceLineColor": "rgba(255, 255, 255, .5)",
         "priceLineVisible": true
+      }
+    }
+  },
+  {
+    "name": "indicator:blue candles",
+    "type": "indicator",
+    "data": {
+      "options": {
+        "upColor": "rgba(33, 150, 243, 0)",
+        "borderUpColor": "rgb(255, 255, 255)",
+        "wickUpColor": "rgba(255, 255, 255, .45)",
+        "downColor": "rgba(66, 165, 245, .47)",
+        "borderDownColor": "rgb(255, 255, 255, .33)",
+        "wickDownColor": "rgb(100, 181, 246, .53)",
+        "borderVisible": true,
+        "lastValueVisible": true,
+        "priceLineColor": "rgba(255, 255, 255, .5)",
+        "priceLineVisible": true
+      }
+    }
+  },
+  {
+    "name": "threshold:100k 250K 1M 10M",
+    "type": "threshold",
+    "data": {
+      "0": {
+        "amount": 100000
+      },
+      "1": {
+        "amount": 250000
+      },
+      "2": {
+        "amount": 1000000
+      },
+      "3": {
+        "amount": 10000000
+      }
+    }
+  },
+  {
+    "name": "threshold:250k 500k 2M 10M",
+    "type": "threshold",
+    "data": {
+      "0": {
+        "amount": 250000
+      },
+      "1": {
+        "amount": 500000
+      },
+      "2": {
+        "amount": 2000000
+      },
+      "3": {
+        "amount": 10000000
       }
     }
   }
