@@ -37,6 +37,9 @@ export interface Product {
   pair: string
   exchange: string
   type: string
+  base: string
+  quote: string
+  local: string
 }
 
 export interface AppState {
@@ -46,7 +49,7 @@ export interface AppState {
   showSearch: boolean
   historicalMarkets: string[]
   apiSupportedTimeframes: number[]
-  indexedProducts: { [exchangeId: string]: string[] }
+  indexedProducts: { [exchangeId: string]: Product[] }
   activeExchanges: { [exchangeId: string]: boolean }
   activeMarkets: Market[]
   proxyUrl: string

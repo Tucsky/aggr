@@ -127,6 +127,8 @@ interface RendererIndicatorData {
   minLength?: number
 }
 
+const DAY = 60 * 60 * 24
+
 export default class ChartController {
   paneId: string
   watermark: string
@@ -142,6 +144,7 @@ export default class ChartController {
   markets: { [identifier: string]: true }
   timezoneOffset = 0
   timeframe: number
+  isOddTimeframe: boolean
   type: 'time' | 'tick'
 
   // private loadedSeries: { [id: string]: IndicatorApi } = {}
@@ -195,8 +198,19 @@ export default class ChartController {
     }
 
     this.timeframe = parseInt(timeframe)
+    this.isOddTimeframe = (1440 * 60) % timeframe !== 0
 
     this.updateWatermark()
+
+    /*if (this.activeRenderer) {
+      const activeRendererDayOpen = Math.floor(this.activeRenderer.timestamp / DAY) * DAY
+      this.activeRenderer.timestamp = activeRendererDayOpen + Math.floor((this.activeRenderer.timestamp - activeRendererDayOpen) / timeframe) * timeframe
+      this.activeRenderer.timeframe = timeframe
+
+      for (const source in this.activeRenderer.sources) {
+        this.activeRenderer.sources[source].timestamp = this.activeRenderer.timestamp
+      }
+    }*/
   }
 
   /**
@@ -753,13 +767,25 @@ export default class ChartController {
   resample(timeframe: number) {
     console.log(`[chart/${this.paneId}/controller] resample to ${timeframe}`)
 
+    const activeRendererDayOpen = Math.floor(this.activeRenderer.timestamp / DAY) * DAY
+    const activeRendererTimestamp =
+      activeRendererDayOpen + Math.floor((this.activeRenderer.timestamp - activeRendererDayOpen) / timeframe) * timeframe
+
+    const activeChunk = this.getActiveChunk()
+
+    for (const source in this.activeRenderer.sources) {
+      if (this.activeRenderer.sources[source].empty === false) {
+        activeChunk.bars.push(this.cloneSourceBar(this.activeRenderer.sources[source], activeRendererTimestamp))
+      }
+    }
+
     this.setTimeframe(timeframe)
 
     if (!this.chartCache.chunks.length) {
       return
     }
 
-    const newBar = function(source, destination, timestamp) {
+    const newBar = (source, destination, timestamp) => {
       if (typeof source.close === 'number') {
         destination.open = destination.high = destination.low = destination.close = source.close
       } else if (typeof destination.close === 'undefined' || destination.close === null) {
@@ -785,7 +811,16 @@ export default class ChartController {
         const bar = this.chartCache.chunks[i].bars[j]
 
         const market = bar.exchange + bar.pair
-        let barTimestamp = Math.floor(bar.timestamp / this.timeframe) * this.timeframe
+
+        let barTimestamp
+
+        if (this.isOddTimeframe) {
+          const dayOpen = Math.floor(bar.timestamp / DAY) * DAY
+          barTimestamp = dayOpen + Math.floor((bar.timestamp - dayOpen) / this.timeframe) * this.timeframe
+        } else {
+          barTimestamp = Math.floor(bar.timestamp / this.timeframe) * this.timeframe
+        }
+
         if (this.activeRenderer.type !== 'time' && markets[market] && markets[market].cbuy + markets[market].csell > this.timeframe) {
           barTimestamp = markets[market].timestamp + this.timeframe
         }
@@ -834,6 +869,31 @@ export default class ChartController {
         }
       }
     }
+
+    this.activeRenderer = null
+
+    this.renderAll()
+  }
+
+  getActiveChunk() {
+    if (!this.activeChunk && this.chartCache.cacheRange.to === this.activeRenderer.timestamp) {
+      this.activeChunk = this.chartCache.chunks[this.chartCache.chunks.length - 1]
+      this.activeChunk.active = true
+    } else {
+      if (this.activeChunk) {
+        this.activeChunk.active = false
+      }
+
+      this.activeChunk = this.chartCache.saveChunk({
+        from: this.activeRenderer.timestamp,
+        to: this.activeRenderer.timestamp,
+        active: true,
+        rendered: true,
+        bars: []
+      })
+    }
+
+    return this.activeChunk
   }
 
   /**
@@ -957,7 +1017,12 @@ export default class ChartController {
       let timestamp
       if (this.activeRenderer) {
         if (this.activeRenderer.type === 'time') {
-          timestamp = Math.floor(trade.timestamp / 1000 / this.timeframe) * this.timeframe
+          if (this.isOddTimeframe) {
+            const dayOpen = Math.floor(trade.timestamp / 1000 / DAY) * DAY
+            timestamp = dayOpen + Math.floor((trade.timestamp / 1000 - dayOpen) / this.timeframe) * this.timeframe
+          } else {
+            timestamp = Math.floor(trade.timestamp / 1000 / this.timeframe) * this.timeframe
+          }
         } else {
           if (this.activeRenderer.bar.cbuy + this.activeRenderer.bar.csell > this.timeframe) {
             timestamp = this.activeRenderer.timestamp + this.timeframe
@@ -972,23 +1037,8 @@ export default class ChartController {
       if (!this.activeRenderer || this.activeRenderer.timestamp < timestamp) {
         if (this.activeRenderer) {
           if (!this.activeChunk || (this.activeChunk.to < this.activeRenderer.timestamp && this.activeChunk.bars.length >= MAX_BARS_PER_CHUNKS)) {
-            if (!this.activeChunk && this.chartCache.cacheRange.to === this.activeRenderer.timestamp) {
-              this.chartCache.chunks[this.chartCache.chunks.length - 1].active = true
-              this.activeChunk = this.chartCache.chunks[this.chartCache.chunks.length - 1]
-              this.activeChunk.active = true
-            } else {
-              if (this.activeChunk) {
-                this.activeChunk.active = false
-              }
-
-              this.activeChunk = this.chartCache.saveChunk({
-                from: this.activeRenderer.timestamp,
-                to: this.activeRenderer.timestamp,
-                active: true,
-                rendered: true,
-                bars: []
-              })
-            }
+            // ensure active chunk is created and ready to receive bars
+            this.getActiveChunk()
           }
 
           if (!this.activeRenderer.bar.empty) {
@@ -1160,6 +1210,8 @@ export default class ChartController {
       }
     }
 
+    let barCount = 0
+
     for (let i = 0; i <= bars.length; i++) {
       const bar = bars[i]
 
@@ -1185,6 +1237,8 @@ export default class ChartController {
         if (!bar) {
           break
         }
+
+        barCount++
 
         if (temporaryRenderer) {
           this.nextBar(bar.timestamp, temporaryRenderer)
@@ -1223,6 +1277,7 @@ export default class ChartController {
     let scrollPosition: number
 
     if (!indicatorsIds || !indicatorsIds.length) {
+      this.activeRenderer.length = barCount
       // whole chart was rendered from start to finish
 
       scrollPosition = this.chartInstance.timeScale().scrollPosition()
@@ -1305,8 +1360,14 @@ export default class ChartController {
       const indicator = this.loadedIndicators[i]
       const serieData = renderer.indicators[indicator.id]
 
-      
-      this.loadedIndicators[i].adapter(renderer, serieData.functions, serieData.variables, renderer.length >= serieData.minLength ? indicator.apis : indicator.apisNoop, indicator.options, seriesUtils)
+      this.loadedIndicators[i].adapter(
+        renderer,
+        serieData.functions,
+        serieData.variables,
+        renderer.length >= serieData.minLength ? indicator.apis : indicator.apisNoop,
+        indicator.options,
+        seriesUtils
+      )
     }
   }
 

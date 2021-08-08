@@ -287,7 +287,7 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
-    if (this.$store.state.app.apiSupportedTimeframes.indexOf(this.timeframe) === -1) {
+    if (this.$store.state.app.apiSupportedTimeframes.indexOf(this.timeframe.toString()) === -1) {
       return
     }
 
@@ -661,7 +661,6 @@ export default class extends Mixins(PaneMixin) {
       Number.isInteger(timeframe / this._chartController.timeframe)
     ) {
       this._chartController.resample(newTimeframe)
-      this._chartController.renderAll()
       this.fetchOrRecover(this._chartController.chartInstance.timeScale().getVisibleLogicalRange())
     } else {
       this._chartController.clear()
