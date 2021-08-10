@@ -2,6 +2,7 @@ import Exchange from '../exchange'
 
 import Bitmex from './bitmex'
 import BinanceFutures from './binance_futures'
+import BinanceUs from './binance_us'
 import Kraken from './kraken'
 import Huobi from './huobi'
 import Binance from './binance'
@@ -19,6 +20,7 @@ import Phemex from './phemex'
 export const exchanges = [
   new Bitmex(),
   new BinanceFutures(),
+  new BinanceUs(),
   new Kraken(),
   new Huobi(),
   new Binance(),

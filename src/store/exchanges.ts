@@ -33,13 +33,20 @@ const getters = {
 } as GetterTree<ExchangesState, ModulesState>
 
 const actions = {
-  async boot({ state, getters }) {
+  async boot({ state, getters, rootState }) {
     state._exchanges.splice(0, state._exchanges.length)
 
     for (const id of getters.getExchanges) {
       state._exchanges.push(id)
       state[id].fetched = false
       this.commit('app/EXCHANGE_UPDATED', id)
+    }
+
+    if (!Object.keys(rootState.app.searchExchanges).length) {
+      rootState.app.searchExchanges = state._exchanges.reduce((searchExchanges, id) => {
+        searchExchanges[id] = state[id].disabled ? false : true
+        return searchExchanges
+      }, {})
     }
 
     await Promise.all(getters.getExchanges.map(id => getProducts(id)))
@@ -121,6 +128,7 @@ const actions = {
         .replace(/-PERP(ETUAL)?/i, '-USD')
         .replace(/[^a-z0-9](perp|swap|perpetual)$/i, '')
         .replace(/[^a-z0-9]\d+$/i, '')
+        .replace(/(.*)F0:USTF0/, '$1USDT')
 
       let match
 

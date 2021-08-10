@@ -64,6 +64,7 @@ $icon-power-off: '\e924';
 $icon-volume-high: '\e925';
 $icon-COINEX: '\e926';
 $icon-BINANCE: '\e927';
+$icon-BINANCE_US: '\e927';
 $icon-BINANCE_FUTURES: '\e928';
 $icon-BITFINEX: '\e929';
 $icon-BITMEX: '\e92a';
@@ -115,6 +116,7 @@ $exchanges: (
   'BITMEX': $icon-BITMEX,
   'BINANCE': $icon-BINANCE,
   'BINANCE_FUTURES': $icon-BINANCE_FUTURES,
+  'BINANCE_US': $icon-BINANCE,
   'BITFINEX': $icon-BITFINEX,
   'OKEX': $icon-OKEX,
   'HUOBI': $icon-HUOBI,

@@ -245,6 +245,11 @@ $iconpath: '../fonts';
     content: $icon-BINANCE_FUTURES; 
   }
 }
+.icon-BINANCE_US {
+  &:before {
+    content: $icon-BINANCE_US; 
+  }
+}
 .icon-BITFINEX {
   &:before {
     content: $icon-BITFINEX; 

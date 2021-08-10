@@ -63,7 +63,8 @@ export interface AppState {
   quoteCurrency: string
   quoteCurrencySymbol: string
   focusedPaneId: string
-  searchFilters: any
+  searchTypes: any
+  searchExchanges: any
 }
 
 const state = {
@@ -88,13 +89,14 @@ const state = {
   quoteCurrency: 'dollar',
   quoteCurrencySymbol: '$',
   focusedPaneId: null,
-  searchFilters: {
+  searchTypes: {
     historical: false,
     spots: true,
     perpetuals: true,
     futures: false,
     normalize: true
-  }
+  },
+  searchExchanges: {}
 } as AppState
 
 const actions = {
@@ -374,19 +376,22 @@ const mutations = {
   SET_FOCUSED_PANE(state, id: string) {
     state.focusedPaneId = id
   },
-  TOGGLE_SEARCH_FILTER(state, key: string) {
-    Vue.set(state.searchFilters, key, !state.searchFilters[key])
+  TOGGLE_SEARCH_TYPE(state, key: string) {
+    Vue.set(state.searchTypes, key, !state.searchTypes[key])
+  },
+  TOGGLE_SEARCH_EXCHANGE(state, key: string) {
+    Vue.set(state.searchExchanges, key, !state.searchExchanges[key])
   },
   CLEAR_SEARCH_FILTERS(state) {
-    for (const key in state.searchFilters) {
+    for (const key in state.searchTypes) {
       if (key === 'normalize') {
         continue
       }
 
-      state.searchFilters[key] = false
+      state.searchTypes[key] = false
     }
 
-    Vue.set(state, 'searchFilters', state.searchFilters)
+    Vue.set(state, 'searchTypes', state.searchTypes)
   }
 } as MutationTree<AppState>
 

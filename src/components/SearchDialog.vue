@@ -23,17 +23,29 @@
             </button>-->
           </div>
           <dropdown
-            :options="searchFilters"
+            :options="searchTypes"
             placeholder="Filter"
-            @output="toggleFilter($event)"
+            @output="toggleType($event)"
             :auto-close="false"
             :selection-class="!hasFilters ? '-text' : 'ml8 -green'"
           >
             <template v-slot:selection> filter <i class="ml4" :class="hasFilters ? 'icon-check' : 'icon-plus'"></i> </template>
             <template v-slot:option="{ index, value }">
-              <i class="icon-check mr8" v-if="value"></i>
-
-              {{ index }}
+              <span v-text="index" class="mrauto"></span>
+              <i class="icon-check ml8" v-if="value"></i>
+            </template>
+          </dropdown>
+          <dropdown
+            :options="searchExchanges"
+            placeholder="Exchanges"
+            @output="toggleExchange($event)"
+            :auto-close="false"
+            :selection-class="!hasExchanges ? '-text' : 'ml8 -green'"
+          >
+            <template v-slot:selection> exchanges <i class="ml4" :class="hasExchanges ? 'icon-check' : 'icon-plus'"></i> </template>
+            <template v-slot:option="{ index, value }">
+              <span v-text="index" class="mrauto"></span>
+              <i class="icon-check ml8" v-if="value"></i>
             </template>
           </dropdown>
           <dropdown
@@ -44,7 +56,7 @@
             @output="selectPaneMarkets($event)"
             selectionClass="-text"
           >
-            <template v-slot:selection> panes <i class="icon-pile ml4"></i></template>
+            <template v-slot:selection><i class="icon-copy-paste"></i></template>
             <template v-slot:option="{ value }">
               {{ value.name || value.id }}
             </template>
@@ -87,7 +99,7 @@
             No results
             <template v-if="hasFilters"> (<button class="btn -text color-100 pl0 pr0" @click="clearFilters">delete filters</button>)</template>
           </p>
-          <div v-if="searchFilters.historical" class="color-100 px16 pt0">
+          <div v-if="searchTypes.historical" class="color-100 px16 pt0">
             <p class="color-100 mb0">In need for more historical data ?</p>
             <p class="mt0 color-100">
               <a class="btn -text" href="https://github.com/Tucsky/aggr-server" target="_blank">Run your own aggr</a>
@@ -106,7 +118,7 @@
       <label class="text-nowrap mt16 mr16 mb0 ml16" for="ok"
         >Selection <code v-if="paneId" class="-filled" v-text="paneName"></code>
         <button class="btn -text" @click="clearSelection"><i class="icon-cross"></i></button
-        ><button class="btn -text" @click="copySelection"><i class="icon-stamp"></i></button
+        ><button v-if="selection.length" class="btn -text" @click="copySelection"><i class="icon-stamp"></i></button
       ></label>
       <transition-group
         :name="transitionGroupName"
@@ -223,14 +235,17 @@ export default {
     canFeelLucky() {
       return this.query.replace(/\W/g, '').length > 4
     },
-    searchFilters() {
-      return this.$store.state.app.searchFilters
+    searchTypes() {
+      return this.$store.state.app.searchTypes
+    },
+    searchExchanges() {
+      return this.$store.state.app.searchExchanges
     },
     hasFilters() {
-      const hasHistorical = this.searchFilters.historical
-      const hasSpot = this.searchFilters.spots
-      const hasPerpetuals = this.searchFilters.perpetuals
-      const hasFutures = this.searchFilters.futures
+      const hasHistorical = this.searchTypes.historical
+      const hasSpot = this.searchTypes.spots
+      const hasPerpetuals = this.searchTypes.perpetuals
+      const hasFutures = this.searchTypes.futures
       return hasHistorical || hasSpot || hasPerpetuals || hasFutures
     },
     historicalMarkets() {
@@ -245,21 +260,26 @@ export default {
     queryFilter: function() {
       const multiQuery = this.query.replace(/[ ,]/g, '|')
 
-      if (this.searchFilters.normalize) {
+      if (this.searchTypes.normalize) {
         return new RegExp('^' + multiQuery, 'i')
       } else {
         return new RegExp(multiQuery, 'i')
       }
     },
     filteredProducts() {
-      const hasHistorical = this.searchFilters.historical
-      const hasSpot = this.searchFilters.spots
-      const hasPerpetuals = this.searchFilters.perpetuals
-      const hasFutures = this.searchFilters.futures
+      const exchanges = this.searchExchanges
+      const hasHistorical = this.searchTypes.historical
+      const hasSpot = this.searchTypes.spots
+      const hasPerpetuals = this.searchTypes.perpetuals
+      const hasFutures = this.searchTypes.futures
       const hasTypeFilters = hasSpot || hasPerpetuals || hasFutures
 
       return this.flattenedProducts.filter(a => {
         if (hasHistorical && this.historicalMarkets.indexOf(a.id) === -1) {
+          return false
+        }
+
+        if (!exchanges[a.exchange]) {
           return false
         }
 
@@ -275,7 +295,7 @@ export default {
       })
     },
     results: function() {
-      const isNormalized = this.searchFilters.normalize
+      const isNormalized = this.searchTypes.normalize
 
       return this.filteredProducts
         .filter(a => this.selection.indexOf(a.id) === -1 && (isNormalized ? this.queryFilter.test(a.local) : this.queryFilter.test(a.id)))
@@ -367,8 +387,11 @@ export default {
     hide() {
       this.$store.dispatch('app/hideSearch')
     },
-    toggleFilter(key) {
-      this.$store.commit('app/TOGGLE_SEARCH_FILTER', key)
+    toggleType(key) {
+      this.$store.commit('app/TOGGLE_SEARCH_TYPE', key)
+    },
+    toggleExchange(key) {
+      this.$store.commit('app/TOGGLE_SEARCH_EXCHANGE', key)
     },
 
     beforeEnter(element) {

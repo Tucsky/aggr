@@ -231,11 +231,11 @@
       "mult": 2,
       "length": 20,
       "lineStyle": 2,
-      "basisColor": "rgba(66,165,245,0.5)",
+      "basisColor": "rgba(129,199,132,0.5)",
       "positiveColor": "rgba(0,0,0,0.1)",
       "negativeColor": "rgba(0,0,0,0.1)",
-      "lowerLineColor": "rgba(66,165,245,0.5)",
-      "higherLineColor": "rgba(66,165,245,0.5)"
+      "lowerLineColor": "rgb(129,199,132)",
+      "higherLineColor": "rgb(129,199,132)"
     }
   },
   "bb-ema-ribbon": {
