@@ -243,6 +243,7 @@
     "script": "src = sma($price.close, options.maLength)\na = sma(Math.pow(src,2),options.bbLength)\nb = Math.pow(sum(src,options.bbLength),2)/Math.pow(options.bbLength,2)\nstdev = Math.sqrt(a - b)\ndev = options.mult * stdev\nbasis = sma(src, options.bbLength)\nupper = basis + dev\nlower = basis - dev\nsrcTwo=($price.close + $price.low + $price.high) / 3\nemaSlow = ema(srcTwo, options.emaSlowLength)\nemaFast = ema(srcTwo, options.emaFastLength)\nplotcloudarea(lower, upper, positiveColor=options.slowRibbonColor, negativeColor=options.slowRibbonColor)\nplotcloudarea(emaSlow, emaFast)",
     "name": "Ribbon",
     "options": {
+      "priceScaleId": "right",
       "maLength": 200,
       "bbLength": 50,
       "mult": 3,

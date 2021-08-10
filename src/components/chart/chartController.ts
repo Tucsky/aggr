@@ -1086,7 +1086,7 @@ export default class ChartController {
           pair: trade.pair,
           price: trade.price
         }
-        
+
         if (this.activeRenderer.length > 10 && !redrawRequired) {
           redrawRequired = true
         }
@@ -1203,7 +1203,7 @@ export default class ChartController {
 
     for (let i = 0; i < bars.length; i++) {
       if (bars[i].timestamp > initialTimestamp) {
-        break;
+        break
       }
 
       const market = bars[i].exchange + bars[i].pair
@@ -1224,7 +1224,7 @@ export default class ChartController {
         open: price,
         high: price,
         low: price,
-        close: price,
+        close: price
       })
 
       bars.unshift(bar)
@@ -1361,10 +1361,7 @@ export default class ChartController {
       return
     }
 
-    this.renderBars(
-      this.chartCache.chunks.length ? this.chartCache.chunks.reduce((bars, chunk) => bars.concat(chunk.bars), []) : [],
-      null
-    )
+    this.renderBars(this.chartCache.chunks.length ? this.chartCache.chunks.reduce((bars, chunk) => bars.concat(chunk.bars), []) : [], null)
   }
 
   /**

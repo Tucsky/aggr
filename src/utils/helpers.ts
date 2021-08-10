@@ -402,7 +402,7 @@ export function getScrollParent(node) {
 }
 
 export function getSiblings(elem) {
-	return Array.prototype.filter.call(elem.parentNode.children, function (sibling) {
-		return sibling !== elem;
-	});
-};
+  return Array.prototype.filter.call(elem.parentNode.children, function(sibling) {
+    return sibling !== elem
+  })
+}
