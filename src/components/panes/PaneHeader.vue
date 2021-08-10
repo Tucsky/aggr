@@ -52,7 +52,7 @@ import TradesPaneDialog from '../trades/TradesPaneDialog.vue'
 import ChartPaneDialog from '../chart/ChartPaneDialog.vue'
 import StatsPaneDialog from '../stats/StatsPaneDialog.vue'
 import PricesPaneDialog from '../prices/PricesPaneDialog.vue'
-import { parseMarket } from '@/utils/helpers'
+import { getSiblings, parseMarket } from '@/utils/helpers'
 
 @Component({
   name: 'PaneHeader',
@@ -165,7 +165,18 @@ export default class extends Vue {
   }
 
   maximizePane() {
-    this.$el.parentElement.parentElement.classList.toggle('-maximized')
+    const el = this.$el.parentElement.parentElement
+    const isMaximized = el.classList.toggle('-maximized')
+
+    const siblings = getSiblings(el)
+
+    for (const sibling of siblings) {
+      if (!sibling.getAttribute('type')) {
+        continue
+      }
+      sibling.classList.remove('-maximized')
+      sibling.style.display = isMaximized ? 'none' : 'block'
+    }
 
     const cls = Event as any
 

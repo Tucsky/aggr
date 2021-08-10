@@ -39,7 +39,7 @@ class HistoricalService extends EventEmitter {
 
           switch (json.format) {
             case 'point':
-              ;({ from, to, data } = this.normalisePoints(data, markets))
+              ;({ from, to, data, markets } = this.normalisePoints(data, markets))
               break
             default:
               break
@@ -49,7 +49,8 @@ class HistoricalService extends EventEmitter {
             format: format,
             data: data,
             from: from,
-            to: to
+            to: to,
+            markets: markets
           }
 
           resolve(output)
@@ -71,6 +72,8 @@ class HistoricalService extends EventEmitter {
     })
   }
   normalisePoints(data, markets: string[]) {
+    markets = markets.slice()
+
     if (!data || !data.length) {
       return data
     }
@@ -129,6 +132,7 @@ class HistoricalService extends EventEmitter {
 
     return {
       data,
+      markets,
       from: data[0].timestamp,
       to: data[data.length - 1].timestamp
     }

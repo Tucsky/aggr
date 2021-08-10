@@ -237,5 +237,22 @@
       "lowerLineColor": "rgba(66,165,245,0.5)",
       "higherLineColor": "rgba(66,165,245,0.5)"
     }
+  },
+  "bb-ema-ribbon": {
+    "enabled": false,
+    "script": "src = sma($price.close, options.maLength)\na = sma(Math.pow(src,2),options.bbLength)\nb = Math.pow(sum(src,options.bbLength),2)/Math.pow(options.bbLength,2)\nstdev = Math.sqrt(a - b)\ndev = options.mult * stdev\nbasis = sma(src, options.bbLength)\nupper = basis + dev\nlower = basis - dev\nsrcTwo=($price.close + $price.low + $price.high) / 3\nemaSlow = ema(srcTwo, options.emaSlowLength)\nemaFast = ema(srcTwo, options.emaFastLength)\nplotcloudarea(lower, upper, positiveColor=options.slowRibbonColor, negativeColor=options.slowRibbonColor)\nplotcloudarea(emaSlow, emaFast)",
+    "name": "Ribbon",
+    "options": {
+      "maLength": 200,
+      "bbLength": 50,
+      "mult": 3,
+      "emaSlowLength": 50,
+      "emaFastLength": 20,
+      "slowRibbonColor": "rgba(255,204,128,0.1)",
+      "higherLineColor": "rgba(0,0,0,0)",
+      "lowerLineColor": "rgba(0,0,0,0)",
+      "negativeColor": "rgba(255,167,38,0.25)",
+      "positiveColor": "rgba(255,167,38,0.25)"
+    }
   }
 }

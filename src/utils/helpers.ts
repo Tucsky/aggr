@@ -400,3 +400,9 @@ export function getScrollParent(node) {
     return getScrollParent(node.parentNode)
   }
 }
+
+export function getSiblings(elem) {
+	return Array.prototype.filter.call(elem.parentNode.children, function (sibling) {
+		return sibling !== elem;
+	});
+};

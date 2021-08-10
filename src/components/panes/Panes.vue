@@ -175,7 +175,6 @@ export default class extends Vue {
           height = parseFloat(maximizedItem.style.height)
           this._maximizedPaneId = null
         }
-        console.log('resizePane.', maximizedPaneId, height, width, this._maximizedPaneId ? 'MAXIMIZED' : 'NORMAL')
         this.resizePane(maximizedPaneId, height, width)
       }
     })

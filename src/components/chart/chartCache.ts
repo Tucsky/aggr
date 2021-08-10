@@ -11,6 +11,13 @@ export interface Chunk {
 export default class ChartCache {
   chunks: Chunk[] = []
   cacheRange: TimeRange = { from: null, to: null }
+  initialPrices: {
+    [exchange: string]: {
+      pair: string
+      exchange: string
+      price: number
+    }
+  } = {}
 
   /**
    * append or prepend chunk to cache array
@@ -61,6 +68,7 @@ export default class ChartCache {
 
     this.chunks.splice(0, this.chunks.length)
     this.cacheRange.from = this.cacheRange.to = null
+    this.initialPrices = {}
   }
 
   trim(end) {

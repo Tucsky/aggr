@@ -930,7 +930,7 @@ export default class extends Mixins(PaneMixin) {
   .trade__pair {
     text-align: left !important;
     margin-left: 0.5em;
-    flex-grow: 0.66 !important;
+    flex-grow: 0.55 !important;
   }
 
   .icon-currency,

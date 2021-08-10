@@ -181,8 +181,14 @@ export default class ChartController {
 
     this.watermark = marketsForWatermark.slice(0, 3).join(' + ') + (markets.length - 3 > 0 ? ' + ' + (markets.length - 3) + ' others' : '')
 
-    this.markets = markets.reduce((output, identifier) => {
-      output[identifier.replace(':', '')] = true
+    this.markets = markets.reduce((output, market) => {
+      const identifier = market.replace(':', '')
+
+      if (this.chartCache.initialPrices[identifier]) {
+        delete this.chartCache.initialPrices[identifier]
+      }
+
+      output[identifier] = true
 
       return output
     }, {})
@@ -651,7 +657,7 @@ export default class ChartController {
       return
     }
 
-    console.debug(`[chart/${this.paneId}/bindIndicator] binding ${indicator.id} ...`)
+    // console.debug(`[chart/${this.paneId}/bindIndicator] binding ${indicator.id} ...`)
 
     const { functions, variables, plots } = JSON.parse(JSON.stringify(indicator.model))
 
@@ -773,9 +779,11 @@ export default class ChartController {
 
     const activeChunk = this.getActiveChunk()
 
-    for (const source in this.activeRenderer.sources) {
-      if (this.activeRenderer.sources[source].empty === false) {
-        activeChunk.bars.push(this.cloneSourceBar(this.activeRenderer.sources[source], activeRendererTimestamp))
+    if (!activeChunk) {
+      for (const source in this.activeRenderer.sources) {
+        if (this.activeRenderer.sources[source].empty === false) {
+          activeChunk.bars.push(this.cloneSourceBar(this.activeRenderer.sources[source], activeRendererTimestamp))
+        }
       }
     }
 
@@ -1006,6 +1014,8 @@ export default class ChartController {
       return
     }
 
+    let redrawRequired = false
+
     for (let i = 0; i < trades.length; i++) {
       const trade = trades[i]
       const identifier = trade.exchange + trade.pair
@@ -1069,6 +1079,18 @@ export default class ChartController {
       const amount = trade.price * trade.size
 
       if (!this.activeRenderer.sources[identifier] || typeof this.activeRenderer.sources[identifier].pair === 'undefined') {
+        console.debug(`[chart/${this.paneId}/controller] set initial price ${identifier} = ${trade.price}`)
+
+        this.chartCache.initialPrices[identifier] = {
+          exchange: trade.exchange,
+          pair: trade.pair,
+          price: trade.price
+        }
+        
+        if (this.activeRenderer.length > 10 && !redrawRequired) {
+          redrawRequired = true
+        }
+
         this.activeRenderer.sources[identifier] = {
           pair: trade.pair,
           exchange: trade.exchange,
@@ -1111,7 +1133,10 @@ export default class ChartController {
       return
     }
 
-    if (!this.activeRenderer.bar.empty) {
+    if (redrawRequired) {
+      console.warn(`[chart/${this.paneId}] new source redraw required`)
+      this.renderAll()
+    } else if (!this.activeRenderer.bar.empty) {
       this.updateBar(this.activeRenderer)
 
       if (this.renderedRange.to < this.activeRenderer.timestamp) {
@@ -1173,6 +1198,37 @@ export default class ChartController {
 
     let temporaryRenderer: Renderer
     let computedBar: any
+
+    const initialTimestamp = bars[0].timestamp
+
+    for (let i = 0; i < bars.length; i++) {
+      if (bars[i].timestamp > initialTimestamp) {
+        break;
+      }
+
+      const market = bars[i].exchange + bars[i].pair
+
+      if (this.chartCache.initialPrices[market]) {
+        delete this.chartCache.initialPrices[market]
+      }
+    }
+
+    for (const market in this.chartCache.initialPrices) {
+      const price = this.chartCache.initialPrices[market].price
+      const exchange = this.chartCache.initialPrices[market].exchange
+      const pair = this.chartCache.initialPrices[market].pair
+      const bar = this.resetBar({
+        timestamp: initialTimestamp,
+        exchange: exchange,
+        pair: pair,
+        open: price,
+        high: price,
+        low: price,
+        close: price,
+      })
+
+      bars.unshift(bar)
+    }
 
     if (this.activeRenderer && this.activeRenderer.timestamp > bars[bars.length - 1].timestamp) {
       const activeBars = Object.values(this.activeRenderer.sources).filter(bar => bar.empty === false)
@@ -1301,12 +1357,12 @@ export default class ChartController {
    * Renders chunks that collides with visible range
    */
   renderAll() {
-    if (!this.chartCache.chunks.length || !this.chartInstance) {
+    if (!this.chartInstance) {
       return
     }
 
     this.renderBars(
-      this.chartCache.chunks.reduce((bars, chunk) => bars.concat(chunk.bars), []),
+      this.chartCache.chunks.length ? this.chartCache.chunks.reduce((bars, chunk) => bars.concat(chunk.bars), []) : [],
       null
     )
   }
@@ -1414,6 +1470,8 @@ export default class ChartController {
    * @param {string[]} indicatorsIds id of indicators to bind (if null all indicators are binded)
    */
   createRenderer(firstBarTimestamp, indicatorsIds?: string[]) {
+    firstBarTimestamp = Math.floor(firstBarTimestamp / this.timeframe) * this.timeframe
+
     const renderer: Renderer = {
       timestamp: firstBarTimestamp,
       localTimestamp: firstBarTimestamp + this.timezoneOffset,
@@ -1451,60 +1509,87 @@ export default class ChartController {
    * @param {Renderer?} renderer bar to use as reference
    */
   nextBar(timestamp, renderer?: Renderer) {
-    renderer.length++
+    if (renderer === this.activeRenderer && this.activeRenderer.timestamp < timestamp - this.activeRenderer.timeframe) {
+      const count = Math.ceil(this.activeRenderer.timestamp / (timestamp - this.activeRenderer.timeframe))
 
-    if (!renderer.bar.empty) {
       for (let i = 0; i < this.loadedIndicators.length; i++) {
-        const rendererSerieData = renderer.indicators[this.loadedIndicators[i].id]
-
-        if (!rendererSerieData) {
-          continue
-        }
-
-        for (let f = 0; f < rendererSerieData.functions.length; f++) {
-          const instruction = rendererSerieData.functions[f]
-
-          if (typeof instruction.state.count !== 'undefined') {
-            instruction.state.count++
-          }
-
-          if (typeof instruction.state.points !== 'undefined') {
-            instruction.state.points.push(instruction.state.output)
-            instruction.state.sum += instruction.state.output
-
-            if (instruction.state.count > (instruction.arg as number) - 1) {
-              instruction.state.sum -= instruction.state.points.shift()
-              instruction.state.count--
+        for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
+          for (let k = 0; k < count; k++) {
+            if (i === 0 && j === 0) {
+              this.incrementRendererBar(renderer)
             }
-          } else if (instruction.state.open !== 'undefined') {
-            instruction.state.open = instruction.state.close
-            instruction.state.high = instruction.state.close
-            instruction.state.low = instruction.state.close
-          } else if (instruction.persistence) {
-            for (let j = 0; j < instruction.persistence.length; j++) {
-              instruction.state['_' + instruction.persistence[j]] = instruction.state[instruction.persistence[j]]
-            }
-          }
-        }
 
-        for (let v = 0; v < rendererSerieData.variables.length; v++) {
-          const instruction = rendererSerieData.variables[v]
-
-          if (instruction.length > 1) {
-            instruction.state.unshift(instruction.state[0])
-
-            if (instruction.state.length > instruction.length) {
-              instruction.state.pop()
-            }
+            this.loadedIndicators[i].apis[j].update({
+              time: renderer.timestamp
+            })
           }
         }
       }
     }
 
+    this.incrementRendererBar(renderer)
+    this.resetRendererBar(renderer)
+
     renderer.timestamp = timestamp
     renderer.localTimestamp = timestamp + this.timezoneOffset
+  }
 
-    this.resetRendererBar(renderer)
+  /**
+   * increment bar (1 timeframe forward)
+   * @param {Renderer} bar bar to clear for next timestamp
+   */
+  incrementRendererBar(renderer: Renderer) {
+    renderer.length++
+    renderer.timestamp += renderer.timeframe
+
+    if (renderer.bar.empty) {
+      return
+    }
+    for (let i = 0; i < this.loadedIndicators.length; i++) {
+      const rendererSerieData = renderer.indicators[this.loadedIndicators[i].id]
+
+      if (!rendererSerieData) {
+        continue
+      }
+
+      for (let f = 0; f < rendererSerieData.functions.length; f++) {
+        const instruction = rendererSerieData.functions[f]
+
+        if (typeof instruction.state.count !== 'undefined') {
+          instruction.state.count++
+        }
+
+        if (typeof instruction.state.points !== 'undefined') {
+          instruction.state.points.push(instruction.state.output)
+          instruction.state.sum += instruction.state.output
+
+          if (instruction.state.count > (instruction.arg as number) - 1) {
+            instruction.state.sum -= instruction.state.points.shift()
+            instruction.state.count--
+          }
+        } else if (instruction.state.open !== 'undefined') {
+          instruction.state.open = instruction.state.close
+          instruction.state.high = instruction.state.close
+          instruction.state.low = instruction.state.close
+        } else if (instruction.persistence) {
+          for (let j = 0; j < instruction.persistence.length; j++) {
+            instruction.state['_' + instruction.persistence[j]] = instruction.state[instruction.persistence[j]]
+          }
+        }
+      }
+
+      for (let v = 0; v < rendererSerieData.variables.length; v++) {
+        const instruction = rendererSerieData.variables[v]
+
+        if (instruction.length > 1) {
+          instruction.state.unshift(instruction.state[0])
+
+          if (instruction.state.length > instruction.length) {
+            instruction.state.pop()
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -1546,6 +1631,8 @@ export default class ChartController {
     bar.lbuy = 0
     bar.lsell = 0
     bar.empty = true
+
+    return bar
   }
 
   prepareRendererForIndicators(indicatorId: string, renderer: Renderer) {
