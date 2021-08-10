@@ -216,6 +216,9 @@ export default class extends Mixins(PaneMixin) {
           this.unbindLegend(mutation.payload)
           this._chartController.removeIndicator(mutation.payload)
           break
+        case this.paneId + '/TOGGLE_FILL_GAPS_WITH_EMPTY':
+          this._chartController.toggleFillGapsWithEmpty()
+          break
         case 'app/SET_OPTIMAL_DECIMAL':
         case 'settings/SET_DECIMAL_PRECISION':
           for (const id in this.indicators) {

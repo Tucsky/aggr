@@ -59,7 +59,7 @@
         <label :for="paneId + 'showHorizontalGridlines'" class="-fill -center ">Horizontal grid lines</label>
       </div>
     </div>
-    <div class="form-group">
+    <div class="form-group mb8">
       <div class="form-group column">
         <label class="checkbox-control" @change="$store.commit(paneId + '/SET_WATERMARK', { value: $event.target.checked })">
           <input type="checkbox" class="form-control" :checked="showWatermark" />
@@ -75,6 +75,15 @@
           @input="$event !== watermarkColor && $store.commit(paneId + '/SET_WATERMARK', { value: $event })"
         ></verte>
         <label for="" class="-fill -center">Watermark</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="form-group column">
+        <label class="checkbox-control" @change="$store.commit(paneId + '/TOGGLE_FILL_GAPS_WITH_EMPTY')">
+          <input type="checkbox" class="form-control" :checked="fillGapsWithEmpty" />
+          <div class="mr8"></div>
+        </label>
+        <label for="" class="-fill -center">Fill gaps with empty bar</label>
       </div>
     </div>
   </div>
@@ -100,6 +109,10 @@ export default class extends Vue {
 
   get showLegend() {
     return this.$store.state[this.paneId].showLegend
+  }
+
+  get fillGapsWithEmpty() {
+    return this.$store.state[this.paneId].fillGapsWithEmpty
   }
 
   get refreshRate() {

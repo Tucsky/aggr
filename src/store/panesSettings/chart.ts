@@ -28,6 +28,7 @@ export interface ChartPaneState {
   indicatorsErrors: { [indicatorId: string]: string }
   refreshRate?: number
   showLegend: boolean
+  fillGapsWithEmpty: boolean
   showHorizontalGridlines: boolean
   horizontalGridlinesColor: string
   showVerticalGridlines: boolean
@@ -45,6 +46,7 @@ const state = {
   timeframe: 10,
   refreshRate: 1000,
   showLegend: true,
+  fillGapsWithEmpty: true,
   showHorizontalGridlines: false,
   horizontalGridlinesColor: 'rgba(255,255,255,.1)',
   showVerticalGridlines: false,
@@ -295,6 +297,9 @@ const mutations = {
     }
 
     state.resizingIndicator = id
+  },
+  TOGGLE_FILL_GAPS_WITH_EMPTY(state) {
+    state.fillGapsWithEmpty = !state.fillGapsWithEmpty
   },
   UPDATE_INDICATOR_DISPLAY_NAME(state, id) {
     const displayName = state.indicators[id].name.replace(/\{([\w\d_]+)\}/g, (match, key) => state.indicators[id].options[key] || '')

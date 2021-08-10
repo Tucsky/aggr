@@ -143,6 +143,7 @@ export default class ChartController {
   chartCache: ChartCache
   markets: { [identifier: string]: true }
   timezoneOffset = 0
+  fillGapsWithEmpty = true
   timeframe: number
   isOddTimeframe: boolean
   type: 'time' | 'tick'
@@ -166,6 +167,8 @@ export default class ChartController {
     this.setMarkets(store.state.panes.panes[this.paneId].markets)
     this.setTimeframe(store.state[this.paneId].timeframe)
     this.setTimezoneOffset(store.state.settings.timezoneOffset)
+
+    this.fillGapsWithEmpty = Boolean(store.state[this.paneId].fillGapsWithEmpty)
   }
 
   /**
@@ -1506,8 +1509,12 @@ export default class ChartController {
    * @param {Renderer?} renderer bar to use as reference
    */
   nextBar(timestamp, renderer?: Renderer) {
-    if (renderer === this.activeRenderer && this.activeRenderer.timestamp < timestamp - this.activeRenderer.timeframe) {
-      const count = Math.ceil(this.activeRenderer.timestamp / (timestamp - this.activeRenderer.timeframe))
+    if (
+      renderer === this.activeRenderer &&
+      this.activeRenderer.type === 'time' &&
+      this.activeRenderer.timestamp < timestamp - this.activeRenderer.timeframe
+    ) {
+      const count = timestamp - this.activeRenderer.timeframe - this.activeRenderer.timestamp
 
       for (let i = 0; i < this.loadedIndicators.length; i++) {
         for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
@@ -1675,5 +1682,11 @@ export default class ChartController {
         return this.loadedIndicators[i].options.scaleMargins
       }
     }
+  }
+
+  toggleFillGapsWithEmpty() {
+    this.fillGapsWithEmpty = !this.fillGapsWithEmpty
+
+    this.renderAll()
   }
 }
