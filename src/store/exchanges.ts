@@ -138,6 +138,12 @@ const actions = {
         if (!match) {
           match = localSymbol.match(baseQuoteLookup2Inverted)
         }
+
+        if (match) {
+          match[0] = match[2]
+          match[2] = match[1]
+          match[1] = match[0]
+        }
       } else {
         match = localSymbol.match(baseQuoteLookup1)
 
