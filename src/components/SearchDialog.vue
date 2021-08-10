@@ -22,14 +22,8 @@
               <i class="icon-magic"></i>
             </button>-->
           </div>
-          <dropdown
-            :options="searchTypes"
-            placeholder="Filter"
-            @output="toggleType($event)"
-            :auto-close="false"
-            :selection-class="!hasFilters ? '-text' : 'ml8 -green'"
-          >
-            <template v-slot:selection> filter <i class="ml4" :class="hasFilters ? 'icon-check' : 'icon-plus'"></i> </template>
+          <dropdown :options="searchTypes" placeholder="Filter" @output="toggleType($event)" :auto-close="false" selection-class="ml8 -green">
+            <template v-slot:selection> filter <i class="ml4 icon-plus"></i> </template>
             <template v-slot:option="{ index, value }">
               <span v-text="index" class="mrauto"></span>
               <i class="icon-check ml8" v-if="value"></i>
@@ -40,9 +34,9 @@
             placeholder="Exchanges"
             @output="toggleExchange($event)"
             :auto-close="false"
-            :selection-class="!hasExchanges ? '-text' : 'ml8 -green'"
+            selection-class="ml8 -green"
           >
-            <template v-slot:selection> exchanges <i class="ml4" :class="hasExchanges ? 'icon-check' : 'icon-plus'"></i> </template>
+            <template v-slot:selection> exchanges <i class="ml4 icon-plus"></i> </template>
             <template v-slot:option="{ index, value }">
               <span v-text="index" class="mrauto"></span>
               <i class="icon-check ml8" v-if="value"></i>

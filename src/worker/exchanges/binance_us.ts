@@ -8,7 +8,7 @@ export default class extends Exchange {
   protected endpoints = { PRODUCTS: 'https://api.binance.us/api/v3/exchangeInfo' }
 
   getUrl() {
-    return `wss://stream.binance.com:9443/ws`
+    return `wss://stream.binance.us:9443/ws`
   }
 
   formatProducts(data) {
