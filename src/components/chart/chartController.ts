@@ -779,7 +779,7 @@ export default class ChartController {
 
     const activeChunk = this.getActiveChunk()
 
-    if (!activeChunk) {
+    if (activeChunk) {
       for (const source in this.activeRenderer.sources) {
         if (this.activeRenderer.sources[source].empty === false) {
           activeChunk.bars.push(this.cloneSourceBar(this.activeRenderer.sources[source], activeRendererTimestamp))
