@@ -1300,6 +1300,23 @@ export default class ChartController {
         barCount++
 
         if (temporaryRenderer) {
+          if (this.fillGapsWithEmpty) {
+            const missingBars = bar.timestamp - temporaryRenderer.timeframe - temporaryRenderer.timestamp
+
+            if (missingBars > 0) {
+              for (let j = 0; j < missingBars; j++) {
+                this.incrementRendererBar(temporaryRenderer)
+
+                for (const id in computedBar) {
+                  if (typeof computedSeries[id] === 'undefined') {
+                    computedSeries[id] = []
+                  }
+
+                  computedSeries[id].push({ time: temporaryRenderer.timestamp })
+                }
+              }
+            }
+          }
           this.nextBar(bar.timestamp, temporaryRenderer)
         } else {
           temporaryRenderer = this.createRenderer(bar.timestamp, indicatorsIds)
@@ -1510,15 +1527,16 @@ export default class ChartController {
    */
   nextBar(timestamp, renderer?: Renderer) {
     if (
+      this.fillGapsWithEmpty &&
       renderer === this.activeRenderer &&
       this.activeRenderer.type === 'time' &&
       this.activeRenderer.timestamp < timestamp - this.activeRenderer.timeframe
     ) {
-      const count = timestamp - this.activeRenderer.timeframe - this.activeRenderer.timestamp
+      const missingBars = timestamp - this.activeRenderer.timeframe - this.activeRenderer.timestamp
 
       for (let i = 0; i < this.loadedIndicators.length; i++) {
         for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
-          for (let k = 0; k < count; k++) {
+          for (let k = 0; k < missingBars; k++) {
             if (i === 0 && j === 0) {
               this.incrementRendererBar(renderer)
             }
