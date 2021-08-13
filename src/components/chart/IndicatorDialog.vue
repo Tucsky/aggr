@@ -21,7 +21,7 @@
           v-tippy
           title="Save it to use / sync with other panes"
         >
-          <i class="icon-info mr4"></i> Save changes
+          <i class="icon-info mr4"></i> Save {{ indicatorId }}
         </button>
         <button class="btn -text" @click="rollbackIndicator"><i class="icon-eraser"></i></button
       ></template>

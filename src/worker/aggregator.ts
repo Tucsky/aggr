@@ -203,6 +203,9 @@ class Aggregator {
     if (this.settings.calculateSlippage) {
       if (this.settings.calculateSlippage === 'price') {
         trade.slippage = trade.price - trade.originalPrice
+        if (Math.abs(trade.slippage) / trade.price < 0.0005) {
+          trade.slippage = null
+        }
       } else if (this.settings.calculateSlippage === 'bps') {
         if (trade.side === 'buy') {
           trade.slippage = Math.floor(((trade.price - trade.originalPrice) / trade.originalPrice) * 10000)

@@ -25,7 +25,7 @@ import workspacesService from '@/services/workspacesService'
 import audioService, { AudioFunction } from '../../services/audioService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
-import { Trade } from '@/types/test'
+import { SlippageMode, Trade } from '@/types/test'
 import { Threshold, TradeTypeFilter } from '@/store/panesSettings/trades'
 
 const GIFS: { [keyword: string]: string[] } = {}
@@ -83,6 +83,7 @@ export default class extends Mixins(PaneMixin) {
   private _enableAnimationsTimeout: number
   private _disableAnimations: boolean
   private _preferQuoteCurrencySize: boolean
+  private _calculateSlippage: SlippageMode
 
   get maxRows() {
     return this.$store.state[this.paneId].maxRows
@@ -112,10 +113,6 @@ export default class extends Mixins(PaneMixin) {
     return this.$store.state.exchanges
   }
 
-  get calculateSlippage() {
-    return this.$store.state.settings.calculateSlippage
-  }
-
   get audioThreshold() {
     return this.$store.state[this.paneId].audioThreshold
   }
@@ -139,6 +136,7 @@ export default class extends Mixins(PaneMixin) {
     this._onStoreMutation = this.$store.subscribe(mutation => {
       switch (mutation.type) {
         case 'app/EXCHANGE_UPDATED':
+        case 'settings/TOGGLE_SLIPPAGE':
         case this.paneId + '/SET_THRESHOLD_MULTIPLIER':
         case this.paneId + '/TOGGLE_TRADE_TYPE':
           this.cacheFilters()
@@ -237,7 +235,7 @@ export default class extends Mixins(PaneMixin) {
           continue
         }
 
-        if (txt !== elements[i].textContent) {
+        if (txt != elements[i].textContent) {
           elements[i].textContent = txt
 
           if (!topOfTheMinute && txt[txt.length - 1] !== 's') {
@@ -333,20 +331,18 @@ export default class extends Mixins(PaneMixin) {
         this._liquidationsAudio[trade.side](audioService, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
       }
     } else {
+      const side = document.createElement('div')
+      side.className = 'trade__side'
+
       if (trade.liquidation) {
         li.className += ' -liquidation'
-
-        const side = document.createElement('div')
-        side.className = 'trade__side ' + (trade.side === 'buy' ? 'icon-bear' : 'icon-bull')
-        li.appendChild(side)
-      } else {
-        if (trade.side !== this._lastSide) {
-          const side = document.createElement('div')
-          side.className = 'trade__side icon-side'
-          li.appendChild(side)
-          this._lastSide = trade.side
-        }
+        side.className += trade.side === 'buy' ? 'icon-bear' : 'icon-bull'
+      } else if (trade.side !== this._lastSide) {
+        side.className += ' icon-side'
+        this._lastSide = trade.side
       }
+
+      li.appendChild(side)
 
       for (let i = 0; i < this.thresholds.length; i++) {
         li.className += ' -level-' + i
@@ -412,18 +408,22 @@ export default class extends Mixins(PaneMixin) {
 
     const price = document.createElement('div')
     price.className = 'trade__price'
-    price.innerText = `${formatPrice(trade.price)}`
+    price.innerHTML = `${formatPrice(trade.price)}`
     li.appendChild(price)
 
-    if (trade.slippage) {
-      if (this.calculateSlippage === 'price' && Math.abs(trade.slippage) / trade.price > 0.0005) {
-        price.setAttribute(
-          'slippage',
-          (trade.slippage > 0 ? '+' : '') + formatPrice(trade.slippage) + document.getElementById('app').getAttribute('data-quote-symbol')
-        )
-      } else if (this.calculateSlippage === 'bps' && trade.slippage) {
-        price.setAttribute('slippage', (trade.slippage > 0 ? '+' : '-') + formatPrice(trade.slippage))
+    if (this._calculateSlippage) {
+      const slippage = document.createElement('div')
+      slippage.className = 'trade__slippage'
+
+      if (trade.slippage) {
+        slippage.innerHTML =
+          (this._calculateSlippage === 'price'
+            ? (trade.slippage > 0 ? '+' : '') + Math.round(trade.slippage)
+            : this._calculateSlippage === 'bps'
+            ? (trade.slippage > 0 ? '+' : '-') + Math.round(trade.slippage)
+            : '') + '&nbsp;&nbsp;'
       }
+      li.appendChild(slippage)
     }
 
     const amount_div = document.createElement('div')
@@ -642,6 +642,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   cacheFilters() {
+    this._calculateSlippage = this.$store.state.settings.calculateSlippage
     this._preferQuoteCurrencySize = this.$store.state.settings.preferQuoteCurrencySize
     this._disableAnimations = this.$store.state.settings.disableAnimations
     this._tradeType = this.$store.state[this.paneId].tradeType
@@ -778,7 +779,7 @@ export default class extends Mixins(PaneMixin) {
       flex-basis: 0;
       flex-grow: 0.25;
       overflow: visible;
-      text-align: right;
+      text-align: center;
       margin: 0;
       padding: 0;
       font-size: 100%;
@@ -817,7 +818,6 @@ export default class extends Mixins(PaneMixin) {
 }
 
 .trades-placeholder {
-  text-align: center;
   text-align: center;
   overflow: auto;
   max-height: 100%;
@@ -916,15 +916,19 @@ export default class extends Mixins(PaneMixin) {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    text-align: center;
+    text-align: right;
   }
 
   .trade__side {
     flex-grow: 0;
     flex-basis: 1em;
-    font-size: 1em;
-    position: absolute;
     font-weight: 600;
+
+    &:before {
+      display: inline-block;
+      vertical-align: -2px;
+      font-weight: 400;
+    }
   }
 
   .trade__pair {
@@ -954,16 +958,18 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__price {
     flex-grow: 0.5;
+    margin-right: 0.1rem;
+    text-align: left;
+    direction: rtl;
+  }
 
-    &:after {
-      content: attr(slippage);
-      font-size: 80%;
-      position: relative;
-      top: -2px;
-      left: 2px;
-      opacity: 0.75;
-      font-weight: 400;
-    }
+  .trade__slippage {
+    flex-basis: 2rem;
+    max-width: 2rem;
+    font-size: 75%;
+    font-family: monospace;
+    overflow: visible;
+    text-align: left;
   }
 
   .trade__amount {
@@ -985,7 +991,7 @@ export default class extends Mixins(PaneMixin) {
       }
 
       &.trade__amount__base {
-        transform: translateX(25%);
+        transform: translateX(-25%);
         opacity: 0;
         text-align: left;
       }
@@ -998,7 +1004,7 @@ export default class extends Mixins(PaneMixin) {
       }
 
       > span.trade__amount__quote {
-        transform: translateX(-25%);
+        transform: translateX(25%);
         opacity: 0;
       }
     }
@@ -1007,12 +1013,13 @@ export default class extends Mixins(PaneMixin) {
   .trade__time {
     text-align: right;
     flex-basis: 1.5em;
+    max-width: 1.5em;
+    flex-shrink: 0;
     flex-grow: 0;
-    font-size: 75%;
     font-weight: 400;
     overflow: visible;
-    position: absolute;
     right: 0.5em;
+    font-family: $font-monospace;
   }
 }
 
