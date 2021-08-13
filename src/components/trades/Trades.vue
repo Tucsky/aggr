@@ -802,6 +802,7 @@ export default class extends Mixins(PaneMixin) {
       .trade__exchange {
         height: 1em;
         background-position: right;
+        margin-right: 0.5rem;
 
         &:before {
           display: none;
@@ -921,8 +922,10 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__side {
     flex-grow: 0;
-    flex-basis: 1em;
+    flex-basis: 1rem;
     font-weight: 600;
+    overflow: visible;
+    max-width: 1rem;
 
     &:before {
       display: inline-block;
@@ -933,8 +936,9 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__pair {
     text-align: left !important;
-    margin-left: 0.5em;
     flex-grow: 0.55 !important;
+    font-size: 75%;
+    line-height: 1;
   }
 
   .icon-currency,
@@ -950,10 +954,10 @@ export default class extends Mixins(PaneMixin) {
     word-break: inherit;
     font-size: 75%;
     line-height: 1;
-    text-align: center;
+    text-align: left;
     margin-right: 0;
     margin-left: auto;
-    padding-left: 1.5em;
+    padding-left: 0.5rem;
   }
 
   .trade__price {
@@ -1012,14 +1016,14 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__time {
     text-align: right;
-    flex-basis: 1.5em;
-    max-width: 1.5em;
-    flex-shrink: 0;
+    flex-basis: 1.9em;
+    max-width: 1.9em;
     flex-grow: 0;
     font-weight: 400;
     overflow: visible;
-    right: 0.5em;
     font-family: $font-monospace;
+    font-size: 0.9em;
+    padding-top: 1px;
   }
 }
 
