@@ -336,7 +336,7 @@ export default class extends Mixins(PaneMixin) {
 
       if (trade.liquidation) {
         li.className += ' -liquidation'
-        side.className += trade.side === 'buy' ? 'icon-bear' : 'icon-bull'
+        side.className += ' ' + (trade.side === 'buy' ? 'icon-bear' : 'icon-bull')
       } else if (trade.side !== this._lastSide) {
         side.className += ' icon-side'
         this._lastSide = trade.side
