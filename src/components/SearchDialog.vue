@@ -110,7 +110,7 @@
     <hr class="-vertical mb8 ml0 mr0 pl0 pr0" />
     <div class="form-group selection hide-scrollbar">
       <label class="text-nowrap mt16 mr16 mb0 ml16" for="ok"
-        >Selection <code v-if="paneId" class="-filled" v-text="paneName"></code>
+        >{{ selection.length }} selected <code v-if="paneId" class="-filled" v-text="paneName"></code>
         <button class="btn -text" @click="clearSelection"><i class="icon-cross"></i></button
         ><button v-if="selection.length" class="btn -text" @click="copySelection"><i class="icon-stamp"></i></button
       ></label>
@@ -230,10 +230,10 @@ export default {
       return this.query.replace(/\W/g, '').length > 4
     },
     searchTypes() {
-      return this.$store.state.app.searchTypes
+      return this.$store.state.settings.searchTypes
     },
     searchExchanges() {
-      return this.$store.state.app.searchExchanges
+      return this.$store.state.settings.searchExchanges
     },
     hasFilters() {
       const hasHistorical = this.searchTypes.historical
@@ -382,10 +382,10 @@ export default {
       this.$store.dispatch('app/hideSearch')
     },
     toggleType(key) {
-      this.$store.commit('app/TOGGLE_SEARCH_TYPE', key)
+      this.$store.commit('settings/TOGGLE_SEARCH_TYPE', key)
     },
     toggleExchange(key) {
-      this.$store.commit('app/TOGGLE_SEARCH_EXCHANGE', key)
+      this.$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', key)
     },
 
     beforeEnter(element) {

@@ -19,5 +19,13 @@
     "LowPassFilter": false
   },
   "settings": ["other", "workspaces", "chart", "stats", "counters", "audio"],
-  "recentColors": []
+  "recentColors": [],
+  "searchTypes": {
+    "historical": false,
+    "spots": true,
+    "perpetuals": true,
+    "futures": false,
+    "normalize": true
+  },
+  "searchExchanges": {}
 }

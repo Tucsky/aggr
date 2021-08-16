@@ -42,8 +42,8 @@ const actions = {
       this.commit('app/EXCHANGE_UPDATED', id)
     }
 
-    if (!Object.keys(rootState.app.searchExchanges).length) {
-      rootState.app.searchExchanges = state._exchanges.reduce((searchExchanges, id) => {
+    if (!Object.keys(rootState.settings.searchExchanges).length) {
+      rootState.settings.searchExchanges = state._exchanges.reduce((searchExchanges, id) => {
         searchExchanges[id] = state[id].disabled ? false : true
         return searchExchanges
       }, {})

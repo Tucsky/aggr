@@ -10,7 +10,9 @@ export function formatAmount(amount, decimals?: number) {
 
   amount = Math.abs(amount)
 
-  if (amount >= 1000000) {
+  if (amount >= 1000000000) {
+    amount = +(amount / 1000000000).toFixed(isNaN(decimals) ? 1 : decimals) + 'B'
+  } else if (amount >= 100000) {
     amount = +(amount / 1000000).toFixed(isNaN(decimals) ? 1 : decimals) + 'M'
   } else if (amount >= 100000) {
     amount = +(amount / 1000).toFixed(isNaN(decimals) ? 0 : decimals) + 'K'

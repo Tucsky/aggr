@@ -25,6 +25,8 @@ export interface SettingsState {
   disableAnimations?: boolean
   decimalPrecision?: number
   autoHideHeaders?: boolean
+  searchTypes?: any
+  searchExchanges?: any
 }
 
 const state = Object.assign(
@@ -223,6 +225,23 @@ const mutations = {
   },
   TOGGLE_AUTO_HIDE_HEADERS(state) {
     state.autoHideHeaders = !state.autoHideHeaders
+  },
+  TOGGLE_SEARCH_TYPE(state, key: string) {
+    Vue.set(state.searchTypes, key, !state.searchTypes[key])
+  },
+  TOGGLE_SEARCH_EXCHANGE(state, key: string) {
+    Vue.set(state.searchExchanges, key, !state.searchExchanges[key])
+  },
+  CLEAR_SEARCH_FILTERS(state) {
+    for (const key in state.searchTypes) {
+      if (key === 'normalize') {
+        continue
+      }
+
+      state.searchTypes[key] = false
+    }
+
+    Vue.set(state, 'searchTypes', state.searchTypes)
   }
 } as MutationTree<SettingsState>
 

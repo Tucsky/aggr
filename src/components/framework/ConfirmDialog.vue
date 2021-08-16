@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="close">
+  <Dialog @clickOutside="close" autofocus>
     <template v-slot:header>
       <div class="title">{{ title }}</div>
     </template>
@@ -33,8 +33,6 @@ export default {
       default: 'Cancel'
     }
   },
-  mixins: [DialogMixin],
-  data: () => ({}),
-  methods: {}
+  mixins: [DialogMixin]
 }
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <div class="pane-trades" :class="{ '-logos': this.showLogos, '-logos-colors': !this.monochromeLogos, '-slippage': this.calculateSlippage }">
+  <div class="pane-trades" :class="{ '-logos': this.showLogos, '-logos-colors': !this.monochromeLogos }">
     <pane-header :paneId="paneId" />
     <ul ref="tradesContainer" class="hide-scrollbar"></ul>
     <div v-if="showPlaceholder" class="trades-placeholder hide-scrollbar">

@@ -4,10 +4,10 @@ import VueTippy, { TippyComponent } from 'vue-tippy'
 import './assets/sass/app.scss'
 import store from './store'
 
-import runtime from 'serviceworker-webpack-plugin/lib/runtime';
- 
+import runtime from 'serviceworker-webpack-plugin/lib/runtime'
+
 if ('serviceWorker' in navigator) {
-  const registration = runtime.register();
+  const registration = runtime.register()
 }
 
 Vue.use(VueTippy, {

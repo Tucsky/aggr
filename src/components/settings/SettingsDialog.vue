@@ -52,12 +52,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="workspace of workspaces" :key="workspace.id" class="-action" @click="loadWorkspace(workspace.id)">
+            <tr v-for="workspace of workspaces" :key="workspace.id" class="-action" @click="openWorkspace(workspace.id)">
               <td class="table-input"><code v-text="workspace.id"></code></td>
               <td class="table-input table-ellipsis text-nowrap" v-text="workspace.name" :title="workspace.name" v-tippy></td>
               <td class="table-input"><small v-text="'' + ago(workspace.updatedAt) + ' ago'"></small></td>
               <td class="table-action">
-                <button class="btn  -text" @click.stop="openWorkspace(workspace.id)"><i class="icon-external-link-square-alt"></i></button>
+                <button class="btn  -text" @click.stop="openWorkspace(workspace.id, true)"><i class="icon-external-link-square-alt"></i></button>
               </td>
               <td class="table-action">
                 <button class="btn  -red -small" @click.stop="removeWorkspace(workspace.id)"><i class="icon-trash"></i></button>
@@ -427,9 +427,14 @@ export default {
       this.getWorkspaces()
     },
 
-    openWorkspace(id) {
+    openWorkspace(id, newWindow = false) {
       const url = window.location.href.replace(this.workspace.id, id)
-      window.open(url)
+
+      if (newWindow) {
+        window.open(url)
+      } else {
+        window.location.href = url
+      }
     },
 
     async removeWorkspace(id) {

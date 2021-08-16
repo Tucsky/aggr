@@ -1301,7 +1301,7 @@ export default class ChartController {
 
         if (temporaryRenderer) {
           if (this.fillGapsWithEmpty) {
-            const missingBars = bar.timestamp - temporaryRenderer.timeframe - temporaryRenderer.timestamp
+            const missingBars = (bar.timestamp - temporaryRenderer.timeframe - temporaryRenderer.timestamp) / temporaryRenderer.timeframe
 
             if (missingBars > 0) {
               for (let j = 0; j < missingBars; j++) {
@@ -1532,7 +1532,7 @@ export default class ChartController {
       this.activeRenderer.type === 'time' &&
       this.activeRenderer.timestamp < timestamp - this.activeRenderer.timeframe
     ) {
-      const missingBars = timestamp - this.activeRenderer.timeframe - this.activeRenderer.timestamp
+      const missingBars = (timestamp - this.activeRenderer.timeframe - this.activeRenderer.timestamp) / this.activeRenderer.timeframe
 
       for (let i = 0; i < this.loadedIndicators.length; i++) {
         for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
