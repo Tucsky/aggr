@@ -12,7 +12,7 @@ export function formatAmount(amount, decimals?: number) {
 
   if (amount >= 1000000000) {
     amount = +(amount / 1000000000).toFixed(isNaN(decimals) ? 1 : decimals) + 'B'
-  } else if (amount >= 100000) {
+  } else if (amount >= 1000000) {
     amount = +(amount / 1000000).toFixed(isNaN(decimals) ? 1 : decimals) + 'M'
   } else if (amount >= 100000) {
     amount = +(amount / 1000).toFixed(isNaN(decimals) ? 0 : decimals) + 'K'
