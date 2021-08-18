@@ -1,6 +1,6 @@
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import { sleep, slugify, uniqueName } from '@/utils/helpers'
+import { parseMarket, sleep, slugify, uniqueName } from '@/utils/helpers'
 import { scheduleSync } from '@/utils/store'
 import { SeriesOptions, SeriesType } from 'lightweight-charts'
 import Vue from 'vue'
@@ -35,6 +35,7 @@ export interface ChartPaneState {
   verticalGridlinesColor: string
   showWatermark: boolean
   watermarkColor: string
+  hiddenMarkets: { [indicatorId: string]: boolean }
 }
 
 const getters = {} as GetterTree<ChartPaneState, ModulesState>
@@ -52,7 +53,8 @@ const state = {
   showVerticalGridlines: false,
   verticalGridlinesColor: 'rgba(255,255,255,.1)',
   showWatermark: false,
-  watermarkColor: 'rgba(255,255,255,.1)'
+  watermarkColor: 'rgba(255,255,255,.1)',
+  hiddenMarkets: {}
 } as ChartPaneState
 
 const actions = {
@@ -203,6 +205,47 @@ const actions = {
 
     state.indicators[indicatorId] = savedIndicator
     commit('SET_INDICATOR_SCRIPT', { id: indicatorId })
+  },
+  toggleMarkets({ state, rootState, commit }, { type, id, inverse }: { type: string; id: string; inverse: boolean }) {
+    for (const market of rootState.panes.panes[state._id].markets) {
+      const isHidden = state.hiddenMarkets[market] === true
+
+      if (!type) {
+        if (!inverse) {
+          if (market !== id) {
+            console.log('[toggle market] skip market ' + market)
+            continue
+          }
+          console.log('[toggle market] toggle ' + market, isHidden ? 'show' : 'hide')
+
+          // toggle selected market
+          Vue.set(state.hiddenMarkets, market, !isHidden)
+        } else if (!isHidden && market !== id) {
+          console.log('[inverse toggle market] hide ' + market)
+          // hide market other than selected
+          Vue.set(state.hiddenMarkets, market, true)
+        } else if (isHidden && market === id) {
+          console.log('[inverse toggle market] show ' + market)
+          // show current market
+          Vue.set(state.hiddenMarkets, market, false)
+        }
+      } else if (type === 'all') {
+        if (isHidden) {
+          Vue.set(state.hiddenMarkets, market, false)
+        }
+      } else {
+        const [exchange] = parseMarket(market)
+        const indexedMarket = rootState.app.indexedProducts[exchange].find(product => product.id === market)
+
+        const hide = type !== indexedMarket.type
+
+        if (hide !== isHidden) {
+          console.log('[' + type + ' toggle markets] ' + (hide ? 'hide' : 'show') + ' ' + market)
+          Vue.set(state.hiddenMarkets, market, hide)
+        }
+      }
+    }
+    commit('TOGGLE_MARKET')
   }
 } as ActionTree<ChartPaneState, ModulesState>
 
@@ -304,6 +347,11 @@ const mutations = {
   UPDATE_INDICATOR_DISPLAY_NAME(state, id) {
     const displayName = state.indicators[id].name.replace(/\{([\w\d_]+)\}/g, (match, key) => state.indicators[id].options[key] || '')
     Vue.set(state.indicators[id], 'displayName', displayName)
+  },
+  TOGGLE_MARKET(state, marketId) {
+    if (marketId) {
+      Vue.set(state.hiddenMarkets, marketId, !state.hiddenMarkets[marketId])
+    }
   }
 } as MutationTree<ChartPaneState>
 

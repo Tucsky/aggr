@@ -7,7 +7,6 @@ import { ModulesState } from '.'
 
 export interface ExchangeSettings {
   disabled?: boolean
-  hidden?: boolean
   fetched?: boolean
 }
 
@@ -83,11 +82,6 @@ const actions = {
     console.log(`[exchanges.${id}] manually connecting ${markets.join(', ')}`)
 
     await aggregatorService.connect(markets)
-  },
-  toggleExchangeVisibility({ commit }, id: string) {
-    commit('TOGGLE_EXCHANGE_VISIBILITY', id)
-
-    this.commit('app/EXCHANGE_UPDATED', id)
   },
   indexExchangeProducts(noop, { exchange, symbols }: { exchange: string; symbols: string[] }) {
     const products = []
@@ -197,15 +191,6 @@ const mutations = {
     }
 
     Vue.set(state[id], 'disabled', disabled)
-  },
-  TOGGLE_EXCHANGE_VISIBILITY: (state, id: string) => {
-    let hidden = true
-
-    if (typeof state[id].hidden === 'boolean') {
-      hidden = !state[id].hidden
-    }
-
-    Vue.set(state[id], 'hidden', hidden)
   },
   SET_FETCHED: (state, id: string) => {
     Vue.set(state[id], 'fetched', true)

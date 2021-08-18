@@ -801,7 +801,7 @@ export default class extends Mixins(PaneMixin) {
     &.-logos-colors {
       .trade__exchange {
         height: 1em;
-        background-position: right;
+        background-position: center;
         margin-right: 0.5rem;
 
         &:before {

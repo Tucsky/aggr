@@ -26,6 +26,7 @@ export interface Bar {
   low?: number
   close?: number
   empty?: boolean
+  active?: boolean
 }
 
 export interface IndicatorApi extends TV.ISeriesApi<any> {
@@ -164,7 +165,7 @@ export default class ChartController {
     this.chartCache = new ChartCache()
     this.serieBuilder = new SerieBuilder()
 
-    this.setMarkets(store.state.panes.panes[this.paneId].markets)
+    this.refreshMarkets()
     this.setTimeframe(store.state[this.paneId].timeframe)
     this.setTimezoneOffset(store.state.settings.timezoneOffset)
 
@@ -175,26 +176,35 @@ export default class ChartController {
    * update watermark when pane's markets changes
    * @param markets
    */
-  setMarkets(markets: string[]) {
-    const marketsForWatermark = markets.filter(market => {
-      const [exchange] = parseMarket(market)
+  refreshMarkets() {
+    const markets = store.state.panes.panes[this.paneId].markets
 
-      return !store.state.exchanges[exchange] || !store.state.exchanges[exchange].disabled
-    })
-
-    this.watermark = marketsForWatermark.slice(0, 3).join(' + ') + (markets.length - 3 > 0 ? ' + ' + (markets.length - 3) + ' others' : '')
+    const marketsForWatermark = []
 
     this.markets = markets.reduce((output, market) => {
+      const [exchange] = parseMarket(market)
       const identifier = market.replace(':', '')
 
       if (this.chartCache.initialPrices[identifier]) {
         delete this.chartCache.initialPrices[identifier]
       }
 
-      output[identifier] = true
+      if (
+        (output[identifier] =
+          store.state.exchanges[exchange] && !store.state.exchanges[exchange].disabled && !store.state[this.paneId].hiddenMarkets[market])
+      ) {
+        marketsForWatermark.push(market)
+      }
+
+      /*if (this.activeRenderer) {
+        this.activeRenderer.sources[identifier].active = output[identifier]
+      }*/
 
       return output
     }, {})
+
+    this.watermark =
+      marketsForWatermark.slice(0, 3).join(' + ') + (marketsForWatermark.length - 3 > 0 ? ' + ' + (marketsForWatermark.length - 3) + ' others' : '')
 
     this.updateWatermark()
   }
@@ -1023,10 +1033,6 @@ export default class ChartController {
       const trade = trades[i]
       const identifier = trade.exchange + trade.pair
 
-      if (!this.markets[identifier]) {
-        continue
-      }
-
       let timestamp
       if (this.activeRenderer) {
         if (this.activeRenderer.type === 'time') {
@@ -1097,7 +1103,8 @@ export default class ChartController {
         this.activeRenderer.sources[identifier] = {
           pair: trade.pair,
           exchange: trade.exchange,
-          close: +trade.price
+          close: +trade.price,
+          active: this.markets[identifier]
         }
 
         this.resetBar(this.activeRenderer.sources[identifier])
@@ -1105,14 +1112,15 @@ export default class ChartController {
 
       this.activeRenderer.sources[identifier].empty = false
 
-      const isActive = store.state.app.activeExchanges[trade.exchange]
+      const isActive = this.markets[identifier]
 
       if (trade.liquidation) {
         this.activeRenderer.sources[identifier]['l' + trade.side] += amount
 
+        this.activeRenderer.bar.empty = false
+
         if (isActive) {
           this.activeRenderer.bar['l' + trade.side] += amount
-          this.activeRenderer.bar.empty = false
         }
 
         continue
@@ -1323,23 +1331,25 @@ export default class ChartController {
         }
       }
 
-      if (!store.state.app.activeExchanges[bar.exchange] || !this.markets[bar.exchange + bar.pair]) {
-        continue
-      }
+      const isActive = this.markets[bar.exchange + bar.pair]
 
-      temporaryRenderer.bar.empty = false
-      temporaryRenderer.bar.vbuy += bar.vbuy
-      temporaryRenderer.bar.vsell += bar.vsell
-      temporaryRenderer.bar.cbuy += bar.cbuy
-      temporaryRenderer.bar.csell += bar.csell
-      temporaryRenderer.bar.lbuy += bar.lbuy
-      temporaryRenderer.bar.lsell += bar.lsell
+      if (isActive) {
+        temporaryRenderer.bar.empty = false
+        temporaryRenderer.bar.vbuy += bar.vbuy
+        temporaryRenderer.bar.vsell += bar.vsell
+        temporaryRenderer.bar.cbuy += bar.cbuy
+        temporaryRenderer.bar.csell += bar.csell
+        temporaryRenderer.bar.lbuy += bar.lbuy
+        temporaryRenderer.bar.lsell += bar.lsell
+      }
 
       temporaryRenderer.sources[bar.exchange + bar.pair] = this.cloneSourceBar(bar)
       temporaryRenderer.sources[bar.exchange + bar.pair].empty = false
+      temporaryRenderer.sources[bar.exchange + bar.pair].active = isActive
     }
 
     if (this.activeRenderer) {
+      this.activeRenderer.bar = temporaryRenderer.bar
       for (const id in temporaryRenderer.indicators) {
         this.activeRenderer.indicators[id] = temporaryRenderer.indicators[id]
       }

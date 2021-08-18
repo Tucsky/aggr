@@ -6,9 +6,8 @@
         v-for="market in markets"
         :key="market.id"
         class="market"
-        :class="{ ['-' + market.exchange]: true, ['-' + market.status]: true, '-hidden': exchanges[market.exchange].hidden }"
+        :class="{ ['-' + market.exchange]: true, ['-' + market.status]: true }"
         :title="market.id"
-        @click="$store.dispatch('exchanges/toggleExchangeVisibility', market.exchange)"
       >
         <div v-if="showPairs" class="market__pair" v-text="market.pair"></div>
         <div class="market__price" v-text="formatPrice(market.price)"></div>

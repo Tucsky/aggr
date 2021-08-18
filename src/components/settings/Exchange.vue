@@ -13,14 +13,6 @@
         <div class="settings-exchange__name">{{ name }}</div>
       </div>
       <div class="settings-exchange__controls">
-        <button
-          class="settings-exchange__visibility"
-          v-tippy
-          :title="settings.hidden ? 'Show' : 'Hide'"
-          @click.stop.prevent="$store.dispatch('exchanges/toggleExchangeVisibility', id)"
-        >
-          <i class="icon-visible"></i>
-        </button>
         <button class="settings-exchange__more" @click.stop.prevent="expanded = !expanded">
           <i class="icon-down"></i>
         </button>

@@ -25,8 +25,10 @@
         "KRAKEN:PI_XBTUSD",
         "DERIBIT:BTC-PERPETUAL",
         "FTX:BTC-PERP",
-        "FTX:BTC/USD",
-        "FTX:BTC/USDT"
+        "BYBIT:BTCUSD",
+        "BYBIT:BTCUSDT",
+        "FTX:BTC/USDT",
+        "FTX:BTC/USD"
       ]
     },
     "trades": {
@@ -52,8 +54,10 @@
         "KRAKEN:PI_XBTUSD",
         "DERIBIT:BTC-PERPETUAL",
         "FTX:BTC-PERP",
-        "FTX:BTC/USD",
-        "FTX:BTC/USDT"
+        "BYBIT:BTCUSD",
+        "BYBIT:BTCUSDT",
+        "FTX:BTC/USDT",
+        "FTX:BTC/USD"
       ],
       "settings": {
         "tradeType": "trades",

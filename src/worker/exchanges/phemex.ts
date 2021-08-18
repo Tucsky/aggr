@@ -6,7 +6,6 @@ export default class extends Exchange {
   currencies = []
   riskLimits = []
   specs = {}
-  products = []
   protected endpoints = {
     PRODUCTS: 'https://api.phemex.com/exchange/public/cfg/v2/products'
   }

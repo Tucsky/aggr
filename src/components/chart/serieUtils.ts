@@ -17,7 +17,7 @@ export function avg_ohlc$(state, renderer) {
   state.close = 0
 
   for (const identifier in renderer.sources) {
-    if (renderer.sources[identifier].open === null) {
+    if (!renderer.sources[identifier].active) {
       continue
     }
 

@@ -25,13 +25,36 @@
       </dropdown>
     </pane-header>
     <div class="chart__overlay">
-      <div class="chart__indicators">
-        <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" />
+      <div>
+        <div class="chart-overlay">
+          <div class="chart-overlay__content chart__indicators" v-if="showIndicatorsOverlay">
+            <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" />
 
-        <div class="column mt8">
-          <a href="javascript:void(0);" @click="addIndicator" v-tippy="{ placement: 'bottom' }" title="Add" class="btn mr4 -text">
-            <i class="icon-plus"></i>
-          </a>
+            <a href="javascript:void(0);" @click="addIndicator" v-tippy="{ placement: 'bottom' }" title="Add" class="btn mr4 -text">
+              <i class="icon-plus"></i>
+            </a>
+          </div>
+          <div class="chart-overlay__title" @click="showIndicatorsOverlay = !showIndicatorsOverlay">Indicators <i class="icon-up -higher"></i></div>
+        </div>
+
+        <div class="chart-overlay">
+          <ul class="chart-overlay__content chart__markets" v-if="showMarketsOverlay">
+            <div class="column">
+              <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('perp')">perp</a>
+              <i class="pipe -center">|</i>
+              <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('spot')">spot</a>
+              <i class="pipe -center">|</i>
+              <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('all')">all</a>
+            </div>
+            <li
+              v-for="market of markets"
+              :key="market"
+              v-text="market"
+              @click="toggleMarket($event, market)"
+              :class="{ '-hidden': hiddenMarkets[market] }"
+            ></li>
+          </ul>
+          <div class="chart-overlay__title" @click="showMarketsOverlay = !showMarketsOverlay">Markets <i class="icon-up -higher"></i></div>
         </div>
       </div>
       <div class="chart__controls" :style="{ marginRight: priceWidth / 12 + 'em' }">
@@ -107,6 +130,9 @@ export default class extends Mixins(PaneMixin) {
     [60 * 60 * 24]: '1d'
   }
 
+  showMarketsOverlay = false
+  showIndicatorsOverlay = true
+
   private _onStoreMutation: () => void
   private _keepAliveTimeout: number
   private _onPanTimeout: number
@@ -133,6 +159,14 @@ export default class extends Mixins(PaneMixin) {
     return getTimeframeForHuman(this.timeframe)
   }
 
+  get markets() {
+    return this.$store.state.panes.panes[this.paneId].markets
+  }
+
+  get hiddenMarkets() {
+    return this.$store.state[this.paneId].hiddenMarkets
+  }
+
   $refs!: {
     chartContainer: HTMLElement
   }
@@ -157,12 +191,9 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.clearChart()
           this._chartController.renderAll()
           break
-        case 'app/EXCHANGE_UPDATED':
-          this._chartController.renderAll()
-          break
         case 'panes/SET_PANE_MARKETS':
           if (mutation.payload.id === this.paneId) {
-            this._chartController.setMarkets(mutation.payload.markets)
+            this._chartController.refreshMarkets()
 
             this.clear()
             this.fetch()
@@ -175,6 +206,11 @@ export default class extends Mixins(PaneMixin) {
           break
         case this.paneId + '/SET_TIMEFRAME':
           this.setTimeframe(mutation.payload)
+          break
+        case 'app/EXCHANGE_UPDATED':
+        case this.paneId + '/TOGGLE_MARKET':
+          this._chartController.refreshMarkets()
+          this._chartController.renderAll()
           break
         case this.paneId + '/SET_REFRESH_RATE':
           this._chartController.clearQueue()
@@ -866,6 +902,14 @@ export default class extends Mixins(PaneMixin) {
 
     openBase64InNewTab(b64, 'image/png')
   }
+
+  toggleMarket(event, id) {
+    this.$store.dispatch(this.paneId + '/toggleMarkets', { id, inverse: event.shiftKey })
+  }
+
+  toggleMarkets(type) {
+    this.$store.dispatch(this.paneId + '/toggleMarkets', { type })
+  }
 }
 </script>
 
@@ -895,6 +939,19 @@ export default class extends Mixins(PaneMixin) {
 
 .chart__indicators {
   font-family: 'Barlow Semi Condensed';
+}
+
+.chart__markets {
+  list-style: none;
+  padding: 0;
+
+  li {
+    cursor: pointer;
+    &.-hidden {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+  }
 }
 
 .chart__controls .btn {
@@ -936,6 +993,27 @@ export default class extends Mixins(PaneMixin) {
 
     &:hover {
       opacity: 1;
+    }
+  }
+}
+
+.chart-overlay {
+  display: flex;
+  flex-direction: column-reverse;
+
+  &__title {
+    cursor: pointer;
+    opacity: 0.5;
+
+    .icon-up {
+      vertical-align: middle;
+    }
+
+    &:first-child {
+      .icon-up {
+        display: inline-block;
+        transform: rotateZ(180deg);
+      }
     }
   }
 }

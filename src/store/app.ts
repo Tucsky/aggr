@@ -276,9 +276,7 @@ const mutations = {
     state.redirectUrl = redirectUrl
   },
   EXCHANGE_UPDATED(state, exchangeId: string) {
-    const active = !this.state.exchanges[exchangeId].disabled && !this.state.exchanges[exchangeId].hidden
-
-    Vue.set(state.activeExchanges, exchangeId, active)
+    Vue.set(state.activeExchanges, exchangeId, !this.state.exchanges[exchangeId].disabled)
   },
   TOGGLE_LOADING(state, value) {
     state.isLoading = value ? true : false
