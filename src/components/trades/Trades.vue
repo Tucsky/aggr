@@ -418,9 +418,9 @@ export default class extends Mixins(PaneMixin) {
       if (trade.slippage) {
         slippage.innerHTML =
           (this._calculateSlippage === 'price'
-            ? (trade.slippage > 0 ? '+' : '') + Math.round(trade.slippage)
+            ? (trade.slippage > 0 ? '+' : '') + trade.slippage
             : this._calculateSlippage === 'bps'
-            ? (trade.slippage > 0 ? '+' : '-') + Math.round(trade.slippage)
+            ? (trade.slippage > 0 ? '+' : '') + trade.slippage
             : '') + '&nbsp;&nbsp;'
       }
       li.appendChild(slippage)

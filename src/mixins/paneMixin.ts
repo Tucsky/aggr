@@ -1,5 +1,4 @@
 import { Pane } from '@/store/panes'
-import { isElementInteractive } from '@/utils/helpers'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 

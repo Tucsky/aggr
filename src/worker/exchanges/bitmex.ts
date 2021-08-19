@@ -89,7 +89,7 @@ export default class extends Exchange {
             pair: trade.symbol,
             timestamp: +new Date(trade.timestamp),
             price: trade.price,
-            size: trade.size / (this.currencies[trade.symbol] === 'USD' ? trade.price : 1),
+            size: trade.homeNotional,
             side: trade.side === 'Buy' ? 'buy' : 'sell'
           }))
         )

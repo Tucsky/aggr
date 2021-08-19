@@ -518,7 +518,6 @@ const mutations = {
   },
   UPDATE_ITEM: (state, { breakpoint, item }: { breakpoint: string; item: GridItem }) => {
     const targetCols = BREAKPOINTS_COLS[breakpoint]
-    console.log('update item', item.i, item)
 
     for (const _breakpoint in state.layouts) {
       const _item = state.layouts[_breakpoint].find(_item => item.i === _item.i)
@@ -528,12 +527,9 @@ const mutations = {
       const isCurrent = coeficient === 1
 
       if (!isCurrent && _item.isolated) {
-        console.log('item', _item.i, 'on layout', _breakpoint, 'is isolated: abort')
         continue
       }
       // const index = state.layouts[_breakpoint].indexOf(_item)
-
-      console.log('update item', _item.i, 'on layout', _breakpoint, 'coef', coeficient, item === _item ? 'is original' : '')
 
       _item.x = Math.floor(item.x * coeficient)
       _item.y = Math.floor(item.y * coeficient)
@@ -541,7 +537,6 @@ const mutations = {
       _item.h = Math.floor(item.h * coeficient)
 
       if (isCurrent && !_item.isolated) {
-        console.log('flag item as "isolated"')
         _item.isolated = true
       }
     }

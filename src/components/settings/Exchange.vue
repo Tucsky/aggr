@@ -4,7 +4,6 @@
     :class="{
       '-active': active,
       '-enabled': !settings.disabled,
-      '-invisible': settings.hidden,
       '-expanded': expanded
     }"
   >
@@ -179,20 +178,6 @@ export default class extends Vue {
 
     .settings-exchange__visibility {
       display: flex;
-    }
-
-    &.-invisible {
-      .icon-visibility:before {
-        transform: scale(1.2) rotateY(180deg);
-      }
-    }
-  }
-
-  &.-invisible {
-    opacity: 0.8;
-
-    .icon-eye:before {
-      content: unicode($icon-hidden);
     }
   }
 
