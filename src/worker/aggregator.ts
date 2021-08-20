@@ -202,11 +202,8 @@ class Aggregator {
 
     if (this.settings.calculateSlippage) {
       if (this.settings.calculateSlippage === 'price') {
-        trade.slippage = Math.round(((trade.price - trade.originalPrice) + Number.EPSILON) * 100) / 100
-        if (trade.pair === 'ADAU21') {
-          console.log(trade.slippage, trade.price - trade.originalPrice)
-        }
-        if (Math.abs(trade.slippage) / trade.price < 0.0001) {
+        trade.slippage = Math.round(((trade.price - trade.originalPrice) + Number.EPSILON) * 10) / 10
+        if (Math.abs(trade.slippage) / trade.price < 0.0005) {
           trade.slippage = null
         }
       } else if (this.settings.calculateSlippage === 'bps') {

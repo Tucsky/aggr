@@ -962,14 +962,12 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__price {
     flex-grow: 0.5;
-    margin-right: 0.1rem;
     text-align: left;
-    direction: rtl;
   }
 
   .trade__slippage {
-    flex-basis: 2rem;
-    max-width: 2rem;
+    flex-basis: 2.5rem;
+    max-width: 2.5rem;
     font-size: 75%;
     font-family: monospace;
     overflow: visible;
