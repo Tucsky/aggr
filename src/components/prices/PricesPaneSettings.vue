@@ -37,7 +37,7 @@ import Thresholds from '../settings/Thresholds.vue'
 
 @Component({
   components: { Thresholds, Slider },
-  name: 'TradesSettings',
+  name: 'PricesSettings',
   props: {
     paneId: {
       type: String,

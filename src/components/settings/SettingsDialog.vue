@@ -376,47 +376,6 @@ export default {
       }
     },
 
-    validateWorkspaceImport(raw) {
-      let workspace = null
-
-      try {
-        workspace = JSON.parse(raw)
-      } catch (error) {
-        this.$store.dispatch('app/showNotice', {
-          type: 'error',
-          title: `The workspace you provided couldn't be parsed<br>${error.message}`
-        })
-
-        return
-      }
-
-      if (!workspace.id) {
-        this.$store.dispatch('app/showNotice', {
-          type: 'error',
-          title: `The workspace you provided has no ID`
-        })
-        return
-      }
-
-      if (!workspace.name) {
-        this.$store.dispatch('app/showNotice', {
-          type: 'error',
-          title: `The workspace you provided has no name`
-        })
-        return
-      }
-
-      if (!workspace.states || Object.keys(workspace.states).length === 0) {
-        this.$store.dispatch('app/showNotice', {
-          type: 'error',
-          title: `The workspace you provided is empty`
-        })
-        return
-      }
-
-      return workspace
-    },
-
     async loadWorkspace(id) {
       await this.close()
 
@@ -491,7 +450,7 @@ export default {
     async uploadWorkspace() {
       const content = await browseFile()
 
-      const workspace = this.validateWorkspaceImport(content)
+      const workspace = workspacesService.validateWorkspace(content)
 
       if (!workspace) {
         return

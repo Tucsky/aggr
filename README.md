@@ -105,6 +105,7 @@ Let's say you have a server instance running on port 3000, start the client with
 If you plan to use real money with this, USE AT YOUR OWN RISK.
 
 ## Support this project !
+ETH [0xe3c893cdA4bB41fCF402726154FB4478Be2732CE](https://etherscan.io/address/0xe3c893cdA4bB41fCF402726154FB4478Be2732CE)<br>
 BTC [3PK1bBK8sG3zAjPBPD7g3PL14Ndux3zWEz](bitcoin:3PK1bBK8sG3zAjPBPD7g3PL14Ndux3zWEz)<br>
 XMR 48NJj3RJDo33zMLaudQDdM8G6MfPrQbpeZU2YnRN2Ep6hbKyYRrS2ZSdiAKpkUXBcjD2pKiPqXtQmSZjZM7fC6YT6CMmoX6<br>
 COINBASE

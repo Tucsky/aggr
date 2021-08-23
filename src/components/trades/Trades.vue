@@ -261,19 +261,25 @@ export default class extends Mixins(PaneMixin) {
       const multiplier = this._multipliers[identifier]
 
       if (trade.liquidation) {
+        // trade is liquidation
         if (this._tradeType === 'both' && amount >= this._liquidationThreshold.amount * multiplier) {
+          // pane showing both trades and liq -> use liquidation threshold and show accordingly
           this.appendRow(trade, amount, multiplier)
           continue
         } else if (this._tradeType === 'trades') {
+          // pane is not showing liquidation -> abort
           continue
         }
       } else if (this._tradeType === 'liquidations') {
+        // trade is not a liquidation but pane only show liquidation -> abort
         continue
       }
 
       if (amount >= this._minimumThresholdAmount * multiplier) {
+        // show trade (liquidation or not) if amount > minimum threshold
         this.appendRow(trade, amount, multiplier)
       } else if (amount > this._audioThreshold) {
+        // show trade (liquidation or not) if amount > minimum threshold
         this._thresholdsAudios[0][trade.side](audioService, amount / (this._significantThresholdAmount * multiplier), trade.side, 0)
       }
     }
@@ -968,10 +974,13 @@ export default class extends Mixins(PaneMixin) {
   .trade__slippage {
     flex-basis: 2.5rem;
     max-width: 2.5rem;
-    font-size: 75%;
-    font-family: monospace;
+    font-size: 12px;
     overflow: visible;
-    text-align: left;
+    position: absolute;
+    left: 50%;
+    line-height: 1rem;
+    font-family: $font-monospace;
+    font-weight: 400;
   }
 
   .trade__amount {

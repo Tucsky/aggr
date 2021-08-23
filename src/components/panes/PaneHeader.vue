@@ -53,6 +53,7 @@ import ChartPaneDialog from '../chart/ChartPaneDialog.vue'
 import StatsPaneDialog from '../stats/StatsPaneDialog.vue'
 import PricesPaneDialog from '../prices/PricesPaneDialog.vue'
 import { getSiblings, parseMarket } from '@/utils/helpers'
+import WebsitePaneDialog from '../website/WebsitePaneDialog.vue'
 
 @Component({
   name: 'PaneHeader',
@@ -134,6 +135,9 @@ export default class extends Vue {
         break
       case 'prices':
         dialogService.open(PricesPaneDialog, { paneId: this.paneId })
+        break
+      case 'website':
+        dialogService.open(WebsitePaneDialog, { paneId: this.paneId })
         break
     }
   }

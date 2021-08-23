@@ -44,10 +44,11 @@ import Trades from '../trades/Trades.vue'
 import Stats from '../stats/Stats.vue'
 import Counters from '../counters/Counters.vue'
 import Prices from '../prices/Prices.vue'
+import Website from '../website/Website.vue'
 import { BREAKPOINTS_COLS, BREAKPOINTS_WIDTHS } from '@/utils/constants'
 
 @Component({
-  components: { GridLayout: VueGridLayout.GridLayout, GridItem: VueGridLayout.GridItem, Chart, Trades, Stats, Counters, Prices }
+  components: { GridLayout: VueGridLayout.GridLayout, GridItem: VueGridLayout.GridItem, Chart, Trades, Stats, Counters, Prices, Website }
 })
 export default class extends Vue {
   draggable = true

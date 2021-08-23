@@ -99,12 +99,6 @@ export default class extends Vue {
     }
   }
 
-  mounted() {
-    setTimeout(() => {
-      this.$el.querySelector('button').focus()
-    })
-  }
-
   beforeDestroy() {
     if (this._handleRelease) {
       this._handleRelease()

@@ -546,6 +546,14 @@ class WorkspacesService {
       return
     }
 
+    for (const paneId in workspace.states) {
+      const pane = workspace.states[paneId]
+
+      if (pane.type === 'website') {
+        pane.locked = true
+      }
+    }
+
     return workspace
   }
 

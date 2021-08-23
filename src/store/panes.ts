@@ -11,7 +11,7 @@ import defaultLayouts from './defaultLayouts.json'
 import { BREAKPOINTS_COLS, BREAKPOINTS_WIDTHS } from '@/utils/constants'
 import dialogService from '@/services/dialogService'
 
-export type PaneType = 'trades' | 'chart' | 'stats' | 'counters' | 'prices'
+export type PaneType = 'trades' | 'chart' | 'stats' | 'counters' | 'prices' | 'website'
 export type MarketsListeners = { [market: string]: number }
 
 export type ResponsiveLayouts = { [breakpoint: string]: GridItem[] }
@@ -346,7 +346,7 @@ const actions = {
   },
   changeZoom({ state, commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
     if (zoom) {
-      zoom = (state.panes[id].zoom || 1) + zoom
+      zoom = Math.max(0.1, (state.panes[id].zoom || 1) + zoom)
     } else {
       zoom = 1
     }
@@ -356,7 +356,7 @@ const actions = {
     dispatch('refreshZoom', id)
   },
   refreshZoom({ state }, id: string) {
-    const zoom = state.panes[id].zoom
+    const zoom = Math.max(0.1, state.panes[id].zoom)
     const el = document.getElementById(id) as HTMLElement
 
     if (el) {
