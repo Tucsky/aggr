@@ -427,7 +427,7 @@ export default class extends Mixins(PaneMixin) {
           '</small> '
       }
     }
-    price.innerHTML = `${formatPrice(trade.price)}`
+    price.innerHTML += `${formatPrice(trade.price)}`
     li.appendChild(price)
 
     const amount_div = document.createElement('div')
@@ -940,12 +940,12 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__pair {
     text-align: left !important;
-    flex-grow: 0.48 !important;
+    flex-grow: 0.4 !important;
     font-size: 75%;
     line-height: 1;
 
     + .trade__price {
-      flex-grow: 0.4;
+      flex-grow: 0.5;
     }
   }
 
@@ -972,10 +972,8 @@ export default class extends Mixins(PaneMixin) {
     flex-grow: 0.6;
     text-align: left;
     small {
-      font-size: 12px;
-      font-family: $font-monospace;
+      font-size: 0.75em;
       font-weight: 400;
-      overflow: visible;
     }
   }
 
