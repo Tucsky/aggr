@@ -91,9 +91,9 @@ export default class extends Mixins(PaneMixin) {
     }
 
     &.-okotoki-small {
-      transform: translate(-11%, calc(-9% - 34px)) scale(0.85);
-      height: calc(123% + 112px);
-      width: calc(127% + 246px);
+      transform: translate(-8%, calc(-9% - 34px)) scale(0.85);
+      height: calc(122% + 112px);
+      width: calc(122% + 247px);
     }
   }
 }

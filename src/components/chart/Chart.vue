@@ -18,7 +18,7 @@
         </template>
       </dropdown>
 
-      <dropdown :options="timeframes" :selected="timeframe" placeholder="tf." @output="$store.commit(paneId + '/SET_TIMEFRAME', $event)">
+      <dropdown :options="timeframes" :selected="timeframe" placeholder="tf." @output="changeTimeframe($event)">
         <template v-slot:selection>
           <span>{{ timeframeForHuman }}</span>
         </template>
@@ -688,6 +688,19 @@ export default class extends Mixins(PaneMixin) {
     this._chartController.clear()
 
     this.reachedEnd = false
+  }
+
+  changeTimeframe(newTimeframe) {
+    if ((window.event as any).ctrlKey) {
+      for (const id in this.$store.state.panes.panes) {
+        const type = this.$store.state.panes.panes[id].type
+        if (type === 'chart' && this.$store.state[id].timeframe !== newTimeframe) {
+          this.$store.commit(id + '/SET_TIMEFRAME', newTimeframe)
+        }
+      }
+    } else {
+      this.$store.commit(this.paneId + '/SET_TIMEFRAME', newTimeframe)
+    }
   }
 
   setTimeframe(newTimeframe) {

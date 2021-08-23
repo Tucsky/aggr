@@ -401,36 +401,34 @@ export default class extends Mixins(PaneMixin) {
       exchange.innerText = trade.exchange.replace('_', ' ')
     }
 
-    exchange.setAttribute('title', trade.exchange)
+    li.setAttribute('title', trade.exchange + ':' + trade.pair)
     li.appendChild(exchange)
 
     if (this.showTradesPairs) {
       const pair = document.createElement('div')
       pair.className = 'trade__pair'
       pair.innerText = trade.pair.replace('_', ' ')
-      pair.setAttribute('title', trade.pair)
       li.appendChild(pair)
     }
 
     const price = document.createElement('div')
     price.className = 'trade__price'
-    price.innerHTML = `${formatPrice(trade.price)}`
-    li.appendChild(price)
 
     if (this._calculateSlippage) {
-      const slippage = document.createElement('div')
-      slippage.className = 'trade__slippage'
-
       if (trade.slippage) {
-        slippage.innerHTML =
+        price.innerHTML =
+          '<small>(' +
           (this._calculateSlippage === 'price'
             ? (trade.slippage > 0 ? '+' : '') + trade.slippage
             : this._calculateSlippage === 'bps'
             ? (trade.slippage > 0 ? '+' : '') + trade.slippage
-            : '') + '&nbsp;&nbsp;'
+            : '') +
+          ')' +
+          '</small> '
       }
-      li.appendChild(slippage)
     }
+    price.innerHTML = `${formatPrice(trade.price)}`
+    li.appendChild(price)
 
     const amount_div = document.createElement('div')
     amount_div.className = 'trade__amount'
@@ -942,9 +940,13 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__pair {
     text-align: left !important;
-    flex-grow: 0.55 !important;
+    flex-grow: 0.48 !important;
     font-size: 75%;
     line-height: 1;
+
+    + .trade__price {
+      flex-grow: 0.4;
+    }
   }
 
   .icon-currency,
@@ -967,8 +969,14 @@ export default class extends Mixins(PaneMixin) {
   }
 
   .trade__price {
-    flex-grow: 0.5;
+    flex-grow: 0.6;
     text-align: left;
+    small {
+      font-size: 12px;
+      font-family: $font-monospace;
+      font-weight: 400;
+      overflow: visible;
+    }
   }
 
   .trade__slippage {
@@ -986,7 +994,7 @@ export default class extends Mixins(PaneMixin) {
   .trade__amount {
     text-align: right;
     position: relative;
-    flex-grow: 0.4;
+    flex-grow: 0.5;
 
     > span {
       max-width: 100%;
