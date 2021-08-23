@@ -112,10 +112,6 @@ const actions = {
       markets: options.markets || []
     }
 
-    if (!pane.markets.length) {
-      pane.markets = Object.keys(state.marketsListeners)
-    }
-
     await registerModule(id, {}, true, pane)
 
     commit('ADD_PANE', pane)

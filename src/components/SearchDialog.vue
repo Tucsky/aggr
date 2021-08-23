@@ -83,7 +83,7 @@
                 <i v-if="historicalMarkets.indexOf(market.id) !== -1" class="icon-candlestick icon-lower"></i>
               </td>
             </tr>
-            <tr v-if="results.length > 0 && results.length <= 25" class="-action" @click="addAll">
+            <tr v-if="results.length > 0" class="-action" @click="addAll">
               <td colspan="100%">add all ({{ results.length }}) ☝</td>
             </tr>
           </tbody>
@@ -230,7 +230,17 @@ export default {
       return this.query.replace(/\W/g, '').length > 4
     },
     searchTypes() {
-      return this.$store.state.settings.searchTypes
+      return Object.assign(
+        {
+          historical: false,
+          spots: true,
+          perpetuals: true,
+          futures: false,
+          normalize: true,
+          connected: false
+        },
+        this.$store.state.settings.searchTypes
+      )
     },
     searchExchanges() {
       return this.$store.state.settings.searchExchanges
@@ -240,7 +250,8 @@ export default {
       const hasSpot = this.searchTypes.spots
       const hasPerpetuals = this.searchTypes.perpetuals
       const hasFutures = this.searchTypes.futures
-      return hasHistorical || hasSpot || hasPerpetuals || hasFutures
+      const isConnected = this.searchTypes.connected
+      return hasHistorical || hasSpot || hasPerpetuals || hasFutures || isConnected
     },
     historicalMarkets() {
       return this.$store.state.app.historicalMarkets
@@ -266,10 +277,16 @@ export default {
       const hasSpot = this.searchTypes.spots
       const hasPerpetuals = this.searchTypes.perpetuals
       const hasFutures = this.searchTypes.futures
+      const isConnected = this.searchTypes.connected
+      const activeMarkets = this.activeMarkets
       const hasTypeFilters = hasSpot || hasPerpetuals || hasFutures
 
       return this.flattenedProducts.filter(a => {
         if (hasHistorical && this.historicalMarkets.indexOf(a.id) === -1) {
+          return false
+        }
+
+        if (isConnected && activeMarkets.indexOf(a.id) === -1) {
           return false
         }
 
@@ -534,8 +551,7 @@ export default {
 .selection {
   place-self: stretch;
   padding-bottom: 90px;
-  width: 240px;
-  max-width: 240px;
+  min-width: 240px;
   overflow: auto;
   max-height: 59vh;
   padding: 0;
@@ -558,6 +574,8 @@ export default {
     padding: 1rem;
     flex-wrap: wrap;
     justify-content: flex-end;
+    max-width: 250px;
+    margin-left: auto;
 
     .btn {
       text-transform: none;
@@ -633,13 +651,14 @@ export default {
     box-shadow: 0 1px var(--theme-background-150);
     margin-top: -1rem;
     width: 100%;
-    max-width: none;
 
     &__items {
       flex-direction: row;
       flex-wrap: wrap;
       place-items: auto;
       justify-content: flex-start;
+      max-width: none;
+      margin: 0;
 
       .btn {
         margin-right: 4px;

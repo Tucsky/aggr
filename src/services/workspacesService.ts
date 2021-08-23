@@ -211,11 +211,16 @@ class WorkspacesService {
     return workspace
   }
 
-  async setCurrentWorkspace(workspace: Workspace) {
+  async setCurrentWorkspace(workspace: Workspace, restart?: boolean) {
     let previousWorkspaceId
 
     if (this.workspace) {
       previousWorkspaceId = this.workspace.id
+
+      if (restart) {
+        window.location.href = window.location.href.replace(previousWorkspaceId, workspace.id)
+        return
+      }
     }
 
     this.upgradeWorkspace(workspace)
@@ -400,7 +405,7 @@ class WorkspacesService {
 
     await this.db.add('workspaces', workspace)
 
-    return await this.setCurrentWorkspace(await this.getWorkspace(workspace.id))
+    return await this.setCurrentWorkspace(await this.getWorkspace(workspace.id), true)
   }
 
   getWorkspaces() {
@@ -503,7 +508,7 @@ class WorkspacesService {
   }
 
   async importAndSetWorkspace(workspace) {
-    await this.setCurrentWorkspace(await this.importWorkspace(workspace))
+    await this.setCurrentWorkspace(await this.importWorkspace(workspace), true)
 
     this.getWorkspaces()
   }

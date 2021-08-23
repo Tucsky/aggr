@@ -355,7 +355,7 @@ export default {
     },
 
     async importWorkspace(workspace) {
-      await workspacesService.setCurrentWorkspace(await workspacesService.importWorkspace(workspace))
+      await workspacesService.setCurrentWorkspace(await workspacesService.importWorkspace(workspace), true)
 
       this.getWorkspaces()
     },
@@ -381,7 +381,7 @@ export default {
 
       const workspace = await workspacesService.getWorkspace(id)
 
-      await workspacesService.setCurrentWorkspace(workspace)
+      await workspacesService.setCurrentWorkspace(workspace, true)
 
       this.getWorkspaces()
     },
@@ -424,7 +424,7 @@ export default {
           nextWorkspace = await workspacesService.createWorkspace()
         }
 
-        await workspacesService.setCurrentWorkspace(nextWorkspace)
+        await workspacesService.setCurrentWorkspace(nextWorkspace, true)
       }
 
       if (!isCurrent) {
@@ -444,7 +444,7 @@ export default {
       await this.close()
       const workspace = await workspacesService.createWorkspace()
 
-      await workspacesService.setCurrentWorkspace(workspace)
+      await workspacesService.setCurrentWorkspace(workspace, true)
     },
 
     async uploadWorkspace() {

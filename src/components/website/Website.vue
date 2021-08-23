@@ -47,11 +47,13 @@ export default class extends Mixins(PaneMixin) {
   }
 
   getCustomId(url) {
-    if (/okotoki.com/.test(url)) {
-      return 'okotoki'
+    const urlHash = url.split('#')
+
+    if (urlHash.length === 0 || urlHash[urlHash.length - 1].trim().length === 0) {
+      return ''
     }
 
-    return null
+    return '-' + urlHash[urlHash.length - 1].trim()
   }
 }
 </script>
@@ -76,10 +78,22 @@ export default class extends Mixins(PaneMixin) {
     width: 100%;
     height: 100%;
 
-    &.okotoki {
-      transform: translate(-30px, -66px);
-      height: calc(100% + 146px);
+    &.-okotoki {
+      transform: translate(-30px, -55px);
+      height: calc(100% + 135px);
       width: calc(100% + 280px);
+    }
+
+    &.-okotoki-mini {
+      transform: translate(-13%, calc(-13% - 34px)) scale(0.75);
+      height: calc(137% + 112px);
+      width: calc(135% + 246px);
+    }
+
+    &.-okotoki-small {
+      transform: translate(-11%, calc(-9% - 34px)) scale(0.85);
+      height: calc(123% + 112px);
+      width: calc(127% + 246px);
     }
   }
 }
