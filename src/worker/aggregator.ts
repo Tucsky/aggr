@@ -202,7 +202,7 @@ class Aggregator {
 
     if (this.settings.calculateSlippage) {
       if (this.settings.calculateSlippage === 'price') {
-        trade.slippage = Math.round(((trade.price - trade.originalPrice) + Number.EPSILON) * 10) / 10
+        trade.slippage = Math.round((trade.price - trade.originalPrice + Number.EPSILON) * 10) / 10
         if (Math.abs(trade.slippage) / trade.price < 0.00025) {
           trade.slippage = null
         }

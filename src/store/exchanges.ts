@@ -38,7 +38,7 @@ const actions = {
     for (const id of getters.getExchanges) {
       state._exchanges.push(id)
       state[id].fetched = false
-      this.commit('app/EXCHANGE_UPDATED', id)
+      rootState.app.activeExchanges[id] = !state[id].disabled
     }
 
     if (!Object.keys(rootState.settings.searchExchanges).length) {

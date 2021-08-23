@@ -185,10 +185,9 @@ const actions = {
       }
 
       for (const market of markets) {
-
         if (typeof marketsListeners[market] === 'undefined') {
           const [exchange, pair] = parseMarket(market)
-  
+
           const indexedProduct = rootState.app.indexedProducts[exchange].find(indexedMarket => indexedMarket.pair === pair)
           marketsListeners[market] = indexedProduct
 
@@ -242,61 +241,6 @@ const actions = {
     commit('SET_PANE_MARKETS', { id, markets })
 
     dispatch('refreshMarketsListeners')
-  },
-  attachMarket({ state, commit, dispatch }, { id, market }: { id: string; market: string }) {
-    const markets = state.panes[id].markets
-
-    if (markets.indexOf(market) === -1) {
-      commit('ADD_PANE_MARKET', { id, market })
-
-      dispatch('refreshMarketsListeners')
-    }
-  },
-  detachMarket({ state, commit, dispatch }, { id, market }: { id: string; market: string }) {
-    const markets = state.panes[id].markets
-    const index = markets.indexOf(market)
-
-    if (index !== -1) {
-      commit('REMOVE_PAIR_MARKET', { id, index })
-
-      dispatch('refreshMarketsListeners')
-    }
-  },
-  copySettings({ rootState }, id) {
-    if (!rootState[id]) {
-      this.dispatch('app/showNotice', {
-        title: `Pane ${id} doesn't exists`,
-        type: 'error'
-      })
-
-      return
-    }
-
-    const settings = JSON.stringify(rootState[id])
-
-    this.commit('app/SET_PANE_CLIPBOARD', settings)
-
-    this.dispatch('app/showNotice', {
-      title: `Settings added to clipboard ✅`
-    })
-  },
-  applySettings({ rootState }, { id, settings }: { id: string; settings: any }) {
-    if (!rootState[id]) {
-      this.dispatch('app/showNotice', {
-        title: `Pane ${id} doesn't exists`,
-        type: 'error'
-      })
-
-      return
-    }
-
-    for (const prop in settings) {
-      rootState[id][prop] = settings[prop]
-    }
-
-    this.dispatch('app/showNotice', {
-      title: `Settings have been applied to pane ${id}`
-    })
   },
   duplicatePane({ state, rootState, dispatch }, id: string) {
     if (!state.panes[id] || !rootState[id]) {

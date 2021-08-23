@@ -108,6 +108,13 @@ export async function getProducts(exchangeId: string, endpoints?: string[]): Pro
   } else if (!endpoints) {
     console.debug(`[products.${exchangeId}] no storage + no endpoint = no products`)
 
+    const payload = await aggregatorService.dispatchAsync({
+      op: 'fetch-products',
+      data: exchangeId
+    })
+
+    console.log('fetch-product payloed', payload)
+
     return null
   } else {
     console.debug(`[products.${exchangeId}] endpoint are known, gona fetch now`)

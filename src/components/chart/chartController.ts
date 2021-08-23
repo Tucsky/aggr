@@ -1033,6 +1033,10 @@ export default class ChartController {
       const trade = trades[i]
       const identifier = trade.exchange + trade.pair
 
+      if (typeof this.markets[identifier] === 'undefined') {
+        continue
+      }
+
       let timestamp
       if (this.activeRenderer) {
         if (this.activeRenderer.type === 'time') {
@@ -1096,7 +1100,7 @@ export default class ChartController {
           price: trade.price
         }
 
-        if (this.activeRenderer.length > 10 && !redrawRequired) {
+        if (!redrawRequired) {
           redrawRequired = true
         }
 
