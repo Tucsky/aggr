@@ -1,6 +1,6 @@
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
-import { getBucketId, sleep, slugify, uniqueName } from '@/utils/helpers'
+import { getBucketId, parseMarket, sleep, slugify, uniqueName } from '@/utils/helpers'
 import { registerModule, syncState } from '@/utils/store'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
@@ -10,9 +10,10 @@ import defaultPanes from './defaultPanes.json'
 import defaultLayouts from './defaultLayouts.json'
 import { BREAKPOINTS_COLS, BREAKPOINTS_WIDTHS } from '@/utils/constants'
 import dialogService from '@/services/dialogService'
+import { ListenedProduct } from './app'
 
 export type PaneType = 'trades' | 'chart' | 'stats' | 'counters' | 'prices' | 'website'
-export type MarketsListeners = { [market: string]: number }
+export type MarketsListeners = { [market: string]: ListenedProduct }
 
 export type ResponsiveLayouts = { [breakpoint: string]: GridItem[] }
 export interface GridItem {
@@ -164,7 +165,7 @@ const actions = {
       }
     }
   },
-  async refreshMarketsListeners({ commit, state }) {
+  async refreshMarketsListeners({ commit, state, rootState }) {
     const marketsListeners = {}
     const buckets = {}
 
@@ -184,11 +185,17 @@ const actions = {
       }
 
       for (const market of markets) {
+
         if (typeof marketsListeners[market] === 'undefined') {
-          marketsListeners[market] = 0
+          const [exchange, pair] = parseMarket(market)
+  
+          const indexedProduct = rootState.app.indexedProducts[exchange].find(indexedMarket => indexedMarket.pair === pair)
+          marketsListeners[market] = indexedProduct
+
+          marketsListeners[market].listeners = 0
         }
 
-        marketsListeners[market]++
+        marketsListeners[market].listeners++
       }
     }
 

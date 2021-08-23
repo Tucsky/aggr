@@ -42,6 +42,10 @@ export interface Product {
   local: string
 }
 
+export interface ListenedProduct extends Product {
+  listeners: number
+}
+
 export interface AppState {
   isBooted: boolean
   isLoading: boolean

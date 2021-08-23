@@ -123,6 +123,9 @@ const actions = {
         .replace(/[^a-z0-9](perp|swap|perpetual)$/i, '')
         .replace(/[^a-z0-9]\d+$/i, '')
         .replace(/(.*)F0:USTF0/, '$1USDT')
+        .replace(/PI_/, '')
+        .replace(/XBT/i, 'btc')
+        .toUpperCase()
 
       let match
 
@@ -161,7 +164,7 @@ const actions = {
         base = match[1]
         quote = match[2]
 
-        localSymbol = base + quote.replace(/usdt/i, 'usd')
+        localSymbol = base + quote.replace(/usdt/i, 'USD')
       }
 
       products.push({

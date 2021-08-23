@@ -69,24 +69,23 @@ import dialogService from './services/dialogService'
     Menu,
     Notices,
     Panes
+  },
+  watch: {
+    '$store.state.panes.marketsListeners': function(newMarkets, previousMarkets) {
+      if (newMarkets !== previousMarkets) {
+        this.refreshMainMarkets(newMarkets)
+      }
+    }
   }
 })
 export default class extends Vue {
   price: string = null
   showStuck = false
 
+  private _mainMarkets: string[]
   private _faviconElement: HTMLLinkElement
   private _stuckTimeout: number
-
-  get pair() {
-    const pairs = this.$store.state.app.activeMarkets
-
-    if (!pairs.length) {
-      return 'SignificantTrades'
-    }
-
-    return pairs[0].pair
-  }
+  private _mainPair: string
 
   get showSearch() {
     return this.$store.state.app.showSearch
@@ -116,10 +115,6 @@ export default class extends Vue {
 
   get autoHideHeaders() {
     return this.$store.state.settings.autoHideHeaders
-  }
-
-  get markets() {
-    return Object.keys(this.$store.state.panes.marketsListeners)
   }
 
   get preferedSizingCurrency() {
@@ -169,7 +164,10 @@ export default class extends Vue {
     let price = 0
     let count = 0
 
-    for (const market in marketsPrices) {
+    for (const market of this._mainMarkets) {
+      if (isNaN(marketsPrices[market])) {
+        continue
+      }
       price += marketsPrices[market]
       count++
     }
@@ -187,12 +185,12 @@ export default class extends Vue {
 
       this.price = formatPrice(price)
 
-      window.document.title = this.pair + ' ' + this.price
+      window.document.title = this._mainPair + ' ' + this.price
     } else {
       this.price = null
       this.updateFavicon('neutral')
 
-      window.document.title = this.pair
+      window.document.title = this._mainPair ? this._mainPair : 'AGGR'
     }
   }
 
@@ -317,6 +315,23 @@ export default class extends Vue {
       }
     }
     reader.readAsText(files[0])
+  }
+  refreshMainMarkets(markets) {
+    const marketsByNormalizedPair = {}
+    for (const id in markets) {
+      const pair = markets[id].local
+      if (!marketsByNormalizedPair[pair]) {
+        marketsByNormalizedPair[pair] = 0
+      }
+
+      marketsByNormalizedPair[pair] += markets[id].listeners
+    }
+
+    this._mainPair = Object.keys(marketsByNormalizedPair).sort((a, b) => marketsByNormalizedPair[b] - marketsByNormalizedPair[a])[0]
+
+    this._mainMarkets = Object.keys(markets)
+      .filter(id => markets[id].local === this._mainPair)
+      .map(id => markets[id].exchange + markets[id].pair)
   }
 }
 </script>
