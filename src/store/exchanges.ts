@@ -96,8 +96,7 @@ const actions = {
 
     const baseQuoteLookup1 = new RegExp(`^${baseRegex}[^a-z0-9]?${quoteRegexKnown}$`, 'i')
     const baseQuoteLookup2 = new RegExp(`^${baseRegex}[^a-z0-9]?${quoteRegexOthers}$`, 'i')
-    const baseQuoteLookup1Inverted = new RegExp(`^${quoteRegexKnown}[^a-z0-9]?${baseRegex}$`, 'i')
-    const baseQuoteLookup2Inverted = new RegExp(`^${quoteRegexOthers}[^a-z0-9]?${baseRegex}$`, 'i')
+    const baseQuoteLookupPoloniex = new RegExp(`^(.*)_(.*)$`)
 
     for (let i = 0; i < symbols.length; i++) {
       const symbol = symbols[i]
@@ -147,16 +146,18 @@ const actions = {
       let match
 
       if (exchange === 'POLONIEX') {
-        match = localSymbol.match(baseQuoteLookup1Inverted)
-
-        if (!match) {
-          match = localSymbol.match(baseQuoteLookup2Inverted)
+        if (/ETH/.test(id) && /USDT/.test(id)) {
+          debugger
         }
+
+        match = symbol.match(baseQuoteLookupPoloniex)
 
         if (match) {
           match[0] = match[2]
           match[2] = match[1]
           match[1] = match[0]
+
+          localSymbol = match[1] + match[2]
         }
       } else {
         match = localSymbol.match(baseQuoteLookup1)
