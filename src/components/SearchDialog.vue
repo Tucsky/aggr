@@ -405,16 +405,10 @@ export default {
       this.selection.push(market)
     },
     selectMarkets(markets) {
-      for (const market of markets) {
-        this.selectMarket(market)
-      }
+      this.selection = this.selection.concat(markets)
     },
     deselectMarket(market) {
-      const index = this.selection.indexOf(market)
-
-      if (index !== -1) {
-        this.selection.splice(index, 1)
-      }
+      this.selection.splice(this.selection.indexOf(market), 1)
     },
     deselectMarkets(markets) {
       for (const market of markets) {
@@ -592,15 +586,19 @@ export default {
 
     addAll() {
       const normalized = this.searchTypes.normalize
+      const markets = []
+
       for (let i = 0; i < this.results.length; i++) {
         if (normalized) {
-          this.selectMarkets(this.results[i].markets)
+          for (const market of this.results[i].markets) {
+            markets.push(market)
+          }
         } else {
-          this.selectMarket(this.results[i].id)
+          markets.push(this.results[i].id)
         }
-
-        i--
       }
+
+      this.selectMarkets(markets)
     }
   }
 }

@@ -139,17 +139,13 @@ const actions = {
         .replace(/-PERP(ETUAL)?/i, 'USD')
         .replace(/[^a-z0-9](perp|swap|perpetual)$/i, '')
         .replace(/[^a-z0-9]\d+$/i, '')
-        .replace(/[-_/]/, '')
+        .replace(/[-_/:]/, '')
         .replace(/XBT/i, 'BTC')
         .toUpperCase()
 
       let match
 
       if (exchange === 'POLONIEX') {
-        if (/ETH/.test(id) && /USDT/.test(id)) {
-          debugger
-        }
-
         match = symbol.match(baseQuoteLookupPoloniex)
 
         if (match) {
