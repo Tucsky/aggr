@@ -172,6 +172,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   created() {
+    this.showIndicatorsOverlay = this.$parent.$el.clientHeight > 420
     this._chartController = new ChartController(this.paneId)
 
     this._legendElements = {}
@@ -691,7 +692,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   changeTimeframe(newTimeframe) {
-    if ((window.event as any).ctrlKey) {
+    if ((window.event as any).shiftKey) {
       for (const id in this.$store.state.panes.panes) {
         const type = this.$store.state.panes.panes[id].type
         if (type === 'chart' && this.$store.state[id].timeframe !== newTimeframe) {
@@ -710,6 +711,7 @@ export default class extends Mixins(PaneMixin) {
     if (
       this._chartController.timeframe < timeframe &&
       type === this._chartController.type &&
+      this.$store.state.app.apiSupportedTimeframes.indexOf(newTimeframe) === -1 &&
       Number.isInteger(timeframe / this._chartController.timeframe)
     ) {
       this._chartController.resample(newTimeframe)
@@ -1017,6 +1019,7 @@ export default class extends Mixins(PaneMixin) {
   &__title {
     cursor: pointer;
     opacity: 0.5;
+    user-select: none;
 
     .icon-up {
       vertical-align: middle;

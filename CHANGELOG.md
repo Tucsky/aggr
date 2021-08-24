@@ -3,6 +3,12 @@
 All notable changes to this project will be documented here.
 
 
+## [3.0.4] - 2021-08-24
+
+### Changed
+- Improved search & symbol normalization
+
+
 ## [3.0.3] - 2021-08-20
 
 ### Added

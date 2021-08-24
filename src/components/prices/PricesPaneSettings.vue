@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="form-group mb8">
-      <label class="checkbox-control" v-tippy="{ placement: 'left' }" title="eg: BTC-USD">
+      <label class="checkbox-control" v-tippy="{ placement: 'left' }" title="ex: BTC-USD">
         <input type="checkbox" class="form-control" :checked="showPairs" @change="$store.commit(paneId + '/TOGGLE_PAIRS')" />
         <div></div>
         <span>Ticker names are {{ showPairs ? 'visible' : 'hidden' }}</span>

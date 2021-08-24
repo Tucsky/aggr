@@ -7,42 +7,43 @@ export function avg_ohlc$(state, renderer) {
   let nbSources = 0
   let setOpen = false
 
+  let open
+  let high = 0
+  let low = 0
+  let close = 0
+
   if (typeof state.open === 'undefined') {
     setOpen = true
-    state.open = 0
+    open = 0
   }
 
-  state.high = 0
-  state.low = 0
-  state.close = 0
-
   for (const identifier in renderer.sources) {
-    if (!renderer.sources[identifier].active) {
+    if (!renderer.sources[identifier].active || renderer.sources[identifier].open === null) {
       continue
     }
 
     if (setOpen) {
-      state.open += renderer.sources[identifier].open
+      open += renderer.sources[identifier].open
     }
 
-    state.high += renderer.sources[identifier].high
-    state.low += renderer.sources[identifier].low
-    state.close += renderer.sources[identifier].close
+    high += renderer.sources[identifier].high
+    low += renderer.sources[identifier].low
+    close += renderer.sources[identifier].close
 
     nbSources++
   }
 
   if (!nbSources) {
-    nbSources = 1
+    return { time: renderer.localTimestamp }
   }
 
   if (setOpen) {
-    state.open /= nbSources
+    state.open = open / nbSources
   }
 
-  state.high /= nbSources
-  state.low /= nbSources
-  state.close /= nbSources
+  state.high = high / nbSources
+  state.low = low / nbSources
+  state.close = close / nbSources
 
   return { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }
 }

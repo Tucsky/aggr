@@ -104,7 +104,7 @@ const actions = {
       const id = exchange + ':' + symbol
       let type = 'spot'
 
-      if (/\d{2}$/.test(symbol)) {
+      if (/[UZ_-]\d{2}/.test(symbol)) {
         type = 'future'
       } else if (exchange === 'BITMEX' || exchange === 'BYBIT' || /(-|_)swap$|(-|_|:)perp/i.test(symbol)) {
         type = 'perp'
@@ -114,7 +114,7 @@ const actions = {
         type = 'perp'
       } else if (exchange === 'PHEMEX' && symbol[0] !== 's') {
         type = 'perp'
-      } else if (exchange === 'HUOBI' && /_(CQ|NW|CQ|NQ)$/.test(symbol)) {
+      } else if (exchange === 'HUOBI' && /_(CW|CQ|NW|NQ)$/.test(symbol)) {
         type = 'future'
       } else if (exchange === 'HUOBI' && /-/.test(symbol)) {
         type = 'perp'
@@ -123,12 +123,25 @@ const actions = {
       }
 
       let localSymbol = symbol
-        .replace(/-PERP(ETUAL)?/i, '-USD')
+
+      if (exchange === 'KRAKEN') {
+        localSymbol = localSymbol.replace(/PI_/, '').replace(/FI_/, '')
+      }
+
+      if (exchange === 'BITFINEX') {
+        localSymbol = localSymbol.replace(/(.*)F0:USTF0/, '$1USDT')
+      }
+
+      if (exchange === 'HUOBI') {
+        localSymbol = localSymbol.replace(/_CW|_CQ|_NW|_NQ/i, 'USD')
+      }
+
+      localSymbol = localSymbol
+        .replace(/-PERP(ETUAL)?/i, 'USD')
         .replace(/[^a-z0-9](perp|swap|perpetual)$/i, '')
         .replace(/[^a-z0-9]\d+$/i, '')
-        .replace(/(.*)F0:USTF0/, '$1USDT')
-        .replace(/PI_/, '')
-        .replace(/XBT/i, 'btc')
+        .replace(/[-_/]/, '')
+        .replace(/XBT/i, 'BTC')
         .toUpperCase()
 
       let match
@@ -168,7 +181,7 @@ const actions = {
         base = match[1]
         quote = match[2]
 
-        localSymbol = base + quote.replace(/usdt/i, 'USD')
+        // localSymbol = base + quote.replace(/usdt/i, 'USD')
       }
 
       products.push({

@@ -185,9 +185,9 @@ export default class ChartController {
       const [exchange] = parseMarket(market)
       const identifier = market.replace(':', '')
 
-      if (this.chartCache.initialPrices[identifier]) {
+      /*if (this.chartCache.initialPrices[identifier]) {
         delete this.chartCache.initialPrices[identifier]
-      }
+      }*/
 
       if (
         (output[identifier] =

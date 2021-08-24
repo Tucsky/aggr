@@ -19,7 +19,7 @@
       <div class="form-group -fill">
         <input
           v-tippy
-          title="Counters step separed by a comma (ie: 1m, 5m, 10m, 15m)"
+          title="Counters step separed by a comma (ex: 1m, 5m, 10m, 15m)"
           type="string"
           placeholder="Enter a set of timeframe (ie 1m, 15m)"
           class="form-control"

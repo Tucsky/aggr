@@ -72,6 +72,10 @@ export default class ChartCache {
   }
 
   trim(end) {
+    if (!this.chunks.length) {
+      return
+    }
+
     while (this.chunks[0] && this.chunks[0].to < end) {
       this.chunks.splice(0, 1)
     }

@@ -2,7 +2,7 @@
   <div class="settings-stats settings-section">
     <div class="column mb16">
       <div class="form-group -fill">
-        <label>Window <i class="icon-info" v-tippy title="Interval in which data is summed (eg: 1m)"></i></label>
+        <label>Window <i class="icon-info" v-tippy title="Interval in which data is summed (ex: 1m)"></i></label>
         <input
           type="text"
           class="form-control"

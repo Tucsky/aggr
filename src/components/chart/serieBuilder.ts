@@ -622,11 +622,7 @@ export default class SerieBuilder {
           throw new Error(`${plot.type}.time should be the same as the current bar timestamp ${renderer.timestamp}, got ${point.time}`)
         }
 
-        if (resultedType !== plot.expectedInput) {
-          throw new Error(`plot ${plot.type} expected ${plot.expectedInput} but got ${resultedType}`)
-        }
-
-        if (resultedType !== plot.expectedInput) {
+        if (resultedType && resultedType !== plot.expectedInput) {
           throw new Error(`plot ${plot.type} expected ${plot.expectedInput} but got ${resultedType}`)
         }
 

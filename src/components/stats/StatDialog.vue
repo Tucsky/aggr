@@ -64,7 +64,7 @@
       </div>
     </div>
     <div v-if="conditionnalColor" class="form-group mb8">
-      <label for>Color condition <span class="icon-info" title="eg: value > 0 ? 'red' : 'white'" v-tippy></span></label>
+      <label for>Color condition <span class="icon-info" title="ex: value > 0 ? 'red' : 'white'" v-tippy></span></label>
       <textarea
         class="form-control"
         rows="2"
@@ -83,7 +83,7 @@
       <div class="form-group mb8">
         <label>
           Window (m)
-          <span class="icon-info" title="Sum over given interval (eg: 30s or 10m or 1h)" v-tippy></span>
+          <span class="icon-info" title="Sum over given interval (ex: 30s or 10m or 1h)" v-tippy></span>
         </label>
         <input
           type="text"

@@ -1,139 +1,142 @@
 <template>
-  <Dialog @clickOutside="hide" class="-sticky-footer -auto" bodyClass="d-flex mobile-dir-col-desktop-dir-row">
+  <Dialog @clickOutside="hide" class="-sticky-footer -auto">
     <template v-slot:header>
       <div v-if="paneId">
-        <div class="title">{{ paneName }}'s MARKETS</div>
-        <div class="subtitle">Choose which markets <u>this pane</u> should listen to</div>
+        <div class="title">ADD/REMOVE SOURCES</div>
+        <div class="subtitle" style="opacity: 1">to <span class="text-success" v-text="paneName"></span> pane</div>
       </div>
       <div v-else>
-        <div class="title">
-          SELECT MARKETS (ALL)
-        </div>
-        <div class="subtitle">Choose which markets <u>all</u> panes should listen to</div>
+        <div class="title">REPLACE SOURCES</div>
+        <div class="subtitle">across all panes</div>
       </div>
       <div class="column -center"></div>
     </template>
     <div class="search">
-      <div class="form-group">
-        <div class="mb0 d-flex">
-          <div class="input-group flex-grow-1">
-            <input ref="input" type="text" class="form-control" placeholder="eg: BITMEX:XBTUSD" v-model="query" />
-            <!--<button v-if="canFeelLucky" class="btn -text" title="I'm feeling lucky 🍀" v-tippy @click="imFeelingLucky">
-              <i class="icon-magic"></i>
-            </button>-->
+      <div class="search__side">
+        <div class="search-filters mb16">
+          <div class="search-filters__content chart__indicators" v-if="showFilters">
+            <label class="checkbox-control -small mb4" v-for="(val, key) in searchTypes" :key="key">
+              <input type="checkbox" class="form-control" :checked="val" @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', key)" />
+              <div></div>
+              <span v-text="key"></span>
+            </label>
           </div>
-          <dropdown :options="searchTypes" placeholder="Filter" @output="toggleType($event)" :auto-close="false" selection-class="ml8 -green">
-            <template v-slot:selection> filter <i class="ml4 icon-plus"></i> </template>
-            <template v-slot:option="{ index, value }">
-              <span v-text="index" class="mrauto"></span>
-              <i class="icon-check ml8" v-if="value"></i>
-            </template>
-          </dropdown>
-          <dropdown
-            :options="searchExchanges"
-            placeholder="Exchanges"
-            @output="toggleExchange($event)"
-            :auto-close="false"
-            selection-class="ml8 -green"
-          >
-            <template v-slot:selection> exchanges <i class="ml4 icon-plus"></i> </template>
-            <template v-slot:option="{ index, value }">
-              <span v-text="index" class="mrauto"></span>
-              <i class="icon-check ml8" v-if="value"></i>
-            </template>
-          </dropdown>
-          <dropdown
-            :options="otherPanes"
-            placeholder="Filter"
-            title="Filters"
-            v-tippy="{ placement: 'top' }"
-            @output="selectPaneMarkets($event)"
-            selectionClass="-text"
-          >
-            <template v-slot:selection><i class="icon-copy-paste"></i></template>
-            <template v-slot:option="{ value }">
-              {{ value.name || value.id }}
-            </template>
-          </dropdown>
+          <div class="search-filters__title mb8" @click="showFilters = !showFilters">Filters <i class="icon-up -higher"></i></div>
+        </div>
+        <div class="search-filters">
+          <div class="search-filters__content chart__indicators" v-if="showExchanges">
+            <label class="checkbox-control -small mb4" v-for="(val, key) in searchExchanges" :key="key">
+              <input type="checkbox" class="form-control" :checked="val" @change="$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', key)" />
+              <div></div>
+              <span v-text="key"></span>
+            </label>
+          </div>
+          <div class="search-filters__title mb8" @click="showExchanges = !showExchanges">Exchanges <i class="icon-up -higher"></i></div>
         </div>
       </div>
-      <div class="search__results hide-scrollbar">
-        <table v-if="results.length" class="table">
-          <thead>
-            <tr>
-              <th></th>
-              <th>exchange</th>
-              <th>pair</th>
-              <th>type</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(market, index) of results"
-              :key="market.id"
-              @click="selectMarket(market.id)"
-              :class="{ active: activeIndex === index }"
-              class="-action"
-            >
-              <td class="icon search__exchange text-center" :class="'icon-' + market.exchange"></td>
-              <td v-text="market.exchange"></td>
-              <td v-text="market.pair"></td>
-              <td v-text="market.type"></td>
-              <td class="text-center">
-                <i v-if="historicalMarkets.indexOf(market.id) !== -1" class="icon-candlestick icon-lower"></i>
-              </td>
-            </tr>
-            <tr v-if="results.length > 0" class="-action" @click="addAll">
-              <td colspan="100%">add all ({{ results.length }}) ☝</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="text-danger search__no-result" v-else>
-          <p class="mt0 mb0 px16 pb0">
-            No results
-            <template v-if="hasFilters"> (<button class="btn -text color-100 pl0 pr0" @click="clearFilters">delete filters</button>)</template>
-          </p>
-          <div v-if="searchTypes.historical" class="color-100 px16 pt0">
-            <p class="color-100 mb0">In need for more historical data ?</p>
-            <p class="mt0 color-100">
-              <a class="btn -text" href="https://github.com/Tucsky/aggr-server" target="_blank">Run your own aggr</a>
-              <dono-dropdown label="support the project" class="-left " />
-              <a class="btn -text" href="https://github.com/Tucsky/aggr/discussions" target="_blank"
-                >Suggest it on github <i class="icon-github"></i
-              ></a>
+      <div class="search__wrapper">
+        <div class="search__selection form-control">
+          <button v-if="selection.length" class="btn search__clear -text" @click="clearSelection"><i class="icon-eraser"></i></button>
+          <template v-if="searchTypes.normalize">
+            <button
+              v-for="(markets, localPair) of groupedSelection"
+              :key="localPair"
+              class="btn  -accent"
+              :title="'Click to remove ' + markets.join(', ')"
+              @click="deselectMarkets(markets)"
+              v-text="localPair"
+            ></button>
+          </template>
+          <template v-else>
+            <button
+              v-for="market of selection"
+              :key="market"
+              class="btn  -accent"
+              :class="{ '-green': activeMarkets.indexOf(market) !== -1 }"
+              title="Click to remove"
+              @click="deselectMarket(market)"
+              v-text="market"
+            ></button>
+          </template>
+          <input ref="input" type="text" placeholder="Search symbol (ex: EXCHANGE:SYMBOL)" v-model="query" />
+        </div>
+        <div class="search__results hide-scrollbar">
+          <template v-if="results.length">
+            <table class="table" v-if="searchTypes.normalize">
+              <thead>
+                <tr>
+                  <th>pair</th>
+                  <th>markets</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(group, index) in results"
+                  :key="group.localPair"
+                  @click="selectMarkets(group.markets)"
+                  :class="{ active: activeIndex === index }"
+                  class="-action"
+                >
+                  <td v-text="group.localPair"></td>
+                  <td><small v-text="group.markets.join(', ')"></small></td>
+                </tr>
+                <tr class="-action" @click="addAll">
+                  <td colspan="100%">👆 add all of the above</td>
+                </tr>
+              </tbody>
+            </table>
+            <table v-else class="table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>exchange</th>
+                  <th>pair</th>
+                  <th>type</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(market, index) of results"
+                  :key="market.id"
+                  @click="selectMarket(market.id)"
+                  :class="{ active: activeIndex === index }"
+                  class="-action"
+                >
+                  <td class="icon search__exchange text-center" :class="'icon-' + market.exchange"></td>
+                  <td v-text="market.exchange"></td>
+                  <td v-text="market.pair"></td>
+                  <td v-text="market.type"></td>
+                  <td class="text-center">
+                    <i v-if="historicalMarkets.indexOf(market.id) !== -1" class="icon-candlestick icon-lower"></i>
+                  </td>
+                </tr>
+                <tr v-if="results.length > 0" class="-action" @click="addAll">
+                  <td colspan="100%">👆 add all of the above</td>
+                </tr>
+              </tbody>
+            </table>
+          </template>
+
+          <div class="text-danger search__no-result" v-if="!results.length">
+            <p class="mt0 mb0 px16 pb0">
+              No results found
+              <template v-if="hasFilters"> (<button class="btn -text color-100 pl0 pr0" @click="clearFilters">clear filters</button>)</template>
             </p>
+            <div v-if="searchTypes.historical" class="color-100 px16 pt0 notice" style="font-size: 14px;">
+              <div class="notice__wrapper">
+                <div class="notice__title">
+                  <div class="color-100 mt8 ml8">In need for more historical data ?</div>
+                  <div class="mt0 color-100">
+                    <a class="btn -text" href="https://github.com/Tucsky/aggr-server" target="_blank">🤓 Run your own aggr</a>
+                    <dono-dropdown label="🚀 support the project" class="-left " />
+                    <a class="btn -text" href="https://github.com/Tucsky/aggr/discussions" target="_blank">🍀 Suggest it on github</a>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <hr class="-horizontal" />
-    <hr class="-vertical mb8 ml0 mr0 pl0 pr0" />
-    <div class="form-group selection hide-scrollbar">
-      <label class="text-nowrap mt16 mr16 mb0 ml16" for="ok"
-        >{{ selection.length }} selected <code v-if="paneId" class="-filled" v-text="paneName"></code>
-        <button class="btn -text" @click="clearSelection"><i class="icon-cross"></i></button
-        ><button v-if="selection.length" class="btn -text" @click="copySelection"><i class="icon-stamp"></i></button
-      ></label>
-      <transition-group
-        :name="transitionGroupName"
-        @beforeEnter="beforeEnter"
-        @enter="enter"
-        @afterEnter="afterEnter"
-        @beforeLeave="beforeLeave"
-        @leave="leave"
-        class="selection__items"
-        tag="div"
-      >
-        <div v-for="market of selection" :key="market">
-          <button
-            class="mb4 btn -small  -accent mr4"
-            :class="{ '-green': activeMarkets.indexOf(market) !== -1 }"
-            title="Click to remove"
-            @click="deselectMarket(market)"
-            v-text="market"
-          ></button>
-        </div>
-      </transition-group>
     </div>
 
     <footer>
@@ -150,6 +153,7 @@ import DialogMixin from '@/mixins/dialogMixin'
 import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import aggregatorService from '@/services/aggregatorService'
+import { parseMarket } from '@/worker/helpers/utils'
 
 export default {
   mixins: [DialogMixin],
@@ -169,7 +173,9 @@ export default {
     markets: [],
     selection: [],
     originalSelection: [],
-    activeIndex: null
+    activeIndex: null,
+    showExchanges: false,
+    showFilters: true
   }),
   computed: {
     transitionGroupName() {
@@ -306,11 +312,44 @@ export default {
       })
     },
     results: function() {
-      const isNormalized = this.searchTypes.normalize
+      if (this.searchTypes.normalize) {
+        const marketsByPair = this.filteredProducts
+          .filter(product => this.selection.indexOf(product.id) === -1 && this.queryFilter.test(product.local))
+          .reduce((groups, product) => {
+            if (!groups[product.local]) {
+              groups[product.local] = []
+            }
 
-      return this.filteredProducts
-        .filter(a => this.selection.indexOf(a.id) === -1 && (isNormalized ? this.queryFilter.test(a.local) : this.queryFilter.test(a.id)))
-        .slice(0, 50)
+            groups[product.local].push(product.id)
+
+            return groups
+          }, {})
+
+        return Object.keys(marketsByPair)
+          .slice(0, 50)
+          .map(localPair => ({
+            localPair,
+            markets: marketsByPair[localPair]
+          }))
+      } else {
+        return this.filteredProducts.filter(product => this.selection.indexOf(product.id) === -1 && this.queryFilter.test(product.id)).slice(0, 50)
+      }
+    },
+    groupedSelection: function() {
+      return this.selection.reduce((groups, market) => {
+        const [exchange] = parseMarket(market)
+        const indexedProduct = this.indexedProducts[exchange].find(product => product.id === market)
+
+        const localPair = indexedProduct ? indexedProduct.local : market
+
+        if (!groups[localPair]) {
+          groups[localPair] = []
+        }
+
+        groups[localPair].push(market)
+
+        return groups
+      }, {})
     }
   },
   watch: {
@@ -365,11 +404,21 @@ export default {
     selectMarket(market) {
       this.selection.push(market)
     },
+    selectMarkets(markets) {
+      for (const market of markets) {
+        this.selectMarket(market)
+      }
+    },
     deselectMarket(market) {
       const index = this.selection.indexOf(market)
 
       if (index !== -1) {
         this.selection.splice(index, 1)
+      }
+    },
+    deselectMarkets(markets) {
+      for (const market of markets) {
+        this.deselectMarket(market)
       }
     },
     async submit() {
@@ -475,6 +524,10 @@ export default {
 
     clearSelection() {
       this.selection.splice(0, this.selection.length)
+
+      this.query = ''
+
+      this.$refs.input.focus()
     },
 
     copySelection() {
@@ -487,7 +540,7 @@ export default {
     },
 
     clearFilters() {
-      this.$store.commit('app/CLEAR_SEARCH_FILTERS')
+      this.$store.commit('settings/CLEAR_SEARCH_FILTERS')
     },
 
     onPaste(event) {
@@ -512,7 +565,11 @@ export default {
         case 'Enter':
           event.preventDefault()
           if (this.results[this.activeIndex]) {
-            this.selectMarket(this.results[this.activeIndex].id)
+            if (this.searchTypes.normalize) {
+              this.selectMarkets(this.results[this.activeIndex].markets)
+            } else {
+              this.selectMarket(this.results[this.activeIndex].id)
+            }
           }
           break
 
@@ -534,12 +591,13 @@ export default {
     },
 
     addAll() {
+      const normalized = this.searchTypes.normalize
       for (let i = 0; i < this.results.length; i++) {
-        if (this.selection.indexOf(this.results[i].id) !== -1) {
-          continue
+        if (normalized) {
+          this.selectMarkets(this.results[i].markets)
+        } else {
+          this.selectMarket(this.results[i].id)
         }
-
-        this.selection.push(this.results[i].id)
 
         i--
       }
@@ -548,137 +606,96 @@ export default {
 }
 </script>
 <style lang="scss" scoped>
-.selection {
-  place-self: stretch;
-  padding-bottom: 90px;
-  min-width: 240px;
-  overflow: auto;
-  max-height: 59vh;
-  padding: 0;
-
-  .slide-notice-enter-active {
-    transition: all 0.2s $ease-elastic, height 0.2s $ease-out-expo;
-  }
-  .slide-notice-leave-active {
-    transition: all 0.2s $ease-out-expo;
-  }
-
-  @media screen and (min-width: 768px) {
-    text-align: right;
-  }
-
-  &__items {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 1rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    max-width: 250px;
-    margin-left: auto;
-
-    .btn {
-      text-transform: none;
-
-      i {
-        display: none;
-      }
-    }
-  }
-}
 .search {
-  max-height: 59vh;
-  padding: 0;
-  flex-grow: 1;
   display: flex;
-  flex-direction: column;
+  padding: 1rem;
 
-  table {
-    border: 0;
-    border-collapse: collapse;
-    width: 100%;
+  &__side {
+    margin-right: 1rem;
   }
 
-  tr.active {
-    background-color: rgba(black, 0.2) !important;
+  &__wrapper {
+    flex-grow: 1;
+    width: 650px;
+    max-width: 650px;
   }
 
-  td:first-child,
-  th:first-child {
-    padding-left: 1rem;
-  }
-
-  td:last-child,
-  th:last-child {
-    padding-right: 1rem;
-  }
-
-  td {
-    padding: 0.35em 0.5em 0.6em;
-  }
-
-  &__exchange {
-    background-position: right;
-  }
-
-  .form-group {
-    padding: 1rem;
-  }
-
-  .search__results {
-    overflow: auto;
-    min-height: 100px;
-  }
-
-  @media screen and (min-width: 768px) {
-    .search__results,
-    .search__no-result {
-      height: 100%;
+  &__results {
+    table {
+      border: 0;
+      border-collapse: collapse;
+      width: 100%;
     }
+
+    tr.active {
+      background-color: rgba(black, 0.2) !important;
+    }
+
+    td:first-child,
+    th:first-child {
+      padding-left: 1rem;
+    }
+
+    td:last-child,
+    th:last-child {
+      padding-right: 1rem;
+    }
+
+    td {
+      padding: 0.35em 0.5em 0.6em;
+    }
+  }
+
+  &__selection {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 6px 2px 2px 6px;
+    position: relative;
+
+    > button,
+    > input {
+      margin-bottom: 4px;
+      margin-right: 4px;
+      height: 32px;
+    }
+
+    input {
+      border: 0;
+      background: 0;
+      color: inherit;
+      font-family: inherit;
+      padding: 0 4px;
+      flex-grow: 1;
+    }
+  }
+
+  &__clear {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 6px !important;
   }
 }
-@media screen and (max-width: 767px) {
-  .selection {
-    order: 0;
-    flex-direction: row;
-    flex-wrap: wrap;
-    max-height: 140px;
-    overflow: auto;
-    top: -1rem;
-    flex-shrink: 0;
-    padding: 1rem 0;
-    background-color: var(--theme-background-100);
-    box-shadow: 0 1px var(--theme-background-150);
-    margin-top: -1rem;
-    width: 100%;
 
-    &__items {
-      flex-direction: row;
-      flex-wrap: wrap;
-      place-items: auto;
-      justify-content: flex-start;
-      max-width: none;
-      margin: 0;
+.search-filters {
+  display: flex;
+  flex-direction: column-reverse;
 
-      .btn {
-        margin-right: 4px;
-        margin-bottom: 4px;
+  &__title {
+    cursor: pointer;
+    opacity: 0.5;
+    user-select: none;
+
+    .icon-up {
+      vertical-align: middle;
+    }
+
+    &:first-child {
+      .icon-up {
+        display: inline-block;
+        transform: rotateZ(180deg);
       }
     }
-  }
-  hr.-horizontal {
-    display: none;
-  }
-  .search {
-    order: 2;
-    width: 100%;
-
-    &__copy {
-      display: none;
-    }
-  }
-  footer {
-    order: 3;
   }
 }
 </style>
