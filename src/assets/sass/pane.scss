@@ -6,6 +6,7 @@
     user-select: none;
     box-sizing: border-box;
     touch-action: none;
+    overflow: hidden;
 
     > .vue-resizable-handle {
       display: none;
@@ -45,6 +46,8 @@
       .toolbar {
         display: flex;
       }
+
+      overflow: visible;
     }
 
     &.vue-grid-placeholder {
@@ -142,7 +145,7 @@
   top: 0;
   left: 0;
   right: 0;
-  font-size: 1.5em;
+  font-size: calc(11px + .8em);
   height: 1.5em;
   background-color: var(--theme-background-100);
   align-items: stretch;

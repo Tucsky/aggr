@@ -110,7 +110,7 @@ const actions = {
       type: options.type,
       zoom: options.zoom,
       settings: options.settings,
-      markets: options.markets || []
+      markets: options.markets || Object.keys(state.marketsListeners)
     }
 
     await registerModule(id, {}, true, pane)
@@ -189,12 +189,17 @@ const actions = {
           const [exchange, pair] = parseMarket(market)
 
           const indexedProduct = rootState.app.indexedProducts[exchange].find(indexedMarket => indexedMarket.pair === pair)
-          marketsListeners[market] = indexedProduct
 
-          marketsListeners[market].listeners = 0
+          if (indexedProduct) {
+            marketsListeners[market] = indexedProduct
+
+            marketsListeners[market].listeners = 0
+          }
         }
 
-        marketsListeners[market].listeners++
+        if (typeof marketsListeners[market] !== 'undefined') {
+          marketsListeners[market].listeners++
+        }
       }
     }
 
