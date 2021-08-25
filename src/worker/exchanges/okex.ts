@@ -35,7 +35,7 @@ export default class extends Exchange {
           specs[pair] = +product.contract_val
           types[pair] = 'futures'
 
-          if (product.is_inverse) {
+          if (product.is_inverse === 'true') {
             inversed[pair] = true
           }
         } else if (/-SWAP/.test(product.instrument_id)) {
@@ -44,7 +44,7 @@ export default class extends Exchange {
           specs[pair] = +product.contract_val
           types[pair] = 'swap'
 
-          if (product.is_inverse) {
+          if (product.is_inverse === 'true') {
             inversed[pair] = true
           }
         } else {
