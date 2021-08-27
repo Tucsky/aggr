@@ -4,13 +4,13 @@
 
     <div class="indicator__controls">
       <template v-if="!error">
-        <button class="btn -small" @click="toggleVisibility" v-tippy :title="visible ? 'Hide' : 'Show'">
+        <button class="btn -small -accent" @click="toggleVisibility" :title="visible ? 'Hide' : 'Show'">
           <i :class="{ 'icon-visible': !visible, 'icon-hidden': visible }"></i>
         </button>
-        <button class="btn -small" @click="edit" v-tippy title="Edit"><i class="icon-edit"></i></button>
+        <button class="btn -small -accent" @click="edit" title="Edit"><i class="icon-edit"></i></button>
       </template>
-      <button class="btn -small" @click="resize" v-tippy title="Resize"><i class="icon-resize-height"></i></button>
-      <button class="btn -small" @click="remove" v-tippy title="Disable"><i class="icon-cross"></i></button>
+      <button class="btn -small -accent" @click="resize" title="Resize"><i class="icon-resize-height"></i></button>
+      <button class="btn -small -accent" @click="remove" title="Disable"><i class="icon-cross"></i></button>
     </div>
     <div v-if="showLegend" class="indicator__legend">
       <div v-for="serie of series" :key="serie" :id="paneId + indicator.id + serie"></div>
@@ -95,6 +95,7 @@ export default {
   &__name {
     position: relative;
     cursor: pointer;
+    background: var(--theme-background-o75);
   }
 
   &__legend {
@@ -129,14 +130,9 @@ export default {
     }
 
     > .btn {
-      background-color: rgba($dark, 0.8);
       color: white;
       border-radius: 0;
       padding: 0.2rem 0.4rem;
-
-      &:hover {
-        background-color: $green;
-      }
 
       &:first-child {
         border-top-left-radius: 3px;

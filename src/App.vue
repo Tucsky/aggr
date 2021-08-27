@@ -58,7 +58,7 @@ import Panes from '@/components/panes/Panes.vue'
 import upFavicon from './assets/up.png'
 import downFavicon from './assets/down.png'
 
-import { formatPrice, progressTask } from './utils/helpers'
+import { formatPrice } from './utils/helpers'
 import { Notice } from './store/app'
 import workspacesService from './services/workspacesService'
 import dialogService from './services/dialogService'
@@ -97,9 +97,10 @@ export default class extends Vue {
     clearTimeout(this._stuckTimeout)
 
     if (!isBooted) {
+      this.showStuck = false
       this._stuckTimeout = setTimeout(() => {
         this.showStuck = true
-      }, 3000)
+      }, 15000)
     }
 
     return isBooted
@@ -139,10 +140,6 @@ export default class extends Vue {
 
   get disableAnimations() {
     return this.$store.state.settings.disableAnimations
-  }
-
-  get progressTask() {
-    return progressTask
   }
 
   mounted() {

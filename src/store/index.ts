@@ -6,7 +6,7 @@ import app, { AppState } from './app'
 import settings, { SettingsState } from './settings'
 import exchanges, { ExchangesState } from './exchanges'
 import panes, { PanesState } from './panes'
-import { progress, sleep } from '@/utils/helpers'
+import { sleep } from '@/utils/helpers'
 import { Workspace } from '@/types/test'
 import aggregatorService from '@/services/aggregatorService'
 
@@ -41,8 +41,6 @@ store.subscribe((mutation, state: any) => {
 })
 
 export async function boot(workspace?: Workspace, previousWorkspaceId?: string) {
-  await progress(true)
-
   console.log(`[store] booting on workspace "${workspace.name}" (${workspace.id})`)
 
   if (store.state.app) {
@@ -50,14 +48,14 @@ export async function boot(workspace?: Workspace, previousWorkspaceId?: string) 
 
     store.dispatch('app/setBooted', false)
 
-    await progress(`unloading ${previousWorkspaceId}`)
+    console.info(`unloading ${previousWorkspaceId}`)
 
     await sleep(100)
 
     const markets = Object.keys(store.state.panes.marketsListeners)
 
     if (markets.length) {
-      // await progress(`disconnect from ` + markets.slice(0, 3).join(', ') + (markets.length - 3 > 0 ? ' + ' + (markets.length - 3) + ' others' : ''))
+      // console.info(`disconnect from ` + markets.slice(0, 3).join(', ') + (markets.length - 3 > 0 ? ' + ' + (markets.length - 3) + ' others' : ''))
 
       await aggregatorService.disconnect(markets)
     }
@@ -68,33 +66,33 @@ export async function boot(workspace?: Workspace, previousWorkspaceId?: string) 
     }
   }
 
-  await progress(`loading core module`)
+  console.info(`loading core module`)
   registerModule('app', modules['app'])
   await sleep(10)
   await store.dispatch('app/boot')
 
-  await progress(`setting up workspace`)
+  console.info(`setting up workspace`)
   registerModule('settings', modules['settings'])
   await sleep(10)
   await store.dispatch('settings/boot')
 
-  await progress(`loading panes`)
+  console.info(`loading panes`)
   registerModule('panes', modules['panes'])
   await sleep(10)
   await store.dispatch('panes/boot')
 
   for (const paneId in store.state.panes.panes) {
-    await progress(`registering pane module ${paneId}`)
+    console.info(`registering pane module ${paneId}`)
     await registerModule(paneId, {}, false, store.state.panes.panes[paneId])
   }
 
   store.dispatch('app/setBooted')
 
-  await progress(`registering exchanges`)
+  console.info(`registering exchanges`)
   await registerModule('exchanges', modules['exchanges'])
 
   for (const paneId in store.state.panes.panes) {
-    await progress(`booting module ${paneId}`)
+    console.info(`booting module ${paneId}`)
 
     try {
       await store.dispatch(paneId + '/boot')
@@ -103,10 +101,8 @@ export async function boot(workspace?: Workspace, previousWorkspaceId?: string) 
     }
   }
 
-  await progress(`loading exchanges`)
+  console.info(`loading exchanges`)
   await store.dispatch('exchanges/boot')
-
-  await progress(false)
 }
 
 export default store

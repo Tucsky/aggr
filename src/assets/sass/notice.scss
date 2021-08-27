@@ -33,7 +33,6 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  color: white;
 
   .notice__title {
     max-width: 200px;
@@ -48,6 +47,7 @@
   pointer-events: all;
   font-size: 12px;
   font-weight: 500;
+  color: white;
 
   &__icon {
     padding: 0.25rem;
@@ -63,7 +63,7 @@
   &__wrapper {
     padding: 0.33rem 0.5rem;
     border-radius: $border-radius-base;
-    background-color: $blue;
+    background-color: var(--theme-background-200);
 
     display: flex;
 
@@ -94,7 +94,11 @@
 
   small {
     line-height: 1.4;
-    margin-top: .5rem;
+    margin-top: 0.5rem;
     display: block;
   }
+}
+
+#app.-light .notice .notice__wrapper {
+  background-color: lighten($green, .5);
 }

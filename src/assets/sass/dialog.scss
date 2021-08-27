@@ -190,4 +190,8 @@
       background-color: rgba(white, 0.5);
     }
   }
+
+  &.-mask {
+    background-color: rgba(0, 0, 0, 0.15);
+  }
 }

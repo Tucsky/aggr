@@ -23,7 +23,7 @@
               <tr v-for="indicator of filteredIndicators" :key="indicator.id" @click="selectIndicator(indicator)" class="-action">
                 <td class="table-input" v-text="indicator.displayName || indicator.name"></td>
                 <td class="table-action" @click.stop="removeIndicator(indicator)">
-                  <button class="btn  -red -small"><i class="icon-cross"></i></button>
+                  <button class="btn  -text -red -small"><i class="icon-cross"></i></button>
                 </td>
               </tr>
             </tbody>
@@ -36,9 +36,6 @@
         <div class="form-group mb16">
           <label>Create indicator</label>
           <input class="form-control" :value="name" @input="getIndicatorId($event.target.value)" placeholder="Name of indicator / serie" />
-          <p>
-            ID: <code class="-filled">{{ indicatorId }}</code>
-          </p>
         </div>
         <div class="form-group mb16">
           <label>Scale with</label>
@@ -169,7 +166,7 @@ export default {
       this.close(null)
     },
     async removeIndicator(indicator) {
-      if (await dialogService.confirm(`Delete ${indicator.name} permanently ?`)) {
+      if (await dialogService.confirm(`Delete "${indicator.name}" ?`)) {
         workspacesService.deleteIndicator(indicator.id)
 
         this.indicators.splice(this.indicators.indexOf(indicator), 1)

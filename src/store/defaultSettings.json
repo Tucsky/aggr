@@ -25,8 +25,7 @@
     "spots": true,
     "perpetuals": true,
     "futures": false,
-    "normalize": true,
-    "connected": false
+    "normalize": true
   },
   "searchExchanges": {}
 }

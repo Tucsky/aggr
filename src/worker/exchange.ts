@@ -1,7 +1,7 @@
 import { ProductsData, ProductsStorage } from '@/types/test'
 import { EventEmitter } from 'eventemitter3'
 import { dispatchAsync } from './helpers/com'
-import { getHms, randomString } from './helpers/utils'
+import { getHms, randomString, sleep } from './helpers/utils'
 interface Api extends WebSocket {
   _id: string
   _pending: string[]
@@ -382,12 +382,17 @@ class Exchange extends EventEmitter {
     }
   }
 
-  setProducts(productsData: ProductsData): void {
+  setProducts(productsData: ProductsData): boolean {
     if (!productsData) {
       console.debug(`[${this.id}] set products (null)`)
       // worker will ask for products next time the market connect
       this.products = null
-      return
+      return false
+    }
+
+    if (!this.validateProducts(productsData)) {
+      this.products = null
+      return true
     }
 
     if (typeof productsData === 'object' && Object.prototype.hasOwnProperty.call(productsData, 'products')) {
@@ -401,18 +406,27 @@ class Exchange extends EventEmitter {
     }
   }
 
-  async getProducts(): Promise<void> {
+  async getProducts(forceFetch?: boolean): Promise<void> {
     console.debug(`[${this.id}] request product`)
+
+    if (forceFetch) {
+      await sleep(1000)
+    }
 
     const storage = (await dispatchAsync({
       op: 'products',
       data: {
         exchange: this.id,
-        endpoints: this.endpoints.PRODUCTS
+        endpoints: this.endpoints.PRODUCTS,
+        forceFetch: forceFetch
       }
-    })) as ProductsStorage
+    })) as ProductsStorage | boolean
 
-    this.setProducts(storage.data)
+    if (storage === true) {
+      return this.getProducts(true)
+    }
+
+    // this.setProducts(storage.data)
   }
 
   /**
@@ -479,6 +493,12 @@ class Exchange extends EventEmitter {
     // should be overrided by exchange class
 
     return data
+  }
+
+  validateProducts(data) {
+    // should be overrided by exchange class
+
+    return true
   }
 
   /**

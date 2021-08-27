@@ -39,20 +39,26 @@
 
         <div class="chart-overlay">
           <ul class="chart-overlay__content chart__markets" v-if="showMarketsOverlay">
-            <div class="column">
+            <li class="column">
               <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('perp')">perp</a>
               <i class="pipe -center">|</i>
               <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('spot')">spot</a>
               <i class="pipe -center">|</i>
               <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('all')">all</a>
-            </div>
-            <li
-              v-for="market of markets"
-              :key="market"
-              v-text="market"
-              @click="toggleMarket($event, market)"
-              :class="{ '-hidden': hiddenMarkets[market] }"
-            ></li>
+            </li>
+            <li v-for="market of markets" :key="market" @click="toggleMarket($event, market)">
+              <label class="checkbox-control -small mb4">
+                <input
+                  type="checkbox"
+                  class="form-control"
+                  :checked="!hiddenMarkets[market]"
+                  @change="toggleMarket($event, market)"
+                  @click.prevent="toggleMarket($event, market)"
+                />
+                <div></div>
+                <span v-text="market"></span>
+              </label>
+            </li>
           </ul>
           <div class="chart-overlay__title" @click="showMarketsOverlay = !showMarketsOverlay">Markets <i class="icon-up -higher"></i></div>
         </div>
@@ -959,6 +965,18 @@ export default class extends Mixins(PaneMixin) {
 .chart__markets {
   list-style: none;
   padding: 0;
+  background: var(--theme-background-o75);
+
+  .checkbox-control {
+    span {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+    input:checked ~ span {
+      text-decoration: none;
+      opacity: 1;
+    }
+  }
 
   li {
     cursor: pointer;
@@ -1016,16 +1034,23 @@ export default class extends Mixins(PaneMixin) {
   display: flex;
   flex-direction: column-reverse;
 
+  &__content {
+    padding: 0;
+    margin: 0;
+  }
+
   &__title {
     cursor: pointer;
-    opacity: 0.5;
     user-select: none;
+    background: var(--theme-background-o75);
+    place-self: flex-start;
 
     .icon-up {
       vertical-align: middle;
     }
 
     &:first-child {
+      background: none;
       .icon-up {
         display: inline-block;
         transform: rotateZ(180deg);

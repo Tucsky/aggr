@@ -14,21 +14,82 @@
     <div class="search">
       <div class="search__side">
         <div class="search-filters mb16">
-          <div class="search-filters__content chart__indicators" v-if="showFilters">
-            <label class="checkbox-control -small mb4" v-for="(val, key) in searchTypes" :key="key">
-              <input type="checkbox" class="form-control" :checked="val" @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', key)" />
+          <div class="search-filters__content chart__indicators" v-if="showExtraFilters">
+            <label class="checkbox-control -small mb4">
+              <input
+                type="checkbox"
+                class="form-control"
+                :checked="searchTypes.normalize"
+                @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')"
+              />
               <div></div>
-              <span v-text="key"></span>
+              <span>Group by pair</span>
+            </label>
+            <label class="checkbox-control -small mb4">
+              <input
+                type="checkbox"
+                class="form-control"
+                :checked="searchTypes.historical"
+                @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'historical')"
+              />
+              <div></div>
+              <span>With historical data</span>
+            </label>
+            <label class="checkbox-control -small mb4">
+              <input type="checkbox" class="form-control" :checked="onlyConnected" @change="onlyConnected = !onlyConnected" />
+              <div></div>
+              <span>Active markets</span>
             </label>
           </div>
-          <div class="search-filters__title mb8" @click="showFilters = !showFilters">Filters <i class="icon-up -higher"></i></div>
+          <div class="search-filters__title mb8" @click="showExtraFilters = !showExtraFilters">Extra <i class="icon-up -higher"></i></div>
         </div>
+
+        <div class="search-filters mb16">
+          <div class="search-filters__content chart__indicators" v-if="showTypeFilters">
+            <label class="checkbox-control -small mb4">
+              <input
+                type="checkbox"
+                class="form-control"
+                :checked="searchTypes.spots"
+                @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'spots')"
+              />
+              <div></div>
+              <span>Spots</span>
+            </label>
+            <label class="checkbox-control -small mb4">
+              <input
+                type="checkbox"
+                class="form-control"
+                :checked="searchTypes.perpetuals"
+                @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'perpetuals')"
+              />
+              <div></div>
+              <span>Perpetuals</span>
+            </label>
+            <label class="checkbox-control -small mb4">
+              <input
+                type="checkbox"
+                class="form-control"
+                :checked="searchTypes.futures"
+                @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'futures')"
+              />
+              <div></div>
+              <span>Futures</span>
+            </label>
+          </div>
+          <div class="search-filters__title mb8" @click="showTypeFilters = !showTypeFilters">Type <i class="icon-up -higher"></i></div>
+        </div>
+
         <div class="search-filters">
           <div class="search-filters__content chart__indicators" v-if="showExchanges">
+            <label class="search-filters__controls checkbox-control -small mb4 flex-right">
+              <input type="checkbox" class="form-control" :checked="allExchangesEnabled" @change="toggleAll" />
+              <div></div>
+            </label>
             <label class="checkbox-control -small mb4" v-for="(val, key) in searchExchanges" :key="key">
               <input type="checkbox" class="form-control" :checked="val" @change="$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', key)" />
               <div></div>
-              <span v-text="key"></span>
+              <span v-text="key"><i :class="'icon-' + key"></i><code v-text="key"></code></span>
             </label>
           </div>
           <div class="search-filters__title mb8" @click="showExchanges = !showExchanges">Exchanges <i class="icon-up -higher"></i></div>
@@ -122,11 +183,11 @@
               No results found
               <template v-if="hasFilters"> (<button class="btn -text color-100 pl0 pr0" @click="clearFilters">clear filters</button>)</template>
             </p>
-            <div v-if="searchTypes.historical" class="color-100 px16 pt0 notice" style="font-size: 14px;">
+            <div v-if="searchTypes.historical" class="color-100 px16 pt0 notice -success" style="font-size: 14px;">
               <div class="notice__wrapper">
                 <div class="notice__title">
-                  <div class="color-100 mt8 ml8">In need for more historical data ?</div>
-                  <div class="mt0 color-100">
+                  <div class=" mt8 ml8">In need for more historical data ?</div>
+                  <div class="mt0">
                     <a class="btn -text" href="https://github.com/Tucsky/aggr-server" target="_blank">🤓 Run your own aggr</a>
                     <dono-dropdown label="🚀 support the project" class="-left " />
                     <a class="btn -text" href="https://github.com/Tucsky/aggr/discussions" target="_blank">🍀 Suggest it on github</a>
@@ -174,8 +235,10 @@ export default {
     selection: [],
     originalSelection: [],
     activeIndex: null,
-    showExchanges: false,
-    showFilters: true
+    showExchanges: true,
+    showExtraFilters: false,
+    showTypeFilters: true,
+    onlyConnected: false
   }),
   computed: {
     transitionGroupName() {
@@ -232,9 +295,6 @@ export default {
 
       return label ? label + ' markets' : 'OK'
     },
-    canFeelLucky() {
-      return this.query.replace(/\W/g, '').length > 4
-    },
     searchTypes() {
       return Object.assign(
         {
@@ -242,8 +302,7 @@ export default {
           spots: true,
           perpetuals: true,
           futures: false,
-          normalize: true,
-          connected: false
+          normalize: true
         },
         this.$store.state.settings.searchTypes
       )
@@ -251,13 +310,16 @@ export default {
     searchExchanges() {
       return this.$store.state.settings.searchExchanges
     },
+    allExchangesEnabled() {
+      return !Object.keys(this.searchExchanges).find(a => !this.searchExchanges[a])
+    },
     hasFilters() {
       const hasHistorical = this.searchTypes.historical
       const hasSpot = this.searchTypes.spots
       const hasPerpetuals = this.searchTypes.perpetuals
       const hasFutures = this.searchTypes.futures
-      const isConnected = this.searchTypes.connected
-      return hasHistorical || hasSpot || hasPerpetuals || hasFutures || isConnected
+      const isNormalized = this.searchTypes.normalize
+      return isNormalized || hasHistorical || hasSpot || hasPerpetuals || hasFutures || this.onlyConnected
     },
     historicalMarkets() {
       return this.$store.state.app.historicalMarkets
@@ -283,7 +345,7 @@ export default {
       const hasSpot = this.searchTypes.spots
       const hasPerpetuals = this.searchTypes.perpetuals
       const hasFutures = this.searchTypes.futures
-      const isConnected = this.searchTypes.connected
+      const isConnected = this.onlyConnected
       const activeMarkets = this.activeMarkets
       const hasTypeFilters = hasSpot || hasPerpetuals || hasFutures
 
@@ -581,6 +643,28 @@ export default {
             }
           }
           break
+
+        case 'Backspace':
+        case 'Delete':
+          this.deleteLast()
+          break
+
+        case 'c':
+          if (event.ctrlKey && !window.getSelection().toString().length) {
+            this.copySelection()
+          }
+          break
+      }
+    },
+
+    deleteLast() {
+      if (!this.query.length && this.selection.length) {
+        if (this.searchTypes.normalize) {
+          const lastPair = Object.keys(this.groupedSelection).pop()
+          this.deselectMarkets(this.groupedSelection[lastPair])
+        } else {
+          this.selection.splice(this.selection.length - 1, 1)
+        }
       }
     },
 
@@ -599,6 +683,19 @@ export default {
       }
 
       this.selectMarkets(markets)
+    },
+
+    toggleAll() {
+      const deselectAll = Boolean(this.allExchangesEnabled)
+
+      this.$set(
+        this.$store.state.settings,
+        'searchExchanges',
+        Object.keys(this.$store.state.settings.searchExchanges).reduce((output, id) => {
+          output[id] = deselectAll ? false : true
+          return output
+        }, {})
+      )
     }
   }
 }
@@ -678,6 +775,15 @@ export default {
 .search-filters {
   display: flex;
   flex-direction: column-reverse;
+  position: relative;
+
+  &__controls {
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-size: 0.875em;
+    z-index: 1;
+  }
 
   &__title {
     cursor: pointer;
@@ -685,6 +791,7 @@ export default {
     user-select: none;
 
     .icon-up {
+      transition: transform 0.2s $ease-out-expo;
       vertical-align: middle;
     }
 

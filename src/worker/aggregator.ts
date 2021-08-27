@@ -5,21 +5,23 @@ import { countDecimals, parseMarket } from './helpers/utils'
 const ctx: Worker = self as any
 
 class Aggregator {
-  public settings: AggregatorSettings = {
+  settings: AggregatorSettings = {
     calculateSlippage: null,
     aggregationLength: null,
     preferQuoteCurrencySize: null,
     buckets: {}
   }
-  public connections: { [name: string]: Connection } = {}
-
-  private onGoingAggregations: { [identifier: string]: AggregatedTrade } = {}
-  private pendingTrades: Trade[] = []
-  private marketsPrices: { [marketId: string]: number } = {}
+  connections: { [name: string]: Connection } = {}
 
   activeBuckets: string[] = []
   buckets: { [id: string]: Volumes } = {}
   connectionsCount = 0
+  connectionChange: { [id: string]: number } = {}
+
+  private onGoingAggregations: { [identifier: string]: AggregatedTrade } = {}
+  private pendingTrades: Trade[] = []
+  private marketsPrices: { [marketId: string]: number } = {}
+  private _connectionChangeNoticeTimeout: number
 
   constructor() {
     console.info(`[worker.aggr] new instance`)
@@ -345,14 +347,65 @@ class Aggregator {
       }
     })
 
-    ctx.postMessage({
-      op: 'notice',
-      data: {
-        id: exchangeId + pair,
-        type: 'success',
-        title: `Subscribed to ${exchangeId + ':' + pair}`
+    this.noticeConnectionChange(exchangeId, 1)
+  }
+
+  noticeConnectionChange(exchangeId, change) {
+    if (!this.connectionChange[exchangeId]) {
+      this.connectionChange[exchangeId] = 0
+    }
+    this.connectionChange[exchangeId] += change
+
+    if (this._connectionChangeNoticeTimeout) {
+      clearTimeout(this._connectionChangeNoticeTimeout)
+    }
+
+    let total = 0
+
+    const connectionsByExchanges = Object.keys(this.connections).reduce((output, id) => {
+      const exchange = this.connections[id].exchange
+      if (typeof output[exchange] === 'undefined') {
+        output[exchange] = 0
       }
-    })
+
+      output[exchange]++
+
+      total++
+
+      return output
+    }, {})
+
+    if (!total) {
+      return
+    }
+
+    this._connectionChangeNoticeTimeout = setTimeout(() => {
+      this._connectionChangeNoticeTimeout = null
+      const messages = []
+      console.info(Object.keys(this.connectionChange))
+      for (const id in this.connectionChange) {
+        console.log(id)
+        const change = this.connectionChange[id]
+        messages.push(
+          (!connectionsByExchanges[id] ? '<strike>' : '') +
+            (id + ': ' + (change > 0 ? '+' : '') + change) +
+            (!connectionsByExchanges[id] ? '</strike>' : '')
+        )
+
+        delete this.connectionChange[id]
+      }
+
+      console.log('after', this.connectionChange)
+
+      ctx.postMessage({
+        op: 'notice',
+        data: {
+          id: 'connections',
+          type: 'success',
+          title: total + ' connections<br>' + messages.join('<br>')
+        }
+      })
+    }, 1000)
   }
 
   createBucket(): Volumes {

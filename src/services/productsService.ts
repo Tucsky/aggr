@@ -1,6 +1,5 @@
 import store from '@/store'
 import { ProductsData, ProductsStorage } from '@/types/test'
-import { progress } from '@/utils/helpers'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
@@ -95,31 +94,29 @@ export async function fetchProducts(exchangeId: string, endpoints: string[]): Pr
   }
 }
 
-export async function getProducts(exchangeId: string, endpoints?: string[]): Promise<ProductsData> {
+export async function getProducts(exchangeId: string, endpoints?: string[], forceFetch?: boolean): Promise<ProductsData> {
   let productsData: ProductsData
 
   console.debug(`[products.${exchangeId}] reading stored products`)
   const storage = await workspacesService.getProducts(exchangeId)
 
-  if (storage && +new Date() - storage.timestamp < 1000 * 60 * 60 * 24 * 7) {
+  if (!forceFetch && storage && +new Date() - storage.timestamp < 1000 * 60 * 60 * 24 * 7) {
     console.debug(`[products.${exchangeId}] using products exchange storage`)
 
     productsData = storage.data
   } else if (!endpoints) {
     console.debug(`[products.${exchangeId}] no storage + no endpoint = no products`)
-
+    
     const payload = await aggregatorService.dispatchAsync({
       op: 'fetch-products',
       data: exchangeId
     })
 
-    console.log('fetch-product payloed', payload)
-
     return null
   } else {
     console.debug(`[products.${exchangeId}] endpoint are known, gona fetch now`)
 
-    progress(`fetching ${exchangeId}'s products`)
+    console.info(`fetching ${exchangeId}'s products`)
 
     productsData = await fetchProducts(exchangeId, endpoints)
   }

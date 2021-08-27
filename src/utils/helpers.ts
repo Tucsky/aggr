@@ -1,10 +1,6 @@
 import dialogService from '@/services/dialogService'
 import store from '../store'
 
-export const progressTask = {
-  text: ''
-}
-
 export function formatAmount(amount, decimals?: number) {
   const negative = amount < 0
 
@@ -185,16 +181,6 @@ export function getBucketId(markets: string[]) {
 
 export function parseMarket(market: string) {
   return market.match(/([^:]*):(.*)/).slice(1, 3)
-}
-
-export async function progress(task: string | boolean) {
-  if (task === false) {
-    progressTask.text = null
-  } else {
-    progressTask.text = task as string
-
-    console.info(task)
-  }
 }
 
 export function openBase64InNewTab(data, mimeType) {

@@ -2,7 +2,9 @@ import Exchange from '../exchange'
 
 export default class extends Exchange {
   id = 'BITMEX'
-  private currencies: { [pair: string]: string }
+  private xbtPrice = 48000
+  private types: { [pair: string]: 'quanto' | 'inverse' | 'linear' }
+  private multipliers: { [pair: string]: number }
   protected endpoints = { PRODUCTS: 'https://www.bitmex.com/api/v1/instrument/active' }
 
   getUrl() {
@@ -11,17 +13,29 @@ export default class extends Exchange {
 
   formatProducts(data) {
     const products = []
-    const currencies = {}
+    const types = {}
+    const multipliers = {}
 
     for (const product of data) {
-      currencies[product.symbol] = product.quoteCurrency
+      types[product.symbol] = product.isInverse ? 'inverse' : product.isQuanto ? 'quanto' : 'linear'
+      multipliers[product.symbol] = product.multiplier
       products.push(product.symbol)
     }
 
     return {
       products,
-      currencies
+      types,
+      multipliers
     }
+  }
+
+  validateProducts(data) {
+    if (!data || !data.multipliers || !data.types) {
+      debugger
+      return false
+    }
+
+    return true
   }
 
   /**
@@ -71,15 +85,27 @@ export default class extends Exchange {
       if (json.table === 'liquidation' && json.action === 'insert') {
         return this.emitLiquidations(
           api.id,
-          json.data.map(trade => ({
-            exchange: this.id,
-            pair: trade.symbol,
-            timestamp: +new Date(),
-            price: trade.price,
-            size: trade.leavesQty / (this.currencies[trade.symbol] === 'USD' ? trade.price : 1),
-            side: trade.side === 'Buy' ? 'buy' : 'sell',
-            liquidation: true
-          }))
+          json.data.map(trade => {
+            let size
+
+            if (this.types[trade.symbol] === 'quanto') {
+              size = (this.multipliers[trade.symbol] / 100000000) * trade.size * this.xbtPrice
+            } else if (this.types[trade.symbol] === 'inverse') {
+              size = trade.size / trade.price
+            } else if (this.types[trade.symbol] === 'linear') {
+              size = trade.size
+            }
+
+            return {
+              exchange: this.id,
+              pair: trade.symbol,
+              timestamp: +new Date(),
+              price: trade.price,
+              size: size,
+              side: trade.side === 'Buy' ? 'buy' : 'sell',
+              liquidation: true
+            }
+          })
         )
       } else if (json.table === 'trade' && json.action === 'insert') {
         return this.emitTrades(

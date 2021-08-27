@@ -125,11 +125,6 @@ const actions = {
 
     document.documentElement.style.setProperty('--theme-color-inverse', colorInverse)
   },
-  setQuoteCurrencySizing({ commit }, sizeInQuote: boolean) {
-    commit('SET_QUOTE_CURRENCY_SIZING', sizeInQuote)
-
-    this.dispatch('app/refreshCurrencies')
-  },
   setAudioVolume({ commit, state }, volume: number) {
     commit('SET_AUDIO_VOLUME', volume)
 

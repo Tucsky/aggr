@@ -351,9 +351,9 @@ export default class extends Mixins(PaneMixin) {
       li.appendChild(side)
 
       for (let i = 0; i < this.thresholds.length; i++) {
-        li.className += ' -level-' + i
-
         if (!this.thresholds[i + 1] || amount < this.thresholds[i + 1].amount * multiplier) {
+          li.className += ' -level-' + i
+
           const color = this._thresholdsColors[Math.min(this.thresholds.length - 2, i)]
           const threshold = this.thresholds[i]
 
@@ -780,13 +780,14 @@ export default class extends Mixins(PaneMixin) {
 
   &.-logos {
     .trade__exchange {
-      flex-basis: 0;
-      flex-grow: 0.25;
       overflow: visible;
       text-align: center;
       margin: 0;
       padding: 0;
       font-size: 100%;
+      flex-grow: 0;
+      max-width: 7%;
+      flex-basis: 7%;
 
       &:before {
         font-family: 'icon';
@@ -806,7 +807,6 @@ export default class extends Mixins(PaneMixin) {
       .trade__exchange {
         height: 1em;
         background-position: center;
-        margin-right: 0.5rem;
 
         &:before {
           display: none;
@@ -840,7 +840,7 @@ export default class extends Mixins(PaneMixin) {
   background-blend-mode: overlay;
   position: relative;
   align-items: center;
-  padding: 1px 0.5em 3px;
+  padding: 1px 0 3px;
 
   &:after {
     content: '';
@@ -903,7 +903,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   &.-level-2 {
-    height: 1.75em;
+    height: 1.625em;
     font-size: 1.125em;
     font-weight: 600;
   }
@@ -917,19 +917,18 @@ export default class extends Mixins(PaneMixin) {
 
   > div {
     flex-basis: 0;
-    flex-grow: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    text-align: right;
   }
 
   .trade__side {
-    flex-grow: 0;
-    flex-basis: 1rem;
     font-weight: 600;
     overflow: visible;
-    max-width: 1rem;
+    flex-grow: 0;
+    max-width: 10%;
+    flex-basis: 10%;
+    text-align: center;
 
     &:before {
       display: inline-block;
@@ -939,8 +938,8 @@ export default class extends Mixins(PaneMixin) {
   }
 
   .trade__pair {
-    text-align: left !important;
-    flex-grow: 0.4 !important;
+    text-align: left;
+    flex-grow: 0.4;
     font-size: 75%;
     line-height: 1;
 
@@ -957,20 +956,19 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__exchange {
     background-repeat: no-repeat;
-    flex-grow: 0.5;
     white-space: normal;
     word-break: inherit;
     font-size: 75%;
     line-height: 1;
     text-align: left;
-    margin-right: 0;
-    margin-left: auto;
-    padding-left: 0.5rem;
+    flex-grow: 0.4;
   }
 
   .trade__price {
     flex-grow: 0.6;
-    text-align: left;
+    text-align: right;
+    margin-right: 4%;
+
     small {
       font-size: 0.75em;
       font-weight: 400;
@@ -1029,14 +1027,14 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__time {
     text-align: right;
-    flex-basis: 1.9em;
-    max-width: 1.9em;
     flex-grow: 0;
     font-weight: 400;
     overflow: visible;
-    font-family: $font-monospace;
-    font-size: 0.9em;
+    font-size: 0.875em;
     padding-top: 1px;
+    max-width: 9%;
+    flex-basis: 9%;
+    margin-right: 3%;
   }
 }
 

@@ -1,6 +1,5 @@
 import aggregatorService from '@/services/aggregatorService'
 import { getProducts, showIndexedProductsCount } from '@/services/productsService'
-import { progress } from '@/utils/helpers'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
@@ -54,7 +53,7 @@ const actions = {
 
     await Promise.all(getters.getExchanges.map(id => getProducts(id)))
 
-    await progress(`connecting to exchanges`)
+    console.info(`connecting to exchanges`)
 
     await this.dispatch('panes/refreshMarketsListeners')
 

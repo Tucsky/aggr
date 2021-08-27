@@ -97,11 +97,6 @@ export default class extends Vue {
 
     await workspacesService.deleteProducts(this.id)
 
-    await aggregatorService.dispatch({
-      op: 'fetch-products',
-      data: this.id
-    })
-
     setTimeout(() => {
       this.canRefreshProducts = true
     }, 3000)

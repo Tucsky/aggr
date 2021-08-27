@@ -264,7 +264,7 @@
 
   &.-small {
     > div {
-      padding: 0.25rem;
+      padding: 0.25em;
     }
   }
 
@@ -278,7 +278,6 @@
     transition: all 0.2s $ease-out-expo;
     position: relative;
     flex-shrink: 0;
-    font-size: 1rem;
     color: white;
 
     &:before,

@@ -132,14 +132,14 @@ class AggregatorService extends EventEmitter {
       })
     })
 
-    this.on('products', async ({ exchange, endpoints }: { exchange: string; endpoints: string[] }, trackingId: string) => {
-      const productsData = await getProducts(exchange, endpoints)
+    this.on('products', async ({ exchange, endpoints, forceFetch }: { exchange: string; endpoints: string[]; forceFetch?: boolean }, trackingId: string) => {
+      const productsData = await getProducts(exchange, endpoints, forceFetch)
 
       this.dispatch({
         op: 'products',
         data: {
           exchange,
-          data: productsData
+          data: productsData,
         },
         trackingId
       })
