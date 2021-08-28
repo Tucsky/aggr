@@ -373,7 +373,7 @@ export default {
           return false
         }
 
-        if (!exchanges[a.exchange] === false) {
+        if (exchanges[a.exchange] === false) {
           return false
         }
 
