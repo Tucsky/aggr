@@ -382,17 +382,22 @@ class Exchange extends EventEmitter {
     }
   }
 
+  /**
+   * Inject formatted products into exchange model
+   * @param productsData
+   * @returns {boolean} true if success, false if invalid, null if no product
+   */
   setProducts(productsData: ProductsData): boolean {
     if (!productsData) {
       console.debug(`[${this.id}] set products (null)`)
       // worker will ask for products next time the market connect
       this.products = null
-      return false
+      return null
     }
 
     if (!this.validateProducts(productsData)) {
       this.products = null
-      return true
+      return false
     }
 
     if (typeof productsData === 'object' && Object.prototype.hasOwnProperty.call(productsData, 'products')) {
@@ -404,6 +409,8 @@ class Exchange extends EventEmitter {
       console.debug(`[${this.id}] set products (array of markets)`)
       this.products = productsData
     }
+
+    return true
   }
 
   async getProducts(forceFetch?: boolean): Promise<void> {
@@ -413,10 +420,13 @@ class Exchange extends EventEmitter {
       await sleep(1000)
     }
 
+    // ask client for exchange's products
+    // will ever retrieve stored or fetch new
+    // fetched product will be sent back to worker for formatting then back to client
     const storage = (await dispatchAsync({
-      op: 'products',
+      op: 'getExchangeProducts',
       data: {
-        exchange: this.id,
+        exchangeId: this.id,
         endpoints: this.endpoints.PRODUCTS,
         forceFetch: forceFetch
       }

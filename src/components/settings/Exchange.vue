@@ -28,10 +28,9 @@
         </div>
       </div>
       <div class="form-group mt8">
-        <small class="mb4 d-block"
-          >Products : <strong>{{ indexedProducts.length }}</strong></small
-        >
-        <button v-if="canRefreshProducts" class="btn -red -small" @click="refreshProducts">Refresh</button>
+        <small class="mb4 d-block">
+          Products : <strong>{{ indexedProducts.length }}</strong>
+        </small>
       </div>
     </div>
   </div>
@@ -45,7 +44,6 @@ import { formatAmount, formatPrice } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '@/components/framework/picker/Slider.vue'
 import aggregatorService from '@/services/aggregatorService'
-import workspacesService from '@/services/workspacesService'
 
 @Component({
   name: 'Exchange',
@@ -56,7 +54,6 @@ import workspacesService from '@/services/workspacesService'
 })
 export default class extends Vue {
   id: string
-  canRefreshProducts = true
   expanded = false
   prices: { [identifier: string]: number } = {}
 
@@ -90,32 +87,6 @@ export default class extends Vue {
 
   get indexedProducts() {
     return this.$store.state.app.indexedProducts[this.id] || []
-  }
-
-  async refreshProducts() {
-    this.canRefreshProducts = false
-
-    await workspacesService.deleteProducts(this.id)
-
-    setTimeout(() => {
-      this.canRefreshProducts = true
-    }, 3000)
-
-    aggregatorService.dispatch({
-      op: 'products',
-      data: {
-        exchange: this.id,
-        data: null
-      }
-    })
-
-    await this.$store.dispatch('exchanges/disconnect', this.id)
-    await this.$store.dispatch('exchanges/connect', this.id)
-
-    this.$store.dispatch('app/showNotice', {
-      type: 'success',
-      title: `${this.indexedProducts.length} products refreshed`
-    })
   }
 
   async toggleExchange() {

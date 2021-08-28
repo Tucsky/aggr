@@ -1,6 +1,6 @@
 import { AggregatedTrade, AggregatorPayload, AggregatorSettings, Connection, Trade, Volumes } from '@/types/test'
 import { exchanges, getExchangeById } from './exchanges'
-import { countDecimals, parseMarket } from './helpers/utils'
+import { parseMarket } from './helpers/utils'
 
 const ctx: Worker = self as any
 
@@ -343,7 +343,7 @@ class Aggregator {
       op: 'connection',
       data: {
         pair,
-        exchange: exchangeId
+        exchangeId
       }
     })
 
@@ -356,8 +356,16 @@ class Aggregator {
     }
     this.connectionChange[exchangeId] += change
 
+    if (!this.connectionChange[exchangeId]) {
+      delete this.connectionChange[exchangeId]
+    }
+
     if (this._connectionChangeNoticeTimeout) {
       clearTimeout(this._connectionChangeNoticeTimeout)
+    }
+
+    if (!Object.keys(this.connectionChange).length) {
+      return
     }
 
     let total = 0
@@ -375,16 +383,10 @@ class Aggregator {
       return output
     }, {})
 
-    if (!total) {
-      return
-    }
-
     this._connectionChangeNoticeTimeout = setTimeout(() => {
       this._connectionChangeNoticeTimeout = null
       const messages = []
-      console.info(Object.keys(this.connectionChange))
       for (const id in this.connectionChange) {
-        console.log(id)
         const change = this.connectionChange[id]
         messages.push(
           (!connectionsByExchanges[id] ? '<strike>' : '') +
@@ -395,8 +397,6 @@ class Aggregator {
         delete this.connectionChange[id]
       }
 
-      console.log('after', this.connectionChange)
-
       ctx.postMessage({
         op: 'notice',
         data: {
@@ -405,7 +405,7 @@ class Aggregator {
           title: total + ' connections<br>' + messages.join('<br>')
         }
       })
-    }, 1000)
+    }, 3000)
   }
 
   createBucket(): Volumes {
@@ -427,15 +427,11 @@ class Aggregator {
   onUnsubscribed(exchangeId, pair) {
     const identifier = exchangeId + pair
 
-    console.log('worker DELETE', identifier)
-
     if (this.onGoingAggregations[identifier]) {
-      console.info('DELETE onGoingAggregations', identifier)
       delete this.onGoingAggregations[identifier]
     }
 
     if (this.connections[identifier]) {
-      console.info('DELETE connections', identifier)
       delete this.connections[identifier]
 
       this.connectionsCount = Object.keys(this.connections).length
@@ -444,18 +440,11 @@ class Aggregator {
         op: 'disconnection',
         data: {
           pair,
-          exchange: exchangeId
+          exchangeId
         }
       })
 
-      ctx.postMessage({
-        op: 'notice',
-        data: {
-          id: exchangeId + pair,
-          type: 'info',
-          title: `Unsubscribed from ${exchangeId + ':' + pair}`
-        }
-      })
+      this.noticeConnectionChange(exchangeId, -1)
     }
   }
 
@@ -486,7 +475,7 @@ class Aggregator {
    * @returns {Promise<any>} promises of connections
    * @memberof Server
    */
-  async connect(markets: string[]) {
+  async connect(markets: string[], trackingId?: string) {
     console.log(`[aggregator] connect`, markets)
 
     const marketsByExchange = markets.reduce((output, market) => {
@@ -529,7 +518,14 @@ class Aggregator {
       }
     }
 
-    return Promise.all(promises)
+    await Promise.all(promises)
+
+    if (trackingId) {
+      ctx.postMessage({
+        op: 'connect',
+        trackingId
+      })
+    }
   }
 
   /**
@@ -538,7 +534,7 @@ class Aggregator {
    * @returns {Promise<void>} promises of disconnection
    * @memberof Server
    */
-  disconnect(markets: string[]) {
+  async disconnect(markets: string[], trackingId?: string) {
     console.log(`[aggregator] disconnect`, markets)
 
     const marketsByExchange = markets.reduce((output, market) => {
@@ -575,66 +571,90 @@ class Aggregator {
       }
     }
 
-    return Promise.all(promises)
+    await Promise.all(promises)
+
+    if (trackingId) {
+      ctx.postMessage({
+        op: 'connect',
+        trackingId
+      })
+    }
   }
 
   startPriceInterval() {
     if (this['_priceInterval']) {
-      console.warn('timer _priceInterval was already started')
       return
     }
-    console.debug(`[worker] started _priceInterval timer`)
     this['_priceInterval'] = self.setInterval(this.emitPrices.bind(this), 1000)
   }
 
   startAggrInterval() {
     if (this['_aggrInterval']) {
-      console.warn('timer _aggrInterval was already started')
       return
     }
-    console.debug(`[worker] started _aggrInterval timer`)
     this['_aggrInterval'] = self.setInterval(this.emitPendingTrades.bind(this), 50)
   }
 
   startStatsInterval() {
     if (this['_statsInterval']) {
-      console.warn('timer _statsInterval was already started')
       return
     }
-    console.debug(`[worker] started _statsInterval timer`)
     this['_statsInterval'] = self.setInterval(this.emitStats.bind(this), 500)
   }
 
   clearInterval(name: string) {
     if (this['_' + name + 'Interval']) {
-      console.log('stopped', name, 'timer')
       clearInterval(this['_' + name + 'Interval'])
       this['_' + name + 'Interval'] = null
     }
   }
 
-  requestOptimalDecimal() {
-    const _optimalDecimalLookupInterval: number = self.setInterval(() => {
-      const prices = Object.values(this.marketsPrices)
-      const markets = Object.keys(this.connections)
+  async getExchangeProducts({ exchangeId, data }) {
+    const exchange = getExchangeById(exchangeId)
 
-      if (prices.length > markets.length / 2) {
-        const optimalDecimal = Math.ceil(prices.map(price => countDecimals(price)).reduce((a, b) => a + b, 0) / prices.length)
+    if (exchange.setProducts(data) === false) {
+      await exchange.getProducts(true)
+    }
+  }
 
-        ctx.postMessage({
-          op: 'notice',
-          data: {
-            type: 'info',
-            title: `Precision set to ${optimalDecimal}`,
-            timeout: 5000
-          }
-        })
+  async fetchExchangeProducts({ exchangeId, forceFetch }: { exchangeId: string; forceFetch?: boolean }, trackingId) {
+    await getExchangeById(exchangeId).getProducts(forceFetch)
 
-        ctx.postMessage({ op: 'optimal-decimal', data: optimalDecimal })
+    ctx.postMessage({
+      op: 'fetchExchangeProducts',
+      trackingId: trackingId
+    })
+  }
 
-        clearInterval(_optimalDecimalLookupInterval)
-      }
-    }, 3333)
+  formatExchangeProducts({ exchangeId, response }, trackingId: string) {
+    const productsData = getExchangeById(exchangeId).formatProducts(response)
+
+    ctx.postMessage({
+      op: 'formatExchangeProducts',
+      data: productsData,
+      trackingId: trackingId
+    })
+  }
+
+  configureAggregator({ key, value }) {
+    if (this.settings[key] === value) {
+      return
+    }
+
+    this.settings[key] = value
+
+    if (key === 'aggregationLength') {
+      // update trades event handler (if 0 mean simple trade emit else group inc trades)
+      this.bindTradesEvent()
+    }
+  }
+
+  getHits(data, trackingId: string) {
+    ctx.postMessage({
+      op: 'getHits',
+      trackingId: trackingId,
+      data: exchanges.reduce((hits, exchanges) => hits + exchanges.count, 0)
+    })
   }
 }
 
@@ -642,64 +662,7 @@ const aggregator = new Aggregator()
 
 self.addEventListener('message', (event: any) => {
   const payload = event.data as AggregatorPayload
-  console.debug('[worker] received message from service', event.data)
-
-  switch (payload.op) {
-    case 'connect':
-    case 'disconnect':
-      aggregator[payload.op as 'connect' | 'disconnect'](payload.data).finally(() => {
-        if (payload.trackingId) {
-          ctx.postMessage({
-            op: payload.op,
-            trackingId: payload.trackingId
-          })
-        }
-      })
-      break
-    case 'products':
-      getExchangeById(payload.data.exchange).setProducts(payload.data.data)
-      break
-    case 'buckets':
-      aggregator.updateBuckets(payload.data)
-      break
-    case 'format-products':
-      ctx.postMessage({
-        op: 'format-products',
-        data: getExchangeById(payload.data.exchange).formatProducts(payload.data.data),
-        trackingId: payload.trackingId
-      })
-      break
-    case 'fetch-products':
-      Promise.all(exchanges.filter(exchange => !payload.data || payload.data === exchange.id).map(exchange => exchange.getProducts())).finally(() => {
-        ctx.postMessage({
-          op: 'fetch-products',
-          trackingId: payload.trackingId
-        })
-      })
-      break
-    case 'settings.calculateSlippage':
-      aggregator.settings.calculateSlippage = payload.data
-      break
-    case 'settings.preferQuoteCurrencySize':
-      aggregator.settings.preferQuoteCurrencySize = payload.data
-      break
-    case 'settings.aggregationLength':
-      if (aggregator.settings.aggregationLength !== payload.data) {
-        aggregator.settings.aggregationLength = payload.data
-        aggregator.bindTradesEvent()
-      }
-      break
-    case 'hits':
-      ctx.postMessage({
-        op: 'hits',
-        trackingId: payload.trackingId,
-        data: exchanges.reduce((hits, exchanges) => hits + exchanges.count, 0)
-      })
-      break
-    case 'unload':
-      console.log(`[worker] unloading port`)
-      break
-  }
+  aggregator[payload.op](payload.data, payload.trackingId)
 })
 
 export default null

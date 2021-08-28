@@ -22,7 +22,7 @@ export async function indexProducts(exchangeId: string, productsData: ProductsDa
   }
 
   store.dispatch('exchanges/indexExchangeProducts', {
-    exchange: exchangeId,
+    exchangeId,
     symbols: products || []
   })
 }
@@ -72,10 +72,10 @@ export async function fetchProducts(exchangeId: string, endpoints: string[]): Pr
 
   if (data) {
     const productsData = (await aggregatorService.dispatchAsync({
-      op: 'format-products',
+      op: 'formatExchangeProducts',
       data: {
-        exchange: exchangeId,
-        data
+        exchangeId: exchangeId,
+        response: data
       }
     })) as ProductsStorage
 
@@ -94,39 +94,28 @@ export async function fetchProducts(exchangeId: string, endpoints: string[]): Pr
   }
 }
 
-export async function getProducts(exchangeId: string, endpoints?: string[], forceFetch?: boolean): Promise<ProductsData> {
+export async function getProducts(id: string, endpoints: string[], forceFetch?: boolean): Promise<ProductsData> {
   let productsData: ProductsData
 
-  console.debug(`[products.${exchangeId}] reading stored products`)
-  const storage = await workspacesService.getProducts(exchangeId)
+  console.debug(`[products.${id}] reading stored products`)
+  const storage = await workspacesService.getProducts(id)
 
   if (!forceFetch && storage && +new Date() - storage.timestamp < 1000 * 60 * 60 * 24 * 7) {
-    console.debug(`[products.${exchangeId}] using products exchange storage`)
+    console.debug(`[products.${id}] using products exchange storage`)
 
     productsData = storage.data
-  } else if (!endpoints) {
-    console.debug(`[products.${exchangeId}] no storage + no endpoint = no products`)
-    
-    const payload = await aggregatorService.dispatchAsync({
-      op: 'fetch-products',
-      data: exchangeId
-    })
-
-    return null
   } else {
-    console.debug(`[products.${exchangeId}] endpoint are known, gona fetch now`)
+    console.debug(`[products.${id}] fetch products using provided endpoints`)
 
-    console.info(`fetching ${exchangeId}'s products`)
-
-    productsData = await fetchProducts(exchangeId, endpoints)
+    productsData = await fetchProducts(id, endpoints)
   }
 
   if (productsData) {
-    if (!store.state.exchanges[exchangeId].fetched) {
-      store.commit('exchanges/SET_FETCHED', exchangeId)
+    if (!store.state.exchanges[id].fetched) {
+      store.commit('exchanges/SET_FETCHED', id)
     }
 
-    indexProducts(exchangeId, productsData)
+    indexProducts(id, productsData)
   }
 
   return productsData
@@ -140,17 +129,4 @@ export async function showIndexedProductsCount() {
     type: 'success',
     title: `${count} markets indexed 🔥`
   })
-}
-
-export async function getAllProducts() {
-  store.dispatch('app/showNotice', {
-    id: 'fetch-products',
-    title: 'Fetching the latest products...'
-  })
-
-  await aggregatorService.dispatchAsync({
-    op: 'fetch-products'
-  })
-
-  this.showIndexedProductsCount()
 }

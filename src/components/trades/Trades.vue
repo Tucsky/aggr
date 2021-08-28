@@ -519,21 +519,21 @@ export default class extends Mixins(PaneMixin) {
 
     const slug = slugify(gif)
 
-    const promise = fetch('https://g.tenor.com/v1/search?q=' + gif + '&key=LIVDSRZULELA&limit=100&key=DF3B0979C761')
+    const promise = fetch('https://api.giphy.com/v1/gifs/search?q=' + gif + '&rating=r&limit=100&api_key=b5Y5CZcpj9spa0xEfskQxGGnhChYt3hi')
       .then(res => res.json())
       .then(async res => {
-        if (!res.results || !res.results.length) {
+        if (!res.data || !res.data.length) {
           return
         }
 
         GIFS[gif] = []
 
-        for (const item of res.results) {
-          GIFS[gif].push(item.media[0].tinygif.url)
+        for (const item of res.data) {
+          GIFS[gif].push(item.images.downsized.url)
         }
 
         this.$store.dispatch('app/showNotice', {
-          title: 'Downloaded ' + GIFS[gif].length + ' gifs about "' + gif + '"',
+          title: 'found ' + GIFS[gif].length + ' ' + gif + ' gifs',
           type: 'success'
         })
 

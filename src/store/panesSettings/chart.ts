@@ -213,7 +213,6 @@ const actions = {
       if (!type) {
         if (!inverse) {
           if (market !== id) {
-            console.log('[toggle market] skip market ' + market)
             continue
           }
           console.log('[toggle market] toggle ' + market, isHidden ? 'show' : 'hide')
@@ -221,11 +220,9 @@ const actions = {
           // toggle selected market
           Vue.set(state.hiddenMarkets, market, !isHidden)
         } else if (!isHidden && market !== id) {
-          console.log('[inverse toggle market] hide ' + market)
           // hide market other than selected
           Vue.set(state.hiddenMarkets, market, true)
         } else if (isHidden && market === id) {
-          console.log('[inverse toggle market] show ' + market)
           // show current market
           Vue.set(state.hiddenMarkets, market, false)
         }
@@ -240,7 +237,6 @@ const actions = {
         const hide = type !== indexedMarket.type
 
         if (hide !== isHidden) {
-          console.log('[' + type + ' toggle markets] ' + (hide ? 'hide' : 'show') + ' ' + market)
           Vue.set(state.hiddenMarkets, market, hide)
         }
       }

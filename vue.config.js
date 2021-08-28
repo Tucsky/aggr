@@ -60,7 +60,7 @@ module.exports = {
       .end()
   },
   devServer: {
-    host: 'localhost',
+    /*host: 'localhost',
     // progress: true,
     // https: true,
     // port: 8081,
@@ -97,7 +97,7 @@ module.exports = {
       }
 
       return obj
-    }, {})
+    }, {})*/
   },
   css: {
     loaderOptions: {

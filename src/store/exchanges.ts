@@ -1,5 +1,6 @@
 import aggregatorService from '@/services/aggregatorService'
-import { getProducts, showIndexedProductsCount } from '@/services/productsService'
+import { showIndexedProductsCount } from '@/services/productsService'
+import { parseMarket } from '@/utils/helpers'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
@@ -31,27 +32,8 @@ const getters = {
 } as GetterTree<ExchangesState, ModulesState>
 
 const actions = {
-  async boot({ state, getters, rootState }) {
-    state._exchanges.splice(0, state._exchanges.length)
-
-    for (const id of getters.getExchanges) {
-      state._exchanges.push(id)
-      state[id].fetched = false
-      rootState.app.activeExchanges[id] = !state[id].disabled
-    }
-
-    if (state._exchanges.length) {
-      this.commit('app/EXCHANGE_UPDATED', state._exchanges[0])
-    }
-
-    if (!Object.keys(rootState.settings.searchExchanges).length) {
-      rootState.settings.searchExchanges = state._exchanges.reduce((searchExchanges, id) => {
-        searchExchanges[id] = state[id].disabled ? false : true
-        return searchExchanges
-      }, {})
-    }
-
-    await Promise.all(getters.getExchanges.map(id => getProducts(id)))
+  async boot({ dispatch }) {
+    await dispatch('prepareExchanges')
 
     console.info(`connecting to exchanges`)
 
@@ -59,13 +41,31 @@ const actions = {
 
     showIndexedProductsCount()
   },
+  async prepareExchanges({ state, getters, rootState }) {
+    state._exchanges.splice(0, state._exchanges.length)
+
+    for (const id of getters.getExchanges) {
+      state._exchanges.push(id)
+      state[id].fetched = false
+      rootState.app.activeExchanges[id] = !state[id].disabled
+
+      await aggregatorService.dispatchAsync({
+        op: 'fetchExchangeProducts',
+        data: { exchangeId: id }
+      })
+    }
+
+    if (state._exchanges.length) {
+      this.commit('app/EXCHANGE_UPDATED', state._exchanges[0])
+    }
+  },
   async toggleExchange({ commit, state, dispatch }, id: string) {
     commit('TOGGLE_EXCHANGE', id)
 
     if (state[id].disabled) {
-      dispatch('disconnect', id)
+      await dispatch('disconnect', id)
     } else {
-      dispatch('connect', id)
+      await dispatch('connect', id)
     }
 
     this.commit('app/EXCHANGE_UPDATED', id)
@@ -86,7 +86,7 @@ const actions = {
 
     await aggregatorService.connect(markets)
   },
-  indexExchangeProducts(noop, { exchange, symbols }: { exchange: string; symbols: string[] }) {
+  indexExchangeProducts(noop, { exchangeId, symbols }: { exchangeId: string; symbols: string[] }) {
     const products = []
 
     const baseRegex = '([a-z0-9]{2,})'
@@ -99,38 +99,38 @@ const actions = {
 
     for (let i = 0; i < symbols.length; i++) {
       const symbol = symbols[i]
-      const id = exchange + ':' + symbol
+      const id = exchangeId + ':' + symbol
       let type = 'spot'
 
       if (/[UZ_-]\d{2}/.test(symbol)) {
         type = 'future'
-      } else if (exchange === 'BITMEX' || exchange === 'BYBIT' || /(-|_)swap$|(-|_|:)perp/i.test(symbol)) {
+      } else if (exchangeId === 'BITMEX' || exchangeId === 'BYBIT' || /(-|_)swap$|(-|_|:)perp/i.test(symbol)) {
         type = 'perp'
-      } else if (exchange === 'BINANCE_FUTURES') {
+      } else if (exchangeId === 'BINANCE_FUTURES') {
         type = 'perp'
-      } else if (exchange === 'BITFINEX' && /F0$/.test(symbol)) {
+      } else if (exchangeId === 'BITFINEX' && /F0$/.test(symbol)) {
         type = 'perp'
-      } else if (exchange === 'PHEMEX' && symbol[0] !== 's') {
+      } else if (exchangeId === 'PHEMEX' && symbol[0] !== 's') {
         type = 'perp'
-      } else if (exchange === 'HUOBI' && /_(CW|CQ|NW|NQ)$/.test(symbol)) {
+      } else if (exchangeId === 'HUOBI' && /_(CW|CQ|NW|NQ)$/.test(symbol)) {
         type = 'future'
-      } else if (exchange === 'HUOBI' && /-/.test(symbol)) {
+      } else if (exchangeId === 'HUOBI' && /-/.test(symbol)) {
         type = 'perp'
-      } else if (exchange === 'KRAKEN' && /PI_/.test(symbol)) {
+      } else if (exchangeId === 'KRAKEN' && /PI_/.test(symbol)) {
         type = 'perp'
       }
 
       let localSymbol = symbol
 
-      if (exchange === 'KRAKEN') {
+      if (exchangeId === 'KRAKEN') {
         localSymbol = localSymbol.replace(/PI_/, '').replace(/FI_/, '')
       }
 
-      if (exchange === 'BITFINEX') {
+      if (exchangeId === 'BITFINEX') {
         localSymbol = localSymbol.replace(/(.*)F0:USTF0/, '$1USDT')
       }
 
-      if (exchange === 'HUOBI') {
+      if (exchangeId === 'HUOBI') {
         localSymbol = localSymbol.replace(/_CW|_CQ|_NW|_NQ/i, 'USD')
       }
 
@@ -144,7 +144,7 @@ const actions = {
 
       let match
 
-      if (exchange === 'POLONIEX') {
+      if (exchangeId === 'POLONIEX') {
         match = symbol.match(baseQuoteLookupPoloniex)
 
         if (match) {
@@ -162,7 +162,7 @@ const actions = {
         }
       }
 
-      if (!match && (exchange === 'DERIBIT' || exchange === 'FTX' || exchange === 'HUOBI')) {
+      if (!match && (exchangeId === 'DERIBIT' || exchangeId === 'FTX' || exchangeId === 'HUOBI')) {
         match = localSymbol.match(/(\w+)[^a-z0-9]/i)
 
         if (match) {
@@ -186,13 +186,13 @@ const actions = {
         quote,
         pair: symbol,
         local: localSymbol,
-        exchange,
+        exchange: exchangeId,
         type
       })
     }
 
     this.commit('app/INDEX_EXCHANGE_PRODUCTS', {
-      exchange,
+      exchangeId,
       products
     })
   }

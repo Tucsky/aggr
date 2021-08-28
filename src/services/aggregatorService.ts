@@ -9,7 +9,6 @@ import workspacesService from './workspacesService'
 
 class AggregatorService extends EventEmitter {
   public worker: Worker
-  public pending = 0
 
   constructor() {
     super()
@@ -21,16 +20,9 @@ class AggregatorService extends EventEmitter {
     })
 
     this.listenUtilityEvents()
-
-    window.addEventListener('beforeunload', () => {
-      this.worker.postMessage({
-        op: 'unload'
-      })
-    })
   }
 
   dispatch(payload: AggregatorPayload) {
-    console.debug('[service] send to worker', payload)
     this.worker.postMessage(payload)
   }
 
@@ -81,18 +73,11 @@ class AggregatorService extends EventEmitter {
   dispatchAsync(payload: AggregatorPayload) {
     const trackingId = randomString(8)
 
-    if (this.pending > 5) {
-      console.warn(`[service.dispatchAsync] there is ${this.pending} messages still waiting answer from worker.`)
-    }
-
-    this.pending++
-
     return new Promise(resolve => {
       console.debug(`[service.dispatchAsync] send to worker (with tracking)`, payload, trackingId)
 
       const listener = ({ data }: { data: AggregatorPayload }) => {
         if (data.trackingId === payload.trackingId) {
-          this.pending--
           console.debug(`[service.dispatchAsync] tracking message match`, 'resolving', trackingId)
           this.worker.removeEventListener('message', listener)
           resolve(data.data)
@@ -116,34 +101,35 @@ class AggregatorService extends EventEmitter {
       workspacesService.setCurrentWorkspace(workspace)
     })
 
-    this.on('connection', ({ exchange, pair }: { exchange: string; pair: string }) => {
-      console.log('worker reported connection', exchange, pair)
+    this.on('connection', ({ exchangeId, pair }: { exchangeId: string; pair: string }) => {
       store.commit('app/ADD_ACTIVE_MARKET', {
-        exchange,
+        exchangeId,
         pair
       })
     })
 
-    this.on('disconnection', ({ exchange, pair }: { exchange: string; pair: string }) => {
-      console.log('worker reported disconnection', exchange, pair)
+    this.on('disconnection', ({ exchangeId, pair }: { exchangeId: string; pair: string }) => {
       store.commit('app/REMOVE_ACTIVE_MARKET', {
-        exchange,
+        exchangeId,
         pair
       })
     })
 
-    this.on('products', async ({ exchange, endpoints, forceFetch }: { exchange: string; endpoints: string[]; forceFetch?: boolean }, trackingId: string) => {
-      const productsData = await getProducts(exchange, endpoints, forceFetch)
+    this.on(
+      'getExchangeProducts',
+      async ({ exchangeId, endpoints, forceFetch }: { exchangeId: string; endpoints: string[]; forceFetch?: boolean }, trackingId: string) => {
+        const productsData = await getProducts(exchangeId, endpoints, forceFetch)
 
-      this.dispatch({
-        op: 'products',
-        data: {
-          exchange,
-          data: productsData,
-        },
-        trackingId
-      })
-    })
+        this.dispatch({
+          op: 'getExchangeProducts',
+          data: {
+            exchangeId,
+            data: productsData
+          },
+          trackingId
+        })
+      }
+    )
   }
 }
 

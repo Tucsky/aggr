@@ -24,9 +24,9 @@
         </template>
       </dropdown>
     </pane-header>
-    <div class="chart__overlay">
-      <div>
-        <div class="chart-overlay">
+    <div class="chart-overlay">
+      <div class="chart-overlay__left hide-scrollbar">
+        <div class="chart-overlay__panel">
           <div class="chart-overlay__content chart__indicators" v-if="showIndicatorsOverlay">
             <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" />
 
@@ -37,8 +37,8 @@
           <div class="chart-overlay__title" @click="showIndicatorsOverlay = !showIndicatorsOverlay">Indicators <i class="icon-up -higher"></i></div>
         </div>
 
-        <div class="chart-overlay">
-          <ul class="chart-overlay__content chart__markets" v-if="showMarketsOverlay">
+        <div class="chart-overlay__panel chart__markets">
+          <ul class="chart-overlay__content" v-if="showMarketsOverlay">
             <li class="column">
               <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('perp')">perp</a>
               <i class="pipe -center">|</i>
@@ -63,7 +63,7 @@
           <div class="chart-overlay__title" @click="showMarketsOverlay = !showMarketsOverlay">Markets <i class="icon-up -higher"></i></div>
         </div>
       </div>
-      <div class="chart__controls" :style="{ marginRight: priceWidth / 12 + 'em' }">
+      <div class="chart-overlay__right chart__controls" :style="{ marginRight: priceWidth / 12 + 'em' }">
         <button class="chart__screenshot btn -text -large" @click="takeScreenshot"><i class="icon-add-photo"></i></button>
       </div>
     </div>
@@ -936,7 +936,7 @@ export default class extends Mixins(PaneMixin) {
 
 <style lang="scss" scoped>
 .pane-chart {
-  &:hover .chart__overlay {
+  &:hover .chart-overlay {
     display: block;
   }
 
@@ -963,9 +963,18 @@ export default class extends Mixins(PaneMixin) {
 }
 
 .chart__markets {
-  list-style: none;
-  padding: 0;
-  background: var(--theme-background-o75);
+  overflow: hidden;
+  flex-grow: 1;
+
+  .chart-overlay__content {
+    overflow: auto;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    background: var(--theme-background-o75);
+  }
 
   .checkbox-control {
     span {
@@ -983,30 +992,6 @@ export default class extends Mixins(PaneMixin) {
     &.-hidden {
       opacity: 0.5;
       text-decoration: line-through;
-    }
-  }
-}
-
-.chart__controls .btn {
-  font-size: 1.25em;
-}
-
-.chart__overlay {
-  display: none;
-  position: relative;
-
-  > div {
-    position: absolute;
-    top: 1em;
-    font-family: 'Barlow Semi Condensed';
-    z-index: 3;
-
-    &:first-child {
-      left: 0.75em;
-    }
-
-    &:last-child {
-      right: 0.75em;
     }
   }
 }
@@ -1030,9 +1015,51 @@ export default class extends Mixins(PaneMixin) {
   }
 }
 
+.chart__controls {
+  .btn {
+    font-size: 1.25em;
+  }
+}
+
 .chart-overlay {
-  display: flex;
+  display: none;
   flex-direction: column-reverse;
+  pointer-events: none;
+
+  > div {
+    position: absolute;
+    z-index: 3;
+  }
+
+  &__left {
+    left: 1em;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: flex-start;
+
+    > div {
+      pointer-events: all;
+      flex-shrink: 0;
+      flex-basis: 0;
+
+      &:first-child {
+        padding-top: 3em;
+      }
+    }
+  }
+
+  &__right {
+    right: 1em;
+    top: 3em;
+    pointer-events: all;
+  }
+
+  &__panel {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+  }
 
   &__content {
     padding: 0;

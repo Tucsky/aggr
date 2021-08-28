@@ -14,7 +14,7 @@
     <div class="search">
       <div class="search__side">
         <div class="search-filters mb16">
-          <div class="search-filters__content chart__indicators" v-if="showExtraFilters">
+          <div class="search-filters__content" v-if="showExtraFilters">
             <label class="checkbox-control -small mb4">
               <input
                 type="checkbox"
@@ -45,7 +45,7 @@
         </div>
 
         <div class="search-filters mb16">
-          <div class="search-filters__content chart__indicators" v-if="showTypeFilters">
+          <div class="search-filters__content" v-if="showTypeFilters">
             <label class="checkbox-control -small mb4">
               <input
                 type="checkbox"
@@ -81,15 +81,25 @@
         </div>
 
         <div class="search-filters">
-          <div class="search-filters__content chart__indicators" v-if="showExchanges">
+          <div class="search-filters__content" v-if="showExchanges">
             <label class="search-filters__controls checkbox-control -small mb4 flex-right">
               <input type="checkbox" class="form-control" :checked="allExchangesEnabled" @change="toggleAll" />
               <div></div>
             </label>
-            <label class="checkbox-control -small mb4" v-for="(val, key) in searchExchanges" :key="key">
-              <input type="checkbox" class="form-control" :checked="val" @change="$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', key)" />
-              <div></div>
-              <span v-text="key"><i :class="'icon-' + key"></i><code v-text="key"></code></span>
+            <label class="checkbox-control -small mb4 -custom" v-for="id of exchanges" :key="id">
+              <input
+                type="checkbox"
+                class="form-control"
+                :checked="searchExchanges[id] !== false"
+                @change="$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', id)"
+              />
+              <div :class="'icon-' + id"></div>
+              <span>
+                <span v-text="id"></span>
+                <a v-if="canRefreshProducts" href="javascript:void(0);" class="-text" @click="refreshExchangeProducts(id)" title="Refresh products">
+                  <i class="icon-refresh ml8"> </i>
+                </a>
+              </span>
             </label>
           </div>
           <div class="search-filters__title mb8" @click="showExchanges = !showExchanges">Exchanges <i class="icon-up -higher"></i></div>
@@ -215,6 +225,7 @@ import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import aggregatorService from '@/services/aggregatorService'
 import { parseMarket } from '@/worker/helpers/utils'
+import workspacesService from '@/services/workspacesService'
 
 export default {
   mixins: [DialogMixin],
@@ -238,7 +249,8 @@ export default {
     showExchanges: true,
     showExtraFilters: false,
     showTypeFilters: true,
-    onlyConnected: false
+    onlyConnected: false,
+    canRefreshProducts: true
   }),
   computed: {
     transitionGroupName() {
@@ -310,8 +322,11 @@ export default {
     searchExchanges() {
       return this.$store.state.settings.searchExchanges
     },
+    exchanges() {
+      return this.$store.getters['exchanges/getExchanges']
+    },
     allExchangesEnabled() {
-      return !Object.keys(this.searchExchanges).find(a => !this.searchExchanges[a])
+      return !this.exchanges.find(a => this.searchExchanges[a] === false)
     },
     hasFilters() {
       const hasHistorical = this.searchTypes.historical
@@ -414,14 +429,18 @@ export default {
       }, {})
     }
   },
+
   watch: {
     '$store.state.app.showSearch': function(value) {
       if (!value) {
         this.close(false)
       }
+    },
+    query: () => {
+      console.log('query change')
     }
   },
-  created() {
+  async created() {
     if (this.paneId) {
       this.selection = this.$store.state.panes.panes[this.paneId].markets.slice()
     } else {
@@ -430,7 +449,7 @@ export default {
 
     this.originalSelection = this.selection.slice()
 
-    this.ensureProducts()
+    await this.ensureProducts()
   },
   mounted() {
     this.$nextTick(() => {
@@ -560,18 +579,12 @@ export default {
     },
 
     async ensureProducts() {
-      for (const exchange of this.$store.getters['exchanges/getExchanges']) {
-        if (!this.$store.state.exchanges[exchange].fetched) {
+      for (const exchangeId of this.$store.getters['exchanges/getExchanges']) {
+        if (!this.$store.state.exchanges[exchangeId].fetched) {
           await aggregatorService.dispatch({
-            op: 'fetch-products',
-            data: this.id
-          })
-
-          aggregatorService.dispatch({
-            op: 'products',
+            op: 'fetchExchangeProducts',
             data: {
-              exchange: exchange,
-              data: null
+              exchangeId
             }
           })
         }
@@ -650,7 +663,7 @@ export default {
           break
 
         case 'c':
-          if (event.ctrlKey && !window.getSelection().toString().length) {
+          if (event.metaKey && !window.getSelection().toString().length) {
             this.copySelection()
           }
           break
@@ -691,11 +704,37 @@ export default {
       this.$set(
         this.$store.state.settings,
         'searchExchanges',
-        Object.keys(this.$store.state.settings.searchExchanges).reduce((output, id) => {
+        this.exchanges.reduce((output, id) => {
           output[id] = deselectAll ? false : true
           return output
         }, {})
       )
+    },
+
+    async refreshExchangeProducts(exchangeId) {
+      this.canRefreshProducts = false
+
+      await workspacesService.deleteProducts(exchangeId)
+
+      setTimeout(() => {
+        this.canRefreshProducts = true
+      }, 3000)
+
+      await aggregatorService.dispatchAsync({
+        op: 'fetchExchangeProducts',
+        data: {
+          exchangeId,
+          forceFetch: true
+        }
+      })
+
+      await this.$store.dispatch('exchanges/disconnect', this.id)
+      await this.$store.dispatch('exchanges/connect', this.id)
+
+      this.$store.dispatch('app/showNotice', {
+        type: 'success',
+        title: `${this.indexedProducts[exchangeId].length} products refreshed`
+      })
     }
   }
 }
@@ -800,6 +839,16 @@ export default {
         display: inline-block;
         transform: rotateZ(180deg);
       }
+    }
+  }
+
+  .checkbox-control {
+    a {
+      visibility: hidden;
+    }
+
+    &:hover a {
+      visibility: visible;
     }
   }
 }

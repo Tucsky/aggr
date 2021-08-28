@@ -39,18 +39,18 @@ const state = Object.assign(
 const actions = {
   async boot({ state, dispatch }) {
     aggregatorService.dispatch({
-      op: 'settings.calculateSlippage',
-      data: state.calculateSlippage
+      op: 'configureAggregator',
+      data: { key: 'calculateSlippage', value: state.calculateSlippage }
     })
 
     aggregatorService.dispatch({
-      op: 'settings.aggregationLength',
-      data: state.aggregationLength
+      op: 'configureAggregator',
+      data: { key: 'aggregationLength', value: state.aggregationLength }
     })
 
     aggregatorService.dispatch({
-      op: 'settings.preferQuoteCurrencySize',
-      data: state.preferQuoteCurrencySize
+      op: 'configureAggregator',
+      data: { key: 'preferQuoteCurrencySize', value: state.preferQuoteCurrencySize }
     })
 
     dispatch('updateCSS')
@@ -141,8 +141,8 @@ const mutations = {
     state.preferQuoteCurrencySize = value ? true : false
 
     aggregatorService.dispatch({
-      op: 'settings.preferQuoteCurrencySize',
-      data: state.preferQuoteCurrencySize
+      op: 'configureAggregator',
+      data: { key: 'preferQuoteCurrencySize', value: state.preferQuoteCurrencySize }
     })
   },
   TOGGLE_SLIPPAGE(state) {
@@ -153,8 +153,8 @@ const mutations = {
     state.calculateSlippage = values[(index + 1) % values.length]
 
     aggregatorService.dispatch({
-      op: 'settings.calculateSlippage',
-      data: state.calculateSlippage
+      op: 'configureAggregator',
+      data: { key: 'calculateSlippage', value: state.calculateSlippage }
     })
   },
   TOGGLE_AGGREGATION(state) {
@@ -165,8 +165,8 @@ const mutations = {
     state.aggregationLength = values[(index + 1) % values.length]
 
     aggregatorService.dispatch({
-      op: 'settings.aggregationLength',
-      data: state.aggregationLength
+      op: 'configureAggregator',
+      data: { key: 'aggregationLength', value: state.aggregationLength }
     })
   },
   TOGGLE_ANIMATIONS(state) {

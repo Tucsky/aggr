@@ -43,7 +43,7 @@ export interface Product {
 }
 
 export interface ListenedProduct extends Product {
-  listeners: number
+  listeners?: number
 }
 
 export interface AppState {
@@ -332,24 +332,24 @@ const mutations = {
   SET_BUILD_DATE(state, value) {
     state.buildDate = value
   },
-  INDEX_EXCHANGE_PRODUCTS(state, { exchange, products }: { exchange: string; products: Product[] }) {
-    Vue.set(state.indexedProducts, exchange, products)
+  INDEX_EXCHANGE_PRODUCTS(state, { exchangeId, products }: { exchangeId: string; products: Product[] }) {
+    Vue.set(state.indexedProducts, exchangeId, products)
   },
-  ADD_ACTIVE_MARKET(state, { exchange, pair }: { exchange: string; pair: string }) {
-    const market = state.activeMarkets.find(m => m.exchange === exchange && m.pair === pair)
+  ADD_ACTIVE_MARKET(state, { exchangeId, pair }: { exchangeId: string; pair: string }) {
+    const market = state.activeMarkets.find(m => m.exchange === exchangeId && m.pair === pair)
 
     if (market) {
       throw new Error('add-active-market-already-exist')
     }
 
     state.activeMarkets.push({
-      id: exchange + pair,
-      exchange,
+      id: exchangeId + pair,
+      exchange: exchangeId,
       pair
     })
   },
-  REMOVE_ACTIVE_MARKET(state, { exchange, pair }: { exchange: string; pair: string }) {
-    const market = state.activeMarkets.find(m => m.exchange === exchange && m.pair === pair)
+  REMOVE_ACTIVE_MARKET(state, { exchangeId, pair }: { exchangeId: string; pair: string }) {
+    const market = state.activeMarkets.find(m => m.exchange === exchangeId && m.pair === pair)
 
     if (!market) {
       throw new Error('remove-active-market-not-found')

@@ -70,17 +70,13 @@ const getters = {
 
 const actions = {
   async boot({ state }) {
-    state.marketsListeners = {}
+    for (const market in state.marketsListeners) {
+      state.marketsListeners[market].listeners = 0
+    }
 
     if (!Object.keys(state.layouts).length) {
-      const isMobile = window.innerWidth < 768
-
-      if (isMobile) {
-        state.layouts = defaultLayouts
-      } else {
-        state.layouts = {
-          lg: defaultLayouts.lg
-        }
+      state.layouts = {
+        lg: defaultLayouts.lg
       }
     }
   },
@@ -166,7 +162,17 @@ const actions = {
     }
   },
   async refreshMarketsListeners({ commit, state, rootState }) {
-    const marketsListeners = {}
+    // cache original listeners (market: n listeners)
+    const originalListeners: { [market: string]: number } = Object.keys(state.marketsListeners).reduce((listenersByMarkets, market) => {
+      listenersByMarkets[market] = state.marketsListeners[market].listeners
+
+      return listenersByMarkets
+    }, {})
+
+    // new listeners stored here
+    const marketsListeners: MarketsListeners = {}
+
+    // bucketed markets stored here
     const buckets = {}
 
     for (const id in state.panes) {
@@ -177,6 +183,7 @@ const actions = {
       }
 
       if (state.panes[id].type === 'counters' || state.panes[id].type === 'stats') {
+        // market used in a bucket
         const bucketId = getBucketId(markets)
 
         if (!buckets[bucketId]) {
@@ -186,14 +193,31 @@ const actions = {
 
       for (const market of markets) {
         if (typeof marketsListeners[market] === 'undefined') {
-          const [exchange, pair] = parseMarket(market)
-
-          const indexedProduct = rootState.app.indexedProducts[exchange].find(indexedMarket => indexedMarket.pair === pair)
-
-          if (indexedProduct) {
-            marketsListeners[market] = indexedProduct
-
+          if (state.marketsListeners[market]) {
+            marketsListeners[market] = state.marketsListeners[market]
             marketsListeners[market].listeners = 0
+          } else {
+            const [exchange, pair] = parseMarket(market)
+
+            if (!rootState.app.indexedProducts[exchange]) {
+              // this shouldn't happen since **ALL** exchanges got their products fetched on boot
+              console.error(`[panes/refreshMarketsListeners] products required for exchange`, exchange, '(critical)')
+              continue
+            }
+
+            const indexedProduct = rootState.app.indexedProducts[exchange].find(indexedMarket => indexedMarket.pair === pair)
+
+            if (!indexedProduct) {
+              // this can happen if a product has been added before, but been delisted and product got automatically refreshed
+              console.error(`[panes/refreshMarketsListeners] market not found in exchange's product`, exchange, '(warning)')
+              continue
+            }
+
+            if (indexedProduct) {
+              marketsListeners[market] = indexedProduct
+
+              marketsListeners[market].listeners = 0
+            }
           }
         }
 
@@ -217,19 +241,26 @@ const actions = {
     )
 
     for (const market of allUniqueMarkets) {
-      if (!state.marketsListeners[market] && marketsListeners[market]) {
+      const previousListeners = originalListeners[market]
+      const currentListeners = marketsListeners[market] && marketsListeners[market].listeners
+
+      if (!previousListeners && currentListeners) {
         toConnect.push(market)
-        //await aggregatorService.connect([market])
-      } else if (state.marketsListeners[market] && !marketsListeners[market]) {
+      } else if (previousListeners && !currentListeners) {
         toDisconnect.push(market)
-        //await aggregatorService.disconnect([market])
+
+        if (state.marketsListeners[market].listeners) {
+          // clear listeners for that market
+          state.marketsListeners[market].listeners = 0
+          debugger
+        }
       }
     }
 
     await Promise.all([aggregatorService.connect(toConnect), aggregatorService.disconnect(toDisconnect)])
 
     aggregatorService.dispatch({
-      op: 'buckets',
+      op: 'updateBuckets',
       data: buckets
     })
 

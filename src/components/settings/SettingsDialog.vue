@@ -346,7 +346,7 @@ export default {
       }
 
       this._hitsTimeout = setTimeout(async () => {
-        const hits = await aggregatorService.dispatchAsync({ op: 'hits' })
+        const hits = await aggregatorService.dispatchAsync({ op: 'getHits' })
         const elapsed = +new Date() - APPLICATION_START_TIME
         this.hits = (hits / (elapsed / 1000)).toFixed()
 

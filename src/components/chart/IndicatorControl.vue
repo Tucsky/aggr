@@ -4,13 +4,13 @@
 
     <div class="indicator__controls">
       <template v-if="!error">
-        <button class="btn -small -accent" @click="toggleVisibility" :title="visible ? 'Hide' : 'Show'">
+        <button class="btn -accent" @click="toggleVisibility" :title="visible ? 'Hide' : 'Show'">
           <i :class="{ 'icon-visible': !visible, 'icon-hidden': visible }"></i>
         </button>
-        <button class="btn -small -accent" @click="edit" title="Edit"><i class="icon-edit"></i></button>
+        <button class="btn -accent" @click="edit" title="Edit"><i class="icon-edit"></i></button>
       </template>
-      <button class="btn -small -accent" @click="resize" title="Resize"><i class="icon-resize-height"></i></button>
-      <button class="btn -small -accent" @click="remove" title="Disable"><i class="icon-cross"></i></button>
+      <button class="btn -accent" @click="resize" title="Resize"><i class="icon-resize-height"></i></button>
+      <button class="btn -accent" @click="remove" title="Disable"><i class="icon-cross"></i></button>
     </div>
     <div v-if="showLegend" class="indicator__legend">
       <div v-for="serie of series" :key="serie" :id="paneId + indicator.id + serie"></div>
@@ -132,21 +132,15 @@ export default {
     > .btn {
       color: white;
       border-radius: 0;
-      padding: 0.2rem 0.4rem;
-
-      &:first-child {
-        border-top-left-radius: 3px;
-        border-bottom-left-radius: 3px;
-      }
-
-      &:last-child {
-        border-top-right-radius: 3px;
-        border-bottom-right-radius: 3px;
-      }
+      padding: 0.2em 0.4em;
+      font-size: 1em;
     }
   }
 
   &:hover {
+    position: relative;
+    z-index: 1;
+
     .indicator__controls {
       display: inline-flex;
       pointer-events: all;
