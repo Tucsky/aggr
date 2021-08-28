@@ -71,7 +71,11 @@ const getters = {
 const actions = {
   async boot({ state }) {
     for (const market in state.marketsListeners) {
-      state.marketsListeners[market].listeners = 0
+      if (typeof state.marketsListeners[market] === 'number') {
+        delete state.marketsListeners[market]
+      } else {
+        state.marketsListeners[market].listeners = 0
+      }
     }
 
     if (!Object.keys(state.layouts).length) {
