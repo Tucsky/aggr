@@ -252,7 +252,6 @@ const actions = {
         if (state.marketsListeners[market].listeners) {
           // clear listeners for that market
           state.marketsListeners[market].listeners = 0
-          debugger
         }
       }
     }

@@ -31,7 +31,6 @@ export default class extends Exchange {
 
   validateProducts(data) {
     if (!data || !data.multipliers || !data.types) {
-      debugger
       return false
     }
 
