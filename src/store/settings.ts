@@ -225,7 +225,7 @@ const mutations = {
     Vue.set(state.searchTypes, key, !state.searchTypes[key])
   },
   TOGGLE_SEARCH_EXCHANGE(state, key: string) {
-    Vue.set(state.searchExchanges, key, !state.searchExchanges[key])
+    Vue.set(state.searchExchanges, key, typeof state.searchExchanges[key] === 'boolean' ? !state.searchExchanges[key] : false)
   },
   CLEAR_SEARCH_FILTERS(state) {
     for (const key in state.searchTypes) {

@@ -373,7 +373,7 @@ export default {
           return false
         }
 
-        if (!exchanges[a.exchange]) {
+        if (!exchanges[a.exchange] === false) {
           return false
         }
 
@@ -733,7 +733,7 @@ export default {
 
       this.$store.dispatch('app/showNotice', {
         type: 'success',
-        title: `${this.indexedProducts[exchangeId].length} products refreshed`
+        title: `${exchangeId}: ${this.indexedProducts[exchangeId].length} products refreshed`
       })
     }
   }
