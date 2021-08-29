@@ -372,7 +372,6 @@ class WorkspacesService {
     const timestamp = +new Date()
 
     const panes = JSON.parse(JSON.stringify(defaultPanes))
-    debugger
 
     const workspace: Workspace = {
       version: this.latestWorkspaceVersion,
