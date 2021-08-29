@@ -137,7 +137,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   showMarketsOverlay = false
-  showIndicatorsOverlay = true
+  showIndicatorsOverlay = false
 
   private _onStoreMutation: () => void
   private _keepAliveTimeout: number
@@ -178,7 +178,6 @@ export default class extends Mixins(PaneMixin) {
   }
 
   created() {
-    this.showIndicatorsOverlay = this.$parent.$el.clientHeight > 420
     this._chartController = new ChartController(this.paneId)
 
     this._legendElements = {}
@@ -284,6 +283,8 @@ export default class extends Mixins(PaneMixin) {
   }
 
   mounted() {
+    this.showIndicatorsOverlay = this.$parent.$el.clientHeight > 420
+
     this.createChart()
 
     this.keepAlive()
@@ -474,7 +475,7 @@ export default class extends Mixins(PaneMixin) {
             title: err ? (typeof err === 'string' ? err : err.message) : `Historical API seems down at the moment`,
             type: 'error',
             icon: 'icon-warning',
-            timeout: -1
+            timeout: 10000
           })
         }
       })

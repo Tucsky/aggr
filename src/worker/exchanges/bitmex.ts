@@ -77,6 +77,15 @@ export default class extends Exchange {
     return true
   }
 
+  onApiCreated(api) {
+    api.send(
+      JSON.stringify({
+        op: 'subscribe',
+        args: ['instrument:XBTUSD'],
+      })
+    )
+  }
+
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
@@ -88,11 +97,11 @@ export default class extends Exchange {
             let size
 
             if (this.types[trade.symbol] === 'quanto') {
-              size = (this.multipliers[trade.symbol] / 100000000) * trade.size * this.xbtPrice
+              size = (this.multipliers[trade.symbol] / 100000000) * trade.leavesQty * this.xbtPrice
             } else if (this.types[trade.symbol] === 'inverse') {
-              size = trade.size / trade.price
+              size = trade.leavesQty / trade.price
             } else if (this.types[trade.symbol] === 'linear') {
-              size = trade.size
+              size = trade.leavesQty
             }
 
             return {
@@ -118,6 +127,8 @@ export default class extends Exchange {
             side: trade.side === 'Buy' ? 'buy' : 'sell'
           }))
         )
+      } else if (json.table === 'instrument' && json.data[0].lastPrice) {
+        this.xbtPrice = json.data[0].lastPrice
       }
     }
   }
