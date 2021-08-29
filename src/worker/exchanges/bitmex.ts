@@ -81,7 +81,7 @@ export default class extends Exchange {
     api.send(
       JSON.stringify({
         op: 'subscribe',
-        args: ['instrument:XBTUSD'],
+        args: ['instrument:XBTUSD']
       })
     )
   }

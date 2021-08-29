@@ -371,6 +371,9 @@ class WorkspacesService {
   async createWorkspace() {
     const timestamp = +new Date()
 
+    const panes = JSON.parse(JSON.stringify(defaultPanes))
+    debugger
+
     const workspace: Workspace = {
       version: this.latestWorkspaceVersion,
       createdAt: timestamp,
@@ -378,7 +381,7 @@ class WorkspacesService {
       name: null,
       id: null,
       states: {
-        panes: JSON.parse(JSON.stringify(defaultPanes))
+        panes
       }
     }
 

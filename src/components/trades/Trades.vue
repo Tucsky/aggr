@@ -17,7 +17,7 @@
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 
-import { formatPrice, formatAmount, slugify } from '../../utils/helpers'
+import { formatPrice, formatAmount, slugify, parseMarket } from '../../utils/helpers'
 import { getColorByWeight, getColorLuminance, getAppBackgroundColor, splitRgba } from '../../utils/colors'
 
 import aggregatorService from '@/services/aggregatorService'
@@ -693,38 +693,20 @@ export default class extends Mixins(PaneMixin) {
     }, 1000)
     const elements = this.$el.getElementsByClassName('trade')
 
-    const pairByExchanges = this.$store.state.app.activeMarkets.reduce((obj, market) => {
-      if (!obj[market.exchange]) {
-        obj[market.exchange] = market.pair
-      }
-
-      return obj
-    }, {})
-
     const trades: Trade[] = []
 
     for (const element of elements) {
-      const exchange = element.querySelector('.trade__exchange').getAttribute('title')
-
-      const pair = pairByExchanges[exchange]
-
-      if (!pair) {
-        console.warn('unable to map pair for exchange', exchange, pairByExchanges)
-        continue
-      }
-
-      const pairElement = element.querySelector('.trade__pair') as HTMLElement
+      const [exchange, pair] = parseMarket(element.getAttribute('title'))
 
       const timestamp = element.querySelector('.trade__time').getAttribute('timestamp')
       const price = parseFloat((element.querySelector('.trade__price') as HTMLElement).innerText) || 0
       const size = parseFloat((element.querySelector('.trade__amount__base') as HTMLElement).innerText) || 0
       const side: 'buy' | 'sell' = element.classList.contains('-buy') ? 'buy' : 'sell'
-      const symbol = pairElement ? pairElement.innerText : null
 
       const trade: Trade = {
         timestamp: (timestamp as unknown) as number,
         exchange,
-        pair: symbol ? symbol : pair,
+        pair,
         price,
         size,
         side
@@ -966,8 +948,7 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__price {
     flex-grow: 0.6;
-    text-align: right;
-    margin-right: 4%;
+    margin-left: 4%;
 
     small {
       font-size: 0.75em;

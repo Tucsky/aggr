@@ -243,9 +243,6 @@ class AudioService {
       source.connect(gainNode)
       gainNode.connect(this.output)
 
-      source.start(time, startTime)
-      source.stop(time + fadeIn + holdDuration + fadeOut)
-
       this.fade(source, gainNode, time, gain, startGain, fadeIn, holdDuration, fadeOut, endGain, startTime)
     }, (time - this.context.currentTime) * 1000)
   }

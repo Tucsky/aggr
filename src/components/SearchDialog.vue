@@ -112,7 +112,7 @@
             <button
               v-for="(markets, localPair) of groupedSelection"
               :key="localPair"
-              class="btn  -accent"
+              class="btn  -accent -accent-200"
               :title="'Click to remove ' + markets.join(', ')"
               @click="deselectMarkets(markets)"
               v-text="localPair"
@@ -122,7 +122,7 @@
             <button
               v-for="market of selection"
               :key="market"
-              class="btn  -accent"
+              class="btn  -accent -accent-200"
               :class="{ '-green': activeMarkets.indexOf(market) !== -1 }"
               title="Click to remove"
               @click="deselectMarket(market)"

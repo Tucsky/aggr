@@ -50,7 +50,7 @@
     display: flex;
 
     [contenteditable] {
-      padding: .5rem;
+      padding: 0.5rem;
       flex-grow: 1;
     }
   }
@@ -69,7 +69,10 @@
     width: 250px;
     min-width: 0;
     background-color: transparent;
-    
+    background-image: $checkerboard;
+    background-size: 6px 6px;
+    background-position: 0 0, 3px -3px, 0 3px, -3px 0px;
+
     color: white;
 
     header,

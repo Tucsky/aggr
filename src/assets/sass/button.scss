@@ -116,36 +116,10 @@ button {
     }
   }
 
-  &.-dark {
-    background-color: lighten($dark, 5%);
-    border-color: lighten($dark, 5%);
-    border: 1px solid lighten($dark, 5%);
-
-    &.-outline {
-      color: lighten($dark, 5%);
-      background: 0;
-
-      &:hover {
-        color: white;
-        border-color: $dark;
-      }
-    }
-
-    &:hover {
-      background-color: $dark;
-      border-color: $dark;
-
-      &.-text {
-        background: 0;
-        color: lighten($dark, 10%);
-      }
-    }
-  }
-
   &.-accent {
-    background-color: var(--theme-background-200);
-    border-color: var(--theme-background-200);
-    border: 1px solid var(--theme-background-200);
+    background-color: var(--theme-background-100);
+    border-color: var(--theme-background-100);
+    border: 1px solid var(--theme-background-100);
 
     &.-text {
       color: var(--theme-background-300);
@@ -171,6 +145,12 @@ button {
         border-color: transparent;
       }
     }
+  }
+
+  &.-accent-200 {
+    background-color: var(--theme-background-200);
+    border-color: var(--theme-background-200);
+    border: 1px solid var(--theme-background-200);
   }
 
   &.-green {
@@ -209,7 +189,6 @@ button {
   &.-text {
     background-color: transparent;
     border: transparent 1px solid;
-    
   }
 }
 

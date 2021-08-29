@@ -1,6 +1,5 @@
 import aggregatorService from '@/services/aggregatorService'
 import { showIndexedProductsCount } from '@/services/productsService'
-import { parseMarket } from '@/utils/helpers'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'

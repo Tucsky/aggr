@@ -207,6 +207,8 @@ const actions = {
     commit('SET_INDICATOR_SCRIPT', { id: indicatorId })
   },
   toggleMarkets({ state, rootState, commit }, { type, id, inverse }: { type: string; id: string; inverse: boolean }) {
+    const containsHidden = typeof rootState.panes.panes[state._id].markets.find(market => state.hiddenMarkets[market] === true) !== 'undefined'
+
     for (const market of rootState.panes.panes[state._id].markets) {
       const isHidden = state.hiddenMarkets[market] === true
 
@@ -227,8 +229,8 @@ const actions = {
           Vue.set(state.hiddenMarkets, market, false)
         }
       } else if (type === 'all') {
-        if (isHidden) {
-          Vue.set(state.hiddenMarkets, market, false)
+        if (containsHidden !== !isHidden) {
+          Vue.set(state.hiddenMarkets, market, !containsHidden)
         }
       } else {
         const [exchange] = parseMarket(market)
