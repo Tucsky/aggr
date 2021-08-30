@@ -52,7 +52,7 @@
     </div>
     <footer>
       <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
-      <button class="btn -large" @click="create">Create</button>
+      <button class="btn -large -green" @click="create">Create</button>
     </footer>
   </Dialog>
 </template>

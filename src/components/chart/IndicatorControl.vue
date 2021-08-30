@@ -99,6 +99,7 @@ export default {
   }
 
   &__legend {
+    background: var(--theme-background-o75);
     color: lighten($green, 20%);
     margin-left: 0.4em;
     font-family: $font-monospace;

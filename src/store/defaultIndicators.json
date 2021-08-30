@@ -144,7 +144,7 @@
   "btccvdperp": {
     "enabled": false,
     "name": "CVD (BTC PERP)",
-    "script": "plotline(cum((BITMEX:XBTUSD.vbuy + BITFINEX:BTCF0:USTF0.vbuy + OKEX:BTC-USD-SWAP.vbuy + OKEX:BTC-USDT-SWAP.vbuy + BINANCE_FUTURES:btcusdt.vbuy + BINANCE_FUTURES:btcusd_perp.vbuy + HUOBI:BTC-USD.vbuy + KRAKEN:PI_XBTUSD.vbuy + DERIBIT:BTC-PERPETUAL.vbuy + FTX:BTC-PERP.vbuy + BYBIT:BTCUSD.vbuy) - (BITMEX:XBTUSD.vsell + BITFINEX:BTCF0:USTF0.vsell + OKEX:BTC-USD-SWAP.vsell + OKEX:BTC-USDT-SWAP.vsell + BINANCE_FUTURES:btcusdt.vsell + BINANCE_FUTURES:btcusd_perp.vsell + HUOBI:BTC-USD.vsell + KRAKEN:PI_XBTUSD.vsell + DERIBIT:BTC-PERPETUAL.vsell + FTX:BTC-PERP.vsell + BYBIT:BTCUSD.vsell)))",
+    "script": "plotline(cum((BINANCE_FUTURES:btcusdt.vbuy+BITFINEX:BTCF0:USTF0.vbuy+BYBIT:BTCUSDT.vbuy+OKEX:BTC-USDT-SWAP.vbuy+BINANCE_FUTURES:btcusd_perp.vbuy+BITMEX:XBTUSD.vbuy+BYBIT:BTCUSD.vbuy+DERIBIT:BTC-PERPETUAL.vbuy+FTX:BTC-PERP.vbuy+HUOBI:BTC-USD.vbuy+KRAKEN:PI_XBTUSD.vbuy+OKEX:BTC-USD-SWAP.vbuy)-(BINANCE_FUTURES:btcusdt.vsell+BITFINEX:BTCF0:USTF0.vsell+BYBIT:BTCUSDT.vsell+OKEX:BTC-USDT-SWAP.vsell+BINANCE_FUTURES:btcusd_perp.vsell+BITMEX:XBTUSD.vsell+BYBIT:BTCUSD.vsell+DERIBIT:BTC-PERPETUAL.vsell+FTX:BTC-PERP.vsell+HUOBI:BTC-USD.vsell+KRAKEN:PI_XBTUSD.vsell+OKEX:BTC-USD-SWAP.vsell)), title=CVD:BTC:PERP)",
     "options": {
       "priceFormat": {
         "type": "volume"
@@ -156,7 +156,7 @@
   "btccvdspot": {
     "enabled": false,
     "name": "CVD (BTC SPOT)",
-    "script": "plotline(cum((BITFINEX:BTCUSD.vbuy+ BINANCE:btcusdt.vbuy+ OKEX:BTC-USDT.vbuy+ KRAKEN:XBT/USD.vbuy+ COINBASE:BTC-USD.vbuy+ POLONIEX:USDT_BTC.vbuy+ HUOBI:btcusdt.vbuy+ BITSTAMP:btcusd.vbuy) - (BITFINEX:BTCUSD.vsell +BINANCE:btcusdt.vsell +OKEX:BTC-USDT.vsell +KRAKEN:XBT/USD.vsell +COINBASE:BTC-USD.vsell +POLONIEX:USDT_BTC.vsell +HUOBI:btcusdt.vsell +BITSTAMP:btcusd.vsell)))",
+    "script": "plotline(cum((BINANCE:btcusdt.vsell+FTX:BTC/USDT.vsell+HUOBI:btcusdt.vbuy+OKEX:BTC-USDT.vbuy+POLONIEX:USDT_BTC.vbuy+BITFINEX:BTCUSD.vbuy+BITSTAMP:btcusd.vbuy+COINBASE:BTC-USD.vbuy+FTX:BTC/USD.vbuy+KRAKEN:XBT/USD.vbuy)-(BINANCE:btcusdt.vbuy+FTX:BTC/USDT.vbuy+HUOBI:btcusdt.vbuy+OKEX:BTC-USDT.vsell+POLONIEX:USDT_BTC.vsell+BITFINEX:BTCUSD.vsell+BITSTAMP:btcusd.vsell+COINBASE:BTC-USD.vsell+FTX:BTC/USD.vsell+KRAKEN:XBT/USD.vsell)), title=CVD:BTC:SPOT)",
     "options": {
       "priceFormat": {
         "type": "volume"
@@ -254,6 +254,40 @@
       "lowerLineColor": "rgba(0,0,0,0)",
       "negativeColor": "rgba(255,167,38,0.25)",
       "positiveColor": "rgba(255,167,38,0.25)"
+    }
+  },
+  "volumedeltabtcspot": {
+    "enabled": false,
+    "script": "binanceDelta = BINANCE:btcusdt.vbuy - BINANCE:btcusdt.vsell\nftxDelta = (FTX:BTC/USDT.vbuy - FTX:BTC/USDT.vsell) + (FTX:BTC/USD.vbuy - FTX:BTC/USD.vsell)\nokexDelta = (OKEX:BTC-USDT.vbuy - OKEX:BTC-USDT.vsell)\npoloniexDelta = (POLONIEX:USDT_BTC.vbuy - POLONIEX:USDT_BTC.vsell)\nbitfinexDelta = (BITFINEX:BTCUSD.vbuy - BITFINEX:BTCUSD.vsell)\nbitstampDelta = (BITSTAMP:btcusd.vbuy - BITSTAMP:btcusd.vsell)\ncoinbaseDelta = (COINBASE:BTC-USD.vbuy - COINBASE:BTC-USD.vsell)\nkrakenDelta = (KRAKEN:XBT/USD.vbuy - KRAKEN:XBT/USD.vsell)\nhuobiDelta = (HUOBI:btcusdt.vbuy - HUOBI:btcusdt.vsell)\n\nbinanceStackedVol = Math.abs(binanceDelta)\nftxStackedVol = binanceStackedVol + Math.abs(ftxDelta)\nokexStackedVol = okexDelta + Math.abs(okexDelta)\npoloniexStackedVol = okexStackedVol + Math.abs(poloniexDelta)\nbitfinexStackedVol = poloniexStackedVol + Math.abs(bitfinexDelta)\nbitstampStackedVol = bitfinexStackedVol + Math.abs(bitstampDelta)\ncoinbaseStackedVol = bitstampStackedVol + Math.abs(coinbaseDelta)\nkrakenStackedVol = coinbaseStackedVol + Math.abs(krakenDelta)\nhuobiStackedVol = krakenStackedVol + Math.abs(huobiDelta)\n\nplothistogram({ time: time, value: binanceStackedVol, color: binanceDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: ftxStackedVol, color: ftxDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: okexStackedVol, color: okexDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: poloniexStackedVol, color: poloniexDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: bitfinexStackedVol, color: bitfinexDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: bitstampStackedVol, color: bitstampDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: coinbaseStackedVol, color: coinbaseDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: krakenStackedVol, color: krakenDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: huobiStackedVol, color: huobiDelta > 0 ? options.upColor : options.downColor})\n",
+    "name": "Volume Δ (BTC SPOT)",
+    "options": {
+      "priceScaleId": "volumedeltabtcspot",
+      "scaleMargins": {
+        "top": 0.75,
+        "bottom": 0.1
+      },
+      "upColor": "#3BCA6D",
+      "downColor": "#EB1E2F",
+      "priceFormat": {
+        "type": "volume"
+      }
+    }
+  },
+  "volumedeltabtcperp": {
+    "enabled": false,
+    "script": "binanceDelta = (BINANCE_FUTURES:btcusd_perp.vbuy - BINANCE_FUTURES:btcusd_perp.vsell) + (BINANCE_FUTURES:btcusdt.vbuy - BINANCE_FUTURES:btcusdt.vsell)\nbitfinexDelta = (BITFINEX:BTCF0:USTF0.vbuy - BITFINEX:BTCF0:USTF0.vsell)\nbybitDelta = (BYBIT:BTCUSDT.vbuy - BYBIT:BTCUSDT.vsell) + (BYBIT:BTCUSD.vbuy - BYBIT:BTCUSD.vsell)\nokexDelta = (OKEX:BTC-USDT-SWAP.vbuy - OKEX:BTC-USDT-SWAP.vsell) + (OKEX:BTC-USD-SWAP.vbuy - OKEX:BTC-USD-SWAP.vsell)\nderibitDelta = (DERIBIT:BTC-PERPETUAL.vbuy - DERIBIT:BTC-PERPETUAL.vsell)\nbitmexDelta = (BITMEX:XBTUSD.vbuy - BITMEX:XBTUSD.vsell)\nftxDelta = (FTX:BTC-PERP.vbuy - FTX:BTC-PERP.vsell)\nhuobiDelta = (HUOBI:BTC-USD.vbuy - HUOBI:BTC-USD.vsell)\nkrakenDelta = (KRAKEN:PI_XBTUSD.vbuy - KRAKEN:PI_XBTUSD.vsell)\n\nbinanceStackedVol = Math.abs(binanceDelta)\nftxStackedVol = binanceStackedVol + Math.abs(ftxDelta)\nokexStackedVol = ftxStackedVol + Math.abs(okexDelta)\nbitfinexStackedVol = okexStackedVol + Math.abs(bitfinexDelta)\nkrakenStackedVol = bitfinexStackedVol + Math.abs(krakenDelta)\nhuobiStackedVol = krakenStackedVol + Math.abs(huobiDelta)\nbybitStackedVol = huobiStackedVol + Math.abs(bybitDelta)\nderibitStackedVol = bybitStackedVol + Math.abs(deribitDelta)\nbitmexStackedVol = deribitStackedVol + Math.abs(bitmexDelta)\n\nplothistogram({ time: time, value: binanceStackedVol, color: binanceDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: ftxStackedVol, color: ftxDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: okexStackedVol, color: okexDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: bitfinexStackedVol, color: bitfinexDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: krakenStackedVol, color: krakenDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: huobiStackedVol, color: huobiDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: bybitStackedVol, color: bybitDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: deribitStackedVol, color: deribitDelta > 0 ? options.upColor : options.downColor})\nplothistogram({ time: time, value: bitmexStackedVol, color: bitmexDelta > 0 ? options.upColor : options.downColor})\n",
+    "name": "Volume Δ (BTC PERP)",
+    "options": {
+      "priceScaleId": "volumedeltabtcperp",
+      "scaleMargins": {
+        "top": 0.75,
+        "bottom": 0.1
+      },
+      "upColor": "#3BCA6D",
+      "downColor": "#EB1E2F",
+      "priceFormat": {
+        "type": "volume"
+      }
     }
   }
 }

@@ -1,14 +1,15 @@
 <template>
   <div class="indicator-resize">
     <div class="indicator-resize__wrapper" :style="{ top: top + '%', bottom: bottom + '%' }">
+      <div class="indicator-resize__middle -top" v-text="coordinates"></div>
       <div class="indicator-resize__pane -top" @mousedown="handleMove" @touchstart="handleMove"></div>
       <div class="indicator-resize__boundary -top" @mousedown="handleResize" @touchstart="handleResize"></div>
       <div class="indicator-resize__boundary -bottom" @mousedown="handleResize" @touchstart="handleResize"></div>
       <button class="indicator-resize__close -left btn -text" @click="$store.dispatch(paneId + '/resizeIndicator')">
-        <i class="icon-check mr4"></i> <code v-text="top"></code>%
+        <i class="icon-check mr4"></i> OK
       </button>
       <button class="indicator-resize__close -right btn -text" @click="$store.dispatch(paneId + '/resizeIndicator')">
-        <i class="icon-check mr4"></i> <code v-text="bottom"></code>%
+        <i class="icon-check mr4"></i> OK
       </button>
     </div>
   </div>
@@ -52,6 +53,9 @@ export default class extends Vue {
   }
   get bottom() {
     return +this.position.bottom.toFixed()
+  }
+  get coordinates() {
+    return this.position.top.toFixed() + '↧ + ' + (100 - this.position.top - this.position.bottom).toFixed() + '↨'
   }
 
   @Watch('indicatorId')
@@ -262,6 +266,13 @@ export default class extends Vue {
     right: 0;
     bottom: 1em;
     cursor: move;
+  }
+
+  &__middle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 }
 

@@ -16,7 +16,7 @@ import {
 import store from '@/store'
 import { findClosingBracketMatchIndex, parseFunctionArguments, slugify, uniqueName } from '@/utils/helpers'
 import { plotTypesMap } from './chartOptions'
-const VARIABLE_REGEX = /(?:^|\n)([a-zA-Z0_9_]+)\(?(\d*)\)?\s*=\s*([^;,]*)?/
+const VARIABLE_REGEX = /(?:^|\n)([a-zA-Z0-9_]+)\(?(\d*)\)?\s*=\s*([^;,]*)?/
 const VARIABLES_VAR_NAME = 'vars'
 const FUNCTIONS_VAR_NAME = 'fns'
 const SERIE_TYPES = {

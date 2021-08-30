@@ -82,6 +82,7 @@ button {
       &.-text {
         background: 0;
         color: lighten($red, 10%);
+        border-color: transparent;
       }
     }
   }
@@ -112,6 +113,7 @@ button {
       &.-text {
         background: 0;
         color: lighten($blue, 10%);
+        border-color: transparent;
       }
     }
   }
@@ -120,6 +122,7 @@ button {
     background-color: var(--theme-background-100);
     border-color: var(--theme-background-100);
     border: 1px solid var(--theme-background-100);
+    color: 1px solid var(--theme-color-base);
 
     &.-text {
       color: var(--theme-background-300);
@@ -182,6 +185,7 @@ button {
       &.-text {
         background: 0;
         color: lighten($green, 10%);
+        border-color: transparent;
       }
     }
   }

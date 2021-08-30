@@ -1,5 +1,5 @@
 <template>
-  <dropdown :options="presets" @output="onSelect" :placeholder="label" class="mrauto" selectionClass="ml0">
+  <dropdown :options="presets" @output="onSelect" :placeholder="label" class="mrauto" selectionClass="ml0 -green">
     <template v-slot:option-0>
       <div class="column" @mousedown.prevent>
         <div class="btn -green" @click="savePreset"><i class="icon-plus"></i></div>
