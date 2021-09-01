@@ -109,12 +109,14 @@ export default {
       if (/t$|ticks?$/i.test(trimmed)) {
         return (output = parseInt(trimmed) + 't')
       } else {
-        if (/ms$/.test(trimmed)) {
-          output = parseFloat(trimmed) / 1000
-        } else if (/h$/.test(trimmed)) {
+        if (/d$/i.test(trimmed)) {
+          output = parseFloat(trimmed) * 60 * 60 * 24
+        } else if (/h$/i.test(trimmed)) {
           output = parseFloat(trimmed) * 60 * 60
-        } else if (/m$/.test(trimmed)) {
+        } else if (/m$/i.test(trimmed)) {
           output = parseFloat(trimmed) * 60
+        } else if (/ms$/i.test(trimmed)) {
+          output = parseFloat(trimmed) / 1000
         } else {
           output = parseFloat(trimmed)
         }

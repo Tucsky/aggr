@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="hide" class="-sticky-footer -auto">
+  <Dialog @clickOutside="hide" class="-sticky-footer -mobile-fs -auto">
     <template v-slot:header>
       <div v-if="paneId">
         <div class="title">ADD/REMOVE SOURCES</div>
@@ -12,7 +12,7 @@
       <div class="column -center"></div>
     </template>
     <div class="search">
-      <div class="search__side">
+      <div class="search__side" :class="{ '-show': mobileShowFilters }">
         <div class="search-filters mb16">
           <div class="search-filters__content" v-if="showExtraFilters">
             <label class="checkbox-control -small mb4">
@@ -211,6 +211,12 @@
     </div>
 
     <footer>
+      <a
+        href="javascript:void(0);"
+        class="btn -text mrauto search-filters__toggle"
+        @click="mobileShowFilters = !mobileShowFilters"
+        v-text="mobileShowFilters ? 'Hide filters' : 'Show filters'"
+      ></a>
       <a href="javascript:void(0);" class="btn -text" @click="hide">Cancel</a>
       <button class="btn -large ml8 -green" @click="submit" v-text="submitLabel"></button>
     </footer>
@@ -246,6 +252,7 @@ export default {
     selection: [],
     originalSelection: [],
     activeIndex: null,
+    mobileShowFilters: false,
     showExchanges: true,
     showExtraFilters: false,
     showTypeFilters: true,
@@ -746,6 +753,14 @@ export default {
 
   &__side {
     margin-right: 1rem;
+
+    @media screen and (max-width: 550px) {
+      display: none;
+
+      &.-show {
+        display: block;
+      }
+    }
   }
 
   &__wrapper {
@@ -815,6 +830,12 @@ export default {
   display: flex;
   flex-direction: column-reverse;
   position: relative;
+
+  &__toggle {
+    @media screen and (min-width: 550px) {
+      display: none;
+    }
+  }
 
   &__controls {
     position: absolute;

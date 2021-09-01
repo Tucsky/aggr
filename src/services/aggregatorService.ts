@@ -74,11 +74,8 @@ class AggregatorService extends EventEmitter {
     const trackingId = randomString(8)
 
     return new Promise(resolve => {
-      console.debug(`[service.dispatchAsync] send to worker (with tracking)`, payload, trackingId)
-
       const listener = ({ data }: { data: AggregatorPayload }) => {
         if (data.trackingId === payload.trackingId) {
-          console.debug(`[service.dispatchAsync] tracking message match`, 'resolving', trackingId)
           this.worker.removeEventListener('message', listener)
           resolve(data.data)
         }

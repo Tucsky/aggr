@@ -84,7 +84,7 @@ const actions = {
       }
     }
   },
-  async addPane({ commit, dispatch, state }, options: Pane & { settings?: any }) {
+  async addPane({ commit, dispatch, state }, options: Pane & { settings?: any; originalGridItem?: any }) {
     if (!options || !options.type) {
       this.dispatch('app/showNotice', {
         title: 'Invalid addPane options',
@@ -116,7 +116,7 @@ const actions = {
     await registerModule(id, {}, true, pane)
 
     commit('ADD_PANE', pane)
-    dispatch('appendPaneGridItem', { id: pane.id, type: pane.type })
+    dispatch('appendPaneGridItem', { id: pane.id, type: pane.type, originalGridItem: options.originalGridItem })
     dispatch('refreshMarketsListeners')
 
     Vue.nextTick(() => {
@@ -142,12 +142,18 @@ const actions = {
       localStorage.removeItem(id)
     })
   },
-  appendPaneGridItem({ commit, state }, { id, type }: { id: string; type: PaneType }) {
+  appendPaneGridItem({ commit, state, getters }, { id, type, originalGridItem }: { id: string; type: PaneType; originalGridItem?: GridItem }) {
+    const currentLayout = getters.currentLayout
     const breakpoints = Object.keys(state.layouts)
     for (const breakpoint of breakpoints) {
       const item: GridItem = {
         i: id,
         type
+      }
+
+      if (originalGridItem && breakpoint === currentLayout) {
+        item.w = originalGridItem.w
+        item.h = originalGridItem.h
       }
 
       console.log('add grid item', item.i, 'on layout', breakpoint)
@@ -281,7 +287,7 @@ const actions = {
 
     dispatch('refreshMarketsListeners')
   },
-  duplicatePane({ state, rootState, dispatch }, id: string) {
+  duplicatePane({ state, rootState, dispatch, getters }, id: string) {
     if (!state.panes[id] || !rootState[id]) {
       this.dispatch('app/showNotice', {
         title: `Pane ${id} doesn't exists`,
@@ -293,7 +299,7 @@ const actions = {
 
     const options = JSON.parse(JSON.stringify(state.panes[id]))
     options.settings = JSON.parse(JSON.stringify(rootState[id]))
-
+    options.originalGridItem = state.layouts[getters.currentLayout].find(a => a.i === id)
     dispatch('addPane', options)
 
     this.dispatch('app/showNotice', {
@@ -454,25 +460,22 @@ const mutations = {
   ADD_GRID_ITEM: (state, { breakpoint, item }) => {
     if (typeof item.x === 'undefined') {
       const cols = BREAKPOINTS_COLS[breakpoint]
-      const size = 4
+      const width = item.w || 4
+      const height = item.h || 4
 
       const items = state.layouts[breakpoint].slice().sort((a, b) => a.x + a.y * 2 - (b.x + b.y * 2))
 
-      console.log('add grid item', 'layout', breakpoint, 'breakpoint cols', cols, 'optimal width', size)
-
       const columns = []
 
-      for (let x = 0; x < cols; x += size) {
-        console.log('looking for max y in col', x, '(size', size, ')')
+      for (let x = 0; x < cols; x += width) {
         let y = 0
         for (const item of items) {
           if (
-            (item.x >= x && item.x < x + size) ||
-            (item.x + item.w > x && item.x + item.w < x + size) ||
-            (item.x < x && item.x + item.w >= x + size)
+            (item.x >= x && item.x < x + width) ||
+            (item.x + item.w > x && item.x + item.w < x + width) ||
+            (item.x < x && item.x + item.w >= x + width)
           ) {
             y = Math.max(y, item.y + item.h)
-            console.log('item', item.i, item.x, item.y, item.w, item.h, 'is in, min y for this col is now', y)
             continue
           }
         }
@@ -481,19 +484,19 @@ const mutations = {
       }
 
       item.y = Math.min.apply(null, columns)
-      item.x = columns.indexOf(Math.min.apply(null, columns)) * size
+      item.x = columns.indexOf(Math.min.apply(null, columns)) * width
 
       if (item.y >= cols) {
         for (const item of state.layouts[breakpoint]) {
-          item.y += size
+          item.y += height
         }
 
         item.y = 0
         item.x = 0
       }
 
-      item.w = size
-      item.h = size
+      item.w = width
+      item.h = height
     }
 
     state.layouts[breakpoint].push(item)

@@ -15,7 +15,7 @@
         @reset="$store.commit(paneId + '/SET_REFRESH_RATE', 500)"
       ></slider>
     </div>
-    <p v-if="refreshRate < 500" class="form-feedback"><i class="icon-warning"></i> Low refresh rate can be very CPU intensive</p>
+    <p v-if="refreshRate < 500" class="form-feedback"><i class="icon-warning"></i> Low refresh rate can be <u>very</u> CPU intensive</p>
     <div class="form-group mb8">
       <label class="checkbox-control">
         <input type="checkbox" class="form-control" :checked="showLegend" @change="$store.commit(paneId + '/TOGGLE_LEGEND')" />

@@ -39,7 +39,7 @@ class HistoricalService extends EventEmitter {
 
           switch (json.format) {
             case 'point':
-              ;({ from, to, data, markets } = this.normalisePoints(data, markets))
+              ;({ from, to, data, markets } = this.normalisePoints(data, timeframe, markets))
               break
             default:
               break
@@ -71,26 +71,91 @@ class HistoricalService extends EventEmitter {
         })
     })
   }
-  normalisePoints(data, markets: string[]) {
+  normalisePoints(data, timeframe, markets: string[]) {
+    const lastClosedBars = {}
+
     markets = markets.slice()
 
     if (!data || !data.length) {
       return data
     }
 
-    const initialTs = +new Date(data[0].time) / 1000
+    // base timestamp of results
+    let firstBarTimestamp: number
+
+    if (Array.isArray(data[0])) {
+      firstBarTimestamp = data[0][0]
+    } else {
+      firstBarTimestamp = +new Date(data[0].time) / 1000
+    }
+
     markets = [...markets]
 
     const refs = {}
 
     for (let i = 0; i < data.length; i++) {
-      data[i].timestamp = +new Date(data[i].time) / 1000
+      if (!data[i].time && data[i][0]) {
+        // new format is array, transform into objet
+        data[i] = {
+          time: data[i][0],
+          cbuy: data[i][1],
+          close: data[i][2],
+          csell: data[i][3],
+          high: data[i][4],
+          lbuy: data[i][5],
+          low: data[i][6],
+          lsell: data[i][7],
+          market: data[i][8],
+          open: data[i][9],
+          vbuy: data[i][10],
+          vsell: data[i][11]
+        }
+        data[i].timestamp = data[i].time
+      } else {
+        // pending bar was sent
+        if (!lastClosedBars[data[i].market]) {
+          // get latest bar for that market
+          for (let j = i - 1; j >= 0; j--) {
+            if (data[j].market === data[i].market) {
+              lastClosedBars[data[i].market] = data[j]
+              break
+            }
+
+            if (i - j > 25) {
+              debugger
+              console.warn('[historical/mergePendingBars] going back TOO FAR in the result array!!')
+            }
+          }
+        }
+
+        // format pending bar time floored to timeframe
+        data[i].timestamp = Math.floor(+new Date(data[i].time) / 1000 / timeframe) * timeframe
+
+        if (!lastClosedBars[data[i].market] || lastClosedBars[data[i].market].timestamp < data[i].timestamp) {
+          // store reference bar for this market (either because it didn't exist or because reference bar time is < than pending bar time)
+          lastClosedBars[data[i].market] = data[i]
+        } else if (lastClosedBars[data[i].market] !== data[i]) {
+          lastClosedBars[data[i].market].vbuy += data[i].vbuy
+          lastClosedBars[data[i].market].vsell += data[i].vsell
+          lastClosedBars[data[i].market].cbuy += data[i].cbuy
+          lastClosedBars[data[i].market].csell += data[i].csell
+          lastClosedBars[data[i].market].lbuy += data[i].lbuy
+          lastClosedBars[data[i].market].lsell += data[i].lsell
+          lastClosedBars[data[i].market].high = Math.max(data[i].high, lastClosedBars[data[i].market].high)
+          lastClosedBars[data[i].market].low = Math.min(data[i].low, lastClosedBars[data[i].market].low)
+          lastClosedBars[data[i].market].close = data[i].close
+
+          data.splice(i, 1)
+          i--
+          continue
+        }
+      }
 
       if (typeof refs[data[i].market] !== 'number') {
         refs[data[i].market] = data[i].open
       }
 
-      if (data[i].timestamp === initialTs) {
+      if (data[i].timestamp === firstBarTimestamp) {
         const marketIndex = markets.indexOf(data[i].market)
 
         markets.splice(marketIndex, 1)
@@ -99,7 +164,6 @@ class HistoricalService extends EventEmitter {
       const [exchange, pair] = parseMarket(data[i].market)
       data[i].exchange = exchange
       data[i].pair = pair
-      delete data[i].market
     }
 
     // markets.length && console.warn('missing markets', markets.join(', '))
@@ -112,22 +176,6 @@ class HistoricalService extends EventEmitter {
 
         continue
       }
-
-      /*data.unshift({
-        timestamp: initialTs,
-        exchange: market.shift(),
-        pair: market.join(':'),
-        open: refs[id],
-        high: refs[id],
-        low: refs[id],
-        close: refs[id],
-        vbuy: 0,
-        vsell: 0,
-        lbuy: 0,
-        lsell: 0,
-        cbuy: 0,
-        csell: 0
-      })*/
     }
 
     return {

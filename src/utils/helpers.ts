@@ -64,20 +64,36 @@ export function getHms(timestamp, round = false) {
   const isNegPrefix = timestamp < 0 ? '-' : ''
   timestamp = Math.abs(timestamp)
 
-  const h = Math.floor(timestamp / 1000 / 3600)
+  const d = Math.floor(timestamp / 1000 / 86400)
+  const h = Math.floor(((timestamp / 1000) % 86400) / 3600)
   const m = Math.floor(((timestamp / 1000) % 3600) / 60)
   const s = Math.floor(((timestamp / 1000) % 3600) % 60)
 
   let output = ''
 
-  output += (!round || !output.length) && h > 0 ? isNegPrefix + h + 'h' + (!round && m ? ', ' : '') : ''
-  output += (!round || !output.length) && m > 0 ? isNegPrefix + m + 'm' + (!round && s ? ', ' : '') : ''
-  output += (!round || !output.length) && s > 0 ? isNegPrefix + s + 's' : ''
+  output += (!round || !output.length) && d > 0 ? (output.length ? ', ' : '') + isNegPrefix + d + 'd' : ''
+  output += (!round || !output.length) && h > 0 ? (output.length ? ', ' : '') + isNegPrefix + h + 'h' : ''
+  output += (!round || !output.length) && m > 0 ? (output.length ? ', ' : '') + isNegPrefix + m + 'm' : ''
+  output += (!round || !output.length) && s > 0 ? (output.length ? ', ' : '') + isNegPrefix + s + 's' : ''
 
   if (!output.length || (!round && timestamp < 60 * 1000 && timestamp > s * 1000))
     output += (output.length ? ', ' : '') + isNegPrefix + (timestamp - s * 1000) + 'ms'
 
   return output.trim()
+}
+
+export function getHmsFull(timestamp, round = false) {
+  let output = getHms(timestamp, round)
+  output = output.replace(/\b1s\b/, '1 second')
+  output = output.replace(/(\d)s\b/, '$1 seconds')
+  output = output.replace(/\b1m\b/, '1 minute')
+  output = output.replace(/(\d)m\b/, '$1 minutes')
+  output = output.replace(/\b1h\b/, '1 hour')
+  output = output.replace(/(\d)h\b/, '$1 hours')
+  output = output.replace(/\b1d\b/, '1 day')
+  output = output.replace(/(\d)d\b/, '$1 days')
+
+  return output
 }
 
 export function randomString(length = 16, characters = 'abcdefghijklmnopqrstuvwxyz0123456789') {
@@ -363,8 +379,8 @@ export function getTimeframeForHuman(timeframe) {
 
   if (normalized[normalized.length - 1] === 't') {
     return parseInt(normalized) + ' TICKS'
-  } else if (!isNaN(normalized)) {
-    return getHms(normalized * 1000)
+  } else if (!isNaN(normalized) && normalized > 0) {
+    return getHmsFull(normalized * 1000)
   }
 
   return null

@@ -4,9 +4,7 @@
     <ul ref="tradesContainer" class="hide-scrollbar"></ul>
     <div v-if="showPlaceholder" class="trades-placeholder hide-scrollbar">
       <div class="mt16 ml16 mr16 help-text">
-        <strong>Waiting for trades</strong>
-
-        <p>No{{ tradeType === 'both' ? 'thing' : ' ' + tradeType }} matching</p>
+        <div>Waiting for {{ tradeType === 'liquidations' ? 'liquidations' : 'trades' }}</div>
         <code v-for="market of pane.markets" :key="market" class="trades-placeholder__market">{{ market.replace(/^\w+:/, '') }}<br /></code>
         <p>with amount > {{ thresholds[0].amount }}</p>
       </div>

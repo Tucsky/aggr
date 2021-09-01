@@ -34,7 +34,7 @@
               <i class="icon-plus"></i>
             </a>
           </div>
-          <div class="chart-overlay__title" @click="showIndicatorsOverlay = !showIndicatorsOverlay">Indicators <i class="icon-up -higher"></i></div>
+          <div class="chart-overlay__title" @click="toggleIndicatorOverlay">Indicators <i class="icon-up -higher"></i></div>
         </div>
 
         <div class="chart-overlay__panel chart__markets">
@@ -261,6 +261,9 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/TOGGLE_FILL_GAPS_WITH_EMPTY':
           this._chartController.toggleFillGapsWithEmpty()
           break
+        case 'settings/TOGGLE_AUTO_HIDE_HEADERS':
+          this.refreshChartDimensions()
+          break
         case 'app/SET_OPTIMAL_DECIMAL':
         case 'settings/SET_DECIMAL_PRECISION':
           for (const id in this.indicators) {
@@ -364,7 +367,7 @@ export default class extends Mixins(PaneMixin) {
         to: leftTime
       }
 
-      const bytesPerBar = 206.54355723892712
+      const bytesPerBar = 112
       const estimatedSize = formatBytes(barsCount * historicalMarkets.length * bytesPerBar)
 
       this.$store.dispatch('app/showNotice', {
@@ -932,11 +935,27 @@ export default class extends Mixins(PaneMixin) {
   toggleMarkets(type) {
     this.$store.dispatch(this.paneId + '/toggleMarkets', { type })
   }
+
+  toggleIndicatorOverlay() {
+    if (this.showIndicatorsOverlay) {
+      this.unbindLegend()
+    }
+
+    this.showIndicatorsOverlay = !this.showIndicatorsOverlay
+
+    if (this.showIndicatorsOverlay) {
+      this.$nextTick(() => {
+        this.bindLegend()
+      })
+    }
+  }
 }
 </script>
 
 <style lang="scss" scoped>
 .pane-chart {
+  font-family: 'Barlow Semi Condensed';
+
   &:hover .chart-overlay {
     display: block;
   }
@@ -957,10 +976,6 @@ export default class extends Mixins(PaneMixin) {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-}
-
-.chart__indicators {
-  font-family: 'Barlow Semi Condensed';
 }
 
 .chart__markets {
@@ -1006,16 +1021,6 @@ export default class extends Mixins(PaneMixin) {
   z-index: 3;
 }
 
-.btn.-text {
-  &.-text {
-    opacity: 0.5;
-
-    &:hover {
-      opacity: 1;
-    }
-  }
-}
-
 .chart__controls {
   .btn {
     font-size: 1.25em;
@@ -1030,6 +1035,7 @@ export default class extends Mixins(PaneMixin) {
   > div {
     position: absolute;
     z-index: 3;
+    padding-top: 1em;
   }
 
   &__left {
@@ -1043,16 +1049,11 @@ export default class extends Mixins(PaneMixin) {
       pointer-events: all;
       flex-shrink: 0;
       flex-basis: 0;
-
-      &:first-child {
-        padding-top: 3em;
-      }
     }
   }
 
   &__right {
     right: 1em;
-    top: 3em;
     pointer-events: all;
   }
 
@@ -1071,7 +1072,12 @@ export default class extends Mixins(PaneMixin) {
     cursor: pointer;
     user-select: none;
     background: var(--theme-background-o75);
+    color: var(--theme-color-200);
     place-self: flex-start;
+
+    &:hover {
+      color: var(--theme-color-base);
+    }
 
     .icon-up {
       vertical-align: middle;
@@ -1088,8 +1094,8 @@ export default class extends Mixins(PaneMixin) {
 }
 
 #app.-auto-hide-headers {
-  .chart__overlay > div {
-    top: 3.25em !important;
+  .chart-overlay > div {
+    padding-top: 3em;
   }
 }
 </style>

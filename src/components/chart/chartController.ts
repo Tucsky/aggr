@@ -904,7 +904,6 @@ export default class ChartController {
       if (this.activeChunk) {
         this.activeChunk.active = false
       }
-
       this.activeChunk = this.chartCache.saveChunk({
         from: this.activeRenderer.timestamp,
         to: this.activeRenderer.timestamp,
@@ -1140,6 +1139,7 @@ export default class ChartController {
       if (isActive) {
         this.activeRenderer.bar['v' + trade.side] += amount
         this.activeRenderer.bar['c' + trade.side] += trade.count
+
         this.activeRenderer.bar.empty = false
       }
     }
