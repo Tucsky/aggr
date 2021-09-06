@@ -121,5 +121,36 @@ export const workspaceUpgrades = {
     delete workspace.states.settings.audioCompressor
     delete workspace.states.settings.audioPingPong
     delete workspace.states.settings.audioDelay
+  },
+  3: (workspace: Workspace) => {
+    // remove alternative layouts, keep only the one fitting current screen size
+    const breakpointsWidth = { xl: 1400, lg: 1024, md: 768, sm: 480, xs: 0 }
+    const breakpointsCols = { xl: 32, lg: 24, md: 16, sm: 12, xs: 8 }
+    const layouts = workspace.states.panes.layouts
+    const breakpoints = Object.keys(layouts).reduce((cols, breakpoint) => {
+      cols[breakpoint] = breakpointsWidth[breakpoint]
+      return cols
+    }, {})
+
+    // sort by layout size
+    const keys = Object.keys(breakpoints).sort((a, b) => {
+      return breakpointsCols[b] - breakpointsCols[a]
+    })
+
+    // ensure smallest is level 0 layout
+    breakpoints[keys[keys.length - 1]] = 0
+
+    const width = window.innerWidth
+
+    let currentBreakpoint
+
+    for (currentBreakpoint of keys) {
+      if (width > breakpoints[currentBreakpoint]) {
+        break
+      }
+    }
+
+    workspace.states.panes.layout = workspace.states.panes.layouts[currentBreakpoint]
+    delete workspace.states.panes.layouts
   }
 }

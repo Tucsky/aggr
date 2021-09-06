@@ -118,6 +118,9 @@ export default {
     initEvents() {
       window.addEventListener('resize', this.handleResize)
     },
+    beforeDestroy() {
+      this.removeEventListener('resize', this.handleResize)
+    },
     /**
      * fire select events
      */

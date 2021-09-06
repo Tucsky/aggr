@@ -2,16 +2,15 @@
   <grid-layout
     ref="grid"
     :layout="layout"
-    :responsive-layouts="layouts"
-    :cols="cols"
-    :breakpoints="breakpoints"
+    :col-num="cols"
     :row-height="rowHeight"
     :margin="[0, 0]"
+    :is-resizable="unlocked"
+    :is-draggable="unlocked"
     :vertical-compact="true"
     :use-css-transforms="true"
-    :responsive="true"
-    @breakpoint-changed="onBreakpointChanged"
     @layout-ready="layoutReady = true"
+    @layout-updated="onLayoutUpdated"
   >
     <grid-item
       v-for="gridItem in layout"
@@ -25,7 +24,6 @@
       :i="gridItem.i"
       @container-resized="onContainerResized"
       @resized="onItemResized"
-      @moved="updateItem"
     >
       <component v-if="layoutReady && $store.state[gridItem.i]._booted" class="pane" ref="panes" :is="gridItem.type" :paneId="gridItem.i"></component>
     </grid-item>
@@ -45,7 +43,8 @@ import Stats from '../stats/Stats.vue'
 import Counters from '../counters/Counters.vue'
 import Prices from '../prices/Prices.vue'
 import Website from '../website/Website.vue'
-import { BREAKPOINTS_COLS, BREAKPOINTS_WIDTHS } from '@/utils/constants'
+import { GRID_COLS } from '@/utils/constants'
+import { GridItem } from '@/store/panes'
 
 @Component({
   components: { GridLayout: VueGridLayout.GridLayout, GridItem: VueGridLayout.GridItem, Chart, Trades, Stats, Counters, Prices, Website }
@@ -55,12 +54,11 @@ export default class extends Vue {
   resizable = true
   layoutReady = false
   rowHeight = 80
-  layout = null
   cols = null
   breakpoint = null
 
-  private _maximizedPaneId
   private _resizeTimeout: number
+  private _maximizedPaneId
 
   $refs!: {
     panes: PaneMixin[]
@@ -71,85 +69,26 @@ export default class extends Vue {
     return this.$store.state.panes.panes
   }
 
-  protected get sortedBreakpoints() {
-    return Object.keys(this.breakpoints).sort((a, b) => {
-      return BREAKPOINTS_COLS[b] - BREAKPOINTS_COLS[a]
-    })
+  protected get unlocked() {
+    return !this.$store.state.panes.locked
   }
 
-  protected get breakpoints() {
-    const breakpoints = Object.keys(this.$store.state.panes.layouts).reduce((cols, breakpoint) => {
-      cols[breakpoint] = BREAKPOINTS_WIDTHS[breakpoint]
-      return cols
-    }, {})
-
-    const keys = Object.keys(breakpoints).sort((a, b) => {
-      return BREAKPOINTS_COLS[b] - BREAKPOINTS_COLS[a]
-    })
-
-    breakpoints[keys[keys.length - 1]] = 0
-
-    return breakpoints
-  }
-
-  protected get layouts() {
-    const layouts = this.$store.state.panes.layouts
-    if (this.breakpoint) {
-      this.layout = layouts[this.breakpoint]
-    }
-    return layouts
+  protected get layout() {
+    return this.$store.state.panes.layout
   }
 
   created() {
-    this.cols = BREAKPOINTS_COLS
+    this.cols = GRID_COLS
 
-    this.getLayout()
-
-    this.layout = this.layouts[this.breakpoint]
+    this.updateRowHeight()
   }
 
   mounted() {
-    window.addEventListener('resize', this.getLayout)
+    window.addEventListener('resize', this.updateRowHeight)
   }
 
   beforeDestroy() {
-    window.addEventListener('resize', this.getLayout)
-  }
-
-  getLayout(event?: Event) {
-    if (event && !event.isTrusted) {
-      this.resizeMaximizedPane()
-      return
-    }
-
-    if (this._resizeTimeout) {
-      clearTimeout(this._resizeTimeout)
-    }
-
-    if (event) {
-      this._resizeTimeout = window.setTimeout(this.getLayout.bind(this), 200)
-    } else {
-      this._resizeTimeout = null
-
-      const width = window.innerWidth
-      const height = window.innerHeight
-      const breakpoints = this.breakpoints
-
-      let breakpointId = null
-
-      for (const id of this.sortedBreakpoints) {
-        if (width > breakpoints[id]) {
-          breakpointId = id
-          break
-        }
-      }
-
-      const rowNum = BREAKPOINTS_COLS[breakpointId]
-
-      this.rowHeight = height / rowNum
-
-      this.breakpoint = breakpointId
-    }
+    window.addEventListener('resize', this.updateRowHeight)
   }
 
   resizeMaximizedPane() {
@@ -181,12 +120,6 @@ export default class extends Vue {
     })
   }
 
-  onBreakpointChanged(newBreakpoint) {
-    console.log('on breakpoint changed', newBreakpoint)
-
-    this.layout = this.layouts[newBreakpoint]
-  }
-
   resizePane(id, height, width) {
     if (!this.$refs.panes) {
       return
@@ -200,6 +133,7 @@ export default class extends Vue {
 
     if (typeof pane.onResize === 'function') {
       pane.$nextTick(() => {
+        console.log('resize pane -> call pane specific resize fn', this.layoutReady)
         pane.onResize(width, height)
       })
     }
@@ -207,18 +141,46 @@ export default class extends Vue {
 
   onItemResized(id, h, w, hPx, wPx) {
     this.resizePane(id, +hPx, +wPx)
-    this.updateItem(id)
+    this.$store.commit('panes/UPDATE_LAYOUT', this.layout)
   }
 
   updateItem(id) {
-    this.$store.commit('panes/UPDATE_ITEM', {
-      breakpoint: this.$refs.grid.lastBreakpoint,
-      item: this.layout.find(item => item.i === id)
-    })
+    const item = this.layout.find(item => item.i === id)
+    this.$store.commit('panes/UPDATE_ITEM', item)
+  }
+  onLayoutUpdated(gridItems: GridItem[]) {
+    if (!this.layoutReady) {
+      return
+    }
+
+    this.$store.commit('panes/UPDATE_LAYOUT', gridItems)
   }
 
-  onContainerResized(id, newHeightGrid, newWidthGrid, newHeightPx, newWidthPx) {
-    this.resizePane(id, +newHeightPx, +newWidthPx)
+  onContainerResized(id, h, w, hPx, wPx) {
+    if (!this.layoutReady) {
+      return
+    }
+
+    this.resizePane(id, +hPx, +wPx)
+  }
+
+  updateRowHeight(event?: Event) {
+    if (event && !event.isTrusted) {
+      this.resizeMaximizedPane()
+      return
+    }
+
+    if (this._resizeTimeout) {
+      clearTimeout(this._resizeTimeout)
+    }
+
+    if (event) {
+      this._resizeTimeout = window.setTimeout(this.updateRowHeight.bind(this), 200)
+    } else {
+      this._resizeTimeout = null
+
+      this.rowHeight = window.innerHeight / this.cols
+    }
   }
 }
 </script>

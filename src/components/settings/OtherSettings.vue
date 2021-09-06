@@ -33,16 +33,6 @@
         </span>
       </label>
     </div>
-    <div class="form-group mb8">
-      <label class="checkbox-control">
-        <input type="checkbox" class="form-control" v-model="responsiveEnabled" @change="toggleResponsive" />
-        <div></div>
-        <span>
-          <small class="d-block text-muted" v-text="responsiveEnabled ? 'Responsive layouts are enabled' : 'Keep same layout'"></small>
-          <span class="d-block mt4" v-text="responsiveEnabled ? 'Disable responsive' : 'Enable responsive'"></span>
-        </span>
-      </label>
-    </div>
   </div>
 </template>
 
@@ -65,20 +55,6 @@ export default class extends Vue {
 
   get autoHideHeaders() {
     return this.$store.state.settings.autoHideHeaders
-  }
-
-  created() {
-    this.responsiveEnabled = Object.keys(this.$store.state.panes.layouts).length > 1
-  }
-
-  async toggleResponsive() {
-    const success = await this.$store.dispatch('panes/toggleResponsive')
-
-    console.log('success', success)
-
-    if (!success) {
-      this.responsiveEnabled = !this.responsiveEnabled
-    }
   }
 }
 </script>

@@ -9,12 +9,9 @@
         </button>
         <button class="btn -accent" @click="edit" title="Edit"><i class="icon-edit"></i></button>
       </template>
-      <button class="btn -accent" @click="resize" title="Resize"><i class="icon-resize-height"></i></button>
       <button class="btn -accent" @click="remove" title="Disable"><i class="icon-cross"></i></button>
     </div>
-    <div v-if="showLegend" class="indicator__legend">
-      <div v-for="serie of series" :key="serie" :id="paneId + indicator.id + serie"></div>
-    </div>
+    <div class="indicator__legend" :id="paneId + indicator.id"></div>
     <div v-if="error">
       <i class="icon-warning ml4 mr8"></i>
       {{ error }}
@@ -31,9 +28,6 @@ export default {
   computed: {
     indicator: function() {
       return this.$store.state[this.paneId].indicators[this.indicatorId]
-    },
-    series: function() {
-      return this.indicator.series
     },
     showLegend: function() {
       return this.$store.state[this.paneId].showLegend
@@ -65,9 +59,6 @@ export default {
     },
     remove() {
       this.$store.dispatch(this.paneId + '/removeIndicator', { id: this.indicatorId })
-    },
-    resize() {
-      this.$store.dispatch(this.paneId + '/resizeIndicator', this.indicatorId)
     }
   }
 }
@@ -76,7 +67,6 @@ export default {
 <style lang="scss">
 .indicator {
   display: flex;
-  width: 0;
   white-space: nowrap;
   height: 1.3em;
 
@@ -94,28 +84,20 @@ export default {
 
   &__name {
     position: relative;
-    cursor: pointer;
     background: var(--theme-background-o75);
   }
 
   &__legend {
     background: var(--theme-background-o75);
     color: lighten($green, 20%);
-    margin-left: 0.4em;
     font-family: $font-monospace;
     pointer-events: none;
     line-height: 1.75em;
     letter-spacing: 0px;
-    order: 2;
-    transition: visibility;
-    transition-delay: 1s;
+    position: absolute;
     font-size: 0.75em;
-
-    > div {
-      display: inline-block;
-      line-height: 1.5;
-      margin: 0.26em 0 0 0.26em;
-    }
+    margin: 0.1em 0 0 1em;
+    left: 100%;
   }
 
   &__controls {
@@ -124,7 +106,6 @@ export default {
     display: none;
     align-items: center;
     pointer-events: none;
-    order: 1;
 
     &:hover {
       display: inline-flex;

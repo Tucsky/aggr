@@ -1,7 +1,7 @@
 <template>
   <div class="pane-chart">
     <pane-header :loading="loading" :paneId="paneId">
-      <dropdown
+      <!--<dropdown
         :options="{
           render: { label: 'Render', click: renderChart },
           trim: { label: 'Trim', click: trimChart },
@@ -16,59 +16,62 @@
         <template v-slot:selection>
           <span>Debug</span>
         </template>
-      </dropdown>
+      </dropdown>-->
 
       <dropdown :options="timeframes" :selected="timeframe" placeholder="tf." @output="changeTimeframe($event)">
         <template v-slot:selection>
           <span>{{ timeframeForHuman }}</span>
         </template>
       </dropdown>
+
+      <button @click="$store.commit(paneId + '/TOGGLE_LAYOUTING')">
+        <i class="icon-resize-height"></i>
+      </button>
     </pane-header>
-    <div class="chart-overlay">
-      <div class="chart-overlay__left hide-scrollbar">
-        <div class="chart-overlay__panel">
-          <div class="chart-overlay__content chart__indicators" v-if="showIndicatorsOverlay">
-            <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" />
+    <div class="chart-overlay -left hide-scrollbar">
+      <div class="chart-overlay__panel">
+        <div class="chart-overlay__content chart__indicators" v-if="showIndicatorsOverlay">
+          <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" />
 
-            <a href="javascript:void(0);" @click="addIndicator" v-tippy="{ placement: 'bottom' }" title="Add" class="btn mr4 -text">
-              <i class="icon-plus"></i>
-            </a>
-          </div>
-          <div class="chart-overlay__title" @click="toggleIndicatorOverlay">Indicators <i class="icon-up -higher"></i></div>
+          <a href="javascript:void(0);" @click="addIndicator" class="btn mr4 -text">
+            <i class="icon-plus"></i>
+          </a>
         </div>
-
-        <div class="chart-overlay__panel chart__markets">
-          <ul class="chart-overlay__content" v-if="showMarketsOverlay">
-            <li class="column">
-              <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('perp')">perp</a>
-              <i class="pipe -center">|</i>
-              <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('spot')">spot</a>
-              <i class="pipe -center">|</i>
-              <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('all')">all</a>
-            </li>
-            <li v-for="market of markets" :key="market" @click="toggleMarket($event, market)">
-              <label class="checkbox-control -small mb4">
-                <input
-                  type="checkbox"
-                  class="form-control"
-                  :checked="!hiddenMarkets[market]"
-                  @change="toggleMarket($event, market)"
-                  @click.prevent="toggleMarket($event, market)"
-                />
-                <div></div>
-                <span v-text="market"></span>
-              </label>
-            </li>
-          </ul>
-          <div class="chart-overlay__title" @click="showMarketsOverlay = !showMarketsOverlay">Markets <i class="icon-up -higher"></i></div>
-        </div>
+        <div class="chart-overlay__title" @click="toggleIndicatorOverlay">Indicators <i class="icon-up -higher"></i></div>
       </div>
-      <div class="chart-overlay__right chart__controls" :style="{ marginRight: priceWidth / 12 + 'em' }">
-        <button class="chart__screenshot btn -text -large" @click="takeScreenshot"><i class="icon-add-photo"></i></button>
+
+      <div class="chart-overlay__panel chart__markets">
+        <div class="chart-overlay__content" v-if="showMarketsOverlay">
+          <div class="column">
+            <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('perp')">perp</a>
+            <i class="pipe -center">|</i>
+            <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('spot')">spot</a>
+            <i class="pipe -center">|</i>
+            <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('all')">all</a>
+          </div>
+          <div v-for="market of markets" :key="market" @click="toggleMarket($event, market)">
+            <label class="checkbox-control -small mb4">
+              <input
+                type="checkbox"
+                class="form-control"
+                :checked="!hiddenMarkets[market]"
+                @change="toggleMarket($event, market)"
+                @click.prevent="toggleMarket($event, market)"
+              />
+              <div></div>
+              <span v-text="market"></span>
+            </label>
+          </div>
+        </div>
+        <div class="chart-overlay__title" @click="showMarketsOverlay = !showMarketsOverlay">Markets <i class="icon-up -higher"></i></div>
       </div>
     </div>
-    <div class="chart__container" ref="chartContainer"></div>
-    <IndicatorResize v-if="resizingIndicator" :indicatorId="resizingIndicator" :paneId="paneId"></IndicatorResize>
+    <div class="chart-overlay -right chart__controls" :style="{ marginRight: axis[0] + 'px' }">
+      <button class="chart__screenshot btn -text -large" @click="takeScreenshot"><i class="icon-add-photo"></i></button>
+    </div>
+    <div class="chart__container" ref="chartContainer">
+      <chart-layout v-if="layouting" :pane-id="paneId" :indicators="indicators" :axis="axis"></chart-layout>
+    </div>
   </div>
 </template>
 
@@ -87,8 +90,8 @@ import dialogService from '../../services/dialogService'
 
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
-import IndicatorResize from './IndicatorResize.vue'
 import IndicatorControl from './IndicatorControl.vue'
+import ChartLayout from './ChartLayout.vue'
 import CreateIndicatorDialog from './CreateIndicatorDialog.vue'
 import { ChartPaneState } from '@/store/panesSettings/chart'
 import { getColorLuminance, joinRgba, splitRgba } from '@/utils/colors'
@@ -96,15 +99,15 @@ import { getColorLuminance, joinRgba, splitRgba } from '@/utils/colors'
 @Component({
   name: 'Chart',
   components: {
-    IndicatorResize,
     IndicatorControl,
+    ChartLayout,
     PaneHeader
   }
 })
 export default class extends Mixins(PaneMixin) {
   reachedEnd = false
   loading = false
-  priceWidth = 40
+  axis = [null, null]
 
   timeframes = {
     '21t': '21 ticks',
@@ -128,11 +131,14 @@ export default class extends Mixins(PaneMixin) {
     [60 * 3]: '3m',
     [60 * 5]: '5m',
     [60 * 15]: '15m',
+    [60 * 21]: '21m',
     [60 * 30]: '30m',
     [60 * 60]: '1h',
     [60 * 60 * 2]: '2h',
     [60 * 60 * 4]: '4h',
     [60 * 60 * 6]: '6h',
+    [60 * 60 * 8]: '8h',
+    [60 * 60 * 12]: '12h',
     [60 * 60 * 24]: '1d'
   }
 
@@ -144,13 +150,14 @@ export default class extends Mixins(PaneMixin) {
   private _onPanTimeout: number
   private _chartController: ChartController
   private _legendElements: { [id: string]: HTMLElement }
+  private _lastCoordinates: number
 
   get indicators() {
     return (this.$store.state[this.paneId] as ChartPaneState).indicators
   }
 
-  get resizingIndicator() {
-    return (this.$store.state[this.paneId] as ChartPaneState).resizingIndicator
+  get layouting() {
+    return (this.$store.state[this.paneId] as ChartPaneState).layouting
   }
 
   get showLegend() {
@@ -209,6 +216,8 @@ export default class extends Mixins(PaneMixin) {
           if (mutation.payload.id === this.paneId) {
             this._chartController.updateFontSize()
           }
+
+          this.updateChartAxis()
           break
         case this.paneId + '/SET_TIMEFRAME':
           this.setTimeframe(mutation.payload)
@@ -239,6 +248,11 @@ export default class extends Mixins(PaneMixin) {
           break
         case this.paneId + '/SET_INDICATOR_OPTION':
           this._chartController.setIndicatorOption(mutation.payload.id, mutation.payload.key, mutation.payload.value)
+          break
+        case this.paneId + '/SET_PRICE_SCALE':
+          if (mutation.payload.priceScale) {
+            this._chartController.bindPriceScale(mutation.payload.id)
+          }
           break
         case this.paneId + '/SET_INDICATOR_SCRIPT':
           this._chartController.rebuildIndicator(mutation.payload.id)
@@ -304,7 +318,7 @@ export default class extends Mixins(PaneMixin) {
 
     await this.fetch()
 
-    this.positionControls()
+    this.updateChartAxis()
 
     this._chartController.setupQueue()
   }
@@ -352,19 +366,19 @@ export default class extends Mixins(PaneMixin) {
     if (!rangeToFetch) {
       const barsCount = Math.ceil(window.innerWidth / 2)
 
-      let leftTime
+      let rightTime
 
       if (this._chartController.chartCache.cacheRange && this._chartController.chartCache.cacheRange.from) {
-        leftTime = this._chartController.chartCache.cacheRange.from
+        rightTime = this._chartController.chartCache.cacheRange.from
       } else if (visibleRange && visibleRange.from) {
-        leftTime = visibleRange.from + this.$store.state.settings.timezoneOffset / 1000
+        rightTime = visibleRange.from + this.$store.state.settings.timezoneOffset / 1000
       } else {
-        leftTime = +new Date() / 1000
+        rightTime = +new Date() / 1000
       }
 
       rangeToFetch = {
-        from: leftTime - timeframe * barsCount,
-        to: leftTime
+        from: rightTime - timeframe * barsCount,
+        to: rightTime
       }
 
       const bytesPerBar = 112
@@ -494,51 +508,62 @@ export default class extends Mixins(PaneMixin) {
    * @param{TV.MouseEventParams} param tv mousemove param
    */
   onCrosshair(param) {
-    let showLegend = true
+    let x
 
-    if (
-      param === undefined ||
-      param.time === undefined ||
-      param.point.x < 0 ||
-      param.point.x > this.$refs.chartContainer.clientWidth ||
-      param.point.y < 0 ||
-      param.point.y > this.$refs.chartContainer.clientHeight
-    ) {
-      showLegend = false
+    if (param && param.time && param.point.x > 0 && param.point.x < this.$refs.chartContainer.clientWidth) {
+      x = param.point.x
     }
+
+    if (this._lastCoordinates === x) {
+      return
+    }
+
+    this._lastCoordinates = x
 
     for (let i = 0; i < this._chartController.loadedIndicators.length; i++) {
       const indicator = this._chartController.loadedIndicators[i]
 
-      for (let j = 0; j < this._chartController.loadedIndicators[i].apis.length; j++) {
-        const api = this._chartController.loadedIndicators[i].apis[j]
-        const id = this.paneId + indicator.id + api.id
+      if (!indicator.apis.length) {
+        continue
+      }
 
-        if (!this._legendElements[id]) {
+      const id = this.paneId + indicator.id
+
+      if (!this._legendElements[id]) {
+        continue
+      }
+
+      if (!x) {
+        this._legendElements[id].textContent = ''
+        continue
+      }
+
+      let text = ''
+
+      for (let j = 0; j < indicator.apis.length; j++) {
+        const api = indicator.apis[j]
+
+        const data = param.seriesPrices.get(api)
+
+        if (text.length) {
+          text += '\u00a0|\u00a0'
+        }
+
+        if (!data) {
+          text += 'na'
           continue
         }
 
-        if (!showLegend) {
-          this._legendElements[id].innerText = ''
-        } else {
-          const data = param.seriesPrices.get(api)
+        const formatFunction = indicator.options.priceFormat && indicator.options.priceFormat.type === 'volume' ? formatAmount : formatPrice
 
-          if (!data) {
-            this._legendElements[id].innerText = ''
-            continue
-          }
-
-          const formatFunction = indicator.options.priceFormat && indicator.options.priceFormat.type === 'volume' ? formatAmount : formatPrice
-
-          if (typeof data === 'number') {
-            this._legendElements[id].innerText = formatFunction(data)
-          } else if (data.close) {
-            this._legendElements[id].innerText = `O: ${formatFunction(data.open)} H: ${formatFunction(data.high)} L: ${formatFunction(
-              data.low
-            )} C: ${formatFunction(data.close)}`
-          }
+        if (typeof data === 'number') {
+          text += formatFunction(data, 0)
+        } else if (data.close) {
+          text += `O: ${formatFunction(data.open)} H: ${formatFunction(data.high)} L: ${formatFunction(data.low)} C: ${formatFunction(data.close)}`
         }
       }
+
+      this._legendElements[id].textContent = text
     }
   }
 
@@ -566,7 +591,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   onPan(visibleLogicalRange) {
-    if (!visibleLogicalRange || this._chartController.panPrevented) {
+    if (!visibleLogicalRange || this._chartController.panPrevented || /t$/.test(this.timeframe)) {
       return
     }
 
@@ -579,6 +604,8 @@ export default class extends Mixins(PaneMixin) {
       if (this._chartController.chartCache.cacheRange.from === null) {
         return
       }
+
+      this.savePosition(visibleLogicalRange)
 
       this.fetchOrRecover(visibleLogicalRange)
     }, 200)
@@ -602,6 +629,13 @@ export default class extends Mixins(PaneMixin) {
     }
 
     this._chartController.chartInstance.timeScale().unsubscribeVisibleLogicalRangeChange(this.onPan)
+  }
+
+  savePosition(visibleLogicalRange) {
+    const canvasWidth = this.$refs.chartContainer.querySelector('canvas').width
+    const barSpacing = canvasWidth / (visibleLogicalRange.to - visibleLogicalRange.from) / window.devicePixelRatio
+
+    this.$store.commit(this.paneId + '/SET_BAR_SPACING', barSpacing)
   }
 
   keepAlive() {
@@ -742,22 +776,18 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
-    const series = this.indicators[indicatorId].series
-
     await this.$nextTick()
 
-    for (let i = 0; i < series.length; i++) {
-      const id = this.paneId + indicatorId + series[i]
+    const legendId = this.paneId + indicatorId
 
-      if (this._legendElements[id]) {
-        continue
-      }
+    if (this._legendElements[legendId]) {
+      return
+    }
 
-      const el = document.getElementById(id)
+    const el = document.getElementById(legendId)
 
-      if (el) {
-        this._legendElements[id] = el
-      }
+    if (el) {
+      this._legendElements[legendId] = el
     }
   }
 
@@ -769,11 +799,12 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
-    const prefix = this.paneId + indicatorId
+    const legendId = this.paneId + indicatorId
 
-    for (const legendId in this._legendElements) {
-      if (legendId.indexOf(prefix) === 0) {
-        delete this._legendElements[legendId]
+    for (const bindedLegendId in this._legendElements) {
+      if (legendId === bindedLegendId) {
+        delete this._legendElements[bindedLegendId]
+        return
       }
     }
   }
@@ -812,9 +843,13 @@ export default class extends Mixins(PaneMixin) {
     })
   }
 
-  positionControls() {
-    const priceAxisCanvas = this.$refs.chartContainer.querySelector('td:last-child canvas:nth-child(2)') as HTMLElement
-    this.priceWidth = priceAxisCanvas.clientWidth
+  updateChartAxis() {
+    setTimeout(() => {
+      this.axis = [
+        this.$refs.chartContainer.querySelector('td:last-child canvas:nth-child(2)').clientWidth,
+        this.$refs.chartContainer.querySelector('tr:last-child').clientHeight
+      ]
+    }, 1000)
   }
 
   takeScreenshot() {
@@ -957,7 +992,7 @@ export default class extends Mixins(PaneMixin) {
   font-family: 'Barlow Semi Condensed';
 
   &:hover .chart-overlay {
-    display: block;
+    display: flex;
   }
 
   &.-loading {
@@ -979,16 +1014,12 @@ export default class extends Mixins(PaneMixin) {
 }
 
 .chart__markets {
-  overflow: hidden;
   flex-grow: 1;
+  overflow: hidden;
 
   .chart-overlay__content {
     overflow: auto;
-  }
 
-  ul {
-    list-style: none;
-    padding: 0;
     background: var(--theme-background-o75);
   }
 
@@ -1029,30 +1060,24 @@ export default class extends Mixins(PaneMixin) {
 
 .chart-overlay {
   display: none;
-  flex-direction: column-reverse;
+  position: absolute;
+  z-index: 3;
+  top: 3em;
   pointer-events: none;
 
-  > div {
-    position: absolute;
-    z-index: 3;
-    padding-top: 1em;
-  }
-
-  &__left {
+  &.-left {
     left: 1em;
-    display: flex;
+    bottom: 0;
     flex-direction: column;
-    height: 100%;
     justify-content: flex-start;
 
     > div {
-      pointer-events: all;
       flex-shrink: 0;
       flex-basis: 0;
     }
   }
 
-  &__right {
+  &.-right {
     right: 1em;
     pointer-events: all;
   }
@@ -1061,6 +1086,11 @@ export default class extends Mixins(PaneMixin) {
     display: flex;
     flex-direction: column-reverse;
     justify-content: flex-end;
+    place-self: end;
+
+    > div {
+      pointer-events: all;
+    }
   }
 
   &__content {
@@ -1072,7 +1102,7 @@ export default class extends Mixins(PaneMixin) {
     cursor: pointer;
     user-select: none;
     background: var(--theme-background-o75);
-    color: var(--theme-color-200);
+    color: var(--theme-color-150);
     place-self: flex-start;
 
     &:hover {
@@ -1093,9 +1123,7 @@ export default class extends Mixins(PaneMixin) {
   }
 }
 
-#app.-auto-hide-headers {
-  .chart-overlay > div {
-    padding-top: 3em;
-  }
+body.-unselectable .chart-overlay {
+  display: none !important;
 }
 </style>

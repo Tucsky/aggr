@@ -3,7 +3,7 @@
     <button class="menu__button btn" @click="toggleMenu">
       <i class="icon-menu"></i>
     </button>
-    <div class="menu__actions" @click="onClickItem">
+    <div class="menu__actions" v-if="open">
       <button class="menu-action btn" type="button" @click="showSettings">
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>
@@ -27,6 +27,10 @@
         <span class="mr4">Audio</span>
         <i v-if="!useAudio" class="icon-volume-off"></i>
         <i v-else class="icon-volume-medium" :class="{ 'icon-volume-high': audioVolume > 1 }"></i>
+      </button>
+      <button type="button" class="menu-action btn" @click="$store.commit('panes/TOGGLE_LAYOUT')">
+        <span class="mr4" v-text="locked ? 'Unlock layout' : 'Lock layout'"></span>
+        <i class="icon-locked" :class="{ 'icon-unlocked': !locked }"></i>
       </button>
       <dropdown class="menu-action" :options="paneTypes" placeholder="tf." @output="addPane" selectionClass="-green" @click.stop>
         <template v-slot:selection>
@@ -100,6 +104,10 @@ export default class extends Vue {
     return this.$store.state.settings.audioVolume
   }
 
+  get locked() {
+    return this.$store.state.panes.locked
+  }
+
   showSettings() {
     dialogService.open(SettingsDialog)
   }
@@ -118,6 +126,39 @@ export default class extends Vue {
     }
 
     this.toggleMenu()
+  }
+
+  beforeEnter(element) {
+    element.style.height = '0px'
+  }
+
+  enter(element) {
+    const wrapper = element.children[0]
+
+    let height = wrapper.offsetHeight
+    height += parseInt(window.getComputedStyle(wrapper).getPropertyValue('margin-top'))
+    height += parseInt(window.getComputedStyle(wrapper).getPropertyValue('margin-bottom'))
+    height += 'px'
+
+    element.dataset.height = height
+
+    setTimeout(() => {
+      element.style.height = height
+    }, 100)
+  }
+
+  afterEnter(element) {
+    element.style.height = ''
+  }
+
+  beforeLeave(element) {
+    element.style.height = element.dataset.height
+  }
+
+  leave(element) {
+    setTimeout(() => {
+      element.style.height = '0px'
+    })
   }
 }
 </script>
@@ -152,13 +193,9 @@ export default class extends Vue {
   }
 
   .menu-action {
-    transform: translateY(100%) scale(0.5);
-    opacity: 0;
-    transition: all 0.4s $ease-elastic, visibility 0.4s linear 0.4s;
     margin-bottom: 0.625rem;
     text-decoration: none;
-
-    visibility: hidden;
+    white-space: nowrap;
 
     &.btn {
       background-color: var(--theme-background-100);
@@ -174,14 +211,6 @@ export default class extends Vue {
     .menu__button {
       background-color: $green;
       color: white;
-    }
-
-    .menu-action {
-      transition: all 0.4s $ease-elastic;
-      transform: none;
-      opacity: 1;
-
-      visibility: visible;
     }
   }
 

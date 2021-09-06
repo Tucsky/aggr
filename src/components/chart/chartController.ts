@@ -9,7 +9,7 @@ import SerieBuilder from './serieBuilder'
 import { Trade } from '@/types/test'
 import dialogService from '@/services/dialogService'
 import IndicatorDialog from './IndicatorDialog.vue'
-import { ChartPaneState } from '@/store/panesSettings/chart'
+import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
 
 export interface Bar {
   vbuy?: number
@@ -103,6 +103,7 @@ export interface Renderer {
   timeframe: number
   timestamp: number
   localTimestamp: number
+  renderedTimestamp?: number
   length: number
   bar: Bar
   sources: { [name: string]: Bar }
@@ -148,12 +149,14 @@ export default class ChartController {
   timeframe: number
   isOddTimeframe: boolean
   type: 'time' | 'tick'
+  lastPositionSet = false
 
   // private loadedSeries: { [id: string]: IndicatorApi } = {}
   private activeChunk: Chunk
   private queuedTrades: Trade[] = []
   private serieBuilder: SerieBuilder
   private seriesIndicatorsMap: { [serieId: string]: IndicatorReference } = {}
+  private priceScales: string[] = []
 
   private _releaseQueueInterval: number
   private _releasePanTimeout: number
@@ -185,20 +188,12 @@ export default class ChartController {
       const [exchange] = parseMarket(market)
       const identifier = market.replace(':', '')
 
-      /*if (this.chartCache.initialPrices[identifier]) {
-        delete this.chartCache.initialPrices[identifier]
-      }*/
-
       if (
         (output[identifier] =
           store.state.exchanges[exchange] && !store.state.exchanges[exchange].disabled && !store.state[this.paneId].hiddenMarkets[market])
       ) {
         marketsForWatermark.push(market)
       }
-
-      /*if (this.activeRenderer) {
-        this.activeRenderer.sources[identifier].active = output[identifier]
-      }*/
 
       return output
     }, {})
@@ -209,6 +204,10 @@ export default class ChartController {
     this.updateWatermark()
   }
 
+  /**
+   * set timeframe to chart model and update watermark with litteral
+   * @param timeframe
+   */
   setTimeframe(timeframe) {
     if (/t$/.test(timeframe)) {
       this.type = 'tick'
@@ -220,20 +219,10 @@ export default class ChartController {
     this.isOddTimeframe = (1440 * 60) % timeframe !== 0
 
     this.updateWatermark()
-
-    /*if (this.activeRenderer) {
-      const activeRendererDayOpen = Math.floor(this.activeRenderer.timestamp / DAY) * DAY
-      this.activeRenderer.timestamp = activeRendererDayOpen + Math.floor((this.activeRenderer.timestamp - activeRendererDayOpen) / timeframe) * timeframe
-      this.activeRenderer.timeframe = timeframe
-
-      for (const source in this.activeRenderer.sources) {
-        this.activeRenderer.sources[source].timestamp = this.activeRenderer.timestamp
-      }
-    }*/
   }
 
   /**
-   * Cache timezone offset
+   * cache timezone offset
    * @param offset in ms
    */
   setTimezoneOffset(offset: number) {
@@ -272,6 +261,13 @@ export default class ChartController {
       chartOptions.watermark.color = store.state[this.paneId].watermarkColor
     }
 
+    const preferedBarSpacing = store.state[this.paneId].barSpacing
+
+    if (preferedBarSpacing) {
+      chartOptions.timeScale.barSpacing = store.state[this.paneId].barSpacing
+      chartOptions.timeScale.rightOffset = Math.ceil((containerElement.clientWidth * 0.05) / chartOptions.timeScale.barSpacing)
+    }
+
     this.chartInstance = TV.createChart(containerElement, chartOptions)
     this.chartElement = containerElement
 
@@ -281,7 +277,7 @@ export default class ChartController {
   }
 
   /**
-   * remove series, destroy this.chartInstance and cancel related events1
+   * remove series, destroy this.chartInstance and cancel related events
    */
   removeChart() {
     console.log(`[chart/${this.paneId}/controller] remove chart`)
@@ -295,12 +291,13 @@ export default class ChartController {
     }
 
     this.chartInstance.remove()
+    this.priceScales.splice(0, this.priceScales.length)
 
     this.chartInstance = null
   }
 
   /**
-   * Get active indicator by id
+   * get active indicator by id
    * @returns {LoadedIndicator} serie
    */
   getLoadedIndicator(id: string): LoadedIndicator {
@@ -312,7 +309,7 @@ export default class ChartController {
   }
 
   /**
-   * Set indicator option by key
+   * set indicator option by key
    * @param {string} id serie id
    * @param {string} key option key
    * @param {any} value serie id
@@ -353,6 +350,11 @@ export default class ChartController {
     }
   }
 
+  /**
+   * return true if option change require complete redraw, false otherwise
+   * @param key option key
+   * @returns
+   */
   optionRequiresRedraw(key: string) {
     const redrawOptions = /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor/i
 
@@ -360,7 +362,7 @@ export default class ChartController {
       return true
     }
 
-    const noRedrawOptions = /color|priceFormat|scaleMargins|linetype|width|style|visible/i
+    const noRedrawOptions = /color|priceFormat|linetype|width|style|visible/i
 
     if (noRedrawOptions.test(key)) {
       return false
@@ -458,6 +460,9 @@ export default class ChartController {
     })
   }
 
+  /**
+   * update chart font using pane zoom option
+   */
   updateFontSize() {
     this.chartInstance.applyOptions({
       layout: {
@@ -527,6 +532,9 @@ export default class ChartController {
 
     // attach indicator to active renderer
     this.bindIndicator(indicator, this.activeRenderer)
+
+    // ensure chart is aware of pricescale used by this indicator
+    this.bindPriceScale(indicator.options.priceScaleId)
 
     return true
   }
@@ -603,7 +611,13 @@ export default class ChartController {
         const apiMethodName = camelize('add-' + serie.type + '-series')
         const serieOptions = Object.assign({}, defaultSerieOptions, defaultPlotsOptions[serie.type] || {}, indicator.options, serie.options)
 
-        if (!indicator.options.scaleMargins && indicator.options.priceScaleId) {
+        if (serieOptions.scaleMargins) {
+          delete serieOptions.scaleMargins
+
+          console.warn('remove serieOptions.scaleMargins')
+        }
+
+        /* if (!indicator.options.scaleMargins && indicator.options.priceScaleId) {
           const scaleMargins = this.getPriceScaleMargins(indicator.options.priceScaleId)
 
           if (scaleMargins) {
@@ -617,7 +631,7 @@ export default class ChartController {
               scaleMargins: serieOptions.scaleMargins
             }
           })
-        }
+        } */
 
         const api = this.chartInstance[apiMethodName](serieOptions) as IndicatorApi
 
@@ -674,12 +688,6 @@ export default class ChartController {
 
     const { functions, variables, plots } = JSON.parse(JSON.stringify(indicator.model))
 
-    // bindIndicator is called when a indicator option changes
-    // this is the time to parse thoses from the scripts itself
-    // and get matching value from indicator.options
-    //
-    // take a script like : plotline(avg_close(bar), color=options.lineColor)
-    // assign (options.lineColor) value into (plots[0].options.lineColor)
     this.serieBuilder.parseScriptOptions(functions, plots, indicator.options)
 
     // attach indicator to renderer, with fresh functions & variables states
@@ -716,6 +724,42 @@ export default class ChartController {
     }
 
     delete renderer.indicators[indicator.id]
+  }
+
+  bindPriceScale(priceScaleId, update?: boolean) {
+    if (!update && this.priceScales.indexOf(priceScaleId) !== -1) {
+      // chart already knows about that price scale (and doesn't need update)
+      return
+    }
+
+    let priceScale: PriceScaleSettings = store.state[this.paneId].priceScales[priceScaleId]
+
+    if (!priceScale) {
+      // create default price scale
+      priceScale = {}
+      // retrocompatibility with previous scaleMargins option
+      // TODO: remove soon ⚠️
+      const indicator = this.loadedIndicators.find(indicator => indicator.options.priceScaleId === priceScaleId)
+
+      if (indicator && indicator.options.scaleMargins) {
+        console.info('using scaleMarings as priceScale (first time)')
+        priceScale.scaleMargins = indicator.options.scaleMargins
+      } else {
+        priceScale.scaleMargins = {
+          top: 0.05,
+          bottom: 0.05
+        }
+      }
+
+      // save it
+      store.commit(this.paneId + '/SET_PRICE_SCALE', {
+        id: priceScaleId,
+        priceScale
+      })
+    }
+
+    // use it
+    this.chartInstance.priceScale(priceScaleId).applyOptions(priceScale)
   }
 
   /**
@@ -1091,8 +1135,6 @@ export default class ChartController {
       const amount = trade.price * trade.size
 
       if (!this.activeRenderer.sources[identifier] || typeof this.activeRenderer.sources[identifier].pair === 'undefined') {
-        console.debug(`[chart/${this.paneId}/controller] set initial price ${identifier} = ${trade.price}`)
-
         this.chartCache.initialPrices[identifier] = {
           exchange: trade.exchange,
           pair: trade.pair,
@@ -1287,7 +1329,7 @@ export default class ChartController {
       const bar = bars[i]
 
       if (!bar || !temporaryRenderer || bar.timestamp > temporaryRenderer.timestamp) {
-        if (temporaryRenderer && !temporaryRenderer.bar.empty) {
+        if (temporaryRenderer) {
           if (from === null) {
             from = temporaryRenderer.timestamp
           }
@@ -1708,13 +1750,13 @@ export default class ChartController {
     }
   }
 
-  getPriceScaleMargins(priceScaleId) {
+  /* getPriceScaleMargins(priceScaleId) {
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       if (this.loadedIndicators[i].options.priceScaleId === priceScaleId && this.loadedIndicators[i].options.scaleMargins) {
         return this.loadedIndicators[i].options.scaleMargins
       }
     }
-  }
+  } */
 
   toggleFillGapsWithEmpty() {
     this.fillGapsWithEmpty = !this.fillGapsWithEmpty

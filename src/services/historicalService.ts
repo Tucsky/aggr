@@ -120,11 +120,6 @@ class HistoricalService extends EventEmitter {
               lastClosedBars[data[i].market] = data[j]
               break
             }
-
-            if (i - j > 25) {
-              debugger
-              console.warn('[historical/mergePendingBars] going back TOO FAR in the result array!!')
-            }
           }
         }
 

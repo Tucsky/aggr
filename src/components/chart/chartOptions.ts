@@ -43,7 +43,7 @@ export const defaultChartOptions = {
     }
   },
   timeScale: {
-    barSpacing: 3,
+    barSpacing: 4,
     minBarSpacing: 0,
     rightOffset: 12,
     lockVisibleTimeRangeOnResize: true,
@@ -54,14 +54,8 @@ export const defaultChartOptions = {
     timeVisible: true,
     secondsVisible: true
   },
-  priceScale: {
-    position: 'right',
-    mode: 0,
-    borderColor: 'rgba(255, 255, 255, .2)',
-    scaleMargins: {
-      top: 0.1,
-      bottom: 0.2
-    }
+  rightPriceScale: {
+    borderColor: 'rgba(255, 255, 255, .2)'
   }
 }
 
@@ -73,10 +67,6 @@ export const defaultSerieOptions = {
     type: 'price',
     minMove: '0.01',
     precision: 2
-  },
-  scaleMargins: {
-    top: 0.1,
-    bottom: 0.2
   }
 }
 
@@ -100,11 +90,7 @@ export const defaultCandlestickOptions = {
 }
 
 export const defaultHistogramOptions = {
-  color: '#c3a87a',
-  scaleMargins: {
-    top: 0.8,
-    bottom: 0
-  }
+  color: '#c3a87a'
 }
 
 export const defaultAreaOptions = {
@@ -135,7 +121,7 @@ export const defaultBarOptions = {
 
 export const defaultStatsChartOptions = {
   ...defaultChartOptions,
-  priceScale: {
+  rightPriceScale: {
     position: 'none',
     mode: 0
   },
@@ -177,7 +163,7 @@ export function getCustomColorsOptions(color?: string) {
       textColor: textColor,
       borderColor
     },
-    priceScale: {
+    rightPriceScale: {
       borderColor
     },
     timeScale: {

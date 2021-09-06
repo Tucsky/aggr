@@ -54,11 +54,9 @@ export default {
   },
   methods: {
     async deletePreset() {
-      if (await dialogService.confirm('Delete preset ' + this.preset.name + ' ?')) {
-        await workspacesService.removePreset(this.preset.name)
+      await workspacesService.removePreset(this.preset.name)
 
-        this.close()
-      }
+      this.close()
     },
     downloadPreset() {
       downloadJson(this.preset, this.preset.type + '_' + slugify(this.name))

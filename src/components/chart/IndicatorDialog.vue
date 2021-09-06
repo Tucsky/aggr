@@ -102,7 +102,7 @@
           </div>
         </div>
 
-        <section v-if="positionOption" class="section">
+        <section class="section">
           <div v-if="sections.indexOf('position') > -1">
             <div class="form-group mb16">
               <label>Scale with <i class="icon-info" v-tippy :title="helps.priceScaleId"></i></label>
@@ -115,19 +115,6 @@
                 @output="validate('priceScaleId', $event)"
               ></dropdown>
             </div>
-            <div class="column">
-              <div class="form-group mb16">
-                <label>top <i class="icon-info" v-tippy :title="helps['scaleMargins.top']"></i></label>
-                <editable class="form-control" :content="positionOption.value.top" :step="0.01" @output="updateScale('top', $event)"></editable>
-              </div>
-              <div class="form-group ml16">
-                <label>bottom <i class="icon-info" v-tippy :title="helps['scaleMargins.bottom']"></i></label>
-                <editable class="form-control" :content="positionOption.value.bottom" :step="0.01" @output="updateScale('bottom', $event)"></editable>
-              </div>
-            </div>
-            <button class="btn -green" @click="$store.dispatch(paneId + '/resizeIndicator', indicatorId)">
-              <i class="icon-resize-height mr4"></i> Resize on chart
-            </button>
           </div>
           <div class="section__title" @click="toggleSection('position')">Position in chart <i class="icon-up"></i></div>
         </section>
@@ -213,9 +200,7 @@ export default {
       borderVisible: `Only for candlestick series, enable borders of candles`,
       lineWidth: `Only for line and area series`,
       lineStyle: `Only for line and area series`,
-      lineType: `Only for line and area series`,
-      'scaleMargins.top': `Top margin (0 = stick at top)`,
-      'scaleMargins.bottom': `Bottom margin (0 = stick to bottom)`
+      lineType: `Only for line and area series`
     }
   }),
   computed: {
@@ -236,14 +221,6 @@ export default {
     },
     script: function() {
       return store.state[this.paneId].indicators[this.indicatorId].script
-    },
-    positionOption() {
-      return {
-        key: 'scaleMargins',
-        label: 'scaleMargins',
-        value: this.getValue('scaleMargins'),
-        type: 'position'
-      }
     },
     formatOption() {
       return {
@@ -308,8 +285,6 @@ export default {
         type = 'boolean'
       } else if (/^rgba?/.test(value) || /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value)) {
         type = 'color'
-      } else if (key === 'scaleMargins') {
-        type = 'position'
       }
 
       return type
@@ -350,13 +325,6 @@ export default {
         return 1
       }
 
-      if (typeof value === 'undefined' && key === 'scaleMargins') {
-        return {
-          top: 0.1,
-          bottom: 0.2
-        }
-      }
-
       return value
     },
     getValue(key) {
@@ -392,22 +360,6 @@ export default {
       this.refreshOptions(newInput)
 
       this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', { id: this.indicatorId, value: newInput })
-    },
-    updateScale(side, value) {
-      const option = this.positionOption
-
-      const scale = {
-        top: option.value.top,
-        bottom: option.value.bottom
-      }
-
-      scale[side] = +value || 0
-
-      if (scale.top + scale.bottom > 1) {
-        scale[side] = 1 - scale[side === 'top' ? 'bottom' : 'top']
-      }
-
-      this.validate(option, scale)
     },
     getScriptOptions(script) {
       const keys = []

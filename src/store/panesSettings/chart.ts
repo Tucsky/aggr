@@ -2,10 +2,15 @@ import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import { parseMarket, sleep, slugify, uniqueName } from '@/utils/helpers'
 import { scheduleSync } from '@/utils/store'
-import { SeriesOptions, SeriesType } from 'lightweight-charts'
+import { PriceScaleMargins, PriceScaleMode, SeriesOptions, SeriesType } from 'lightweight-charts'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '..'
+
+export interface PriceScaleSettings {
+  scaleMargins?: PriceScaleMargins
+  mode?: PriceScaleMode
+}
 
 export interface IndicatorSettings {
   id?: string
@@ -23,7 +28,8 @@ export interface ChartPaneState {
   _id?: string
   _booted?: boolean
   indicators?: { [id: string]: IndicatorSettings }
-  resizingIndicator: string
+  priceScales: { [id: string]: PriceScaleSettings }
+  layouting: boolean
   timeframe: number
   indicatorsErrors: { [indicatorId: string]: string }
   refreshRate?: number
@@ -36,6 +42,7 @@ export interface ChartPaneState {
   showWatermark: boolean
   watermarkColor: string
   hiddenMarkets: { [indicatorId: string]: boolean }
+  barSpacing: number
 }
 
 const getters = {} as GetterTree<ChartPaneState, ModulesState>
@@ -43,7 +50,15 @@ const getters = {} as GetterTree<ChartPaneState, ModulesState>
 const state = {
   indicatorsErrors: {},
   indicators: {},
-  resizingIndicator: null,
+  priceScales: {
+    right: {
+      scaleMargins: {
+        top: 0.02,
+        bottom: 0.38
+      }
+    }
+  },
+  layouting: false,
   timeframe: 10,
   refreshRate: 1000,
   showLegend: true,
@@ -54,11 +69,15 @@ const state = {
   verticalGridlinesColor: 'rgba(255,255,255,.1)',
   showWatermark: false,
   watermarkColor: 'rgba(255,255,255,.1)',
-  hiddenMarkets: {}
+  hiddenMarkets: {},
+  barSpacing: null
 } as ChartPaneState
 
 const actions = {
   async boot({ state }) {
+    state.indicatorsErrors = {} // let chart recalculate potential errors
+    state.layouting = false // start without layouting overlay
+
     if (!Object.keys(state.indicators).length) {
       const indicators = await workspacesService.getIndicators()
 
@@ -111,27 +130,15 @@ const actions = {
       // empty
     }
 
-    if (key === 'scaleMargins') {
-      // sync scale margins
-      const currentPriceScaleId = state.indicators[id].options.priceScaleId
-
-      if (currentPriceScaleId) {
-        for (const _id in state.indicators) {
-          const serieOptions = state.indicators[_id].options
-          if (id !== _id && serieOptions.priceScaleId === currentPriceScaleId) {
-            commit('SET_INDICATOR_OPTION', { id: _id, key, value })
-          }
-        }
-      }
-    }
-
     if (state.indicators[id] && state.indicators[id].options[key] === value) {
       return
     }
 
     commit('SET_INDICATOR_OPTION', { id, key, value })
 
-    commit('FLAG_INDICATOR_AS_UNSAVED', id)
+    if (!state.indicators[id].unsavedChanges) {
+      commit('FLAG_INDICATOR_AS_UNSAVED', id)
+    }
 
     if (state.indicators[id].name.indexOf(key) !== -1) {
       commit('UPDATE_INDICATOR_DISPLAY_NAME', id)
@@ -173,9 +180,6 @@ const actions = {
     dispatch('removeIndicator', { id, confirm: false })
 
     return newId
-  },
-  resizeIndicator({ commit }, id) {
-    commit('TOGGLE_INDICATOR_RESIZE', id)
   },
   transferIndicator({ state, rootState }, indicator: IndicatorSettings) {
     for (const paneId in rootState.panes.panes) {
@@ -331,13 +335,8 @@ const mutations = {
   FLAG_INDICATOR_AS_SAVED(state, id) {
     Vue.set(state.indicators[id], 'unsavedChanges', false)
   },
-  TOGGLE_INDICATOR_RESIZE(state, id) {
-    if (state.resizingIndicator === id) {
-      state.resizingIndicator = null
-      return
-    }
-
-    state.resizingIndicator = id
+  TOGGLE_LAYOUTING(state) {
+    state.layouting = !state.layouting
   },
   TOGGLE_FILL_GAPS_WITH_EMPTY(state) {
     state.fillGapsWithEmpty = !state.fillGapsWithEmpty
@@ -350,6 +349,16 @@ const mutations = {
     if (marketId) {
       Vue.set(state.hiddenMarkets, marketId, !state.hiddenMarkets[marketId])
     }
+  },
+  SET_PRICE_SCALE(state, { id, priceScale }) {
+    if (!priceScale) {
+      delete state.priceScales[id]
+    }
+
+    state.priceScales[id] = priceScale
+  },
+  SET_BAR_SPACING(state, value) {
+    state.barSpacing = value
   }
 } as MutationTree<ChartPaneState>
 

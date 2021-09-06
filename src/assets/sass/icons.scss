@@ -475,3 +475,18 @@ $iconpath: '../fonts';
     content: $icon-enlarge;
   }
 }
+.icon-locked {
+  &:before {
+    content: $icon-locked;
+  }
+}
+.icon-unlocked {
+  &:before {
+    content: $icon-unlocked;
+  }
+}
+.icon-move {
+  &:before {
+    content: $icon-move;
+  }
+}

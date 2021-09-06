@@ -56,6 +56,7 @@
 
     &.-highlight {
       z-index: 1;
+      overflow: visible;
 
       .pane {
         z-index: 4;
@@ -145,7 +146,7 @@
   top: 0;
   left: 0;
   right: 0;
-  font-size: calc(11px + .8em);
+  font-size: calc(11px + 0.8em);
   height: 1.5em;
   background-color: var(--theme-background-100);
   align-items: stretch;
@@ -246,4 +247,8 @@
       right: -8%;
     }
   }
+}
+
+body.-unselectable .pane-header {
+  display: none !important;
 }
