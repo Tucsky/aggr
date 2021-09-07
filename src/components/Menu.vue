@@ -3,7 +3,7 @@
     <button class="menu__button btn" @click="toggleMenu">
       <i class="icon-menu"></i>
     </button>
-    <div class="menu__actions" v-if="open">
+    <div class="menu__actions" v-if="open" @click="onClickItem">
       <button class="menu-action btn" type="button" @click="showSettings">
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>

@@ -234,10 +234,8 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/TOGGLE_LEGEND':
           if (this.showLegend) {
             this.bindLegend()
-            this._chartController.chartInstance.subscribeCrosshairMove(this.onCrosshair)
           } else {
             this.unbindLegend()
-            this._chartController.chartInstance.unsubscribeCrosshairMove(this.onCrosshair)
           }
           break
         case this.paneId + '/SET_GRIDLINES':
@@ -256,10 +254,6 @@ export default class extends Mixins(PaneMixin) {
           break
         case this.paneId + '/SET_INDICATOR_SCRIPT':
           this._chartController.rebuildIndicator(mutation.payload.id)
-          break
-        case this.paneId + '/SET_INDICATOR_SERIES':
-          this.unbindLegend(mutation.payload.id)
-          this.bindLegend(mutation.payload.id)
           break
         case this.paneId + '/ADD_INDICATOR':
           if (this._chartController.addIndicator(mutation.payload.id)) {
@@ -614,8 +608,8 @@ export default class extends Mixins(PaneMixin) {
   bindChartEvents() {
     aggregatorService.on('trades', this.onTrades)
 
-    if (this.showLegend) {
-      this._chartController.chartInstance.subscribeCrosshairMove(this.onCrosshair)
+    if (this.showLegend && this.showIndicatorsOverlay) {
+      this.bindLegend()
     }
 
     this._chartController.chartInstance.timeScale().subscribeVisibleLogicalRangeChange(this.onPan)
@@ -624,9 +618,7 @@ export default class extends Mixins(PaneMixin) {
   unbindChartEvents() {
     aggregatorService.off('trades', this.onTrades)
 
-    if (this.showLegend) {
-      this._chartController.chartInstance.unsubscribeCrosshairMove(this.onCrosshair)
-    }
+    this.unbindLegend()
 
     this._chartController.chartInstance.timeScale().unsubscribeVisibleLogicalRangeChange(this.onPan)
   }
@@ -773,6 +765,8 @@ export default class extends Mixins(PaneMixin) {
       for (const id in this.indicators) {
         this.bindLegend(id)
       }
+
+      this._chartController.chartInstance.subscribeCrosshairMove(this.onCrosshair)
       return
     }
 
@@ -796,6 +790,8 @@ export default class extends Mixins(PaneMixin) {
       for (const id in this.indicators) {
         this.unbindLegend(id)
       }
+
+      this._chartController.chartInstance.unsubscribeCrosshairMove(this.onCrosshair)
       return
     }
 

@@ -53,7 +53,7 @@ const state = {
   priceScales: {
     right: {
       scaleMargins: {
-        top: 0.02,
+        top: 0.04,
         bottom: 0.38
       }
     }
