@@ -14,7 +14,7 @@ class HistoricalService extends EventEmitter {
     url = url.replace(/\{from\}/, from)
     url = url.replace(/\{to\}/, to)
     url = url.replace(/\{timeframe\}/, (timeframe * 1000).toString())
-    url = url.replace(/\{markets\}/, markets.join('+'))
+    url = url.replace(/\{markets\}/, encodeURIComponent(markets.join('+')))
 
     return url
   }

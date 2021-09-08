@@ -2,7 +2,7 @@
   <div class="chart-pricescale" :style="{ top: roundedTop + '%', bottom: roundedBottom + '%' }" :class="{ '-active': !!currentSide }">
     <div class="chart-pricescale__content">
       <div class="chart-pricescale__title" @mousedown="handleMove" @touchstart="handleMove">
-        <i class="icon-move"></i> {{ id }} <span v-if="id === 'right'" title="Main scale" v-tippy>👑</span>
+        <i class="icon-move mr8"></i> {{ id }} <span v-if="id === 'right'" title="Main scale" v-tippy class="ml4">👑</span>
       </div>
       <div class="chart-pricescale__size" v-text="100 - roundedTop - roundedBottom + '%'"></div>
     </div>
@@ -298,7 +298,6 @@ export default class extends Vue {
   }
 
   &__title {
-    font-weight: 600;
     line-height: 1;
     display: inline-block;
     position: absolute;
@@ -306,6 +305,7 @@ export default class extends Vue {
     left: 0.5em;
     padding: 0.5em;
     pointer-events: all;
+    text-transform: uppercase;
 
     .icon-move {
       vertical-align: text-bottom;

@@ -161,6 +161,7 @@
     <div class="form-group column">
       <presets type="indicator" class="mr8 -left" :adapter="getIndicatorPreset" @apply="applyIndicatorPreset($event)" label="Presets" />
       <button class="btn -red" v-tippy title="Unload indicator" @click="removeIndicator"><i class="icon-cross mr4"></i> Unload</button>
+      <button class="btn -text ml8" v-tippy title="Unload indicator" @click="resizeIndicator"><i class="icon-resize-height mr4"></i> Resize</button>
       <button class="btn -text ml8 mrauto" v-tippy title="Duplicate" @click="duplicateIndicator">
         <i class="icon-copy-paste mr4"></i> Make a copy
       </button>
@@ -490,6 +491,11 @@ export default {
       await this.close()
 
       store.dispatch(this.paneId + '/removeIndicator', { id: this.indicatorId })
+    },
+    async resizeIndicator() {
+      await this.close()
+
+      store.commit(this.paneId + '/TOGGLE_LAYOUTING', this.indicatorId)
     },
     async renameIndicator() {
       const name = await dialogService.prompt({

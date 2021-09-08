@@ -45,11 +45,15 @@ import ChartPriceScale from './ChartPriceScale.vue'
     },
     axis: {
       required: true
+    },
+    layouting: {
+      required: true
     }
   }
 })
 export default class extends Vue {
   paneId: string
+  layouting: string
   noSyncId: string
   axis: [number, number]
   activePriceScales: { [id: string]: PriceScaleSettings }
@@ -69,8 +73,13 @@ export default class extends Vue {
   }
 
   getActivePriceScales() {
-    this.activePriceScales = Object.keys((this.$store.state[this.paneId] as ChartPaneState).indicators).reduce((priceScales, indicatorId) => {
-      const priceScaleId = (this.$store.state[this.paneId] as ChartPaneState).indicators[indicatorId].options.priceScaleId
+    const indicators = (this.$store.state[this.paneId] as ChartPaneState).indicators
+
+    this.activePriceScales = Object.keys(indicators).reduce((priceScales, indicatorId) => {
+      if (typeof this.layouting === 'string' && indicatorId !== this.layouting) {
+        return priceScales
+      }
+      const priceScaleId = indicators[indicatorId].options.priceScaleId
 
       if (!priceScales[priceScaleId]) {
         priceScales[priceScaleId] = this.$store.state[this.paneId].priceScales[priceScaleId]

@@ -29,6 +29,16 @@
               <input
                 type="checkbox"
                 class="form-control"
+                :checked="searchTypes.mergeUsdt"
+                @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'mergeUsdt')"
+              />
+              <div></div>
+              <span>hide usd<strong>T</strong> / usd<strong>C</strong></span>
+            </label>
+            <label class="checkbox-control -small mb4">
+              <input
+                type="checkbox"
+                class="form-control"
                 :checked="searchTypes.historical"
                 @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'historical')"
               />
@@ -321,7 +331,8 @@ export default {
           spots: true,
           perpetuals: true,
           futures: false,
-          normalize: true
+          normalize: true,
+          mergeUsdt: true
         },
         this.$store.state.settings.searchTypes
       )
@@ -400,11 +411,17 @@ export default {
         const marketsByPair = this.filteredProducts
           .filter(product => this.selection.indexOf(product.id) === -1 && this.queryFilter.test(product.local))
           .reduce((groups, product) => {
-            if (!groups[product.local]) {
-              groups[product.local] = []
+            let local = product.local
+
+            if (this.searchTypes.mergeUsdt) {
+              local = local.replace('USDT', 'USD').replace('USDC', 'USD')
             }
 
-            groups[product.local].push(product.id)
+            if (!groups[local]) {
+              groups[local] = []
+            }
+
+            groups[local].push(product.id)
 
             return groups
           }, {})
@@ -424,7 +441,11 @@ export default {
         const [exchange] = parseMarket(market)
         const indexedProduct = this.indexedProducts[exchange].find(product => product.id === market)
 
-        const localPair = indexedProduct ? indexedProduct.local : market
+        let localPair = indexedProduct ? indexedProduct.local : market
+
+        if (this.searchTypes.mergeUsdt) {
+          localPair = localPair.replace('USDT', 'USD').replace('USDC', 'USD')
+        }
 
         if (!groups[localPair]) {
           groups[localPair] = []

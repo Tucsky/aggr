@@ -18,7 +18,7 @@
         </template>
       </dropdown>-->
 
-      <dropdown :options="timeframes" :selected="timeframe" placeholder="tf." @output="changeTimeframe($event)">
+      <dropdown :options="timeframes" :selected="timeframe" placeholder="tf." @output="changeTimeframe($event)" selectionClass="-text">
         <template v-slot:selection>
           <span>{{ timeframeForHuman }}</span>
         </template>
@@ -70,7 +70,7 @@
       <button class="chart__screenshot btn -text -large" @click="takeScreenshot"><i class="icon-add-photo"></i></button>
     </div>
     <div class="chart__container" ref="chartContainer">
-      <chart-layout v-if="layouting" :pane-id="paneId" :indicators="indicators" :axis="axis"></chart-layout>
+      <chart-layout v-if="layouting" :pane-id="paneId" :layouting="layouting" :axis="axis"></chart-layout>
     </div>
   </div>
 </template>
@@ -249,7 +249,7 @@ export default class extends Mixins(PaneMixin) {
           break
         case this.paneId + '/SET_PRICE_SCALE':
           if (mutation.payload.priceScale) {
-            this._chartController.bindPriceScale(mutation.payload.id)
+            this._chartController.bindPriceScale(mutation.payload.id, true)
           }
           break
         case this.paneId + '/SET_INDICATOR_SCRIPT':
@@ -761,6 +761,10 @@ export default class extends Mixins(PaneMixin) {
   }
 
   async bindLegend(indicatorId?: string) {
+    if (!this.showLegend) {
+      return
+    }
+
     if (!indicatorId) {
       for (const id in this.indicators) {
         this.bindLegend(id)
@@ -841,6 +845,10 @@ export default class extends Mixins(PaneMixin) {
 
   updateChartAxis() {
     setTimeout(() => {
+      if (!this.$refs.chartContainer) {
+        return
+      }
+
       this.axis = [
         this.$refs.chartContainer.querySelector('td:last-child canvas:nth-child(2)').clientWidth,
         this.$refs.chartContainer.querySelector('tr:last-child').clientHeight

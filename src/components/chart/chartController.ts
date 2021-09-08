@@ -216,7 +216,7 @@ export default class ChartController {
     }
 
     this.timeframe = parseInt(timeframe)
-    this.isOddTimeframe = (1440 * 60) % timeframe !== 0
+    this.isOddTimeframe = (1440 * 60) % this.timeframe !== 0 && this.timeframe < 86400
 
     this.updateWatermark()
   }
@@ -727,7 +727,9 @@ export default class ChartController {
   }
 
   bindPriceScale(priceScaleId, update?: boolean) {
-    if (!update && this.priceScales.indexOf(priceScaleId) !== -1) {
+    const created = this.priceScales.indexOf(priceScaleId) !== -1
+
+    if (!update && created) {
       // chart already knows about that price scale (and doesn't need update)
       return
     }
@@ -760,6 +762,10 @@ export default class ChartController {
 
     // use it
     this.chartInstance.priceScale(priceScaleId).applyOptions(priceScale)
+
+    if (!created) {
+      this.priceScales.push(priceScaleId)
+    }
   }
 
   /**
@@ -830,9 +836,14 @@ export default class ChartController {
   resample(timeframe: number) {
     console.log(`[chart/${this.paneId}/controller] resample to ${timeframe}`)
 
-    const activeRendererDayOpen = Math.floor(this.activeRenderer.timestamp / DAY) * DAY
-    const activeRendererTimestamp =
-      activeRendererDayOpen + Math.floor((this.activeRenderer.timestamp - activeRendererDayOpen) / timeframe) * timeframe
+    let activeRendererTimestamp
+
+    if (timeframe < 86400) {
+      const activeRendererDayOpen = Math.floor(this.activeRenderer.timestamp / DAY) * DAY
+      activeRendererTimestamp = activeRendererDayOpen + Math.floor((this.activeRenderer.timestamp - activeRendererDayOpen) / timeframe) * timeframe
+    } else {
+      activeRendererTimestamp = Math.floor(this.activeRenderer.timestamp / timeframe) * timeframe
+    }
 
     const activeChunk = this.getActiveChunk()
 

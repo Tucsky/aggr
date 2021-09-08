@@ -16,6 +16,15 @@ button {
   flex-shrink: 0;
   cursor: pointer;
 
+  &:focus {
+    box-shadow: 0 0 0 6px rgba($green, 0.1);
+
+    &.-text {
+      box-shadow: none;
+      background: var(--theme-color-o20);
+    }
+  }
+
   background-color: $green;
 
   &:hover {

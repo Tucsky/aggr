@@ -150,7 +150,21 @@ export const workspaceUpgrades = {
       }
     }
 
-    workspace.states.panes.layout = workspace.states.panes.layouts[currentBreakpoint]
+    const currentLayout = workspace.states.panes.layouts[currentBreakpoint]
+
+    if (currentBreakpoint !== 'lg') {
+      const cols = breakpointsCols[currentBreakpoint]
+      const coeficient = breakpointsCols.lg / cols
+
+      for (const pane of currentLayout) {
+        pane.x = Math.floor(pane.x * coeficient)
+        pane.y = Math.floor(pane.y * coeficient)
+        pane.w = Math.floor(pane.w * coeficient)
+        pane.h = Math.floor(pane.h * coeficient)
+      }
+    }
+
+    workspace.states.panes.layout = currentLayout
     delete workspace.states.panes.layouts
   }
 }

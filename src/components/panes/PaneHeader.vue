@@ -12,13 +12,13 @@
         <i class="icon-cog"></i>
       </button>
 
-      <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)">
+      <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)" selectionClass="-text">
         <template v-slot:option-0>
           <div class="column" @mousedown.prevent>
             <div class="btn -green" @click="zoomOut">
               <i class="icon-minus"></i>
             </div>
-            <div class="btn -text text-monospace" @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 0 })" style="display: block">
+            <div class="btn -text text-monospace" @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 1 })" style="display: block">
               × {{ zoom.toFixed(1) }}
             </div>
             <div class="btn -green" @click="zoomIn">

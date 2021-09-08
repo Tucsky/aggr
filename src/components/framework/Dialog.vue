@@ -55,14 +55,10 @@ import { getEventCords } from '../../utils/picker'
     },
     startPosition: {
       required: false
-    },
-    autofocus: {
-      type: Boolean
     }
   }
 })
 export default class extends Vue {
-  autofocus: boolean
   startPosition: { x: number; y: number }
   headerBackground: string
   delta = { x: 0, y: 0 }

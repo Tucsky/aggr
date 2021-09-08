@@ -1,12 +1,12 @@
 <template>
-  <Dialog @clickOutside="close" autofocus>
+  <Dialog @clickOutside="close">
     <template v-slot:header>
       <div class="title">{{ title }}</div>
     </template>
     <p class="mx0" v-html="message"></p>
     <footer>
       <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)" v-if="cancel" v-text="cancel"></a>
-      <button class="btn -green -large" @click="close(true)"><i class="icon-check mr4"></i> {{ ok }}</button>
+      <button class="btn -green -large" v-autofocus @click="close(true)"><i class="icon-check mr4"></i> {{ ok }}</button>
     </footer>
   </Dialog>
 </template>

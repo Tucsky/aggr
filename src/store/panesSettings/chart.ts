@@ -29,7 +29,7 @@ export interface ChartPaneState {
   _booted?: boolean
   indicators?: { [id: string]: IndicatorSettings }
   priceScales: { [id: string]: PriceScaleSettings }
-  layouting: boolean
+  layouting: boolean | string
   timeframe: number
   indicatorsErrors: { [indicatorId: string]: string }
   refreshRate?: number
@@ -335,8 +335,12 @@ const mutations = {
   FLAG_INDICATOR_AS_SAVED(state, id) {
     Vue.set(state.indicators[id], 'unsavedChanges', false)
   },
-  TOGGLE_LAYOUTING(state) {
-    state.layouting = !state.layouting
+  TOGGLE_LAYOUTING(state, indicatorId: string) {
+    if (typeof indicatorId === 'string' && !state.layouting) {
+      state.layouting = indicatorId
+    } else {
+      state.layouting = !state.layouting
+    }
   },
   TOGGLE_FILL_GAPS_WITH_EMPTY(state) {
     state.fillGapsWithEmpty = !state.fillGapsWithEmpty
