@@ -120,7 +120,7 @@ export default class extends Vue {
 
       const otherScaleMargins = this.activePriceScales[otherId].scaleMargins
 
-      if (otherScaleMargins[oppositeSide] === +(1 - originalValue).toFixed(2)) {
+      /*if (otherScaleMargins[oppositeSide] === +(1 - originalValue).toFixed(2)) {
         // sync adjacent
 
         Vue.set(
@@ -135,7 +135,10 @@ export default class extends Vue {
         })
 
         hasSynced = true
-      } else if (otherScaleMargins.top === originalScaleMargins.top && otherScaleMargins.bottom === originalScaleMargins.bottom) {
+      } else*/ if (
+        otherScaleMargins.top === originalScaleMargins.top &&
+        otherScaleMargins.bottom === originalScaleMargins.bottom
+      ) {
         // sync overlapping
 
         Vue.set(this.activePriceScales[otherId], 'scaleMargins', scaleMargins)
