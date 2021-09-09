@@ -819,7 +819,7 @@ export default {
   &__selection {
     display: flex;
     flex-wrap: wrap;
-    padding: 6px 2px 2px 6px;
+    padding: 6px 16px 2px 6px;
     position: relative;
 
     > button,

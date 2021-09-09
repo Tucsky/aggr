@@ -613,8 +613,6 @@ export default class ChartController {
 
         if (serieOptions.scaleMargins) {
           delete serieOptions.scaleMargins
-
-          console.warn('remove serieOptions.scaleMargins')
         }
 
         /* if (!indicator.options.scaleMargins && indicator.options.priceScaleId) {
@@ -744,12 +742,11 @@ export default class ChartController {
       const indicator = this.loadedIndicators.find(indicator => indicator.options.priceScaleId === priceScaleId)
 
       if (indicator && indicator.options.scaleMargins) {
-        console.info('using scaleMarings as priceScale (first time)')
         priceScale.scaleMargins = indicator.options.scaleMargins
       } else {
         priceScale.scaleMargins = {
-          top: 0.05,
-          bottom: 0.05
+          top: 0.1,
+          bottom: 0.2
         }
       }
 

@@ -7,6 +7,7 @@
         <button class="btn -accent" @click="toggleVisibility" :title="visible ? 'Hide' : 'Show'">
           <i :class="{ 'icon-visible': !visible, 'icon-hidden': visible }"></i>
         </button>
+        <button class="btn -accent" @click="resize" title="Resize"><i class="icon-resize-height"></i></button>
         <button class="btn -accent" @click="edit" title="Edit"><i class="icon-edit"></i></button>
       </template>
       <button class="btn -accent" @click="remove" title="Disable"><i class="icon-cross"></i></button>
@@ -59,6 +60,9 @@ export default {
     },
     remove() {
       this.$store.dispatch(this.paneId + '/removeIndicator', { id: this.indicatorId })
+    },
+    resize() {
+      this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING', this.indicatorId)
     }
   }
 }

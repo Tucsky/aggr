@@ -48,12 +48,11 @@
             @output="priceScaleId = $event"
           ></dropdown>
         </div>
+        <div class="text-right">
+          <button class="btn -large -green" @click="create">Create</button>
+        </div>
       </div>
     </div>
-    <footer>
-      <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
-      <button class="btn -large -green" @click="create">Create</button>
-    </footer>
   </Dialog>
 </template>
 
@@ -180,3 +179,11 @@ export default {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.mobile-dir-col-desktop-dir-row > .form-group {
+  @media screen and (min-width: 768px) {
+    width: 33vw;
+  }
+}
+</style>

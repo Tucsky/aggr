@@ -2,7 +2,17 @@
   <div class="chart-pricescale" :style="{ top: roundedTop + '%', bottom: roundedBottom + '%' }" :class="{ '-active': !!currentSide }">
     <div class="chart-pricescale__content">
       <div class="chart-pricescale__title" @mousedown="handleMove" @touchstart="handleMove">
-        <i class="icon-move mr8"></i> {{ id }} <span v-if="id === 'right'" title="Main scale" v-tippy class="ml4">👑</span>
+        <i class="icon-move mr8"></i> {{ priceScaleId }} <span v-if="priceScaleId === 'right'" title="Main scale" v-tippy class="ml4">👑</span>
+
+        <dropdown
+          class="chart-pricescale__mode"
+          :options="modes"
+          :selected="priceScale.mode"
+          placeholder="linear"
+          @output="updateMode($event)"
+          selectionClass="-text -small"
+        >
+        </dropdown>
       </div>
       <div class="chart-pricescale__size" v-text="100 - roundedTop - roundedBottom + '%'"></div>
     </div>
@@ -31,7 +41,10 @@ import { randomString } from '@/utils/helpers'
 @Component({
   name: 'ChartPriceScale',
   props: {
-    id: {
+    paneId: {
+      required: true
+    },
+    priceScaleId: {
       required: true
     },
     priceScale: {
@@ -52,7 +65,8 @@ import { randomString } from '@/utils/helpers'
   }
 })
 export default class extends Vue {
-  id: string
+  paneId: string
+  priceScaleId: string
   priceScale: PriceScaleSettings
 
   top: number = null
@@ -64,6 +78,13 @@ export default class extends Vue {
   currentSide: 'top' | 'bottom' | 'both' = null
   currentOrigin: number = null
   currentContainerHeight: number = null
+
+  modes = {
+    0: 'Linear',
+    1: 'Logarithimic',
+    2: 'Percent',
+    3: 'Indexed to 100'
+  }
 
   created() {
     this.getSize()
@@ -102,7 +123,7 @@ export default class extends Vue {
 
     this[this.currentSide] += percentMove * (this.currentSide === 'top' ? 1 : -1)
 
-    this.update(event)
+    this.updateScaleMargins(event)
   }
 
   handleMove(event: MouseEvent | TouchEvent) {
@@ -130,7 +151,7 @@ export default class extends Vue {
     this.top += percentMove
     this.bottom -= percentMove
 
-    this.update(event)
+    this.updateScaleMargins(event)
   }
 
   release() {
@@ -156,7 +177,7 @@ export default class extends Vue {
     this.bottom = this.roundedBottom
   }
 
-  update(event) {
+  updateScaleMargins(event) {
     const top = Math.round(this.top)
     const bottom = Math.round(this.bottom)
 
@@ -173,11 +194,19 @@ export default class extends Vue {
     }
 
     this.$emit('update', {
-      id: this.id,
-      moveId: this.currentMoveId,
+      id: this.currentMoveId,
       side: this.currentSide,
-      scaleMargins,
-      canSync: event.type !== 'touchmove' && !event.shiftKey
+      value: scaleMargins,
+      syncable: event.type !== 'touchmove' && !event.shiftKey
+    })
+  }
+
+  updateMode(mode) {
+    this.priceScale.mode = +mode
+
+    this.$store.commit(this.paneId + '/SET_PRICE_SCALE', {
+      id: this.priceScaleId,
+      priceScale: this.priceScale
     })
   }
 
@@ -202,7 +231,7 @@ export default class extends Vue {
   }
 
   start(side: 'top' | 'bottom' | 'both', origin: number) {
-    const siblings = (this.$el.parentElement.children as unknown) as HTMLElement[]
+    /* const siblings = (this.$el.parentElement.children as unknown) as HTMLElement[]
 
     for (const el of siblings) {
       if (el === this.$el) {
@@ -210,7 +239,7 @@ export default class extends Vue {
       } else {
         el.style.zIndex = ''
       }
-    }
+    } */
 
     this.currentMoveId = randomString(8)
     this.currentSide = side
@@ -299,17 +328,19 @@ export default class extends Vue {
 
   &__title {
     line-height: 1;
-    display: inline-block;
+    display: inline-flex;
     position: absolute;
     top: 0.5em;
     left: 0.5em;
     padding: 0.5em;
     pointer-events: all;
     text-transform: uppercase;
+    align-items: center;
+    z-index: 2;
+  }
 
-    .icon-move {
-      vertical-align: text-bottom;
-    }
+  &__mode .dropdown__options {
+    color: var(--theme-color-base);
   }
 
   &__size {

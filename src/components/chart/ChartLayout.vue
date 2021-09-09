@@ -22,9 +22,10 @@
     <chart-price-scale
       v-for="(priceScale, id) of activePriceScales"
       :key="id"
-      :id="id"
+      :paneId="paneId"
+      :priceScaleId="id"
       :priceScale="priceScale"
-      @update="updatePriceScale"
+      @update="updatePriceScaleScaleMargins(id, $event)"
       class="chart-layout__item"
     ></chart-price-scale>
   </div>
@@ -54,7 +55,7 @@ import ChartPriceScale from './ChartPriceScale.vue'
 export default class extends Vue {
   paneId: string
   layouting: string
-  noSyncId: string
+  unsyncableMoveId: string
   axis: [number, number]
   activePriceScales: { [id: string]: PriceScaleSettings }
 
@@ -91,30 +92,30 @@ export default class extends Vue {
     this._originalActivePriceScales = JSON.parse(JSON.stringify(this.activePriceScales))
   }
 
-  updatePriceScale({ id, moveId, canSync, side, scaleMargins }) {
-    if (canSync && this.noSyncId !== moveId) {
-      if (!this.syncMoveWithOthers(id, side, scaleMargins)) {
-        this.noSyncId = moveId
+  updatePriceScaleScaleMargins(priceScaleId, event) {
+    if (event.syncable && this.unsyncableMoveId !== event.id) {
+      if (!this.syncMoveWithOthers(priceScaleId, event.side, event.value)) {
+        this.unsyncableMoveId = event.id
       }
     }
 
-    this.activePriceScales[id].scaleMargins = scaleMargins
+    this.activePriceScales[priceScaleId].scaleMargins = event.value
 
     this.$store.commit(this.paneId + '/SET_PRICE_SCALE', {
-      id,
-      priceScale: this.activePriceScales[id]
+      id: priceScaleId,
+      priceScale: this.activePriceScales[priceScaleId]
     })
   }
 
-  syncMoveWithOthers(id, side, scaleMargins): boolean {
-    const originalScaleMargins = this.activePriceScales[id].scaleMargins
-    const originalValue = originalScaleMargins[side]
-    const oppositeSide = side === 'top' ? 'bottom' : side === 'bottom' ? 'top' : null
+  syncMoveWithOthers(priceScaleId, side, scaleMargins): boolean {
+    const originalScaleMargins = this.activePriceScales[priceScaleId].scaleMargins
+    /*const originalValue = originalScaleMargins[side]
+    const oppositeSide = side === 'top' ? 'bottom' : side === 'bottom' ? 'top' : null*/
 
     let hasSynced = false
 
     for (const otherId in this.activePriceScales) {
-      if (id === otherId) {
+      if (priceScaleId === otherId) {
         continue
       }
 
@@ -183,13 +184,13 @@ export default class extends Vue {
   &__controls {
     position: absolute;
     top: 0;
-    padding: 1em;
+    padding: 1rem;
     border-radius: 0 0 4px 4px;
     background-color: var(--theme-background-base);
     left: 50%;
     transform: translateX(-50%);
     z-index: 4;
-    box-shadow: 0 0.2em 1em rgba(black, 0.2);
+    box-shadow: 0 0.2rem 1rem rgba(black, 0.2);
   }
 }
 </style>

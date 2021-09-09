@@ -166,5 +166,37 @@ export const workspaceUpgrades = {
 
     workspace.states.panes.layout = currentLayout
     delete workspace.states.panes.layouts
+
+    for (const paneId in workspace.states.panes.panes) {
+      if (workspace.states.panes.panes[paneId].type !== 'chart' || !workspace.states[paneId]) {
+        continue
+      }
+
+      let scaleMargins = {
+        top: 0.1,
+        bottom: 0.2
+      }
+
+      if (workspace.states[paneId].indicators) {
+        const rightIndicatorId = Object.keys(workspace.states[paneId].indicators).find(id => {
+          return (
+            workspace.states[paneId].indicators[id].options &&
+            workspace.states[paneId].indicators[id].options.scaleMargins &&
+            workspace.states[paneId].indicators[id].options.priceScaleId === 'right'
+          )
+        }) as string
+
+        if (rightIndicatorId) {
+          scaleMargins = workspace.states[paneId].indicators[rightIndicatorId].options.scaleMargins
+        }
+      }
+
+      workspace.states[paneId].priceScales = {
+        right: {
+          mode: 0,
+          scaleMargins
+        }
+      }
+    }
   }
 }

@@ -54,7 +54,7 @@ const state = {
     right: {
       scaleMargins: {
         top: 0.04,
-        bottom: 0.38
+        bottom: 0.21
       }
     }
   },
@@ -78,7 +78,7 @@ const actions = {
     state.indicatorsErrors = {} // let chart recalculate potential errors
     state.layouting = false // start without layouting overlay
 
-    if (!Object.keys(state.indicators).length) {
+    /*if (!Object.keys(state.indicators).length) {
       const indicators = await workspacesService.getIndicators()
 
       for (const indicator of indicators) {
@@ -94,7 +94,7 @@ const actions = {
       }
 
       scheduleSync(state)
-    }
+    }*/
 
     state._booted = true
   },
@@ -357,7 +357,10 @@ const mutations = {
   SET_PRICE_SCALE(state, { id, priceScale }) {
     if (!priceScale) {
       delete state.priceScales[id]
+      return
     }
+
+    console.log(id, priceScale.scaleMargins.top, priceScale.scaleMargins.bottom)
 
     state.priceScales[id] = priceScale
   },
