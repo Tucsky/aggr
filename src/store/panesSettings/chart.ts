@@ -78,7 +78,7 @@ const actions = {
     state.indicatorsErrors = {} // let chart recalculate potential errors
     state.layouting = false // start without layouting overlay
 
-    /*if (!Object.keys(state.indicators).length) {
+    if (!Object.keys(state.indicators).length) {
       const indicators = await workspacesService.getIndicators()
 
       for (const indicator of indicators) {
@@ -94,7 +94,7 @@ const actions = {
       }
 
       scheduleSync(state)
-    }*/
+    }
 
     state._booted = true
   },

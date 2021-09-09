@@ -525,6 +525,7 @@ export default {
       indicator.name += ' copy'
       delete indicator.updatedAt
       delete indicator.createdAt
+      delete indicator.enabled
 
       this.$store.dispatch(this.paneId + '/addIndicator', indicator)
 
