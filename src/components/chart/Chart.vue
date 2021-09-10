@@ -1,23 +1,6 @@
 <template>
   <div class="pane-chart">
     <pane-header :loading="loading" :paneId="paneId">
-      <!--<dropdown
-        :options="{
-          render: { label: 'Render', click: renderChart },
-          trim: { label: 'Trim', click: trimChart },
-          reset: { label: 'Reload', click: resetChart }
-        }"
-      >
-        <template v-slot:option="{ value }">
-          <div>
-            {{ value.label }}
-          </div>
-        </template>
-        <template v-slot:selection>
-          <span>Debug</span>
-        </template>
-      </dropdown>-->
-
       <dropdown :options="timeframes" :selected="timeframe" placeholder="tf." @output="changeTimeframe($event)" selectionClass="-text">
         <template v-slot:selection>
           <span>{{ timeframeForHuman }}</span>
@@ -26,6 +9,9 @@
 
       <button @click="$store.commit(paneId + '/TOGGLE_LAYOUTING')">
         <i class="icon-resize-height"></i>
+      </button>
+      <button @click="resetChart">
+        <i class="icon-refresh"></i>
       </button>
     </pane-header>
     <div class="chart-overlay -left hide-scrollbar">
@@ -85,7 +71,7 @@ import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
 import { getCustomColorsOptions } from './chartOptions'
 
 import aggregatorService from '@/services/aggregatorService'
-import historicalService from '@/services/historicalService'
+import historicalService, { HistoricalResponse } from '@/services/historicalService'
 import dialogService from '../../services/dialogService'
 
 import PaneMixin from '@/mixins/paneMixin'
@@ -339,6 +325,8 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
+    const alreadyHasData = this._chartController.chartCache.cacheRange && this._chartController.chartCache.cacheRange.from
+
     const historicalMarkets = historicalService.getHistoricalMarktets(this.$store.state.panes.panes[this.paneId].markets)
 
     if (!historicalMarkets.length) {
@@ -361,13 +349,21 @@ export default class extends Mixins(PaneMixin) {
       const barsCount = Math.ceil(window.innerWidth / 2)
 
       let rightTime
+      let isFirstFetch = true
 
-      if (this._chartController.chartCache.cacheRange && this._chartController.chartCache.cacheRange.from) {
+      if (alreadyHasData) {
         rightTime = this._chartController.chartCache.cacheRange.from
+        isFirstFetch = false
       } else if (visibleRange && visibleRange.from) {
         rightTime = visibleRange.from + this.$store.state.settings.timezoneOffset / 1000
       } else {
         rightTime = +new Date() / 1000
+      }
+
+      if (isFirstFetch) {
+        this.$store.dispatch('app/showNotice', {
+          title: 'first fetch that is'
+        })
       }
 
       rangeToFetch = {
@@ -391,7 +387,7 @@ export default class extends Mixins(PaneMixin) {
 
     console.debug(`[chart/fetch] fetch rangeToFetch: FROM: ${formatTime(rangeToFetch.from)} | TO: ${formatTime(rangeToFetch.to)}`)
 
-    this._chartController.lockRender()
+    // this._chartController.lockRender()
 
     this.loading = true
 
@@ -400,82 +396,7 @@ export default class extends Mixins(PaneMixin) {
 
     return historicalService
       .fetch(Math.round(rangeToFetch.from * 1000), Math.round(rangeToFetch.to * 1000 - 1), timeframe, historicalMarkets)
-      .then(({ data, from, to, format }) => {
-        /**
-         * @type {Chunk}
-         */
-        let chunk
-
-        switch (format) {
-          case 'point':
-            chunk = {
-              from,
-              to,
-              bars: data
-            }
-            break
-          default:
-            throw new Error('unsupported-historical-data-format')
-        }
-
-        if (chunk && chunk.bars.length) {
-          /**
-           * @type {Chunk[]}
-           */
-          const chunks = [
-            {
-              from: chunk.from,
-              to: chunk.from,
-              bars: []
-            }
-          ]
-
-          console.log(`[chart/fetch] success (${data.length} new ${format}s)`)
-
-          if (chunk.bars.length > MAX_BARS_PER_CHUNKS) {
-            console.debug(`[chart/fetch] response chunk is too large (> ${MAX_BARS_PER_CHUNKS} bars) -> start splitting`)
-          }
-
-          while (chunk.bars.length) {
-            const bar = chunk.bars.shift()
-
-            if (chunks[0].bars.length >= MAX_BARS_PER_CHUNKS && chunks[0].to < bar.timestamp) {
-              chunks.unshift({
-                from: bar.timestamp,
-                to: bar.timestamp,
-                bars: []
-              })
-            }
-
-            chunks[0].bars.push(bar)
-            chunks[0].to = bar.timestamp
-          }
-
-          if (chunks.length > 1) {
-            console.debug(`[chart/fetch] splitted result into ${chunks.length} chunks`)
-          }
-
-          console.debug(`[chart/fetch] save ${chunks.length} new chunks`)
-          console.debug(
-            `\t-> [first] FROM: ${formatTime(chunks[0].from)} | TO: ${formatTime(chunks[0].to)} (${formatAmount(chunks[0].bars.length)} bars)`
-          )
-          console.debug(
-            `\t-> [last] FROM: ${formatTime(chunks[chunks.length - 1].from)} | TO: ${formatTime(chunks[chunks.length - 1].to)} (${formatAmount(
-              chunks[chunks.length - 1].bars.length
-            )} bars)`
-          )
-          console.debug(
-            `\t-> [current cacheRange] FROM: ${formatTime(this._chartController.chartCache.cacheRange.from)} | TO: ${formatTime(
-              this._chartController.chartCache.cacheRange.to
-            )}`
-          )
-          for (const chunk of chunks) {
-            this._chartController.chartCache.saveChunk(chunk)
-          }
-
-          this._chartController.renderAll()
-        }
-      })
+      .then(results => this.onHistorical(results))
       .catch(err => {
         console.error(err)
 
@@ -493,7 +414,7 @@ export default class extends Mixins(PaneMixin) {
       .then(() => {
         this.$store.dispatch('app/hideNotice', 'fetching-' + this.paneId)
         this.loading = false
-        this._chartController.unlockRender()
+        // this._chartController.unlockRender()
       })
   }
 
@@ -558,6 +479,72 @@ export default class extends Mixins(PaneMixin) {
       }
 
       this._legendElements[id].textContent = text
+    }
+  }
+
+  /**
+   * Handle the historical service response
+   * Split bars into chunks and add to chartCache
+   * Render chart once everything is done
+   */
+  onHistorical(results: HistoricalResponse) {
+    {
+      /**
+       * @type {Chunk}
+       */
+      let chunk
+
+      switch (results.format) {
+        case 'point':
+          chunk = {
+            from: results.from,
+            to: results.to,
+            bars: results.data
+          }
+          break
+        default:
+          throw new Error('unsupported-historical-data-format')
+      }
+
+      if (chunk && chunk.bars.length) {
+        /**
+         * @type {Chunk[]}
+         */
+        const chunks = [
+          {
+            from: chunk.from,
+            to: chunk.from,
+            bars: []
+          }
+        ]
+
+        console.log(`[chart/fetch] success (${results.data.length} new ${results.format}s)`)
+
+        while (chunk.bars.length) {
+          const bar = chunk.bars.shift()
+
+          if (chunks[0].bars.length >= MAX_BARS_PER_CHUNKS && chunks[0].to < bar.timestamp) {
+            chunks.unshift({
+              from: bar.timestamp,
+              to: bar.timestamp,
+              bars: []
+            })
+          }
+
+          chunks[0].bars.push(bar)
+          chunks[0].to = bar.timestamp
+        }
+
+        console.debug(`[chart/fetch] save ${chunks.length} new chunks`)
+
+        for (const chunk of chunks) {
+          this._chartController.chartCache.saveChunk(chunk)
+        }
+
+        this._chartController.propagateInitialPrices = false
+        console.warn('propagateInitialPrices = false')
+        this._chartController.renderAll()
+      }
     }
   }
 

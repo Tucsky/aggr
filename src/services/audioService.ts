@@ -88,7 +88,7 @@ class AudioService {
         application.focus()
       }, 500)
 
-      const resumeOnFocus = (event => {
+      const resumeOnFocus = (() => {
         if (checkInProgress) {
           return
         }
@@ -109,8 +109,6 @@ class AudioService {
                 type: 'success',
                 title: 'Audio resumed successfully 🔊'
               })
-
-              console.info(`[sfx] AudioContext resumed successfully during the "${event.type}" event.`)
             }
 
             window.removeEventListener('focus', resumeOnFocus)

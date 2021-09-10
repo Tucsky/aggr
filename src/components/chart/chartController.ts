@@ -138,7 +138,6 @@ export default class ChartController {
   chartInstance: TV.IChartApi
   chartElement: HTMLElement
   loadedIndicators: LoadedIndicator[] = []
-  preventRender: boolean
   panPrevented: boolean
   activeRenderer: Renderer
   renderedRange: TimeRange = { from: null, to: null }
@@ -150,8 +149,8 @@ export default class ChartController {
   isOddTimeframe: boolean
   type: 'time' | 'tick'
   lastPositionSet = false
+  propagateInitialPrices = true
 
-  // private loadedSeries: { [id: string]: IndicatorApi } = {}
   private activeChunk: Chunk
   private queuedTrades: Trade[] = []
   private serieBuilder: SerieBuilder
@@ -160,7 +159,6 @@ export default class ChartController {
 
   private _releaseQueueInterval: number
   private _releasePanTimeout: number
-  private _preventImmediateRender: boolean
 
   constructor(id: string) {
     this.paneId = id
@@ -786,6 +784,14 @@ export default class ChartController {
     // unbind from activebar (remove serie meta data like sma memory etc)
     this.unbindIndicator(indicator, this.activeRenderer)
 
+    // when all indicator using a pricescale are removed, remove it from model as well
+    const isPriceScaleDead =
+      typeof this.loadedIndicators.find(i => i.id !== indicator.id && i.options.priceScaleId === indicator.options.priceScaleId) === 'undefined'
+
+    if (isPriceScaleDead) {
+      this.priceScales.splice(this.priceScales.indexOf(indicator.options.priceScaleId), 1)
+    }
+
     // remove from active series model
     this.loadedIndicators.splice(this.loadedIndicators.indexOf(indicator), 1)
   }
@@ -828,6 +834,12 @@ export default class ChartController {
     this.clearChart()
 
     this.setTimeframe(store.state[this.paneId].timeframe)
+
+    // starting from here the chart will only develop using realtime api
+    // market will get priced once a trade is done: can take some time to get "true price" of aggregated markets
+    // we use this to re-render the whole chart with all initial prices everytime a market get priced first time
+    // if a fetch adds historical data after this present fucntion, propagateInitialPrices will be set to false
+    this.propagateInitialPrices = true
   }
 
   resample(timeframe: number) {
@@ -1003,9 +1015,7 @@ export default class ChartController {
     console.debug(`[chart/${this.paneId}/controller] setup queue (${getHms(store.state[this.paneId].refreshRate)})`)
 
     this._releaseQueueInterval = setInterval(() => {
-      if (!this._preventImmediateRender) {
-        this.releaseQueue()
-      }
+      this.releaseQueue()
     }, store.state[this.paneId].refreshRate)
   }
 
@@ -1031,7 +1041,7 @@ export default class ChartController {
    * pull trades from queue and render them immediately
    */
   releaseQueue() {
-    if (!this.queuedTrades.length || this.preventRender) {
+    if (!this.queuedTrades.length) {
       if (!store.state[this.paneId].refreshRate) {
         this._releaseQueueInterval = requestAnimationFrame(() => this.releaseQueue())
       }
@@ -1044,20 +1054,6 @@ export default class ChartController {
     if (!store.state[this.paneId].refreshRate) {
       this._releaseQueueInterval = requestAnimationFrame(() => this.releaseQueue())
     }
-  }
-
-  /**
-   * unlock render, will release queue on next queueInterval
-   */
-  unlockRender() {
-    this.preventRender = false
-  }
-
-  /**
-   * temporarily disable render to avoid issues
-   */
-  lockRender() {
-    this.preventRender = true
   }
 
   /**
@@ -1143,14 +1139,16 @@ export default class ChartController {
       const amount = trade.price * trade.size
 
       if (!this.activeRenderer.sources[identifier] || typeof this.activeRenderer.sources[identifier].pair === 'undefined') {
-        this.chartCache.initialPrices[identifier] = {
-          exchange: trade.exchange,
-          pair: trade.pair,
-          price: trade.price
-        }
+        if (this.propagateInitialPrices) {
+          this.chartCache.initialPrices[identifier] = {
+            exchange: trade.exchange,
+            pair: trade.pair,
+            price: trade.price
+          }
 
-        if (!redrawRequired) {
-          redrawRequired = true
+          if (!redrawRequired) {
+            redrawRequired = true
+          }
         }
 
         this.activeRenderer.sources[identifier] = {
@@ -1199,7 +1197,6 @@ export default class ChartController {
     }
 
     if (redrawRequired) {
-      console.warn(`[chart/${this.paneId}] new source redraw required`)
       this.renderAll()
     } else if (!this.activeRenderer.bar.empty) {
       this.updateBar(this.activeRenderer)
@@ -1264,35 +1261,37 @@ export default class ChartController {
     let temporaryRenderer: Renderer
     let computedBar: any
 
-    const initialTimestamp = bars[0].timestamp
+    if (this.propagateInitialPrices) {
+      const initialTimestamp = bars[0].timestamp
 
-    for (let i = 0; i < bars.length; i++) {
-      if (bars[i].timestamp > initialTimestamp) {
-        break
+      for (let i = 0; i < bars.length; i++) {
+        if (bars[i].timestamp > initialTimestamp) {
+          break
+        }
+
+        const market = bars[i].exchange + bars[i].pair
+
+        if (this.chartCache.initialPrices[market]) {
+          delete this.chartCache.initialPrices[market]
+        }
       }
 
-      const market = bars[i].exchange + bars[i].pair
+      for (const market in this.chartCache.initialPrices) {
+        const price = this.chartCache.initialPrices[market].price
+        const exchange = this.chartCache.initialPrices[market].exchange
+        const pair = this.chartCache.initialPrices[market].pair
+        const bar = this.resetBar({
+          timestamp: initialTimestamp,
+          exchange: exchange,
+          pair: pair,
+          open: price,
+          high: price,
+          low: price,
+          close: price
+        })
 
-      if (this.chartCache.initialPrices[market]) {
-        delete this.chartCache.initialPrices[market]
+        bars.unshift(bar)
       }
-    }
-
-    for (const market in this.chartCache.initialPrices) {
-      const price = this.chartCache.initialPrices[market].price
-      const exchange = this.chartCache.initialPrices[market].exchange
-      const pair = this.chartCache.initialPrices[market].pair
-      const bar = this.resetBar({
-        timestamp: initialTimestamp,
-        exchange: exchange,
-        pair: pair,
-        open: price,
-        high: price,
-        low: price,
-        close: price
-      })
-
-      bars.unshift(bar)
     }
 
     if (this.activeRenderer && this.activeRenderer.timestamp > bars[bars.length - 1].timestamp) {

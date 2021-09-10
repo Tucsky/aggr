@@ -1,7 +1,15 @@
+import { Bar } from '@/components/chart/chartController'
 import { parseMarket } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import store from '../store'
+
+export interface HistoricalResponse {
+  format: 'point'
+  from: number
+  to: number
+  data: Bar[]
+}
 
 class HistoricalService extends EventEmitter {
   getHistoricalMarktets(markets: string[]) {
@@ -18,8 +26,9 @@ class HistoricalService extends EventEmitter {
 
     return url
   }
-  fetch(from: number, to: number, timeframe: number, markets: string[]) {
+  fetch(from: number, to: number, timeframe: number, markets: string[]): Promise<HistoricalResponse> {
     const url = this.getApiUrl(from, to, timeframe, markets)
+
     store.commit('app/TOGGLE_LOADING', true)
 
     return new Promise((resolve, reject) => {
@@ -159,6 +168,7 @@ class HistoricalService extends EventEmitter {
       const [exchange, pair] = parseMarket(data[i].market)
       data[i].exchange = exchange
       data[i].pair = pair
+      delete data[i].time
     }
 
     // markets.length && console.warn('missing markets', markets.join(', '))

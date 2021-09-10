@@ -54,7 +54,7 @@ const state = {
     right: {
       scaleMargins: {
         top: 0.04,
-        bottom: 0.21
+        bottom: 0.26
       }
     }
   },

@@ -49,7 +49,6 @@ export interface ListenedProduct extends Product {
 export interface AppState {
   isBooted: boolean
   isLoading: boolean
-  redirectUrl: string
   showSearch: boolean
   historicalMarkets: string[]
   apiSupportedTimeframes: number[]
@@ -72,7 +71,6 @@ export interface AppState {
 const state = {
   isBooted: false,
   isLoading: false,
-  redirectUrl: null,
   optimalDecimal: null,
   pairs: [],
   showSearch: false,
@@ -269,15 +267,6 @@ const actions = {
 const mutations = {
   SET_BOOTED: (state, value: boolean) => {
     state.isBooted = value
-  },
-  SET_REDIRECT_URL: (state, redirectUrl: string) => {
-    if (state.redirectUrl && redirectUrl) {
-      return
-    }
-
-    console.info(`[redirect] ${redirectUrl ? 'save url for later' : 'clear redirectUrl'}`, redirectUrl)
-
-    state.redirectUrl = redirectUrl
   },
   EXCHANGE_UPDATED(state, exchangeId: string) {
     Vue.set(state.activeExchanges, exchangeId, !this.state.exchanges[exchangeId].disabled)

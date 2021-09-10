@@ -24,7 +24,7 @@ class Aggregator {
   private _connectionChangeNoticeTimeout: number
 
   constructor() {
-    console.info(`[worker.aggr] new instance`)
+    console.info(`new worker instance`)
 
     this.bindExchanges()
     this.startPriceInterval()

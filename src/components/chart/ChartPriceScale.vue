@@ -261,6 +261,11 @@ export default class extends Vue {
     .chart-pricescale__size {
       display: block;
     }
+
+    .chart-pricescale__content:before {
+      opacity: 0.1;
+    }
+
     .chart-pricescale__title,
     .chart-pricescale__size {
       background: var(--theme-color-base);

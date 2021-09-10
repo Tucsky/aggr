@@ -52,8 +52,7 @@ class WorkspacesService {
   }
 
   async createDatabase() {
-    console.log(`[idb] openDB 'aggr' (latest database v${this.latestDatabaseVersion} workspace v${this.latestWorkspaceVersion})`)
-    console.info('init database')
+    console.info(`openDB 'aggr' (latest database v${this.latestDatabaseVersion} workspace v${this.latestWorkspaceVersion})`)
 
     let promiseOfUpgrade: Promise<void>
 

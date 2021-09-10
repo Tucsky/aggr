@@ -104,8 +104,8 @@
       "downColor": "#EB1E2F",
       "priceScaleId": "volume",
       "scaleMargins": {
-        "top": 0.75,
-        "bottom": 0.1
+        "top": 0.84,
+        "bottom": 0
       }
     }
   },
@@ -120,8 +120,8 @@
       "upColor": "rgb(255,76,243)",
       "downColor": "rgb(255,183,77)",
       "scaleMargins": {
-        "top": 0.82,
-        "bottom": 0.01
+        "top": 0.75,
+        "bottom": 0.17
       }
     }
   },
@@ -187,7 +187,11 @@
       },
       "color": "rgb(156,39,176)",
       "priceScaleId": "ctd",
-      "lineWidth": 1
+      "lineWidth": 1,
+      "scaleMargins": {
+        "top": 0.75,
+        "bottom": 0.17
+      }
     }
   },
   "linregcurve": {
