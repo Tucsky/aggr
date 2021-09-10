@@ -349,21 +349,13 @@ export default class extends Mixins(PaneMixin) {
       const barsCount = Math.ceil(window.innerWidth / 2)
 
       let rightTime
-      let isFirstFetch = true
 
       if (alreadyHasData) {
         rightTime = this._chartController.chartCache.cacheRange.from
-        isFirstFetch = false
       } else if (visibleRange && visibleRange.from) {
         rightTime = visibleRange.from + this.$store.state.settings.timezoneOffset / 1000
       } else {
         rightTime = +new Date() / 1000
-      }
-
-      if (isFirstFetch) {
-        this.$store.dispatch('app/showNotice', {
-          title: 'first fetch that is'
-        })
       }
 
       rangeToFetch = {
