@@ -18,7 +18,7 @@
     "core-js": "^3.6.5",
     "eventemitter3": "^4.0.7",
     "idb": "^6.0.0",
-    "lightweight-charts": "git://github.com/Tucsky/lightweight-charts.git#cloud-area-chart",
+    "lightweight-charts": "git://github.com/Tucsky/lightweight-charts.git#7f0eca830d4fd8134fd9176e50d072f65dbfdef9",
     "lodash.merge": "^4.6.2",
     "pako": "^1.0.6",
     "register-service-worker": "^1.7.1",

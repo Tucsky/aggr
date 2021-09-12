@@ -66,7 +66,7 @@ import { Component, Mixins } from 'vue-property-decorator'
 
 import ChartController, { TimeRange } from './chartController'
 
-import { formatPrice, formatAmount, formatTime, getHms, formatBytes, openBase64InNewTab, getTimeframeForHuman, copyTextToClipboard } from '../../utils/helpers'
+import { formatPrice, formatAmount, formatTime, getHms, formatBytes, openBase64InNewTab, getTimeframeForHuman } from '../../utils/helpers'
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
 import { getCustomColorsOptions } from './chartOptions'
 
@@ -592,7 +592,6 @@ export default class extends Mixins(PaneMixin) {
     }
 
     this._chartController.chartInstance.timeScale().subscribeVisibleLogicalRangeChange(this.onPan)
-    this._chartController.chartInstance.subscribeClick(this.onClick)
   }
 
   unbindChartEvents() {
@@ -601,15 +600,6 @@ export default class extends Mixins(PaneMixin) {
     this.unbindLegend()
 
     this._chartController.chartInstance.timeScale().unsubscribeVisibleLogicalRangeChange(this.onPan)
-    this._chartController.chartInstance.unsubscribeClick(this.onClick)
-  }
-
-  onClick(param) {
-    if (!param.point) {
-      return
-    }
-
-    copyTextToClipboard(param.time)
   }
 
   savePosition(visibleLogicalRange) {
