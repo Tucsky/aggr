@@ -69,7 +69,7 @@
     }
   },
   {
-    "name": "indicator:green/red candles",
+    "name": "indicator:default candlesticks",
     "type": "indicator",
     "data": {
       "options": {
@@ -87,7 +87,7 @@
     }
   },
   {
-    "name": "indicator:blue candles",
+    "name": "indicator:blue candlesticks",
     "type": "indicator",
     "data": {
       "options": {
@@ -101,6 +101,21 @@
         "lastValueVisible": true,
         "priceLineColor": "rgba(255, 255, 255, .5)",
         "priceLineVisible": true
+      }
+    }
+  },
+  {
+    "name": "indicator:light candlesticks",
+    "type": "indicator",
+    "data": {
+      "options": {
+        "upColor": "rgb(165,214,167)",
+        "downColor": "rgb(239,154,154)",
+        "borderUpColor": "rgb(102,187,106)",
+        "borderDownColor": "rgb(229,115,115)",
+        "wickUpColor": "rgb(102,187,106)",
+        "wickDownColor": "rgb(239,154,154)",
+        "priceLineColor": "rgba(0,0,0,0.5)"
       }
     }
   },

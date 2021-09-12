@@ -23,7 +23,7 @@
               <tr v-for="indicator of filteredIndicators" :key="indicator.id" @click="selectIndicator(indicator)" class="-action">
                 <td class="table-input" v-text="indicator.displayName || indicator.name"></td>
                 <td class="table-action" @click.stop="removeIndicator(indicator)">
-                  <button class="btn  -text -red -small"><i class="icon-cross"></i></button>
+                  <button class="btn  -text -small"><i class="icon-cross"></i></button>
                 </td>
               </tr>
             </tbody>
@@ -179,11 +179,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-.mobile-dir-col-desktop-dir-row > .form-group {
-  @media screen and (min-width: 768px) {
-    width: 33vw;
-  }
-}
-</style>

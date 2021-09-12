@@ -1,6 +1,6 @@
 <template>
   <div class="indicator" :class="{ '-error': !!error, '-disabled': !visible }">
-    <div class="indicator__name" @click="edit">{{ name }}</div>
+    <div class="indicator__name pane-overlay" @click="edit">{{ name }}</div>
 
     <div class="indicator__controls">
       <template v-if="!error">
@@ -12,7 +12,7 @@
       </template>
       <button class="btn -accent" @click="remove" title="Disable"><i class="icon-cross"></i></button>
     </div>
-    <div class="indicator__legend" :id="paneId + indicator.id"></div>
+    <div class="indicator__legend pane-overlay" :id="paneId + indicator.id"></div>
     <div v-if="error">
       <i class="icon-warning ml4 mr8"></i>
       {{ error }}
@@ -88,11 +88,9 @@ export default {
 
   &__name {
     position: relative;
-    background: var(--theme-background-o75);
   }
 
   &__legend {
-    background: var(--theme-background-o75);
     color: lighten($green, 20%);
     font-family: $font-monospace;
     pointer-events: none;
@@ -136,7 +134,7 @@ export default {
 
 #app.-light {
   .indicator__legend {
-    color: $green;
+    color: darken($green, 10%);
     text-shadow: none;
   }
 }

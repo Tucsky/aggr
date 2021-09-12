@@ -63,12 +63,13 @@ export interface LoadedIndicator {
   script: string
   model: IndicatorTranspilationResult
   adapter: IndicatorRealtimeAdapter
+  silentAdapter: IndicatorRealtimeAdapter
   apis: IndicatorApi[]
-  apisNoop: IndicatorApi[]
 }
 
 export interface IndicatorTranspilationResult {
   output: string
+  silentOutput: string
   variables: IndicatorVariable[]
   functions: IndicatorFunction[]
   plots: IndicatorPlot[]
@@ -83,7 +84,6 @@ export interface IndicatorFunction {
   state?: any
 }
 export interface IndicatorVariable {
-  name: string
   length?: number
   state?: any
 }
@@ -112,6 +112,7 @@ export interface Renderer {
 }
 
 interface RendererIndicatorData {
+  canRender: boolean
   series: {
     time: number
     value?: number
@@ -197,7 +198,7 @@ export default class ChartController {
     }, {})
 
     this.watermark =
-      marketsForWatermark.slice(0, 3).join(' + ') + (marketsForWatermark.length - 3 > 0 ? ' + ' + (marketsForWatermark.length - 3) + ' others' : '')
+      marketsForWatermark.slice(0, 3).join(' + ') + (marketsForWatermark.length - 3 > 0 ? ' + ' + (marketsForWatermark.length - 3) : '')
 
     this.updateWatermark()
   }
@@ -494,8 +495,8 @@ export default class ChartController {
       script: indicatorSettings.script,
       model: null,
       adapter: null,
-      apis: [],
-      apisNoop: []
+      silentAdapter: null,
+      apis: []
     }
 
     // build indicator
@@ -584,7 +585,6 @@ export default class ChartController {
   prepareIndicator(indicator: LoadedIndicator) {
     try {
       const result = this.serieBuilder.build(indicator, this.seriesIndicatorsMap, this.paneId)
-      const { output, functions, variables, references, markets, plots } = result
 
       if (store.state[this.paneId].indicatorsErrors[indicator.id]) {
         store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
@@ -593,14 +593,7 @@ export default class ChartController {
         })
       }
 
-      indicator.model = {
-        output,
-        functions,
-        variables,
-        references,
-        markets,
-        plots
-      }
+      indicator.model = result
 
       const series = []
 
@@ -613,22 +606,6 @@ export default class ChartController {
           delete serieOptions.scaleMargins
         }
 
-        /* if (!indicator.options.scaleMargins && indicator.options.priceScaleId) {
-          const scaleMargins = this.getPriceScaleMargins(indicator.options.priceScaleId)
-
-          if (scaleMargins) {
-            serieOptions.scaleMargins = scaleMargins
-          }
-        }
-
-        if (indicator.options.priceScaleId === 'right') {
-          this.chartInstance.applyOptions({
-            rightPriceScale: {
-              scaleMargins: serieOptions.scaleMargins
-            }
-          })
-        } */
-
         const api = this.chartInstance[apiMethodName](serieOptions) as IndicatorApi
 
         api.id = serie.id
@@ -639,17 +616,8 @@ export default class ChartController {
         }
         series.push(serie.id)
 
-        /* if (indicator.options.scaleMargins) {
-          api.applyOptions({
-            scaleMargins: indicator.options.scaleMargins
-          })
-        } */
-
         // this.loadedSeries[serie.id] = api
         indicator.apis.push(api)
-
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        indicator.apisNoop.push(({ update: () => {} } as unknown) as IndicatorApi) // for batch rendering
       }
 
       store.commit(this.paneId + '/SET_INDICATOR_SERIES', {
@@ -689,6 +657,7 @@ export default class ChartController {
     // attach indicator to renderer, with fresh functions & variables states
     // all ready to calculate bars from the start
     renderer.indicators[indicator.id] = {
+      canRender: indicator.options.minLength <= 1,
       series: [],
       functions,
       variables,
@@ -703,6 +672,7 @@ export default class ChartController {
 
     // create function ready to calculate (& render) everything for this indicator
     indicator.adapter = this.serieBuilder.getAdapter(indicator.model.output)
+    indicator.silentAdapter = this.serieBuilder.getAdapter(indicator.model.silentOutput)
 
     this.prepareRendererForIndicators(indicator.id, renderer)
 
@@ -823,6 +793,18 @@ export default class ChartController {
     this.queuedTrades.splice(0, this.queuedTrades.length)
   }
 
+  clearPriceLines(indicatorsIds?: string[]) {
+    for (let i = 0; i < this.loadedIndicators.length; i++) {
+      if (indicatorsIds && indicatorsIds.indexOf(this.loadedIndicators[i].id) === -1) {
+        continue
+      }
+
+      for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
+        this.clearSeriePriceLines(this.loadedIndicators[i].apis[j])
+      }
+    }
+  }
+
   /**
    * fresh start : clear cache, renderer and rendered series on chart
    */
@@ -906,9 +888,9 @@ export default class ChartController {
           barTimestamp = Math.floor(bar.timestamp / this.timeframe) * this.timeframe
         }
 
-        if (this.activeRenderer.type !== 'time' && markets[market] && markets[market].cbuy + markets[market].csell > this.timeframe) {
+        /*if (this.activeRenderer.type !== 'time' && markets[market] && markets[market].cbuy + markets[market].csell > this.timeframe) {
           barTimestamp = markets[market].timestamp + this.timeframe
-        }
+        }*/
 
         if (!markets[market] || markets[market].timestamp < barTimestamp) {
           if (markets[market]) {
@@ -998,8 +980,33 @@ export default class ChartController {
    */
   clearIndicatorSeries(indicator: LoadedIndicator) {
     for (let i = 0; i < indicator.apis.length; i++) {
+      this.clearSeriePriceLines(indicator.apis[i])
       indicator.apis[i].setData([])
+      // this.recreateSerie(indicator, i)
     }
+
+    // this.bindPriceScale(indicator.options.priceScaleId, true)
+  }
+
+  clearSeriePriceLines(serieApi) {
+    if (serieApi._internal__series) {
+      serieApi._internal__series._private__customPriceLines.splice(0, serieApi._internal__series._private__customPriceLines.length)
+    } else {
+      serieApi.Ye.Lo.splice(0, serieApi.Ye.Lo.length)
+    }
+  }
+
+  /**
+   * @param {LoadedIndicator} indicator indicator owning series
+   * @param {number} serieIndex
+   */
+  recreateSerie(indicator, serieIndex) {
+    const apiMethodName = camelize('add' + indicator.apis[serieIndex].seriesType() + '-series')
+    const apiId = indicator.apis[serieIndex].id
+    const serieOptions = indicator.apis[serieIndex].options()
+    this.chartInstance.removeSeries(indicator.apis[serieIndex])
+    indicator.apis[serieIndex] = this.chartInstance[apiMethodName](serieOptions) as IndicatorApi
+    indicator.apis[serieIndex].id = apiId
   }
 
   /**
@@ -1095,7 +1102,7 @@ export default class ChartController {
           }
         } else {
           if (this.activeRenderer.bar.cbuy + this.activeRenderer.bar.csell > this.timeframe) {
-            timestamp = this.activeRenderer.timestamp + this.timeframe
+            timestamp = Math.round(trade.timestamp / 1000)
           } else {
             timestamp = this.activeRenderer.timestamp
           }
@@ -1254,6 +1261,8 @@ export default class ChartController {
       return
     }
 
+    this.clearPriceLines(indicatorsIds)
+
     const computedSeries = {}
     let from = null
     let to = null
@@ -1361,7 +1370,7 @@ export default class ChartController {
         barCount++
 
         if (temporaryRenderer) {
-          if (this.fillGapsWithEmpty) {
+          if (this.fillGapsWithEmpty && temporaryRenderer.type === 'time') {
             const missingBars = (bar.timestamp - temporaryRenderer.timeframe - temporaryRenderer.timestamp) / temporaryRenderer.timeframe
 
             if (missingBars > 0) {
@@ -1420,8 +1429,6 @@ export default class ChartController {
       // whole chart was rendered from start to finish
 
       scrollPosition = this.chartInstance.timeScale().scrollPosition()
-
-      this.clearChart()
 
       if (!bars.length) {
         this.renderedRange.from = this.renderedRange.to = null
@@ -1496,14 +1503,11 @@ export default class ChartController {
       const indicator = this.loadedIndicators[i]
       const serieData = renderer.indicators[indicator.id]
 
-      this.loadedIndicators[i].adapter(
-        renderer,
-        serieData.functions,
-        serieData.variables,
-        renderer.length >= serieData.minLength ? indicator.apis : indicator.apisNoop,
-        indicator.options,
-        seriesUtils
-      )
+      if (serieData.canRender) {
+        this.loadedIndicators[i].adapter(renderer, serieData.functions, serieData.variables, indicator.apis, indicator.options, seriesUtils)
+      } else {
+        this.loadedIndicators[i].silentAdapter(renderer, serieData.functions, serieData.variables, indicator.apis, indicator.options, seriesUtils)
+      }
     }
   }
 
@@ -1524,7 +1528,7 @@ export default class ChartController {
 
       const serieData = renderer.indicators[indicator.id]
 
-      indicator.adapter(renderer, serieData.functions, serieData.variables, indicator.apisNoop, indicator.options, seriesUtils)
+      indicator.silentAdapter(renderer, serieData.functions, serieData.variables, indicator.apis, indicator.options, seriesUtils)
 
       for (let i = 0; i < serieData.series.length; i++) {
         if (
@@ -1636,6 +1640,8 @@ export default class ChartController {
       if (!rendererSerieData) {
         continue
       }
+
+      rendererSerieData.canRender = renderer.length >= rendererSerieData.minLength
 
       for (let f = 0; f < rendererSerieData.functions.length; f++) {
         const instruction = rendererSerieData.functions[f]

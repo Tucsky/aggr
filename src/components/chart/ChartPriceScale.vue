@@ -1,7 +1,7 @@
 <template>
   <div class="chart-pricescale" :style="{ top: roundedTop + '%', bottom: roundedBottom + '%' }" :class="{ '-active': !!currentSide }">
     <div class="chart-pricescale__content">
-      <div class="chart-pricescale__title" @mousedown="handleMove" @touchstart="handleMove">
+      <div class="chart-pricescale__title pane-overlay" @mousedown="handleMove" @touchstart="handleMove">
         <i class="icon-move mr8"></i> {{ priceScaleId }} <span v-if="priceScaleId === 'right'" title="Main scale" v-tippy class="ml4">👑</span>
 
         <dropdown
@@ -10,11 +10,11 @@
           :selected="priceScale.mode"
           placeholder="linear"
           @output="updateMode($event)"
-          selectionClass="-text -small"
+          selectionClass="-text -small ml8 text-bold"
         >
         </dropdown>
       </div>
-      <div class="chart-pricescale__size" v-text="100 - roundedTop - roundedBottom + '%'"></div>
+      <div class="chart-pricescale__size pane-overlay" v-text="100 - roundedTop - roundedBottom + '%'"></div>
     </div>
     <div
       class="chart-pricescale__boundary -top"
@@ -265,12 +265,6 @@ export default class extends Vue {
     .chart-pricescale__content:before {
       opacity: 0.1;
     }
-
-    .chart-pricescale__title,
-    .chart-pricescale__size {
-      background: var(--theme-color-base);
-      color: var(--theme-background-base);
-    }
   }
 
   &__boundary {
@@ -342,6 +336,10 @@ export default class extends Vue {
     text-transform: uppercase;
     align-items: center;
     z-index: 2;
+
+    .icon-move {
+      font-size: 0.75em;
+    }
   }
 
   &__mode .dropdown__options {

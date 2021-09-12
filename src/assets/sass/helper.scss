@@ -247,6 +247,10 @@ $unit: 'px'; // Feel free to change the unit.
   color: lighten($green, 10%);
 }
 
+.text-bold {
+  font-weight: 600;
+}
+
 .color-100 {
   color: var(--theme-color-100);
 }

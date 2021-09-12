@@ -134,7 +134,7 @@ export default class extends Vue {
 
     event.preventDefault()
 
-    this.crement(Math.sign(event.deltaY) * (event.shiftKey ? 100 : 1))
+    this.crement(Math.sign(event.deltaY) * (event.shiftKey ? 10 : 1))
   }
 }
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <div class="pane-header d-flex" :class="{ '-loading': loading }">
+  <div class="pane-header pane-overlay d-flex" :class="{ '-loading': loading }">
     <div class="pane-header__loader"></div>
     <span class="pane-header__name ml4 mrauto" data-hide-header @dblclick="renamePane">{{ name }}</span>
     <div class="flex-grow-1" @dblclick="maximizePane"></div>

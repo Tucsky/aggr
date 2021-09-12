@@ -118,6 +118,10 @@
   }
 }
 
+.pane-overlay {
+  background-color: rgba(black, 0.4);
+}
+
 #app.-light {
   .vue-grid-item {
     > .vue-resizable-handle:hover {
@@ -126,13 +130,24 @@
   }
 
   .pane {
-    background-color: rgba(white, 0.2);
+    background-color: rgba(white, 0.1);
+
+    .pane-overlay {
+      background-color: rgba(white, 0.5);
+    }
+
+    /*.pane-header,
+    .pane-header button,
+    .pane-header button i:before,
+    .pane-overlay {
+      font-weight: 600;
+    }*/
   }
 }
 
 .pane {
   position: relative;
-  background-color: rgba(black, 0.2);
+  background-color: rgba(black, 0.1);
   width: 100%;
   height: 100%;
   display: flex;
@@ -148,7 +163,7 @@
   right: 0;
   font-size: calc(11px + 0.8em);
   height: 1.5em;
-  background-color: var(--theme-background-100);
+  background-color: rgba(black, 0.5);
   align-items: stretch;
   flex-shrink: 0;
 

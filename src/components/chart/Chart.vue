@@ -23,11 +23,11 @@
             <i class="icon-plus"></i>
           </a>
         </div>
-        <div class="chart-overlay__title" @click="toggleIndicatorOverlay">Indicators <i class="icon-up -higher"></i></div>
+        <div class="chart-overlay__title pane-overlay" @click="toggleIndicatorOverlay">Indicators <i class="icon-up -higher"></i></div>
       </div>
 
       <div class="chart-overlay__panel chart__markets">
-        <div class="chart-overlay__content" v-if="showMarketsOverlay">
+        <div class="chart-overlay__content pane-overlay" v-if="showMarketsOverlay">
           <div class="column">
             <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('perp')">perp</a>
             <i class="pipe -center">|</i>
@@ -49,7 +49,7 @@
             </label>
           </div>
         </div>
-        <div class="chart-overlay__title" @click="showMarketsOverlay = !showMarketsOverlay">Markets <i class="icon-up -higher"></i></div>
+        <div class="chart-overlay__title pane-overlay" @click="showMarketsOverlay = !showMarketsOverlay">Markets <i class="icon-up -higher"></i></div>
       </div>
     </div>
     <div class="chart-overlay -right chart__controls" :style="{ marginRight: axis[0] + 'px' }">
@@ -66,7 +66,7 @@ import { Component, Mixins } from 'vue-property-decorator'
 
 import ChartController, { TimeRange } from './chartController'
 
-import { formatPrice, formatAmount, formatTime, getHms, formatBytes, openBase64InNewTab, getTimeframeForHuman } from '../../utils/helpers'
+import { formatPrice, formatAmount, formatTime, getHms, formatBytes, openBase64InNewTab, getTimeframeForHuman, copyTextToClipboard } from '../../utils/helpers'
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
 import { getCustomColorsOptions } from './chartOptions'
 
@@ -592,6 +592,7 @@ export default class extends Mixins(PaneMixin) {
     }
 
     this._chartController.chartInstance.timeScale().subscribeVisibleLogicalRangeChange(this.onPan)
+    this._chartController.chartInstance.subscribeClick(this.onClick)
   }
 
   unbindChartEvents() {
@@ -600,6 +601,15 @@ export default class extends Mixins(PaneMixin) {
     this.unbindLegend()
 
     this._chartController.chartInstance.timeScale().unsubscribeVisibleLogicalRangeChange(this.onPan)
+    this._chartController.chartInstance.unsubscribeClick(this.onClick)
+  }
+
+  onClick(param) {
+    if (!param.point) {
+      return
+    }
+
+    copyTextToClipboard(param.time)
   }
 
   savePosition(visibleLogicalRange) {
@@ -936,7 +946,7 @@ export default class extends Mixins(PaneMixin) {
       }
 
       ctx.fillStyle = color
-      ctx.fillText(indicator.name.toUpperCase(), textPadding, headerHeight + textPadding + index * lineHeight * 1.2)
+      ctx.fillText(indicator.displayName || indicator.name, textPadding, headerHeight + textPadding + index * lineHeight * 1.2)
     })
 
     const dataURL = canvas.toDataURL('image/png')
@@ -1002,8 +1012,6 @@ export default class extends Mixins(PaneMixin) {
 
   .chart-overlay__content {
     overflow: auto;
-
-    background: var(--theme-background-o75);
   }
 
   .checkbox-control {
@@ -1033,12 +1041,6 @@ export default class extends Mixins(PaneMixin) {
   left: 0;
   right: 0;
   z-index: 3;
-}
-
-.chart__controls {
-  .btn {
-    font-size: 1.25em;
-  }
 }
 
 .chart-overlay {
@@ -1083,7 +1085,6 @@ export default class extends Mixins(PaneMixin) {
   &__title {
     cursor: pointer;
     user-select: none;
-    background: var(--theme-background-o75);
     color: var(--theme-color-150);
     place-self: flex-start;
 
@@ -1096,7 +1097,6 @@ export default class extends Mixins(PaneMixin) {
     }
 
     &:first-child {
-      background: none;
       .icon-up {
         display: inline-block;
         transform: rotateZ(180deg);

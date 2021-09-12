@@ -17,6 +17,7 @@ import store from '@/store'
 import { findClosingBracketMatchIndex, parseFunctionArguments, slugify, uniqueName } from '@/utils/helpers'
 import { plotTypesMap } from './chartOptions'
 const VARIABLE_REGEX = /(?:^|\n)([a-zA-Z0-9_]+)\(?(\d*)\)?\s*=\s*([^;,]*)?/
+const SERIE_UPDATE_REGEX = /series\[\d+\]\.update\(/
 const VARIABLES_VAR_NAME = 'vars'
 const FUNCTIONS_VAR_NAME = 'fns'
 const SERIE_TYPES = {
@@ -79,6 +80,7 @@ export default class SerieBuilder {
 
     return {
       output: result.output,
+      silentOutput: result.silentOutput,
       functions: result.functions,
       variables: result.variables,
       references: result.references,
@@ -100,6 +102,7 @@ export default class SerieBuilder {
     input = input.replace(/([^.])?\b(bar)\b/gi, '$1renderer')
     input = input.replace(/([^.]|^)\b(vbuy|vsell|cbuy|csell|lbuy|lsell)\b/gi, '$1renderer.bar.$2')
     input = input.replace(/([^.]|^)\b(time)\b\s*([^:])/gi, '$1renderer.localTimestamp$3')
+    input = input.replace(/(\n|^)\s*?\/\/.*/g, '')
     input = input.replace(/[^\S\r\n]/g, '')
     //input = input.replace(/([^({[])\n/g, '$1,').replace(/\s/g, '')
 
@@ -151,6 +154,21 @@ export default class SerieBuilder {
     }
   }
 
+  getSilentOutput(originalOutput) {
+    let silentOutput = originalOutput
+
+    let instructionMatch = null
+    do {
+      if ((instructionMatch = SERIE_UPDATE_REGEX.exec(silentOutput))) {
+        const openingParenthesisIndex = instructionMatch.index + instructionMatch[0].length - 1
+        const closingParenthesisIndex = findClosingBracketMatchIndex(silentOutput, openingParenthesisIndex)
+        silentOutput = silentOutput.replace(instructionMatch[0] + silentOutput.slice(openingParenthesisIndex + 1, closingParenthesisIndex + 1), 1)
+      }
+    } while (instructionMatch)
+
+    return silentOutput
+  }
+
   /**
    * parse variable, functions referenced sources and external indicators used in it
    * @param input
@@ -174,8 +192,11 @@ export default class SerieBuilder {
 
     output = this.formatOutput(output)
 
+    const silentOutput = this.getSilentOutput(output)
+
     return {
       output,
+      silentOutput,
       functions,
       variables,
       plots,
@@ -228,14 +249,18 @@ export default class SerieBuilder {
     do {
       if ((variableMatch = VARIABLE_REGEX.exec(output))) {
         const variableName = variableMatch[1]
+
+        if (/^var/.test(variableName)) {
+          output = output.replace(variableMatch[0], '\nvar ' + variableName.slice(3) + '=' + variableMatch[3])
+          VARIABLE_REGEX.lastIndex = variableMatch.index + variableMatch[0].length
+          continue
+        }
         const variableLength = +variableMatch[2] || 1
 
         output = output.replace(new RegExp('([^.]|^)\\b(' + variableName + ')\\b', 'ig'), `$1${VARIABLES_VAR_NAME}[${variables.length}]`)
 
-        const variable = {
-          type: 'unknown',
-          length: variableLength,
-          name: variableName
+        const variable: IndicatorVariable = {
+          length: variableLength
         }
 
         variables.push(variable)
@@ -537,7 +562,7 @@ export default class SerieBuilder {
     }
   }
 
-  determineVariablesType(output, variables) {
+  determineVariablesType(output, variables: IndicatorVariable[]) {
     for (const variable of variables) {
       const index = variables.indexOf(variable)
       const VARIABLE_LENGTH_REGEX = new RegExp(`${VARIABLES_VAR_NAME}\\[${index}\\](?:\\[(\\d+)\\])?`, 'g')
@@ -565,15 +590,11 @@ export default class SerieBuilder {
       } while (lengthMatch)
 
       if (!variable.length) {
-        throw new Error('no length on var ' + variable.name)
+        throw new Error('unexpected no length on var')
       }
 
       if (variable.length === 1) {
-        variable.type = 'number'
-
         output = output.replace(new RegExp(`${VARIABLES_VAR_NAME}\\[${index}\\]\\.state\\[\\d+\\]`, 'g'), `${VARIABLES_VAR_NAME}[${index}].state`)
-      } else {
-        variable.type = 'array'
       }
 
       output = output.replace(new RegExp(`#${VARIABLES_VAR_NAME}\\[${index}\\]\\.state\\[\\d+\\]`, 'g'), `${VARIABLES_VAR_NAME}[${index}].state`)
@@ -582,10 +603,10 @@ export default class SerieBuilder {
     return output
   }
 
-  test({ output, functions, variables, markets, plots, references }: IndicatorTranspilationResult, options) {
+  test({ silentOutput, functions, variables, markets, plots, references }: IndicatorTranspilationResult, options) {
     let adapter: IndicatorRealtimeAdapter
     try {
-      adapter = this.getAdapter(output)
+      adapter = this.getAdapter(silentOutput)
     } catch (error) {
       throw new Error(`syntax error: ${error.message}`)
     }
@@ -604,6 +625,10 @@ export default class SerieBuilder {
 
       for (let p = 0; p < renderer.indicators[this.indicatorId].series.length; p++) {
         const point = renderer.indicators[this.indicatorId].series[p]
+
+        if (typeof point === 'undefined') {
+          continue
+        }
         const plot = plots[p]
         const resultedType =
           typeof point.value !== 'undefined'
@@ -618,9 +643,9 @@ export default class SerieBuilder {
           throw new Error(`${plot.type}.time expected a valid timestamp (number of seconds since January 1, 1970) but got NaN`)
         }
 
-        if (point.time < renderer.timestamp) {
+        /*if (point.time < renderer.timestamp) {
           throw new Error(`${plot.type}.time should be the same as the current bar timestamp ${renderer.timestamp}, got ${point.time}`)
-        }
+        }*/
 
         if (resultedType && resultedType !== plot.expectedInput) {
           throw new Error(`plot ${plot.type} expected ${plot.expectedInput} but got ${resultedType}`)
@@ -653,7 +678,7 @@ export default class SerieBuilder {
     }
   }
 
-  refreshSerieMeta(functions, variables) {
+  refreshSerieMeta(functions: IndicatorFunction[], variables: IndicatorVariable[]) {
     for (let f = 0; f < functions.length; f++) {
       const instruction = functions[f]
 
@@ -683,7 +708,7 @@ export default class SerieBuilder {
     for (let v = 0; v < variables.length; v++) {
       const instruction = variables[v]
 
-      if (instruction.type === 'array') {
+      if (instruction.length > 1) {
         instruction.state.unshift(instruction.state[0])
 
         if (instruction.state.length > instruction.length) {
@@ -746,6 +771,7 @@ export default class SerieBuilder {
       for (const reference of references) {
         if (!renderer.indicators[reference.indicatorId]) {
           renderer.indicators[reference.indicatorId] = {
+            canRender: false,
             series: [],
             plotsOptions: [],
             functions: [],

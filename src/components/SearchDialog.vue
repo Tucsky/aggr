@@ -48,7 +48,7 @@
             <label class="checkbox-control -small mb4">
               <input type="checkbox" class="form-control" :checked="onlyConnected" @change="onlyConnected = !onlyConnected" />
               <div></div>
-              <span>Active markets</span>
+              <span>Already connected</span>
             </label>
           </div>
           <div class="search-filters__title mb8" @click="showExtraFilters = !showExtraFilters">Extra <i class="icon-up -higher"></i></div>

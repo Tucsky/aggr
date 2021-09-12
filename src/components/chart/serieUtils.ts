@@ -133,6 +133,54 @@ export function cum$(state, value) {
 }
 
 /**
+ * pivot high
+ * @param {Renderer} renderer
+ */
+export const pivot_high = {
+  count: 0,
+  points: []
+}
+export function pivot_high$(state, value, length) {
+  state.output = value
+
+  const middle = state.points[Math.round(length / 2 - 1)]
+
+  for (let i = 0; i <= length; i++) {
+    const current = i < length ? state.points[i] : value
+
+    if (current > middle) {
+      return null
+    }
+  }
+
+  return middle
+}
+
+/**
+ * pivot low
+ * @param {Renderer} renderer
+ */
+export const pivot_low = {
+  count: 0,
+  points: []
+}
+export function pivot_low$(state, value, length) {
+  state.output = value
+
+  const middle = state.points[Math.round(length / 2 - 1)]
+
+  for (let i = 0; i <= length; i++) {
+    const current = i < length ? state.points[i] : value
+
+    if (current < middle) {
+      return null
+    }
+  }
+
+  return middle
+}
+
+/**
  * Highest value state
  */
 export const highest = {

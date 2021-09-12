@@ -264,6 +264,8 @@ export default {
     })
   },
   beforeDestroy() {
+    this.cleanOptions()
+
     if (this.editor) {
       this.editor.destroy()
     }
@@ -278,14 +280,12 @@ export default {
         // empty
       }
 
-      if (key === 'type') {
-        type = 'type'
-      } else if (typeof value === 'number') {
-        type = 'number'
-      } else if (typeof value === 'boolean') {
+      if (typeof value === 'boolean' || /^show[A-Z]/.test(key)) {
         type = 'boolean'
       } else if (/^rgba?/.test(value) || /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value)) {
         type = 'color'
+      } else if (typeof value === 'number') {
+        type = 'number'
       }
 
       return type
@@ -393,6 +393,28 @@ export default {
         .map(t => t.replace(/^plot/, ''))
         .map(t => plotTypesMap[t] || t)
         .filter((t, index, self) => self.indexOf(t) === index && defaultPlotsOptions[t])
+    },
+    cleanOptions() {
+      const defaultSeriesOptionsKeys = Object.keys(defaultSerieOptions)
+
+      for (let i = this.types.length - 1; i >= 0; i--) {
+        for (const prop in defaultPlotsOptions[this.types[i]]) {
+          defaultSeriesOptionsKeys.push(prop)
+        }
+      }
+
+      const scriptOptionsKeys = this.getScriptOptions(this.script)
+
+      const mergedOptionsKeys = [...scriptOptionsKeys, ...defaultSeriesOptionsKeys].filter((x, i, a) => {
+        return ignoredOptionsKeys.indexOf(x) === -1 && a.indexOf(x) == i
+      })
+
+      for (const key of this.otherOptionsKeys) {
+        if (mergedOptionsKeys.indexOf(key) === -1) {
+          console.warn('[indicator/' + this.indicatorId + '] remove unused option ' + key)
+          this.$store.commit(this.paneId + '/REMOVE_INDICATOR_OPTION', { id: this.indicatorId, key })
+        }
+      }
     },
     refreshOptions(script) {
       const defaultIndicatorOptionsKeys = Object.keys(store.state[this.paneId].indicators[this.indicatorId].options)

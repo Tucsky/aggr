@@ -179,6 +179,10 @@ const actions = {
 
     dispatch('removeIndicator', { id, confirm: false })
 
+    if (/{.*}/.test(state.indicators[newId].name)) {
+      commit('UPDATE_INDICATOR_DISPLAY_NAME', newId)
+    }
+
     return newId
   },
   transferIndicator({ state, rootState }, indicator: IndicatorSettings) {
@@ -359,8 +363,6 @@ const mutations = {
       delete state.priceScales[id]
       return
     }
-
-    console.log(id, priceScale.scaleMargins.top, priceScale.scaleMargins.bottom)
 
     state.priceScales[id] = priceScale
   },
