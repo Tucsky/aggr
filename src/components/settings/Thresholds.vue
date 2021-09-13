@@ -669,7 +669,7 @@ export default class extends Vue {
   }
 
   code {
-    color: white;
+    color: var(--theme-color-base);;
     font-weight: 600;
   }
 

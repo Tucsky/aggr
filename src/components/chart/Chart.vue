@@ -534,7 +534,6 @@ export default class extends Mixins(PaneMixin) {
         }
 
         this._chartController.propagateInitialPrices = false
-        console.warn('propagateInitialPrices = false')
         this._chartController.renderAll()
       }
     }

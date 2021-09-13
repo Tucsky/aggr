@@ -493,7 +493,7 @@ textarea.form-control {
 
   code,
   strong {
-    color: white;
+    color: var(--theme-color-base);;
     font-weight: 400;
   }
 }
