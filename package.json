@@ -18,7 +18,7 @@
     "core-js": "^3.6.5",
     "eventemitter3": "^4.0.7",
     "idb": "^6.0.0",
-    "lightweight-charts": "git://github.com/Tucsky/lightweight-charts.git#a2e0310aba84e13c6f451c18ca40772a79a15285",
+    "lightweight-charts": "git://github.com/Tucsky/lightweight-charts.git#c5fc54479763ff372b79572bb2c2e45e97c3f716",
     "lodash.merge": "^4.6.2",
     "pako": "^1.0.6",
     "register-service-worker": "^1.7.1",

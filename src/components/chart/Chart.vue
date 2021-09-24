@@ -1,9 +1,23 @@
 <template>
   <div class="pane-chart">
     <pane-header :loading="loading" :paneId="paneId">
-      <dropdown :options="timeframes" :selected="timeframe" placeholder="tf." @output="changeTimeframe($event)" selectionClass="-text">
+      <button v-for="(timeframeLabel, timeframe) of favoriteTimeframes" :key="timeframe" @click="changeTimeframe(timeframe)">
+        <span v-text="timeframeLabel"></span>
+      </button>
+
+      <dropdown class="mlauto" :options="timeframes" :selected="timeframe" placeholder="tf." @output="changeTimeframe($event)" selectionClass="-text">
         <template v-slot:selection>
           <span>{{ timeframeForHuman }}</span>
+        </template>
+        <template v-slot:option="{ index, value }">
+          <i
+            class="-fill icon-star mr4"
+            @mousedown.prevent
+            :class="{ 'icon-star-filled': favoriteTimeframes[index] }"
+            @click="toggleFavoriteTimeframe(index)"
+          ></i>
+
+          <span class="mlauto">{{ value }}</span>
         </template>
       </dropdown>
 
@@ -148,6 +162,10 @@ export default class extends Mixins(PaneMixin) {
 
   get showLegend() {
     return (this.$store.state[this.paneId] as ChartPaneState).showLegend
+  }
+
+  get favoriteTimeframes() {
+    return this.$store.state.settings.favoriteTimeframes
   }
 
   get timeframe() {
@@ -965,6 +983,10 @@ export default class extends Mixins(PaneMixin) {
         this.bindLegend()
       })
     }
+  }
+
+  toggleFavoriteTimeframe(timeframe) {
+    this.$store.commit('settings/TOGGLE_FAVORITE_TIMEFRAME', timeframe)
   }
 }
 </script>

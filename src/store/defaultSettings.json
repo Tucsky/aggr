@@ -28,5 +28,6 @@
     "normalize": true,
     "mergeUsdt": true
   },
-  "searchExchanges": {}
+  "searchExchanges": {},
+  "favoriteTimeframes": {}
 }

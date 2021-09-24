@@ -793,7 +793,7 @@ export default class ChartController {
     this.queuedTrades.splice(0, this.queuedTrades.length)
   }
 
-  clearPriceLines(indicatorsIds?: string[]) {
+  /*clearPriceLines(indicatorsIds?: string[]) {
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       if (indicatorsIds && indicatorsIds.indexOf(this.loadedIndicators[i].id) === -1) {
         continue
@@ -803,7 +803,7 @@ export default class ChartController {
         this.clearSeriePriceLines(this.loadedIndicators[i].apis[j])
       }
     }
-  }
+  }*/
 
   /**
    * fresh start : clear cache, renderer and rendered series on chart
@@ -980,7 +980,7 @@ export default class ChartController {
    */
   clearIndicatorSeries(indicator: LoadedIndicator) {
     for (let i = 0; i < indicator.apis.length; i++) {
-      this.clearSeriePriceLines(indicator.apis[i])
+      // this.clearSeriePriceLines(indicator.apis[i])
       indicator.apis[i].setData([])
       // this.recreateSerie(indicator, i)
     }
@@ -988,13 +988,13 @@ export default class ChartController {
     // this.bindPriceScale(indicator.options.priceScaleId, true)
   }
 
-  clearSeriePriceLines(serieApi) {
+  /* clearSeriePriceLines(serieApi) {
     if (serieApi._internal__series) {
       serieApi._internal__series._private__customPriceLines.splice(0, serieApi._internal__series._private__customPriceLines.length)
     } else {
       serieApi.Ye.Lo.splice(0, serieApi.Ye.Lo.length)
     }
-  }
+  } */
 
   /**
    * @param {LoadedIndicator} indicator indicator owning series
@@ -1261,7 +1261,7 @@ export default class ChartController {
       return
     }
 
-    this.clearPriceLines(indicatorsIds)
+    // this.clearPriceLines(indicatorsIds)
 
     const computedSeries = {}
     let from = null

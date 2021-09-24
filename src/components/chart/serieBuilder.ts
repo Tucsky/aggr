@@ -26,7 +26,8 @@ const SERIE_TYPES = {
   line: 'number',
   histogram: 'number',
   area: 'number',
-  cloudarea: 'range'
+  cloudarea: 'range',
+  brokenarea: 'range'
 }
 export default class SerieBuilder {
   private paneId: string
@@ -252,7 +253,7 @@ export default class SerieBuilder {
 
         if (/^var/.test(variableName)) {
           output = output.replace(variableMatch[0], '\nvar ' + variableName.slice(3) + '=' + variableMatch[3])
-          VARIABLE_REGEX.lastIndex = variableMatch.index + variableMatch[0].length
+          VARIABLE_REGEX.lastIndex += variableMatch[1].length
           continue
         }
         const variableLength = +variableMatch[2] || 1
@@ -267,7 +268,7 @@ export default class SerieBuilder {
 
         output = output.replace(new RegExp(`(${VARIABLES_VAR_NAME}\\[${variables.length - 1}\\])\\(${variable.length}\\)\\s*=\\s*`), '$1=')
       }
-    } while (variableMatch && variables.length < 20)
+    } while (variableMatch && variables.length < 50)
 
     output = this.determineVariablesType(output, variables)
 
@@ -327,7 +328,7 @@ export default class SerieBuilder {
     }
 
     // tranform input into valid lightweight-charts data point
-    if (args.length === 1 && args[0][0] === '{' && /time:/.test(args[0])) {
+    if (args.length === 1 && /{/.test(args[0]) && /}/.test(args[0])) {
       seriePoint += args[0]
     } else if (expectedInput === 'ohlc') {
       if (args.length === 4) {
@@ -363,7 +364,7 @@ export default class SerieBuilder {
     } else if (serieType === 'line') {
       // prevent null
       finalInstruction += pointVariable + '.value !== null&&'
-    } else if (serieType === 'cloudarea') {
+    } else if (serieType === 'cloudarea' || serieType === 'brokenarea') {
       // prevent null
       finalInstruction += pointVariable + '.lowerValue !== null&&'
     }

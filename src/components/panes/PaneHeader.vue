@@ -2,8 +2,7 @@
   <div class="pane-header pane-overlay d-flex" :class="{ '-loading': loading }">
     <div class="pane-header__loader"></div>
     <span class="pane-header__name ml4 mrauto" data-hide-header @dblclick="renamePane">{{ name }}</span>
-    <div class="flex-grow-1" @dblclick="maximizePane"></div>
-    <div class="toolbar">
+    <div class="toolbar flex-grow-1" @dblclick="maximizePane">
       <slot />
       <button type="button" @click="openSearch">
         <i class="icon-search"></i>
@@ -168,7 +167,11 @@ export default class extends Vue {
     this.$el.parentElement.parentElement.classList[value ? 'add' : 'remove']('-highlight')
   }
 
-  maximizePane() {
+  maximizePane(event) {
+    if (event.currentTarget !== event.target) {
+      return
+    }
+
     const el = this.$el.parentElement.parentElement
     const isMaximized = el.classList.toggle('-maximized')
 

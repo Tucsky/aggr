@@ -490,3 +490,13 @@ $iconpath: '../fonts';
     content: $icon-move;
   }
 }
+.icon-star {
+  &:before {
+    content: $icon-star;
+  }
+}
+.icon-star-filled {
+  &:before {
+    content: $icon-star-filled;
+  }
+}

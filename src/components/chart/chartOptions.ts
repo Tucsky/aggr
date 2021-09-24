@@ -25,7 +25,6 @@ export const defaultChartOptions = {
     color: 'rgba(255,255,255, 0.1)',
     visible: false,
     text: 'Loading',
-    fontSize: 24,
     horzAlign: 'center',
     vertAlign: 'center'
   },
@@ -111,6 +110,10 @@ export const defaultCloudAreaOptions = {
   lowerLineWidth: 1
 }
 
+export const defaultBrokenAreaOptions = {
+  color: 'rgba(76,175,80,0.1)'
+}
+
 export const defaultBarOptions = {
   thinBars: false,
   upColor: '#a5d6a7',
@@ -186,7 +189,8 @@ export function getChartOptions(baseOptions: DeepPartial<ChartOptions>): DeepPar
 }
 
 export const plotTypesMap = {
-  cloudarea: 'cloud-area'
+  cloudarea: 'cloud-area',
+  brokenarea: 'broken-area'
 }
 
 export const defaultPlotsOptions = {
@@ -194,6 +198,7 @@ export const defaultPlotsOptions = {
   area: defaultAreaOptions,
   candlestick: defaultCandlestickOptions,
   'cloud-area': defaultCloudAreaOptions,
+  'broken-area': defaultBrokenAreaOptions,
   bar: defaultBarOptions,
   histogram: defaultHistogramOptions
 }

@@ -7,6 +7,7 @@ import { AggregationLength, SlippageMode } from '@/types/test'
 import aggregatorService from '@/services/aggregatorService'
 import audioService from '@/services/audioService'
 import Vue from 'vue'
+import { getHms } from '@/utils/helpers'
 
 export type AudioFilters = { [id: string]: boolean }
 export interface SettingsState {
@@ -27,6 +28,7 @@ export interface SettingsState {
   autoHideHeaders?: boolean
   searchTypes?: any
   searchExchanges?: any
+  favoriteTimeframes?: { [timeframe: number]: string }
 }
 
 const state = Object.assign(
@@ -237,6 +239,13 @@ const mutations = {
     }
 
     Vue.set(state, 'searchTypes', state.searchTypes)
+  },
+  TOGGLE_FAVORITE_TIMEFRAME(state, value) {
+    if (typeof state.favoriteTimeframes[value] === 'undefined') {
+      Vue.set(state.favoriteTimeframes, value, getHms(value * 1000))
+    } else {
+      Vue.delete(state.favoriteTimeframes, value)
+    }
   }
 } as MutationTree<SettingsState>
 

@@ -241,9 +241,9 @@ export function parseFunctionArguments(str) {
       const contentWithinParenthesis = str.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/,/g, '#COMMA#')
       str = str.slice(0, paranthesisMatch.index + 1) + contentWithinParenthesis + str.slice(closingParenthesisIndex, str.length)
     }
-  } while (paranthesisMatch && iteration < 10)
+  } while (paranthesisMatch && iteration < 100)
 
-  if (iteration >= 10) {
+  if (iteration >= 100) {
     throw new Error('maxiumum parseFunctionArguments iteration reached')
   }
 
