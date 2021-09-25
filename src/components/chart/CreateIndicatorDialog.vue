@@ -35,7 +35,7 @@
       <div class="-unshrinkable">
         <div class="form-group mb16">
           <label>Import indicator</label>
-          <button class="btn -blue -large -cases w-100" @click="uploadIndicator"><i class="icon-upload mr8"></i> Browse</button>
+          <button class="btn -blue -large -cases w-100" @click="importIndicator"><i class="icon-upload mr8"></i> Browse</button>
           <div class="divider -horizontal" style="display:flex;">Or</div>
           <label>Create blank indicator</label>
           <input class="form-control" v-model="name" placeholder="Name it" />
@@ -138,7 +138,7 @@ export default {
         this.indicators.map(i => i.id)
       )
     },
-    async uploadIndicator() {
+    async importIndicator() {
       let content
 
       try {
@@ -175,16 +175,11 @@ export default {
             .join(':')
         }
 
-        this.createIndicator(
-          Object.assign(
-            {
-              name: preset.name || 'Imported indicator',
-              script: preset.data.script || ''
-            },
-            preset.data.options || {},
-            preset.data.colors || {}
-          )
-        )
+        this.createIndicator({
+          name: preset.name || 'Imported indicator',
+          script: preset.data.script || '',
+          options: preset.data.options || {}
+        })
 
         this.$store.dispatch('app/showNotice', {
           title: `Added 1 indicator`,
