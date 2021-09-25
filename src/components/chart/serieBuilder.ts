@@ -258,7 +258,7 @@ export default class SerieBuilder {
         }
         const variableLength = +variableMatch[2] || 1
 
-        output = output.replace(new RegExp('([^.]|^)\\b(' + variableName + ')\\b', 'ig'), `$1${VARIABLES_VAR_NAME}[${variables.length}]`)
+        output = output.replace(new RegExp('([^.]|^)\\b(' + variableName + ')\\b(?!:)', 'ig'), `$1${VARIABLES_VAR_NAME}[${variables.length}]`)
 
         const variable: IndicatorVariable = {
           length: variableLength
