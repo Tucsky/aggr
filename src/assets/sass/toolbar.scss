@@ -40,6 +40,12 @@
     height: 100%;
     display: inline-flex;
     align-items: center;
+
+    &:after {
+      font-size: 0.64em;
+      padding: 0;
+      top: 0;
+    }
   }
 
   .dropdown__selected > i,

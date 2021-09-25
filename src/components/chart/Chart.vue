@@ -4,8 +4,7 @@
       <button v-for="(timeframeLabel, timeframe) of favoriteTimeframes" :key="timeframe" @click="changeTimeframe(timeframe)">
         <span v-text="timeframeLabel"></span>
       </button>
-
-      <dropdown class="mlauto" :options="timeframes" :selected="timeframe" placeholder="tf." @output="changeTimeframe($event)" selectionClass="-text">
+      <dropdown :options="timeframes" :selected="timeframe" placeholder="tf." @output="changeTimeframe($event)" selectionClass="-text -arrow">
         <template v-slot:selection>
           <span>{{ timeframeForHuman }}</span>
         </template>
@@ -173,7 +172,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   get timeframeForHuman() {
-    return getTimeframeForHuman(this.timeframe)
+    return getTimeframeForHuman(this.timeframe, true)
   }
 
   get markets() {

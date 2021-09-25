@@ -58,7 +58,7 @@
               class="-left -center"
               :selected="currentValues[option.key]"
               :options="{ 0: 'Simple', 1: 'with steps' }"
-              selectionClass="-outline form-control"
+              selectionClass="-outline form-control -arrow"
               placeholder="lineType"
               @output="validate(option, $event)"
             ></dropdown>
@@ -67,7 +67,7 @@
               class="-left -center"
               :selected="currentValues[option.key]"
               :options="{ 0: 'Solid', 1: 'Dotted', 2: 'Dashed', 3: 'LargeDashed', 4: 'SparseDotted' }"
-              selectionClass="-outline form-control"
+              selectionClass="-outline form-control -arrow"
               placeholder="lineStyle"
               @output="validate(option, $event)"
             ></dropdown>
@@ -111,7 +111,7 @@
                 :selected="currentValues.priceScaleId"
                 :options="availableScales"
                 placeholder="Default scale"
-                selectionClass="-outline form-control"
+                selectionClass="-outline form-control -arrow"
                 @output="validate('priceScaleId', $event)"
               ></dropdown>
             </div>
@@ -127,7 +127,7 @@
                 :selected="formatOption.value.type"
                 :options="{ price: 'Price', volume: 'Volume', percent: 'Percent' }"
                 placeholder="lineType"
-                selectionClass="-outline form-control"
+                selectionClass="-outline form-control -arrow"
                 @output="validate(formatOption, { ...formatOption.value, type: $event })"
               ></dropdown>
             </div>

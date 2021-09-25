@@ -28,10 +28,6 @@
         <i v-if="!useAudio" class="icon-volume-off"></i>
         <i v-else class="icon-volume-medium" :class="{ 'icon-volume-high': audioVolume > 1 }"></i>
       </button>
-      <button type="button" class="menu-action btn" @click="$store.commit('panes/TOGGLE_LAYOUT')">
-        <span class="mr4" v-text="locked ? 'Unlock layout' : 'Lock layout'"></span>
-        <i class="icon-locked" :class="{ 'icon-unlocked': !locked }"></i>
-      </button>
       <dropdown class="menu-action" :options="paneTypes" placeholder="tf." @output="addPane" selectionClass="-green" @click.stop>
         <template v-slot:selection>
           <i class="icon-dashboard -center mr16"></i>
@@ -102,10 +98,6 @@ export default class extends Vue {
 
   get audioVolume() {
     return this.$store.state.settings.audioVolume
-  }
-
-  get locked() {
-    return this.$store.state.panes.locked
   }
 
   showSettings() {

@@ -154,6 +154,7 @@ $exchanges: (
   --theme-color-300: #{$light};
   --theme-color-500: #{$light};
   --theme-color-o20: #{rgba($light, 0.2)};
+  --theme-color-o50: #{rgba($light, 0.5)};
   --theme-color-o75: #{rgba($light, 0.75)};
   --theme-color-inverse: #{$dark};
 }

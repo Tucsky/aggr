@@ -10,7 +10,7 @@
           :selected="priceScale.mode"
           placeholder="linear"
           @output="updateMode($event)"
-          selectionClass="-text -small ml8 text-bold"
+          selectionClass="-text -small ml8 text-bold -arrow"
         >
         </dropdown>
       </div>
@@ -255,6 +255,12 @@ export default class extends Vue {
   width: 100%;
   font-family: 'Barlow Semi Condensed';
   pointer-events: none;
+
+  .pane-overlay {
+    border-radius: 4px 0 0 4px;
+    background-color: var(--theme-background-base);
+    box-shadow: 0 0.2rem 1rem rgb(0 0 0 / 20%);
+  }
 
   &.-active,
   &:hover {

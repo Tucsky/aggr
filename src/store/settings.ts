@@ -7,7 +7,7 @@ import { AggregationLength, SlippageMode } from '@/types/test'
 import aggregatorService from '@/services/aggregatorService'
 import audioService from '@/services/audioService'
 import Vue from 'vue'
-import { getHms } from '@/utils/helpers'
+import { getTimeframeForHuman } from '@/utils/helpers'
 
 export type AudioFilters = { [id: string]: boolean }
 export interface SettingsState {
@@ -123,6 +123,7 @@ const actions = {
     document.documentElement.style.setProperty('--theme-color-150', getLogShade(textColorRgb, 0.3 * colorSide))
     document.documentElement.style.setProperty('--theme-color-200', getLogShade(textColorRgb, 0.5 * colorSide))
     document.documentElement.style.setProperty('--theme-color-o75', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .75)`)
+    document.documentElement.style.setProperty('--theme-color-o50', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .5)`)
     document.documentElement.style.setProperty('--theme-color-o20', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .2)`)
 
     document.documentElement.style.setProperty('--theme-color-inverse', colorInverse)
@@ -242,7 +243,7 @@ const mutations = {
   },
   TOGGLE_FAVORITE_TIMEFRAME(state, value) {
     if (typeof state.favoriteTimeframes[value] === 'undefined') {
-      Vue.set(state.favoriteTimeframes, value, getHms(value * 1000))
+      Vue.set(state.favoriteTimeframes, value, getTimeframeForHuman(value))
     } else {
       Vue.delete(state.favoriteTimeframes, value)
     }

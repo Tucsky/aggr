@@ -1484,7 +1484,7 @@ export default class ChartController {
   replaceData(seriesData: { [id: string]: (TV.LineData | TV.BarData | TV.HistogramData)[] }) {
     this.preventPan()
 
-    for (let i = 0; i < this.loadedIndicators.length; i++) {
+    for (let i = this.loadedIndicators.length - 1; i >= 0; i--) {
       for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
         const serieId = this.loadedIndicators[i].apis[j].id
         if (seriesData[serieId]) {
@@ -1575,6 +1575,10 @@ export default class ChartController {
         empty: true
       }
     }
+
+    this.loadedIndicators = this.loadedIndicators.sort((a, b) => {
+      return a.model.references.length - b.model.references.length
+    })
 
     for (const indicator of this.loadedIndicators) {
       if (indicatorsIds && indicatorsIds.indexOf(indicator.id) === -1) {

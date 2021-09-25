@@ -33,6 +33,16 @@
         </span>
       </label>
     </div>
+    <div class="form-group mb8">
+      <label class="checkbox-control -animations">
+        <input type="checkbox" class="form-control" :checked="locked" @change="$store.commit('panes/TOGGLE_LAYOUT')" />
+        <div></div>
+        <span>
+          <small class="d-block text-muted" v-text="locked ? 'Workspace grid is locked' : 'Workspace grid is unlocked'"></small>
+          <span class="d-block mt4" v-text="locked ? 'Unlock layout' : 'Lock layout'"></span>
+        </span>
+      </label>
+    </div>
   </div>
 </template>
 
@@ -55,6 +65,10 @@ export default class extends Vue {
 
   get autoHideHeaders() {
     return this.$store.state.settings.autoHideHeaders
+  }
+
+  get locked() {
+    return this.$store.state.panes.locked
   }
 }
 </script>

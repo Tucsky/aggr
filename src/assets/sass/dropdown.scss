@@ -22,7 +22,7 @@
   display: inline-flex;
   align-items: center;
 
-  &__selected.form-control {
+  &__selected.-arrow {
     &:after {
       content: unicode($icon-down);
       transform: rotateZ(180deg);

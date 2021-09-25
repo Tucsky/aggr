@@ -181,6 +181,12 @@
     padding: 0 0.4em 0.1em;
   }
 
+  &__divider {
+    width: 1px;
+    background-color: var(--theme-color-o75);
+    margin: .4em .4em;
+  }
+
   &__loader {
     display: none;
     position: absolute;

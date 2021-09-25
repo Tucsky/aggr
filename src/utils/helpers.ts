@@ -374,13 +374,13 @@ export function copyTextToClipboard(text) {
   return navigator.clipboard.writeText(text)
 }
 
-export function getTimeframeForHuman(timeframe) {
+export function getTimeframeForHuman(timeframe, full?: boolean) {
   const normalized = timeframe.toString().trim()
 
   if (normalized[normalized.length - 1] === 't') {
     return parseInt(normalized) + ' TICKS'
   } else if (!isNaN(normalized) && normalized > 0) {
-    return getHmsFull(normalized * 1000)
+    return full ? getHmsFull(normalized * 1000) : getHms(normalized * 1000)
   }
 
   return null

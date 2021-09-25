@@ -107,6 +107,25 @@ export default class SerieBuilder {
     input = input.replace(/[^\S\r\n]/g, '')
     //input = input.replace(/([^({[])\n/g, '$1,').replace(/\s/g, '')
 
+    const PARANTHESIS_REGEX = /\(/g
+    let paranthesisMatch
+    do {
+      if ((paranthesisMatch = PARANTHESIS_REGEX.exec(input))) {
+        const closingParenthesisIndex = findClosingBracketMatchIndex(input, paranthesisMatch.index, /\(|{|\[/, /\)|}|\]/)
+        const contentWithinParenthesis = input.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/\n/g, ' ')
+
+        input =
+          input.slice(0, paranthesisMatch.index) +
+          input.slice(paranthesisMatch.index, paranthesisMatch.index + 1) +
+          contentWithinParenthesis.replace(/\n/g, '') +
+          input.slice(closingParenthesisIndex, closingParenthesisIndex + 1) +
+          '\n' +
+          input.slice(closingParenthesisIndex + 1, input.length)
+
+        PARANTHESIS_REGEX.lastIndex = closingParenthesisIndex
+      }
+    } while (paranthesisMatch)
+
     return input
   }
 

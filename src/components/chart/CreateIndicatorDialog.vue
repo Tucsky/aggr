@@ -29,13 +29,16 @@
             </tbody>
           </table>
         </div>
-        <div class="divider -horizontal">Or</div>
-        <div class="divider -vertical">Or</div>
+        <div class="divider -single -horizontal"></div>
+        <div class="divider -single -vertical"></div>
       </template>
       <div class="-unshrinkable">
         <div class="form-group mb16">
-          <label>Create indicator</label>
-          <input class="form-control" :value="name" @input="getIndicatorId($event.target.value)" placeholder="Name of indicator / serie" />
+          <label>Import indicator</label>
+          <button class="btn -blue -large -cases w-100" @click="uploadIndicator"><i class="icon-upload mr8"></i> Browse</button>
+          <div class="divider -horizontal" style="display:flex;">Or</div>
+          <label>Create blank indicator</label>
+          <input class="form-control" v-model="name" placeholder="Name it" />
         </div>
         <div class="form-group mb16">
           <label>Scale with</label>
@@ -44,12 +47,12 @@
             :selected="priceScaleId"
             :options="availableScales"
             placeholder="Default scale"
-            selectionClass="-outline form-control"
+            selectionClass="-outline form-control -arrow"
             @output="priceScaleId = $event"
           ></dropdown>
         </div>
         <div class="text-right">
-          <button class="btn -large -green" @click="create">Create</button>
+          <button class="btn -large -green ml16" @click="createIndicator()">Create <i class="icon-plus ml8"></i></button>
         </div>
       </div>
     </div>
@@ -63,6 +66,7 @@ import DialogMixin from '@/mixins/dialogMixin'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import IndicatorDialog from './IndicatorDialog.vue'
+import { browseFile } from '@/utils/helpers'
 
 export default {
   mixins: [DialogMixin],
@@ -77,12 +81,17 @@ export default {
   },
   data: () => ({
     name: '',
-    indicatorId: null,
     priceScaleId: 'right',
     query: '',
     indicators: []
   }),
   computed: {
+    indicatorId: function() {
+      return uniqueName(
+        slugify(this.name),
+        this.indicators.map(i => i.id)
+      )
+    },
     queryFilter: function() {
       return new RegExp(this.query.replace(/\W/, '.*'), 'i')
     },
@@ -121,42 +130,97 @@ export default {
   methods: {
     async getIndicators() {
       this.indicators = await workspacesService.getIndicators()
-      this.getIndicatorId(this.name)
+      this.getIndicatorId()
     },
-    getIndicatorId(name) {
-      if (!name || !name.length) {
-        if (!this.name || !this.name.lengt) {
-          name = 'Untitled'
-        } else {
-          name = this.name
-        }
-      }
-
+    getIndicatorId() {
       this.indicatorId = uniqueName(
-        slugify(name),
+        slugify(this.name),
         this.indicators.map(i => i.id)
       )
-
-      this.name = name
     },
-    async create() {
-      if (!this.name || this.name.length < 3) {
+    async uploadIndicator() {
+      let content
+
+      try {
+        content = await browseFile()
+      } catch (error) {
+        this.$store.dispatch('app/showNotice', {
+          title: error.message,
+          type: 'error'
+        })
         return
       }
 
-      const slug = slugify(this.name)
+      let preset
 
-      const id = await workspacesService.saveIndicator({
-        id: this.indicatorId,
-        name: this.name,
-        priceScaleId: this.priceScaleId || slug
-      })
+      try {
+        if (typeof content === 'string') {
+          preset = JSON.parse(content)
+        } else {
+          throw new Error('invalid file, must be text/json')
+        }
 
-      const indicator = await workspacesService.getIndicator(id)
+        if (!preset.data) {
+          throw new Error('indicator is empty')
+        }
+
+        if (preset.type !== 'indicator') {
+          throw new Error('not an indicator')
+        }
+
+        if (preset.name) {
+          preset.name = preset.name
+            .split(':')
+            .slice(1)
+            .join(':')
+        }
+
+        this.createIndicator(
+          Object.assign(
+            {
+              name: preset.name || 'Imported indicator',
+              script: preset.data.script || ''
+            },
+            preset.data.options || {},
+            preset.data.colors || {}
+          )
+        )
+
+        this.$store.dispatch('app/showNotice', {
+          title: `Added 1 indicator`,
+          type: 'info'
+        })
+      } catch (error) {
+        this.$store.dispatch('app/showNotice', {
+          title: `Couldn't import indicator : ${error.message}`,
+          type: 'error'
+        })
+        return
+      }
+    },
+    async createIndicator(indicator) {
+      if (!indicator) {
+        indicator = {}
+      }
+
+      if (indicator.name) {
+        this.name = indicator.name
+      } else if (!this.name) {
+        this.name = 'Untitled'
+      }
+
+      indicator.id = this.indicatorId
+      indicator.name = this.name
+
+      if (!indicator.priceScaleId) {
+        const slug = slugify(indicator.name)
+
+        indicator.priceScaleId = this.priceScaleId || slug
+      }
 
       this.$store.dispatch(this.paneId + '/addIndicator', indicator)
 
-      dialogService.open(IndicatorDialog, { paneId: this.paneId, indicatorId: indicator.id }, 'indicator')
+      dialogService.open(IndicatorDialog, { paneId: this.paneId, indicatorId: this.indicatorId }, 'indicator')
 
       this.close(null)
     },

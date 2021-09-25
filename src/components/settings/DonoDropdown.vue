@@ -1,5 +1,5 @@
 <template>
-  <dropdown :options="donationMenu" :placeholder="label" selectionClass="-text">
+  <dropdown :options="donationMenu" :placeholder="label" selectionClass="-text -arrow">
     <template v-slot:option="{ value }">
       <i :class="'icon-' + value.icon" class="-fill"></i>
 

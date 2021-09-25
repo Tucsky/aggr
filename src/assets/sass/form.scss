@@ -65,30 +65,30 @@
 }
 ::-webkit-input-placeholder {
   /* WebKit, Blink, Edge */
-  color: var(--theme-color-o20);
+  color: var(--theme-color-o50);
 }
 :-moz-placeholder {
   /* Mozilla Firefox 4 to 18 */
-  color: var(--theme-color-o20);
+  color: var(--theme-color-o50);
   opacity: 1;
 }
 ::-moz-placeholder {
   /* Mozilla Firefox 19+ */
-  color: var(--theme-color-o20);
+  color: var(--theme-color-o50);
   opacity: 1;
 }
 :-ms-input-placeholder {
   /* Internet Explorer 10-11 */
-  color: var(--theme-color-o20);
+  color: var(--theme-color-o50);
 }
 ::-ms-input-placeholder {
   /* Microsoft Edge */
-  color: var(--theme-color-o20);
+  color: var(--theme-color-o50);
 }
 
 ::placeholder {
   /* Most modern browsers support this now. */
-  color: var(--theme-color-o20);
+  color: var(--theme-color-o50);
 }
 
 .input-group {

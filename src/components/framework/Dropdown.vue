@@ -55,7 +55,8 @@ import { Component, Vue } from 'vue-property-decorator'
       default: true
     },
     selectionClass: {
-      required: false
+      required: false,
+      default: '-arrow'
     }
   }
 })

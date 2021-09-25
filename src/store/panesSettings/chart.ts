@@ -82,7 +82,7 @@ const actions = {
       const indicators = await workspacesService.getIndicators()
 
       for (const indicator of indicators) {
-        if ((indicator as any).enabled === false) {
+        if ((indicator as any).enabled !== true) {
           continue
         }
 

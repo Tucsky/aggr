@@ -271,6 +271,11 @@ body {
       margin-top: 1rem;
     }
   }
+
+  &.-single:before,
+  &.-single:after {
+    margin: 0
+  }
 }
 
 blockquote {

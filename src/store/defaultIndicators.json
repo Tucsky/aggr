@@ -1,5 +1,6 @@
 {
   "price": {
+    "enabled": true,
     "name": "Price",
     "script": "plotcandlestick(avg_ohlc(bar))",
     "options": {
@@ -16,7 +17,6 @@
     }
   },
   "smas": {
-    "enabled": false,
     "name": "SMA {fastLength} {mediumLength} {slowLength}",
     "displayName": "SMA 50 100 200",
     "script": "plotline(sma($price.close, options.fastLength), color=options.fastColor)\nplotline(sma($price.close, options.mediumLength), color=options.mediumColor)\nplotline(sma($price.close, options.slowLength), color=options.slowColor)",
@@ -31,7 +31,6 @@
     }
   },
   "emas": {
-    "enabled": false,
     "name": "EMA {fastLength} {mediumLength} {slowLength}",
     "displayName": "EMA 50 100 200",
     "script": "plotline(ema($price.close, options.fastLength), color=options.fastColor)\nplotline(ema($price.close, options.mediumLength), color=options.mediumColor)\nplotline(ema($price.close, options.slowLength), color=options.slowColor)",
@@ -46,7 +45,6 @@
     }
   },
   "cmas": {
-    "enabled": false,
     "name": "CMA {fastLength} {mediumLength} {slowLength}",
     "displayName": "CMA 50 100 200",
     "script": "plotline(cma($price.close, options.fastLength), color=options.fastColor)\nplotline(cma($price.close, options.mediumLength), color=options.mediumColor)\nplotline(cma($price.close, options.slowLength), color=options.slowColor)",
@@ -61,6 +59,7 @@
     }
   },
   "volume": {
+    "enabled": true,
     "name": "Volume",
     "script": "plothistogram({ time: time, value: vbuy + vsell, color: vbuy > vsell ? options.upColor : options.downColor})",
     "options": {
@@ -77,6 +76,7 @@
     }
   },
   "volume_delta": {
+    "enabled": true,
     "name": "Volume Δ",
     "script": "plothistogram({ time: time, value: Math.abs(vbuy-vsell), color: vbuy - vsell > 0 ? options.upColor : options.downColor})",
     "options": {
@@ -93,7 +93,6 @@
     }
   },
   "volume_buy_sell": {
-    "enabled": false,
     "name": "Buy/sells volume",
     "script": "plotcloudarea(-vsell, vbuy)\nplotline(0, color=rgba(255,255,255,.25), lineStyle=2)",
     "options": {
@@ -110,6 +109,7 @@
     }
   },
   "liquidations": {
+    "enabled": true,
     "name": "Liquidations",
     "script": "plothistogram(lbuy, color=options.upColor)\nplothistogram(-lsell, color=options.downColor)",
     "options": {
@@ -126,6 +126,7 @@
     }
   },
   "cvd": {
+    "enabled": true,
     "name": "CVD",
     "description": "Cumulative Volume Delta",
     "script": "plotline(cum(vbuy - vsell))",
@@ -142,7 +143,6 @@
     }
   },
   "btccvdperp": {
-    "enabled": false,
     "name": "CVD (BTC PERP)",
     "script": "plotline(cum((BINANCE_FUTURES:btcusdt.vbuy+BITFINEX:BTCF0:USTF0.vbuy+BYBIT:BTCUSDT.vbuy+OKEX:BTC-USDT-SWAP.vbuy+BINANCE_FUTURES:btcusd_perp.vbuy+BITMEX:XBTUSD.vbuy+BYBIT:BTCUSD.vbuy+DERIBIT:BTC-PERPETUAL.vbuy+FTX:BTC-PERP.vbuy+HUOBI:BTC-USD.vbuy+KRAKEN:PI_XBTUSD.vbuy+OKEX:BTC-USD-SWAP.vbuy)-(BINANCE_FUTURES:btcusdt.vsell+BITFINEX:BTCF0:USTF0.vsell+BYBIT:BTCUSDT.vsell+OKEX:BTC-USDT-SWAP.vsell+BINANCE_FUTURES:btcusd_perp.vsell+BITMEX:XBTUSD.vsell+BYBIT:BTCUSD.vsell+DERIBIT:BTC-PERPETUAL.vsell+FTX:BTC-PERP.vsell+HUOBI:BTC-USD.vsell+KRAKEN:PI_XBTUSD.vsell+OKEX:BTC-USD-SWAP.vsell)), title=CVD:BTC:PERP)",
     "options": {
@@ -154,7 +154,6 @@
     }
   },
   "btccvdspot": {
-    "enabled": false,
     "name": "CVD (BTC SPOT)",
     "script": "plotline(cum((BINANCE:btcusdt.vsell+FTX:BTC/USDT.vsell+HUOBI:btcusdt.vbuy+OKEX:BTC-USDT.vbuy+POLONIEX:USDT_BTC.vbuy+BITFINEX:BTCUSD.vbuy+BITSTAMP:btcusd.vbuy+COINBASE:BTC-USD.vbuy+FTX:BTC/USD.vbuy+KRAKEN:XBT/USD.vbuy)-(BINANCE:btcusdt.vbuy+FTX:BTC/USDT.vbuy+HUOBI:btcusdt.vbuy+OKEX:BTC-USDT.vsell+POLONIEX:USDT_BTC.vsell+BITFINEX:BTCUSD.vsell+BITSTAMP:btcusd.vsell+COINBASE:BTC-USD.vsell+FTX:BTC/USD.vsell+KRAKEN:XBT/USD.vsell)), title=CVD:BTC:SPOT)",
     "options": {
@@ -166,7 +165,6 @@
     }
   },
   "ctd": {
-    "enabled": false,
     "script": "plotline(cum(cbuy-csell))",
     "name": "CTD",
     "description": "Cumulative Trades Delta",
@@ -177,7 +175,6 @@
     }
   },
   "cld": {
-    "enabled": false,
     "script": "plotline(cum(lbuy-lsell))",
     "name": "CLD",
     "description": "Cumulative Liquidations Delta",
@@ -195,7 +192,6 @@
     }
   },
   "linregcurve": {
-    "enabled": false,
     "script": "plotline(linreg($price.close, 50))\nplotline(linreg($price.close, 100))\nplotline(linreg($price.close, 200))",
     "name": "Linear Regression",
     "options": {
@@ -205,7 +201,6 @@
     }
   },
   "allmarkets": {
-    "enabled": false,
     "script": "plotline(BITFINEX:BTCUSD.close, color=#97c554, title=Bitfinex.spot)\nplotline(BINANCE:btcusdt.close, color=#f3ba2f, title=Binance.spot)\nplotline(OKEX:BTC-USDT.close, color=#5894f2, title=Okex.spot)\nplotline(KRAKEN:XBT/USD.close, color=#5841d8, title=Kraken.spot)\nplotline(COINBASE:BTC-USD.close, color=#0e70e2, title=Coinbase.spot)\nplotline(POLONIEX:USDT_BTC.close, color=#858b8f, title=Poloniex.spot)\nplotline(HUOBI:btcusdt.close, color=#2ca6e0, title=Huobi.spot)\nplotline(BITSTAMP:btcusd.close, color=#169f4a, title=Bitstamp.spot)\nplotline(BITMEX:XBTUSD.close, color=#595fb5, title=Bitmex.perp)\nplotline(BITFINEX:BTCF0:USTF0.close, color=#97c554, title=Bitfinex.perp)\nplotline(OKEX:BTC-USD-SWAP.close, color=#5894f2, title=Okex.perp)\nplotline(BINANCE_FUTURES:btcusdt.close, color=#f3ba2f, title=Binance.perp)\nplotline(BINANCE_FUTURES:btcusd_perp.close, color=#f3ba2f, title=Binance.perp)\nplotline(HUOBI:BTC-USD.close, color=#2ca6e0, title=Huobi.perp)\nplotline(KRAKEN:PI_XBTUSD.close, color=#5841d8, title=Kraken.perp)\nplotline(DERIBIT:BTC-PERPETUAL.close, color=#2dae9a, title=Deribit.perp)\nplotline(FTX:BTC-PERP.close, color=#02a6c2, title=Ftx.perp)\nplotline(BYBIT:BTCUSD.close, color=#f9b600, title=Bybit.perp)",
     "name": "All markets",
     "options": {
@@ -215,7 +210,6 @@
     }
   },
   "ichimoku": {
-    "enabled": false,
     "script": "conversionLine=(lowest($price.low, options.conversionLineLength) + highest($price.high, options.conversionLineLength)) / 2\nbaseLine=(lowest($price.low, options.baseLineLength) + highest($price.high, options.baseLineLength)) / 2\nleadLineOne=(conversionLine + baseLine) / 2\nleadLineTwo=(lowest($price.low, options.laggingSpanTwoLength) + highest($price.high, options.laggingSpanTwoLength)) / 2\nplotcloudarea(leadLineTwo, leadLineOne, offset=options.displacement)",
     "name": "Ichimoku",
     "options": {
@@ -227,7 +221,6 @@
     }
   },
   "bollinger_bands": {
-    "enabled": false,
     "script": "a = sma(Math.pow($price.close,2),options.length)\nb = Math.pow(sum($price.close,options.length),2)/Math.pow(options.length,2)\nstdev = Math.sqrt(a - b)\nsrc = $price.close\n\nbasis = sma($price.close, options.length)\ndev = options.mult * stdev\nupper = basis + dev\nlower = basis - dev\n\nplotline(basis, color=options.basisColor)\nplotcloudarea(lower, upper)",
     "name": "Bollinger Bands",
     "options": {
@@ -243,7 +236,6 @@
     }
   },
   "bb-ema-ribbon": {
-    "enabled": false,
     "script": "src = sma($price.close, options.maLength)\na = sma(Math.pow(src,2),options.bbLength)\nb = Math.pow(sum(src,options.bbLength),2)/Math.pow(options.bbLength,2)\nstdev = Math.sqrt(a - b)\ndev = options.mult * stdev\nbasis = sma(src, options.bbLength)\nupper = basis + dev\nlower = basis - dev\nsrcTwo=($price.close + $price.low + $price.high) / 3\nemaSlow = ema(srcTwo, options.emaSlowLength)\nemaFast = ema(srcTwo, options.emaFastLength)\nplotcloudarea(lower, upper, positiveColor=options.slowRibbonColor, negativeColor=options.slowRibbonColor)\nplotcloudarea(emaSlow, emaFast)",
     "name": "Ribbon",
     "options": {
