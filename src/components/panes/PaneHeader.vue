@@ -12,7 +12,7 @@
       </button>
 
       <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)" selectionClass="-text">
-        <template v-slot:option-0>
+        <template v-slot:option-zoom>
           <div class="column" @mousedown.prevent>
             <div class="btn -green" @click="zoomOut">
               <i class="icon-minus"></i>
@@ -63,14 +63,19 @@ import WebsitePaneDialog from '../website/WebsitePaneDialog.vue'
     loading: {
       type: Boolean,
       default: false
+    },
+    controls: {
+      required: false
     }
   }
 })
 export default class extends Vue {
+  controls: any[]
   paneId: string
   menu = [
     {
-      label: 'Zoom'
+      label: 'Zoom',
+      id: 'zoom'
     },
     {
       icon: 'enlarge',
@@ -116,6 +121,12 @@ export default class extends Vue {
 
   get type() {
     return this.$store.state.panes.panes[this.paneId].type
+  }
+
+  created() {
+    if (this.controls && this.controls.length) {
+      this.menu = this.controls.concat(this.menu)
+    }
   }
 
   openSettings() {

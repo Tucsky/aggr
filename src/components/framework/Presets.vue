@@ -1,6 +1,6 @@
 <template>
   <dropdown :options="presets" @output="onSelect" :placeholder="label" class="mrauto" selectionClass="ml0 -green -arrow">
-    <template v-slot:option-0>
+    <template v-slot:option-custom>
       <div class="column" @mousedown.prevent>
         <div class="btn -green" @click="savePreset"><i class="icon-plus"></i></div>
         <div class="btn -blue" @click="uploadPreset"><i class="icon-upload"></i></div>
@@ -42,7 +42,11 @@ export default class extends Vue {
   type: PresetType
   adapter: Function
 
-  presets = [{}] as any
+  presets = [
+    {
+      id: 'custom'
+    }
+  ] as any
 
   created() {
     this.getPresets()
@@ -104,10 +108,26 @@ export default class extends Vue {
       delete data._id
     }
 
+    name = this.type + ':' + name
+
+    const updatedAt = +new Date()
+
+    const original = this.presets.find(preset => preset.name === name)
+
+    let createdAt
+
+    if (original) {
+      createdAt = original.createdAt
+    } else {
+      createdAt = updatedAt
+    }
+
     await workspacesService.savePreset({
-      name: this.type + ':' + name,
+      name,
       type: this.type,
-      data
+      data,
+      createdAt,
+      updatedAt
     })
 
     await this.getPresets()

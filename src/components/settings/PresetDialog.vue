@@ -10,8 +10,24 @@
     </template>
 
     <form @submit.prevent="apply">
-      <p class="mt0">Saved settings for :</p>
-      <ul>
+      <div class="d-flex flex-middle">
+        <i class="icon-info mr16"></i>
+        <div class="mr16">
+          <small class="text-muted">Created at</small>
+          <div>{{ createdAt }} ago</div>
+        </div>
+        <div>
+          <small class="text-muted">Updated at</small>
+          <div>{{ updatedAt }} ago</div>
+        </div>
+      </div>
+
+      <p>
+        What's included :
+        <button type="button" class="btn -text" v-text="showDetails ? 'hide' : 'show'" @click="showDetails = !showDetails"></button>
+      </p>
+
+      <ul v-if="showDetails">
         <li v-for="prop of dataProperties" :key="prop">
           <code v-text="prop"></code>
         </li>
@@ -19,7 +35,7 @@
 
       <footer>
         <button type="button" class="btn -text -red mrauto ml0" @click="deletePreset"><i class="icon-cross mr4"></i> Delete</button>
-        <button type="button" class="btn -text" @click="downloadPreset"><i class="icon-download mr4"></i> Download</button>
+        <button type="button" class="btn -text ml8" @click="downloadPreset"><i class="icon-download mr4"></i> Download</button>
         <button type="submit" class="btn -green -large ml16"><i class="icon-check mr4"></i> Apply</button>
       </footer>
     </form>
@@ -29,7 +45,7 @@
 <script>
 import DialogMixin from '@/mixins/dialogMixin'
 import workspacesService from '@/services/workspacesService'
-import { downloadJson, slugify } from '@/utils/helpers'
+import { downloadJson, slugify, ago } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 
 export default {
@@ -41,7 +57,10 @@ export default {
   },
   data() {
     return {
-      dataProperties: []
+      dataProperties: [],
+      createdAt: 'N/A',
+      updatedAt: 'N/A',
+      showDetails: false
     }
   },
   computed: {
@@ -51,6 +70,14 @@ export default {
   },
   created() {
     this.retrieveDataProperties(this.preset.data)
+
+    if (this.preset.updatedAt) {
+      this.updatedAt = ago(this.preset.updatedAt)
+    }
+
+    if (this.preset.createdAt) {
+      this.createdAt = ago(this.preset.createdAt)
+    }
   },
   methods: {
     async deletePreset() {

@@ -691,7 +691,7 @@ export default {
           break
 
         case 'c':
-          if (event.metaKey && !window.getSelection().toString().length) {
+          if ((event.ctrlKey || event.metaKey) && !window.getSelection().toString().length) {
             this.copySelection()
           }
           break

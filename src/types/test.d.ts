@@ -101,6 +101,8 @@ export interface Preset {
   name: string
   type: PresetType
   data: any
+  createdAt: number
+  updatedAt: number
 }
 
 export type ProductsData = string[] | { [prop: string]: any }

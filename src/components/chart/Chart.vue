@@ -1,6 +1,6 @@
 <template>
   <div class="pane-chart">
-    <pane-header :loading="loading" :paneId="paneId">
+    <pane-header :loading="loading" :paneId="paneId" :controls="paneControls">
       <button v-for="(timeframeLabel, timeframe) of favoriteTimeframes" :key="timeframe" @click="changeTimeframe(timeframe)">
         <span v-text="timeframeLabel"></span>
       </button>
@@ -19,13 +19,6 @@
           <span class="mlauto">{{ value }}</span>
         </template>
       </dropdown>
-
-      <button @click="$store.commit(paneId + '/TOGGLE_LAYOUTING')">
-        <i class="icon-resize-height"></i>
-      </button>
-      <button @click="resetChart">
-        <i class="icon-refresh"></i>
-      </button>
     </pane-header>
     <div class="chart-overlay -left hide-scrollbar">
       <div class="chart-overlay__panel">
@@ -104,7 +97,6 @@ import { getColorLuminance, joinRgba, splitRgba } from '@/utils/colors'
   }
 })
 export default class extends Mixins(PaneMixin) {
-  reachedEnd = false
   loading = false
   axis = [null, null]
 
@@ -144,12 +136,26 @@ export default class extends Mixins(PaneMixin) {
   showMarketsOverlay = false
   showIndicatorsOverlay = false
 
+  paneControls = [
+    {
+      icon: 'resize-height',
+      label: 'Move indicators',
+      click: this.toggleLayout
+    },
+    {
+      icon: 'refresh',
+      label: 'Force refresh',
+      click: this.resetChart
+    }
+  ]
+
   private _onStoreMutation: () => void
   private _keepAliveTimeout: number
   private _onPanTimeout: number
   private _chartController: ChartController
   private _legendElements: { [id: string]: HTMLElement }
   private _lastCoordinates: number
+  private _reachedEnd: boolean
 
   get indicators() {
     return (this.$store.state[this.paneId] as ChartPaneState).indicators
@@ -358,7 +364,7 @@ export default class extends Mixins(PaneMixin) {
     const timeframe = (this.$store.state[this.paneId] as ChartPaneState).timeframe
 
     if (isNaN(+timeframe)) {
-      this.reachedEnd = true
+      this._reachedEnd = true
       return
     }
 
@@ -410,7 +416,7 @@ export default class extends Mixins(PaneMixin) {
         console.error(err)
 
         if (err === 'no-more-data' || err === 'unsupported-historical-data-format') {
-          this.reachedEnd = true
+          this._reachedEnd = true
         } else {
           this.$store.dispatch('app/showNotice', {
             title: err ? (typeof err === 'string' ? err : err.message) : `Historical API seems down at the moment`,
@@ -687,7 +693,7 @@ export default class extends Mixins(PaneMixin) {
     )
 
     if (
-      !this.reachedEnd &&
+      !this._reachedEnd &&
       (!this._chartController.chartCache.cacheRange.from || rangeToFetch.to <= this._chartController.chartCache.cacheRange.from)
     ) {
       this.fetch(rangeToFetch)
@@ -719,7 +725,7 @@ export default class extends Mixins(PaneMixin) {
   clear() {
     this._chartController.clear()
 
-    this.reachedEnd = false
+    this._reachedEnd = false
   }
 
   changeTimeframe(newTimeframe) {
@@ -752,7 +758,7 @@ export default class extends Mixins(PaneMixin) {
       this.fetch()
     }
 
-    this.reachedEnd = false
+    this._reachedEnd = false
   }
 
   async bindLegend(indicatorId?: string) {
@@ -986,6 +992,10 @@ export default class extends Mixins(PaneMixin) {
 
   toggleFavoriteTimeframe(timeframe) {
     this.$store.commit('settings/TOGGLE_FAVORITE_TIMEFRAME', timeframe)
+  }
+
+  toggleLayout() {
+    this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING')
   }
 }
 </script>

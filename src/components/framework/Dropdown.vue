@@ -16,7 +16,7 @@
             :key="index"
             :class="{ active: !alwaysShowPlaceholder && index === selected }"
           >
-            <slot v-if="$slots['option-' + index]" :name="'option-' + index">
+            <slot v-if="value.id && $slots['option-' + value.id]" :name="'option-' + value.id">
               {{ value }}
             </slot>
             <slot v-else name="option" :value="value" :index="index">
