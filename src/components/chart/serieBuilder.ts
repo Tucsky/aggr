@@ -671,7 +671,7 @@ export default class SerieBuilder {
           throw new Error(`plot ${plot.type} expected ${plot.expectedInput} but got ${resultedType}`)
         }
 
-        if (resultedType === 'ohlc') {
+        /*if (resultedType === 'ohlc') {
           if (isNaN(point.open)) {
             throw new Error(`${plot.type}.open expected value to be a number, got NaN`)
           }
@@ -690,7 +690,7 @@ export default class SerieBuilder {
           if (isNaN(point.value)) {
             throw new Error(`${plot.type} expected value to be a number, got NaN`)
           }
-        }
+        }*/
       }
 
       renderer = this.getFakeRenderer(renderer, functions, variables, markets, references)

@@ -35,15 +35,18 @@
               Input
             </label>
           </div>
-          <textarea
-            ref="behaveInput"
-            class="form-control"
-            rows="10"
-            cols="50"
-            :value="script"
-            @blur="updateScript($event.target.value)"
-            spellcheck="false"
-          ></textarea>
+          <div class="p-relative">
+            <textarea
+              ref="behaveInput"
+              class="form-control"
+              rows="10"
+              cols="50"
+              :value="script"
+              @blur="updateScript($event.target.value)"
+              spellcheck="false"
+            ></textarea>
+            <button class="btn refresh -text" title="Force redraw indicator" @click="updateScript(script)"><i class="icon-refresh"></i></button>
+          </div>
           <p v-if="error" class="form-feedback"><i class="icon-warning mr4"></i> {{ error }}</p>
         </div>
         <div v-if="otherOptions.length" class="d-flex -fill" style="max-width: 400px;flex-wrap:wrap;">
@@ -158,13 +161,20 @@
     </div>
 
     <hr />
-    <div class="form-group column">
+    <div class="form-group d-flex">
       <presets type="indicator" class="mr8 -left" :adapter="getIndicatorPreset" @apply="applyIndicatorPreset($event)" label="Presets" />
-      <button class="btn -red" v-tippy title="Unload indicator" @click="removeIndicator"><i class="icon-cross mr4"></i> Unload</button>
-      <button class="btn -text ml8" v-tippy title="Unload indicator" @click="resizeIndicator"><i class="icon-resize-height mr4"></i> Resize</button>
-      <button class="btn -text ml8 mrauto" v-tippy title="Duplicate" @click="duplicateIndicator">
-        <i class="icon-copy-paste mr4"></i> Make a copy
-      </button>
+      <dropdown :options="indicatorMenu" class="mlauto" selectionClass="-text -arrow">
+        <template v-slot:option="{ value }">
+          <div>
+            <i class="-lower" :class="'icon-' + value.icon"></i>
+
+            <span>{{ value.label }}</span>
+          </div>
+        </template>
+        <template v-slot:selection>
+          Options
+        </template>
+      </dropdown>
     </div>
   </Dialog>
 </template>
@@ -179,6 +189,7 @@ import SerieHelpDialog from './IndicatorHelpDialog.vue'
 import dialogService from '../../services/dialogService'
 import merge from 'lodash.merge'
 import IndicatorPresetDialog from './IndicatorPresetDialog.vue'
+import { downloadJson } from '@/utils/helpers'
 
 const ignoredOptionsKeys = ['crosshairMarkerVisible', 'minLength', 'visible', 'priceScaleId']
 
@@ -194,6 +205,7 @@ export default {
     colorOptionsKeys: [],
     colorOptions: [],
     otherOptions: [],
+    indicatorMenu: null,
     helps: {
       priceScaleId: `Use <u>right</u> for binding indicator to main price scale. Otherwise use it as an id to align multiple indicator on same scale (as overlay)`,
       lastValueVisible: `Show last value on right axis`,
@@ -251,6 +263,8 @@ export default {
     }
   },
   created() {
+    this.initIndicatorMenu()
+
     this.$nextTick(() => {
       this.refreshPlotTypes()
       this.refreshOptions()
@@ -271,6 +285,30 @@ export default {
     }
   },
   methods: {
+    initIndicatorMenu() {
+      this.indicatorMenu = [
+        {
+          label: 'Download',
+          icon: 'download',
+          click: this.downloadIndicator
+        },
+        {
+          label: 'Make a copy',
+          icon: 'copy-paste',
+          click: this.duplicateIndicator
+        },
+        {
+          label: 'Resize',
+          icon: 'resize-height',
+          click: this.resizeIndicator
+        },
+        {
+          label: 'Unload',
+          icon: 'cross',
+          click: this.removeIndicator
+        }
+      ]
+    },
     getOptionType(value, key) {
       let type = 'string'
 
@@ -389,9 +427,14 @@ export default {
       }
     },
     refreshPlotTypes() {
-      this.types = (this.script.match(/plot(\w+)/g) || [])
-        .map(t => t.replace(/^plot/, ''))
-        .map(t => plotTypesMap[t] || t)
+      const availableTypes = Object.keys(defaultPlotsOptions).map(a => a.replace(/[^\w]/g, ''))
+
+      this.types = (this.script.match(new RegExp(`(?:\\n|\\s)(?:plot)?(${availableTypes.join('|')})\\(`, 'g')) || [])
+        .map(a => {
+          const justType = a.replace(/[^\w]/g, '').replace(/^plot/, '')
+
+          return plotTypesMap[justType] || justType
+        })
         .filter((t, index, self) => self.indexOf(t) === index && defaultPlotsOptions[t])
     },
     cleanOptions() {
@@ -540,6 +583,19 @@ export default {
         await store.commit(this.paneId + '/UPDATE_DESCRIPTION', { id: this.indicatorId, description })
       }
     },
+    async downloadIndicator() {
+      await downloadJson(
+        {
+          type: 'indicator',
+          name: 'indicator:' + this.name,
+          data: {
+            options: store.state[this.paneId].indicators[this.indicatorId].options,
+            script: this.script
+          }
+        },
+        'indicator_' + this.indicatorId
+      )
+    },
     async duplicateIndicator() {
       const indicator = merge({}, store.state[this.paneId].indicators[this.indicatorId])
 
@@ -657,3 +713,13 @@ export default {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.refresh {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  border-radius: 0 2px 0 4px;
+  background: 0 !important;
+}
+</style>

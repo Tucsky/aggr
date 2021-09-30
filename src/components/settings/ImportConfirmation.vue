@@ -40,7 +40,7 @@
     </div>
     <footer>
       <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
-      <button class="btn -large" @click="close(workspace)">IMPORT & LOAD</button>
+      <button class="btn -large -primary" @click="close(workspace)">IMPORT & LOAD</button>
     </footer>
   </Dialog>
 </template>

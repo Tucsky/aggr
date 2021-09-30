@@ -329,7 +329,9 @@ const mutations = {
       return
     }
 
-    this.commit(state._id + '/FLAG_INDICATOR_AS_UNSAVED', payload.id)
+    if (state.indicators[payload.id].script !== payload.value) {
+      this.commit(state._id + '/FLAG_INDICATOR_AS_UNSAVED', payload.id)
+    }
 
     Vue.set(state.indicators[payload.id], 'script', payload.value)
   },
