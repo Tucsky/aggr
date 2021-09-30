@@ -25,7 +25,14 @@
         </button>
         <button class="btn -text" @click="rollbackIndicator"><i class="icon-eraser"></i></button
       ></template>
-      <button class="btn -text -white mlauto" @click="showHelp">doc <i class="icon-external-link-square-alt ml4"></i></button>
+      <a
+        href="https://github.com/Tucsky/aggr/wiki/introduction-to-scripting"
+        target="_blank"
+        title="Scripting documentation"
+        v-tippy
+        class="btn -text -white mlauto"
+        >Wiki <span class="badge -red ml4">NEW</span></a
+      >
     </div>
     <div class="d-flex mobile-dir-col-desktop-dir-row">
       <div>
@@ -185,7 +192,6 @@ import DialogMixin from '../../mixins/dialogMixin'
 import { defaultPlotsOptions, defaultSerieOptions, plotTypesMap } from './chartOptions'
 import Behave from 'behave-js'
 import IndicatorDialog from './IndicatorDialog.vue'
-import SerieHelpDialog from './IndicatorHelpDialog.vue'
 import dialogService from '../../services/dialogService'
 import merge from 'lodash.merge'
 import IndicatorPresetDialog from './IndicatorPresetDialog.vue'
@@ -629,9 +635,6 @@ export default {
       } else {
         this.sections.splice(index, 1)
       }
-    },
-    showHelp() {
-      dialogService.open(SerieHelpDialog)
     },
     createScriptEditor() {
       setTimeout(() => {

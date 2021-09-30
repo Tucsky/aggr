@@ -25,7 +25,8 @@ module.exports = {
   configureWebpack: {
     plugins: [
       new ServiceWorkerWebpackPlugin({
-        entry: path.join(__dirname, 'src/sw.js')
+        entry: path.join(__dirname, 'src/sw.js'),
+        publicPath: process.env.PUBLIC_PATH || '/'
       })
     ]
   },
