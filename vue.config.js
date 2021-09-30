@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const ServiceWorkerWebpackPlugin = require('serviceworker-webpack-plugin')
+const WebpackPwaManifest = require('webpack-pwa-manifest')
 
 process.env.VUE_APP_VERSION = require('./package.json').version
 
@@ -19,14 +20,56 @@ process.env.VUE_APP_API_URL = process.env.API_URL
 process.env.VUE_APP_API_SUPPORTED_PAIRS = process.env.API_SUPPORTED_PAIRS
 process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES = process.env.API_SUPPORTED_TIMEFRAMES
 
+const publicPath = process.env.PUBLIC_PATH || '/'
+
 module.exports = {
   productionSourceMap: false,
-  publicPath: process.env.PUBLIC_PATH || '/',
+  publicPath: publicPath,
   configureWebpack: {
     plugins: [
       new ServiceWorkerWebpackPlugin({
         entry: path.join(__dirname, 'src/sw.js'),
-        publicPath: process.env.PUBLIC_PATH || '/'
+        publicPath: publicPath
+      }),
+      new WebpackPwaManifest({
+        start_url: publicPath,
+        name: 'SignificantTrades',
+        short_name: 'AGGR',
+        icons: [
+          {
+            src: publicPath + 'android-chrome-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: publicPath + 'android-chrome-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          }
+        ],
+        theme_color: '#171b29',
+        background_color: '#171b29',
+        display: 'standalone'
+        /*name: 'My Progressive Web App',
+        short_name: 'MyPWA',
+        description: 'My awesome Progressive Web App!',
+        background_color: '#ffffff',
+        crossorigin: 'use-credentials', //can be null, use-credentials or anonymous
+        icons: [
+          {
+            src: path.resolve('src/assets/icon.png'),
+            sizes: [96, 128, 192, 256, 384, 512] // multiple sizes
+          },
+          {
+            src: path.resolve('src/assets/large-icon.png'),
+            size: '1024x1024' // you can also use the specifications pattern
+          },
+          {
+            src: path.resolve('src/assets/maskable-icon.png'),
+            size: '1024x1024',
+            purpose: 'maskable'
+          }
+        ]*/
       })
     ]
   },

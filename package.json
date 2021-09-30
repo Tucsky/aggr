@@ -60,6 +60,7 @@
     "vue-cli-plugin-webpack-bundle-analyzer": "~4.0.0",
     "vue-template-compiler": "^2.6.11",
     "webpack-bundle-analyzer": "^4.4.2",
+    "webpack-pwa-manifest": "^4.3.0",
     "worker-loader": "^3.0.8"
   }
 }
