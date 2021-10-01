@@ -500,3 +500,8 @@ $iconpath: '../fonts';
     content: $icon-star-filled;
   }
 }
+.icon-save {
+  &:before {
+    content: $icon-save;
+  }
+}

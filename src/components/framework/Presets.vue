@@ -4,7 +4,7 @@
       <div class="column" @mousedown.prevent>
         <div class="btn -green" @click="savePreset"><i class="icon-plus"></i></div>
         <div class="btn -blue" @click="uploadPreset"><i class="icon-upload"></i></div>
-        <div class="btn -red" @click="applyDefault"><i class="icon-eraser mr4"></i> Reset</div>
+        <div class="btn -red" @click="applyDefault"><i class="icon-eraser mr8"></i> Reset</div>
       </div>
     </template>
     <template v-slot:option="{ value }">
@@ -77,9 +77,9 @@ export default class extends Vue {
 
     if (await dialogService.openAsPromise(PresetDialog, { preset })) {
       this.applyPreset(preset)
-    } else {
-      await this.getPresets()
     }
+
+    await this.getPresets()
   }
 
   async savePreset(name?: string) {

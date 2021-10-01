@@ -130,13 +130,6 @@ export default {
   methods: {
     async getIndicators() {
       this.indicators = await workspacesService.getIndicators()
-      this.getIndicatorId()
-    },
-    getIndicatorId() {
-      this.indicatorId = uniqueName(
-        slugify(this.name),
-        this.indicators.map(i => i.id)
-      )
     },
     async importIndicator() {
       let content
@@ -224,7 +217,7 @@ export default {
       this.close(null)
     },
     async removeIndicator(indicator) {
-      if (await dialogService.confirm(`Delete "${indicator.name}" ?`)) {
+      if (await dialogService.confirm(`Delete indicator "${indicator.name}" ?`)) {
         workspacesService.deleteIndicator(indicator.id)
 
         this.indicators.splice(this.indicators.indexOf(indicator), 1)

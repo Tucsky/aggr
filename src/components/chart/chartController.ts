@@ -698,6 +698,9 @@ export default class ChartController {
     if (!update && created) {
       // chart already knows about that price scale (and doesn't need update)
       return
+    } else if (!created) {
+      // prevent double pricescale registration
+      this.priceScales.push(priceScaleId)
     }
 
     let priceScale: PriceScaleSettings = store.state[this.paneId].priceScales[priceScaleId]
@@ -706,7 +709,6 @@ export default class ChartController {
       // create default price scale
       priceScale = {}
       // retrocompatibility with previous scaleMargins option
-      // TODO: remove soon ⚠️
       const indicator = this.loadedIndicators.find(indicator => indicator.options.priceScaleId === priceScaleId)
 
       if (indicator && indicator.options.scaleMargins) {
@@ -727,10 +729,6 @@ export default class ChartController {
 
     // use it
     this.chartInstance.priceScale(priceScaleId).applyOptions(priceScale)
-
-    if (!created) {
-      this.priceScales.push(priceScaleId)
-    }
   }
 
   /**

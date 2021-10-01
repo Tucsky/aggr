@@ -12,26 +12,20 @@
       <div class="column -center"></div>
     </template>
     <div class="d-flex mb16">
-      <template v-if="unsavedChanges">
-        <button
-          v-if="unsavedChanges"
-          class="btn -green"
-          href="javascript:void(0)"
-          @click="$store.dispatch(paneId + '/saveIndicator', indicatorId)"
-          v-tippy
-          title="Save it to use / sync with other panes"
-        >
-          <i class="icon-info mr4"></i> Save {{ indicatorId }}
-        </button>
-        <button class="btn -text" @click="rollbackIndicator"><i class="icon-eraser"></i></button
-      ></template>
+      <div v-if="unsavedChanges">
+        <p class="help-text mt0 mb4">
+          Unsaved changes <i class="icon-info -lower ml4" title="Those changes are visible on that pane only, save it to sync w/ other panes"></i>
+        </p>
+        <button class="btn -green" href="javascript:void(0)" @click="saveIndicator" v-tippy title="Save"><i class="icon-save mr8"></i> save</button>
+        <button class="btn -text" @click="undoIndicator" title="Rollback to previous save" v-tippy><i class="icon-eraser mr8"></i> Undo</button>
+      </div>
       <a
         href="https://github.com/Tucsky/aggr/wiki/introduction-to-scripting"
         target="_blank"
         title="Scripting documentation"
         v-tippy
-        class="btn -text -white mlauto"
-        >Wiki <span class="badge -red ml4">NEW</span></a
+        class="btn -text -white mlauto -start"
+        >scripting Wiki <span class="badge -red ml4">NEW</span></a
       >
     </div>
     <div class="d-flex mobile-dir-col-desktop-dir-row">
@@ -141,7 +135,7 @@
                 @output="validate(formatOption, { ...formatOption.value, type: $event })"
               ></dropdown>
             </div>
-            <div>
+            <div class="column">
               <div class="form-group mb16">
                 <label>precision</label>
                 <editable
@@ -171,6 +165,13 @@
     <div class="form-group d-flex">
       <presets type="indicator" class="mr8 -left" :adapter="getIndicatorPreset" @apply="applyIndicatorPreset($event)" label="Presets" />
       <dropdown :options="indicatorMenu" class="mlauto" selectionClass="-text -arrow">
+        <template v-slot:option-use-as-default>
+          <label class="checkbox-control -small" @mousedown.prevent>
+            <input type="checkbox" class="form-control" :checked="indicator.enabled" @change="toggleIndicatorAsDefault" />
+            <div></div>
+            <span>Use as default</span>
+          </label>
+        </template>
         <template v-slot:option="{ value }">
           <div>
             <i class="-lower" :class="'icon-' + value.icon"></i>
@@ -223,23 +224,26 @@ export default {
     }
   }),
   computed: {
-    displayName: function() {
-      return store.state[this.paneId].indicators[this.indicatorId].displayName
+    indicator() {
+      return store.state[this.paneId].indicators[this.indicatorId]
     },
-    description: function() {
-      return store.state[this.paneId].indicators[this.indicatorId].description
+    displayName() {
+      return this.indicator.displayName
+    },
+    description() {
+      return this.indicator.description
     },
     unsavedChanges() {
-      return store.state[this.paneId].indicators[this.indicatorId].unsavedChanges
+      return this.indicator.unsavedChanges
     },
-    error: function() {
+    error() {
       return store.state[this.paneId].indicatorsErrors[this.indicatorId]
     },
     name() {
-      return store.state[this.paneId].indicators[this.indicatorId].displayName || store.state[this.paneId].indicators[this.indicatorId].name
+      return this.indicator.displayName || this.indicator.name
     },
-    script: function() {
-      return store.state[this.paneId].indicators[this.indicatorId].script
+    script() {
+      return this.indicator.script
     },
     formatOption() {
       return {
@@ -307,6 +311,9 @@ export default {
           label: 'Resize',
           icon: 'resize-height',
           click: this.resizeIndicator
+        },
+        {
+          id: 'use-as-default'
         },
         {
           label: 'Unload',
@@ -435,7 +442,7 @@ export default {
     refreshPlotTypes() {
       const availableTypes = Object.keys(defaultPlotsOptions).map(a => a.replace(/[^\w]/g, ''))
 
-      this.types = (this.script.match(new RegExp(`(?:\\n|\\s)(?:plot)?(${availableTypes.join('|')})\\(`, 'g')) || [])
+      this.types = (this.script.match(new RegExp(`(?:\\n|\\s|^)(?:plot)?(${availableTypes.join('|')})\\(`, 'g')) || [])
         .map(a => {
           const justType = a.replace(/[^\w]/g, '').replace(/^plot/, '')
 
@@ -465,7 +472,7 @@ export default {
         }
       }
     },
-    refreshOptions(script) {
+    refreshOptions(script, updateValues = false) {
       const defaultIndicatorOptionsKeys = Object.keys(store.state[this.paneId].indicators[this.indicatorId].options)
 
       const scriptOptionsKeys = this.getScriptOptions(script || this.script)
@@ -502,6 +509,8 @@ export default {
           if (scriptOptionsKeys.indexOf(key) !== -1 && defaultIndicatorOptionsKeys.indexOf(key) === -1) {
             this.validate(this.colorOptions[this.colorOptions.length - 1], value)
           }
+        } else if (updateValues) {
+          this.getValue(key)
         }
       }
 
@@ -522,6 +531,8 @@ export default {
           if (scriptOptionsKeys.indexOf(key) !== -1 && defaultIndicatorOptionsKeys.indexOf(key) === -1) {
             this.validate(this.otherOptions[this.otherOptions.length - 1], value)
           }
+        } else if (updateValues) {
+          this.getValue(key)
         }
       }
 
@@ -624,8 +635,15 @@ export default {
         'serie'
       )
     },
-    rollbackIndicator() {
-      this.$store.dispatch(this.paneId + '/rollbackIndicator', this.indicatorId)
+    async saveIndicator() {
+      this.$store.dispatch(this.paneId + '/saveIndicator', this.indicatorId)
+    },
+    async undoIndicator() {
+      if (!(await dialogService.confirm('Undo changes ?'))) {
+        return
+      }
+
+      this.$store.dispatch(this.paneId + '/undoIndicator', this.indicatorId)
     },
     toggleSection(id) {
       const index = this.sections.indexOf(id)
@@ -712,6 +730,23 @@ export default {
       }
 
       this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', { id: this.indicatorId })
+
+      this.refreshPlotTypes()
+      this.refreshOptions(this.script, true)
+
+      this.$store.commit(this.paneId + '/FLAG_INDICATOR_AS_UNSAVED', this.indicatorId)
+    },
+    async toggleIndicatorAsDefault() {
+      if (
+        this.unsavedChanges &&
+        !(await dialogService.confirm('Indicator has unsaved changes, save it and turn ' + (this.indicator.enabled ? 'off' : 'on') + ' default ?'))
+      ) {
+        return
+      }
+
+      this.indicator.enabled = !this.indicator.enabled
+
+      return this.saveIndicator()
     }
   }
 }

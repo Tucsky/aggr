@@ -34,8 +34,8 @@
       </ul>
 
       <footer>
-        <button type="button" class="btn -text -red mrauto ml0" @click="deletePreset"><i class="icon-cross mr4"></i> Delete</button>
-        <button type="button" class="btn -text ml8" @click="downloadPreset"><i class="icon-download mr4"></i> Download</button>
+        <button type="button" class="btn -text -red mrauto ml0" @click="deletePreset"><i class="icon-cross mr8"></i> Delete</button>
+        <button type="button" class="btn -text ml8" @click="downloadPreset"><i class="icon-download mr8"></i> Download</button>
         <button type="submit" class="btn -green -large ml16"><i class="icon-check mr4"></i> Apply</button>
       </footer>
     </form>

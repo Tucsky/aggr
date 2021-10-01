@@ -165,7 +165,7 @@ export default class extends Vue {
   }
 
   async removePane() {
-    if (await dialogService.confirm(`Supprimer ${this.paneId} ?`)) {
+    if (await dialogService.confirm(`Delete pane "${this.paneId}" ?`)) {
       this.$store.dispatch('panes/removePane', this.paneId)
     }
   }

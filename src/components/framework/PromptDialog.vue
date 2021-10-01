@@ -11,7 +11,7 @@
 
       <footer>
         <a href="javascript:void(0);" class="btn -text" @click="close(false)">Cancel</a>
-        <button type="submit" class="btn -green ml8 -large"><i class="icon-check mr4"></i> Submit</button>
+        <button type="submit" class="btn -green ml8 -large"><i class="icon-check mr8"></i> Submit</button>
       </footer>
     </form>
   </Dialog>

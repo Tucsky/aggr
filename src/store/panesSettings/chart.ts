@@ -200,7 +200,7 @@ const actions = {
       }
     }
   },
-  async rollbackIndicator({ state, commit }, indicatorId) {
+  async undoIndicator({ state, commit }, indicatorId) {
     const savedIndicator = await workspacesService.getIndicator(indicatorId)
 
     if (!savedIndicator) {
