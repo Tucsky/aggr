@@ -201,6 +201,8 @@ export default class ChartController {
       marketsForWatermark.slice(0, 3).join(' + ') + (marketsForWatermark.length - 3 > 0 ? ' + ' + (marketsForWatermark.length - 3) : '')
 
     this.updateWatermark()
+
+    this.resetPriceScales()
   }
 
   /**
@@ -729,6 +731,14 @@ export default class ChartController {
 
     // use it
     this.chartInstance.priceScale(priceScaleId).applyOptions(priceScale)
+  }
+
+  resetPriceScales() {
+    for (let i = 0; i < this.priceScales.length; i++) {
+      this.chartInstance.priceScale(this.priceScales[i]).applyOptions({
+        autoScale: true
+      })
+    }
   }
 
   /**
