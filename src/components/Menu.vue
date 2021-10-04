@@ -4,6 +4,10 @@
       <i class="icon-menu"></i>
     </button>
     <div class="menu__actions" v-if="open" @click="onClickItem">
+      <button class="menu-action btn" type="button" @click="toggleFullscreen">
+        <span class="mr4" v-text="isFullscreen ? 'exit' : 'fullscreen'"></span>
+        <i class="icon-enlarge"></i>
+      </button>
       <button class="menu-action btn" type="button" @click="showSettings">
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>
@@ -64,6 +68,7 @@ import SettingsDialog from './settings/SettingsDialog.vue'
   }
 })
 export default class extends Vue {
+  isFullscreen = false
   open = false
   paneTypes = {
     chart: {
@@ -104,8 +109,37 @@ export default class extends Vue {
     dialogService.open(SettingsDialog)
   }
 
+  toggleFullscreen() {
+    let element = document.body
+
+    if (event instanceof HTMLElement) {
+      element = event
+    }
+
+    ;(element as any).requestFullScreen =
+      (element as any).requestFullScreen ||
+      (element as any).webkitRequestFullScreen ||
+      (element as any).mozRequestFullScreen ||
+      function() {
+        return false
+      }
+    ;(document as any).cancelFullScreen =
+      (document as any).cancelFullScreen ||
+      (document as any).webkitCancelFullScreen ||
+      (document as any).mozCancelFullScreen ||
+      function() {
+        return false
+      }
+
+    this.isFullscreen ? (document as any).cancelFullScreen() : (element as any).requestFullScreen()
+  }
+
   toggleMenu() {
     this.open = !this.open
+
+    if (this.open) {
+      this.isFullscreen = (document as any).webkitIsFullScreen || (document as any).mozFullScreen ? true : false
+    }
   }
 
   addPane(type: PaneType) {
