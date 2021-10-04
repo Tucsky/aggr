@@ -3,7 +3,13 @@
     <template v-slot:header>
       <div v-if="paneId">
         <div class="title">ADD/REMOVE SOURCES</div>
-        <div class="subtitle" style="opacity: 1">to <span class="text-success" v-text="paneName"></span> pane</div>
+        <div class="subtitle" style="opacity: 1">
+          to <span class="text-success" v-text="paneName"></span>
+          pane
+          <button type="button" class="btn -small ml4 -text" v-tippy title="Target all instead" @click="detargetPane">
+            <i class="icon-cross"></i>
+          </button>
+        </div>
       </div>
       <div v-else>
         <div class="title">REPLACE SOURCES</div>
@@ -96,21 +102,23 @@
               <input type="checkbox" class="form-control" :checked="allExchangesEnabled" @change="toggleAll" />
               <div></div>
             </label>
-            <label class="checkbox-control -small mb4 -custom" v-for="id of exchanges" :key="id">
-              <input
-                type="checkbox"
-                class="form-control"
-                :checked="searchExchanges[id] !== false"
-                @change="$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', id)"
-              />
-              <div :class="'icon-' + id"></div>
-              <span>
-                <span v-text="id"></span>
-                <a v-if="canRefreshProducts" href="javascript:void(0);" class="-text" @click="refreshExchangeProducts(id)" title="Refresh products">
-                  <i class="icon-refresh ml8"> </i>
-                </a>
-              </span>
-            </label>
+            <template v-for="id of exchanges">
+              <label class="checkbox-control -small mb4 -custom" :key="id" v-if="!$store.state.exchanges[id].disabled">
+                <input
+                  type="checkbox"
+                  class="form-control"
+                  :checked="searchExchanges[id] !== false"
+                  @change="$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', id)"
+                />
+                <div :class="'icon-' + id"></div>
+                <span>
+                  <span v-text="id"></span>
+                  <a v-if="canRefreshProducts" href="javascript:void(0);" class="-text" @click="refreshExchangeProducts(id)" title="Refresh products">
+                    <i class="icon-refresh ml8"> </i>
+                  </a>
+                </span>
+              </label>
+            </template>
           </div>
           <div class="search-filters__title mb8" @click="showExchanges = !showExchanges">Exchanges <i class="icon-up -higher"></i></div>
         </div>
@@ -337,14 +345,24 @@ export default {
         this.$store.state.settings.searchTypes
       )
     },
-    searchExchanges() {
-      return this.$store.state.settings.searchExchanges
-    },
     exchanges() {
       return this.$store.getters['exchanges/getExchanges']
     },
+    searchExchanges() {
+      const searchExchanges = this.$store.state.settings.searchExchanges
+
+      return Object.keys(searchExchanges).reduce((output, a) => {
+        if (this.$store.state.exchanges[a].disabled) {
+          return output
+        }
+
+        output[a] = searchExchanges[a]
+
+        return output
+      }, {})
+    },
     allExchangesEnabled() {
-      return !this.exchanges.find(a => this.searchExchanges[a] === false)
+      return !Object.values(this.searchExchanges).find(a => !a)
     },
     hasFilters() {
       const hasHistorical = this.searchTypes.historical
@@ -391,7 +409,7 @@ export default {
           return false
         }
 
-        if (exchanges[a.exchange] === false) {
+        if (!exchanges[a.exchange]) {
           return false
         }
 
@@ -469,13 +487,7 @@ export default {
     }
   },
   async created() {
-    if (this.paneId) {
-      this.selection = this.$store.state.panes.panes[this.paneId].markets.slice()
-    } else {
-      this.selection = this.activeMarkets.slice()
-    }
-
-    this.originalSelection = this.selection.slice()
+    this.initSelection()
 
     await this.ensureProducts()
   },
@@ -492,6 +504,20 @@ export default {
     document.removeEventListener('keydown', this.onKeydown)
   },
   methods: {
+    detargetPane() {
+      this.$store.commit('app/SET_FOCUSED_PANE', null)
+      this.paneId = null
+      this.initSelection()
+    },
+    initSelection() {
+      if (this.paneId) {
+        this.selection = this.$store.state.panes.panes[this.paneId].markets.slice()
+      } else {
+        this.selection = this.activeMarkets.slice()
+      }
+
+      this.originalSelection = this.selection.slice()
+    },
     containMultipleMarketsConfigurations() {
       return (
         Object.keys(this.$store.state.panes.panes)
