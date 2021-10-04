@@ -4,13 +4,13 @@
       <i class="icon-menu"></i>
     </button>
     <div class="menu__actions" v-if="open" @click="onClickItem">
-      <button class="menu-action btn" type="button" @click="toggleFullscreen">
-        <span class="mr4" v-text="isFullscreen ? 'exit' : 'fullscreen'"></span>
-        <i class="icon-enlarge"></i>
-      </button>
       <button class="menu-action btn" type="button" @click="showSettings">
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>
+      </button>
+      <button class="menu-action btn" type="button" @click="toggleFullscreen">
+        <span class="mr4" v-text="isFullscreen ? 'exit' : 'fullscreen'"></span>
+        <i class="icon-enlarge"></i>
       </button>
       <tippy to="myTrigger" :interactive="true" :delay="[0, 400]" :distance="20" placement="left" :theme="'transparent'">
         <div class="mt4 mb4 text-nowrap">
