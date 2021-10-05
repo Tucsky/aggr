@@ -204,6 +204,21 @@ button {
     background-color: transparent;
     border: transparent 1px solid;
   }
+
+  &.-badge {
+    position: relative;
+
+    .badge {
+      top: -0.75em;
+      right: -0.75em;
+      position: absolute;
+      z-index: 1;
+
+      + span {
+        padding-right: .5em;
+      }
+    }
+  }
 }
 
 a {

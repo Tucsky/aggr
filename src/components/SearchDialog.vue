@@ -130,11 +130,13 @@
             <button
               v-for="(markets, localPair) of groupedSelection"
               :key="localPair"
-              class="btn  -accent -accent-200"
+              class="btn  -accent -accent-200 -badge"
               :title="'Click to remove ' + markets.join(', ')"
               @click="deselectMarkets(markets)"
-              v-text="localPair"
-            ></button>
+            >
+              <span v-if="markets.length > 1" class="badge" v-text="markets.length"></span>
+              <span v-text="localPair"></span>
+            </button>
           </template>
           <template v-else>
             <button
@@ -362,7 +364,7 @@ export default {
       }, {})
     },
     allExchangesEnabled() {
-      return !Object.values(this.searchExchanges).find(a => !a)
+      return typeof Object.values(this.searchExchanges).find(a => a === false) === 'undefined'
     },
     hasFilters() {
       const hasHistorical = this.searchTypes.historical
