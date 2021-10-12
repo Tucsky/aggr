@@ -144,7 +144,7 @@
   },
   "btccvdperp": {
     "name": "CVD (BTC PERP)",
-    "script": "plotline(cum((BINANCE_FUTURES:btcusdt.vbuy+BITFINEX:BTCF0:USTF0.vbuy+BYBIT:BTCUSDT.vbuy+OKEX:BTC-USDT-SWAP.vbuy+BINANCE_FUTURES:btcusd_perp.vbuy+BITMEX:XBTUSD.vbuy+BYBIT:BTCUSD.vbuy+DERIBIT:BTC-PERPETUAL.vbuy+FTX:BTC-PERP.vbuy+HUOBI:BTC-USD.vbuy+KRAKEN:PI_XBTUSD.vbuy+OKEX:BTC-USD-SWAP.vbuy)-(BINANCE_FUTURES:btcusdt.vsell+BITFINEX:BTCF0:USTF0.vsell+BYBIT:BTCUSDT.vsell+OKEX:BTC-USDT-SWAP.vsell+BINANCE_FUTURES:btcusd_perp.vsell+BITMEX:XBTUSD.vsell+BYBIT:BTCUSD.vsell+DERIBIT:BTC-PERPETUAL.vsell+FTX:BTC-PERP.vsell+HUOBI:BTC-USD.vsell+KRAKEN:PI_XBTUSD.vsell+OKEX:BTC-USD-SWAP.vsell)), title=CVD:BTC:PERP)",
+    "script": "line(cum((BINANCE_FUTURES:btcusdt.vbuy+BINANCE_FUTURES:btcusd_perp.vbuy+BITFINEX:BTCF0:USTF0.vbuy+BITMEX:XBTUSD.vbuy+BYBIT:BTCUSD.vbuy+BYBIT:BTCUSDT.vbuy+DERIBIT:BTC-PERPETUAL.vbuy+FTX:BTC-PERP.vbuy+HUOBI:BTC-USD.vbuy+KRAKEN:PI_XBTUSD.vbuy+OKEX:BTC-USDT-SWAP.vbuy+OKEX:BTC-USD-SWAP.vbuy)- (BINANCE_FUTURES:btcusdt.vsell+BINANCE_FUTURES:btcusd_perp.vsell+BITFINEX:BTCF0:USTF0.vsell+BITMEX:XBTUSD.vsell+BYBIT:BTCUSD.vsell+BYBIT:BTCUSDT.vsell+DERIBIT:BTC-PERPETUAL.vsell+FTX:BTC-PERP.vsell+HUOBI:BTC-USD.vsell+KRAKEN:PI_XBTUSD.vsell+OKEX:BTC-USDT-SWAP.vsell+OKEX:BTC-USD-SWAP.vsell)), title=CVD:BTC:PERP)",
     "options": {
       "priceFormat": {
         "type": "volume"
@@ -155,7 +155,7 @@
   },
   "btccvdspot": {
     "name": "CVD (BTC SPOT)",
-    "script": "plotline(cum((BINANCE:btcusdt.vsell+FTX:BTC/USDT.vsell+HUOBI:btcusdt.vbuy+OKEX:BTC-USDT.vbuy+POLONIEX:USDT_BTC.vbuy+BITFINEX:BTCUSD.vbuy+BITSTAMP:btcusd.vbuy+COINBASE:BTC-USD.vbuy+FTX:BTC/USD.vbuy+KRAKEN:XBT/USD.vbuy)-(BINANCE:btcusdt.vbuy+FTX:BTC/USDT.vbuy+HUOBI:btcusdt.vbuy+OKEX:BTC-USDT.vsell+POLONIEX:USDT_BTC.vsell+BITFINEX:BTCUSD.vsell+BITSTAMP:btcusd.vsell+COINBASE:BTC-USD.vsell+FTX:BTC/USD.vsell+KRAKEN:XBT/USD.vsell)), title=CVD:BTC:SPOT)",
+    "script": "line(cum((BINANCE:btcusdt.vbuy+BINANCE:btcusdc.vbuy+BITFINEX:BTCUSD.vbuy+BITSTAMP:btcusd.vbuy+BITSTAMP:btcusdt.vbuy+BITSTAMP:btcusdc.vbuy+COINBASE:BTC-USDC.vbuy+COINBASE:BTC-USD.vbuy+COINBASE:BTC-USDT.vbuy+FTX:BTC/USD.vbuy+FTX:BTC/USDT.vbuy+HUOBI:btcusdt.vbuy+HUOBI:btcusdc.vbuy+KRAKEN:XBT/USDC.vbuy+KRAKEN:XBT/USDT.vbuy+KRAKEN:XBT/USD.vbuy+OKEX:BTC-USDT.vbuy+OKEX:BTC-USDC.vbuy+POLONIEX:USDT_BTC.vbuy+POLONIEX:USDC_BTC.vbuy)-(BINANCE:btcusdt.vsell+BINANCE:btcusdc.vsell+BITFINEX:BTCUSD.vsell+BITSTAMP:btcusd.vsell+BITSTAMP:btcusdt.vsell+BITSTAMP:btcusdc.vsell+COINBASE:BTC-USDC.vsell+COINBASE:BTC-USD.vsell+COINBASE:BTC-USDT.vsell+FTX:BTC/USD.vsell+FTX:BTC/USDT.vsell+HUOBI:btcusdt.vsell+HUOBI:btcusdc.vsell+KRAKEN:XBT/USDC.vsell+KRAKEN:XBT/USDT.vsell+KRAKEN:XBT/USD.vsell+OKEX:BTC-USDT.vsell+OKEX:BTC-USDC.vsell+POLONIEX:USDT_BTC.vsell+POLONIEX:USDC_BTC.vsell)), title=CVD:BTC:SPOT)",
     "options": {
       "priceFormat": {
         "type": "volume"
