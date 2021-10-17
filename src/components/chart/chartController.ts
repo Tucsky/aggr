@@ -801,17 +801,17 @@ export default class ChartController {
     this.queuedTrades.splice(0, this.queuedTrades.length)
   }
 
-  /*clearPriceLines(indicatorsIds?: string[]) {
+  clearPriceLines(indicatorsIds?: string[]) {
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       if (indicatorsIds && indicatorsIds.indexOf(this.loadedIndicators[i].id) === -1) {
         continue
       }
 
       for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
-        this.clearSeriePriceLines(this.loadedIndicators[i].apis[j])
+        this.loadedIndicators[i].apis[j].removeAllPriceLines()
       }
     }
-  }*/
+  }
 
   /**
    * fresh start : clear cache, renderer and rendered series on chart
@@ -989,6 +989,7 @@ export default class ChartController {
   clearIndicatorSeries(indicator: LoadedIndicator) {
     for (let i = 0; i < indicator.apis.length; i++) {
       // this.clearSeriePriceLines(indicator.apis[i])
+      indicator.apis[i].removeAllPriceLines()
       indicator.apis[i].setData([])
       // this.recreateSerie(indicator, i)
     }
@@ -1269,7 +1270,7 @@ export default class ChartController {
       return
     }
 
-    // this.clearPriceLines(indicatorsIds)
+    this.clearPriceLines(indicatorsIds)
 
     const computedSeries = {}
     let from = null

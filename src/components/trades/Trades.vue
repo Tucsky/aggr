@@ -411,21 +411,19 @@ export default class extends Mixins(PaneMixin) {
 
     const price = document.createElement('div')
     price.className = 'trade__price'
-
+    price.innerHTML = `${formatPrice(trade.price)}`
     if (this._calculateSlippage) {
       if (trade.slippage) {
-        price.innerHTML =
-          '<small>(' +
+        price.innerHTML +=
+          '<small>' +
           (this._calculateSlippage === 'price'
             ? (trade.slippage > 0 ? '+' : '') + trade.slippage
             : this._calculateSlippage === 'bps'
-            ? (trade.slippage > 0 ? '+' : '') + trade.slippage
+            ? '(' + (trade.slippage > 0 ? '+' : '') + trade.slippage + ')'
             : '') +
-          ')' +
           '</small> '
       }
     }
-    price.innerHTML += `${formatPrice(trade.price)}`
     li.appendChild(price)
 
     const amount_div = document.createElement('div')
@@ -951,19 +949,11 @@ export default class extends Mixins(PaneMixin) {
     small {
       font-size: 0.75em;
       font-weight: 400;
+      line-height: 1em;
+      display: inline-block;
+      vertical-align: top;
+      padding: 0.2em 0.25em;
     }
-  }
-
-  .trade__slippage {
-    flex-basis: 2.5rem;
-    max-width: 2.5rem;
-    font-size: 12px;
-    overflow: visible;
-    position: absolute;
-    left: 50%;
-    line-height: 1rem;
-    font-family: $font-monospace;
-    font-weight: 400;
   }
 
   .trade__amount {
