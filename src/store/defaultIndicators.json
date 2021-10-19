@@ -251,5 +251,15 @@
       "negativeColor": "rgba(255,167,38,0.25)",
       "positiveColor": "rgba(255,167,38,0.25)"
     }
+  },
+  "vwap": {
+    "script": "var src = ($price.high + $price.low + $price.close)/3\nvar vol=vbuy+vsell\nvar sumVol = cum(vol)\nvar sumSrcVol = cum(src * vol)\nvar sumSrcSrcVol = cum(vol*Math.pow(src, 2))\nvar VWAP = sumSrcVol / sumVol \nvar variance = sumSrcSrcVol / sumVol - Math.pow(VWAP, 2)\nvar stDev = Math.sqrt(variance < 0 ? 0 : variance)\n\t\nline(VWAP)\ncloudarea(VWAP - stDev * options.stdevMultiplier, VWAP + stDev * options.stdevMultiplier)\n\nvar unixDays = time / 60 / 60 / 24 + 3\nif (unixDays % (options.sessionLengthInDays) === 0) {\n  fns[0].state = {}\n  fns[1].state = {}\n  fns[2].state = {}\n}",
+    "name": "VWAP",
+    "options": {
+      "priceScaleId": "right",
+      "stdevMultiplier": 1,
+      "color": "rgb(41,98,255)",
+      "sessionLengthInDays": 7
+    }
   }
 }
