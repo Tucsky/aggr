@@ -2,7 +2,8 @@
   <div class="chart-pricescale" :style="{ top: roundedTop + '%', bottom: roundedBottom + '%' }" :class="{ '-active': !!currentSide }">
     <div class="chart-pricescale__content">
       <div class="chart-pricescale__title pane-overlay" @mousedown="handleMove" @touchstart="handleMove">
-        <i class="icon-move mr8"></i> {{ priceScaleId }} <span v-if="priceScaleId === 'right'" title="Main scale" v-tippy class="ml4">👑</span>
+        <i class="icon-move mr8"></i> {{ priceScale.indicators.join(', ') }}
+        <span v-if="priceScaleId === 'right'" title="Main scale" v-tippy class="ml4">👑</span>
 
         <dropdown
           class="chart-pricescale__mode"

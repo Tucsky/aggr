@@ -896,10 +896,6 @@ export default class ChartController {
           barTimestamp = Math.floor(bar.timestamp / this.timeframe) * this.timeframe
         }
 
-        /*if (this.activeRenderer.type !== 'time' && markets[market] && markets[market].cbuy + markets[market].csell > this.timeframe) {
-          barTimestamp = markets[market].timestamp + this.timeframe
-        }*/
-
         if (!markets[market] || markets[market].timestamp < barTimestamp) {
           if (markets[market]) {
             markets[market] = newBar(markets[market], bar, barTimestamp)
@@ -1110,8 +1106,9 @@ export default class ChartController {
             timestamp = Math.floor(trade.timestamp / 1000 / this.timeframe) * this.timeframe
           }
         } else {
-          if (this.activeRenderer.bar.cbuy + this.activeRenderer.bar.csell > this.timeframe) {
-            timestamp = Math.round(trade.timestamp / 1000)
+          if (this.activeRenderer.bar.cbuy + this.activeRenderer.bar.csell >= this.timeframe) {
+            timestamp = Math.max(this.activeRenderer.timestamp + 0.001, Math.round(trade.timestamp / 1000))
+            console.log(this.activeRenderer.timestamp, timestamp, this.activeRenderer.bar.cbuy + this.activeRenderer.bar.csell)
           } else {
             timestamp = this.activeRenderer.timestamp
           }

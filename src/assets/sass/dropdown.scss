@@ -87,7 +87,7 @@
     margin: 0;
     padding: 0;
     z-index: 1000;
-    border-radius: $border-radius-base / 2;
+    border-radius: $border-radius-small;
     box-shadow: rgba(0, 0, 0, 0.2) 0px 18px 50px -10px;
     white-space: nowrap;
     cursor: pointer;
@@ -109,7 +109,7 @@
   &__scroller {
     overflow: auto;
     max-height: 250px;
-    border-radius: $border-radius-base / 2 - 2;
+    border-radius: $border-radius-small;
   }
 
   &__option {

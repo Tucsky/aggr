@@ -84,7 +84,10 @@ export default class extends Vue {
 
       if (!priceScales[priceScaleId]) {
         priceScales[priceScaleId] = this.$store.state[this.paneId].priceScales[priceScaleId]
+        priceScales[priceScaleId].indicators = []
       }
+
+      priceScales[priceScaleId].indicators.push(indicators[indicatorId].name)
 
       return priceScales
     }, {})

@@ -746,8 +746,9 @@ export default class extends Mixins(PaneMixin) {
     const type = newTimeframe[newTimeframe.length - 1] === 't' ? 'tick' : 'time'
 
     if (
-      this._chartController.timeframe < timeframe &&
       type === this._chartController.type &&
+      type === 'time' &&
+      this._chartController.timeframe < timeframe &&
       this.$store.state.app.apiSupportedTimeframes.indexOf(newTimeframe) === -1 &&
       Number.isInteger(timeframe / this._chartController.timeframe)
     ) {

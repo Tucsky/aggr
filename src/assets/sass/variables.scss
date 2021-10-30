@@ -19,10 +19,11 @@ $ease-elastic: cubic-bezier(0, 1.4, 1, 1);
 $font-base: 'Barlow', sans-serif;
 $font-monospace: 'Share Tech Mono', monospace;
 $shadow: rgba(0, 0, 0, 0.2) 0px 18px 50px -10px;
-$border-radius-base: 6px;
 $accent: rgba(#708090, 0.5);
 $checkerboard: linear-gradient(45deg, $accent 25%, transparent 25%), linear-gradient(45deg, transparent 75%, $accent 75%),
   linear-gradient(-45deg, $accent 25%, transparent 25%), linear-gradient(-45deg, transparent 75%, $accent 75%);
+$border-radius-base: 6px;
+$border-radius-small: 3px;
 
 $icon-bitcoin: '\e900';
 $icon-btc: '\e901';
