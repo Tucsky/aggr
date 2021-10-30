@@ -1108,7 +1108,6 @@ export default class ChartController {
         } else {
           if (this.activeRenderer.bar.cbuy + this.activeRenderer.bar.csell >= this.timeframe) {
             timestamp = Math.max(this.activeRenderer.timestamp + 0.001, Math.round(trade.timestamp / 1000))
-            console.log(this.activeRenderer.timestamp, timestamp, this.activeRenderer.bar.cbuy + this.activeRenderer.bar.csell)
           } else {
             timestamp = this.activeRenderer.timestamp
           }
