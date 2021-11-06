@@ -126,7 +126,7 @@ const actions = {
       }
 
       if (exchangeId === 'BITFINEX') {
-        localSymbol = localSymbol.replace(/(.*)F0:USTF0/, '$1USDT')
+        localSymbol = localSymbol.replace(/(.*)F0:USTF0/, '$1USDT').replace(/UST$/, 'USDT')
       }
 
       if (exchangeId === 'HUOBI') {
