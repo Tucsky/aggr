@@ -43,6 +43,13 @@
         </span>
       </label>
     </div>
+    <div class="form-group mb8">
+      <label class="checkbox-control -animations">
+        <input type="checkbox" class="form-control" :checked="normalizeWatermarks" @change="$store.commit('settings/TOGGLE_NORMAMIZE_WATERMARKS')" />
+        <div></div>
+        <span v-text="normalizeWatermarks ? 'Show normalized watermarks' : 'Show detailed watermark'"></span>
+      </label>
+    </div>
   </div>
 </template>
 
@@ -69,6 +76,10 @@ export default class extends Vue {
 
   get locked() {
     return this.$store.state.panes.locked
+  }
+
+  get normalizeWatermarks() {
+    return this.$store.state.settings.normalizeWatermarks
   }
 }
 </script>

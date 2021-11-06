@@ -29,6 +29,7 @@ export interface SettingsState {
   searchTypes?: any
   searchExchanges?: any
   favoriteTimeframes?: { [timeframe: number]: string }
+  normalizeWatermarks: boolean
 }
 
 const state = Object.assign(
@@ -174,6 +175,9 @@ const mutations = {
   },
   TOGGLE_ANIMATIONS(state) {
     state.disableAnimations = !state.disableAnimations
+  },
+  TOGGLE_NORMAMIZE_WATERMARKS(state) {
+    state.normalizeWatermarks = !state.normalizeWatermarks
   },
   TOGGLE_SETTINGS_PANEL(state, value) {
     const index = state.settings.indexOf(value)

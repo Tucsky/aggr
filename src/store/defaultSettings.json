@@ -29,5 +29,6 @@
     "mergeUsdt": true
   },
   "searchExchanges": {},
-  "favoriteTimeframes": {}
+  "favoriteTimeframes": {},
+  "normalizeWatermarks": true
 }

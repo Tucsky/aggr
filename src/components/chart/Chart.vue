@@ -208,6 +208,9 @@ export default class extends Mixins(PaneMixin) {
         case 'settings/SET_CHART_THEME':
           this._chartController.chartInstance.applyOptions(getCustomColorsOptions())
           break
+        case 'settings/TOGGLE_NORMAMIZE_WATERMARKS':
+          this._chartController.refreshMarkets()
+          break
         case 'settings/SET_TIMEZONE_OFFSET':
           this._chartController.setTimezoneOffset(this.$store.state.settings.timezoneOffset)
           this._chartController.clearChart()
@@ -251,6 +254,7 @@ export default class extends Mixins(PaneMixin) {
           this.updateGridlines(mutation.payload.type)
           break
         case this.paneId + '/SET_WATERMARK':
+        case this.paneId + '/TOGGLE_NORMAMIZE_WATERMARKS':
           this._chartController.updateWatermark()
           break
         case this.paneId + '/SET_INDICATOR_OPTION':

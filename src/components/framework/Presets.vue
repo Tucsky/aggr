@@ -11,6 +11,8 @@
       <i v-if="value.icon" :class="'-lower icon-' + value.icon"></i>
 
       <span>{{ value.label }}</span>
+
+      <button type="button" class="dropdown-option__action btn -small mlauto" @mousedown.prevent @click="savePreset(value.label)">update</button>
     </template>
   </dropdown>
 </template>
@@ -138,6 +140,8 @@ export default class extends Vue {
       this.$emit('apply')
     }
   }
+
+  
 
   async applyPreset(preset: Preset) {
     this.$emit('apply', preset.data)

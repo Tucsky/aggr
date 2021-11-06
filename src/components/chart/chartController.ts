@@ -167,9 +167,16 @@ export default class ChartController {
     this.chartCache = new ChartCache()
     this.serieBuilder = new SerieBuilder()
 
-    this.refreshMarkets()
     this.setTimeframe(store.state[this.paneId].timeframe)
     this.setTimezoneOffset(store.state.settings.timezoneOffset)
+    this.refreshMarkets()
+
+    const unsubscribe = store.subscribe(mutation => {
+      if (mutation.type === 'app/EXCHANGE_UPDATED') {
+        this.refreshMarkets()
+        unsubscribe()
+      }
+    })
 
     this.fillGapsWithEmpty = Boolean(store.state[this.paneId].fillGapsWithEmpty)
   }
@@ -197,8 +204,37 @@ export default class ChartController {
       return output
     }, {})
 
-    this.watermark =
-      marketsForWatermark.slice(0, 3).join(' + ') + (marketsForWatermark.length - 3 > 0 ? ' + ' + (marketsForWatermark.length - 3) : '')
+    if (store.state.settings.normalizeWatermarks) {
+      const indexedProducts = store.state.app.indexedProducts
+      const mergeUsdt = store.state.settings.searchTypes.mergeUsdt
+
+      this.watermark = marketsForWatermark
+        .reduce((output, market) => {
+          const [exchange] = parseMarket(market)
+
+          let indexedProduct
+
+          if (indexedProducts[exchange]) {
+            indexedProduct = indexedProducts[exchange].find(product => product.id === market)
+          }
+
+          let localPair = indexedProduct ? indexedProduct.local : market
+
+          if (mergeUsdt) {
+            localPair = localPair.replace('USDT', 'USD').replace('USDC', 'USD')
+          }
+
+          if (output.indexOf(localPair) === -1) {
+            output.push(localPair)
+          }
+
+          return output
+        }, [])
+        .join(' | ')
+    } else {
+      this.watermark =
+        marketsForWatermark.slice(0, 3).join(' + ') + (marketsForWatermark.length - 3 > 0 ? ' + ' + (marketsForWatermark.length - 3) : '')
+    }
 
     this.updateWatermark()
 

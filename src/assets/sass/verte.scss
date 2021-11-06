@@ -1,3 +1,5 @@
+@use 'sass:math';
+
 .verte {
   &__recent {
     display: flex;
@@ -60,7 +62,7 @@
   }
 
   &__recent-color {
-    width: ((250px - 32 - 10 * 2) / 10);
+    width: math.div(250px - 32 - 10 * 2, 10);
   }
 }
 

@@ -135,6 +135,10 @@
       i.-action {
         display: block;
       }
+
+      .dropdown-option__action {
+        visibility: visible;
+      }
     }
 
     span + i {
@@ -143,15 +147,6 @@
 
     i {
       align-self: center;
-
-      &.-action {
-        display: none;
-        opacity: 0.5;
-
-        &:hover {
-          opacity: 1;
-        }
-      }
 
       + i,
       + span {
@@ -185,6 +180,10 @@
   &__description {
     opacity: 0.5;
     font-size: 80%;
+  }
+
+  &__action {
+    visibility: hidden;
   }
 }
 
