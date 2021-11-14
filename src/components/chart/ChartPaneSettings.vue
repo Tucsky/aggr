@@ -83,7 +83,7 @@
           <input type="checkbox" class="form-control" :checked="fillGapsWithEmpty" />
           <div class="mr8"></div>
         </label>
-        <label for="" class="-fill -center">Fill gaps with empty bar</label>
+        <label for="" class="-fill -center">Fill gaps with empty bars</label>
       </div>
     </div>
   </div>

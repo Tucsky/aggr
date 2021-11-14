@@ -232,8 +232,9 @@ export default class ChartController {
         }, [])
         .join(' | ')
     } else {
+      const othersCount = marketsForWatermark.length - 3
       this.watermark =
-        marketsForWatermark.slice(0, 3).join(' + ') + (marketsForWatermark.length - 3 > 0 ? ' + ' + (marketsForWatermark.length - 3) : '')
+        marketsForWatermark.slice(0, 3).join(' + ') + (othersCount > 0 ? ' + ' + othersCount + ' other' + (othersCount > 1 ? 's' : '') : '')
     }
 
     this.updateWatermark()
@@ -488,9 +489,9 @@ export default class ChartController {
      */
     this.chartInstance.applyOptions({
       watermark: {
-        text: `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0${this.watermark +
+        text: `\u00A0\u00A0\u00A0\u00A0${this.watermark +
           ' | ' +
-          getTimeframeForHuman(store.state[this.paneId].timeframe)}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0`,
+          getTimeframeForHuman(store.state[this.paneId].timeframe).toUpperCase()}\u00A0\u00A0\u00A0\u00A0`,
         visible: store.state[this.paneId].showWatermark,
         color: store.state[this.paneId].watermarkColor
       }
@@ -501,9 +502,15 @@ export default class ChartController {
    * update chart font using pane zoom option
    */
   updateFontSize() {
+    const multiplier = store.state.panes.panes[this.paneId].zoom || 1
+    const watermarkBaseFontSize = store.state.settings.normalizeWatermarks ? 48 : 24
+
     this.chartInstance.applyOptions({
       layout: {
-        fontSize: 12 * (store.state.panes.panes[this.paneId].zoom || 1)
+        fontSize: 12 * multiplier
+      },
+      watermark: {
+        fontSize: watermarkBaseFontSize * multiplier
       }
     })
   }

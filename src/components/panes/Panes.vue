@@ -9,6 +9,7 @@
     :is-draggable="unlocked"
     :vertical-compact="true"
     :use-css-transforms="true"
+    :use-style-cursor="false"
     @layout-ready="layoutReady = true"
     @layout-updated="onLayoutUpdated"
   >

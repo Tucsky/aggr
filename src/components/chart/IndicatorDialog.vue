@@ -17,7 +17,7 @@
           Unsaved changes <i class="icon-info -lower ml4" title="Those changes are visible on that pane only, save it to sync w/ other panes"></i>
         </p>
         <button class="btn -green" href="javascript:void(0)" @click="saveIndicator" v-tippy title="Save"><i class="icon-save mr8"></i> save</button>
-        <button class="btn -text" @click="undoIndicator" title="Rollback to previous save" v-tippy><i class="icon-eraser mr8"></i> Undo</button>
+        <button class="btn -text ml8" @click="undoIndicator" title="Rollback to previous save" v-tippy><i class="icon-eraser mr8"></i> Undo</button>
       </div>
       <a
         href="https://github.com/Tucsky/aggr/wiki/introduction-to-scripting"

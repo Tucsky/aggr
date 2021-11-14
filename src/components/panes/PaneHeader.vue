@@ -3,10 +3,11 @@
     <div class="pane-header__loader"></div>
     <span class="pane-header__name ml4 mrauto" data-hide-header @dblclick="renamePane">{{ name }}</span>
     <div class="toolbar flex-grow-1" @dblclick="maximizePane">
-      <slot />
       <button type="button" @click="openSearch">
         <i class="icon-search"></i>
       </button>
+      <div class="toolbar__spacer"></div>
+      <slot />
       <button type="button" @click="openSettings">
         <i class="icon-cog"></i>
       </button>
@@ -82,11 +83,11 @@ export default class extends Vue {
       label: 'Maximize',
       click: this.maximizePane
     },
-    {
+    /*{
       icon: 'search',
       label: 'Add markets',
       click: this.openSearch
-    },
+    },*/
     {
       icon: 'copy-paste',
       label: 'Duplicate',
@@ -125,7 +126,7 @@ export default class extends Vue {
 
   created() {
     if (this.controls && this.controls.length) {
-      this.menu = this.controls.concat(this.menu)
+      this.menu = this.menu.slice(0, 1).concat(this.controls, this.menu.slice(1))
     }
   }
 
@@ -179,7 +180,7 @@ export default class extends Vue {
   }
 
   maximizePane(event) {
-    if (event.currentTarget !== event.target) {
+    if (event.currentTarget !== event.target && event.target.className !== 'toolbar__spacer') {
       return
     }
 

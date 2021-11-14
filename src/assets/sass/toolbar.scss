@@ -3,6 +3,10 @@
   justify-content: flex-end;
   align-items: stretch;
 
+  &__spacer {
+    flex-grow: 1;
+  }
+
   > span,
   > button > span,
   .dropdown > .dropdown__selected > span {

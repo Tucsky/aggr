@@ -80,6 +80,7 @@
             <input type="checkbox" class="form-control" :checked="true" @click.prevent="$store.commit('settings/TOGGLE_AGGREGATION')" />
             <div :on="aggregationLength + 'ms'" off="No aggregation"></div>
             <span v-if="aggregationLength">{{ aggregationLength }}ms aggregation</span>
+            <span v-else>No aggregation</span>
           </label>
         </div>
 
