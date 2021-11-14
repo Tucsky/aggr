@@ -122,6 +122,10 @@
     align-items: center;
     text-decoration: none;
 
+    > span {
+      line-height: 1;
+    }
+
     &:last-child {
       border-bottom: 0;
     }
@@ -147,7 +151,9 @@
     }
 
     i {
-      align-self: center;
+      align-self: stretch;
+      margin: -0.75rem -1rem;
+      padding: 0.75rem 1rem;
 
       + i,
       + span {

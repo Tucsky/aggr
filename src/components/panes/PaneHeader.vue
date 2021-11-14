@@ -3,11 +3,10 @@
     <div class="pane-header__loader"></div>
     <span class="pane-header__name ml4 mrauto" data-hide-header @dblclick="renamePane">{{ name }}</span>
     <div class="toolbar flex-grow-1" @dblclick="maximizePane">
+      <slot />
       <button type="button" @click="openSearch">
         <i class="icon-search"></i>
       </button>
-      <div class="toolbar__spacer"></div>
-      <slot />
       <button type="button" @click="openSettings">
         <i class="icon-cog"></i>
       </button>

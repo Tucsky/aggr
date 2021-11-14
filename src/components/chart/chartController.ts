@@ -1430,7 +1430,7 @@ export default class ChartController {
                     computedSeries[id] = []
                   }
 
-                  computedSeries[id].push({ time: temporaryRenderer.timestamp })
+                  computedSeries[id].push({ time: temporaryRenderer.localTimestamp })
                 }
               }
             }
@@ -1661,7 +1661,7 @@ export default class ChartController {
             }
 
             this.loadedIndicators[i].apis[j].update({
-              time: renderer.timestamp
+              time: renderer.localTimestamp
             })
           }
         }
@@ -1682,6 +1682,7 @@ export default class ChartController {
   incrementRendererBar(renderer: Renderer) {
     renderer.length++
     renderer.timestamp += renderer.timeframe
+    renderer.localTimestamp += renderer.timeframe
 
     if (renderer.bar.empty) {
       return
