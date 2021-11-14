@@ -101,7 +101,7 @@ export default class extends Exchange {
             } else if (this.types[trade.symbol] === 'inverse') {
               size = trade.leavesQty / trade.price
             } else if (this.types[trade.symbol] === 'linear') {
-              size = 0.000001 * trade.leavesQty * trade.price
+              size = 0.000001 * trade.leavesQty
             }
 
             return {
