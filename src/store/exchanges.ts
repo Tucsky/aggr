@@ -117,6 +117,8 @@ const actions = {
         type = 'perp'
       } else if (exchangeId === 'KRAKEN' && /PI_/.test(symbol)) {
         type = 'perp'
+      } else if (exchangeId === 'PHEMEX') {
+        type = 'perp'
       }
 
       let localSymbol = symbol

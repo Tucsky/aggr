@@ -354,7 +354,7 @@ export default class extends Mixins(PaneMixin) {
 
     const alreadyHasData = this._chartController.chartCache.cacheRange && this._chartController.chartCache.cacheRange.from
 
-    const historicalMarkets = historicalService.getHistoricalMarktets(this.$store.state.panes.panes[this.paneId].markets)
+    const historicalMarkets = historicalService.getHistoricalMarkets(this.$store.state.panes.panes[this.paneId].markets)
 
     if (!historicalMarkets.length) {
       return

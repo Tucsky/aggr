@@ -16,6 +16,7 @@ import Deribit from './deribit'
 import Bybit from './bybit'
 import Ftx from './ftx'
 import Phemex from './phemex'
+import Serum from './serum'
 
 export const exchanges = [
   new Bitmex(),
@@ -33,7 +34,8 @@ export const exchanges = [
   new Deribit(),
   new Bybit(),
   new Ftx(),
-  new Phemex()
+  new Phemex(),
+  new Serum()
 ] as Exchange[]
 
 export function getExchangeById(id: string) {
