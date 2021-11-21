@@ -43,7 +43,7 @@ export async function fetchProducts(exchangeId: string, endpoints: string[]): Pr
       method = 'GET'
     }
 
-    if (process.env.VUE_APP_PROXY_URL) {
+    if (process.env.VUE_APP_PROXY_URL && !/^https:\/\/raw.githubusercontent.com\//.test(url)) {
       url = process.env.VUE_APP_PROXY_URL + url
     }
 

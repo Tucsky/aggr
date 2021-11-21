@@ -353,12 +353,12 @@ export default {
     searchExchanges() {
       const searchExchanges = this.$store.state.settings.searchExchanges
 
-      return Object.keys(searchExchanges).reduce((output, a) => {
-        if (this.$store.state.exchanges[a].disabled) {
+      return Object.keys(this.$store.state.exchanges).reduce((output, id) => {
+        if (this.$store.state.exchanges[id].disabled) {
           return output
         }
 
-        output[a] = searchExchanges[a]
+        output[id] = typeof searchExchanges[id] === 'undefined' ? true : searchExchanges[id]
 
         return output
       }, {})

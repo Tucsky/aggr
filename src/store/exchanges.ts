@@ -17,6 +17,10 @@ const state = process.env.VUE_APP_EXCHANGES.split(',').reduce(
       fetched: false
     }
 
+    if (/HITBTC|PHEMEX|BINANCE_US|SERUM/i.test(id)) {
+      exchangesState[id.toUpperCase()].disabled = true
+    }
+
     return exchangesState
   },
   {

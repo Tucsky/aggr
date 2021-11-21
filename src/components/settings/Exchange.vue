@@ -6,9 +6,10 @@
       '-enabled': !settings.disabled,
       '-expanded': expanded
     }"
+    @click="toggleExchange"
   >
     <div class="settings-exchange__header">
-      <div class="settings-exchange__identity" :title="'Toggle ' + id" v-tippy @click="toggleExchange">
+      <div class="settings-exchange__identity" :title="'Toggle ' + id" v-tippy>
         <div class="settings-exchange__name">{{ name }}</div>
       </div>
       <div class="settings-exchange__controls">
