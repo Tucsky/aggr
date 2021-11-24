@@ -1156,7 +1156,7 @@ export default class ChartController {
           }
         }
       } else {
-        timestamp = +new Date() / 1000
+        timestamp = trade.timestamp / 1000
       }
 
       if (!this.activeRenderer || this.activeRenderer.timestamp < timestamp) {
