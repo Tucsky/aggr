@@ -14,6 +14,7 @@ fs.readdirSync('./src/worker/exchanges/').forEach(file => {
     exchanges.push(file.replace(/\.ts$/, ''))
   }
 })
+
 process.env.VUE_APP_EXCHANGES = exchanges.join(',')
 process.env.VUE_APP_PROXY_URL = process.env.PROXY_URL
 process.env.VUE_APP_API_URL = process.env.API_URL
@@ -50,28 +51,13 @@ module.exports = {
         theme_color: '#171b29',
         background_color: '#171b29',
         display: 'standalone'
-        /*name: 'My Progressive Web App',
-        short_name: 'MyPWA',
-        description: 'My awesome Progressive Web App!',
-        background_color: '#ffffff',
-        crossorigin: 'use-credentials', //can be null, use-credentials or anonymous
-        icons: [
-          {
-            src: path.resolve('src/assets/icon.png'),
-            sizes: [96, 128, 192, 256, 384, 512] // multiple sizes
-          },
-          {
-            src: path.resolve('src/assets/large-icon.png'),
-            size: '1024x1024' // you can also use the specifications pattern
-          },
-          {
-            src: path.resolve('src/assets/maskable-icon.png'),
-            size: '1024x1024',
-            purpose: 'maskable'
-          }
-        ]*/
       })
     ]
+  },
+  pluginOptions: {
+    webpackBundleAnalyzer: {
+      openAnalyzer: false
+    }
   },
   /*configureWebpack: config => {
     if (process.env.NODE_ENV === 'development') {

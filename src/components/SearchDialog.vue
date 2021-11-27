@@ -459,6 +459,11 @@ export default {
     groupedSelection: function() {
       return this.selection.reduce((groups, market) => {
         const [exchange] = parseMarket(market)
+
+        if (!this.indexedProducts[exchange]) {
+          return groups
+        }
+
         const indexedProduct = this.indexedProducts[exchange].find(product => product.id === market)
 
         let localPair = indexedProduct ? indexedProduct.local : market
@@ -483,9 +488,6 @@ export default {
       if (!value) {
         this.close(false)
       }
-    },
-    query: () => {
-      console.log('query change')
     }
   },
   async created() {
@@ -495,6 +497,10 @@ export default {
   },
   mounted() {
     this.$nextTick(() => {
+      if (!this.$refs.input) {
+        return
+      }
+
       this.$refs.input.focus()
     })
 

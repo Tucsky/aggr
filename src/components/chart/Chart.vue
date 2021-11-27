@@ -282,6 +282,11 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/TOGGLE_FILL_GAPS_WITH_EMPTY':
           this._chartController.toggleFillGapsWithEmpty()
           break
+        case this.paneId + '/TOGGLE_FORCE_NORMALIZE_PRICE':
+          this._chartController.propagateInitialPrices = (this.$store.state[this.paneId] as ChartPaneState).forceNormalizePrice
+          this.clear()
+          this.fetch()
+          break
         case 'settings/TOGGLE_AUTO_HIDE_HEADERS':
           this.refreshChartDimensions()
           break
@@ -560,7 +565,11 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.chartCache.saveChunk(chunk)
         }
 
-        this._chartController.propagateInitialPrices = false
+        if (!(this.$store.state[this.paneId] as ChartPaneState).forceNormalizePrice) {
+          this._chartController.propagateInitialPrices = false
+          console.log('propagateInitialPrices = false (from historical fetch)')
+        }
+
         this._chartController.renderAll()
       }
     }

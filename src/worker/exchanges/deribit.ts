@@ -64,25 +64,39 @@ export default class extends Exchange {
       return
     }
 
-    return this.emitTrades(
-      api.id,
-      json.params.data.map(a => {
-        const trade: Trade = {
-          exchange: this.id,
-          pair: a.instrument_name,
-          timestamp: +a.timestamp,
-          price: +a.price,
-          size: a.amount / a.price,
-          side: a.direction
-        }
+    const trades = []
+    const liquidations = []
 
-        if (a.liquidation) {
-          trade.liquidation = true
-        }
+    for (let i = 0; i < json.params.data.length; i++) {
+      const trade = json.params.data[i]
 
-        return trade
-      })
-    )
+      const output: Trade = {
+        exchange: this.id,
+        pair: trade.instrument_name,
+        timestamp: +trade.timestamp,
+        price: +trade.price,
+        size: trade.amount / trade.price,
+        side: trade.direction
+      }
+
+      if (trade.liquidation) {
+        output.liquidation = true
+
+        liquidations.push(output)
+      } else {
+        trades.push(output)
+      }
+    }
+
+    if (trades.length) {
+      this.emitTrades(api.id, trades)
+    }
+
+    if (liquidations.length) {
+      this.emitLiquidations(api.id, liquidations)
+    }
+
+    return true
   }
 
   onApiCreated(api) {

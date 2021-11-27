@@ -514,7 +514,7 @@ class Aggregator {
           })()
         )
       } else {
-        console.error(`[worker.connect] unknown exchange ${exchange}`)
+        console.error(`[worker.connect] unknown exchange ${exchangeId}`)
       }
     }
 

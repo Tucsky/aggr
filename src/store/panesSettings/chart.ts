@@ -35,6 +35,7 @@ export interface ChartPaneState {
   refreshRate?: number
   showLegend: boolean
   fillGapsWithEmpty: boolean
+  forceNormalizePrice: boolean
   showHorizontalGridlines: boolean
   horizontalGridlinesColor: string
   showVerticalGridlines: boolean
@@ -63,6 +64,7 @@ const state = {
   refreshRate: 1000,
   showLegend: true,
   fillGapsWithEmpty: true,
+  forceNormalizePrice: false,
   showHorizontalGridlines: false,
   horizontalGridlinesColor: 'rgba(255,255,255,.1)',
   showVerticalGridlines: false,
@@ -350,6 +352,9 @@ const mutations = {
   },
   TOGGLE_FILL_GAPS_WITH_EMPTY(state) {
     state.fillGapsWithEmpty = !state.fillGapsWithEmpty
+  },
+  TOGGLE_FORCE_NORMALIZE_PRICE(state) {
+    state.forceNormalizePrice = !state.forceNormalizePrice
   },
   UPDATE_INDICATOR_DISPLAY_NAME(state, id) {
     const displayName = state.indicators[id].name.replace(/\{([\w\d_]+)\}/g, (match, key) => state.indicators[id].options[key] || '')

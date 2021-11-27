@@ -42,6 +42,4 @@ export function getExchangeById(id: string) {
       return exchange
     }
   }
-
-  throw new Error('[worker] failed to get exchange by id "' + id + '"')
 }

@@ -11,14 +11,16 @@ export interface ExchangeSettings {
 
 export type ExchangesState = { [exchangeId: string]: ExchangeSettings } & { _id: string; _exchanges: string[] }
 
-const state = process.env.VUE_APP_EXCHANGES.split(',').reduce(
+const supportedExchanges = process.env.VUE_APP_EXCHANGES.split(',').map(id => id.toUpperCase())
+
+const state = supportedExchanges.reduce(
   (exchangesState: ExchangesState, id: string) => {
-    exchangesState[id.toUpperCase()] = {
+    exchangesState[id] = {
       fetched: false
     }
 
-    if (/HITBTC|PHEMEX|BINANCE_US|SERUM/i.test(id)) {
-      exchangesState[id.toUpperCase()].disabled = true
+    if (/HITBTC|PHEMEX|BINANCE_US|SERUM/.test(id)) {
+      exchangesState[id].disabled = true
     }
 
     return exchangesState
@@ -48,6 +50,18 @@ const actions = {
     state._exchanges.splice(0, state._exchanges.length)
 
     for (const id of getters.getExchanges) {
+      if (supportedExchanges.indexOf(id) === -1) {
+        if (rootState.settings.searchExchanges[id]) {
+          delete rootState.settings.searchExchanges[id]
+        }
+
+        if (rootState.exchanges[id]) {
+          delete rootState.exchanges[id]
+        }
+
+        continue
+      }
+
       state._exchanges.push(id)
       state[id].fetched = false
       rootState.app.activeExchanges[id] = !state[id].disabled
@@ -107,7 +121,9 @@ const actions = {
 
       if (/[UZ_-]\d{2}/.test(symbol)) {
         type = 'future'
-      } else if (exchangeId === 'BITMEX' || exchangeId === 'BYBIT' || /(-|_)swap$|(-|_|:)perp/i.test(symbol)) {
+      } else if (exchangeId === 'BYBIT' && !/-SPOT$/.test(symbol)) {
+        type = 'perp'
+      } else if (exchangeId === 'BITMEX' || /(-|_)swap$|(-|_|:)perp/i.test(symbol)) {
         type = 'perp'
       } else if (exchangeId === 'BINANCE_FUTURES') {
         type = 'perp'
@@ -124,6 +140,10 @@ const actions = {
       }
 
       let localSymbol = symbol
+
+      if (exchangeId === 'BYBIT') {
+        localSymbol = localSymbol.replace(/-SPOT$/, '')
+      }
 
       if (exchangeId === 'KRAKEN') {
         localSymbol = localSymbol.replace(/PI_/, '').replace(/FI_/, '')

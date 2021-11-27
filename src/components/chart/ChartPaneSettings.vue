@@ -77,13 +77,29 @@
         <label for="" class="-fill -center">Watermark</label>
       </div>
     </div>
-    <div class="form-group">
+    <div class="form-group mb8">
       <div class="form-group column">
         <label class="checkbox-control" @change="$store.commit(paneId + '/TOGGLE_FILL_GAPS_WITH_EMPTY')">
           <input type="checkbox" class="form-control" :checked="fillGapsWithEmpty" />
           <div class="mr8"></div>
         </label>
         <label for="" class="-fill -center">Fill gaps with empty bars</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="form-group column">
+        <label class="checkbox-control" @change="$store.commit(paneId + '/TOGGLE_FORCE_NORMALIZE_PRICE')">
+          <input type="checkbox" class="form-control" :checked="forceNormalizePrice" />
+          <div class="mr8"></div>
+        </label>
+        <label for="" class="-fill -center"
+          >Force normalize price
+          <i
+            class="icon-info"
+            v-tippy
+            title="Useful when aggregating multiple assets, mixing historical data and realtime only symbols. Recalculates the whole chart when the first price of a symbol is obtained and avoiding huge change of price."
+          ></i>
+        </label>
       </div>
     </div>
   </div>
@@ -113,6 +129,10 @@ export default class extends Vue {
 
   get fillGapsWithEmpty() {
     return this.$store.state[this.paneId].fillGapsWithEmpty
+  }
+
+  get forceNormalizePrice() {
+    return this.$store.state[this.paneId].forceNormalizePrice
   }
 
   get refreshRate() {
