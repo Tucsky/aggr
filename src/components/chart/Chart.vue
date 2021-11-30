@@ -350,9 +350,9 @@ export default class extends Mixins(PaneMixin) {
 
   /**
    * fetch whatever is missing based on visiblerange
-   * @param {boolean} clear will clear the chart / initial fetch
+   * @param {TimeRange} range range to fetch
    */
-  fetch(rangeToFetch?: TimeRange) {
+  fetch(range?: TimeRange) {
     if (this.loading) {
       return
     }
@@ -377,8 +377,10 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
-    if (!rangeToFetch) {
-      const barsCount = Math.ceil(window.innerWidth / 2)
+    let rangeToFetch
+
+    if (!range) {
+      const barsCount = Math.ceil(this.$el.clientWidth / 10)
 
       let rightTime
 
@@ -404,6 +406,8 @@ export default class extends Mixins(PaneMixin) {
         title: `Fetching ${barsCount * historicalMarkets.length} × ${getHms(timeframe * 1000)} bars (~${estimatedSize})`,
         type: 'info'
       })
+    } else {
+      rangeToFetch = range
     }
 
     rangeToFetch.from = Math.floor(Math.round(rangeToFetch.from) / timeframe) * timeframe
@@ -438,7 +442,10 @@ export default class extends Mixins(PaneMixin) {
       .then(() => {
         this.$store.dispatch('app/hideNotice', 'fetching-' + this.paneId)
         this.loading = false
-        // this._chartController.unlockRender()
+
+        if (!range) {
+          this.fetchMore(this._chartController.chartInstance.timeScale().getVisibleLogicalRange())
+        }
       })
   }
 
@@ -615,8 +622,8 @@ export default class extends Mixins(PaneMixin) {
 
       this.savePosition(visibleLogicalRange)
 
-      this.fetchOrRecover(visibleLogicalRange)
-    }, 200)
+      this.fetchMore(visibleLogicalRange)
+    }, 1000)
   }
 
   bindChartEvents() {
@@ -685,49 +692,30 @@ export default class extends Mixins(PaneMixin) {
     dialogService.open(CreateIndicatorDialog, { paneId: this.paneId })
   }
 
-  fetchOrRecover(visibleLogicalRange) {
-    if (!visibleLogicalRange || visibleLogicalRange.from > 0) {
+  async fetchMore(visibleLogicalRange) {
+    if (this._reachedEnd || !visibleLogicalRange || visibleLogicalRange.from > 0) {
       return
     }
 
-    const barsToLoad = Math.abs(visibleLogicalRange.from)
+    let indicatorLength = 0
+
+    if (this._chartController.activeRenderer) {
+      for (const indicatorId in this._chartController.activeRenderer.indicators) {
+        if (!this._chartController.activeRenderer.indicators[indicatorId].minLength) {
+          continue
+        }
+        indicatorLength = Math.max(indicatorLength, this._chartController.activeRenderer.indicators[indicatorId].minLength)
+      }
+    }
+
+    const barsToLoad = Math.abs(visibleLogicalRange.from) + indicatorLength
     const rangeToFetch = {
       from: this._chartController.chartCache.cacheRange.from - barsToLoad * this.$store.state[this.paneId].timeframe,
       to: this._chartController.chartCache.cacheRange.from
     }
 
-    console.debug(`[chart/pan] timeout fired`)
-    console.debug(`\t-> barsToLoad: ${barsToLoad}`)
-    console.debug(`\t-> rangeToFetch: FROM: ${formatTime(rangeToFetch.from)} | TO: ${formatTime(rangeToFetch.to)}`)
-    console.debug(
-      `\t-> current cacheRange: FROM: ${formatTime(this._chartController.chartCache.cacheRange.from)} | TO: ${formatTime(
-        this._chartController.chartCache.cacheRange.to
-      )}`
-    )
-
-    if (
-      !this._reachedEnd &&
-      (!this._chartController.chartCache.cacheRange.from || rangeToFetch.to <= this._chartController.chartCache.cacheRange.from)
-    ) {
-      this.fetch(rangeToFetch)
-
-      return true
-    } else {
-      console.warn(
-        `[chart/pan] wont fetch this range\n\t-> rangeToFetch.to (${formatTime(rangeToFetch.to)}) > chart.chartCache.cacheRange.from (${formatTime(
-          this._chartController.chartCache.cacheRange.from
-        )})`
-      )
-
-      if (this._chartController.renderedRange.from > this._chartController.chartCache.cacheRange.from) {
-        console.warn('(might trigger redraw with more cached chunks here...)')
-
-        this._chartController.renderAll()
-
-        return true
-      }
-
-      return false
+    if (!this._chartController.renderedRange.from || rangeToFetch.to <= this._chartController.renderedRange.from) {
+      await this.fetch(rangeToFetch)
     }
   }
 
@@ -766,7 +754,7 @@ export default class extends Mixins(PaneMixin) {
       Number.isInteger(timeframe / this._chartController.timeframe)
     ) {
       this._chartController.resample(newTimeframe)
-      this.fetchOrRecover(this._chartController.chartInstance.timeScale().getVisibleLogicalRange())
+      this.fetchMore(this._chartController.chartInstance.timeScale().getVisibleLogicalRange())
     } else {
       this._chartController.clear()
       this.fetch()

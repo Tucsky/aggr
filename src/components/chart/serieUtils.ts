@@ -372,6 +372,32 @@ export function ema$(state, value, length) {
   return state.output
 }
 
+/**
+ * rolling moving average (EMA) state
+ */
+export const rma = {
+  count: 0,
+  sum: 0,
+  points: []
+}
+/**
+ * exponential moving average
+ * @param {SerieMemory} memory
+ * @param {number} value
+ */
+export function rma$(state, value, length) {
+  const k = 1 / length
+
+  if (state.count) {
+    const last = state.points[state.points.length - 1]
+    state.output = k * value + (1 - k) * last
+  } else {
+    state.output = 1
+  }
+
+  return state.output
+}
+
 export const avg_heikinashi = {
   count: 0,
   points: []
