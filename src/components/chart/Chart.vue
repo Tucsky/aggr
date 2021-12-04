@@ -380,7 +380,7 @@ export default class extends Mixins(PaneMixin) {
     let rangeToFetch
 
     if (!range) {
-      const barsCount = Math.ceil(this.$el.clientWidth / 10)
+      const barsCount = 10
 
       let rightTime
 
