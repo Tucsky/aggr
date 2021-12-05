@@ -9,7 +9,7 @@
   >
     <div class="chart-layout__controls">
       <button class="btn -red -small" title="Close menu while reverting chart layout to it's original state" @click="cancel">
-        Revert <i class="icon-eraser ml4"></i>
+        Cancel <i class="icon-eraser ml4"></i>
       </button>
       <button
         class="btn -green -small ml8"

@@ -70,7 +70,7 @@ export default class extends Exchange {
     if (!(await super.subscribe(api, pair))) {
       return
     }
-    // console.log(pair);
+
     api.send(
       JSON.stringify({
         id: 1234,

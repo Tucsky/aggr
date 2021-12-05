@@ -46,7 +46,6 @@
               @blur="updateScript($event.target.value)"
               spellcheck="false"
             ></textarea>
-            <button class="btn refresh -text" title="Force redraw indicator" @click="updateScript(script)"><i class="icon-refresh"></i></button>
           </div>
           <p v-if="error" class="form-feedback"><i class="icon-warning mr4"></i> {{ error }}</p>
         </div>
@@ -101,6 +100,7 @@
                 model="rgb"
                 :value="currentValues[option.key]"
                 @input="currentValues[option.key] !== $event && validate(option, $event)"
+                @close="updateScript(script)"
               ></verte>
             </div>
           </div>
@@ -751,13 +751,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-.refresh {
-  position: absolute;
-  top: 1px;
-  right: 1px;
-  border-radius: 0 2px 0 4px;
-  background: 0 !important;
-}
-</style>

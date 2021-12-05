@@ -49,6 +49,7 @@ export interface ListenedProduct extends Product {
 export interface AppState {
   isBooted: boolean
   isLoading: boolean
+  isExchangesReady: boolean
   showSearch: boolean
   historicalMarkets: string[]
   apiSupportedTimeframes: number[]
@@ -71,6 +72,7 @@ export interface AppState {
 const state = {
   isBooted: false,
   isLoading: false,
+  isExchangesReady: false,
   optimalDecimal: null,
   pairs: [],
   showSearch: false,
@@ -267,6 +269,9 @@ const actions = {
 const mutations = {
   SET_BOOTED: (state, value: boolean) => {
     state.isBooted = value
+  },
+  SET_EXCHANGES_READY(state) {
+    state.isExchangesReady = true
   },
   EXCHANGE_UPDATED(state, exchangeId: string) {
     Vue.set(state.activeExchanges, exchangeId, !this.state.exchanges[exchangeId].disabled)

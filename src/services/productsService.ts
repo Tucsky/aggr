@@ -5,7 +5,7 @@ import workspacesService from './workspacesService'
 
 export function saveProducts(storage: ProductsStorage) {
   console.log(`[products.${storage.exchange}] saving products`, storage.data)
-  storage.timestamp = +new Date()
+  storage.timestamp = Date.now()
 
   workspacesService.saveProducts(storage)
 }
@@ -100,7 +100,7 @@ export async function getProducts(id: string, endpoints: string[], forceFetch?: 
   console.debug(`[products.${id}] reading stored products`)
   const storage = await workspacesService.getProducts(id)
 
-  if (!forceFetch && storage && +new Date() - storage.timestamp < 1000 * 60 * 60 * 24 * 7) {
+  if (!forceFetch && storage && Date.now() - storage.timestamp < 1000 * 60 * 60 * 24 * 7) {
     console.debug(`[products.${id}] using products exchange storage`)
 
     productsData = storage.data

@@ -64,7 +64,7 @@ const state = {
   refreshRate: 1000,
   showLegend: true,
   fillGapsWithEmpty: true,
-  forceNormalizePrice: false,
+  forceNormalizePrice: true,
   showHorizontalGridlines: false,
   horizontalGridlinesColor: 'rgba(255,255,255,.1)',
   showVerticalGridlines: false,

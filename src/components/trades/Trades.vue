@@ -131,6 +131,16 @@ export default class extends Mixins(PaneMixin) {
 
     aggregatorService.on('trades', this.onTrades)
 
+    const unsubscribe = this.$store.watch(
+      state => {
+        return state.app.isExchangesReady
+      },
+      () => {
+        this.cacheFilters()
+        unsubscribe()
+      }
+    )
+
     this._onStoreMutation = this.$store.subscribe(mutation => {
       switch (mutation.type) {
         case 'app/EXCHANGE_UPDATED':
@@ -213,7 +223,7 @@ export default class extends Mixins(PaneMixin) {
         return
       }
 
-      now = +new Date()
+      now = Date.now()
 
       const topOfTheMinute = (now / 1000) % 60 < 1
 
@@ -497,7 +507,7 @@ export default class extends Mixins(PaneMixin) {
     const storage = await workspacesService.getGifs(slug)
     let gifs
 
-    if (storage && +new Date() - storage.timestamp < 1000 * 60 * 60 * 24 * 7) {
+    if (storage && Date.now() - storage.timestamp < 1000 * 60 * 60 * 24 * 7) {
       gifs = storage.data
     } else if (!PROMISES_OF_GIFS[gif]) {
       gifs = await this.fetchGifByKeyword(gif)
@@ -536,7 +546,7 @@ export default class extends Mixins(PaneMixin) {
         await workspacesService.saveGifs({
           slug,
           keyword: gif,
-          timestamp: +new Date(),
+          timestamp: Date.now(),
           data: GIFS[gif]
         })
 
@@ -746,6 +756,7 @@ export default class extends Mixins(PaneMixin) {
     max-height: 100%;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
+    scrollbar-width: none;
   }
 
   &.-large {

@@ -176,7 +176,7 @@ class Exchange extends EventEmitter {
       this.count++
 
       if (this.onMessage(event, api) === true) {
-        api._timestamp = +new Date()
+        api._timestamp = Date.now()
       }
     }
 
@@ -546,7 +546,6 @@ class Exchange extends EventEmitter {
    */
   async unsubscribe(api, pair) {
     if (!this.markPairAsDisconnected(api, pair)) {
-      console.log(pair, 'pair is already detached')
       // pair is already detached
       return false
     }

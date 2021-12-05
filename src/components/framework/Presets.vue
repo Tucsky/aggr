@@ -4,7 +4,7 @@
       <div class="column" @mousedown.prevent>
         <div class="btn -green" @click="savePreset"><i class="icon-plus"></i></div>
         <div class="btn -blue" @click="uploadPreset"><i class="icon-upload"></i></div>
-        <div class="btn -red" @click="applyDefault"><i class="icon-eraser mr8"></i> Reset</div>
+        <div class="btn -red" @click="applyDefault"><i class="icon-eraser"></i><span class="ml8">Reset</span></div>
       </div>
     </template>
     <template v-slot:option="{ value }">
@@ -12,7 +12,9 @@
 
       <span class="mr4">{{ value.label }}</span>
 
-      <button type="button" class="dropdown-option__action btn -small mlauto" @mousedown.prevent @click="savePreset(value.label)">update</button>
+      <button type="button" class="dropdown-option__action btn -small mlauto" @mousedown.prevent @click="openPreset(value.id, value.label)">
+        <i class="icon-edit"></i>
+      </button>
     </template>
   </dropdown>
 </template>
@@ -77,11 +79,17 @@ export default class extends Vue {
 
     const preset = await workspacesService.getPreset(this.presets[index].id)
 
+    this.applyPreset(preset)
+  }
+
+  async openPreset(id: string, name: string) {
+    const preset = await workspacesService.getPreset(id)
+
     if (await dialogService.openAsPromise(PresetDialog, { preset })) {
-      this.applyPreset(preset)
+      this.savePreset(name)
     }
 
-    await this.getPresets()
+    this.getPresets()
   }
 
   async savePreset(name?: string) {
@@ -112,7 +120,7 @@ export default class extends Vue {
 
     name = this.type + ':' + name
 
-    const updatedAt = +new Date()
+    const updatedAt = Date.now()
 
     const original = this.presets.find(preset => preset.name === name)
 

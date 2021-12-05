@@ -25,9 +25,7 @@
         <div class="chart-overlay__content chart__indicators" v-if="showIndicatorsOverlay">
           <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" />
 
-          <a href="javascript:void(0);" @click="addIndicator" class="btn mr4 -text">
-            <i class="icon-plus"></i>
-          </a>
+          <a href="javascript:void(0);" @click="addIndicator" class="btn mt8 mb8 -text"> Add <i class="icon-plus ml8 "></i> </a>
         </div>
         <div class="chart-overlay__title pane-overlay" @click="toggleIndicatorOverlay">Indicators <i class="icon-up -higher"></i></div>
       </div>
@@ -72,7 +70,15 @@ import { Component, Mixins } from 'vue-property-decorator'
 
 import ChartController, { TimeRange } from './chartController'
 
-import { formatPrice, formatAmount, formatTime, getHms, formatBytes, openBase64InNewTab, getTimeframeForHuman } from '../../utils/helpers'
+import {
+  formatPrice,
+  formatAmount,
+  getHms,
+  formatBytes,
+  openBase64InNewTab,
+  getTimeframeForHuman,
+  floorTimestampToTimeframe
+} from '../../utils/helpers'
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
 import { getCustomColorsOptions } from './chartOptions'
 
@@ -262,7 +268,7 @@ export default class extends Mixins(PaneMixin) {
           break
         case this.paneId + '/SET_PRICE_SCALE':
           if (mutation.payload.priceScale) {
-            this._chartController.bindPriceScale(mutation.payload.id, true)
+            this._chartController.refreshPriceScale(mutation.payload.id)
           }
           break
         case this.paneId + '/SET_INDICATOR_SCRIPT':
@@ -370,9 +376,9 @@ export default class extends Mixins(PaneMixin) {
     }
 
     const visibleRange = this._chartController.getVisibleRange() as TimeRange
-    const timeframe = (this.$store.state[this.paneId] as ChartPaneState).timeframe
+    const timeframe = +(this.$store.state[this.paneId] as ChartPaneState).timeframe
 
-    if (isNaN(+timeframe)) {
+    if (isNaN(timeframe)) {
       this._reachedEnd = true
       return
     }
@@ -380,8 +386,6 @@ export default class extends Mixins(PaneMixin) {
     let rangeToFetch
 
     if (!range) {
-      const barsCount = 10
-
       let rightTime
 
       if (alreadyHasData) {
@@ -389,63 +393,47 @@ export default class extends Mixins(PaneMixin) {
       } else if (visibleRange && visibleRange.from) {
         rightTime = visibleRange.from + this.$store.state.settings.timezoneOffset / 1000
       } else {
-        rightTime = +new Date() / 1000
+        rightTime = Date.now() / 1000
       }
 
       rangeToFetch = {
-        from: rightTime - timeframe * barsCount,
+        from: rightTime - timeframe * 10,
         to: rightTime
       }
-
-      const bytesPerBar = 112
-      const estimatedSize = formatBytes(barsCount * historicalMarkets.length * bytesPerBar)
-
-      this.$store.dispatch('app/showNotice', {
-        id: 'fetching-' + this.paneId,
-        timeout: 15000,
-        title: `Fetching ${barsCount * historicalMarkets.length} × ${getHms(timeframe * 1000)} bars (~${estimatedSize})`,
-        type: 'info'
-      })
     } else {
       rangeToFetch = range
     }
 
-    rangeToFetch.from = Math.floor(Math.round(rangeToFetch.from) / timeframe) * timeframe
-    rangeToFetch.to = Math.ceil(Math.round(rangeToFetch.to) / timeframe) * timeframe - 1
+    rangeToFetch.from = floorTimestampToTimeframe(Math.round(rangeToFetch.from), timeframe)
+    rangeToFetch.to = floorTimestampToTimeframe(Math.round(rangeToFetch.to), timeframe) + timeframe
 
-    console.debug(`[chart/fetch] fetch rangeToFetch: FROM: ${formatTime(rangeToFetch.from)} | TO: ${formatTime(rangeToFetch.to)}`)
+    const barsCount = (rangeToFetch.to - rangeToFetch.from) / timeframe
+    const bytesPerBar = 112
+    const estimatedSize = formatBytes(barsCount * historicalMarkets.length * bytesPerBar)
 
-    // this._chartController.lockRender()
+    this.$store.dispatch('app/showNotice', {
+      id: 'fetching-' + this.paneId,
+      timeout: 15000,
+      title: `Fetching ${barsCount * historicalMarkets.length} bars (~${estimatedSize})`,
+      type: 'info'
+    })
 
     this.loading = true
 
-    //rangeToFetch.from = +new Date(new Date(rangeToFetch.from * 1000).toISOString().replace('2021', '2019')) / 1000
-    //rangeToFetch.to = +new Date(new Date(rangeToFetch.to * 1000).toISOString().replace('2021', '2019')) / 1000
-
     return historicalService
-      .fetch(Math.round(rangeToFetch.from * 1000), Math.round(rangeToFetch.to * 1000 - 1), timeframe, historicalMarkets)
+      .fetch(rangeToFetch.from * 1000, rangeToFetch.to * 1000, timeframe, historicalMarkets)
       .then(results => this.onHistorical(results))
-      .catch(err => {
-        console.error(err)
-
-        if (err === 'no-more-data' || err === 'unsupported-historical-data-format') {
-          this._reachedEnd = true
-        } else {
-          this.$store.dispatch('app/showNotice', {
-            title: err ? (typeof err === 'string' ? err : err.message) : `Historical API seems down at the moment`,
-            type: 'error',
-            icon: 'icon-warning',
-            timeout: 10000
-          })
-        }
+      .catch(() => {
+        this._reachedEnd = true
       })
       .then(() => {
         this.$store.dispatch('app/hideNotice', 'fetching-' + this.paneId)
-        this.loading = false
 
-        if (!range) {
+        setTimeout(() => {
+          this.loading = false
+
           this.fetchMore(this._chartController.chartInstance.timeScale().getVisibleLogicalRange())
-        }
+        }, 200)
       })
   }
 
@@ -574,7 +562,6 @@ export default class extends Mixins(PaneMixin) {
 
         if (!(this.$store.state[this.paneId] as ChartPaneState).forceNormalizePrice) {
           this._chartController.propagateInitialPrices = false
-          console.log('propagateInitialPrices = false (from historical fetch)')
         }
 
         this._chartController.renderAll()
@@ -693,7 +680,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   async fetchMore(visibleLogicalRange) {
-    if (this._reachedEnd || !visibleLogicalRange || visibleLogicalRange.from > 0) {
+    if (this.loading || this._reachedEnd || !visibleLogicalRange || visibleLogicalRange.from > 0) {
       return
     }
 
@@ -708,13 +695,18 @@ export default class extends Mixins(PaneMixin) {
       }
     }
 
-    const barsToLoad = Math.abs(visibleLogicalRange.from) + indicatorLength
-    const rangeToFetch = {
-      from: this._chartController.chartCache.cacheRange.from - barsToLoad * this.$store.state[this.paneId].timeframe,
-      to: this._chartController.chartCache.cacheRange.from
+    const barsToLoad = Math.round(Math.min(Math.abs(visibleLogicalRange.from) + indicatorLength, 500))
+
+    if (!barsToLoad) {
+      return
     }
 
-    if (!this._chartController.renderedRange.from || rangeToFetch.to <= this._chartController.renderedRange.from) {
+    const rangeToFetch = {
+      from: this._chartController.chartCache.cacheRange.from - barsToLoad * this.$store.state[this.paneId].timeframe,
+      to: this._chartController.chartCache.cacheRange.from - 1
+    }
+
+    if (!this._chartController.chartCache.cacheRange.from || rangeToFetch.to <= this._chartController.chartCache.cacheRange.from) {
       await this.fetch(rangeToFetch)
     }
   }
@@ -1109,6 +1101,7 @@ export default class extends Mixins(PaneMixin) {
     user-select: none;
     color: var(--theme-color-150);
     place-self: flex-start;
+    padding: 0.2em 0.25em 0.3em;
 
     &:hover {
       color: var(--theme-color-base);

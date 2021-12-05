@@ -192,7 +192,7 @@ export default class extends Mixins(PaneMixin) {
     }
   }
   populateCounters() {
-    const now = +new Date()
+    const now = Date.now()
 
     if (this._activeChunk.timestamp) {
       this._counters[0].chunks.push({

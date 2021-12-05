@@ -51,8 +51,8 @@ class DialogService {
     })
   }
 
-  open(component, props = {}, dialogId?: string): Vue {
-    component = this.createComponent(component, props, null, dialogId)
+  open(component, props = {}, dialogId?: string, onClose?: Function): Vue {
+    component = this.createComponent(component, props, onClose, dialogId)
 
     this.mountDialog(component)
 
@@ -68,7 +68,7 @@ class DialogService {
     return !!this.mountedComponents[name]
   }
 
-  openPicker(initialColor, cb, title?: string) {
+  openPicker(initialColor, cb, title?: string, onClose?: Function) {
     if (this.pickerInstance) {
       this.pickerInstance.selectColor(initialColor, true)
 
@@ -78,10 +78,15 @@ class DialogService {
 
       this.pickerInstance.$off('input')
     } else {
-      this.pickerInstance = this.open(VerteDialog, {
-        value: initialColor,
-        title
-      })
+      this.pickerInstance = this.open(
+        VerteDialog,
+        {
+          value: initialColor,
+          title
+        },
+        null,
+        onClose
+      )
     }
 
     if (typeof cb === 'function') {

@@ -107,9 +107,11 @@
   }
 
   &__scroller {
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     max-height: 250px;
     border-radius: $border-radius-small;
+    scrollbar-width: none;
   }
 
   &__option {

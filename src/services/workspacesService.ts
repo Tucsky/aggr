@@ -131,7 +131,7 @@ class WorkspacesService {
   }
 
   async insertDefaultIndicators(db: IDBPDatabase<AggrDB>) {
-    const now = +new Date()
+    const now = Date.now()
     const tx = db.transaction('indicators', 'readwrite')
 
     const existing = await tx.store.getAllKeys()
@@ -327,7 +327,7 @@ class WorkspacesService {
   }
 
   async importWorkspace(workspace: Workspace) {
-    const timestamp = +new Date()
+    const timestamp = Date.now()
 
     await this.makeUniqueWorkspace(workspace)
 
@@ -368,7 +368,7 @@ class WorkspacesService {
   }
 
   async createWorkspace() {
-    const timestamp = +new Date()
+    const timestamp = Date.now()
 
     const panes = JSON.parse(JSON.stringify(defaultPanes))
 
@@ -393,7 +393,7 @@ class WorkspacesService {
   }
 
   async duplicateWorkspace() {
-    const timestamp = +new Date()
+    const timestamp = Date.now()
 
     const workspace: Workspace = JSON.parse(JSON.stringify(this.workspace))
 
@@ -430,7 +430,7 @@ class WorkspacesService {
       throw new Error(`There is no current workspace`)
     }
 
-    this.workspace.updatedAt = +new Date()
+    this.workspace.updatedAt = Date.now()
 
     return this.db.put('workspaces', JSON.parse(JSON.stringify(this.workspace)))
   }
@@ -464,7 +464,7 @@ class WorkspacesService {
   }
 
   async saveIndicator(indicator: IndicatorSettings) {
-    const now = +new Date()
+    const now = Date.now()
 
     if (indicator.createdAt) {
       indicator.updatedAt = now

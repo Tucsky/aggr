@@ -132,7 +132,6 @@ export default class extends Exchange {
     const json = JSON.parse(pako.inflate(event.data, { to: 'string' }))
 
     if (!json) {
-      console.log(json)
       return
     }
 

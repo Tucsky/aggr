@@ -120,8 +120,6 @@ export default class extends Exchange {
       return
     }
 
-    !json.table && console.log(json)
-
     if (!json || !json.data || !json.data.length) {
       return
     }

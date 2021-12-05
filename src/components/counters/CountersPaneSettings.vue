@@ -71,7 +71,7 @@ export default class extends Vue {
   }
 
   get countersStepsStringified() {
-    const now = +new Date()
+    const now = Date.now()
 
     return this.countersSteps.map(a => ago(now - a)).join(', ')
   }

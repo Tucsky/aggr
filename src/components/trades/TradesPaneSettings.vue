@@ -454,27 +454,36 @@ export default class extends Vue {
 
     merge(this.$store.state[this.paneId], state)
 
-    if (typeof state.liquidations.buyAudio !== 'undefined') {
-      this.$store.commit(this.paneId + '/SET_THRESHOLD_AUDIO', {
-        id: 'liquidations',
-        buyAudio: state.liquidations.buyAudio,
-        sellAudio: state.liquidations.sellAudio
-      })
-    }
-
-    if (typeof state.liquidations.buyColor !== 'undefined') {
-      this.$store.commit(this.paneId + '/SET_THRESHOLD_COLOR', {
-        id: 'liquidations',
-        side: 'buyColor',
-        value: state.liquidations.buyColor
-      })
-    }
-
-    if (typeof state.liquidations.amount !== 'undefined') {
+    if (state.thresholds.length) {
       this.$store.commit(this.paneId + '/SET_THRESHOLD_AMOUNT', {
-        id: 'liquidations',
-        value: state.liquidations.amount
+        id: null,
+        amount: null
       })
+    }
+
+    if (state.liquidations) {
+      if (typeof state.liquidations.buyAudio !== 'undefined') {
+        this.$store.commit(this.paneId + '/SET_THRESHOLD_AUDIO', {
+          id: 'liquidations',
+          buyAudio: state.liquidations.buyAudio,
+          sellAudio: state.liquidations.sellAudio
+        })
+      }
+
+      if (typeof state.liquidations.buyColor !== 'undefined') {
+        this.$store.commit(this.paneId + '/SET_THRESHOLD_COLOR', {
+          id: 'liquidations',
+          side: 'buyColor',
+          value: state.liquidations.buyColor
+        })
+      }
+
+      if (typeof state.liquidations.amount !== 'undefined') {
+        this.$store.commit(this.paneId + '/SET_THRESHOLD_AMOUNT', {
+          id: 'liquidations',
+          value: state.liquidations.amount
+        })
+      }
     }
   }
 }

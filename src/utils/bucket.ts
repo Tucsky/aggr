@@ -101,7 +101,7 @@ export default class Bucket {
 
   appendStack(timestamp) {
     if (!timestamp) {
-      timestamp = +new Date()
+      timestamp = Date.now()
     }
 
     if (!this.stacks.length || this.stacks[this.stacks.length - 1]) {

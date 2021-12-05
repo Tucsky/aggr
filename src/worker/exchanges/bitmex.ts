@@ -110,21 +110,12 @@ export default class extends Exchange {
               size = trade.leavesQty / trade.price
             } else {
               size = (1 / this.underlyingToPositionMultipliers[trade.symbol]) * trade.leavesQty
-              console.log(
-                '(bitmex usdt liquidation)',
-                trade.symbol,
-                'multiplier:' + this.underlyingToPositionMultipliers[trade.symbol],
-                'type:' + this.types[trade.symbol],
-                'leavesQty:' + trade.leavesQty,
-                'price:' + trade.price,
-                'result:' + size
-              )
             }
 
             return {
               exchange: this.id,
               pair: trade.symbol,
-              timestamp: +new Date(),
+              timestamp: Date.now(),
               price: trade.price,
               size: size,
               side: trade.side === 'Buy' ? 'buy' : 'sell',

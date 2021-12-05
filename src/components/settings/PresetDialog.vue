@@ -9,36 +9,34 @@
       </div>
     </template>
 
-    <form @submit.prevent="apply">
-      <div class="d-flex flex-middle">
-        <i class="icon-info mr16"></i>
-        <div class="mr16">
-          <small class="text-muted">Created at</small>
-          <div>{{ createdAt }} ago</div>
-        </div>
-        <div>
-          <small class="text-muted">Updated at</small>
-          <div>{{ updatedAt }} ago</div>
-        </div>
+    <div class="d-flex flex-middle">
+      <i class="icon-info mr16"></i>
+      <div class="mr16">
+        <small class="text-muted">Created at</small>
+        <div>{{ createdAt }} ago</div>
       </div>
+      <div>
+        <small class="text-muted">Updated at</small>
+        <div>{{ updatedAt }} ago</div>
+      </div>
+    </div>
 
-      <p>
-        What's included :
-        <button type="button" class="btn -text" v-text="showDetails ? 'hide' : 'show'" @click="showDetails = !showDetails"></button>
-      </p>
+    <p>
+      What's included :
+      <button type="button" class="btn -text" v-text="showDetails ? 'hide' : 'show'" @click="showDetails = !showDetails"></button>
+    </p>
 
-      <ul v-if="showDetails">
-        <li v-for="prop of dataProperties" :key="prop">
-          <code v-text="prop"></code>
-        </li>
-      </ul>
+    <ul v-if="showDetails">
+      <li v-for="prop of dataProperties" :key="prop">
+        <code v-text="prop"></code>
+      </li>
+    </ul>
 
-      <footer>
-        <button type="button" class="btn -text -red mrauto ml0" @click="deletePreset"><i class="icon-cross mr8"></i> Delete</button>
-        <button type="button" class="btn -text ml8" @click="downloadPreset"><i class="icon-download mr8"></i> Download</button>
-        <button type="submit" class="btn -green -large ml16"><i class="icon-check mr4"></i> Apply</button>
-      </footer>
-    </form>
+    <footer>
+      <button type="button" class="btn -text mrauto ml0" @click="downloadPreset"><i class="icon-download mr8"></i> Export</button>
+      <button type="button" class="btn -text -red ml8" @click="deletePreset"><i class="icon-cross mr8"></i> Delete</button>
+      <button type="button" class="btn -blue -large ml16" @click="updatePreset"><i class="icon-edit mr4"></i> Update</button>
+    </footer>
   </Dialog>
 </template>
 
@@ -97,7 +95,7 @@ export default {
         }
       }
     },
-    apply() {
+    updatePreset() {
       this.close(true)
     },
     async renamePreset() {

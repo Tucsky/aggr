@@ -101,7 +101,7 @@ export default class extends Vue {
   }
 
   onClick() {
-    const now = +new Date()
+    const now = Date.now()
 
     if (this.clickAt && now - this.clickAt < 150) {
       this.selectAll()

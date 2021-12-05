@@ -134,7 +134,6 @@ export default class extends Vue {
 
     if (typeof pane.onResize === 'function') {
       pane.$nextTick(() => {
-        console.log('resize pane -> call pane specific resize fn', this.layoutReady)
         pane.onResize(width, height)
       })
     }

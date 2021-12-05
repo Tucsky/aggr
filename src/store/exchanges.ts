@@ -72,9 +72,7 @@ const actions = {
       })
     }
 
-    if (state._exchanges.length) {
-      this.commit('app/EXCHANGE_UPDATED', state._exchanges[0])
-    }
+    this.commit('app/SET_EXCHANGES_READY')
   },
   async toggleExchange({ commit, state, dispatch }, id: string) {
     commit('TOGGLE_EXCHANGE', id)

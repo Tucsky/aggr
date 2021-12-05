@@ -1,6 +1,6 @@
 <template>
   <div class="indicator" :class="{ '-error': !!error, '-disabled': !visible }">
-    <div class="indicator__name pane-overlay" @click="edit">{{ name }}</div>
+    <button type="button" class="indicator__name pane-overlay" @click="edit">{{ name }}</button>
 
     <div class="indicator__controls">
       <template v-if="!error">
@@ -88,6 +88,11 @@ export default {
 
   &__name {
     position: relative;
+    padding: 0 0.25em;
+    border: 0;
+    font-size: inherit;
+    font-family: inherit;
+    cursor: pointer;
   }
 
   &__legend {

@@ -196,6 +196,10 @@ $unit: 'px'; // Feel free to change the unit.
   width: auto !important;
 }
 
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+
 .hide-scrollbar::-webkit-scrollbar {
   width: 0;
   height: 0;

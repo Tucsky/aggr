@@ -136,23 +136,18 @@ export default class SerieBuilder {
    */
   determineFunctionState(instruction: IndicatorFunction) {
     if (typeof seriesUtils[instruction.name] && typeof seriesUtils[instruction.name] === 'object') {
-      instruction.persistence = []
       instruction.state = {}
 
-      const ignoreFromPersistance = ['count', 'points', 'sum']
-
       for (const prop in seriesUtils[instruction.name]) {
+        if (prop === 'lengthIndexes') {
+          continue
+        }
+
         try {
           instruction.state[prop] = JSON.parse(JSON.stringify(seriesUtils[instruction.name][prop]))
         } catch (error) {
           instruction.state[prop] = seriesUtils[instruction.name]
         }
-
-        if (ignoreFromPersistance.indexOf(prop) !== -1) {
-          continue
-        }
-
-        instruction.persistence.push(prop)
       }
 
       return
@@ -438,7 +433,8 @@ export default class SerieBuilder {
         }
 
         const instruction: IndicatorFunction = {
-          name: functionName
+          name: functionName,
+          args: []
         }
 
         const targetFunction = seriesUtils[functionName + '$']
@@ -455,24 +451,15 @@ export default class SerieBuilder {
         const start = functionMatch.index
         const end = findClosingBracketMatchIndex(output, start + functionMatch[1].length)
 
-        const args = parseFunctionArguments(output.slice(start + functionMatch[1].length + 1, end))
+        instruction.args = parseFunctionArguments(output.slice(start + functionMatch[1].length + 1, end))
 
-        // in order to know how many points to keep in the state in order to calculate averages
-        // some functions require length to be known from controller
-        // eg. sma, ema and all periodic functions
-        // we just guess that the length is the second argument
-        if (args.length === 2) {
-          instruction.arg = args[1]
-        }
-
-        // this is pretty bad...
-        if ((functionName === 'ohlc' || functionName === 'cum_ohlc') && args.length === 1) {
+        if ((functionName === 'ohlc' || functionName === 'cum_ohlc') && instruction.args.length === 1) {
           // ohlc and cum_ohlc that uses number as input need bar timestamp to construct the point
-          args.push('renderer.localTimestamp')
+          instruction.args.push('renderer.localTimestamp')
         }
 
         // replace original function call, add function state to arguments
-        output = `${output.slice(0, start)}utils.${functionName}$(${FUNCTIONS_VAR_NAME}[${instructions.length}].state,${args.join(
+        output = `${output.slice(0, start)}utils.${functionName}$(${FUNCTIONS_VAR_NAME}[${instructions.length}].state,${instruction.args.join(
           ','
         )})${output.slice(end + 1, output.length)}`
 
@@ -710,7 +697,7 @@ export default class SerieBuilder {
         instruction.state.points.push(instruction.state.output)
         instruction.state.sum += instruction.state.output
 
-        if (instruction.state.count > instruction.arg) {
+        if (instruction.state.count > instruction.length) {
           instruction.state.sum -= instruction.state.points.shift()
           instruction.state.count--
         }
@@ -718,10 +705,6 @@ export default class SerieBuilder {
         instruction.state.open = instruction.state.close
         instruction.state.high = instruction.state.close
         instruction.state.low = instruction.state.close
-      } else if (instruction.persistence) {
-        for (let j = 0; j < instruction.persistence.length; j++) {
-          instruction.state['_' + instruction.persistence[j]] = instruction.state[instruction.persistence[j]]
-        }
       }
     }
 
@@ -784,7 +767,7 @@ export default class SerieBuilder {
     }
 
     if (!previousRenderer) {
-      renderer.timestamp = Math.floor(Math.round(+new Date() / 1000) / 10) * 10
+      renderer.timestamp = Math.floor(Math.round(Date.now() / 1000) / 10) * 10
       renderer.localTimestamp = renderer.timestamp
 
       // fake references
@@ -867,8 +850,6 @@ export default class SerieBuilder {
 
     const marketsUsed = input.match(new RegExp(`\\b(${this.markets.sort((a, b) => b.length - a.length).join('|')})\\b(?:\\.\\w+)`, 'g')) || []
 
-    // const referencesUsed = (input.match(new RegExp('\\$([a-z_\\-0-9]+)\\b')) || []).slice(1).map(name => name.replace('$', ''))
-
     const dataUsed = (input.match(/renderer\.bar\.([a-zA-Z0-9_]+)/g) || [])
       .map(name => name.replace('renderer.bar.', ''))
       .filter(name => name !== 'bar')
@@ -883,42 +864,69 @@ export default class SerieBuilder {
   }
 
   /**
-   * update functions & plots with corresponding options
-   * @param functions
-   * @param plots
-   * @param options
+   * get fresh state of indicator for the renderer
+   * @param indicator
    */
-  parseScriptOptions(functions: IndicatorFunction[], plots: IndicatorPlot[], options) {
-    let minLength = 0
+  getRendererIndicatorData(indicator: LoadedIndicator) {
+    const { functions, variables, plots } = JSON.parse(JSON.stringify(indicator.model)) as IndicatorTranspilationResult
+
+    indicator.options.minLength = 0
 
     // update functions arguments from script input
     for (const instruction of functions) {
-      if (typeof instruction.arg === 'undefined') {
+      for (let i = 0; i < instruction.args.length; i++) {
+        try {
+          instruction.args[i] = new Function('options', `'use strict'; return ${instruction.args[i]}`)(indicator.options)
+        } catch (error) {
+          // nothing to see here
+        }
+      }
+
+      instruction.length = 0
+
+      if (!instruction.state.points) {
         continue
       }
 
-      try {
-        instruction.arg = eval(instruction.arg as string)
+      const lengthIndexes = seriesUtils[instruction.name].lengthIndexes || [1]
 
-        if (typeof instruction.arg === 'number') {
-          minLength = Math.max(minLength, instruction.arg)
+      for (const index of lengthIndexes) {
+        if (!isNaN(instruction.args[index])) {
+          instruction.length += instruction.args[index]
         }
+      }
+
+      indicator.options.minLength = Math.max(indicator.options.minLength, instruction.length)
+    }
+
+    const plotsOptions = []
+
+    // update plot options from script input
+    for (const plot of plots) {
+      plotsOptions.push(this.getCustomPlotOptions(indicator, plot))
+    }
+
+    return {
+      canRender: indicator.options.minLength <= 1,
+      series: [],
+      functions,
+      variables,
+      plotsOptions,
+      minLength: indicator.options.minLength
+    }
+  }
+
+  getCustomPlotOptions(indicator, plot) {
+    // update plot options from script input
+
+    for (const prop in plot.options) {
+      try {
+        plot.options[prop] = new Function('options', `'use strict'; return ${plot.options[prop]}`)(indicator.options)
       } catch (error) {
         // nothing to see here
       }
     }
 
-    options.minLength = minLength
-
-    // update plot options from script input
-    for (const plot of plots) {
-      for (const prop in plot.options) {
-        try {
-          plot.options[prop] = eval(plot.options[prop])
-        } catch (error) {
-          // nothing to see here
-        }
-      }
-    }
+    return plot.options
   }
 }

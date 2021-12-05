@@ -1,6 +1,8 @@
 import dialogService from '@/services/dialogService'
 import store from '../store'
 
+const DAY = 60 * 60 * 24
+
 export function formatAmount(amount, decimals?: number) {
   const negative = amount < 0
 
@@ -43,7 +45,7 @@ export function formatPrice(price) {
 }
 
 export function ago(timestamp) {
-  const seconds = Math.floor((+new Date() - timestamp) / 1000)
+  const seconds = Math.floor((Date.now() - timestamp) / 1000)
   let interval, output
 
   if ((interval = Math.floor(seconds / 31536000)) > 1) output = interval + 'y'
@@ -409,4 +411,21 @@ export function getSiblings(elem) {
   return Array.prototype.filter.call(elem.parentNode.children, function(sibling) {
     return sibling !== elem
   })
+}
+
+export function isOddTimeframe(timeframe) {
+  return DAY % timeframe !== 0 && timeframe < DAY
+}
+
+export function floorTimestampToTimeframe(timestamp: number, timeframe: number, isOdd?: boolean) {
+  if (typeof isOdd === 'undefined') {
+    isOdd = isOddTimeframe(timeframe)
+  }
+
+  if (isOdd) {
+    const dayOpen = Math.floor(timestamp / DAY) * DAY
+    return dayOpen + Math.floor((timestamp - dayOpen) / timeframe) * timeframe
+  } else {
+    return Math.floor(timestamp / timeframe) * timeframe
+  }
 }

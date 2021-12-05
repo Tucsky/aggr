@@ -374,7 +374,7 @@ export default class extends Vue {
       this.refreshCaretPosition(event.target)
 
       this._dragReference = {
-        timestamp: +new Date(),
+        timestamp: Date.now(),
         position: x
       }
     })
@@ -390,7 +390,7 @@ export default class extends Vue {
     if (
       this.selectedElement === null ||
       !this._dragReference ||
-      (+new Date() - this._dragReference.timestamp < 1000 && Math.abs(this._dragReference.position - x) < 3)
+      (Date.now() - this._dragReference.timestamp < 1000 && Math.abs(this._dragReference.position - x) < 3)
     ) {
       return
     }

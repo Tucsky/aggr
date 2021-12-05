@@ -1,5 +1,5 @@
 import { Bar } from '@/components/chart/chartController'
-import { parseMarket } from '@/utils/helpers'
+import { floorTimestampToTimeframe, isOddTimeframe, parseMarket } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import store from '../store'
@@ -31,56 +31,69 @@ class HistoricalService extends EventEmitter {
 
     store.commit('app/TOGGLE_LOADING', true)
 
-    return new Promise((resolve, reject) => {
-      fetch(url)
-        .then(response => response.json())
-        .then(json => {
-          if (!json || typeof json !== 'object') {
-            return reject('invalid-data')
-          }
-
-          const format = json.format
-          let data = json.results
-
-          if (!data.length) {
-            return reject('no-more-data')
-          }
-
-          switch (json.format) {
-            case 'point':
-              ;({ from, to, data, markets } = this.normalisePoints(data, timeframe, markets))
-              break
-            default:
-              break
-          }
-
-          const output = {
-            format: format,
-            data: data,
-            from: from,
-            to: to,
-            markets: markets
-          }
-
-          resolve(output)
+    return fetch(url)
+      .then(response =>
+        response.json().then(json => {
+          json.status = response.status
+          return json
         })
-        .catch(err => {
-          err &&
+      )
+      .then(json => {
+        if (!json || json.error) {
+          throw new Error(json && json.error ? json.error : 'empty-response')
+        }
+
+        const format = json.format
+        let data = json.results
+
+        if (!data.length) {
+          throw new Error('no-more-data')
+        }
+
+        switch (json.format) {
+          case 'point':
+            ;({ from, to, data, markets } = this.normalizePoints(data, timeframe, markets))
+            break
+          default:
+            break
+        }
+
+        return {
+          format: format,
+          data: data,
+          from: from,
+          to: to,
+          markets: markets
+        }
+      })
+      .catch(err => {
+        if (err instanceof Error) {
+          const hasSomethingToSay = err.message && err.message !== 'Failed to fetch'
+
+          if (hasSomethingToSay) {
             store.dispatch('app/showNotice', {
+              title: err.message,
               type: 'error',
-              title: `API error (${
-                err.response && err.response.data && err.response.data.error ? err.response.data.error : err.message || 'unknown error'
-              })`
+              timeout: 10000
             })
+          } else {
+            store.dispatch('app/showNotice', {
+              title: `Aggr server seems down 💀.<br>Please <a href="https://github.com/Tucsky/aggr/issues/new?title=Server%20is%20down&body=Can%20devs%20do%20something%20?">Open a ticket</a> <strong>if the issue persists</strong>.`,
+              type: 'error',
+              timeout: 10000
+            })
+          }
+        }
 
-          reject()
-        })
-        .then(() => {
-          store.commit('app/TOGGLE_LOADING', false)
-        })
-    })
+        throw err
+      })
+      .then(data => {
+        store.commit('app/TOGGLE_LOADING', false)
+
+        return data
+      })
   }
-  normalisePoints(data, timeframe, markets: string[]) {
+  normalizePoints(data, timeframe, markets: string[]) {
     const lastClosedBars = {}
 
     markets = markets.slice()
@@ -101,6 +114,8 @@ class HistoricalService extends EventEmitter {
     markets = [...markets]
 
     const refs = {}
+
+    const isOdd = isOddTimeframe(timeframe)
 
     for (let i = 0; i < data.length; i++) {
       if (!data[i].time && data[i][0]) {
@@ -133,7 +148,7 @@ class HistoricalService extends EventEmitter {
         }
 
         // format pending bar time floored to timeframe
-        data[i].timestamp = Math.floor(+new Date(data[i].time) / 1000 / timeframe) * timeframe
+        data[i].timestamp = floorTimestampToTimeframe(data[i].time / 1000, timeframe, isOdd)
 
         if (!lastClosedBars[data[i].market] || lastClosedBars[data[i].market].timestamp < data[i].timestamp) {
           // store reference bar for this market (either because it didn't exist or because reference bar time is < than pending bar time)

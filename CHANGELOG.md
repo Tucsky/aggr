@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented here.
 
+## [3.0.6] - 2021-12-05
+
+### Changed
+- pivot_high & pivot_low to take left & right argument
+- Aggregate liquidations if trade aggregation is enabled
+
+### Added
+- ram() indicator functions 
+
+## [3.0.5] - 2021-09-12
+
+### Added
+- Indicator functions pivot_high + pivot_low
 
 ## [3.0.4] - 2021-08-24
 

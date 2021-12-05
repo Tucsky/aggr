@@ -261,5 +261,21 @@
       "color": "rgb(41,98,255)",
       "sessionLengthInDays": 7
     }
+  },
+  "rsi": {
+    "script": "src = $price.close\nchange = src - src[1]\nup = ema(Math.max(change, 0), options.length)\ndown = ema(-Math.min(change, 0), options.length)\nrsi = down == 0 ? 100 : up == 0 ? 0 : 100 - (100 / (1 + up / down))\nline(80, color=options.thresholdColor)\nline(20, color=options.thresholdColor)\nline(rsi)",
+    "name": "RSI",
+    "options": {
+      "priceScaleId": "rsi",
+      "scaleMargins": {
+        "top": 0.01,
+        "bottom": 0.83
+      },
+      "upColor": "rgb(59,202,109)",
+      "downColor": "rgb(235,30,47)",
+      "thresholdColor": "rgba(255,255,255,0.5)",
+      "color": "rgb(255,255,255)",
+      "length": 14
+    }
   }
 }

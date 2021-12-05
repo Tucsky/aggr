@@ -138,12 +138,14 @@ export function cum$(state, value) {
  */
 export const pivot_high = {
   count: 0,
-  points: []
+  points: [],
+  lengthIndexes: [1, 2]
 }
-export function pivot_high$(state, value, length) {
+export function pivot_high$(state, value, lengthBefore, lengthAfter) {
   state.output = value
 
-  const middle = state.points[Math.round(length / 2 - 1)]
+  const middle = state.points[lengthBefore + 1]
+  const length = lengthBefore + lengthAfter
 
   for (let i = 0; i <= length; i++) {
     const current = i < length ? state.points[i] : value
@@ -162,12 +164,14 @@ export function pivot_high$(state, value, length) {
  */
 export const pivot_low = {
   count: 0,
-  points: []
+  points: [],
+  lengthIndexes: [1, 2]
 }
-export function pivot_low$(state, value, length) {
+export function pivot_low$(state, value, lengthBefore, lengthAfter) {
   state.output = value
 
-  const middle = state.points[Math.round(length / 2 - 1)]
+  const middle = state.points[lengthBefore + 1]
+  const length = lengthBefore + lengthAfter
 
   for (let i = 0; i <= length; i++) {
     const current = i < length ? state.points[i] : value
