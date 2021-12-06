@@ -683,9 +683,9 @@ export default class ChartController {
       // create function ready to calculate (& render) everything for this indicator
       indicator.adapter = this.serieBuilder.getAdapter(indicator.model.output)
       indicator.silentAdapter = this.serieBuilder.getAdapter(indicator.model.silentOutput)
-
-      this.prepareRendererForIndicators(indicator.id, renderer)
     }
+
+    this.prepareRendererForIndicators(indicator, renderer)
 
     return indicator
   }
@@ -1755,39 +1755,33 @@ export default class ChartController {
     return bar
   }
 
-  prepareRendererForIndicators(indicatorId: string, renderer: Renderer) {
-    for (let i = 0; i < this.loadedIndicators.length; i++) {
-      if (indicatorId && this.loadedIndicators[i].id === indicatorId) {
-        const markets = Object.keys(this.loadedIndicators[i].model.markets)
+  prepareRendererForIndicators(indicator: LoadedIndicator, renderer: Renderer) {
+    const markets = Object.keys(indicator.model.markets)
 
-        for (let j = 0; j < markets.length; j++) {
-          if (!renderer.sources[markets[j]]) {
-            renderer.sources[markets[j]] = {
-              open: null,
-              high: null,
-              low: null,
-              close: null
-            }
-          }
+    for (let j = 0; j < markets.length; j++) {
+      if (!renderer.sources[markets[j]]) {
+        renderer.sources[markets[j]] = {
+          open: null,
+          high: null,
+          low: null,
+          close: null
+        }
+      }
 
-          const keys = this.loadedIndicators[i].model.markets[markets[j]]
+      const keys = indicator.model.markets[markets[j]]
 
-          if (keys.length) {
-            for (let k = 0; k < keys.length; k++) {
-              if (
-                typeof renderer.sources[markets[j]][keys[k]] === 'undefined' &&
-                keys[k] !== 'open' &&
-                keys[k] !== 'high' &&
-                keys[k] !== 'low' &&
-                keys[k] !== 'close'
-              ) {
-                renderer.sources[markets[j]][keys[k]] = 0
-              }
-            }
+      if (keys.length) {
+        for (let k = 0; k < keys.length; k++) {
+          if (
+            typeof renderer.sources[markets[j]][keys[k]] === 'undefined' &&
+            keys[k] !== 'open' &&
+            keys[k] !== 'high' &&
+            keys[k] !== 'low' &&
+            keys[k] !== 'close'
+          ) {
+            renderer.sources[markets[j]][keys[k]] = 0
           }
         }
-
-        break
       }
     }
   }
