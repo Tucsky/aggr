@@ -51,7 +51,7 @@ import TradesPaneDialog from '../trades/TradesPaneDialog.vue'
 import ChartPaneDialog from '../chart/ChartPaneDialog.vue'
 import StatsPaneDialog from '../stats/StatsPaneDialog.vue'
 import PricesPaneDialog from '../prices/PricesPaneDialog.vue'
-import { getSiblings, parseMarket } from '@/utils/helpers'
+import { getSiblings } from '@/utils/helpers'
 import WebsitePaneDialog from '../website/WebsitePaneDialog.vue'
 
 @Component({
@@ -99,28 +99,25 @@ export default class extends Vue {
     }
   ]
 
-  get name() {
-    let name = this.$store.state.panes.panes[this.paneId].name
-    const markets = this.$store.state.panes.panes[this.paneId].markets
-
-    if (!name) {
-      if (markets.length) {
-        const [, pair] = parseMarket(markets[0])
-        return pair
-      } else {
-        name = this.paneId
-      }
-    }
-
-    return name
-  }
-
   get zoom() {
     return this.$store.state.panes.panes[this.paneId].zoom || 1
   }
 
   get type() {
     return this.$store.state.panes.panes[this.paneId].type
+  }
+
+  get name() {
+    const name = this.$store.state.panes.panes[this.paneId].name
+    const market = this.$store.state.panes.marketsListeners[this.$store.state.panes.panes[this.paneId].markets[0]]
+
+    if (name) {
+      return name
+    } else if (market) {
+      return market.local
+    } else {
+      return this.type
+    }
   }
 
   created() {
@@ -179,7 +176,7 @@ export default class extends Vue {
   }
 
   maximizePane(event) {
-    if (event.currentTarget !== event.target && event.target.className !== 'toolbar__spacer') {
+    if (event.type === 'dblclick' && event.currentTarget !== event.target && event.target.className !== 'toolbar__spacer') {
       return
     }
 

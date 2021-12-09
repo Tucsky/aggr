@@ -3,7 +3,6 @@ import { ModulesState } from '..'
 
 export interface WebsitePaneState {
   _id?: string
-  _booted?: boolean
   url?: string
   locked?: boolean
 }
@@ -18,7 +17,6 @@ const state = {
 
 const actions = {
   async boot({ state, dispatch }) {
-    state._booted = true
     setTimeout(() => {
       dispatch('setTitle', state.url)
     })

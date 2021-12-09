@@ -1,10 +1,14 @@
 {
   "_id": "panes",
   "locked": false,
-  "layout": [
+  "layoutDesktop": [
     { "i": "chart", "type": "chart", "x": 0, "y": 0, "w": 20, "h": 24 },
     { "i": "trades", "type": "trades", "x": 20, "y": 0, "w": 4, "h": 20 },
     { "i": "liquidations", "type": "trades", "x": 20, "y": 20, "w": 4, "h": 4 }
+  ],
+  "layoutMobile": [
+    { "i": "chart", "type": "chart", "x": 0, "y": 0, "w": 24, "h": 16 },
+    { "i": "trades", "type": "trades", "x": 0, "y": 0, "w": 24, "h": 8 }
   ],
   "panes": {
     "chart": {
@@ -38,29 +42,19 @@
         "BINANCE_FUTURES:btcusd_perp",
         "BITFINEX:BTCUSD",
         "BITMEX:XBTUSD",
-        "BITSTAMP:btcusd",
         "BYBIT:BTCUSD",
         "COINBASE:BTC-USD",
         "DERIBIT:BTC-PERPETUAL",
         "FTX:BTC-PERP",
         "FTX:BTC/USD",
-        "HUOBI:BTC-USD",
-        "KRAKEN:XBT/USD",
-        "KRAKEN:PI_XBTUSD",
         "BINANCE:btcusdt",
         "BINANCE_FUTURES:btcusdt",
         "BITFINEX:BTCUST",
         "BITFINEX:BTCF0:USTF0",
         "BITMEX:XBTUSDT",
-        "BITSTAMP:btcusdt",
         "BYBIT:BTCUSDT",
         "COINBASE:BTC-USDT",
-        "FTX:BTC/USDT",
-        "HUOBI:btcusdt",
-        "OKEX:BTC-USDT",
-        "OKEX:BTC-USDT-SWAP",
-        "OKEX:BTC-USD-SWAP",
-        "POLONIEX:USDT_BTC"
+        "FTX:BTC/USDT"
       ],
       "settings": {
         "tradeType": "trades",
@@ -81,56 +75,19 @@
       "markets": [
         "BITFINEX:BTCUSD",
         "BITMEX:XBTUSD",
+        "BITMEX:XBTUSDT",
         "BITFINEX:BTCF0:USTF0",
-        "OKEX:BTC-USD-SWAP",
-        "OKEX:BTC-USDT-SWAP",
         "BINANCE_FUTURES:btcusdt",
         "BINANCE_FUTURES:btcusd_perp",
-        "HUOBI:BTC-USD",
-        "KRAKEN:PI_XBTUSD",
         "DERIBIT:BTC-PERPETUAL",
         "FTX:BTC-PERP",
+        "FTX:BTC/USD",
+        "FTX:BTC/USDT",
         "BYBIT:BTCUSD",
         "BYBIT:BTCUSDT"
       ],
       "settings": {
-        "tradeType": "liquidations",
-        "thresholds": [
-          {
-            "id": "threshold",
-            "amount": 10000,
-            "buyColor": "rgba(236,64,122,0.5)",
-            "sellColor": "rgba(255,152,0,0.5)",
-            "buyAudio": "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*2,0,,,'sine')\nplay(329.63, srqtR, srqtR*4,0.08,,,'sine')",
-            "sellAudio": "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*2,0,,,'sine')\nplay(440, srqtR, srqtR*4,0.08,,,'sine')"
-          },
-          {
-            "id": "significant",
-            "amount": 25000,
-            "buyColor": "rgba(236,64,122,0.6)",
-            "sellColor": "rgba(255,152,0,0.7)",
-            "buyAudio": "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*6,0.08,,,'sine')",
-            "sellAudio": "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*6,0.08,,,'sine')"
-          },
-          {
-            "id": "huge",
-            "amount": 100000,
-            "gif": "rip coffin",
-            "buyColor": "rgba(236,64,122,0.7)",
-            "sellColor": "rgba(255,152,0,0.8)",
-            "buyAudio": "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*8,0.08,,,'sine')",
-            "sellAudio": "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*8,0.08,,,'sine')"
-          },
-          {
-            "id": "rare",
-            "amount": 1000000,
-            "gif": "rip coffin",
-            "buyColor": "rgb(156,39,176)",
-            "sellColor": "rgb(255,235,59)",
-            "buyAudio": "var srqtR = Math.min(1, gain / 10)\nplay(329.63, srqtR, 1,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",
-            "sellAudio": "var srqtR = Math.min(1, gain / 10)\nplay(440, srqtR, 1,0,,,'sine')\nplay(440, srqtR, srqtR*10,0.08,,,'sine')"
-          }
-        ]
+        "tradeType": "liquidations"
       }
     }
   },

@@ -22,9 +22,7 @@ export interface SettingsState {
   audioVolume?: number
   audioFilters?: AudioFilters
   settings?: string[]
-  recentColors?: string[]
   disableAnimations?: boolean
-  decimalPrecision?: number
   autoHideHeaders?: boolean
   searchTypes?: any
   searchExchanges?: any
@@ -66,17 +64,6 @@ const actions = {
       }
     })
   },
-  addRecentColor({ commit, state }, newColor) {
-    if (state.recentColors.includes(newColor)) {
-      return
-    }
-
-    if (state.recentColors.length >= 16) {
-      commit('TRIM_RECENT_COLORS')
-    }
-
-    commit('ADD_RECENT_COLOR', newColor)
-  },
   setBackgroundColor({ commit, state, dispatch }, rgb) {
     commit('SET_CHART_BACKGROUND_COLOR', rgb)
 
@@ -99,16 +86,24 @@ const actions = {
     const backgroundSide = theme === 'dark' ? 1 : -10
     const colorSide = theme === 'dark' ? -1 : 1
     const backgroundRgb = splitRgba(state.backgroundColor)
+    const background100 = getLogShade(backgroundRgb, variantMultiplier * 0.015 * backgroundSide)
+    const background100Rgb = splitRgba(background100)
 
     document.documentElement.style.setProperty('--theme-background-base', state.backgroundColor)
-    document.documentElement.style.setProperty('--theme-background-100', getLogShade(backgroundRgb, variantMultiplier * 0.015 * backgroundSide))
+    document.documentElement.style.setProperty('--theme-background-100', background100)
     document.documentElement.style.setProperty('--theme-background-150', getLogShade(backgroundRgb, variantMultiplier * 0.05 * backgroundSide))
     document.documentElement.style.setProperty('--theme-background-200', getLogShade(backgroundRgb, variantMultiplier * 0.075 * backgroundSide))
     document.documentElement.style.setProperty('--theme-background-300', getLogShade(backgroundRgb, variantMultiplier * 0.1 * backgroundSide))
 
     // const background100 = splitRgba(document.documentElement.style.getPropertyValue('--theme-background-100'))
-    document.documentElement.style.setProperty('--theme-background-o75', `rgba(${backgroundRgb[0]}, ${backgroundRgb[1]},${backgroundRgb[2]}, .75)`)
-    document.documentElement.style.setProperty('--theme-background-o20', `rgba(${backgroundRgb[0]}, ${backgroundRgb[1]},${backgroundRgb[2]}, .2)`)
+    document.documentElement.style.setProperty(
+      '--theme-background-o75',
+      `rgba(${background100Rgb[0]}, ${background100Rgb[1]},${background100Rgb[2]}, .75)`
+    )
+    document.documentElement.style.setProperty(
+      '--theme-background-o20',
+      `rgba(${background100Rgb[0]}, ${background100Rgb[1]},${background100Rgb[2]}, .2)`
+    )
 
     const colorInverse = theme !== 'light' ? 'rgb(17,17,17)' : 'rgb(246,246,246)'
     let textColor = state.textColor
@@ -215,15 +210,6 @@ const mutations = {
   },
   SET_TIMEZONE_OFFSET(state, value) {
     state.timezoneOffset = +value || 0
-  },
-  ADD_RECENT_COLOR(state, value) {
-    state.recentColors.push(value)
-  },
-  TRIM_RECENT_COLORS(state) {
-    state.recentColors.pop()
-  },
-  SET_DECIMAL_PRECISION(state, value) {
-    state.decimalPrecision = value
   },
   TOGGLE_AUTO_HIDE_HEADERS(state) {
     state.autoHideHeaders = !state.autoHideHeaders

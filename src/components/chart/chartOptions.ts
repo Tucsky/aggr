@@ -45,7 +45,7 @@ export const defaultChartOptions = {
     barSpacing: 4,
     minBarSpacing: 0,
     rightOffset: 12,
-    lockVisibleTimeRangeOnResize: true,
+    lockVisibleTimeRangeOnResize: false,
     borderVisible: true,
     borderColor: 'rgba(255, 255, 255, .2)',
     visible: true,

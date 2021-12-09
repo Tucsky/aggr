@@ -25,7 +25,7 @@
         title="Scripting documentation"
         v-tippy
         class="btn -text -white mlauto -start"
-        >scripting Wiki <span class="badge -red ml4">NEW</span></a
+        >scripting Wiki</a
       >
     </div>
     <div class="d-flex mobile-dir-col-desktop-dir-row">
@@ -120,7 +120,7 @@
               ></dropdown>
             </div>
           </div>
-          <div class="section__title" @click="toggleSection('position')">Position in chart <i class="icon-up"></i></div>
+          <div class="section__title" @click="toggleSection('position')">Position in chart <i class="icon-up-thin"></i></div>
         </section>
         <section v-if="formatOption" class="section">
           <div v-if="sections.indexOf('format') > -1">
@@ -141,7 +141,7 @@
                 <editable
                   class="form-control"
                   :content="formatOption.value.precision"
-                  @output="validate(formatOption, { ...formatOption.value, precision: +$event || 1 })"
+                  @output="validate(formatOption, { ...formatOption.value, precision: Math.abs($event) || 0 })"
                 ></editable>
               </div>
               <div class="form-group">
@@ -150,13 +150,13 @@
                   class="form-control"
                   :content="formatOption.value.minMove"
                   step="0.01"
-                  @output="validate(formatOption, { ...formatOption.value, minMove: ($event || 0.1).toString() })"
+                  @output="validate(formatOption, { ...formatOption.value, minMove: (Math.abs($event) || formatOption.value.minMove).toString() })"
                 ></editable>
               </div>
             </div>
           </div>
 
-          <div class="section__title" @click="toggleSection('format')">Price format <i class="icon-up"></i></div>
+          <div class="section__title" @click="toggleSection('format')">Price format <i class="icon-up-thin"></i></div>
         </section>
       </div>
     </div>
@@ -465,7 +465,7 @@ export default {
         return ignoredOptionsKeys.indexOf(x) === -1 && a.indexOf(x) == i
       })
 
-      for (const key of this.otherOptionsKeys) {
+      for (const key of [...this.otherOptionsKeys, ...this.colorOptionsKeys]) {
         if (mergedOptionsKeys.indexOf(key) === -1) {
           console.warn('[indicator/' + this.indicatorId + '] remove unused option ' + key)
           this.$store.commit(this.paneId + '/REMOVE_INDICATOR_OPTION', { id: this.indicatorId, key })

@@ -53,16 +53,16 @@
 
 .help-text {
   line-height: 1.3;
-  opacity: 0.6;
 
   a {
     text-decoration: underline;
   }
 
-  &.d-flex > i {
-    line-height: 1.4;
+  i {
+    vertical-align: text-bottom;
   }
 }
+
 ::-webkit-input-placeholder {
   /* WebKit, Blink, Edge */
   color: var(--theme-color-o50);
@@ -164,6 +164,18 @@
 
     &:after {
       content: unicode($icon-cross);
+    }
+  }
+
+  &.-sort input ~ div {
+    background-color: $green;
+    
+    &:before {
+      content: unicode($icon-up);
+    }
+
+    &:after {
+      content: unicode($icon-down);
     }
   }
 
@@ -376,8 +388,6 @@ input[type='range'] {
 [contenteditable] {
   display: inline-block;
   cursor: text;
-  color: lighten($green, 20%);
-  cursor: text;
   font-family: $font-monospace;
 
   -webkit-touch-callout: auto;
@@ -427,7 +437,8 @@ input[type='range'] {
 
 textarea.form-control {
   font-family: $font-monospace;
-  line-height: 1.5;
+  line-height: 1;
+  letter-spacing: -1px;
   height: auto;
   width: 100%;
   max-width: 100%;
@@ -443,7 +454,7 @@ textarea.form-control {
   }
 
   &:focus {
-    border-color: $blue;
+    border-color: $green;
   }
 }
 
@@ -478,10 +489,6 @@ textarea.form-control {
 #app.-light {
   .checkbox-control > div {
     border-color: rgba(0, 0, 0, 0.1);
-  }
-
-  [contenteditable] {
-    color: black;
   }
 }
 

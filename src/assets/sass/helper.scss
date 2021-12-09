@@ -104,7 +104,7 @@ $unit: 'px'; // Feel free to change the unit.
 }
 
 .condensed {
-  font-family: 'Barlow Semi Condensed';
+  font-family: $font-condensed;
 }
 
 .text-monospace {
@@ -273,4 +273,8 @@ $unit: 'px'; // Feel free to change the unit.
 
 .p-relative {
   position: relative;
+}
+
+#app.-light .text-muted {
+  opacity: .75;
 }

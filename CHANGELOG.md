@@ -2,14 +2,25 @@
 
 All notable changes to this project will be documented here.
 
+## [3.0.7] - 2021-12-22
+### Added
+- Threshold audio assistant
+- Import audio files (dragndrop)
+- Configure multiple thresholds for both trade type simultaneously
+- Separate gifs for both side
+- Add volume to prices pane
+
+### Changed
+- Trade pane refactor
+
 ## [3.0.6] - 2021-12-05
+
+### Added
+- rma() indicator functions 
 
 ### Changed
 - pivot_high & pivot_low to take left & right argument
 - Aggregate liquidations if trade aggregation is enabled
-
-### Added
-- ram() indicator functions 
 
 ## [3.0.5] - 2021-09-12
 

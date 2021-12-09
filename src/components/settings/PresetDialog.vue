@@ -33,9 +33,14 @@
     </ul>
 
     <footer>
-      <button type="button" class="btn -text mrauto ml0" @click="downloadPreset"><i class="icon-download mr8"></i> Export</button>
-      <button type="button" class="btn -text -red ml8" @click="deletePreset"><i class="icon-cross mr8"></i> Delete</button>
-      <button type="button" class="btn -blue -large ml16" @click="updatePreset"><i class="icon-edit mr4"></i> Update</button>
+      <dropdown class="-left -text-left" :options="menu" selectionClass="-text -large mrauto" placeholder="Options">
+        <template v-slot:selection>Manage preset</template>
+        <template v-slot:option="{ value }">
+          <i :class="[value.icon === 'trash' && 'text-danger', 'icon-' + value.icon]"> </i>
+          <span :class="value.icon === 'trash' ? 'text-danger' : ''">{{ value.label }}</span>
+        </template>
+      </dropdown>
+      <button type="button" class="btn -blue -large ml16 mlauto" @click="replacePreset"><i class="icon-check mr4"></i> Set</button>
     </footer>
   </Dialog>
 </template>
@@ -55,6 +60,23 @@ export default {
   },
   data() {
     return {
+      menu: [
+        {
+          icon: 'swap',
+          label: 'Override',
+          click: this.replacePreset
+        },
+        {
+          icon: 'external-link-square-alt',
+          label: 'Export',
+          click: this.downloadPreset
+        },
+        {
+          icon: 'trash',
+          label: 'Delete',
+          click: this.deletePreset
+        }
+      ],
       dataProperties: [],
       createdAt: 'N/A',
       updatedAt: 'N/A',
@@ -95,8 +117,8 @@ export default {
         }
       }
     },
-    updatePreset() {
-      this.close(true)
+    replacePreset() {
+      this.close('replace')
     },
     async renamePreset() {
       const name = await dialogService.prompt({

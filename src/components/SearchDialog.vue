@@ -57,7 +57,9 @@
               <span>Already connected</span>
             </label>
           </div>
-          <div class="search-filters__title mb8" @click="showExtraFilters = !showExtraFilters">Extra <i class="icon-up -higher"></i></div>
+          <div class="search-filters__title text-muted mb8" @click="showExtraFilters = !showExtraFilters">
+            Extra <i class="icon-up-thin -higher"></i>
+          </div>
         </div>
 
         <div class="search-filters mb16">
@@ -93,7 +95,9 @@
               <span>Futures</span>
             </label>
           </div>
-          <div class="search-filters__title mb8" @click="showTypeFilters = !showTypeFilters">Type <i class="icon-up -higher"></i></div>
+          <div class="search-filters__title text-muted mb8" @click="showTypeFilters = !showTypeFilters">
+            Type <i class="icon-up-thin -higher"></i>
+          </div>
         </div>
 
         <div class="search-filters">
@@ -120,7 +124,9 @@
               </label>
             </template>
           </div>
-          <div class="search-filters__title mb8" @click="showExchanges = !showExchanges">Exchanges <i class="icon-up -higher"></i></div>
+          <div class="search-filters__title text-muted mb8" @click="showExchanges = !showExchanges">
+            Exchanges <i class="icon-up-thin -higher"></i>
+          </div>
         </div>
       </div>
       <div class="search__wrapper">
@@ -149,7 +155,7 @@
               v-text="market"
             ></button>
           </template>
-          <input ref="input" type="text" placeholder="Search symbol (ex: EXCHANGE:SYMBOL)" v-model="query" />
+          <input ref="input" type="text" placeholder="Search symbol (ex: EXCHANGE:SYMBOL)" :value="query" @input="query = $event.target.value" />
         </div>
         <div class="search__results hide-scrollbar">
           <template v-if="results.length">
@@ -250,7 +256,6 @@ import DialogMixin from '@/mixins/dialogMixin'
 import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import aggregatorService from '@/services/aggregatorService'
-import { parseMarket } from '@/worker/helpers/utils'
 import workspacesService from '@/services/workspacesService'
 
 export default {
@@ -260,14 +265,12 @@ export default {
     DonoDropdown
   },
   props: {
-    query: {
-      default: ''
-    },
     paneId: {
       required: false
     }
   },
   data: () => ({
+    query: '',
     markets: [],
     selection: [],
     originalSelection: [],
@@ -300,7 +303,7 @@ export default {
       }
     },
     activeMarkets() {
-      return this.$store.state.app.activeMarkets.map(m => m.exchange + ':' + m.pair)
+      return Object.keys(this.$store.state.panes.marketsListeners)
     },
     paneMarkets() {
       if (!this.paneId) {
@@ -458,7 +461,7 @@ export default {
     },
     groupedSelection: function() {
       return this.selection.reduce((groups, market) => {
-        const [exchange] = parseMarket(market)
+        const [exchange] = market.split(':')
 
         if (!this.indexedProducts[exchange]) {
           return groups
@@ -642,7 +645,7 @@ export default {
 
     async ensureProducts() {
       for (const exchangeId of this.$store.getters['exchanges/getExchanges']) {
-        if (!this.$store.state.exchanges[exchangeId].fetched) {
+        if (!this.$store.state.exchanges[exchangeId].fetched && this.$store.state.exchanges[exchangeId].disabled !== true) {
           await aggregatorService.dispatch({
             op: 'fetchExchangeProducts',
             data: {
@@ -902,16 +905,18 @@ export default {
 
   &__title {
     cursor: pointer;
-    opacity: 0.5;
     user-select: none;
+    display: flex;
+    align-items: center;
 
-    .icon-up {
+    .icon-up-thin {
       transition: transform 0.2s $ease-out-expo;
-      vertical-align: middle;
+      line-height: inherit;
+      margin-left: auto;
     }
 
     &:first-child {
-      .icon-up {
+      .icon-up-thin {
         display: inline-block;
         transform: rotateZ(180deg);
       }

@@ -1,7 +1,7 @@
 import { ProductsData, ProductsStorage } from '@/types/test'
 import { EventEmitter } from 'eventemitter3'
 import { dispatchAsync } from './helpers/com'
-import { getHms, randomString, sleep } from './helpers/utils'
+import { getHms, randomString } from './helpers/utils'
 interface Api extends WebSocket {
   _id: string
   _pending: string[]
@@ -66,7 +66,7 @@ class Exchange extends EventEmitter {
     super()
   }
 
-  get requireProducts() {
+  get requiresProducts() {
     return !this.products && this.endpoints.PRODUCTS
   }
 
@@ -94,7 +94,7 @@ class Exchange extends EventEmitter {
    */
   /* eslint-disable @typescript-eslint/no-unused-vars */
   getUrl(pair: string): string {
-    throw new Error('not implemented')
+    throw new Error('Not implemented')
   }
 
   /**
@@ -324,7 +324,7 @@ class Exchange extends EventEmitter {
 
     if (api.readyState !== WebSocket.CLOSED) {
       if (api._connected.length) {
-        throw new Error(`cannot unbind api that still has pairs linked to it`)
+        throw new Error(`Cannot unbind api that still has pairs linked to it`)
       }
 
       console.debug(`[${this.id}.removeWs] close api ${api.url}`)
@@ -395,7 +395,7 @@ class Exchange extends EventEmitter {
    */
   setProducts(productsData: ProductsData): boolean {
     if (!productsData) {
-      console.debug(`[${this.id}] set products (null)`)
+      console.debug(`[${this.id}] set products with no data (setting null)`)
       // worker will ask for products next time the market connect
       this.products = null
       return null
@@ -420,14 +420,10 @@ class Exchange extends EventEmitter {
   }
 
   async getProducts(forceFetch?: boolean): Promise<void> {
-    console.debug(`[${this.id}] request product`)
-
-    if (forceFetch) {
-      await sleep(1000)
-    }
+    console.debug(`[${this.id}] request product ${forceFetch ? '(force fetching)' : ''}`)
 
     // ask client for exchange's products
-    // will ever retrieve stored or fetch new
+    // will either retrieve stored or fetch new
     // fetched product will be sent back to worker for formatting then back to client
     const storage = (await dispatchAsync({
       op: 'getExchangeProducts',
@@ -436,9 +432,9 @@ class Exchange extends EventEmitter {
         endpoints: this.endpoints.PRODUCTS,
         forceFetch: forceFetch
       }
-    })) as ProductsStorage | boolean
+    })) as ProductsStorage
 
-    if (storage === true) {
+    if (this.setProducts(storage.data) === false) {
       return this.getProducts(true)
     }
 
@@ -478,7 +474,7 @@ class Exchange extends EventEmitter {
    * @param {WebSocket} api WebSocket instance
    */
   onMessage(event, api): boolean {
-    throw new Error('not implemented')
+    throw new Error('Not implemented')
   }
 
   /**
@@ -661,8 +657,6 @@ class Exchange extends EventEmitter {
     const pendingIndex = api._pending.indexOf(pair)
 
     if (pendingIndex !== -1) {
-      // console.debug(`[${this.id}.markPairAsConnected] ${pair} was connecting. move from _pending to _connected`)
-
       api._pending.splice(pendingIndex, 1)
     } else {
       console.warn(`[${this.id}.markPairAsConnected] ${pair} appears to be NOT connecting anymore (prevent undesired subscription)`)
@@ -677,8 +671,6 @@ class Exchange extends EventEmitter {
     }
 
     api._connected.push(pair)
-
-    // console.debug(`[${this.id}.markPairAsConnected] ${pair} added to _connected list at index ${api._connected.length - 1}`)
 
     return true
   }
@@ -705,8 +697,6 @@ class Exchange extends EventEmitter {
     }
 
     api._connected.splice(connectedIndex, 1)
-
-    // console.debug(`[${this.id}.markPairAsDisconnected] ${pair} removed from _connected list`)
 
     return true
   }

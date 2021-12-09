@@ -1,7 +1,7 @@
 <template>
   <div class="slider" ref="wrapper" :class="{ '-vertical': vertical, '-disabled': disabled }">
-    <div class="slider__track" ref="track" v-on="trackSlide ? { mousedown: select, touchstart: select } : {}">
-      <div class="slider__fill" ref="fill"></div>
+    <div class="slider__track" ref="track">
+      <div class="slider__fill" ref="fill" v-on="trackSlide ? { mousedown: select, touchstart: select } : {}"></div>
       <div v-if="showCompletion && handles[0]" class="slider__completion" :style="`width: ${handles[0].positionX}px`"></div>
       <div
         class="slider__handle"
@@ -126,9 +126,13 @@ export default {
      */
     select(event) {
       event.preventDefault()
-      event.stopPropagation()
+
       // check if  left mouse is clicked
       if (event.buttons === 2) return
+
+      if (this._dblClickTimeout) {
+        clearTimeout(this._dblClickTimeout)
+      }
 
       // check if a double click
       if (this.pendingDblClick) {
@@ -137,11 +141,8 @@ export default {
         return
       }
 
-      // next click might be double click, for the next 300ms
+      // next click might be double click, for the next 150ms
       this.pendingDblClick = true
-      this._dblClickTimeout = window.setTimeout(() => {
-        this.pendingDblClick = false
-      }, 300)
 
       this.updateSize()
       this.track.classList.add('slider--dragging')
@@ -185,6 +186,13 @@ export default {
       document.removeEventListener('touchmove', this.tempDrag)
       document.removeEventListener('mouseup', this.tempRelease)
       document.removeEventListener('touchend', this.tempRelease)
+
+      if (this.pendingDblClick) {
+        this._dblClickTimeout = window.setTimeout(() => {
+          this.pendingDblClick = false
+          this._dblClickTimeout = null
+        }, 150)
+      }
     },
     getStepValue(event) {
       const { x, y } = getEventCords(event)
@@ -538,5 +546,7 @@ export default {
 
   border-radius: 10px;
   background-color: $green;
+
+  pointer-events: none;
 }
 </style>

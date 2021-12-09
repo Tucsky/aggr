@@ -7,6 +7,7 @@ import PromptDialog from '@/components/framework/PromptDialog.vue'
 
 class DialogService {
   mountedComponents = {}
+  isInteracting = false
   pickerInstance: any
 
   createComponent(component, props = {}, resolve = null, dialogId?: string): Vue {

@@ -24,14 +24,14 @@
 
   &__selected.-arrow {
     &:after {
-      content: unicode($icon-down);
+      content: unicode($icon-down-thin);
       transform: rotateZ(180deg);
       font-family: 'icon';
       padding: 0 0.2em;
       position: relative;
-      top: 1px;
       line-height: 1;
       transition: transform 0.2s cubic-bezier(0, 1.4, 1, 1);
+      margin-left: auto;
     }
 
     &:last-child:after {
@@ -149,7 +149,8 @@
     }
 
     span + i {
-      margin-left: 1rem;
+      margin-left: 0.5rem;
+      align-self: center;
     }
 
     i {
@@ -188,7 +189,8 @@
 .dropdown-option {
   &__description {
     opacity: 0.5;
-    font-size: 80%;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
   }
 
   &__action {

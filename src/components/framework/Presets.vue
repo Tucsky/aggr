@@ -2,8 +2,11 @@
   <dropdown :options="presets" @output="onSelect" :placeholder="label" class="mrauto" selectionClass="ml0 -green -arrow">
     <template v-slot:option-custom>
       <div class="column" @mousedown.prevent>
-        <div class="btn -green" @click="savePreset"><i class="icon-plus"></i></div>
-        <div class="btn -blue" @click="uploadPreset"><i class="icon-upload"></i></div>
+        <div class="btn -green" @click="savePreset()"><i class="icon-plus"></i></div>
+        <div class="btn -blue -file">
+          <i class="icon-upload"></i>
+          <input type="file" accept="application/json" @change="handleFile" />
+        </div>
         <div class="btn -red" @click="applyDefault"><i class="icon-eraser"></i><span class="ml8">Reset</span></div>
       </div>
     </template>
@@ -12,7 +15,7 @@
 
       <span class="mr4">{{ value.label }}</span>
 
-      <button type="button" class="dropdown-option__action btn -small mlauto" @mousedown.prevent @click="openPreset(value.id, value.label)">
+      <button type="button" class="dropdown-option__action btn -green -small mlauto" @mousedown.prevent @click="openPreset(value.id, value.label)">
         <i class="icon-edit"></i>
       </button>
     </template>
@@ -22,11 +25,11 @@
 <script lang="ts">
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
+import importService from '@/services/importService'
 import { Preset, PresetType } from '@/types/test'
 import { Component, Vue } from 'vue-property-decorator'
 import Dropdown from '@/components/framework/Dropdown.vue'
 import PresetDialog from '../settings/PresetDialog.vue'
-import { browseFile } from '@/utils/helpers'
 
 @Component({
   components: { Dropdown },
@@ -85,14 +88,20 @@ export default class extends Vue {
   async openPreset(id: string, name: string) {
     const preset = await workspacesService.getPreset(id)
 
-    if (await dialogService.openAsPromise(PresetDialog, { preset })) {
+    const postClose = await dialogService.openAsPromise(PresetDialog, { preset })
+
+    if (postClose === 'replace') {
       this.savePreset(name)
+    } else if (postClose === 'set') {
+      this.applyPreset(preset)
     }
 
     this.getPresets()
   }
 
   async savePreset(name?: string) {
+    const isOverride = !!name
+
     if (!name || typeof name !== 'string') {
       name = await dialogService.prompt('Enter a name')
     } else if (!(await dialogService.confirm(`Override preset ${name} with current settings ?`))) {
@@ -108,7 +117,7 @@ export default class extends Vue {
     if (!data) {
       this.$store.dispatch('app/showNotice', {
         type: 'error',
-        title: `Preset should contain data. Not saving this preset.`
+        title: isOverride ? `Canceled preset override` : `Canceled preset creation`
       })
 
       return
@@ -122,7 +131,7 @@ export default class extends Vue {
 
     const updatedAt = Date.now()
 
-    const original = this.presets.find(preset => preset.name === name)
+    const original = await workspacesService.getPreset(name)
 
     let createdAt
 
@@ -153,51 +162,23 @@ export default class extends Vue {
     this.$emit('apply', preset.data)
   }
 
-  async uploadPreset() {
-    let content
+  async handleFile(event: Event) {
+    const file = (event.target as HTMLInputElement).files[0]
+
+    if (!file) {
+      return
+    }
 
     try {
-      content = await browseFile()
+      if (await importService.importPreset(file, this.type)) {
+        await this.getPresets()
+      }
     } catch (error) {
       this.$store.dispatch('app/showNotice', {
         title: error.message,
         type: 'error'
       })
-      return
     }
-
-    let preset
-
-    try {
-      if (typeof content === 'string') {
-        preset = JSON.parse(content)
-      } else {
-        throw new Error('invalid file, must be text/json')
-      }
-
-      if (!preset.data) {
-        throw new Error('preset is empty')
-      }
-
-      if (preset.type !== this.type) {
-        throw new Error('preset is not ' + this.type + ' type')
-      }
-    } catch (error) {
-      this.$store.dispatch('app/showNotice', {
-        title: `Couldn't import preset : ${error.message}`,
-        type: 'error'
-      })
-      return
-    }
-
-    await workspacesService.savePreset(preset)
-
-    this.$store.dispatch('app/showNotice', {
-      title: `Preset ${preset.name} imported successfully`,
-      type: 'info'
-    })
-
-    await this.getPresets()
   }
 }
 </script>

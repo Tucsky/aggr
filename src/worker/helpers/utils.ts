@@ -1,6 +1,11 @@
 export function countDecimals(value) {
-  if (Math.floor(value) === value) return 0
-  return value.toString().split('.')[1].length || 0
+  const parts = value.toString().split('.')
+
+  if (parts.length === 2) {
+    return parts[1].length
+  }
+
+  return 0
 }
 
 export function getHms(timestamp, round = false) {

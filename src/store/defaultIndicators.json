@@ -271,8 +271,6 @@
         "top": 0.01,
         "bottom": 0.83
       },
-      "upColor": "rgb(59,202,109)",
-      "downColor": "rgb(235,30,47)",
       "thresholdColor": "rgba(255,255,255,0.5)",
       "color": "rgb(255,255,255)",
       "length": 14

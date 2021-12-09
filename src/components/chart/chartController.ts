@@ -1,5 +1,5 @@
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
-import { getHms, parseMarket, deepSet, camelize, getTimeframeForHuman, floorTimestampToTimeframe, isOddTimeframe } from '../../utils/helpers'
+import { getHms, deepSet, camelize, getTimeframeForHuman, floorTimestampToTimeframe, isOddTimeframe } from '../../utils/helpers'
 import { defaultChartOptions, defaultPlotsOptions, defaultSerieOptions, getChartOptions } from './chartOptions'
 import store from '../../store'
 import * as seriesUtils from './serieUtils'
@@ -10,6 +10,7 @@ import { Trade } from '@/types/test'
 import dialogService from '@/services/dialogService'
 import IndicatorDialog from './IndicatorDialog.vue'
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
+import { waitForStateMutation } from '../../utils/store'
 
 export interface Bar {
   vbuy?: number
@@ -146,7 +147,6 @@ export default class ChartController {
   timeframe: number
   isOddTimeframe: boolean
   type: 'time' | 'tick'
-  lastPositionSet = false
   propagateInitialPrices = true
 
   private activeChunk: Chunk
@@ -157,6 +157,7 @@ export default class ChartController {
 
   private _releaseQueueInterval: number
   private _releasePanTimeout: number
+  private _queueHandler = this.releaseQueue.bind(this)
 
   constructor(id: string) {
     this.paneId = id
@@ -168,16 +169,6 @@ export default class ChartController {
     this.setTimezoneOffset(store.state.settings.timezoneOffset)
     this.refreshMarkets()
 
-    const unsubscribe = store.watch(
-      state => {
-        return state.app.isExchangesReady
-      },
-      () => {
-        this.refreshMarkets()
-        unsubscribe()
-      }
-    )
-
     this.fillGapsWithEmpty = Boolean(store.state[this.paneId].fillGapsWithEmpty)
   }
 
@@ -186,39 +177,34 @@ export default class ChartController {
    * @param markets
    */
   refreshMarkets() {
+    if (!store.state.app.isExchangesReady) {
+      waitForStateMutation(state => state.app.isExchangesReady).then(this.refreshMarkets.bind(this))
+    }
+
     const markets = store.state.panes.panes[this.paneId].markets
 
     const marketsForWatermark = []
 
-    this.markets = markets.reduce((output, market) => {
-      const [exchange] = parseMarket(market)
-      const identifier = market.replace(':', '')
+    this.markets = markets.reduce((output, marketKey) => {
+      const [exchange] = marketKey.split(':')
 
       if (
-        (output[identifier] =
-          store.state.exchanges[exchange] && !store.state.exchanges[exchange].disabled && !store.state[this.paneId].hiddenMarkets[market])
+        (output[marketKey] =
+          store.state.exchanges[exchange] && !store.state.exchanges[exchange].disabled && !store.state[this.paneId].hiddenMarkets[marketKey])
       ) {
-        marketsForWatermark.push(market)
+        marketsForWatermark.push(marketKey)
       }
 
       return output
     }, {})
 
     if (store.state.settings.normalizeWatermarks) {
-      const indexedProducts = store.state.app.indexedProducts
       const mergeUsdt = store.state.settings.searchTypes.mergeUsdt
 
       this.watermark = marketsForWatermark
-        .reduce((output, market) => {
-          const [exchange] = parseMarket(market)
-
-          let indexedProduct
-
-          if (indexedProducts[exchange]) {
-            indexedProduct = indexedProducts[exchange].find(product => product.id === market)
-          }
-
-          let localPair = indexedProduct ? indexedProduct.local : market
+        .reduce((output, marketKey) => {
+          const market = store.state.panes.marketsListeners[marketKey]
+          let localPair = market ? market.local : marketKey
 
           if (mergeUsdt) {
             localPair = localPair.replace('USDT', 'USD').replace('USDC', 'USD')
@@ -514,11 +500,11 @@ export default class ChartController {
    */
   updateFontSize() {
     const multiplier = store.state.panes.panes[this.paneId].zoom || 1
-    const watermarkBaseFontSize = store.state.settings.normalizeWatermarks ? 48 : 24
+    const watermarkBaseFontSize = store.state.settings.normalizeWatermarks ? 72 : 24
 
     this.chartInstance.applyOptions({
       layout: {
-        fontSize: 12 * multiplier
+        fontSize: 14 * multiplier
       },
       watermark: {
         fontSize: watermarkBaseFontSize * multiplier
@@ -869,7 +855,7 @@ export default class ChartController {
       for (let j = 0; j < this.chartCache.chunks[i].bars.length; j++) {
         const bar = this.chartCache.chunks[i].bars[j]
 
-        const market = bar.exchange + bar.pair
+        const market = bar.exchange + ':' + bar.pair
 
         const barTimestamp = floorTimestampToTimeframe(bar.timestamp, this.timeframe, this.isOddTimeframe)
 
@@ -972,15 +958,16 @@ export default class ChartController {
   setupQueue() {
     if (this._releaseQueueInterval) {
       return
-    } else if (!store.state[this.paneId].refreshRate) {
-      this._releaseQueueInterval = requestAnimationFrame(() => this.releaseQueue())
+    }
+
+    if (!store.state[this.paneId].refreshRate) {
+      this._releaseQueueInterval = requestAnimationFrame(this._queueHandler)
       return
     }
+
     console.debug(`[chart/${this.paneId}/controller] setup queue (${getHms(store.state[this.paneId].refreshRate)})`)
 
-    this._releaseQueueInterval = setInterval(() => {
-      this.releaseQueue()
-    }, store.state[this.paneId].refreshRate)
+    this._releaseQueueInterval = setInterval(this._queueHandler, store.state[this.paneId].refreshRate)
   }
 
   /**
@@ -1006,18 +993,11 @@ export default class ChartController {
    */
   releaseQueue() {
     if (!this.queuedTrades.length) {
-      if (!store.state[this.paneId].refreshRate) {
-        this._releaseQueueInterval = requestAnimationFrame(() => this.releaseQueue())
-      }
       return
     }
 
     this.renderRealtimeTrades(this.queuedTrades)
     this.queuedTrades.splice(0, this.queuedTrades.length)
-
-    if (!store.state[this.paneId].refreshRate) {
-      this._releaseQueueInterval = requestAnimationFrame(() => this.releaseQueue())
-    }
   }
 
   /**
@@ -1026,6 +1006,10 @@ export default class ChartController {
    */
   queueTrades(trades) {
     Array.prototype.push.apply(this.queuedTrades, trades)
+
+    if (!store.state[this.paneId].refreshRate) {
+      this._releaseQueueInterval = requestAnimationFrame(this._queueHandler)
+    }
   }
 
   /**
@@ -1042,7 +1026,7 @@ export default class ChartController {
 
     for (let i = 0; i < trades.length; i++) {
       const trade = trades[i]
-      const identifier = trade.exchange + trade.pair
+      const identifier = trade.exchange + ':' + trade.pair
 
       if (typeof this.markets[identifier] === 'undefined') {
         continue
@@ -1200,6 +1184,10 @@ export default class ChartController {
    * @param {string[]} indicatorsId id of indicators to render
    */
   renderBars(bars, indicatorsIds) {
+    if (!bars.length) {
+      return
+    }
+
     console.log(
       `[chart/${this.paneId}/controller] render bars`,
       '(',
@@ -1208,10 +1196,6 @@ export default class ChartController {
       bars.length,
       'bar(s)'
     )
-
-    if (!bars.length) {
-      return
-    }
 
     this.clearPriceLines(indicatorsIds)
 
@@ -1230,7 +1214,7 @@ export default class ChartController {
           break
         }
 
-        const market = bars[i].exchange + bars[i].pair
+        const market = bars[i].exchange + ':' + bars[i].pair
 
         if (this.chartCache.initialPrices[market]) {
           delete this.chartCache.initialPrices[market]
@@ -1345,7 +1329,8 @@ export default class ChartController {
         }
       }
 
-      const isActive = this.markets[bar.exchange + bar.pair]
+      const marketKey = bar.exchange + ':' + bar.pair
+      const isActive = this.markets[marketKey]
 
       if (isActive) {
         temporaryRenderer.bar.empty = false
@@ -1357,9 +1342,9 @@ export default class ChartController {
         temporaryRenderer.bar.lsell += bar.lsell
       }
 
-      temporaryRenderer.sources[bar.exchange + bar.pair] = this.cloneSourceBar(bar)
-      temporaryRenderer.sources[bar.exchange + bar.pair].empty = false
-      temporaryRenderer.sources[bar.exchange + bar.pair].active = isActive
+      temporaryRenderer.sources[marketKey] = this.cloneSourceBar(bar)
+      temporaryRenderer.sources[marketKey].empty = false
+      temporaryRenderer.sources[marketKey].active = isActive
     }
 
     if (this.activeRenderer) {
@@ -1463,17 +1448,6 @@ export default class ChartController {
   }
 
   /**
-   * Renders chunks that collides with visible range
-   */
-  renderAll() {
-    if (!this.chartInstance) {
-      return
-    }
-
-    this.renderBars(this.chartCache.chunks.length ? this.chartCache.chunks.reduce((bars, chunk) => bars.concat(chunk.bars), []) : [], null)
-  }
-
-  /**
    * disable "fetch on pan" until current operation (serie.update / serie.setData) is finished
    */
   preventPan() {
@@ -1481,7 +1455,7 @@ export default class ChartController {
       return
     }
 
-    const delay = 1000
+    const delay = 100
 
     if (typeof this._releasePanTimeout !== 'undefined') {
       clearTimeout(this._releasePanTimeout)
@@ -1490,10 +1464,19 @@ export default class ChartController {
     this.panPrevented = true
 
     this._releasePanTimeout = window.setTimeout(() => {
-      if (this.panPrevented) {
-        this.panPrevented = false
-      }
+      this.panPrevented = false
     }, delay)
+  }
+
+  /**
+   * Renders chunks that collides with visible range
+   */
+  renderAll() {
+    if (!this.chartInstance) {
+      return
+    }
+
+    this.renderBars(this.chartCache.chunks.length ? this.chartCache.chunks.reduce((bars, chunk) => bars.concat(chunk.bars), []) : [], null)
   }
 
   /**
@@ -1691,10 +1674,17 @@ export default class ChartController {
             instruction.state.sum -= instruction.state.points.shift()
             instruction.state.count--
           }
-        } else if (instruction.state.open !== 'undefined') {
-          instruction.state.open = instruction.state.close
-          instruction.state.high = instruction.state.close
-          instruction.state.low = instruction.state.close
+        } else if (typeof instruction.state.open !== 'undefined') {
+          if (typeof instruction.state.point !== 'undefined') {
+            instruction.state.point.open = instruction.state.open
+            instruction.state.point.high = instruction.state.high
+            instruction.state.point.low = instruction.state.low
+            instruction.state.point.close = instruction.state.close
+          } else {
+            instruction.state.open = instruction.state.close
+            instruction.state.high = instruction.state.close
+            instruction.state.low = instruction.state.close
+          }
         }
       }
 
@@ -1785,14 +1775,6 @@ export default class ChartController {
       }
     }
   }
-
-  /* getPriceScaleMargins(priceScaleId) {
-    for (let i = 0; i < this.loadedIndicators.length; i++) {
-      if (this.loadedIndicators[i].options.priceScaleId === priceScaleId && this.loadedIndicators[i].options.scaleMargins) {
-        return this.loadedIndicators[i].options.scaleMargins
-      }
-    }
-  } */
 
   toggleFillGapsWithEmpty() {
     this.fillGapsWithEmpty = !this.fillGapsWithEmpty

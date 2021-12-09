@@ -51,7 +51,6 @@ import aggregatorService from './services/aggregatorService'
 
 import Notices from './components/framework/Notices.vue'
 import Menu from './components/Menu.vue'
-import SettingsImportConfirmation from './components/settings/ImportConfirmation.vue'
 
 import Panes from '@/components/panes/Panes.vue'
 
@@ -62,6 +61,7 @@ import { formatPrice } from './utils/helpers'
 import { Notice } from './store/app'
 import workspacesService from './services/workspacesService'
 import dialogService from './services/dialogService'
+import importService from './services/importService'
 
 @Component({
   name: 'App',
@@ -79,7 +79,7 @@ import dialogService from './services/dialogService'
   }
 })
 export default class extends Vue {
-  price: string = null
+  price: number = null
   showStuck = false
 
   private _mainMarkets: string[]
@@ -161,11 +161,11 @@ export default class extends Vue {
     let price = 0
     let count = 0
 
-    for (const market of this._mainMarkets) {
-      if (isNaN(marketsPrices[market])) {
+    for (const marketKey of this._mainMarkets) {
+      if (!marketsPrices[marketKey] || marketsPrices[marketKey].price === null) {
         continue
       }
-      price += marketsPrices[market]
+      price += marketsPrices[marketKey].price
       count++
     }
 
@@ -180,7 +180,7 @@ export default class extends Vue {
         }
       }
 
-      this.price = formatPrice(price)
+      this.price = formatPrice(price, this._mainMarkets[0])
 
       window.document.title = this._mainPair + ' ' + this.price
     } else {
@@ -270,48 +270,28 @@ export default class extends Vue {
     document.body.removeEventListener('drop', this.handleDrop)
     document.body.removeEventListener('dragover', this.handleDrop)
   }
-  handleDrop(e) {
-    e.preventDefault()
+  async handleDrop(event) {
+    event.preventDefault()
 
-    if (e.type !== 'drop') {
+    if (event.type !== 'drop') {
       return false
     }
 
-    const files = e.dataTransfer.files
-
-    if (!files || !files.length) {
+    if (!event.dataTransfer.files || !event.dataTransfer.files.length) {
       return
     }
 
-    const reader = new FileReader()
-
-    reader.onload = async ({ target }) => {
-      const workspace = workspacesService.validateWorkspace(target.result)
-
-      if (!workspace) {
-        return
-      }
-
-      if (
-        (await workspacesService.getWorkspace(workspace.id)) &&
-        !(await dialogService.confirm({
-          message: `Workspace ${workspace.id} already exists`,
-          ok: 'Import anyway',
-          cancel: 'Annuler'
-        }))
-      ) {
-        return
-      }
-
-      if (
-        await dialogService.openAsPromise(SettingsImportConfirmation, {
-          workspace
+    for (const file of event.dataTransfer.files) {
+      try {
+        await importService.importAnything(file)
+      } catch (error) {
+        this.$store.dispatch('app/showNotice', {
+          title: error.message,
+          type: 'error',
+          timeout: 60000
         })
-      ) {
-        workspacesService.importAndSetWorkspace(workspace)
       }
     }
-    reader.readAsText(files[0])
   }
   refreshMainMarkets(markets) {
     const marketsByNormalizedPair = {}
@@ -328,7 +308,7 @@ export default class extends Vue {
 
     this._mainMarkets = Object.keys(markets)
       .filter(id => markets[id].local === this._mainPair)
-      .map(id => markets[id].exchange + markets[id].pair)
+      .map(id => markets[id].exchange + ':' + markets[id].pair)
   }
 }
 </script>

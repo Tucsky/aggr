@@ -30,7 +30,7 @@
 
       <footer>
         <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
-        <button type="submit" class="btn -large"><i class="icon-check mr8"></i> Submit</button>
+        <button type="submit" class="btn -large -green"><i class="icon-check mr8"></i> Submit</button>
       </footer>
     </form>
   </Dialog>

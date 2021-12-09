@@ -3,6 +3,8 @@ import { ProductsData, ProductsStorage } from '@/types/test'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
+const promisesOfProducts = []
+
 export function saveProducts(storage: ProductsStorage) {
   console.log(`[products.${storage.exchange}] saving products`, storage.data)
   storage.timestamp = Date.now()
@@ -94,7 +96,7 @@ export async function fetchProducts(exchangeId: string, endpoints: string[]): Pr
   }
 }
 
-export async function getProducts(id: string, endpoints: string[], forceFetch?: boolean): Promise<ProductsData> {
+export async function getStoredProductsOrFetch(id: string, endpoints: string[], forceFetch?: boolean): Promise<ProductsData> {
   let productsData: ProductsData
 
   console.debug(`[products.${id}] reading stored products`)
@@ -121,12 +123,16 @@ export async function getProducts(id: string, endpoints: string[], forceFetch?: 
   return productsData
 }
 
-export async function showIndexedProductsCount() {
-  const count = Array.prototype.concat(...Object.values(store.state.app.indexedProducts)).length
+export function requestProducts(exchangeId: string) {
+  if (promisesOfProducts[exchangeId]) {
+    console.debug(`[products.${exchangeId}] use promise of products`)
+    return promisesOfProducts[exchangeId]
+  }
 
-  store.dispatch('app/showNotice', {
-    id: 'fetch-products',
-    type: 'success',
-    title: `${count} markets indexed 🔥`
+  promisesOfProducts[exchangeId] = aggregatorService.dispatchAsync({
+    op: 'fetchExchangeProducts',
+    data: { exchangeId }
   })
+
+  return promisesOfProducts[exchangeId]
 }

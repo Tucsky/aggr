@@ -46,6 +46,7 @@ export interface Trade {
   price: number
   size: number
   side: 'buy' | 'sell'
+  amount?: number
   count?: number
   originalPrice?: number
   liquidation?: boolean
@@ -103,6 +104,12 @@ export interface Preset {
   data: any
   createdAt: number
   updatedAt: number
+  version?: string
+}
+
+export interface ImportedSound {
+  name: string
+  data: any
 }
 
 export type ProductsData = string[] | { [prop: string]: any }

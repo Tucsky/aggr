@@ -12,6 +12,8 @@ export interface HistoricalResponse {
 }
 
 class HistoricalService extends EventEmitter {
+  promisesOfData: { [keyword: string]: Promise<HistoricalResponse> } = {}
+
   getHistoricalMarktets(markets: string[]) {
     return markets.filter(market => store.state.app.historicalMarkets.indexOf(market) !== -1)
   }
@@ -29,9 +31,13 @@ class HistoricalService extends EventEmitter {
   fetch(from: number, to: number, timeframe: number, markets: string[]): Promise<HistoricalResponse> {
     const url = this.getApiUrl(from, to, timeframe, markets)
 
+    if (this.promisesOfData[url]) {
+      return this.promisesOfData[url]
+    }
+
     store.commit('app/TOGGLE_LOADING', true)
 
-    return fetch(url)
+    this.promisesOfData[url] = fetch(url)
       .then(response =>
         response.json().then(json => {
           json.status = response.status
@@ -47,7 +53,7 @@ class HistoricalService extends EventEmitter {
         let data = json.results
 
         if (!data.length) {
-          throw new Error('no-more-data')
+          throw new Error('No more data')
         }
 
         switch (json.format) {
@@ -77,11 +83,19 @@ class HistoricalService extends EventEmitter {
               timeout: 10000
             })
           } else {
-            store.dispatch('app/showNotice', {
-              title: `Aggr server seems down 💀.<br>Please <a href="https://github.com/Tucsky/aggr/issues/new?title=Server%20is%20down&body=Can%20devs%20do%20something%20?">Open a ticket</a> <strong>if the issue persists</strong>.`,
-              type: 'error',
-              timeout: 10000
-            })
+            if (/aggr\.trade$/.test(location.hostname)) {
+              store.dispatch('app/showNotice', {
+                title: `Aggr server seems down 💀`,
+                type: 'error',
+                timeout: 10000
+              })
+            } else {
+              store.dispatch('app/showNotice', {
+                title: `Failed to reach api<br><a href="https://github.com/Tucsky/aggr-server">Configure aggr-server</a> <strong>to use your own data</strong>`,
+                type: 'error',
+                timeout: 10000
+              })
+            }
           }
         }
 
@@ -89,9 +103,12 @@ class HistoricalService extends EventEmitter {
       })
       .then(data => {
         store.commit('app/TOGGLE_LOADING', false)
+        delete this.promisesOfData[url]
 
         return data
       })
+
+    return this.promisesOfData[url]
   }
   normalizePoints(data, timeframe, markets: string[]) {
     const lastClosedBars = {}

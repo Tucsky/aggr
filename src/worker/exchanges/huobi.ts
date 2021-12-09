@@ -58,7 +58,7 @@ export default class extends Exchange {
         }
 
         if (products.find(a => a.toLowerCase() === pair.toLowerCase())) {
-          throw new Error('duplicate pair detected on huobi exchange (' + pair + ')')
+          throw new Error('Duplicate pair detected on huobi exchange (' + pair + ')')
         }
 
         types[pair] = type

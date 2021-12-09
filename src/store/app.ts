@@ -1,5 +1,4 @@
 import dialogService from '@/services/dialogService'
-import { Market } from '@/types/test'
 import { randomString } from '@/utils/helpers'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
@@ -55,7 +54,6 @@ export interface AppState {
   apiSupportedTimeframes: number[]
   indexedProducts: { [exchangeId: string]: Product[] }
   activeExchanges: { [exchangeId: string]: boolean }
-  activeMarkets: Market[]
   proxyUrl: string
   apiUrl: string
   version: string
@@ -77,7 +75,6 @@ const state = {
   pairs: [],
   showSearch: false,
   activeExchanges: {},
-  activeMarkets: [],
   notices: [],
   historicalMarkets: [],
   apiSupportedTimeframes: [],
@@ -101,8 +98,6 @@ const actions = {
     commit('SET_BUILD_DATE', process.env.VUE_APP_BUILD_DATE)
     commit('SET_API_URL', process.env.VUE_APP_API_URL)
     commit('SET_PROXY_URL', process.env.VUE_APP_PROXY_URL)
-
-    this.dispatch('app/refreshCurrencies')
   },
   setBooted({ commit }, value = true) {
     commit('SET_BOOTED', value)
@@ -182,58 +177,6 @@ const actions = {
       index,
       notice
     })
-  },
-  refreshCurrencies({ commit, state }) {
-    const market = state.activeMarkets[0]
-
-    if (!market) {
-      return
-    }
-
-    const pair = market.pair
-
-    const symbols = {
-      BTC: ['bitcoin', '฿'],
-      XBT: ['bitcoin', '฿'],
-      GBP: ['pound', '£'],
-      EUR: ['euro', '€'],
-      USD: ['dollar', '$'],
-      JPY: ['yen', '¥'],
-      ETH: ['ethereum', 'ETH'],
-      XRP: ['xrp', 'XRP'],
-      LTC: ['ltc', 'LTC'],
-      TRX: ['trx', 'TRX'],
-      ADA: ['ada', 'ADA'],
-      IOTA: ['iota', 'IOTA'],
-      XMR: ['xmr', 'XMR'],
-      NEO: ['neo', 'NEO'],
-      EOS: ['eos', 'EOS']
-    }
-
-    const currencies: BaseQuoteCurrencies = {
-      base: 'coin',
-      baseSymbol: '฿',
-      quote: 'dollar',
-      quoteSymbol: '$'
-    }
-
-    for (const symbol of Object.keys(symbols)) {
-      if (new RegExp(symbol + '$').test(pair)) {
-        currencies.quote = symbols[symbol][0]
-        currencies.quoteSymbol = symbols[symbol][1]
-      }
-
-      if (new RegExp('^' + symbol).test(pair)) {
-        currencies.base = symbols[symbol][0]
-        currencies.baseSymbol = symbols[symbol][1]
-      }
-    }
-
-    console.log(
-      `[app] refresh currencies\n\tbase: ${currencies.base} - ${currencies.baseSymbol}\n\tquote: ${currencies.quote} - ${currencies.quoteSymbol}`
-    )
-
-    commit('SET_CURRENCIES', currencies)
   },
   showSearch({ commit, state }, paneId?: string) {
     if (state.showSearch) {
@@ -328,30 +271,6 @@ const mutations = {
   },
   INDEX_EXCHANGE_PRODUCTS(state, { exchangeId, products }: { exchangeId: string; products: Product[] }) {
     Vue.set(state.indexedProducts, exchangeId, products)
-  },
-  ADD_ACTIVE_MARKET(state, { exchangeId, pair }: { exchangeId: string; pair: string }) {
-    const market = state.activeMarkets.find(m => m.exchange === exchangeId && m.pair === pair)
-
-    if (market) {
-      throw new Error('add-active-market-already-exist')
-    }
-
-    state.activeMarkets.push({
-      id: exchangeId + pair,
-      exchange: exchangeId,
-      pair
-    })
-  },
-  REMOVE_ACTIVE_MARKET(state, { exchangeId, pair }: { exchangeId: string; pair: string }) {
-    const market = state.activeMarkets.find(m => m.exchange === exchangeId && m.pair === pair)
-
-    if (!market) {
-      throw new Error('remove-active-market-not-found')
-    }
-
-    const index = state.activeMarkets.indexOf(market)
-
-    state.activeMarkets.splice(index, 1)
   },
   SET_CURRENCIES(state, currencies: BaseQuoteCurrencies) {
     state.baseCurrency = currencies.base

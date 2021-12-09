@@ -3,7 +3,7 @@ import { Workspace } from '@/types/test'
 import { IDBPDatabase } from 'idb'
 import { AggrDB } from './workspacesService'
 import defaultPanes from '@/store/defaultPanes.json'
-import { TradesPaneState } from '@/store/panesSettings/trades'
+import { Threshold, TradesPaneState } from '@/store/panesSettings/trades'
 
 export const databaseUpgrades = {
   0: (db: IDBPDatabase<any>) => {
@@ -41,6 +41,14 @@ export const databaseUpgrades = {
   2: (db: IDBPDatabase<AggrDB>) => {
     db.createObjectStore('presets', {
       keyPath: 'name'
+    })
+  },
+  3: (db: IDBPDatabase<AggrDB>) => {
+    db.createObjectStore('sounds', {
+      keyPath: 'name'
+    })
+    db.createObjectStore('colors', {
+      autoIncrement: true
     })
   }
 }
@@ -196,6 +204,77 @@ export const workspaceUpgrades = {
           mode: 0,
           scaleMargins
         }
+      }
+    }
+  },
+  4: (workspace: Workspace) => {
+    for (const paneId in workspace.states.panes.panes) {
+      if (workspace.states.panes.panes[paneId].type !== 'trades' || !workspace.states[paneId]) {
+        continue
+      }
+
+      const state = workspace.states[paneId] as TradesPaneState
+
+      let liquidationThreshold: Threshold = {
+        id: 'liquidation_threshold',
+        amount: 10000,
+        buyColor: 'rgba(236,64,122,0.5)',
+        sellColor: 'rgba(255,152,0,0.5)',
+        buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*2,0,,,'sine')\nplay(329.63, srqtR, srqtR*4,0.08,,,'sine')",
+        sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*2,0,,,'sine')\nplay(440, srqtR, srqtR*4,0.08,,,'sine')"
+      }
+
+      if (workspace.states[paneId].liquidation && workspace.states[paneId].liquidation.amount < 25000) {
+        liquidationThreshold = workspace.states[paneId].liquidation
+        liquidationThreshold.id = 'liquidation_threshold'
+
+        if (workspace.states[paneId].liquidation.gif) {
+          liquidationThreshold.buyGif = workspace.states[paneId].liquidation.gif
+          liquidationThreshold.sellGif = workspace.states[paneId].liquidation.gif
+          delete (liquidationThreshold as any).gif
+        }
+      }
+
+      state.liquidations = [
+        liquidationThreshold,
+        {
+          id: 'liquidation_significant',
+          amount: 25000,
+          buyColor: 'rgba(236,64,122,0.6)',
+          sellColor: 'rgba(255,152,0,0.7)',
+          buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*6,0.08,,,'sine')",
+          sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*6,0.08,,,'sine')"
+        },
+        {
+          id: 'liquidation_huge',
+          amount: 100000,
+          buyGif: 'rekt',
+          sellGif: 'rekt',
+          buyColor: 'rgba(236,64,122,0.7)',
+          sellColor: 'rgba(255,152,0,0.8)',
+          buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*8,0.08,,,'sine')",
+          sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*8,0.08,,,'sine')"
+        },
+        {
+          id: 'liquidation_rare',
+          amount: 1000000,
+          buyGif: 'explosion',
+          sellGif: 'explosion',
+          buyColor: 'rgb(156,39,176)',
+          sellColor: 'rgb(255,235,59)',
+          buyAudio: "var srqtR = Math.min(1, gain / 10)\nplay(329.63, srqtR, 1,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",
+          sellAudio: "var srqtR = Math.min(1, gain / 10)\nplay(440, srqtR, 1,0,,,'sine')\nplay(440, srqtR, srqtR*10,0.08,,,'sine')"
+        }
+      ]
+
+      for (let i = 0; i < state.thresholds.length; i++) {
+        if (!(state.thresholds[i] as any).gif) {
+          continue
+        }
+
+        state.thresholds[i].buyGif = (state.thresholds[i] as any).gif
+        state.thresholds[i].sellGif = (state.thresholds[i] as any).gif
+        delete (state.thresholds[i] as any).gif
       }
     }
   }

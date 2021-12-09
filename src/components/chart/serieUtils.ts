@@ -403,8 +403,7 @@ export function rma$(state, value, length) {
 }
 
 export const avg_heikinashi = {
-  count: 0,
-  points: []
+  point: {} // previous point
 }
 
 export function avg_heikinashi$(state, renderer) {
@@ -436,9 +435,8 @@ export function avg_heikinashi$(state, renderer) {
   state.low /= nbSources
   state.close /= nbSources
 
-  if (state.count > 0) {
-    const prevPoint = state.points[state.points.length - 1]
-    state.open = (prevPoint.open + prevPoint.close) / 2
+  if (typeof state.point.open !== 'undefined') {
+    state.open = (state.point.open + state.point.close) / 2
     state.close = 0.25 * (state.open + state.high + state.low + state.close)
 
     state.low = Math.min(state.open, state.low, state.close)
@@ -446,6 +444,6 @@ export function avg_heikinashi$(state, renderer) {
   } else {
     state.open /= nbSources
   }
-  state.output = { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }
-  return state.output
+
+  return { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }
 }

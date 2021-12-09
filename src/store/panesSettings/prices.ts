@@ -2,10 +2,12 @@ import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 
 export interface PricesPaneState {
   _id?: string
-  _booted?: boolean
   animateSort?: boolean
   showPairs?: boolean
-  boldFont?: boolean
+  showVolume?: boolean
+  showChange?: boolean
+  sortOrder?: 1 | -1
+  sortType?: 'price' | 'change' | 'volume' | null
 }
 
 const getters = {} as GetterTree<PricesPaneState, PricesPaneState>
@@ -14,16 +16,14 @@ const getters = {} as GetterTree<PricesPaneState, PricesPaneState>
 
 const state = {
   animateSort: true,
-  showPairs: false,
-  boldFont: false
+  showPairs: true,
+  showVolume: true,
+  showChange: true,
+  sortType: 'change',
+  sortOrder: -1
 } as PricesPaneState
 
-const actions = {
-  async boot({ state }) {
-    state._booted = true
-    //
-  }
-} as ActionTree<PricesPaneState, PricesPaneState>
+const actions = {} as ActionTree<PricesPaneState, PricesPaneState>
 
 const mutations = {
   TOGGLE_SORT_ANIMATION(state) {
@@ -32,8 +32,17 @@ const mutations = {
   TOGGLE_PAIRS(state) {
     state.showPairs = !state.showPairs
   },
-  TOGGLE_BOLD_FONT(state) {
-    state.boldFont = !state.boldFont
+  TOGGLE_VOLUME(state) {
+    state.showVolume = !state.showVolume
+  },
+  TOGGLE_CHANGE(state) {
+    state.showChange = !state.showChange
+  },
+  TOGGLE_SORT_ORDER(state) {
+    state.sortOrder = state.sortOrder > 0 ? -1 : 1
+  },
+  SET_SORT_TYPE(state, sortType) {
+    state.sortType = sortType
   }
 } as MutationTree<PricesPaneState>
 

@@ -89,7 +89,7 @@ export default class extends Vue {
     }
 
     if (event.which === 38 || event.which === 40) {
-      this.crement((event.which === 40 ? 1 : -1) * (event.shiftKey ? 100 : 1))
+      this.increment((event.which === 40 ? 1 : -1) * (event.shiftKey ? 100 : 1))
     }
   }
 
@@ -110,7 +110,7 @@ export default class extends Vue {
     this.clickAt = now
   }
 
-  crement(direction: number) {
+  increment(direction: number) {
     const text = (this.$el as HTMLElement).innerText.replace(/[^0-9-.]/g, '')
 
     if (isNaN(text as any)) {
@@ -119,12 +119,11 @@ export default class extends Vue {
 
     const max = typeof this.max === 'undefined' ? Infinity : this.max
     const min = typeof this.min === 'undefined' ? 0 : this.min
-    const step = this.step || 1
-    const precision = countDecimals(step)
+    const precision = countDecimals(text)
+    const step = 1 / Math.pow(10, precision)
     const change = step * direction * -1
-    const value = +Math.max(min, Math.min(max, +text + change)).toFixed(precision)
 
-    this.$emit('output', value)
+    this.$emit('output', Math.max(min, Math.min(max, +text + change)).toFixed(precision))
   }
 
   onWheel(event) {
@@ -134,7 +133,7 @@ export default class extends Vue {
 
     event.preventDefault()
 
-    this.crement(Math.sign(event.deltaY) * (event.shiftKey ? 10 : 1))
+    this.increment(Math.sign(event.deltaY) * (event.shiftKey ? 10 : 1))
   }
 }
 </script>

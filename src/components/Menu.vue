@@ -89,7 +89,7 @@ export default class extends Vue {
     },
     prices: {
       title: 'Markets',
-      description: 'Tickers sorted by price'
+      description: 'Price change & volume'
     },
     website: {
       title: 'Website',

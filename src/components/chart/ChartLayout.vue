@@ -112,8 +112,6 @@ export default class extends Vue {
 
   syncMoveWithOthers(priceScaleId, side, scaleMargins): boolean {
     const originalScaleMargins = this.activePriceScales[priceScaleId].scaleMargins
-    /*const originalValue = originalScaleMargins[side]
-    const oppositeSide = side === 'top' ? 'bottom' : side === 'bottom' ? 'top' : null*/
 
     let hasSynced = false
 
@@ -124,25 +122,7 @@ export default class extends Vue {
 
       const otherScaleMargins = this.activePriceScales[otherId].scaleMargins
 
-      /*if (otherScaleMargins[oppositeSide] === +(1 - originalValue).toFixed(2)) {
-        // sync adjacent
-
-        Vue.set(
-          otherScaleMargins,
-          oppositeSide,
-          +(otherScaleMargins[oppositeSide] + (this.activePriceScales[id].scaleMargins[side] - scaleMargins[side])).toFixed(2)
-        )
-
-        this.$store.commit(this.paneId + '/SET_PRICE_SCALE', {
-          id: otherId,
-          priceScale: this.activePriceScales[otherId]
-        })
-
-        hasSynced = true
-      } else*/ if (
-        otherScaleMargins.top === originalScaleMargins.top &&
-        otherScaleMargins.bottom === originalScaleMargins.bottom
-      ) {
+      if (otherScaleMargins.top === originalScaleMargins.top && otherScaleMargins.bottom === originalScaleMargins.bottom) {
         // sync overlapping
 
         Vue.set(this.activePriceScales[otherId], 'scaleMargins', scaleMargins)

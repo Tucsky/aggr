@@ -3,7 +3,6 @@
   "aggregationLength": 1,
   "disableAnimations": false,
   "calculateSlippage": null,
-  "decimalPrecision": null,
   "autoHideHeaders": true,
   "theme": "dark",
   "backgroundColor": "rgb(23,27,41)",
@@ -19,7 +18,6 @@
     "LowPassFilter": false
   },
   "settings": ["other", "workspaces", "chart", "stats", "counters", "audio"],
-  "recentColors": [],
   "searchTypes": {
     "historical": false,
     "spots": true,

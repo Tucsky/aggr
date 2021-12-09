@@ -23,7 +23,7 @@ export async function syncState(state): Promise<any> {
   await workspacesService.saveState(state._id, state)
 }
 
-export function scheduleSync(state, delay = 500): Promise<void> {
+export function scheduleSync(state, mutation?: string): Promise<void> {
   if (!state._id) {
     // unsupported module?
     return
@@ -35,10 +35,13 @@ export function scheduleSync(state, delay = 500): Promise<void> {
 
   return new Promise<void>(resolve => {
     persistModulesTimers[state._id] = setTimeout(async () => {
+      if (mutation) {
+        console.log('syncState triggered by', mutation)
+      }
       await syncState(state)
 
       resolve()
-    }, delay)
+    }, 500)
   })
 }
 
@@ -57,14 +60,30 @@ export async function mergeStoredState(state: any) {
   return state
 }
 
+/**
+ * Prepare pane state if needed
+ * Not all panes type have a boot method
+ * @param paneId
+ */
+export async function bootPane(paneId) {
+  console.info(`booting pane ${paneId}`)
+  if ((store as any)._actions[paneId + '/boot']) {
+    try {
+      await store.dispatch(paneId + '/boot')
+    } catch (error) {
+      console.error(error)
+    }
+  }
+}
+
 export async function registerModule(id, module: Module<any, any>, boot?: boolean, pane?: Pane) {
   console.debug(`[store] registering module ${id}`)
 
   if (pane) {
+    // module is a pane
     module = { ...panesSettings[pane.type], state: JSON.parse(JSON.stringify(panesSettings[pane.type].state)) }
 
     module.state._id = id
-    module.state._booted = false
 
     console.debug(`[store] module created using pane's type "${pane.type}"`)
 
@@ -89,16 +108,24 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
   console.debug(`[store] store.registerModule ${id}`, module)
   store.registerModule(id, module)
 
-  if (boot && typeof module.actions.boot !== 'undefined') {
-    console.debug(`[store] booting module ${id}`)
-    await store.dispatch(id + '/boot')
+  if (boot && pane) {
+    await bootPane(id)
   }
 
   syncState(module.state)
 }
 
-export const normalizeSymbol = (symbol: string) => {
+export function normalizeSymbol(symbol: string) {
   return symbol.replace(/(?:%7F)+/g, '_').trim()
+}
+
+export function waitForStateMutation(getter): Promise<any> {
+  return new Promise(resolve => {
+    const unsubscribe = store.watch(getter, value => {
+      resolve(value)
+      unsubscribe()
+    })
+  })
 }
 
 export function dumpSettings(): { [id: string]: any } {

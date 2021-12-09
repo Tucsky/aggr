@@ -16,11 +16,11 @@ class Aggregator {
   activeBuckets: string[] = []
   buckets: { [id: string]: Volumes } = {}
   connectionsCount = 0
-  connectionChange: { [id: string]: number } = {}
+  connectionChange = 0
 
   private onGoingAggregations: { [identifier: string]: AggregatedTrade } = {}
   private pendingTrades: Trade[] = []
-  private marketsPrices: { [marketId: string]: number } = {}
+  private marketsStats: { [marketId: string]: { initialPrice?: number; decimals?: number; price: number; volume?: number } } = {}
   private _connectionChangeNoticeTimeout: number
 
   constructor() {
@@ -141,19 +141,17 @@ class Aggregator {
   emitTrades(trades: Trade[]) {
     for (let i = 0; i < trades.length; i++) {
       const trade = trades[i]
-      const marketKey = trade.exchange + trade.pair
+      const marketKey = trade.exchange + ':' + trade.pair
 
       if (!this.connections[marketKey]) {
         continue
       }
 
       if (this.settings.calculateSlippage) {
-        trade.originalPrice = this.marketsPrices[marketKey] || trade.price
+        trade.originalPrice = this.marketsStats[marketKey].price || trade.price
       }
 
       trade.count = 1
-
-      this.marketsPrices[marketKey] = trade.price
 
       this.processTrade(trade)
     }
@@ -169,7 +167,7 @@ class Aggregator {
 
     for (let i = 0; i < trades.length; i++) {
       const trade = (trades[i] as unknown) as AggregatedTrade
-      const marketKey = trade.exchange + trade.pair
+      const marketKey = trade.exchange + ':' + trade.pair
 
       if (!this.connections[marketKey]) {
         continue
@@ -189,9 +187,7 @@ class Aggregator {
         }
       }
 
-      trade.originalPrice = this.marketsPrices[marketKey] || trade.price
-
-      this.marketsPrices[marketKey] = trade.price
+      trade.originalPrice = this.marketsStats[marketKey].price || trade.price
 
       trade.count = 1
       trade.prices = trade.price * trade.size
@@ -203,7 +199,7 @@ class Aggregator {
   emitLiquidations(trades: Trade[]) {
     for (let i = 0; i < trades.length; i++) {
       const trade = trades[i]
-      const marketKey = trade.exchange + trade.pair
+      const marketKey = trade.exchange + ':' + trade.pair
 
       if (!this.connections[marketKey]) {
         continue
@@ -223,7 +219,7 @@ class Aggregator {
 
     for (let i = 0; i < trades.length; i++) {
       const trade = (trades[i] as unknown) as AggregatedTrade
-      const marketKey = trade.exchange + trade.pair
+      const marketKey = trade.exchange + ':' + trade.pair
       const tradeKey = 'liq_' + marketKey
 
       if (!this.connections[marketKey]) {
@@ -249,7 +245,7 @@ class Aggregator {
   }
 
   processTrade(trade: Trade): Trade {
-    const marketKey = trade.exchange + trade.pair
+    const marketKey = trade.exchange + ':' + trade.pair
 
     if (this.settings.calculateSlippage) {
       if (this.settings.calculateSlippage === 'price') {
@@ -266,27 +262,35 @@ class Aggregator {
       }
     }
 
+    trade.amount = (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
+
+    this.marketsStats[marketKey].volume += trade.amount
+
+    this.marketsStats[marketKey].price = trade.price
+
+    if (this.marketsStats[marketKey].initialPrice === null) {
+      this.emitInitialPrice(marketKey, trade.price)
+    }
+
     if (this.settings.aggregationLength > 0) {
       trade.price = Math.max(trade.price, trade.originalPrice)
     }
 
     if (this.connections[marketKey].bucket) {
-      const size = (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
-
       this.connections[marketKey].bucket['c' + trade.side] += trade.count
-      this.connections[marketKey].bucket['v' + trade.side] += size
+      this.connections[marketKey].bucket['v' + trade.side] += trade.amount
     }
 
     return trade
   }
 
   processLiquidation(trade: Trade): Trade {
-    const marketKey = trade.exchange + trade.pair
+    const marketKey = trade.exchange + ':' + trade.pair
+
+    trade.amount = (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
 
     if (this.connections[marketKey].bucket) {
-      const size = (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
-
-      this.connections[marketKey].bucket['l' + trade.side] += size
+      this.connections[marketKey].bucket['l' + trade.side] += trade
     }
 
     return trade
@@ -310,6 +314,18 @@ class Aggregator {
         delete this.onGoingAggregations[tradeKeys[i]]
       }
     }
+  }
+
+  emitInitialPrice(marketKey: string, price: number) {
+    this.marketsStats[marketKey].initialPrice = price
+
+    ctx.postMessage({
+      op: 'price',
+      data: {
+        market: marketKey,
+        price: price
+      }
+    })
   }
 
   emitPendingTrades() {
@@ -362,29 +378,35 @@ class Aggregator {
       return
     }
 
-    ctx.postMessage({ op: 'prices', data: this.marketsPrices })
+    ctx.postMessage({ op: 'prices', data: this.marketsStats })
   }
 
   onSubscribed(exchangeId, pair) {
-    const market = exchangeId + pair
+    const marketKey = exchangeId + ':' + pair
 
-    if (this.connections[market]) {
+    if (this.connections[marketKey]) {
       return
     }
 
-    this.connections[market] = {
+    this.connections[marketKey] = {
       exchange: exchangeId,
       pair: pair,
       hit: 0,
       timestamp: null
     }
 
+    this.marketsStats[marketKey] = {
+      volume: 0,
+      initialPrice: null,
+      price: null
+    }
+
     this.connectionsCount = Object.keys(this.connections).length
 
     for (const bucketId in this.settings.buckets) {
-      if (this.settings.buckets[bucketId].indexOf(market) !== -1) {
-        console.debug(`[worker] create bucket for new connection ${market}`)
-        this.connections[market].bucket = this.createBucket()
+      if (this.settings.buckets[bucketId].indexOf(marketKey) !== -1) {
+        console.debug(`[worker] create bucket for new connection ${marketKey}`)
+        this.connections[marketKey].bucket = this.createBucket()
         break
       }
     }
@@ -397,64 +419,53 @@ class Aggregator {
       }
     })
 
-    this.noticeConnectionChange(exchangeId, 1)
+    this.noticeConnectionChange(1)
   }
 
-  noticeConnectionChange(exchangeId, change) {
-    if (!this.connectionChange[exchangeId]) {
-      this.connectionChange[exchangeId] = 0
-    }
-    this.connectionChange[exchangeId] += change
+  onUnsubscribed(exchangeId, pair) {
+    const identifier = exchangeId + ':' + pair
 
-    if (!this.connectionChange[exchangeId]) {
-      delete this.connectionChange[exchangeId]
+    if (this.onGoingAggregations[identifier]) {
+      delete this.onGoingAggregations[identifier]
     }
+
+    if (this.connections[identifier]) {
+      delete this.connections[identifier]
+      delete this.marketsStats[identifier]
+
+      this.connectionsCount = Object.keys(this.connections).length
+
+      ctx.postMessage({
+        op: 'disconnection',
+        data: {
+          pair,
+          exchangeId
+        }
+      })
+
+      this.noticeConnectionChange(-1)
+    }
+  }
+
+  noticeConnectionChange(change) {
+    this.connectionChange += change
 
     if (this._connectionChangeNoticeTimeout) {
       clearTimeout(this._connectionChangeNoticeTimeout)
     }
 
-    if (!Object.keys(this.connectionChange).length) {
-      return
-    }
-
-    let total = 0
-
-    const connectionsByExchanges = Object.keys(this.connections).reduce((output, id) => {
-      const exchange = this.connections[id].exchange
-      if (typeof output[exchange] === 'undefined') {
-        output[exchange] = 0
-      }
-
-      output[exchange]++
-
-      total++
-
-      return output
-    }, {})
-
     this._connectionChangeNoticeTimeout = setTimeout(() => {
       this._connectionChangeNoticeTimeout = null
-      const messages = []
-      for (const id in this.connectionChange) {
-        const change = this.connectionChange[id]
-        messages.push(
-          (!connectionsByExchanges[id] ? '<strike>' : '') +
-            (id + ': ' + (change > 0 ? '+' : '') + change) +
-            (!connectionsByExchanges[id] ? '</strike>' : '')
-        )
-
-        delete this.connectionChange[id]
-      }
-
       ctx.postMessage({
         op: 'notice',
         data: {
           id: 'connections',
           type: 'success',
-          title: total + ' connections<br>' + messages.join('<br>')
+          title: this.connectionsCount + ' connections (' + (this.connectionChange > 0 ? '+' : '') + this.connectionChange + ')'
         }
       })
+
+      this.connectionChange = 0
     }, 3000)
   }
 
@@ -472,30 +483,6 @@ class Aggregator {
 
   clearBucket(bucket: Volumes) {
     bucket.cbuy = bucket.csell = bucket.vbuy = bucket.vsell = bucket.lbuy = bucket.lsell = 0
-  }
-
-  onUnsubscribed(exchangeId, pair) {
-    const identifier = exchangeId + pair
-
-    if (this.onGoingAggregations[identifier]) {
-      delete this.onGoingAggregations[identifier]
-    }
-
-    if (this.connections[identifier]) {
-      delete this.connections[identifier]
-
-      this.connectionsCount = Object.keys(this.connections).length
-
-      ctx.postMessage({
-        op: 'disconnection',
-        data: {
-          pair,
-          exchangeId
-        }
-      })
-
-      this.noticeConnectionChange(exchangeId, -1)
-    }
   }
 
   onError(exchangeId, reason) {
@@ -552,7 +539,8 @@ class Aggregator {
       const exchange = getExchangeById(exchangeId)
 
       if (exchange) {
-        if (exchange.requireProducts) {
+        if (exchange.requiresProducts) {
+          // shouldn't happen, products are ensured on the client before we get to this point
           await exchange.getProducts()
         }
 
@@ -659,14 +647,6 @@ class Aggregator {
     }
   }
 
-  async getExchangeProducts({ exchangeId, data }) {
-    const exchange = getExchangeById(exchangeId)
-
-    if (exchange.setProducts(data) === false) {
-      await exchange.getProducts(true)
-    }
-  }
-
   async fetchExchangeProducts({ exchangeId, forceFetch }: { exchangeId: string; forceFetch?: boolean }, trackingId) {
     await getExchangeById(exchangeId).getProducts(forceFetch)
 
@@ -712,7 +692,10 @@ const aggregator = new Aggregator()
 
 self.addEventListener('message', (event: any) => {
   const payload = event.data as AggregatorPayload
-  aggregator[payload.op](payload.data, payload.trackingId)
+
+  if (typeof aggregator[payload.op] === 'function') {
+    aggregator[payload.op](payload.data, payload.trackingId)
+  }
 })
 
 export default null

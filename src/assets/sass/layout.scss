@@ -225,7 +225,7 @@ body {
 }
 
 #app.-no-animations *.flip-list-move {
-  transition: transform 0.4s linear !important;
+  transition: transform 0.2s linear !important;
 }
 
 .divider {
@@ -344,7 +344,7 @@ code {
       cursor: pointer;
     }
 
-    .icon-up {
+    .icon-up-thin {
       transition: transform 0.2s $ease-elastic;
       margin-left: 0.5em;
     }
@@ -353,7 +353,7 @@ code {
       margin: -1rem;
       padding-bottom: 1rem;
 
-      .icon-up {
+      .icon-up-thin {
         transform: rotateZ(180deg);
       }
     }

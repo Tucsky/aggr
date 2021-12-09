@@ -23,10 +23,10 @@ export interface IndicatorSettings {
   updatedAt?: number
   unsavedChanges?: boolean
   series?: string[]
+  version?: string
 }
 export interface ChartPaneState {
   _id?: string
-  _booted?: boolean
   indicators?: { [id: string]: IndicatorSettings }
   priceScales: { [id: string]: PriceScaleSettings }
   layouting: boolean | string
@@ -97,12 +97,11 @@ const actions = {
 
       scheduleSync(state)
     }
-
-    state._booted = true
   },
-  addIndicator({ commit }, indicator) {
-    // const ids = Object.keys(state.indicators)
-    // const id = uniqueName(slugify(indicator.name), ids)
+  addIndicator({ state, commit }, indicator) {
+    const ids = Object.keys(state.indicators)
+
+    indicator.id = uniqueName(indicator.id, ids)
 
     indicator = {
       script: 'plotline(avg_close(bar))',

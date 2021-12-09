@@ -1,48 +1,5 @@
 [
   {
-    "name": "trades:rekt",
-    "type": "trades",
-    "data": {
-      "tradeType": "liquidations",
-      "thresholds": [
-        {
-          "id": "threshold",
-          "amount": 10000,
-          "buyColor": "rgba(236,64,122,0.5)",
-          "sellColor": "rgba(255,152,0,0.5)",
-          "buyAudio": "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*2,0,,,'sine')\nplay(329.63, srqtR, srqtR*4,0.08,,,'sine')",
-          "sellAudio": "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*2,0,,,'sine')\nplay(440, srqtR, srqtR*4,0.08,,,'sine')"
-        },
-        {
-          "id": "significant",
-          "amount": 25000,
-          "buyColor": "rgba(236,64,122,0.6)",
-          "sellColor": "rgba(255,152,0,0.7)",
-          "buyAudio": "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*6,0.08,,,'sine')",
-          "sellAudio": "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*6,0.08,,,'sine')"
-        },
-        {
-          "id": "huge",
-          "amount": 100000,
-          "gif": "rekt",
-          "buyColor": "rgba(236,64,122,0.7)",
-          "sellColor": "rgba(255,152,0,0.8)",
-          "buyAudio": "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*8,0.08,,,'sine')",
-          "sellAudio": "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*8,0.08,,,'sine')"
-        },
-        {
-          "id": "rare",
-          "amount": 1000000,
-          "gif": "explosion",
-          "buyColor": "rgb(156,39,176)",
-          "sellColor": "rgb(255,235,59)",
-          "buyAudio": "var srqtR = Math.min(1, gain / 10)\nplay(329.63, srqtR, 1,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",
-          "sellAudio": "var srqtR = Math.min(1, gain / 10)\nplay(440, srqtR, 1,0,,,'sine')\nplay(440, srqtR, srqtR*10,0.08,,,'sine')"
-        }
-      ]
-    }
-  },
-  {
     "name": "threshold:bongo 🥁",
     "type": "threshold",
     "data": {
@@ -120,7 +77,7 @@
     }
   },
   {
-    "name": "threshold:100k 250K 1M 10M",
+    "name": "threshold:100k+",
     "type": "threshold",
     "data": {
       "0": {
@@ -138,7 +95,7 @@
     }
   },
   {
-    "name": "threshold:250k 500k 2M 10M",
+    "name": "threshold:250k+",
     "type": "threshold",
     "data": {
       "0": {

@@ -383,7 +383,7 @@ export default class extends Mixins(PaneMixin) {
   &__value {
     text-align: right;
     white-space: nowrap;
-    font-family: 'Barlow Semi Condensed';
+    font-family: $font-condensed;
     z-index: 1;
     flex-grow: 1;
     font-weight: 600;

@@ -26,6 +26,7 @@
 </template>
 
 <script lang="ts">
+import dialogService from '@/services/dialogService'
 import { getColorLuminance, splitRgba } from '@/utils/colors'
 import { Component, Vue } from 'vue-property-decorator'
 import { getEventCords } from '../../utils/picker'
@@ -64,7 +65,7 @@ export default class extends Vue {
   delta = { x: 0, y: 0 }
   target = { x: 0, y: 0 }
   animating = false
-  private clickOutsideClose: boolean
+  private _deinteractionTimeout: number
   private _handleRelease: () => void
   private _handleDragging: (evnt: any) => void
 
@@ -82,8 +83,6 @@ export default class extends Vue {
   }
 
   created() {
-    this.clickOutsideClose = true
-
     if (this.startPosition) {
       if (this.startPosition.x) {
         this.delta.x = window.innerWidth * this.startPosition.x
@@ -139,13 +138,18 @@ export default class extends Vue {
   }
 
   onMouseDown() {
-    this.clickOutsideClose = false
+    if (this._deinteractionTimeout) {
+      clearTimeout(this._deinteractionTimeout)
+    }
+
+    dialogService.isInteracting = true
 
     const handler = () => {
       document.removeEventListener('mouseup', handler)
 
-      setTimeout(() => {
-        this.clickOutsideClose = true
+      this._deinteractionTimeout = setTimeout(() => {
+        dialogService.isInteracting = false
+        this._deinteractionTimeout = null
       }, 100)
     }
 
@@ -166,7 +170,7 @@ export default class extends Vue {
   }
 
   clickOutside() {
-    if (!this.clickOutsideClose) {
+    if (dialogService.isInteracting) {
       return false
     }
 

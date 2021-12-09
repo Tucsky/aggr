@@ -254,7 +254,7 @@ export default class extends Vue {
 .chart-pricescale {
   position: absolute;
   width: 100%;
-  font-family: 'Barlow Semi Condensed';
+  font-family: $font-condensed;
   pointer-events: none;
 
   .pane-overlay {

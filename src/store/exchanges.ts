@@ -1,8 +1,8 @@
 import aggregatorService from '@/services/aggregatorService'
-import { showIndexedProductsCount } from '@/services/productsService'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
+import { requestProducts } from '../services/productsService'
 
 export interface ExchangeSettings {
   disabled?: boolean
@@ -19,7 +19,7 @@ const state = supportedExchanges.reduce(
       fetched: false
     }
 
-    if (/HITBTC|PHEMEX|BINANCE_US|SERUM/.test(id)) {
+    if (/HITBTC|PHEMEX|BINANCE_US|SERUM|OKEX|HUOBI/.test(id)) {
       exchangesState[id].disabled = true
     }
 
@@ -39,14 +39,8 @@ const getters = {
 const actions = {
   async boot({ dispatch }) {
     await dispatch('prepareExchanges')
-
-    console.info(`connecting to exchanges`)
-
-    await this.dispatch('panes/refreshMarketsListeners')
-
-    showIndexedProductsCount()
   },
-  async prepareExchanges({ state, getters, rootState }) {
+  prepareExchanges({ state, getters, rootState }) {
     state._exchanges.splice(0, state._exchanges.length)
 
     for (const id of getters.getExchanges) {
@@ -65,14 +59,12 @@ const actions = {
       state._exchanges.push(id)
       state[id].fetched = false
       rootState.app.activeExchanges[id] = !state[id].disabled
-
-      await aggregatorService.dispatchAsync({
-        op: 'fetchExchangeProducts',
-        data: { exchangeId: id }
-      })
     }
-
-    this.commit('app/SET_EXCHANGES_READY')
+  },
+  async requestExchangesProducts({ getters }) {
+    for (const id of getters.getExchanges) {
+      await requestProducts(id)
+    }
   },
   async toggleExchange({ commit, state, dispatch }, id: string) {
     commit('TOGGLE_EXCHANGE', id)

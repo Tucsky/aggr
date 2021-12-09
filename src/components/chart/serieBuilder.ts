@@ -14,7 +14,7 @@ import {
   IndicatorMarkets
 } from './chartController'
 import store from '@/store'
-import { findClosingBracketMatchIndex, parseFunctionArguments, slugify, uniqueName } from '@/utils/helpers'
+import { findClosingBracketMatchIndex, parseFunctionArguments, randomString, uniqueName } from '@/utils/helpers'
 import { plotTypesMap } from './chartOptions'
 const VARIABLE_REGEX = /(?:^|\n)([a-zA-Z0-9_]+)\(?(\d*)\)?\s*=\s*([^;,]*)?/
 const SERIE_UPDATE_REGEX = /series\[\d+\]\.update\(/
@@ -305,7 +305,7 @@ export default class SerieBuilder {
     const serieOptions: { [key: string]: any } = {}
 
     // parse and store serie options in dedicated object (eg. color=red in plotline arguments)
-    for (let i = 0; i < args.length; i++) {
+    for (let i = 1; i < args.length; i++) {
       try {
         const [, key, value] = args[i].match(/^(\w+)\s*=(.*)/)
 
@@ -350,19 +350,19 @@ export default class SerieBuilder {
       } else if (args.length === 1) {
         seriePoint += args[0]
       } else {
-        throw new Error(`invalid input for function ${match[1]}, expected a ohlc object or 4 number`)
+        throw new Error(`Invalid input for function ${match[1]}, expected a ohlc object or 4 number`)
       }
     } else if (expectedInput === 'range') {
       if (args.length === 2) {
         seriePoint += `{ time: ${timeProperty}, lowerValue: ${args[0]}, higherValue: ${args[1]} }`
       } else {
-        throw new Error(`invalid input for function ${match[1]}, expected 2 arguments (lowerValue and higherValue)`)
+        throw new Error(`Invalid input for function ${match[1]}, expected 2 arguments (lowerValue and higherValue)`)
       }
     } else if (expectedInput === 'number') {
       if (args.length === 1) {
         seriePoint += `{ time: ${timeProperty}, value: ${args[0]} }`
       } else {
-        throw new Error(`invalid input for function ${match[1]}, expected 1 value (number)`)
+        throw new Error(`Invalid input for function ${match[1]}, expected 1 value (number)`)
       }
     }
 
@@ -394,7 +394,7 @@ export default class SerieBuilder {
 
       delete serieOptions.id
     } else {
-      id = this.getPlotId(rawFunctionArguments)
+      id = randomString(8)
     }
 
     const names = Object.keys(this.serieIndicatorsMap).concat(plots.map(plot => plot.id))
@@ -444,7 +444,7 @@ export default class SerieBuilder {
             FUNCTION_LOOKUP_REGEX.lastIndex = functionMatch.index + functionMatch[0].length
             continue
           } else {
-            throw new Error(`function ${functionName} doesn't exists`)
+            throw new Error(`Function ${functionName} doesn't exists`)
           }
         }
 
@@ -476,27 +476,30 @@ export default class SerieBuilder {
       return output
     }
 
-    const EXCHANGE_REGEX = /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{5,})(:[\w]{4,})?\.?([a-z]{4,})?\b/
+    const EXCHANGE_REGEX = /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{5,})(:[\w]{4,})?\.?([a-z]{4,})?\b/g
 
     let marketMatch = null
 
     do {
       if ((marketMatch = EXCHANGE_REGEX.exec(output))) {
         const marketName = marketMatch[1] + (marketMatch[2] ? marketMatch[2] : '')
-        const marketId = marketName.replace(':', '')
         const marketDataKey = marketMatch[3]
 
-        if (!markets[marketId]) {
-          markets[marketId] = []
+        if (!markets[marketName]) {
+          markets[marketName] = []
         }
 
         if (marketDataKey) {
-          if (markets[marketId].indexOf(marketDataKey) === -1) {
-            markets[marketId].push(marketDataKey)
+          if (markets[marketName].indexOf(marketDataKey) === -1) {
+            markets[marketName].push(marketDataKey)
           }
         }
 
-        output = output.replace(new RegExp('([^.$])\\b(' + marketName + ')\\b', 'i'), `$1renderer.sources['${marketId}']`)
+        const replacement = `renderer.sources['${marketName}']${marketDataKey ? '.' + marketDataKey : ''}`
+
+        EXCHANGE_REGEX.lastIndex = marketMatch.index + replacement.length
+
+        output = output.slice(0, marketMatch.index) + replacement + output.slice(marketMatch.index + marketMatch[0].length)
       }
     } while (marketMatch)
 
@@ -598,7 +601,7 @@ export default class SerieBuilder {
       } while (lengthMatch)
 
       if (!variable.length) {
-        throw new Error('unexpected no length on var')
+        throw new Error('Unexpected no length on var')
       }
 
       if (variable.length === 1) {
@@ -616,7 +619,7 @@ export default class SerieBuilder {
     try {
       adapter = this.getAdapter(silentOutput)
     } catch (error) {
-      throw new Error(`syntax error: ${error.message}`)
+      throw new Error(`Syntax error: ${error.message}`)
     }
 
     let renderer = this.getFakeRenderer(null, functions, variables, markets, references)
@@ -628,7 +631,7 @@ export default class SerieBuilder {
       try {
         adapter(renderer, functions, variables, series, options, seriesUtils)
       } catch (error) {
-        throw new Error('syntax error: ' + (typeof error === 'string' ? error : error.message))
+        throw new Error('Syntax error: ' + (typeof error === 'string' ? error : error.message))
       }
 
       for (let p = 0; p < renderer.indicators[this.indicatorId].series.length; p++) {
@@ -656,7 +659,7 @@ export default class SerieBuilder {
         }*/
 
         if (resultedType && resultedType !== plot.expectedInput) {
-          throw new Error(`plot ${plot.type} expected ${plot.expectedInput} but got ${resultedType}`)
+          throw new Error(`Plot ${plot.type} expected ${plot.expectedInput} but got ${resultedType}`)
         }
 
         /*if (resultedType === 'ohlc') {
@@ -842,29 +845,6 @@ export default class SerieBuilder {
   }
 
   /**
-   * generate an id from argument passed to plot function
-   * @param input
-   * @returns
-   */
-  getPlotId(input: string) {
-    input = input.replace(/options\.([a-zA-Z0-9_]+)/g, '')
-
-    const marketsUsed = input.match(new RegExp(`\\b(${this.markets.sort((a, b) => b.length - a.length).join('|')})\\b(?:\\.\\w+)`, 'g')) || []
-
-    const dataUsed = (input.match(/renderer\.bar\.([a-zA-Z0-9_]+)/g) || [])
-      .map(name => name.replace('renderer.bar.', ''))
-      .filter(name => name !== 'bar')
-
-    const functionUsed = (input.match(new RegExp(`([a-zA-Z0_9_]+)\\(`, 'g')) || [])
-      .map(name => name.trim().slice(0, -1))
-      .filter(name => seriesUtils[name + '$'])
-
-    const meta = [...functionUsed, ...marketsUsed, ...dataUsed].filter((v, i, a) => a.indexOf(v) === i)
-
-    return slugify(meta.join('-'))
-  }
-
-  /**
    * get fresh state of indicator for the renderer
    * @param indicator
    */
@@ -898,6 +878,12 @@ export default class SerieBuilder {
       }
 
       indicator.options.minLength = Math.max(indicator.options.minLength, instruction.length)
+
+      if (!instruction.length) {
+        delete instruction.state.points
+        delete instruction.state.count
+        delete instruction.state.sum
+      }
     }
 
     const plotsOptions = []

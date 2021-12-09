@@ -51,7 +51,7 @@
           class="verte__recent-color"
           role="button"
           href="#"
-          v-for="clr in historySource"
+          v-for="clr in internalColorHistory"
           :key="clr"
           :style="`color: ${clr}`"
           @click.prevent="selectColor(clr)"
@@ -72,6 +72,7 @@ import { PALETTE } from '@/utils/colors'
 
 import Dialog from '@/components/framework/Dialog.vue'
 import dialogMixin from '../../../mixins/dialogMixin'
+import workspacesService from '@/services/workspacesService'
 
 export default {
   name: 'Verte',
@@ -139,14 +140,8 @@ export default {
     type: 'rgb',
     internalColorHistory: []
   }),
-  beforeDestroy() {
-    document.getElementById('app').classList.remove('-picking-color')
-  },
   computed: {
     colors: () => PALETTE,
-    historySource() {
-      return this.$store.state.settings.recentColors
-    },
     currentColor: {
       get() {
         if (!this[this.model] && process.env.NODE_ENV !== 'production') {
@@ -205,10 +200,17 @@ export default {
       this.selectColor(val)
     }
   },
+  beforeDestroy() {
+    document.getElementById('app').classList.remove('-picking-color')
+  },
   created() {
     this.selectColor(this.value || '#000', true)
 
     document.getElementById('app').classList.add('-picking-color')
+
+    workspacesService.getColors().then(colors => {
+      this.internalColorHistory = colors
+    })
   },
   methods: {
     selectColor(color, muted = false) {
@@ -255,13 +257,16 @@ export default {
       this.type = models[indx + 1] || models[0]
     },
     submit() {
-      this.$emit('beforeSubmit', this.currentColor)
       this.addColorToHistory(this.currentColor)
       this.$emit('input', this.currentColor)
-      this.$emit('submit', this.currentColor)
     },
     addColorToHistory(color) {
-      this.$store.dispatch('settings/addRecentColor', color)
+      workspacesService.saveColor(color)
+      this.internalColorHistory.push(color)
+
+      if (this.internalColorHistory.length > 32) {
+        workspacesService.removeColor(this.internalColorHistory.shift())
+      }
     },
     inputChanged(value) {
       this.selectColor(value)

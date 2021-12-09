@@ -25,7 +25,7 @@
 
       &:before {
         font-family: 'icon';
-        content: $icon-up;
+        content: $icon-up-thin;
         transform: rotateZ(-225deg) scale(1);
         display: block;
         font-size: 2em;
@@ -125,7 +125,7 @@
 #app.-light {
   .vue-grid-item {
     > .vue-resizable-handle:hover {
-      background-color: rgba(black, 0.2);
+      background-color: var(--theme-background-o20);
     }
   }
 
@@ -133,7 +133,7 @@
     background-color: rgba(white, 0.1);
 
     .pane-overlay {
-      background-color: rgba(white, 0.5);
+      background-color: var(--theme-background-o75);
     }
 
     /*.pane-header,
@@ -152,6 +152,10 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+
+  &.-large .pane-header + div {
+    font-weight: 500;
+  }
 }
 
 .pane-header {
@@ -174,7 +178,7 @@
 
   &__name {
     opacity: 0.75;
-    font-family: 'Barlow Semi Condensed';
+    font-family: $font-condensed;
     font-size: 0.64em;
     align-self: center;
     display: block;
