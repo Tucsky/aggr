@@ -582,7 +582,8 @@ export default class SerieBuilder {
           const position = lengthMatch.index + lengthMatch[0].length
 
           if (typeof variableLength === 'undefined') {
-            output = output.substring(0, position) + '.state[0]' + output.substring(position)
+            const hasSpecifiedIndex = output[position] === '['
+            output = output.substring(0, position) + '.state' + (!hasSpecifiedIndex ? '[0]' : '') + output.substring(position)
           } else {
             const beforeVariable = output.substring(0, lengthMatch.index)
             const variableReplacement = `${VARIABLES_VAR_NAME}[${index}].state[Math.min(${VARIABLES_VAR_NAME}[${index}].state.length-1,${variableLength})]`
