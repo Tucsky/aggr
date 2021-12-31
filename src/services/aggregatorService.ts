@@ -145,7 +145,7 @@ class AggregatorService extends EventEmitter {
         continue
       }
 
-      const localPair = store.state.panes.marketsListeners[marketKey].local
+      const localPair = store.state.panes.marketsListeners[marketKey].local.replace('USDT', 'USD').replace('USDC', 'USD')
 
       if (!decimalsByLocalMarkets[localPair]) {
         decimalsByLocalMarkets[localPair] = []

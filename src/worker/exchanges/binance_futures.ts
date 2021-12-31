@@ -7,6 +7,7 @@ export default class extends Exchange {
   private subscriptions = {}
   private specs: { [pair: string]: number }
   private dapi: { [pair: string]: string }
+  protected maxConnectionsPerApi = 100
   protected endpoints = { PRODUCTS: ['https://fapi.binance.com/fapi/v1/exchangeInfo', 'https://dapi.binance.com/dapi/v1/exchangeInfo'] }
 
   getUrl(pair: string) {

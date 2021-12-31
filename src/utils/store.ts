@@ -115,10 +115,6 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
   syncState(module.state)
 }
 
-export function normalizeSymbol(symbol: string) {
-  return symbol.replace(/(?:%7F)+/g, '_').trim()
-}
-
 export function waitForStateMutation(getter): Promise<any> {
   return new Promise(resolve => {
     const unsubscribe = store.watch(getter, value => {

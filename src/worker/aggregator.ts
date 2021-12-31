@@ -290,7 +290,7 @@ class Aggregator {
     trade.amount = (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
 
     if (this.connections[marketKey].bucket) {
-      this.connections[marketKey].bucket['l' + trade.side] += trade
+      this.connections[marketKey].bucket['l' + trade.side] += trade.amount
     }
 
     return trade

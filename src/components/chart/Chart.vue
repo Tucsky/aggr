@@ -187,7 +187,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   get timeframeForHuman() {
-    return getTimeframeForHuman(this.timeframe, true)
+    return getTimeframeForHuman(this.timeframe)
   }
 
   get markets() {

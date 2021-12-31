@@ -202,6 +202,8 @@ export default class extends Vue {
     border-radius: 50%;
     justify-content: center;
     background-color: var(--theme-background-100);
+    z-index: 1;
+    position: relative;
 
     &:hover {
       color: white;
@@ -216,6 +218,7 @@ export default class extends Vue {
     flex-direction: column-reverse;
     align-items: flex-end;
     width: 0;
+    filter: drop-shadow(-1em -1em 3em var(--theme-background-base));
   }
 
   .menu-action {

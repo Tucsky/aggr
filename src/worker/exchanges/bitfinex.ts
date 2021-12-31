@@ -2,7 +2,7 @@ import Exchange from '../exchange'
 
 export default class extends Exchange {
   id = 'BITFINEX'
-  private lastSubscriptionId = 0
+  protected maxConnectionsPerApi = 24
   private channels = {}
   private prices = {}
   protected endpoints = { PRODUCTS: 'https://api.bitfinex.com/v1/symbols' }

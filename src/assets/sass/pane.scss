@@ -163,10 +163,9 @@
   position: relative;
   z-index: 4;
   top: 0;
-  left: 0;
-  right: 0;
   font-size: calc(11px + 0.8em);
   height: 1.5em;
+  min-width: 100%;
   background-color: rgba(black, 0.7);
   align-items: stretch;
   flex-shrink: 0;

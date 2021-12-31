@@ -165,12 +165,12 @@ export default class extends Mixins(PaneMixin) {
           this.refreshList()
           break
         case this.paneId + '/SET_THRESHOLD_AUDIO':
+        case this.paneId + '/SET_AUDIO_VOLUME':
+        case this.paneId + '/SET_AUDIO_PITCH':
+        case 'settings/SET_AUDIO_VOLUME':
         case 'settings/TOGGLE_AUDIO':
           this.prepareAudio()
           break
-        case this.paneId + '/SET_AUDIO_PITCH':
-        case this.paneId + '/SET_AUDIO_VOLUME':
-        case 'settings/SET_AUDIO_VOLUME':
         case this.paneId + '/SET_AUDIO_THRESHOLD':
         case this.paneId + '/TOGGLE_MUTED':
           this.prepareAudio(false)

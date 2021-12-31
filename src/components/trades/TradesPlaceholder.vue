@@ -83,10 +83,9 @@ export default class extends Vue {
   get filterRecap() {
     const minimumTradeAmount = this.tradesThresholds[0].amount
     const minimumLiquidationAmount = this.liquidationsThresholds[0].amount
-    const minimumAmount = Math.min(minimumTradeAmount, minimumLiquidationAmount)
 
     if (this.tradeType === 'both') {
-      return `Waiting for trades or liquidations > ${formatAmount(minimumAmount)}`
+      return `Waiting for trades or liquidations > ${formatAmount(minimumTradeAmount)} / ${formatAmount(minimumLiquidationAmount)}`
     } else if (this.tradeType === 'trades') {
       return `Waiting for trades > ${formatAmount(minimumTradeAmount)}`
     } else {
@@ -123,6 +122,7 @@ export default class extends Vue {
     font-size: 0.75em;
     pointer-events: all;
     user-select: text;
+    font-family: $font-monospace;
   }
 }
 </style>

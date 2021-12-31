@@ -14,7 +14,9 @@ class Exchange extends EventEmitter {
   public id: string
   public pairs: string[] = []
   public products: string[] = null
+  protected maxConnectionsPerApi: number
   protected endpoints: { [id: string]: string | string[] }
+
   /**
    * ping timers
    * @type {{[url: string]: number}}
@@ -115,7 +117,7 @@ class Exchange extends EventEmitter {
   }
 
   resolveApi(pair) {
-    let api = this.getActiveApiByPair(pair)
+    let api = this.getActiveApiByUrl(this.getUrl(pair))
 
     if (!api) {
       api = this.createWs(pair)
@@ -282,7 +284,7 @@ class Exchange extends EventEmitter {
       return
     }
 
-    if (api._connected.indexOf(pair) === -1 && api._pending.indexOf(pair) === -1) {
+    if (api._pending.indexOf(pair) === -1) {
       console.debug(`[${this.id}.unlink] "${pair}" does not exist on exchange ${this.id} (resolved immediately)`)
       return
     }
@@ -305,10 +307,24 @@ class Exchange extends EventEmitter {
    * @returns {WebSocket}
    */
   getActiveApiByPair(pair) {
-    const url = this.getUrl(pair)
-
     for (let i = 0; i < this.apis.length; i++) {
-      if (this.apis[i].url === url) {
+      if (this.apis[i]._connected.indexOf(pair) !== -1) {
+        return this.apis[i]
+      }
+    }
+  }
+
+  /**
+   * Get active websocket api by url
+   * @param {string} url
+   * @returns {WebSocket}
+   */
+  getActiveApiByUrl(url) {
+    for (let i = 0; i < this.apis.length; i++) {
+      if (
+        this.apis[i].url === url &&
+        (!this.maxConnectionsPerApi || this.apis[i]._connected.length + this.apis[i]._pending.length < this.maxConnectionsPerApi)
+      ) {
         return this.apis[i]
       }
     }

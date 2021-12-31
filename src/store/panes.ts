@@ -373,8 +373,9 @@ const mutations = {
   ADD_GRID_ITEM: (state, item) => {
     if (typeof item.x === 'undefined') {
       const cols = GRID_COLS
-      const width = item.w || 4
-      const height = item.h || 4
+      const size = window.innerWidth <= 500 ? 16 : window.innerWidth < 768 ? 8 : 4
+      const width = item.w || size
+      const height = item.h || size
 
       const items = state.layout.slice().sort((a, b) => a.x + a.y * 2 - (b.x + b.y * 2))
 

@@ -41,6 +41,10 @@ export function formatPrice(price, market): number {
     return parseInt(price)
   }
 
+  if (!price) {
+    price = 0
+  }
+
   return price.toFixed(marketDecimals[market])
 }
 
