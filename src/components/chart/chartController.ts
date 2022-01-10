@@ -148,12 +148,12 @@ export default class ChartController {
   isOddTimeframe: boolean
   type: 'time' | 'tick'
   propagateInitialPrices = true
+  priceScales: string[] = []
 
   private activeChunk: Chunk
   private queuedTrades: Trade[] = []
   private serieBuilder: SerieBuilder
   private seriesIndicatorsMap: { [serieId: string]: IndicatorReference } = {}
-  private priceScales: string[] = []
 
   private _releaseQueueInterval: number
   private _releasePanTimeout: number
@@ -338,7 +338,7 @@ export default class ChartController {
    * @param {string} key option key
    * @param {any} value serie id
    */
-  setIndicatorOption(id, key, value) {
+  setIndicatorOption(id, key, value, silent = false) {
     const indicator = this.getLoadedIndicator(id)
 
     if (!indicator) {
@@ -355,6 +355,10 @@ export default class ChartController {
       rootOptionKey = path[0]
     } else {
       indicator.options[rootOptionKey] = value
+    }
+
+    if (silent) {
+      return
     }
 
     if (key === 'visible') {
@@ -435,15 +439,29 @@ export default class ChartController {
    * @param {string} indicatorId
    */
   redrawIndicator(indicatorId) {
+    const indicator = this.getLoadedIndicator(indicatorId)
+
+    this.clearIndicatorSeries(indicator)
+
     let bars = []
 
     for (const chunk of this.chartCache.chunks) {
       bars = bars.concat(chunk.bars)
     }
 
-    const requiredIndicatorsIds = this.getReferencedIndicators(this.getLoadedIndicator(indicatorId))
+    const requiredIndicatorsIds = this.getReferencedIndicators(indicator)
+
+    this.ensureIndicatorVisible(requiredIndicatorsIds)
 
     this.renderBars(bars, [...requiredIndicatorsIds, indicatorId])
+  }
+
+  ensureIndicatorVisible(indicatorIds: string[]) {
+    for (const indicatorId of indicatorIds) {
+      if (this.loadedIndicators[indicatorId] && this.loadedIndicators[indicatorId].options.visible === false) {
+        this.setIndicatorOption(indicatorId, 'visible', true, true)
+      }
+    }
   }
 
   /**
@@ -587,7 +605,11 @@ export default class ChartController {
       if (indicators[otherIndicatorId].series.indexOf(missingSerieId) !== -1) {
         // found missing indicator
         // add missing indicator (otherIndicatorId) that seems to contain the missing serie (missingSerieId)
-        if (this.addIndicator(otherIndicatorId, dependencyDepth + 1)) {
+        /*if (indicators[otherIndicatorId].options.visible === false) {
+          this.setIndicatorOption(otherIndicatorId, 'visible', true, true)
+        } else*/ if (
+          this.addIndicator(otherIndicatorId, dependencyDepth + 1)
+        ) {
           if (dependencyDepth === 0) {
             // finaly add original indicator
             this.addIndicator(originalIndicatorId, dependencyDepth + 1)
@@ -635,15 +657,17 @@ export default class ChartController {
         this.createIndicatorSeries(indicator)
       }
     } catch (error) {
-      console.error(`[chart/${this.paneId}/prepareIndicator] transpilation failed`)
-      console.error(`\t->`, error)
+      if (indicator.options.visible !== false) {
+        console.error(`[chart/${this.paneId}/prepareIndicator] transpilation failed`)
+        console.error(`\t->`, error)
 
-      store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
-        id: indicator.id,
-        error: error.message
-      })
+        store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
+          id: indicator.id,
+          error: error.message
+        })
 
-      throw error
+        throw error
+      }
     }
   }
 
@@ -1075,8 +1099,6 @@ export default class ChartController {
         } else {
           this.activeRenderer = this.createRenderer(timestamp)
         }
-
-        this.preventPan()
       }
 
       const amount = trade.price * trade.size
@@ -1391,7 +1413,9 @@ export default class ChartController {
     this.unbindIndicator(indicator, this.activeRenderer)
 
     const isPriceScaleDead =
-      typeof this.loadedIndicators.find(i => i.id !== indicator.id && i.options.priceScaleId === indicator.options.priceScaleId) === 'undefined'
+      typeof this.loadedIndicators.find(
+        i => i.id !== indicator.id && i.options.visible !== false && i.options.priceScaleId === indicator.options.priceScaleId
+      ) === 'undefined'
 
     if (isPriceScaleDead) {
       this.priceScales.splice(this.priceScales.indexOf(indicator.options.priceScaleId), 1)
@@ -1476,6 +1500,7 @@ export default class ChartController {
       return
     }
 
+    this.clearChart()
     this.renderBars(this.chartCache.chunks.length ? this.chartCache.chunks.reduce((bars, chunk) => bars.concat(chunk.bars), []) : [], null)
   }
 
@@ -1505,6 +1530,8 @@ export default class ChartController {
    * @param renderer
    */
   updateBar(renderer: Renderer) {
+    this.preventPan()
+
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       if (this.loadedIndicators[i].options.visible === false) {
         continue
@@ -1539,7 +1566,18 @@ export default class ChartController {
       const indicator = this.loadedIndicators[i]
       const serieData = renderer.indicators[indicator.id]
 
-      indicator.silentAdapter(renderer, serieData.functions, serieData.variables, indicator.apis, indicator.options, seriesUtils)
+      serieData.series = []
+
+      try {
+        indicator.silentAdapter(renderer, serieData.functions, serieData.variables, indicator.apis, indicator.options, seriesUtils)
+      } catch (error) {
+        store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
+          id: indicator.id,
+          error: error.message
+        })
+
+        continue
+      }
 
       for (let i = 0; i < serieData.series.length; i++) {
         if (
@@ -1586,10 +1624,6 @@ export default class ChartController {
         empty: true
       }
     }
-
-    this.loadedIndicators = this.loadedIndicators.sort((a, b) => {
-      return a.model.references.length - b.model.references.length
-    })
 
     for (const indicator of this.loadedIndicators) {
       if ((indicatorsIds && indicatorsIds.indexOf(indicator.id) === -1) || indicator.options.visible === false) {

@@ -86,7 +86,7 @@ class WorkspacesService {
             console.debug(`[idb] migrating v${i}`)
 
             if (typeof databaseUpgrades[i] === 'function') {
-              databaseUpgrades[i](db)
+              databaseUpgrades[i](db, tx)
             }
           }
         },

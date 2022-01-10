@@ -94,15 +94,13 @@
 .input-group {
   position: relative;
 
-  > .form-control {
-    width: 100%;
-  }
-
   > .btn {
     position: absolute;
     right: 0;
     top: 0;
     bottom: 0;
+    width: 2.25rem;
+    justify-content: center;
   }
 }
 
@@ -169,7 +167,7 @@
 
   &.-sort input ~ div {
     background-color: $green;
-    
+
     &:before {
       content: unicode($icon-up);
     }
@@ -500,7 +498,7 @@ textarea.form-control {
 
   code,
   strong {
-    color: var(--theme-color-base);;
+    color: var(--theme-color-base);
     font-weight: 400;
   }
 }

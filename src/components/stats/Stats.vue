@@ -16,7 +16,7 @@ import { Component, Mixins } from 'vue-property-decorator'
 import * as TV from 'lightweight-charts'
 import aggregatorService from '@/services/aggregatorService'
 import Bucket from '../../utils/bucket'
-import { defaultStatsChartOptions, getChartOptions, getCustomColorsOptions } from '../chart/chartOptions'
+import { defaultStatsChartOptions, getChartOptions, getChartCustomColorsOptions } from '../chart/chartOptions'
 
 import StatDialog from './StatDialog.vue'
 import dialogService from '@/services/dialogService'
@@ -55,12 +55,12 @@ export default class extends Mixins(PaneMixin) {
       switch (mutation.type) {
         case 'settings/SET_CHART_COLOR':
           if (this._chart && mutation.payload) {
-            this._chart.applyOptions(getCustomColorsOptions(mutation.payload))
+            this._chart.applyOptions(getChartCustomColorsOptions(mutation.payload))
           }
           break
         case 'settings/SET_CHART_THEME':
           if (this._chart) {
-            this._chart.applyOptions(getCustomColorsOptions())
+            this._chart.applyOptions(getChartCustomColorsOptions())
           }
           break
         case 'panes/SET_PANE_MARKETS':

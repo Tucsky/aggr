@@ -1,7 +1,7 @@
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import { parseMarket, sleep, slugify, uniqueName } from '@/utils/helpers'
-import { scheduleSync } from '@/utils/store'
+import { scheduleSync, syncState } from '@/utils/store'
 import { PriceScaleMargins, PriceScaleMode, SeriesOptions, SeriesType } from 'lightweight-charts'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
@@ -12,11 +12,19 @@ export interface PriceScaleSettings {
   mode?: PriceScaleMode
 }
 
+export interface IndicatorNavigationState {
+  sections: string[]
+  tab: string
+  optionsQuery: string
+  fontSize: number
+}
+
 export interface IndicatorSettings {
   id?: string
   name?: string
   displayName?: string
   description?: string
+  navigationState?: IndicatorNavigationState
   script?: string
   options?: SeriesOptions<SeriesType>
   createdAt?: number
@@ -124,7 +132,7 @@ const actions = {
         !state.indicators[id].options || typeof state.indicators[id].options.visible === 'undefined' ? false : !state.indicators[id].options.visible
     })
   },
-  setIndicatorOption({ commit, state }, { id, key, value }) {
+  setIndicatorOption({ commit, state }, { id, key, value, silent }) {
     try {
       value = JSON.parse(value)
     } catch (error) {
@@ -135,7 +143,7 @@ const actions = {
       return
     }
 
-    commit('SET_INDICATOR_OPTION', { id, key, value })
+    commit('SET_INDICATOR_OPTION', { id, key, value, silent })
 
     if (!state.indicators[id].unsavedChanges) {
       commit('FLAG_INDICATOR_AS_UNSAVED', id)
@@ -200,6 +208,10 @@ const actions = {
         this.commit(paneId + '/SET_INDICATOR_SCRIPT', { id: indicator.id })
       }
     }
+  },
+  async setIndicatorNavigationState({ state }, { id, navigationState }: { id: string; navigationState: IndicatorNavigationState }) {
+    state.indicators[id].navigationState = navigationState
+    syncState(state)
   },
   async undoIndicator({ state, commit }, indicatorId) {
     const savedIndicator = await workspacesService.getIndicator(indicatorId)

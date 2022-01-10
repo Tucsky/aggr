@@ -16,8 +16,7 @@ import {
 import store from '@/store'
 import { findClosingBracketMatchIndex, parseFunctionArguments, randomString, uniqueName } from '@/utils/helpers'
 import { plotTypesMap } from './chartOptions'
-const VARIABLE_REGEX = /(?:^|\n)([a-zA-Z0-9_]+)\(?(\d*)\)?\s*=\s*([^;,]*)?/
-const SERIE_UPDATE_REGEX = /series\[\d+\]\.update\(/
+const SERIE_UPDATE_REGEX = /series\[[a-zA-Z0-9+\-$ ]+\]\.update\(/
 const VARIABLES_VAR_NAME = 'vars'
 const FUNCTIONS_VAR_NAME = 'fns'
 const SERIE_TYPES = {
@@ -27,7 +26,8 @@ const SERIE_TYPES = {
   histogram: 'number',
   area: 'number',
   cloudarea: 'range',
-  brokenarea: 'range'
+  brokenarea: 'range',
+  baseline: 'number'
 }
 export default class SerieBuilder {
   private paneId: string
@@ -99,32 +99,52 @@ export default class SerieBuilder {
    * @param input
    * @returns
    */
-  normalizeInput(input) {
+  normalizeInput(input, strings) {
     input = input.replace(/([^.])?\b(bar)\b/gi, '$1renderer')
     input = input.replace(/([^.]|^)\b(vbuy|vsell|cbuy|csell|lbuy|lsell)\b/gi, '$1renderer.bar.$2')
-    input = input.replace(/([^.]|^)\b(time)\b\s*([^:])/gi, '$1renderer.localTimestamp$3')
+    input = input.replace(/([^.]|^)\b(time)\b([^:])/gi, '$1renderer.localTimestamp$3')
     input = input.replace(/(\n|^)\s*?\/\/.*/g, '')
-    input = input.replace(/[^\S\r\n]/g, '')
-    //input = input.replace(/([^({[])\n/g, '$1,').replace(/\s/g, '')
+
+    const STRING_REGEX = /'([^']*)'|"([^"]*)"/
+    let stringMatch = null
+    let iterations = 0
+
+    do {
+      if ((stringMatch = STRING_REGEX.exec(input))) {
+        let refIndex = strings.indexOf(stringMatch[0])
+
+        if (refIndex === -1) {
+          refIndex = strings.push(stringMatch[0]) - 1
+        }
+        input = input.slice(0, stringMatch.index) + '#STRING_' + refIndex + '#' + input.slice(stringMatch.index + stringMatch[0].length)
+      }
+    } while (stringMatch && ++iterations < 1000)
+
+    // input = input.replace(/[^\S\r\n]/g, '')
 
     const PARANTHESIS_REGEX = /\(/g
     let paranthesisMatch
+    iterations = 0
+
     do {
       if ((paranthesisMatch = PARANTHESIS_REGEX.exec(input))) {
         const closingParenthesisIndex = findClosingBracketMatchIndex(input, paranthesisMatch.index, /\(|{|\[/, /\)|}|\]/)
-        const contentWithinParenthesis = input.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/\n/g, ' ')
 
-        input =
-          input.slice(0, paranthesisMatch.index) +
-          input.slice(paranthesisMatch.index, paranthesisMatch.index + 1) +
-          contentWithinParenthesis.replace(/\n/g, '') +
-          input.slice(closingParenthesisIndex, closingParenthesisIndex + 1) +
-          '\n' +
-          input.slice(closingParenthesisIndex + 1, input.length)
+        if (closingParenthesisIndex !== -1) {
+          const contentWithinParenthesis = input.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/\n/g, ' ')
 
-        PARANTHESIS_REGEX.lastIndex = closingParenthesisIndex
+          input =
+            input.slice(0, paranthesisMatch.index) +
+            input.slice(paranthesisMatch.index, paranthesisMatch.index + 1) +
+            contentWithinParenthesis.replace(/\n/g, '') +
+            input.slice(closingParenthesisIndex, closingParenthesisIndex + 1) +
+            '\n' +
+            input.slice(closingParenthesisIndex + 1, input.length)
+
+          PARANTHESIS_REGEX.lastIndex = closingParenthesisIndex
+        }
       }
-    } while (paranthesisMatch)
+    } while (paranthesisMatch && ++iterations < 1000)
 
     return input
   }
@@ -173,13 +193,15 @@ export default class SerieBuilder {
     let silentOutput = originalOutput
 
     let instructionMatch = null
+    let iterations = 0
+
     do {
       if ((instructionMatch = SERIE_UPDATE_REGEX.exec(silentOutput))) {
         const openingParenthesisIndex = instructionMatch.index + instructionMatch[0].length - 1
         const closingParenthesisIndex = findClosingBracketMatchIndex(silentOutput, openingParenthesisIndex)
         silentOutput = silentOutput.replace(instructionMatch[0] + silentOutput.slice(openingParenthesisIndex + 1, closingParenthesisIndex + 1), 1)
       }
-    } while (instructionMatch)
+    } while (instructionMatch && ++iterations < 1000)
 
     return silentOutput
   }
@@ -195,10 +217,15 @@ export default class SerieBuilder {
     const plots: IndicatorPlot[] = []
     const markets: IndicatorMarkets = {}
     const references: IndicatorReference[] = []
+    const strings = []
 
-    let output = this.normalizeInput(input)
+    let output = this.normalizeInput(input, strings)
 
     output = this.parseVariables(output, variables)
+
+    for (let i = 0; i < strings.length; i++) {
+      output = output.replace(new RegExp('#STRING_' + i + '#', 'g'), strings[i].replace(/\$/g, '$$$'))
+    }
 
     output = this.parseFunctions(output, functions, plots)
 
@@ -222,7 +249,10 @@ export default class SerieBuilder {
 
   formatOutput(input) {
     const PARANTHESIS_REGEX = /\(|{|\[/g
+
     let paranthesisMatch
+    let iterations = 0
+
     do {
       if ((paranthesisMatch = PARANTHESIS_REGEX.exec(input))) {
         const lineBreakIt = paranthesisMatch[0] === '('
@@ -230,7 +260,7 @@ export default class SerieBuilder {
         const closingParenthesisIndex = findClosingBracketMatchIndex(input, paranthesisMatch.index, /\(|{|\[/, /\)|}|\]/)
         const contentWithinParenthesis = input.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/\n/g, ' ')
 
-        if (/if|for/.test(input.slice(paranthesisMatch.index - 2, 2))) {
+        if (/if|for|else/.test(input.slice(paranthesisMatch.index - 2, 2))) {
           input =
             input.slice(0, paranthesisMatch.index) +
             input.slice(paranthesisMatch.index, paranthesisMatch.index + 1) +
@@ -242,7 +272,7 @@ export default class SerieBuilder {
 
         PARANTHESIS_REGEX.lastIndex = closingParenthesisIndex
       }
-    } while (paranthesisMatch)
+    } while (paranthesisMatch && ++iterations < 1000)
 
     const lines = input.trim().split(/\n/)
 
@@ -260,16 +290,29 @@ export default class SerieBuilder {
   }
 
   parseVariables(output, variables): string {
+    const VARIABLE_REGEX = /(?:^|\n)\s*((?:var )?[a-zA-Z0-9_]+)\(?(\d*)\)?\s*=\s*([^\n;,]*)?/
     let variableMatch = null
+    let iterations = 0
+
+    const nonPersistentVariables = []
+
     do {
       if ((variableMatch = VARIABLE_REGEX.exec(output))) {
-        const variableName = variableMatch[1]
+        let variableName = variableMatch[1]
+        const isNonPersistent = /^var/.test(variableName)
 
-        if (/^var/.test(variableName)) {
-          output = output.replace(variableMatch[0], '\nvar ' + variableName.slice(3) + '=' + variableMatch[3])
-          VARIABLE_REGEX.lastIndex += variableMatch[1].length
+        if (nonPersistentVariables.indexOf(variableName) !== -1 || isNonPersistent) {
+          if (isNonPersistent) {
+            variableName = variableName.replace(/var\s*/, '')
+            output = output.replace(variableMatch[0], '\nvar ' + variableName + '=' + variableMatch[3])
+            nonPersistentVariables.push(variableName)
+          }
+
+          // eslint-disable-next-line no-useless-escape
+          output = output.replace(new RegExp('([^.$]|^)\\b(' + variableName + ')\\b(?!:)(?!\\()(?!\\$)', 'ig'), `$1${variableName}$`)
           continue
         }
+
         const variableLength = +variableMatch[2] || 1
 
         output = output.replace(new RegExp('([^.]|^)\\b(' + variableName + ')\\b(?!:)', 'ig'), `$1${VARIABLES_VAR_NAME}[${variables.length}]`)
@@ -279,10 +322,9 @@ export default class SerieBuilder {
         }
 
         variables.push(variable)
-
         output = output.replace(new RegExp(`(${VARIABLES_VAR_NAME}\\[${variables.length - 1}\\])\\(${variable.length}\\)\\s*=\\s*`), '$1=')
       }
-    } while (variableMatch && variables.length < 50)
+    } while (variableMatch && ++iterations < 1000)
 
     output = this.determineVariablesType(output, variables)
 
@@ -342,13 +384,17 @@ export default class SerieBuilder {
     }
 
     // tranform input into valid lightweight-charts data point
-    if (args.length === 1 && /{/.test(args[0]) && /}/.test(args[0])) {
+    if (args.length === 1 && ((/{/.test(args[0]) && /}/.test(args[0])) || /^[\w_]+\$/.test(args[0]))) {
       seriePoint += args[0]
     } else if (expectedInput === 'ohlc') {
       if (args.length === 4) {
         seriePoint += `{ time: ${timeProperty}, open: ${args[0]}, high: ${args[1]}, low: ${args[2]}, close: ${args[3]} }`
       } else if (args.length === 1) {
-        seriePoint += args[0]
+        if (/^[A-Z_]+:\w+/.test(args[0])) {
+          seriePoint += `${args[0]}.close === null ? { time: ${timeProperty} } : { time: ${timeProperty}, open: ${args[0]}.open, high: ${args[0]}.high, low: ${args[0]}.low, close: ${args[0]}.close }`
+        } else {
+          seriePoint += args[0]
+        }
       } else {
         throw new Error(`Invalid input for function ${match[1]}, expected a ohlc object or 4 number`)
       }
@@ -393,6 +439,8 @@ export default class SerieBuilder {
       id = serieOptions.id
 
       delete serieOptions.id
+    } else if (plots.length === 0) {
+      id = this.indicatorId
     } else {
       id = randomString(8)
     }
@@ -411,9 +459,10 @@ export default class SerieBuilder {
   }
 
   parseFunctions(output: string, instructions: IndicatorFunction[], plots: IndicatorPlot[]): string {
-    let functionMatch = null
-
     const FUNCTION_LOOKUP_REGEX = new RegExp(`([a-zA-Z0_9_]+)\\(`, 'g')
+
+    let functionMatch = null
+    let iterations = 0
 
     do {
       if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(output))) {
@@ -426,7 +475,7 @@ export default class SerieBuilder {
         if (isMathFunction || isSerieFunction || isMethod) {
           FUNCTION_LOOKUP_REGEX.lastIndex = functionMatch.index + functionMatch[0].length
 
-          if (isSerieFunction) {
+          if (typeof isSerieFunction === 'string') {
             output = this.parseSerie(output, functionMatch, plots)
           }
           continue
@@ -440,7 +489,7 @@ export default class SerieBuilder {
         const targetFunction = seriesUtils[functionName + '$']
 
         if (!targetFunction) {
-          if (/for|if/i.test(functionName)) {
+          if (/for|if|rgba/i.test(functionName)) {
             FUNCTION_LOOKUP_REGEX.lastIndex = functionMatch.index + functionMatch[0].length
             continue
           } else {
@@ -466,19 +515,16 @@ export default class SerieBuilder {
         // register instruction
         instructions.push(instruction)
       }
-    } while (functionMatch)
+    } while (functionMatch && ++iterations < 1000)
 
     return output
   }
 
   parseMarkets(output: string, markets: IndicatorMarkets): string {
-    if (!this.markets.length) {
-      return output
-    }
-
-    const EXCHANGE_REGEX = /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{5,})(:[\w]{4,})?\.?([a-z]{4,})?\b/g
+    const EXCHANGE_REGEX = /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{5,})(:[\w]{4,})?\.?([a-z]{3,})?\b/g
 
     let marketMatch = null
+    let iterations = 0
 
     do {
       if ((marketMatch = EXCHANGE_REGEX.exec(output))) {
@@ -501,14 +547,15 @@ export default class SerieBuilder {
 
         output = output.slice(0, marketMatch.index) + replacement + output.slice(marketMatch.index + marketMatch[0].length)
       }
-    } while (marketMatch)
+    } while (marketMatch && ++iterations < 1000)
 
     return output
   }
   parseReferences(output: string, references: IndicatorReference[], plots: IndicatorPlot[]): string {
-    const REFERENCE_REGEX = new RegExp('\\$([a-z_\\-0-9]+)\\b')
+    const REFERENCE_REGEX = new RegExp('\\$(\\w+[a-z_\\-0-9]+)\\b')
 
     let referenceMatch = null
+    let iterations = 0
 
     do {
       if ((referenceMatch = REFERENCE_REGEX.exec(output))) {
@@ -534,7 +581,7 @@ export default class SerieBuilder {
           }
         }
       }
-    } while (referenceMatch)
+    } while (referenceMatch && ++iterations < 1000)
 
     return output
   }
@@ -578,6 +625,7 @@ export default class SerieBuilder {
       const VARIABLE_LENGTH_REGEX = new RegExp(`${VARIABLES_VAR_NAME}\\[${index}\\](?:\\[(\\d+)\\])?`, 'g')
 
       let lengthMatch = null
+      let iterations = 0
 
       do {
         if ((lengthMatch = VARIABLE_LENGTH_REGEX.exec(output))) {
@@ -598,7 +646,7 @@ export default class SerieBuilder {
 
           variable.length = Math.max(variable.length, (+variableLength || 0) + 1)
         }
-      } while (lengthMatch)
+      } while (lengthMatch && ++iterations < 1000)
 
       if (!variable.length) {
         throw new Error('Unexpected no length on var')
@@ -619,7 +667,9 @@ export default class SerieBuilder {
     try {
       adapter = this.getAdapter(silentOutput)
     } catch (error) {
-      throw new Error(`Syntax error: ${error.message}`)
+      console.log('%c' + silentOutput, 'font-size: 8px;line-height:1;')
+
+      throw new Error(`Syntax error: ${error.message} - see console`)
     }
 
     let renderer = this.getFakeRenderer(null, functions, variables, markets, references)
@@ -906,7 +956,15 @@ export default class SerieBuilder {
   getCustomPlotOptions(indicator, plot) {
     // update plot options from script input
 
+    const parsedValues = []
+
     for (const prop in plot.options) {
+      if (parsedValues.indexOf(plot.options[prop]) !== -1) {
+        continue
+      }
+
+      parsedValues.push(plot.options[prop])
+
       try {
         plot.options[prop] = new Function('options', `'use strict'; return ${plot.options[prop]}`)(indicator.options)
       } catch (error) {

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented here.
 
+## [3.0.8] - 2022-01-10
+### Added
+- Indicator script syntax highlighter
+
 ## [3.0.7] - 2021-12-22
 ### Added
 - Threshold audio assistant

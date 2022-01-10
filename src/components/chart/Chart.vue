@@ -1,16 +1,29 @@
 <template>
   <div class="pane-chart">
     <pane-header :paneId="paneId" :controls="paneControls">
-      <button v-for="(timeframeLabel, timeframe) of favoriteTimeframes" :key="timeframe" @click="changeTimeframe(timeframe)">
+      <button
+        v-for="(timeframeLabel, timeframe) of favoriteTimeframes"
+        :key="timeframe"
+        @click="changeTimeframe(timeframe)"
+        title="Maintain shift key to change timeframe on all panes"
+        class="timeframe"
+      >
         <span v-text="timeframeLabel"></span>
       </button>
-      <dropdown :options="timeframes" :selected="timeframe" placeholder="tf." @output="changeTimeframe($event)" selectionClass="-text -arrow">
+      <dropdown
+        :options="timeframes"
+        :selected="timeframe"
+        placeholder="tf."
+        @output="changeTimeframe($event)"
+        class="-full-height"
+        selectionClass="-text -arrow"
+      >
         <template v-slot:selection>
           <span>{{ timeframeForHuman }}</span>
         </template>
         <template v-slot:option="{ index, value }">
           <i
-            class="-fill icon-star mr4"
+            class="-fill icon-star mr8"
             @mousedown.prevent
             :class="{ 'icon-star-filled': favoriteTimeframes[index] }"
             @click="toggleFavoriteTimeframe(index)"
@@ -54,7 +67,11 @@
           </div>
         </div>
         <div class="chart-overlay__title pane-overlay" @click="showMarketsOverlay = !showMarketsOverlay">
-          Markets <i class="icon-up-thin -higher"></i>
+          Markets
+          <button type="button" class="btn badge -compact ml4 mr4" @click="toggleMarketOverlay">
+            {{ markets.length ? visibleMarkets : 'Search markets' }}
+          </button>
+          <i class="icon-up-thin -higher"></i>
         </div>
       </div>
     </div>
@@ -81,7 +98,7 @@ import {
   getTimeframeForHuman,
   floorTimestampToTimeframe
 } from '../../utils/helpers'
-import { defaultChartOptions, getCustomColorsOptions } from './chartOptions'
+import { defaultChartOptions, getChartCustomColorsOptions } from './chartOptions'
 
 import aggregatorService from '@/services/aggregatorService'
 import historicalService, { HistoricalResponse } from '@/services/historicalService'
@@ -198,6 +215,10 @@ export default class extends Mixins(PaneMixin) {
     return this.$store.state[this.paneId].hiddenMarkets
   }
 
+  get visibleMarkets() {
+    return this.markets.filter(a => !this.hiddenMarkets[a]).length
+  }
+
   $refs!: {
     chartContainer: HTMLElement
   }
@@ -211,11 +232,11 @@ export default class extends Mixins(PaneMixin) {
       switch (mutation.type) {
         case 'settings/SET_CHART_COLOR':
           if (mutation.payload) {
-            this._chartController.chartInstance.applyOptions(getCustomColorsOptions(mutation.payload))
+            this._chartController.chartInstance.applyOptions(getChartCustomColorsOptions(mutation.payload))
           }
           break
         case 'settings/SET_CHART_THEME':
-          this._chartController.chartInstance.applyOptions(getCustomColorsOptions())
+          this._chartController.chartInstance.applyOptions(getChartCustomColorsOptions())
           break
         case 'settings/TOGGLE_NORMAMIZE_WATERMARKS':
           this._chartController.refreshMarkets()
@@ -227,6 +248,7 @@ export default class extends Mixins(PaneMixin) {
           break
         case 'panes/SET_PANE_MARKETS':
           if (mutation.payload.id === this.paneId) {
+            ;(this.$store.state[this.paneId] as ChartPaneState).hiddenMarkets = {}
             this._chartController.refreshMarkets()
 
             this.clear()
@@ -267,7 +289,7 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.updateWatermark()
           break
         case this.paneId + '/SET_INDICATOR_OPTION':
-          this._chartController.setIndicatorOption(mutation.payload.id, mutation.payload.key, mutation.payload.value)
+          this._chartController.setIndicatorOption(mutation.payload.id, mutation.payload.key, mutation.payload.value, mutation.payload.silent)
           break
         case this.paneId + '/SET_PRICE_SCALE':
           if (mutation.payload.priceScale) {
@@ -344,6 +366,9 @@ export default class extends Mixins(PaneMixin) {
    * @param {TimeRange} range range to fetch
    */
   fetch(range?: TimeRange) {
+    if (!range) {
+      this._reachedEnd = false
+    }
     const alreadyHasData = this._chartController.chartCache.cacheRange && this._chartController.chartCache.cacheRange.from
 
     const historicalMarkets = historicalService.getHistoricalMarktets(this.$store.state.panes.panes[this.paneId].markets)
@@ -490,10 +515,6 @@ export default class extends Mixins(PaneMixin) {
    * Render chart once everything is done
    */
   onHistorical(results: HistoricalResponse) {
-    if (!results.data.length) {
-      debugger
-    }
-
     const chunk: Chunk = {
       from: results.from,
       to: results.to,
@@ -645,6 +666,13 @@ export default class extends Mixins(PaneMixin) {
     dialogService.open(CreateIndicatorDialog, { paneId: this.paneId })
   }
 
+  toggleMarketOverlay(event) {
+    if (!this.markets.length) {
+      this.$store.dispatch('app/showSearch', this.paneId)
+      event.stopPropagation()
+    }
+  }
+
   async fetchMore(visibleLogicalRange) {
     if (this._loading || this._reachedEnd || !visibleLogicalRange || visibleLogicalRange.from > 0) {
       return
@@ -672,9 +700,7 @@ export default class extends Mixins(PaneMixin) {
       to: this._chartController.chartCache.cacheRange.from - 1
     }
 
-    if (!this._chartController.chartCache.cacheRange.from || rangeToFetch.to <= this._chartController.chartCache.cacheRange.from) {
-      await this.fetch(rangeToFetch)
-    }
+    await this.fetch(rangeToFetch)
   }
 
   onResize() {
@@ -896,30 +922,32 @@ export default class extends Mixins(PaneMixin) {
     const luminance = getColorLuminance(splitRgba(backgroundColor))
     const textColor = luminance < 170 ? '#ffffff' : '#000000'
 
-    Object.values(this.indicators).forEach((indicator, index) => {
-      const options = indicator.options as any
+    if (this.showMarketsOverlay) {
+      Object.values(this.indicators).forEach((indicator, index) => {
+        const options = indicator.options as any
 
-      if (options.visible === false) {
-        return
-      }
-
-      let color = options.color || options.upColor || textColor
-
-      try {
-        color = splitRgba(color)
-
-        if (typeof color[3] !== 'undefined') {
-          color[3] = 1
+        if (options.visible === false) {
+          return
         }
 
-        color = joinRgba(color)
-      } catch (error) {
-        // not rgb(a)
-      }
+        let color = options.color || options.upColor || textColor
 
-      ctx.fillStyle = color
-      ctx.fillText(indicator.displayName || indicator.name, textPadding, headerHeight + textPadding + index * lineHeight * 1.2)
-    })
+        try {
+          color = splitRgba(color)
+
+          if (typeof color[3] !== 'undefined') {
+            color[3] = 1
+          }
+
+          color = joinRgba(color)
+        } catch (error) {
+          // not rgb(a)
+        }
+
+        ctx.fillStyle = color
+        ctx.fillText(indicator.displayName || indicator.name, textPadding, headerHeight + textPadding + index * lineHeight * 1.2)
+      })
+    }
 
     const dataURL = canvas.toDataURL('image/png')
     const startIndex = dataURL.indexOf('base64,') + 7
@@ -1077,9 +1105,9 @@ export default class extends Mixins(PaneMixin) {
   &__title {
     cursor: pointer;
     user-select: none;
-    color: var(--theme-color-150);
     place-self: flex-start;
-    padding: 0.2em 0.25em 0.3em;
+    padding: 0.2em 0.25em;
+    line-height: 1.4;
 
     &:hover {
       color: var(--theme-color-base);
@@ -1095,6 +1123,14 @@ export default class extends Mixins(PaneMixin) {
         transform: rotateZ(180deg);
       }
     }
+  }
+}
+
+.timeframe {
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 1;
   }
 }
 

@@ -85,11 +85,6 @@ $iconpath: '../fonts';
     content: $icon-pound; 
   }
 }
-.icon-sound-wave {
-  &:before {
-    content: $icon-sound-wave; 
-  }
-}
 .icon-up {
   &:before {
     content: $icon-up; 
@@ -350,11 +345,6 @@ $iconpath: '../fonts';
     content: $icon-trash; 
   }
 }
-.icon-black-and-white {
-  &:before {
-    content: $icon-black-and-white; 
-  }
-}
 .icon-BYBIT {
   &:before {
     content: $icon-BYBIT; 
@@ -498,6 +488,11 @@ $iconpath: '../fonts';
 .icon-save {
   &:before {
     content: $icon-save; 
+  }
+}
+.icon-merge {
+  &:before {
+    content: $icon-merge; 
   }
 }
 

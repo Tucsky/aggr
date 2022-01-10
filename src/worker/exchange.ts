@@ -145,17 +145,6 @@ class Exchange extends EventEmitter {
       )
     }
 
-    /* if (this.connecting[api.url]) {
-      console.log(`[${this.id}.resolveApi] attach ${pair} to connecting api ${api.url}`)
-      //return this.connecting[api.url].promise
-    } else {
-      console.log(`[${this.id}.resolveApi] attach ${pair} to already opened api ${api.url}`)
-      //return Promise.resolve(api)
-    } */
-
-    // return immediately
-    // return Promise.resolve(api)
-
     return api
   }
 
@@ -193,7 +182,7 @@ class Exchange extends EventEmitter {
         }, 10000)
       }
 
-      this.markLoadingAsCompleted(this.connecting, url, true)
+      this.markLoadingAsCompleted(this.connecting, api._id, true)
 
       this.subscribePendingPairs(api)
 
@@ -206,11 +195,11 @@ class Exchange extends EventEmitter {
         delete this.clearReconnectionDelayTimeout[url]
       }
 
-      this.markLoadingAsCompleted(this.connecting, url, false)
+      this.markLoadingAsCompleted(this.connecting, api._id, false)
 
       this.onClose(event, api._connected)
       // resolve disconnecting (as success)
-      this.markLoadingAsCompleted(this.disconnecting, url, true)
+      this.markLoadingAsCompleted(this.disconnecting, api._id, true)
 
       const pairsToReconnect = [...api._pending, ...api._connected]
 
@@ -243,10 +232,10 @@ class Exchange extends EventEmitter {
       this.onError(event, api._connected)
     }
 
-    this.connecting[url] = {}
+    this.connecting[api._id] = {}
 
-    this.connecting[url].promise = new Promise((resolve, reject) => {
-      this.connecting[url].resolver = success => {
+    this.connecting[api._id].promise = new Promise((resolve, reject) => {
+      this.connecting[api._id].resolver = success => {
         if (success) {
           this.onApiCreated(api)
 
@@ -335,7 +324,7 @@ class Exchange extends EventEmitter {
    * @param {WebSocket} api
    * @returns {Promise<void>}
    */
-  removeWs(api) {
+  removeWs(api: Api) {
     let promiseOfClose
 
     if (api.readyState !== WebSocket.CLOSED) {
@@ -345,17 +334,17 @@ class Exchange extends EventEmitter {
 
       console.debug(`[${this.id}.removeWs] close api ${api.url}`)
 
-      this.disconnecting[api.url] = {}
+      this.disconnecting[api._id] = {}
 
-      this.disconnecting[api.url].promise = new Promise<void>((resolve, reject) => {
+      this.disconnecting[api._id].promise = new Promise<void>((resolve, reject) => {
         if (api.readyState < WebSocket.CLOSING) {
           api.close()
         }
 
-        this.disconnecting[api.url].resolver = success => (success ? resolve() : reject())
+        this.disconnecting[api._id].resolver = success => (success ? resolve() : reject())
       })
 
-      promiseOfClose = this.disconnecting[api.url].promise
+      promiseOfClose = this.disconnecting[api._id].promise
     } else {
       promiseOfClose = Promise.resolve()
     }
@@ -632,10 +621,10 @@ class Exchange extends EventEmitter {
     delete this.keepAliveIntervals[api.url]
   }
 
-  markLoadingAsCompleted(type: { [url: string]: { promise?: Promise<any>; resolver?: (success: boolean) => void } }, url: string, success: boolean) {
-    if (type[url]) {
-      type[url].resolver(success)
-      delete type[url]
+  markLoadingAsCompleted(type: { [id: string]: { promise?: Promise<any>; resolver?: (success: boolean) => void } }, id: string, success: boolean) {
+    if (type[id]) {
+      type[id].resolver(success)
+      delete type[id]
     }
   }
 

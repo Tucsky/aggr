@@ -8,7 +8,13 @@
       :style="{ transform: `translate(${delta.x}px, ${delta.y}px)` }"
       @mousedown="onMouseDown"
     >
-      <header v-if="header" @mousedown="handleDrag" @touchstart="handleDrag" :style="{ color: headerColor, background: headerBackground }">
+      <header
+        v-if="header"
+        @mousedown="handleDrag"
+        @touchstart="handleDrag"
+        @dblclick="toggleFullscreen"
+        :style="{ color: headerColor, background: headerBackground }"
+      >
         <slot name="header"></slot>
         <div class="dialog-controls">
           <slot name="controls"></slot>
@@ -110,13 +116,17 @@ export default class extends Vue {
     event.preventDefault()
     const lastMove = Object.assign({}, this.delta)
     const startPosition = getEventCords(event)
-
+    const dialogWidth = this.$refs.dialogContent.clientWidth
     const startOffset = this.$refs.dialogContent.offsetTop
+    const maxX = (window.innerWidth - dialogWidth) / 2
+    const minX = -maxX
+    const minY = startOffset * -1
+
     this._handleDragging = evnt => {
       const endPosition = getEventCords(evnt)
 
-      const x = lastMove.x + endPosition.x - startPosition.x
-      const y = Math.max(startOffset * -1, lastMove.y + endPosition.y - startPosition.y)
+      const x = Math.max(minX, Math.min(maxX, lastMove.x + endPosition.x - startPosition.x))
+      const y = Math.max(minY, lastMove.y + endPosition.y - startPosition.y)
 
       this.target.x = x
       this.target.y = y
@@ -179,6 +189,10 @@ export default class extends Vue {
 
   close() {
     this.$emit('clickOutside')
+  }
+
+  toggleFullscreen() {
+    //
   }
 }
 </script>

@@ -88,18 +88,9 @@
     .pane-header {
       display: none;
       position: absolute;
-      opacity: 0.75;
-
-      &__name {
-        opacity: 1;
-      }
 
       .toolbar {
         display: flex;
-      }
-
-      &:hover {
-        opacity: 1;
       }
     }
 
@@ -166,7 +157,8 @@
   font-size: calc(11px + 0.8em);
   height: 1.5em;
   min-width: 100%;
-  background-color: rgba(black, 0.7);
+  background-color: rgba(black, 0.5);
+  backdrop-filter: blur(1em);
   align-items: stretch;
   flex-shrink: 0;
   cursor: move;
@@ -176,7 +168,6 @@
   }
 
   &__name {
-    opacity: 0.75;
     font-family: $font-condensed;
     font-size: 0.64em;
     align-self: center;

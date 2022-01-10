@@ -110,8 +110,8 @@ play(392, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23, 0.08,,0)`
     {
       id: 'huge',
       amount: 1000000,
-      buyGif: 'cash',
-      sellGif: 'cash',
+      buyGif: 'cash bullish',
+      sellGif: 'cash bearish',
       buyColor: 'rgb(59, 202, 109)',
       sellColor: 'rgb(235, 30, 47)',
       buyAudio: `play(659.26, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0,,0);

@@ -87,6 +87,16 @@ export const defaultCandlestickOptions = {
   wickDownColor: 'rgba(224, 91, 95, .8)'
 }
 
+export const defaultBaselineOptions = {
+  topFillColor1: 'rgba(38, 166, 154, 0.28)',
+  topFillColor2: 'rgba(38, 166, 154, 0.05)',
+  topLineColor: 'rgba(38, 166, 154, 1)',
+  bottomFillColor1: 'rgba(239, 83, 80, 0.05)',
+  bottomFillColor2: 'rgba(239, 83, 80, 0.28)',
+  bottomLineColor: 'rgba(239, 83, 80, 1)',
+  lineWidth: 1
+}
+
 export const defaultHistogramOptions = {
   color: '#c3a87a'
 }
@@ -137,7 +147,23 @@ export const defaultStatsChartOptions = {
   }
 }
 
-export function getCustomColorsOptions(color?: string) {
+export const plotTypesMap = {
+  cloudarea: 'cloud-area',
+  brokenarea: 'broken-area'
+}
+
+export const defaultPlotsOptions = {
+  line: defaultLineOptions,
+  area: defaultAreaOptions,
+  candlestick: defaultCandlestickOptions,
+  baseline: defaultBaselineOptions,
+  'cloud-area': defaultCloudAreaOptions,
+  'broken-area': defaultBrokenAreaOptions,
+  bar: defaultBarOptions,
+  histogram: defaultHistogramOptions
+}
+
+export function getChartCustomColorsOptions(color?: string) {
   let textColor = color
 
   if (!textColor) {
@@ -179,7 +205,7 @@ export function getCustomColorsOptions(color?: string) {
 export function getChartOptions(baseOptions: DeepPartial<ChartOptions>): DeepPartial<ChartOptions> {
   const chartOptions = Object.assign({}, baseOptions)
 
-  const chartColorOptions = getCustomColorsOptions()
+  const chartColorOptions = getChartCustomColorsOptions()
 
   for (const prop in chartColorOptions) {
     Object.assign(chartOptions[prop], chartColorOptions[prop])
@@ -188,17 +214,54 @@ export function getChartOptions(baseOptions: DeepPartial<ChartOptions>): DeepPar
   return chartOptions
 }
 
-export const plotTypesMap = {
-  cloudarea: 'cloud-area',
-  brokenarea: 'broken-area'
+export function getDefaultIndicatorOptionValue(key: string, plotTypes: string[]) {
+  let value
+
+  if (plotTypes) {
+    for (const type of plotTypes) {
+      if (typeof defaultPlotsOptions[type][key] !== 'undefined') {
+        return defaultPlotsOptions[type][key]
+      }
+    }
+  }
+
+  if (typeof value === 'undefined' && typeof defaultSerieOptions[key] !== 'undefined') {
+    return defaultSerieOptions[key]
+  }
+
+  if (typeof value === 'undefined' && /length$/i.test(key)) {
+    return 14
+  }
+
+  if (typeof value === 'undefined' && /color$/i.test(key)) {
+    return '#c3a87a'
+  }
+
+  if (typeof value === 'undefined' && /width$/i.test(key)) {
+    return 1
+  }
+
+  return value
 }
 
-export const defaultPlotsOptions = {
-  line: defaultLineOptions,
-  area: defaultAreaOptions,
-  candlestick: defaultCandlestickOptions,
-  'cloud-area': defaultCloudAreaOptions,
-  'broken-area': defaultBrokenAreaOptions,
-  bar: defaultBarOptions,
-  histogram: defaultHistogramOptions
+export function getIndicatorOptionValue(paneId: string, indicatorId: string, key: string, plotTypes?: string[]): any {
+  let preferedValue
+
+  if (typeof store.state[paneId].indicators[indicatorId].options[key] !== 'undefined') {
+    preferedValue = store.state[paneId].indicators[indicatorId].options[key]
+  }
+
+  const defaultValue = getDefaultIndicatorOptionValue(key, plotTypes)
+
+  if (typeof preferedValue !== 'undefined') {
+    if (preferedValue && typeof preferedValue === 'object' && defaultValue && typeof defaultValue === 'object') {
+      return Object.assign({}, defaultValue, preferedValue)
+    } else {
+      return preferedValue
+    }
+  } else if (typeof defaultValue !== 'undefined') {
+    return defaultValue
+  }
+
+  return null
 }

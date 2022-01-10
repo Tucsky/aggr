@@ -118,7 +118,7 @@ export default class extends Vue {
     }
 
     const max = typeof this.max === 'undefined' ? Infinity : this.max
-    const min = typeof this.min === 'undefined' ? 0 : this.min
+    const min = typeof this.min === 'undefined' ? -Infinity : this.min
     const precision = countDecimals(text)
     const step = 1 / Math.pow(10, precision)
     const change = step * direction * -1
@@ -127,7 +127,9 @@ export default class extends Vue {
   }
 
   onWheel(event) {
-    if (!(document.activeElement as HTMLElement).isContentEditable) {
+    const focusedElement = document.activeElement as HTMLElement
+
+    if (focusedElement !== event.target || !focusedElement.isContentEditable) {
       return
     }
 

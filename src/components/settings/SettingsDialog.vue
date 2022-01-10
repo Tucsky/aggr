@@ -46,14 +46,12 @@
         <table v-if="workspaces.length" class="table">
           <thead>
             <tr>
-              <th>Id</th>
               <th>Name</th>
               <th>Use</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="workspace of workspaces" :key="workspace.id" class="option -action" @click="openWorkspace(workspace.id)">
-              <td class="table-input"><code v-text="workspace.id"></code></td>
               <td class="table-input table-ellipsis text-nowrap" v-text="workspace.name" :title="workspace.name" v-tippy></td>
               <td class="table-input"><small v-text="'' + ago(workspace.updatedAt) + ' ago'"></small></td>
               <td class="table-action">

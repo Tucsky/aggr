@@ -60,6 +60,9 @@ export default {
   },
   data() {
     return {
+      name: null,
+      type: null,
+      cat: null,
       menu: [
         {
           icon: 'swap',
@@ -83,12 +86,12 @@ export default {
       showDetails: false
     }
   },
-  computed: {
-    name() {
-      return this.preset.name.split(':').pop()
-    }
-  },
   created() {
+    const [, type, cat, name] = this.preset.name.match(/^([a-z-]+):?([a-z-]+)?:(.*)/)
+    this.type = type
+    this.cat = cat
+    this.name = name
+
     this.retrieveDataProperties(this.preset.data)
 
     if (this.preset.updatedAt) {
@@ -106,7 +109,7 @@ export default {
       this.close()
     },
     downloadPreset() {
-      downloadJson(this.preset, this.preset.type + '_' + slugify(this.name))
+      downloadJson(this.preset, slugify(this.preset.name))
     },
     retrieveDataProperties(obj) {
       for (const prop in obj) {
@@ -129,7 +132,7 @@ export default {
       if (name && name !== this.name) {
         await workspacesService.removePreset(this.preset.name)
 
-        this.preset.name = this.preset.type + ':' + name
+        this.preset.name = this.type + ':' + (this.cat ? ':' + this.cat : '') + name
 
         await workspacesService.savePreset(this.preset)
       }

@@ -784,7 +784,7 @@ export default class extends Mixins(PaneMixin) {
   &.-level-2 {
     line-height: 2em;
     font-size: 1.125em;
-    font-weight: 500;
+    font-weight: 600;
     padding-bottom: 1px;
   }
 

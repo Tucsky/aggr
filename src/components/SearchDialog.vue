@@ -57,9 +57,7 @@
               <span>Already connected</span>
             </label>
           </div>
-          <div class="search-filters__title text-muted mb8" @click="showExtraFilters = !showExtraFilters">
-            Extra <i class="icon-up-thin -higher"></i>
-          </div>
+          <div class="search-filters__title text-muted mb8" @click="showExtraFilters = !showExtraFilters">Extra <i class="icon-up-thin"></i></div>
         </div>
 
         <div class="search-filters mb16">
@@ -95,9 +93,7 @@
               <span>Futures</span>
             </label>
           </div>
-          <div class="search-filters__title text-muted mb8" @click="showTypeFilters = !showTypeFilters">
-            Type <i class="icon-up-thin -higher"></i>
-          </div>
+          <div class="search-filters__title text-muted mb8" @click="showTypeFilters = !showTypeFilters">Type <i class="icon-up-thin"></i></div>
         </div>
 
         <div class="search-filters">
@@ -124,23 +120,26 @@
               </label>
             </template>
           </div>
-          <div class="search-filters__title text-muted mb8" @click="showExchanges = !showExchanges">
-            Exchanges <i class="icon-up-thin -higher"></i>
-          </div>
+          <div class="search-filters__title text-muted mb8" @click="showExchanges = !showExchanges">Exchanges <i class="icon-up-thin"></i></div>
         </div>
       </div>
       <div class="search__wrapper">
         <div class="search__selection form-control">
-          <button v-if="selection.length" class="btn search__clear -text" @click="clearSelection"><i class="icon-eraser"></i></button>
+          <div v-if="selection.length" class="search__selection-controls">
+            <button class="btn -text" @click="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')" v-tippy title="Toggle grouping">
+              <i class="icon-merge"></i>
+            </button>
+            <button class="btn -text" @click="clearSelection" title="Clear" v-tippy><i class="icon-cross"></i></button>
+          </div>
           <template v-if="searchTypes.normalize">
             <button
               v-for="(markets, localPair) of groupedSelection"
               :key="localPair"
-              class="btn  -accent -accent-200 -badge"
+              class="btn  -accent -accent-200 -pill"
               :title="'Click to remove ' + markets.join(', ')"
               @click="deselectMarkets(markets)"
             >
-              <span v-if="markets.length > 1" class="badge" v-text="markets.length"></span>
+              <span v-if="markets.length > 1" class="badge -compact" v-text="markets.length"></span>
               <span v-text="localPair"></span>
             </button>
           </template>
@@ -155,10 +154,20 @@
               v-text="market"
             ></button>
           </template>
-          <input ref="input" type="text" placeholder="Search symbol (ex: EXCHANGE:SYMBOL)" :value="query" @input="query = $event.target.value" />
+          <input
+            ref="input"
+            type="text"
+            placeholder="Search symbol (ex: EXCHANGE:SYMBOL)"
+            :value="query"
+            @input=";(page = 0), (query = $event.target.value)"
+          />
         </div>
         <div class="search__results hide-scrollbar">
           <template v-if="results.length">
+            <div v-if="page > 0" class="d-flex mt8">
+              <button class="btn -text -small mlauto" @click="showLess">👆 back to page {{ page + 1 }}</button>
+            </div>
+
             <table class="table" v-if="searchTypes.normalize">
               <thead>
                 <tr>
@@ -176,9 +185,6 @@
                 >
                   <td v-text="group.localPair"></td>
                   <td><small v-text="group.markets.join(', ')"></small></td>
-                </tr>
-                <tr class="-action" @click="addAll">
-                  <td colspan="100%">👆 add all of the above</td>
                 </tr>
               </tbody>
             </table>
@@ -207,11 +213,13 @@
                     <i v-if="historicalMarkets.indexOf(market.id) !== -1" class="icon-candlestick icon-lower"></i>
                   </td>
                 </tr>
-                <tr v-if="results.length > 0" class="-action" @click="addAll">
-                  <td colspan="100%">👆 add all of the above</td>
-                </tr>
               </tbody>
             </table>
+
+            <div class="mt8 d-flex">
+              <button class="btn -text -small" @click="addAll">👆 add all of the above</button>
+              <button class="btn -text -small mlauto" @click="showMore" v-if="results.length === resultsPerPage">👇 see page {{ page + 2 }}</button>
+            </div>
           </template>
 
           <div class="text-danger search__no-result" v-if="!results.length">
@@ -258,6 +266,8 @@ import dialogService from '@/services/dialogService'
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
 
+const RESULTS_PER_PAGE = 50
+
 export default {
   mixins: [DialogMixin],
   components: {
@@ -270,6 +280,7 @@ export default {
     }
   },
   data: () => ({
+    page: 0,
     query: '',
     markets: [],
     selection: [],
@@ -277,12 +288,15 @@ export default {
     activeIndex: null,
     mobileShowFilters: false,
     showExchanges: true,
-    showExtraFilters: false,
+    showExtraFilters: true,
     showTypeFilters: true,
     onlyConnected: false,
     canRefreshProducts: true
   }),
   computed: {
+    resultsPerPage() {
+      return RESULTS_PER_PAGE
+    },
     transitionGroupName() {
       if (!this.$store.state.settings.disableAnimations) {
         return 'slide-notice'
@@ -405,6 +419,9 @@ export default {
       const activeMarkets = this.activeMarkets
       const hasTypeFilters = hasSpot || hasPerpetuals || hasFutures
 
+      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+      this.page = 0
+
       return this.flattenedProducts.filter(a => {
         if (hasHistorical && this.historicalMarkets.indexOf(a.id) === -1) {
           return false
@@ -430,6 +447,8 @@ export default {
       })
     },
     results: function() {
+      const offset = this.page * RESULTS_PER_PAGE
+
       if (this.searchTypes.normalize) {
         const marketsByPair = this.filteredProducts
           .filter(product => this.selection.indexOf(product.id) === -1 && this.queryFilter.test(product.local))
@@ -450,13 +469,15 @@ export default {
           }, {})
 
         return Object.keys(marketsByPair)
-          .slice(0, 50)
+          .slice(offset, offset + RESULTS_PER_PAGE)
           .map(localPair => ({
             localPair,
             markets: marketsByPair[localPair]
           }))
       } else {
-        return this.filteredProducts.filter(product => this.selection.indexOf(product.id) === -1 && this.queryFilter.test(product.id)).slice(0, 50)
+        return this.filteredProducts
+          .filter(product => this.selection.indexOf(product.id) === -1 && this.queryFilter.test(product.id))
+          .slice(offset, offset + RESULTS_PER_PAGE)
       }
     },
     groupedSelection: function() {
@@ -800,6 +821,14 @@ export default {
         type: 'success',
         title: `${exchangeId}: ${this.indexedProducts[exchangeId].length} products refreshed`
       })
+    },
+
+    showMore() {
+      this.page++
+    },
+
+    showLess() {
+      this.page = Math.max(this.page - 1, 0)
     }
   }
 }
@@ -859,6 +888,7 @@ export default {
     padding: 6px 16px 2px 6px;
     position: relative;
 
+    &-controls > button,
     > button,
     > input {
       margin-bottom: 4px;
@@ -876,7 +906,7 @@ export default {
     }
   }
 
-  &__clear {
+  &__selection-controls {
     position: absolute;
     top: 0;
     right: 0;

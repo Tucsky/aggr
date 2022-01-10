@@ -12,6 +12,20 @@
   flex-shrink: 0;
   cursor: pointer;
   background-color: $red;
-  color: white;
+  color: var(--theme-background-base);
   font-weight: 600;
+
+  &.-small {
+    padding: 0.2em 0.25em;
+  }
+
+  &.-compact {
+    padding: 0.25em 0.2em;
+    font-weight: 600;
+    line-height: 0.6;
+    margin-top: 2px;
+    font-size: 1em;
+    font-weight: 600;
+    background-color: var(--theme-color-base);
+  }
 }

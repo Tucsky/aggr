@@ -1,169 +1,163 @@
 <template>
-  <Dialog @clickOutside="close" class="serie-dialog -auto" :mask="!resizing">
+  <Dialog @clickOutside="close" class="indicator-dialog -auto -sticky-footer -mobile-fs" :mask="false">
     <template v-slot:header>
       <div>
         <div class="title">
           <div @dblclick="renameIndicator">{{ name }}</div>
         </div>
         <div v-if="description" class="subtitle pl0" v-text="description" @dblclick="editDescription"></div>
-        <code v-else class="subtitle -filled" v-text="indicatorId" @dblclick="editDescription"></code>
+        <code v-else class="subtitle -filled" @click="copyIndicatorId" v-text="indicatorId" @dblclick="editDescription"></code>
       </div>
 
-      <div class="column -center"></div>
-    </template>
-    <div class="d-flex mb16">
-      <div v-if="unsavedChanges">
-        <p class="help-text mt0 mb4">
-          Unsaved changes <i class="icon-info -lower ml4" title="Those changes are visible on that pane only, save it to sync w/ other panes"></i>
-        </p>
-        <button class="btn -green" href="javascript:void(0)" @click="saveIndicator" v-tippy title="Save"><i class="icon-save mr8"></i> save</button>
-        <button class="btn -text ml8" @click="undoIndicator" title="Rollback to previous save" v-tippy><i class="icon-eraser mr8"></i> Undo</button>
-      </div>
       <a
         href="https://github.com/Tucsky/aggr/wiki/introduction-to-scripting"
         target="_blank"
         title="Scripting documentation"
         v-tippy
-        class="btn -text -white mlauto -start"
-        >scripting Wiki</a
+        class="btn -text -white mlauto -center  -no-grab"
+        ><i class="icon-info mr8"></i> Wiki</a
       >
-    </div>
-    <div class="d-flex mobile-dir-col-desktop-dir-row">
-      <div>
-        <div class="form-group mb16">
-          <div class="d-flex mb8">
-            <label for class="mrauto -center">
-              Input
-            </label>
-          </div>
-          <div class="p-relative">
-            <textarea
-              ref="behaveInput"
-              class="form-control"
-              rows="10"
-              cols="50"
-              :value="script"
-              @blur="updateScript($event.target.value)"
-              spellcheck="false"
-            ></textarea>
-          </div>
-          <p v-if="error" class="form-feedback"><i class="icon-warning mr4"></i> {{ error }}</p>
-        </div>
-        <div v-if="otherOptions.length" class="d-flex -fill" style="max-width: 400px;flex-wrap:wrap;">
-          <div v-for="option in otherOptions" :key="option.key" class="form-group mb16 mr16">
-            <label v-if="option.label !== false">
-              {{ option.label }}
-              <i v-if="helps[option.key]" class="icon-info" v-tippy :title="helps[option.key]"></i>
-            </label>
 
-            <dropdown
-              v-if="option.key === 'lineType'"
-              class="-left -center"
-              :selected="currentValues[option.key]"
-              :options="{ 0: 'Simple', 1: 'with steps' }"
-              selectionClass="-outline form-control -arrow"
-              placeholder="lineType"
-              @output="validate(option, $event)"
-            ></dropdown>
-            <dropdown
-              v-else-if="/linestyle$/i.test(option.key)"
-              class="-left -center"
-              :selected="currentValues[option.key]"
-              :options="{ 0: 'Solid', 1: 'Dotted', 2: 'Dashed', 3: 'LargeDashed', 4: 'SparseDotted' }"
-              selectionClass="-outline form-control -arrow"
-              placeholder="lineStyle"
-              @output="validate(option, $event)"
-            ></dropdown>
-            <template v-else-if="option.type === 'string' || option.type === 'number'">
-              <editable class="form-control" :content="currentValues[option.key]" @output="validate(option, $event)"></editable>
-            </template>
-            <template v-else-if="option.type === 'boolean'">
-              <label class="checkbox-control">
-                <input type="checkbox" class="form-control" :checked="currentValues[option.key]" @change="validate(option, $event.target.checked)" />
-                <div></div>
-              </label>
-            </template>
-          </div>
-        </div>
-      </div>
-      <hr class="-horizontal" />
-      <hr class="-vertical mb8" />
-      <div>
-        <div class="column">
-          <div v-if="colorOptions.length">
-            <div v-for="(option, index) in colorOptions" :key="index" class="column form-group -fill mr8 mb8">
-              <label v-if="option.label !== false" class="-center  -nowrap mr16">{{ option.label }}</label>
-              <verte
-                picker="square"
-                menuPosition="left"
-                :label="option.label"
-                model="rgb"
-                :value="currentValues[option.key]"
-                @input="currentValues[option.key] !== $event && validate(option, $event)"
-                @close="updateScript(script)"
-              ></verte>
+      <button v-if="unsavedChanges" title="Rollback changes" v-tippy class="btn ml8 -text -no-grab" @click="undoIndicator">
+        <i class="icon-trash mr8"></i> Discard
+      </button>
+
+      <button
+        title="Save changes"
+        v-tippy
+        class="btn ml8 -no-grab"
+        :class="[!unsavedChanges && '-text -accent', unsavedChanges && '-green']"
+        @click="saveIndicator"
+      >
+        <i class="icon-save mr8"></i> Save
+      </button>
+    </template>
+    <p v-if="error" class="form-feedback ml16"><i class="icon-warning mr4"></i> {{ error }}</p>
+    <div class="d-flex indicator-dialog__wrapper" ref="containerElement">
+      <tabs class="indicator-tabs" v-model="tab" ref="tabsComponent">
+        <tab name="Script" class="d-flex p-relative editor" :style="{ fontSize: fontSize + 'em' }">
+          <prism-editor
+            class="editor__prism hide-scrollbar"
+            v-model="code"
+            :highlight="highlighter"
+            ref="editor"
+            @blur="updateScript($event.target.value)"
+          ></prism-editor>
+          <code-minimap ref="editorMinimap" class="editor__minimap" />
+          <div class="editor__zoom">
+            <div class="btn -text -small" @click="scaleEditor(1.1)">
+              <i class="icon-plus"></i>
+            </div>
+            <div class="btn -text -small" @click="scaleEditor(0.9)">
+              <i class="icon-minus"></i>
             </div>
           </div>
-        </div>
-
-        <section class="section">
-          <div v-if="sections.indexOf('position') > -1">
-            <div class="form-group mb16">
-              <label>Scale with <i class="icon-info" v-tippy :title="helps.priceScaleId"></i></label>
-              <dropdown
-                class="-left -center"
-                :selected="currentValues.priceScaleId"
-                :options="availableScales"
-                placeholder="Default scale"
-                selectionClass="-outline form-control -arrow"
-                @output="validate('priceScaleId', $event)"
-              ></dropdown>
+          <i class="icon-up-thin editor__resize" @mousedown="handleResize" @touchstart="handleResize"></i>
+        </tab>
+        <tab name="Options" :badge="otherOptionsKeys.length" class="indicator-options indicator-options--tab hide-scrollbar">
+          <indicator-option
+            v-for="key in otherOptionsKeys"
+            :key="key"
+            :name="key"
+            :pane-id="paneId"
+            :indicator-id="indicatorId"
+            :plot-types="plotTypes"
+            class="indicator-options__option"
+          />
+        </tab>
+      </tabs>
+      <hr class="-vertical" />
+      <div class="indicator-options hide-scrollbar">
+        <section class="indicator-options__search section">
+          <div>
+            <div class="input-group">
+              <input type="text" class="form-control" placeholder="search..." v-model="optionsQuery" />
+              <button type="button" class="btn -text -small" @click="optionsQuery = ''"><i class="icon-cross"></i></button>
             </div>
+            <indicator-option
+              v-for="key in queryOptionsKeys"
+              :key="key"
+              :name="key"
+              :pane-id="paneId"
+              :indicator-id="indicatorId"
+              :plot-types="plotTypes"
+            />
           </div>
-          <div class="section__title" @click="toggleSection('position')">Position in chart <i class="icon-up-thin"></i></div>
         </section>
-        <section v-if="formatOption" class="section">
-          <div v-if="sections.indexOf('format') > -1">
-            <div class="form-group mb16">
-              <label>price format</label>
-              <dropdown
-                class="-left -center"
-                :selected="formatOption.value.type"
-                :options="{ price: 'Price', volume: 'Volume', percent: 'Percent' }"
-                placeholder="lineType"
-                selectionClass="-outline form-control -arrow"
-                @output="validate(formatOption, { ...formatOption.value, type: $event })"
-              ></dropdown>
+        <template v-if="!optionsQuery.length">
+          <section v-if="colorOptionsKeys.length" class="section">
+            <div v-if="sections.indexOf('colors') > -1">
+              <indicator-option
+                v-for="key in colorOptionsKeys"
+                :key="key"
+                :name="key"
+                :pane-id="paneId"
+                :indicator-id="indicatorId"
+                :plot-types="plotTypes"
+              />
             </div>
-            <div class="column">
-              <div class="form-group mb16">
-                <label>precision</label>
-                <editable
-                  class="form-control"
-                  :content="formatOption.value.precision"
-                  @output="validate(formatOption, { ...formatOption.value, precision: Math.abs($event) || 0 })"
-                ></editable>
-              </div>
+            <div class="section__title" @click="toggleSection('colors')">Colors <i class="icon-up-thin"></i></div>
+          </section>
+
+          <section class="section">
+            <div v-if="sections.indexOf('customOptions') > -1">
+              <indicator-option
+                v-for="key in otherOptionsKeys"
+                :key="key"
+                :name="key"
+                :pane-id="paneId"
+                :indicator-id="indicatorId"
+                :plot-types="plotTypes"
+              />
+            </div>
+            <div class="section__title" @click="toggleSection('customOptions')">Options <i class="icon-up-thin"></i></div>
+          </section>
+
+          <section class="section">
+            <div v-if="sections.indexOf('position') > -1">
               <div class="form-group">
-                <label>minMove</label>
-                <editable
-                  class="form-control"
-                  :content="formatOption.value.minMove"
-                  step="0.01"
-                  @output="validate(formatOption, { ...formatOption.value, minMove: (Math.abs($event) || formatOption.value.minMove).toString() })"
-                ></editable>
+                <label>Scale with <i class="icon-info" v-tippy :title="helps.priceScaleId"></i></label>
+                <dropdown
+                  class="-left -center w-100"
+                  :selected="indicator.options.priceScaleId"
+                  :options="availableScales"
+                  placeholder="Default scale"
+                  selectionClass="-outline form-control -arrow w-100"
+                  @output="setPriceScale($event)"
+                ></dropdown>
               </div>
             </div>
-          </div>
+            <div class="section__title" @click="toggleSection('position')">Position in chart <i class="icon-up-thin"></i></div>
+          </section>
+          <section class="section">
+            <div v-if="sections.indexOf('format') > -1">
+              <div class="d-flex">
+                <dropdown
+                  :selected="priceFormat"
+                  :options="['price', 'volume']"
+                  selectionClass="-outline form-control -arrow w-100"
+                  class="mr8"
+                  return-value
+                  @output="setPriceFormat($event, precision)"
+                ></dropdown>
+                <editable class="form-control -fill" :content="precision" @output="setPriceFormat(priceFormat, $event)"></editable>
+              </div>
+            </div>
 
-          <div class="section__title" @click="toggleSection('format')">Price format <i class="icon-up-thin"></i></div>
-        </section>
+            <div class="section__title" @click="toggleSection('format')">Price format <i class="icon-up-thin"></i></div>
+          </section>
+        </template>
       </div>
     </div>
 
-    <hr />
-    <div class="form-group d-flex">
-      <presets type="indicator" class="mr8 -left" :adapter="getIndicatorPreset" @apply="applyIndicatorPreset($event)" label="Presets" />
+    <footer>
+      <presets
+        :type="'indicator:' + indicatorId"
+        class="mr8 -left"
+        :adapter="getIndicatorPreset"
+        @apply="applyIndicatorPreset($event)"
+        label="Presets"
+      />
       <dropdown :options="indicatorMenu" class="mlauto" selectionClass="-text -arrow">
         <template v-slot:option-use-as-default>
           <label class="checkbox-control -small" @mousedown.prevent>
@@ -173,45 +167,54 @@
           </label>
         </template>
         <template v-slot:option="{ value }">
-          <div>
-            <i class="-lower" :class="'icon-' + value.icon"></i>
+          <i class="-lower" :class="'icon-' + value.icon"></i>
 
-            <span>{{ value.label }}</span>
-          </div>
+          <span>{{ value.label }}</span>
         </template>
         <template v-slot:selection>
           Options
         </template>
       </dropdown>
-    </div>
+    </footer>
   </Dialog>
 </template>
 
-<script>
+<script lang="ts">
+import { PrismEditor } from 'vue-prism-editor'
 import store from '../../store'
 import DialogMixin from '../../mixins/dialogMixin'
-import { defaultPlotsOptions, defaultSerieOptions, plotTypesMap } from './chartOptions'
-import Behave from 'behave-js'
+import Tabs from '@/components/framework/Tabs.vue'
+import Tab from '@/components/framework/Tab.vue'
+import { defaultPlotsOptions, defaultSerieOptions, getIndicatorOptionValue, plotTypesMap } from './chartOptions'
 import IndicatorDialog from './IndicatorDialog.vue'
 import dialogService from '../../services/dialogService'
 import merge from 'lodash.merge'
 import IndicatorPresetDialog from './IndicatorPresetDialog.vue'
-import { downloadJson } from '@/utils/helpers'
+import { copyTextToClipboard, downloadJson } from '@/utils/helpers'
+import CodeMinimap from '../framework/CodeMinimap.vue'
 
-const ignoredOptionsKeys = ['crosshairMarkerVisible', 'minLength', 'visible', 'priceScaleId']
+const ignoredOptionsKeys = ['crosshairMarkerVisible', 'minLength', 'visible', 'priceScaleId', 'priceFormat']
+
+import { highlight, languages } from 'prismjs/components/prism-core'
+import 'prismjs/components/prism-clike'
+import 'prismjs/components/prism-javascript'
+import { getEventCords } from '@/utils/picker'
+import IndicatorOption from './IndicatorOption.vue'
+import { IndicatorSettings } from '@/store/panesSettings/chart'
 
 export default {
+  components: { CodeMinimap, PrismEditor, IndicatorOption, Tabs, Tab },
   props: ['paneId', 'indicatorId'],
   mixins: [DialogMixin],
   data: () => ({
-    types: [],
-    sections: [],
-    editor: null,
-    currentValues: {},
+    code: '',
+    plotTypes: [],
+    sections: ['position', 'colors'],
+    optionsQuery: '',
+    fontSize: 1,
+    tab: 0,
     otherOptionsKeys: [],
     colorOptionsKeys: [],
-    colorOptions: [],
-    otherOptions: [],
     indicatorMenu: null,
     helps: {
       priceScaleId: `Use <u>right</u> for binding indicator to main price scale. Otherwise use it as an id to align multiple indicator on same scale (as overlay)`,
@@ -245,19 +248,16 @@ export default {
     script() {
       return this.indicator.script
     },
-    formatOption() {
-      return {
-        key: 'priceFormat',
-        label: 'priceFormat',
-        value: this.getValue('priceFormat'),
-        type: 'position'
-      }
+    precision() {
+      return this.indicator.options.priceFormat && typeof this.indicator.options.priceFormat.precision === 'number'
+        ? this.indicator.options.priceFormat.precision
+        : 2
     },
-    resizing() {
-      return store.state[this.paneId].resizingIndicator === this.indicatorId
+    priceFormat() {
+      return this.indicator.options.priceFormat ? this.indicator.options.priceFormat.format : 'price'
     },
     availableScales() {
-      return Object.values(this.$store.state[this.paneId].indicators).reduce(
+      return Object.values(this.$store.state[this.paneId].indicators as IndicatorSettings).reduce(
         (scales, indicator) => {
           if (indicator.id !== this.indicatorId && indicator.options && indicator.options.priceScaleId && !scales[indicator.options.priceScaleId]) {
             scales[indicator.options.priceScaleId] = indicator.name || indicator.id
@@ -270,31 +270,57 @@ export default {
           right: 'Right scale (main)'
         }
       )
+    },
+    queryOptionsKeys() {
+      if (!this.optionsQuery.length) {
+        return []
+      }
+
+      const query = new RegExp(this.optionsQuery, 'i')
+
+      return [...this.otherOptionsKeys, ...this.colorOptionsKeys].filter(key => query.test(key))
+    }
+  },
+  watch: {
+    script: {
+      handler(value) {
+        this.code = value
+      },
+      immediate: true
     }
   },
   created() {
     this.initIndicatorMenu()
+    this.restoreNavigationState()
 
     this.$nextTick(() => {
-      this.refreshPlotTypes()
-      this.refreshOptions()
-    })
-
-    this.getValue('priceScaleId')
-  },
-  mounted() {
-    this.$nextTick(function() {
-      this.createScriptEditor()
+      this.getPlotTypes()
+      this.getOptionsKeys()
     })
   },
   beforeDestroy() {
-    this.cleanOptions()
-
-    if (this.editor) {
-      this.editor.destroy()
-    }
+    this.saveNavigationState()
   },
   methods: {
+    restoreNavigationState() {
+      if (this.indicator.navigationState) {
+        this.sections = this.indicator.navigationState.sections.slice()
+        this.tab = this.indicator.navigationState.tab
+        this.optionsQuery = this.indicator.navigationState.optionsQuery
+        this.fontSize = this.indicator.navigationState.fontSize
+      }
+    },
+    saveNavigationState() {
+      this.$store.dispatch(this.paneId + '/setIndicatorNavigationState', {
+        id: this.indicatorId,
+        navigationState: {
+          sections: this.sections,
+          tab: this.tab,
+          optionsQuery: this.optionsQuery,
+          fontSize: this.fontSize
+        }
+      })
+    },
     initIndicatorMenu() {
       this.indicatorMenu = [
         {
@@ -322,96 +348,20 @@ export default {
         }
       ]
     },
-    getOptionType(value, key) {
-      let type = 'string'
-
-      try {
-        value = JSON.parse(value)
-      } catch (error) {
-        // empty
-      }
-
-      if (typeof value === 'boolean' || /^show[A-Z]/.test(key)) {
-        type = 'boolean'
-      } else if (/^rgba?/.test(value) || /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value)) {
-        type = 'color'
-      } else if (typeof value === 'number') {
-        type = 'number'
-      }
-
-      return type
-    },
-    validate(option, value) {
-      const key = typeof option === 'string' ? option : option.key
-
+    setPriceScale(id) {
       store.dispatch(this.paneId + '/setIndicatorOption', {
         id: this.indicatorId,
-        key,
-        value
+        key: 'priceScaleId',
+        value: id
       })
-
-      this.currentValues = { ...this.currentValues, [key]: value }
     },
-    getDefaultValue(key) {
-      let value
+    updateScript(script) {
+      script = script.trim()
 
-      for (const type of this.types) {
-        if (typeof defaultPlotsOptions[type][key] !== 'undefined') {
-          return defaultPlotsOptions[type][key]
-        }
-      }
+      this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', { id: this.indicatorId, value: script })
 
-      if (typeof value === 'undefined' && typeof defaultSerieOptions[key] !== 'undefined') {
-        return defaultSerieOptions[key]
-      }
-
-      if (typeof value === 'undefined' && /length$/i.test(key)) {
-        return 14
-      }
-
-      if (typeof value === 'undefined' && /color$/i.test(key)) {
-        return '#c3a87a'
-      }
-
-      if (typeof value === 'undefined' && /width$/i.test(key)) {
-        return 1
-      }
-
-      return value
-    },
-    getValue(key) {
-      /*if (!store.state[this.paneId].indicators[this.indicatorId]) {
-        return null
-      }*/
-
-      let preferedValue
-
-      if (typeof store.state[this.paneId].indicators[this.indicatorId].options[key] !== 'undefined') {
-        preferedValue = store.state[this.paneId].indicators[this.indicatorId].options[key]
-      }
-
-      const defaultValue = this.getDefaultValue(key)
-      let finalValue = ''
-
-      if (typeof preferedValue !== 'undefined') {
-        if (preferedValue && typeof preferedValue === 'object' && defaultValue && typeof defaultValue === 'object') {
-          finalValue = Object.assign({}, defaultValue, preferedValue)
-        } else {
-          finalValue = preferedValue
-        }
-      } else if (typeof defaultValue !== 'undefined') {
-        finalValue = defaultValue
-      }
-
-      this.currentValues[key] = finalValue
-
-      return this.currentValues[key]
-    },
-    updateScript(newInput) {
-      this.refreshPlotTypes()
-      this.refreshOptions(newInput)
-
-      this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', { id: this.indicatorId, value: newInput })
+      this.getPlotTypes()
+      this.getOptionsKeys()
     },
     getScriptOptions(script) {
       const keys = []
@@ -427,147 +377,16 @@ export default {
 
       return keys
     },
-    removeOption(key) {
-      this.$store.commit(this.paneId + '/REMOVE_INDICATOR_OPTION', { id: this.indicatorId, key })
-
-      for (const options of [this.colorOptions, this.otherOptions]) {
-        const option = options.find(o => o.key === key)
-
-        if (option) {
-          options.splice(options.indexOf(option), 1)
-          break
-        }
-      }
-    },
-    refreshPlotTypes() {
+    getPlotTypes() {
       const availableTypes = Object.keys(defaultPlotsOptions).map(a => a.replace(/[^\w]/g, ''))
 
-      this.types = (this.script.match(new RegExp(`(?:\\n|\\s|^)(?:plot)?(${availableTypes.join('|')})\\(`, 'g')) || [])
+      this.plotTypes = (this.script.match(new RegExp(`(?:\\n|\\s|^)(?:plot)?(${availableTypes.join('|')})\\(`, 'g')) || [])
         .map(a => {
           const justType = a.replace(/[^\w]/g, '').replace(/^plot/, '')
 
           return plotTypesMap[justType] || justType
         })
         .filter((t, index, self) => self.indexOf(t) === index && defaultPlotsOptions[t])
-    },
-    cleanOptions() {
-      const defaultSeriesOptionsKeys = Object.keys(defaultSerieOptions)
-
-      for (let i = this.types.length - 1; i >= 0; i--) {
-        for (const prop in defaultPlotsOptions[this.types[i]]) {
-          defaultSeriesOptionsKeys.push(prop)
-        }
-      }
-
-      const scriptOptionsKeys = this.getScriptOptions(this.script)
-
-      const mergedOptionsKeys = [...scriptOptionsKeys, ...defaultSeriesOptionsKeys].filter((x, i, a) => {
-        return ignoredOptionsKeys.indexOf(x) === -1 && a.indexOf(x) == i
-      })
-
-      for (const key of [...this.otherOptionsKeys, ...this.colorOptionsKeys]) {
-        if (mergedOptionsKeys.indexOf(key) === -1) {
-          console.warn('[indicator/' + this.indicatorId + '] remove unused option ' + key)
-          this.$store.commit(this.paneId + '/REMOVE_INDICATOR_OPTION', { id: this.indicatorId, key })
-        }
-      }
-    },
-    refreshOptions(script, updateValues = false) {
-      const defaultIndicatorOptionsKeys = Object.keys(store.state[this.paneId].indicators[this.indicatorId].options)
-
-      const scriptOptionsKeys = this.getScriptOptions(script || this.script)
-
-      const defaultSeriesOptionsKeys = Object.keys(defaultSerieOptions)
-
-      for (let i = this.types.length - 1; i >= 0; i--) {
-        for (const prop in defaultPlotsOptions[this.types[i]]) {
-          defaultSeriesOptionsKeys.push(prop)
-        }
-      }
-
-      const mergedOptionsKeys = [...defaultIndicatorOptionsKeys, ...scriptOptionsKeys, ...defaultSeriesOptionsKeys].filter((x, i, a) => {
-        return ignoredOptionsKeys.indexOf(x) === -1 && a.indexOf(x) == i
-      })
-
-      const colorOptionsKeys = mergedOptionsKeys.filter(k => /color/i.test(k))
-      const otherOptionsKeys = mergedOptionsKeys.filter(k => !/color/i.test(k))
-
-      for (const key of colorOptionsKeys) {
-        if (this.colorOptionsKeys.indexOf(key) === -1) {
-          const value = this.getValue(key)
-
-          if (value && typeof value === 'object') {
-            continue
-          }
-
-          this.colorOptions.push({
-            key,
-            label: key,
-            type: this.getOptionType(value, key)
-          })
-
-          if (scriptOptionsKeys.indexOf(key) !== -1 && defaultIndicatorOptionsKeys.indexOf(key) === -1) {
-            this.validate(this.colorOptions[this.colorOptions.length - 1], value)
-          }
-        } else if (updateValues) {
-          this.getValue(key)
-        }
-      }
-
-      for (const key of otherOptionsKeys) {
-        if (this.otherOptionsKeys.indexOf(key) === -1) {
-          const value = this.getValue(key)
-
-          if (value && typeof value === 'object') {
-            continue
-          }
-
-          this.otherOptions.push({
-            key,
-            label: key,
-            type: this.getOptionType(value, key)
-          })
-
-          if (scriptOptionsKeys.indexOf(key) !== -1 && defaultIndicatorOptionsKeys.indexOf(key) === -1) {
-            this.validate(this.otherOptions[this.otherOptions.length - 1], value)
-          }
-        } else if (updateValues) {
-          this.getValue(key)
-        }
-      }
-
-      this.colorOptionsKeys = colorOptionsKeys
-      this.otherOptionsKeys = otherOptionsKeys
-
-      for (let i = 0; i < this.otherOptions.length; i++) {
-        if (this.otherOptionsKeys.indexOf(this.otherOptions[i].key) === -1) {
-          this.otherOptions.splice(this.otherOptions.indexOf(this.otherOptions[i]), 1)
-          i--
-        }
-      }
-
-      for (let i = 0; i < this.colorOptions.length; i++) {
-        if (this.colorOptionsKeys.indexOf(this.colorOptions[i].key) === -1) {
-          this.colorOptions.splice(this.colorOptions.indexOf(this.colorOptions[i]), 1)
-          i--
-        }
-      }
-
-      this.otherOptions = this.otherOptions.sort((a, b) => {
-        let order = 0
-
-        if (a.key > b.key) {
-          order++
-        } else if (a.key < b.key) {
-          order--
-        }
-
-        if (a.type === 'boolean' && a.type !== 'boolean') {
-          order += 10
-        }
-
-        return order
-      })
     },
     async removeIndicator() {
       await this.close()
@@ -644,6 +463,8 @@ export default {
       }
 
       this.$store.dispatch(this.paneId + '/undoIndicator', this.indicatorId)
+
+      this.$refs.editorMinimap.updateSize()
     },
     toggleSection(id) {
       const index = this.sections.indexOf(id)
@@ -653,21 +474,6 @@ export default {
       } else {
         this.sections.splice(index, 1)
       }
-    },
-    createScriptEditor() {
-      setTimeout(() => {
-        this.editor = new Behave({
-          textarea: this.$refs.behaveInput,
-          replaceTab: true,
-          softTabs: true,
-          tabSize: 2,
-          autoOpen: true,
-          overwrite: true,
-          autoStrip: true,
-          autoIndent: true,
-          fence: false
-        })
-      })
     },
     async getIndicatorPreset() {
       const payload = await dialogService.openAsPromise(IndicatorPresetDialog)
@@ -681,27 +487,19 @@ export default {
           return
         }
 
-        const indicatorPreset = {
+        const indicatorPreset: any = {
           options: {}
         }
 
-        const ignoreKeys = ['scaleMargins', 'priceFormat', 'visible']
-
         if (payload.values) {
           for (const key of this.otherOptionsKeys) {
-            if (ignoreKeys.indexOf(key) !== -1) {
-              continue
-            }
-            indicatorPreset.options[key] = this.getValue(key)
+            indicatorPreset.options[key] = getIndicatorOptionValue(this.paneId, this.indicatorId, key, this.plotTypes)
           }
         }
 
         if (payload.colors) {
           for (const key of this.colorOptionsKeys) {
-            if (ignoreKeys.indexOf(key) !== -1) {
-              continue
-            }
-            indicatorPreset.options[key] = this.getValue(key)
+            indicatorPreset.options[key] = getIndicatorOptionValue(this.paneId, this.indicatorId, key, this.plotTypes)
           }
         }
 
@@ -711,6 +509,29 @@ export default {
 
         return indicatorPreset
       }
+    },
+    getOptionsKeys() {
+      const customOptionsKeys = [
+        ...Object.keys(defaultSerieOptions),
+        ...this.plotTypes.reduce((typesKeys, key) => [...typesKeys, ...Object.keys(defaultPlotsOptions[key] || {})], []),
+        ...this.getScriptOptions(this.script)
+      ].filter((x, i, a) => {
+        return ignoredOptionsKeys.indexOf(x) === -1 && a.indexOf(x) == i
+      })
+
+      this.otherOptionsKeys = customOptionsKeys
+        .filter(key => !/color/i.test(key))
+        .sort((a, b) => {
+          if (a > b) {
+            return 1
+          } else if (a < b) {
+            return -1
+          }
+
+          return 0
+        })
+
+      this.colorOptionsKeys = customOptionsKeys.filter(key => /color/i.test(key))
     },
     applyIndicatorPreset(presetData) {
       const indicator = this.$store.state[this.paneId].indicators[this.indicatorId]
@@ -729,12 +550,16 @@ export default {
         }
       }
 
-      this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', { id: this.indicatorId })
+      this.otherOptionsKeys = this.colorOptionsKeys = []
 
-      this.refreshPlotTypes()
-      this.refreshOptions(this.script, true)
+      this.$nextTick(() => {
+        this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', { id: this.indicatorId })
 
-      this.$store.commit(this.paneId + '/FLAG_INDICATOR_AS_UNSAVED', this.indicatorId)
+        this.getPlotTypes()
+        this.getOptionsKeys()
+
+        this.$store.commit(this.paneId + '/FLAG_INDICATOR_AS_UNSAVED', this.indicatorId)
+      })
     },
     async toggleIndicatorAsDefault() {
       if (
@@ -747,7 +572,185 @@ export default {
       this.indicator.enabled = !this.indicator.enabled
 
       return this.saveIndicator()
+    },
+    highlighter(code) {
+      return highlight(code, languages.js, 'js') // languages.<insert language> to return html with markup
+    },
+    handleResize(event) {
+      this._resizeOrigin = getEventCords(event)
+
+      this.$refs.tabsComponent.$el.style.width = this.$refs.tabsComponent.$el.clientWidth + 'px'
+      this.$refs.containerElement.style.height = this.$refs.containerElement.clientHeight + 'px'
+
+      document.addEventListener('mousemove', this.resize)
+      document.addEventListener('mouseup', this.release)
+      document.addEventListener('touchmove', this.resize)
+      document.addEventListener('touchend', this.release)
+
+      document.body.classList.add('-unselectable')
+    },
+    resize(event) {
+      const coordinates = getEventCords(event)
+
+      const editorWidth = parseInt(this.$refs.tabsComponent.$el.style.width) + (coordinates.x - this._resizeOrigin.x) * 2
+      const editorHeight = parseInt(this.$refs.containerElement.style.height) + (coordinates.y - this._resizeOrigin.y) * 2
+      this.$refs.tabsComponent.$el.style.width = editorWidth + 'px'
+      this.$refs.containerElement.style.height = editorHeight + 'px'
+
+      this._resizeOrigin = coordinates
+    },
+    release() {
+      document.removeEventListener('mousemove', this.resize)
+      document.removeEventListener('mouseup', this.release)
+      document.removeEventListener('touchmove', this.resize)
+      document.removeEventListener('touchend', this.release)
+
+      document.body.classList.remove('-unselectable')
+
+      this.$refs.editor.setLineNumbersHeight()
+
+      setTimeout(() => {
+        this.$refs.editorMinimap.updateSize()
+      })
+    },
+    scaleEditor(change) {
+      if (isNaN(this.fontSize)) {
+        this.fontSize = 1
+      }
+
+      this.fontSize *= change
+
+      setTimeout(() => {
+        this.$refs.editorMinimap.updateSize()
+      })
+    },
+    togglePriceFormat() {
+      const formats = ['price', 'volume']
+
+      this.updatePriceFormat(formats[(formats.indexOf(this.format) + 1) % formats.length], this.precision)
+    },
+    updatePriceFormat(format, precision) {
+      this.$store.dispatch(this.paneId + '/setIndicatorOption', {
+        id: this.indicatorId,
+        key: 'priceFormat',
+        value: {
+          format,
+          precision,
+          minMove: 1 / Math.pow(10, precision)
+        }
+      })
+    },
+    copyIndicatorId() {
+      copyTextToClipboard(this.indicatorId)
+
+      this.$store.dispatch('app/showNotice', {
+        title: `Copied indicator id to clipboard`
+      })
     }
   }
 }
 </script>
+<style lang="scss" scoped>
+.indicator-dialog {
+  ::v-deep header {
+    border-bottom: 0 !important;
+  }
+
+  &__wrapper {
+    height: 50vh;
+    flex-grow: 1;
+  }
+}
+
+.indicator-tabs {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+
+  @media screen and (min-width: 1400px) {
+    width: 25vw;
+  }
+
+  + hr.-vertical {
+    margin: 0 0 0;
+  }
+}
+
+.indicator-options {
+  overflow-y: auto;
+
+  &__search {
+    background: 0 !important;
+    padding-bottom: 0;
+
+    .input-group + .indicator-option {
+      margin-top: 1rem;
+    }
+  }
+
+  &--tab {
+    margin: 0;
+    padding: 1rem;
+
+    .indicator-options__option {
+      width: 184px;
+      display: inline-block;
+      margin-right: 16px;
+
+      .form-control {
+        max-width: 100%;
+      }
+    }
+  }
+}
+
+.editor {
+  position: relative;
+  flex-grow: 1;
+  min-height: 0;
+
+  &__prism {
+    width: 100%;
+    height: auto;
+    color: var(--theme-color-100);
+    font-family: $font-monospace;
+    padding: 1rem 2.5rem 1rem 1rem;
+    font-size: 0.825em;
+  }
+
+  &__minimap {
+    flex-basis: 100px;
+    max-width: 100px;
+    flex-shrink: 0;
+  }
+
+  &__zoom,
+  &__resize {
+    position: absolute;
+    font-size: 1rem;
+    padding: 0.5em;
+    right: 0;
+    top: 0;
+  }
+
+  &__zoom .btn {
+    display: block;
+  }
+
+  &__resize {
+    top: auto;
+    bottom: 0;
+    cursor: se-resize;
+
+    &:before {
+      display: inline-block;
+      transform: rotateZ(-225deg) scale(1);
+      transition: transform 0.2s;
+    }
+
+    &:hover:before {
+      transform: translate(5%, 5%) rotateZ(-225deg) scale(1);
+    }
+  }
+}
+</style>

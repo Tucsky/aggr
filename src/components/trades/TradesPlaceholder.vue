@@ -50,10 +50,6 @@ export default class extends Vue {
     return this.paneMarkets.reduce((pairs, marketKey) => {
       const market = this.$store.state.panes.marketsListeners[marketKey]
 
-      if (!market) {
-        debugger
-      }
-
       let localPair = market ? market.local : marketKey
 
       if (mergeUsdt) {

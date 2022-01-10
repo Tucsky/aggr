@@ -89,16 +89,7 @@ class AggregatorService extends EventEmitter {
     }
 
     for (let i = 0; i < markets.length; i++) {
-      const [exchange, pair] = parseMarket(markets[i])
-
-      if (!store.state.exchanges[exchange]) {
-        store.dispatch('app/showNotice', {
-          type: 'warning',
-          timeout: 10000,
-          title: `⚠️ Not connecting to ${exchange}:${pair} because ${exchange} doesn't exist`
-        })
-        continue
-      }
+      const [exchange] = parseMarket(markets[i])
 
       if (store.state.exchanges[exchange].disabled) {
         const panes = []
@@ -107,12 +98,6 @@ class AggregatorService extends EventEmitter {
             panes.push(paneId)
           }
         }
-
-        store.dispatch('app/showNotice', {
-          type: 'warning',
-          timeout: 10000,
-          title: `⚠️ Not connecting to ${exchange}:${pair} (from ${panes.join(', ')} panes) because ${exchange} is disabled`
-        })
 
         markets.splice(i, 1)
         i--

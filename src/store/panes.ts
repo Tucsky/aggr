@@ -324,7 +324,7 @@ const actions = {
 
       parent.style.fontSize = zoom ? zoom + 'rem' : ''
 
-      if (zoom >= 1.2) {
+      if (zoom >= 1) {
         el.classList.add('-large')
       } else {
         el.classList.remove('-large')

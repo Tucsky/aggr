@@ -26,11 +26,9 @@
           </div>
         </template>
         <template v-slot:option="{ value }">
-          <div>
-            <i class="-lower" :class="'icon-' + value.icon"></i>
+          <i class="-lower" :class="'icon-' + value.icon"></i>
 
-            <span>{{ value.label }}</span>
-          </div>
+          <span>{{ value.label }}</span>
         </template>
         <template v-slot:selection>
           <i class="icon-more"></i>

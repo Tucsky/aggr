@@ -29,13 +29,19 @@
       font-family: 'icon';
       padding: 0 0.2em;
       position: relative;
-      line-height: 1;
+      line-height: 0;
       transition: transform 0.2s cubic-bezier(0, 1.4, 1, 1);
       margin-left: auto;
     }
 
     &:last-child:after {
       transform: none;
+    }
+  }
+
+  &.-full-height {
+    .dropdown__scroller {
+      max-height: 420px;
     }
   }
 
@@ -153,14 +159,13 @@
       align-self: center;
     }
 
-    i {
+    > i {
       align-self: stretch;
       margin: -0.75rem -1rem;
       padding: 0.75rem 1rem;
 
-      + i,
-      + span {
-        margin-left: 0.5rem;
+      &:first-child {
+        margin-right: 0;
       }
     }
 

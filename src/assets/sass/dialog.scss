@@ -11,12 +11,11 @@
   pointer-events: none;
 
   &.-mask {
-    background-color: var(--theme-background-o20);
     pointer-events: all;
   }
 
   .dialog-content {
-    min-width: 320px;
+    min-width: 420px;
     max-width: 500px;
     border-radius: $border-radius-base;
     background-color: var(--theme-background-100);
@@ -39,6 +38,10 @@
       padding: 1rem;
       border-bottom: 1px solid var(--theme-background-150);
       cursor: grab;
+
+      > .btn {
+        align-self: center;
+      }
 
       .checkbox-control > input:not(:checked) + div {
         background: 0;
@@ -93,7 +96,7 @@
   }
 
   &.-small .dialog-content {
-    max-width: 320px;
+    max-width: 420px;
   }
 
   &.-medium .dialog-content {
@@ -110,10 +113,14 @@
       z-index: 11;
 
       .dialog-content {
+        width: 100%;
+        height: 100%;
         max-width: 100%;
         max-height: 100%;
         display: flex;
         flex-direction: column;
+        transform: none !important;
+        border-radius: 0;
       }
 
       .dialog-body {
@@ -121,18 +128,19 @@
       }
     }
   }
+
   &.-sticky-footer {
     footer {
       background-color: var(--theme-background-100) !important;
       flex-basis: 100%;
-
       margin: 0;
       padding: 1rem;
-
       position: sticky;
       bottom: 0;
-
       z-index: 1;
+      margin-top: auto;
+      flex-basis: 0;
+      flex-shrink: 0;
     }
 
     section {
@@ -141,10 +149,9 @@
 
     .dialog-body {
       padding: 0;
-
-      @media screen and (min-width: 768px) {
-        flex-wrap: wrap;
-      }
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
     }
   }
 
@@ -205,9 +212,5 @@
     textarea {
       background-color: rgba(white, 0.5);
     }
-  }
-
-  &.-mask {
-    background-color: rgba(0, 0, 0, 0.15);
   }
 }

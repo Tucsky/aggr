@@ -26,8 +26,9 @@
     }
   },
   {
-    "name": "indicator:default candlesticks",
+    "name": "indicator:price:default",
     "type": "indicator",
+    "version": "3.0.8",
     "data": {
       "options": {
         "upColor": "rgba(100, 157, 102, 0)",
@@ -44,8 +45,9 @@
     }
   },
   {
-    "name": "indicator:blue candlesticks",
+    "name": "indicator:price:blue",
     "type": "indicator",
+    "version": "3.0.8",
     "data": {
       "options": {
         "upColor": "rgba(33, 150, 243, 0)",
@@ -62,8 +64,9 @@
     }
   },
   {
-    "name": "indicator:light candlesticks",
+    "name": "indicator:price:light",
     "type": "indicator",
+    "version": "3.0.8",
     "data": {
       "options": {
         "upColor": "rgb(165,214,167)",
@@ -110,6 +113,117 @@
       "3": {
         "amount": 10000000
       }
+    }
+  },
+  {
+    "name": "threshold:default colors",
+    "type": "threshold",
+    "version": "3.0.8",
+    "data": {
+      "liquidations": [
+        {
+          "buyColor": "rgba(236,64,122,0.5)",
+          "sellColor": "rgba(255,152,0,0.5)"
+        },
+        {
+          "buyColor": "rgba(236,64,122,0.6)",
+          "sellColor": "rgba(255,152,0,0.7)"
+        },
+        {
+          "buyColor": "rgba(236,64,122,0.7)",
+          "sellColor": "rgba(255,152,0,0.8)"
+        },
+        {
+          "buyColor": "rgb(156,39,176)",
+          "sellColor": "rgb(255,235,59)"
+        }
+      ],
+      "thresholds": [
+        {
+          "buyColor": "rgba(119, 148, 92, 0.25)",
+          "sellColor": "rgba(239, 67, 82, 0.25)"
+        },
+        {
+          "buyColor": "rgb(100, 157, 102)",
+          "sellColor": "rgb(239, 67, 82)"
+        },
+        {
+          "buyColor": "rgb(59, 202, 109)",
+          "sellColor": "rgb(235, 30, 47)"
+        },
+        {
+          "buyColor": "rgb(0, 255, 127)",
+          "sellColor": "rgb(217, 31, 28)"
+        }
+      ]
+    }
+  },
+  {
+    "name": "threshold:legacy colors",
+    "type": "threshold",
+    "version": "3.0.8",
+    "data": {
+      "thresholds": [
+        {
+          "buyColor": "rgba(76,175,80,0.33)",
+          "sellColor": "rgba(229,115,115,.33)"
+        },
+        {
+          "buyColor": "rgb(91,130,48)",
+          "sellColor": "rgb(224,91,82)"
+        },
+        {
+          "buyColor": "rgb(156,204,101)",
+          "sellColor": "rgb(244,67,54)"
+        },
+        {
+          "buyColor": "rgb(255,160,0)",
+          "sellColor": "rgb(233,30,99)"
+        }
+      ]
+    }
+  },
+  {
+    "name": "threshold:saturated colors",
+    "type": "threshold",
+    "version": "3.0.8",
+    "data": {
+      "thresholds": [
+        {
+          "buyColor": "rgba(119,148,92,0.5)",
+          "sellColor": "rgba(217,31,28,0.5)"
+        },
+        {
+          "buyColor": "rgb(100, 157, 102)",
+          "sellColor": "rgb(157,20,20)"
+        },
+        {
+          "buyColor": "rgb(59, 202, 109)",
+          "sellColor": "rgb(180,23,23)"
+        },
+        {
+          "buyColor": "rgb(0, 255, 127)",
+          "sellColor": "rgb(217, 31, 28)"
+        }
+      ],
+      "liquidations": [
+        {
+          "buyColor": "rgba(255,76,243,0.25)",
+          "sellColor": "rgba(255,152,0,0.5)"
+        },
+        {
+          "buyColor": "rgb(57,32,120)",
+          "sellColor": "rgba(255,152,0,0.7)"
+        },
+        {
+          "buyColor": "rgb(78,44,169)",
+          "sellColor": "rgba(255,152,0,0.8)"
+        },
+        {
+          "buyColor": "rgb(117,66,244)",
+          "sellColor": "rgb(255,235,59)"
+        }
+      ]
     }
   }
 ]

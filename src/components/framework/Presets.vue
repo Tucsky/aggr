@@ -67,10 +67,7 @@ export default class extends Vue {
     for (let i = 0; i < keys.length; i++) {
       this.presets.push({
         id: keys[i],
-        label: keys[i]
-          .split(':')
-          .slice(1)
-          .join(':')
+        label: keys[i].split(':').pop()
       })
     }
   }
