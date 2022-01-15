@@ -265,6 +265,7 @@ import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
+import { indexedProducts, requestProducts } from '@/services/productsService'
 
 const RESULTS_PER_PAGE = 50
 
@@ -291,7 +292,8 @@ export default {
     showExtraFilters: true,
     showTypeFilters: true,
     onlyConnected: false,
-    canRefreshProducts: true
+    canRefreshProducts: true,
+    flattenedProducts: []
   }),
   computed: {
     resultsPerPage() {
@@ -394,12 +396,6 @@ export default {
     historicalMarkets() {
       return this.$store.state.app.historicalMarkets
     },
-    indexedProducts() {
-      return this.$store.state.app.indexedProducts
-    },
-    flattenedProducts() {
-      return Array.prototype.concat(...Object.values(this.indexedProducts))
-    },
     queryFilter: function() {
       const multiQuery = this.query.replace(/[ ,]/g, '|')
 
@@ -484,11 +480,11 @@ export default {
       return this.selection.reduce((groups, market) => {
         const [exchange] = market.split(':')
 
-        if (!this.indexedProducts[exchange]) {
+        if (!indexedProducts[exchange]) {
           return groups
         }
 
-        const indexedProduct = this.indexedProducts[exchange].find(product => product.id === market)
+        const indexedProduct = indexedProducts[exchange].find(product => product.id === market)
 
         let localPair = indexedProduct ? indexedProduct.local : market
 
@@ -518,6 +514,8 @@ export default {
     this.initSelection()
 
     await this.ensureProducts()
+
+    this.cacheProducts()
   },
   mounted() {
     this.$nextTick(() => {
@@ -667,12 +665,7 @@ export default {
     async ensureProducts() {
       for (const exchangeId of this.$store.getters['exchanges/getExchanges']) {
         if (!this.$store.state.exchanges[exchangeId].fetched && this.$store.state.exchanges[exchangeId].disabled !== true) {
-          await aggregatorService.dispatch({
-            op: 'fetchExchangeProducts',
-            data: {
-              exchangeId
-            }
-          })
+          await requestProducts(exchangeId)
         }
       }
     },
@@ -819,8 +812,10 @@ export default {
 
       this.$store.dispatch('app/showNotice', {
         type: 'success',
-        title: `${exchangeId}: ${this.indexedProducts[exchangeId].length} products refreshed`
+        title: `${exchangeId}: ${indexedProducts[exchangeId].length} products refreshed`
       })
+
+      this.cacheProducts()
     },
 
     showMore() {
@@ -829,6 +824,10 @@ export default {
 
     showLess() {
       this.page = Math.max(this.page - 1, 0)
+    },
+
+    cacheProducts() {
+      this.flattenedProducts = Array.prototype.concat(...Object.values(indexedProducts))
     }
   }
 }
@@ -837,9 +836,13 @@ export default {
 .search {
   display: flex;
   padding: 1rem;
+  align-items: flex-start;
 
   &__side {
     margin-right: 1rem;
+    position: sticky;
+    top: 1rem;
+    width: 11rem;
 
     @media screen and (max-width: 550px) {
       display: none;

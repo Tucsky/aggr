@@ -919,6 +919,10 @@ export default class SerieBuilder {
         continue
       }
 
+      if (seriesUtils[instruction.name].baseLength > 0) {
+        instruction.length = seriesUtils[instruction.name].baseLength
+      }
+
       const lengthIndexes = seriesUtils[instruction.name].lengthIndexes || [1]
 
       for (const index of lengthIndexes) {
@@ -956,22 +960,16 @@ export default class SerieBuilder {
   getCustomPlotOptions(indicator, plot) {
     // update plot options from script input
 
-    const parsedValues = []
+    const options = {}
 
     for (const prop in plot.options) {
-      if (parsedValues.indexOf(plot.options[prop]) !== -1) {
-        continue
-      }
-
-      parsedValues.push(plot.options[prop])
-
       try {
-        plot.options[prop] = new Function('options', `'use strict'; return ${plot.options[prop]}`)(indicator.options)
+        options[prop] = new Function('options', `'use strict'; return ${plot.options[prop]}`)(indicator.options)
       } catch (error) {
-        // nothing to see here
+        options[prop] = plot.options[prop]
       }
     }
 
-    return plot.options
+    return options
   }
 }

@@ -39,6 +39,7 @@ export interface Product {
   base: string
   quote: string
   local: string
+  historical: boolean
 }
 
 export interface ListenedProduct extends Product {
@@ -52,7 +53,6 @@ export interface AppState {
   showSearch: boolean
   historicalMarkets: string[]
   apiSupportedTimeframes: number[]
-  indexedProducts: { [exchangeId: string]: Product[] }
   activeExchanges: { [exchangeId: string]: boolean }
   proxyUrl: string
   apiUrl: string
@@ -78,7 +78,6 @@ const state = {
   notices: [],
   historicalMarkets: [],
   apiSupportedTimeframes: [],
-  indexedProducts: {},
   proxyUrl: null,
   apiUrl: null,
   version: 'DEV',
@@ -268,9 +267,6 @@ const mutations = {
   },
   SET_BUILD_DATE(state, value) {
     state.buildDate = value
-  },
-  INDEX_EXCHANGE_PRODUCTS(state, { exchangeId, products }: { exchangeId: string; products: Product[] }) {
-    Vue.set(state.indexedProducts, exchangeId, products)
   },
   SET_CURRENCIES(state, currencies: BaseQuoteCurrencies) {
     state.baseCurrency = currencies.base

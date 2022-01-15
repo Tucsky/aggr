@@ -413,6 +413,10 @@ export default class extends Mixins(PaneMixin) {
     rangeToFetch.from = floorTimestampToTimeframe(Math.round(rangeToFetch.from), timeframe)
     rangeToFetch.to = floorTimestampToTimeframe(Math.round(rangeToFetch.to), timeframe) + timeframe
 
+    if (this._chartController.chartCache.cacheRange.from) {
+      rangeToFetch.to = Math.min(floorTimestampToTimeframe(this._chartController.chartCache.cacheRange.from, timeframe), rangeToFetch.to)
+    }
+
     const barsCount = Math.floor((rangeToFetch.to - rangeToFetch.from) / timeframe)
     const bytesPerBar = 112
     const estimatedSize = formatBytes(barsCount * historicalMarkets.length * bytesPerBar)
@@ -529,7 +533,7 @@ export default class extends Mixins(PaneMixin) {
       this._chartController.propagateInitialPrices = false
     }
 
-    this._chartController.renderAll()
+    this._chartController.renderAll(true)
   }
 
   /**
@@ -569,6 +573,9 @@ export default class extends Mixins(PaneMixin) {
       if (this._chartController.chartCache.cacheRange.from === null) {
         return
       }
+
+      // get latest visible logical range
+      visibleLogicalRange = this._chartController.chartInstance.timeScale().getVisibleLogicalRange()
 
       this.savePosition(visibleLogicalRange)
 
@@ -694,6 +701,8 @@ export default class extends Mixins(PaneMixin) {
     if (!barsToLoad) {
       return
     }
+
+    console.log('range from:', new Date(this._chartController.chartCache.cacheRange.from*1000).toISOString())
 
     const rangeToFetch = {
       from: this._chartController.chartCache.cacheRange.from - barsToLoad * this.$store.state[this.paneId].timeframe,

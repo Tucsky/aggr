@@ -144,6 +144,7 @@ $exchanges: (
 :root {
   --theme-background-base: #{lighten($dark, 0%)};
   --theme-background-100: #{lighten($dark, 10%)};
+  --theme-background-115: #{lighten($dark, 12.5%)};
   --theme-background-150: #{lighten($dark, 30%)};
   --theme-background-200: #{lighten($dark, 50%)};
   --theme-background-300: #{lighten($dark, 75%)};

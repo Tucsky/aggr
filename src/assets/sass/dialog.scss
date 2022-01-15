@@ -15,7 +15,6 @@
   }
 
   .dialog-content {
-    min-width: 420px;
     max-width: 500px;
     border-radius: $border-radius-base;
     background-color: var(--theme-background-100);
@@ -26,7 +25,7 @@
 
     .dialog-body {
       overflow: auto;
-      max-height: 69vh;
+      max-height: 66vh;
       padding: 1rem;
     }
 
@@ -41,6 +40,15 @@
 
       > .btn {
         align-self: center;
+        span {
+          display: none;
+        }
+        
+        @media screen and (min-width: 580px) {
+          span {
+            display: block;
+          }
+        }
       }
 
       .checkbox-control > input:not(:checked) + div {

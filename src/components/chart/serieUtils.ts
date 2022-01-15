@@ -139,16 +139,17 @@ export function cum$(state, value) {
 export const pivot_high = {
   count: 0,
   points: [],
+  baseLength: 1,
   lengthIndexes: [1, 2]
 }
 export function pivot_high$(state, value, lengthBefore, lengthAfter) {
   state.output = value
 
-  const middle = state.points[lengthBefore + 1]
+  const middle = state.points[lengthBefore]
   const length = lengthBefore + lengthAfter
 
   for (let i = 0; i <= length; i++) {
-    const current = i < length ? state.points[i] : value
+    const current = i < length - 1 ? state.points[i] : value
 
     if (current > middle) {
       return null
@@ -165,16 +166,17 @@ export function pivot_high$(state, value, lengthBefore, lengthAfter) {
 export const pivot_low = {
   count: 0,
   points: [],
+  baseLength: 1,
   lengthIndexes: [1, 2]
 }
 export function pivot_low$(state, value, lengthBefore, lengthAfter) {
   state.output = value
 
-  const middle = state.points[lengthBefore + 1]
+  const middle = state.points[lengthBefore]
   const length = lengthBefore + lengthAfter
 
   for (let i = 0; i <= length; i++) {
-    const current = i < length ? state.points[i] : value
+    const current = i < length - 1 ? state.points[i] : value
 
     if (current < middle) {
       return null
@@ -446,4 +448,40 @@ export function avg_heikinashi$(state, renderer) {
   }
 
   return { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }
+}
+
+export function merge_overlapping_intervals$(state, intervals) {
+  return intervals
+    .sort((a, b) => a[0] - b[0])
+    .reduce(
+      (acc, range) => {
+        const indexOfLast = acc.length - 1
+        const prevRange = acc[indexOfLast]
+        const end = prevRange[1]
+        const start = range[0]
+
+        if (end >= start) {
+          acc[indexOfLast][1] = Math.max(end, range[1])
+        } else {
+          acc.push(range)
+        }
+
+        return acc
+      },
+      [intervals[0]]
+    )
+}
+
+export function reverse_intervals$(state, intervals) {
+  return intervals.reduce((acc, range, i, arr) => {
+    if (i > 0) {
+      acc[i - 1][1] = range[0]
+    }
+
+    if (i < arr.length - 1) {
+      acc.push([range[1]])
+    }
+
+    return acc
+  }, [])
 }

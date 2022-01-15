@@ -9,7 +9,7 @@ import panesSettings from './panesSettings'
 import defaultPanes from './defaultPanes.json'
 import { ListenedProduct } from './app'
 import { GRID_COLS } from '@/utils/constants'
-import { requestProducts } from '../services/productsService'
+import { indexedProducts, requestProducts } from '../services/productsService'
 
 export type PaneType = 'trades' | 'chart' | 'stats' | 'counters' | 'prices' | 'website'
 export type MarketsListeners = { [market: string]: ListenedProduct }
@@ -142,7 +142,7 @@ const actions = {
       commit('REMOVE_GRID_ITEM', index)
     }
   },
-  async refreshMarketsListeners({ commit, state, rootState }, { markets, id } = {}) {
+  async refreshMarketsListeners({ commit, state }, { markets, id } = {}) {
     // cache original listeners (market: n listeners)
     const originalListeners: { [marketKey: string]: number } = Object.keys(state.marketsListeners).reduce((listenersByMarkets, marketKey) => {
       listenersByMarkets[marketKey] = state.marketsListeners[marketKey].listeners
@@ -179,13 +179,13 @@ const actions = {
           } else {
             const [exchange, pair] = parseMarket(marketKey)
 
-            if (!rootState.app.indexedProducts[exchange]) {
+            if (!indexedProducts[exchange]) {
               console.warn(`[panes/refreshMarketsListeners] products not found for exchange`, exchange, '-> requesting now')
               await requestProducts(exchange)
               console.debug(`[panes/refreshMarketsListeners] ${exchange}'s products acquired`)
             }
 
-            const indexedProduct = rootState.app.indexedProducts[exchange].find(indexedMarket => indexedMarket.pair === pair)
+            const indexedProduct = indexedProducts[exchange].find(indexedMarket => indexedMarket.pair === pair)
 
             if (!indexedProduct) {
               // this can happen if a product has been added before, but been delisted and product got automatically refreshed
@@ -223,9 +223,9 @@ const actions = {
       } else if (previousListeners && !currentListeners) {
         toDisconnect.push(market)
 
-        if (state.marketsListeners[market].listeners) {
-          // clear listeners for that market
-          state.marketsListeners[market].listeners = 0
+        if (state.marketsListeners[market]) {
+          // dlete market from store
+          delete state.marketsListeners[market]
         }
       }
     }

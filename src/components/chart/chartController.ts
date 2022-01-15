@@ -141,7 +141,12 @@ export default class ChartController {
   activeRenderer: Renderer
   renderedRange: TimeRange = { from: null, to: null }
   chartCache: ChartCache
-  markets: { [identifier: string]: true }
+  markets: {
+    [identifier: string]: {
+      active: boolean
+      historical: boolean
+    }
+  }
   timezoneOffset = 0
   fillGapsWithEmpty = true
   timeframe: number
@@ -182,41 +187,34 @@ export default class ChartController {
     }
 
     const markets = store.state.panes.panes[this.paneId].markets
+    const mergeUsdt = store.state.settings.searchTypes.mergeUsdt
 
     const marketsForWatermark = []
 
     this.markets = markets.reduce((output, marketKey) => {
       const [exchange] = marketKey.split(':')
+      const market = store.state.panes.marketsListeners[marketKey]
 
-      if (
-        (output[marketKey] =
-          store.state.exchanges[exchange] && !store.state.exchanges[exchange].disabled && !store.state[this.paneId].hiddenMarkets[marketKey])
-      ) {
-        marketsForWatermark.push(marketKey)
+      output[marketKey] = {
+        active: store.state.exchanges[exchange] && !store.state.exchanges[exchange].disabled && !store.state[this.paneId].hiddenMarkets[marketKey],
+        historical: market.historical
+      }
+
+      let localPair = market ? market.local : marketKey
+
+      if (mergeUsdt) {
+        localPair = localPair.replace('USDT', 'USD').replace('USDC', 'USD')
+      }
+
+      if (output[marketKey].active && marketsForWatermark.indexOf(localPair) === -1) {
+        marketsForWatermark.push(localPair)
       }
 
       return output
     }, {})
 
     if (store.state.settings.normalizeWatermarks) {
-      const mergeUsdt = store.state.settings.searchTypes.mergeUsdt
-
-      this.watermark = marketsForWatermark
-        .reduce((output, marketKey) => {
-          const market = store.state.panes.marketsListeners[marketKey]
-          let localPair = market ? market.local : marketKey
-
-          if (mergeUsdt) {
-            localPair = localPair.replace('USDT', 'USD').replace('USDC', 'USD')
-          }
-
-          if (output.indexOf(localPair) === -1) {
-            output.push(localPair)
-          }
-
-          return output
-        }, [])
-        .join(' | ')
+      this.watermark = marketsForWatermark.join(' | ')
     } else {
       const othersCount = marketsForWatermark.length - 3
       this.watermark =
@@ -395,7 +393,7 @@ export default class ChartController {
    * @returns
    */
   optionRequiresRedraw(key: string) {
-    const redrawOptions = /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor/i
+    const redrawOptions = /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor|compositeOperation/i
 
     if (redrawOptions.test(key)) {
       return true
@@ -1120,7 +1118,7 @@ export default class ChartController {
           pair: trade.pair,
           exchange: trade.exchange,
           close: +trade.price,
-          active: this.markets[identifier]
+          active: this.markets[identifier].active
         }
 
         this.resetBar(this.activeRenderer.sources[identifier])
@@ -1128,7 +1126,7 @@ export default class ChartController {
 
       this.activeRenderer.sources[identifier].empty = false
 
-      const isActive = this.markets[identifier]
+      const isActive = this.markets[identifier].active
 
       if (trade.liquidation) {
         this.activeRenderer.sources[identifier]['l' + trade.side] += amount
@@ -1204,8 +1202,9 @@ export default class ChartController {
    *
    * @param {Bar[]} bars bars to render
    * @param {string[]} indicatorsId id of indicators to render
+   * @param {boolean} refreshInitialPrices
    */
-  renderBars(bars, indicatorsIds) {
+  renderBars(bars, indicatorsIds, refreshInitialPrices?: boolean) {
     if (!bars.length) {
       return
     }
@@ -1227,19 +1226,36 @@ export default class ChartController {
 
     let temporaryRenderer: Renderer
     let computedBar: any
+    const remainingInitialMarkets = Object.keys(this.markets).filter(name => this.markets[name].historical)
+
+    const maxLookback = 100 * remainingInitialMarkets.length
+    const initialMarkets = []
 
     if (this.propagateInitialPrices) {
       const initialTimestamp = bars[0].timestamp
 
-      for (let i = 0; i < bars.length; i++) {
-        if (bars[i].timestamp > initialTimestamp) {
-          break
-        }
+      if (refreshInitialPrices) {
+        for (let i = 0; i < bars.length; i++) {
+          const market = bars[i].exchange + ':' + bars[i].pair
+          let index
 
-        const market = bars[i].exchange + ':' + bars[i].pair
-
-        if (this.chartCache.initialPrices[market]) {
-          delete this.chartCache.initialPrices[market]
+          if (refreshInitialPrices) {
+            if (bars[i].timestamp <= initialTimestamp) {
+              if ((index = remainingInitialMarkets.indexOf(market)) !== -1) {
+                initialMarkets.push(remainingInitialMarkets.splice(index, 1)[0])
+              }
+              continue
+            } else if ((index = remainingInitialMarkets.indexOf(market)) !== -1) {
+              this.chartCache.initialPrices[market] = {
+                exchange: bars[i].exchange,
+                pair: bars[i].pair,
+                price: bars[i].close
+              }
+              remainingInitialMarkets.splice(index, 1)
+            } else if (!remainingInitialMarkets.length || i > maxLookback) {
+              break
+            }
+          }
         }
       }
 
@@ -1352,7 +1368,8 @@ export default class ChartController {
       }
 
       const marketKey = bar.exchange + ':' + bar.pair
-      const isActive = this.markets[marketKey]
+
+      const isActive = this.markets[marketKey].active
 
       if (isActive) {
         temporaryRenderer.bar.empty = false
@@ -1495,13 +1512,17 @@ export default class ChartController {
   /**
    * Renders chunks that collides with visible range
    */
-  renderAll() {
+  renderAll(refreshInitialPrices?: boolean) {
     if (!this.chartInstance) {
       return
     }
 
     this.clearChart()
-    this.renderBars(this.chartCache.chunks.length ? this.chartCache.chunks.reduce((bars, chunk) => bars.concat(chunk.bars), []) : [], null)
+    this.renderBars(
+      this.chartCache.chunks.length ? this.chartCache.chunks.reduce((bars, chunk) => bars.concat(chunk.bars), []) : [],
+      null,
+      refreshInitialPrices
+    )
   }
 
   /**
@@ -1624,6 +1645,10 @@ export default class ChartController {
         empty: true
       }
     }
+
+    this.loadedIndicators = this.loadedIndicators.sort((a, b) => {
+      return a.model.references.length - b.model.references.length
+    })
 
     for (const indicator of this.loadedIndicators) {
       if ((indicatorsIds && indicatorsIds.indexOf(indicator.id) === -1) || indicator.options.visible === false) {

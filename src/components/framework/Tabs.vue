@@ -162,6 +162,7 @@ export default class extends Vue {
   text-transform: none;
   border-radius: 0;
   font-size: 1.125em;
+  font-family: $font-base;
 
   &:hover {
     background: 0;
@@ -176,12 +177,18 @@ export default class extends Vue {
     position: relative;
     z-index: 1;
     color: var(--theme-color-base);
-    box-shadow: 0 1px var(--theme-color-base);
+    box-shadow: 0 1px var(--theme-color-o50);
     background-color: rgba(white, 0.075);
 
-    &:focus {
-      box-shadow: 0 1px var(--theme-color-base);
+    &:active {
+      box-shadow: 0 1px rgb(246 246 246 / 20%);
+      background-color: rgb(255 255 255 / 3%);
     }
+  }
+
+  &:active {
+    box-shadow: 0 1px rgb(246 246 246 / 20%);
+    background-color: rgb(0 0 0 / 8%);
   }
 }
 </style>

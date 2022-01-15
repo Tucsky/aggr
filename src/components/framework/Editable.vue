@@ -68,7 +68,11 @@ export default class extends Vue {
       return
     }
 
-    this.changed && this.$emit('output', event.target.innerText)
+    if (this.changed) {
+      event.target.innerHTML = event.target.innerText
+      this.$emit('output', event.target.innerText)
+    }
+
     this.focused = false
 
     if (window.getSelection) {

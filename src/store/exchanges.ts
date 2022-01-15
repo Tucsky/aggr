@@ -2,7 +2,7 @@ import aggregatorService from '@/services/aggregatorService'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
-import { requestProducts } from '../services/productsService'
+import { indexedProducts, requestProducts } from '../services/productsService'
 
 export interface ExchangeSettings {
   disabled?: boolean
@@ -93,7 +93,7 @@ const actions = {
 
     await aggregatorService.connect(markets)
   },
-  indexExchangeProducts(noop, { exchangeId, symbols }: { exchangeId: string; symbols: string[] }) {
+  indexExchangeProducts({ rootState }, { exchangeId, symbols }: { exchangeId: string; symbols: string[] }) {
     const products = []
 
     const baseRegex = '([a-z0-9]{2,})'
@@ -193,21 +193,21 @@ const actions = {
         // localSymbol = base + quote.replace(/usdt/i, 'USD')
       }
 
-      products.push({
+      const product = {
         id,
         base,
         quote,
         pair: symbol,
         local: localSymbol,
         exchange: exchangeId,
+        historical: rootState.app.historicalMarkets.indexOf(id) !== -1,
         type
-      })
+      }
+
+      products.push(product)
     }
 
-    this.commit('app/INDEX_EXCHANGE_PRODUCTS', {
-      exchangeId,
-      products
-    })
+    indexedProducts[exchangeId] = products
   }
 } as ActionTree<ExchangesState, ModulesState>
 

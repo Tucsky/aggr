@@ -1,6 +1,6 @@
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import { parseMarket, sleep, slugify, uniqueName } from '@/utils/helpers'
+import { sleep, slugify, uniqueName } from '@/utils/helpers'
 import { scheduleSync, syncState } from '@/utils/store'
 import { PriceScaleMargins, PriceScaleMode, SeriesOptions, SeriesType } from 'lightweight-charts'
 import Vue from 'vue'
@@ -254,8 +254,7 @@ const actions = {
           Vue.set(state.hiddenMarkets, market, !containsHidden)
         }
       } else {
-        const [exchange] = parseMarket(market)
-        const indexedMarket = rootState.app.indexedProducts[exchange].find(product => product.id === market)
+        const indexedMarket = rootState.panes.marketsListeners[market]
 
         const hide = type !== indexedMarket.type
 

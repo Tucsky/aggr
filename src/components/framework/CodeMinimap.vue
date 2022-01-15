@@ -138,13 +138,16 @@ export default class extends Vue {
   canvas {
     width: 100%;
     height: 100%;
+    position: relative;
+    pointer-events: none;
+    z-index: 1;
   }
 
   &__bounds {
     position: absolute;
     left: 0;
     right: 0;
-    background-color: rgba(black, 0.2);
+    background-color: var(--theme-background-150);
   }
 }
 </style>

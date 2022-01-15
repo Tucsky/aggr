@@ -15,11 +15,11 @@
         title="Scripting documentation"
         v-tippy
         class="btn -text -white mlauto -center  -no-grab"
-        ><i class="icon-info mr8"></i> Wiki</a
+        ><i class="icon-info"></i><span class="ml8">Wiki</span></a
       >
 
       <button v-if="unsavedChanges" title="Rollback changes" v-tippy class="btn ml8 -text -no-grab" @click="undoIndicator">
-        <i class="icon-trash mr8"></i> Discard
+        <i class="icon-trash"></i><span class="ml8">Discard</span>
       </button>
 
       <button
@@ -29,7 +29,7 @@
         :class="[!unsavedChanges && '-text -accent', unsavedChanges && '-green']"
         @click="saveIndicator"
       >
-        <i class="icon-save mr8"></i> Save
+        <i class="icon-save"></i><span class="ml8">Save</span>
       </button>
     </template>
     <p v-if="error" class="form-feedback ml16"><i class="icon-warning mr4"></i> {{ error }}</p>
@@ -54,16 +54,39 @@
           </div>
           <i class="icon-up-thin editor__resize" @mousedown="handleResize" @touchstart="handleResize"></i>
         </tab>
-        <tab name="Options" :badge="otherOptionsKeys.length" class="indicator-options indicator-options--tab hide-scrollbar">
-          <indicator-option
-            v-for="key in otherOptionsKeys"
-            :key="key"
-            :name="key"
-            :pane-id="paneId"
-            :indicator-id="indicatorId"
-            :plot-types="plotTypes"
-            class="indicator-options__option"
-          />
+        <tab
+          name="Options"
+          :badge="scriptOptionsKeys.length + defaultOptionsKeys.length"
+          class="indicator-options indicator-options--tab hide-scrollbar"
+        >
+          <section class="section">
+            <div v-if="sections.indexOf('scriptOptions') > -1">
+              <indicator-option
+                v-for="key in scriptOptionsKeys"
+                :key="key"
+                :name="key"
+                :pane-id="paneId"
+                :indicator-id="indicatorId"
+                :plot-types="plotTypes"
+                class="indicator-options__option"
+              />
+            </div>
+            <div class="section__title" @click="toggleSection('scriptOptions')">Script options <i class="icon-up-thin"></i></div>
+          </section>
+          <section class="section">
+            <div v-if="sections.indexOf('defaultOptions') > -1">
+              <indicator-option
+                v-for="key in defaultOptionsKeys"
+                :key="key"
+                :name="key"
+                :pane-id="paneId"
+                :indicator-id="indicatorId"
+                :plot-types="plotTypes"
+                class="indicator-options__option"
+              />
+            </div>
+            <div class="section__title" @click="toggleSection('defaultOptions')">Other options <i class="icon-up-thin"></i></div>
+          </section>
         </tab>
       </tabs>
       <hr class="-vertical" />
@@ -100,9 +123,9 @@
           </section>
 
           <section class="section">
-            <div v-if="sections.indexOf('customOptions') > -1">
+            <div v-if="sections.indexOf('scriptOptions') > -1">
               <indicator-option
-                v-for="key in otherOptionsKeys"
+                v-for="key in scriptOptionsKeys"
                 :key="key"
                 :name="key"
                 :pane-id="paneId"
@@ -110,7 +133,21 @@
                 :plot-types="plotTypes"
               />
             </div>
-            <div class="section__title" @click="toggleSection('customOptions')">Options <i class="icon-up-thin"></i></div>
+            <div class="section__title" @click="toggleSection('scriptOptions')">Script <i class="icon-up-thin"></i></div>
+          </section>
+
+          <section class="section">
+            <div v-if="sections.indexOf('defaultOptions') > -1">
+              <indicator-option
+                v-for="key in defaultOptionsKeys"
+                :key="key"
+                :name="key"
+                :pane-id="paneId"
+                :indicator-id="indicatorId"
+                :plot-types="plotTypes"
+              />
+            </div>
+            <div class="section__title" @click="toggleSection('defaultOptions')">Other <i class="icon-up-thin"></i></div>
           </section>
 
           <section class="section">
@@ -213,7 +250,8 @@ export default {
     optionsQuery: '',
     fontSize: 1,
     tab: 0,
-    otherOptionsKeys: [],
+    defaultOptionsKeys: [],
+    scriptOptionsKeys: [],
     colorOptionsKeys: [],
     indicatorMenu: null,
     helps: {
@@ -254,7 +292,7 @@ export default {
         : 2
     },
     priceFormat() {
-      return this.indicator.options.priceFormat ? this.indicator.options.priceFormat.format : 'price'
+      return this.indicator.options.priceFormat ? this.indicator.options.priceFormat.type : 'price'
     },
     availableScales() {
       return Object.values(this.$store.state[this.paneId].indicators as IndicatorSettings).reduce(
@@ -278,7 +316,8 @@ export default {
 
       const query = new RegExp(this.optionsQuery, 'i')
 
-      return [...this.otherOptionsKeys, ...this.colorOptionsKeys].filter(key => query.test(key))
+      // script + default + colors
+      return [...this.scriptOptionsKeys, ...this.defaultOptionsKeys, ...this.colorOptionsKeys].filter(key => query.test(key))
     }
   },
   watch: {
@@ -492,12 +531,17 @@ export default {
         }
 
         if (payload.values) {
-          for (const key of this.otherOptionsKeys) {
+          // + script + default
+          for (const key of this.scriptOptionsKeys) {
+            indicatorPreset.options[key] = getIndicatorOptionValue(this.paneId, this.indicatorId, key, this.plotTypes)
+          }
+          for (const key of this.defaultOptionsKeys) {
             indicatorPreset.options[key] = getIndicatorOptionValue(this.paneId, this.indicatorId, key, this.plotTypes)
           }
         }
 
         if (payload.colors) {
+          // + colors
           for (const key of this.colorOptionsKeys) {
             indicatorPreset.options[key] = getIndicatorOptionValue(this.paneId, this.indicatorId, key, this.plotTypes)
           }
@@ -511,16 +555,28 @@ export default {
       }
     },
     getOptionsKeys() {
-      const customOptionsKeys = [
-        ...Object.keys(defaultSerieOptions),
-        ...this.plotTypes.reduce((typesKeys, key) => [...typesKeys, ...Object.keys(defaultPlotsOptions[key] || {})], []),
-        ...this.getScriptOptions(this.script)
-      ].filter((x, i, a) => {
+      const defaultOptionsKeys = Object.keys(defaultSerieOptions)
+      const defaultSeriesOptionsKeys = this.plotTypes.reduce((typesKeys, key) => [...typesKeys, ...Object.keys(defaultPlotsOptions[key] || {})], [])
+      const scriptOptionsKeys = this.getScriptOptions(this.script)
+
+      const customOptionsKeys = [...defaultOptionsKeys, ...defaultSeriesOptionsKeys, ...scriptOptionsKeys].filter((x, i, a) => {
         return ignoredOptionsKeys.indexOf(x) === -1 && a.indexOf(x) == i
       })
 
-      this.otherOptionsKeys = customOptionsKeys
-        .filter(key => !/color/i.test(key))
+      this.scriptOptionsKeys = customOptionsKeys
+        .filter(key => !/color/i.test(key) && scriptOptionsKeys.indexOf(key) !== -1)
+        .sort((a, b) => {
+          if (a > b) {
+            return 1
+          } else if (a < b) {
+            return -1
+          }
+
+          return 0
+        })
+
+      this.defaultOptionsKeys = customOptionsKeys
+        .filter(key => !/color/i.test(key) && scriptOptionsKeys.indexOf(key) === -1)
         .sort((a, b) => {
           if (a > b) {
             return 1
@@ -539,7 +595,8 @@ export default {
       if (presetData) {
         merge(indicator, presetData)
       } else {
-        const keys = this.otherOptionsKeys.concat(this.colorOptionsKeys)
+        // script + default + colors
+        const keys = this.scriptOptionsKeys.concat(this.defaultOptionsKeys, this.colorOptionsKeys)
 
         for (const key of keys) {
           const defaultValue = this.getDefaultValue(key)
@@ -624,18 +681,19 @@ export default {
         this.$refs.editorMinimap.updateSize()
       })
     },
-    togglePriceFormat() {
-      const formats = ['price', 'volume']
+    setPriceFormat(type, precision) {
+      precision = Math.round(precision)
 
-      this.updatePriceFormat(formats[(formats.indexOf(this.format) + 1) % formats.length], this.precision)
-    },
-    updatePriceFormat(format, precision) {
+      if (isNaN(precision)) {
+        precision = 2
+      }
+
       this.$store.dispatch(this.paneId + '/setIndicatorOption', {
         id: this.indicatorId,
         key: 'priceFormat',
         value: {
-          format,
-          precision,
+          type,
+          precision: precision,
           minMove: 1 / Math.pow(10, precision)
         }
       })
@@ -652,53 +710,73 @@ export default {
 </script>
 <style lang="scss" scoped>
 .indicator-dialog {
-  ::v-deep header {
-    border-bottom: 0 !important;
+  ::v-deep .dialog-content {
+    header {
+      border-bottom: 0 !important;
+    }
+    .dialog-body {
+      max-height: 90vh;
+    }
   }
 
   &__wrapper {
     height: 50vh;
     flex-grow: 1;
   }
-}
+  .indicator-tabs {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 
-.indicator-tabs {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
+    @media screen and (min-width: 1400px) {
+      width: 25vw;
+    }
 
-  @media screen and (min-width: 1400px) {
-    width: 25vw;
-  }
-
-  + hr.-vertical {
-    margin: 0 0 0;
-  }
-}
-
-.indicator-options {
-  overflow-y: auto;
-
-  &__search {
-    background: 0 !important;
-    padding-bottom: 0;
-
-    .input-group + .indicator-option {
-      margin-top: 1rem;
+    + hr.-vertical {
+      margin: 2.5rem 0 0;
     }
   }
 
-  &--tab {
-    margin: 0;
-    padding: 1rem;
+  .indicator-options {
+    overflow-y: auto;
+    margin-top: 2.5rem;
+    border-top: 1px solid var(--theme-background-200);
+    display: none;
 
-    .indicator-options__option {
-      width: 184px;
-      display: inline-block;
-      margin-right: 16px;
+    @media screen and (min-width: 768px) {
+      display: block;
+    }
 
-      .form-control {
-        max-width: 100%;
+    &__search {
+      position: sticky;
+      top: 0;
+      margin: 0 1px;
+      background-color: var(--theme-background-o75);
+      backdrop-filter: blur(1rem);
+      z-index: 2;
+
+      .input-group + .indicator-option {
+        margin-top: 1rem;
+      }
+    }
+
+    &--tab {
+      margin: 0;
+      display: block;
+      border: 0;
+
+      @media screen and (min-width: 768px) {
+        display: block;
+      }
+
+      .indicator-options__option {
+        width: 184px;
+        display: inline-block;
+        margin-right: 16px;
+
+        .form-control {
+          max-width: 100%;
+        }
       }
     }
   }
@@ -712,10 +790,11 @@ export default {
   &__prism {
     width: 100%;
     height: auto;
-    color: var(--theme-color-100);
+    color: var(--theme-color-150);
     font-family: $font-monospace;
     padding: 1rem 2.5rem 1rem 1rem;
     font-size: 0.825em;
+    background-color: rgba(black, 0.085);
   }
 
   &__minimap {

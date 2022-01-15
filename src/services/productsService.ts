@@ -5,6 +5,8 @@ import workspacesService from './workspacesService'
 
 const promisesOfProducts = []
 
+export const indexedProducts = []
+
 export function saveProducts(storage: ProductsStorage) {
   console.log(`[products.${storage.exchange}] saving products`, storage.data)
   storage.timestamp = Date.now()
