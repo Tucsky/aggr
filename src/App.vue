@@ -57,7 +57,7 @@ import Panes from '@/components/panes/Panes.vue'
 import upFavicon from './assets/up.png'
 import downFavicon from './assets/down.png'
 
-import { formatPrice } from './utils/helpers'
+import { formatMarketPrice } from './utils/helpers'
 import { Notice } from './store/app'
 import workspacesService from './services/workspacesService'
 import dialogService from './services/dialogService'
@@ -180,7 +180,7 @@ export default class extends Vue {
         }
       }
 
-      this.price = formatPrice(price, this._mainMarkets[0])
+      this.price = formatMarketPrice(price, this._mainMarkets[0])
 
       window.document.title = this._mainPair + ' ' + this.price
     } else {
@@ -248,9 +248,10 @@ export default class extends Vue {
 
   async resetAndReload() {
     const response = await dialogService.confirm({
+      title: 'Reset app',
       message: 'Are you sure ?',
       ok: 'Reset settings',
-      cancel: 'Download settings'
+      cancel: 'Download workspace ' + workspacesService.workspace.id
     })
 
     if (response === true) {

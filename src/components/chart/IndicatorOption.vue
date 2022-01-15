@@ -107,7 +107,7 @@ export default class extends Vue {
   onIndicatorValueChange() {
     const value = this.getValue()
 
-    if (value !== this.value) {
+    if (+this.value !== +value || (isNaN(+this.value) && value !== this.value)) {
       this.value = value
     }
   }

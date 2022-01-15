@@ -51,7 +51,8 @@ export const databaseUpgrades = {
       autoIncrement: true
     })
   },
-  4: async (db: IDBPDatabase<AggrDB>, tx: IDBPTransaction<AggrDB>) => {
+  4: async (/*db: IDBPDatabase<AggrDB>, tx: IDBPTransaction<AggrDB>*/) => {
+    /*
     const type = 'indicator'
     const objectStore: any = tx.objectStore('presets')
     const presets = await objectStore.getAllKeys(IDBKeyRange.bound(type, type + '|', true, true))
@@ -63,6 +64,7 @@ export const databaseUpgrades = {
       await objectStore.put(preset)
       await objectStore.delete(id)
     }
+    */
   }
 }
 

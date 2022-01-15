@@ -36,7 +36,7 @@ export function countDecimals(value) {
 
 export const marketDecimals = {}
 
-export function formatPrice(price, market): number {
+export function formatMarketPrice(price, market): number {
   if (!marketDecimals[market]) {
     return parseInt(price)
   }
@@ -46,6 +46,18 @@ export function formatPrice(price, market): number {
   }
 
   return price.toFixed(marketDecimals[market])
+}
+
+export function formatPrice(price, precision?: number): number {
+  if (!precision) {
+    return parseInt(price)
+  }
+
+  if (!price) {
+    price = 0
+  }
+
+  return price.toFixed(precision)
 }
 
 export function ago(timestamp) {
@@ -123,18 +135,6 @@ export function uniqueName(name, names) {
   }
 
   return name
-}
-
-export const deepSet = (object, path, value) => {
-  if (path.length === 1) object[path[0]] = value
-  else if (path.length === 0) throw 'error'
-  else {
-    if (object[path[0]]) return deepSet(object[path[0]], path.slice(1), value)
-    else {
-      object[path[0]] = {}
-      return deepSet(object[path[0]], path.slice(1), value)
-    }
-  }
 }
 
 export const slugify = string => {

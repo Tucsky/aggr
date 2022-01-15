@@ -547,7 +547,11 @@ class Aggregator {
         promises.push(
           (async () => {
             for (const market of marketsByExchange[exchangeId]) {
-              await exchange.link(market)
+              try {
+                await exchange.link(market)
+              } catch (error) {
+                console.error(error)
+              }
             }
           })()
         )

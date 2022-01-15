@@ -75,7 +75,7 @@ export default class extends Exchange {
     )
 
     // BINANCE: WebSocket connections have a limit of 5 incoming messages per second.
-    await sleep(250)
+    await sleep(101)
 
     return true
   }
@@ -103,7 +103,7 @@ export default class extends Exchange {
     delete this.subscriptions[pair]
 
     // BINANCE: WebSocket connections have a limit of 5 incoming messages per second.
-    await sleep(250)
+    await sleep(101)
 
     return true
   }

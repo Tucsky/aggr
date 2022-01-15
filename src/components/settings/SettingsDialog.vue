@@ -154,7 +154,7 @@
             menuPosition="left"
             model="rgb"
             :value="textColor"
-            @input="$event !== textColor && $store.commit('settings/SET_CHART_COLOR', $event)"
+            @input="$event !== textColor && $store.dispatch('settings/setTextColor', $event)"
           ></verte>
           <label for="" class="-fill -center ml8"
             >Text color <a><i class="icon-cross text-small" v-if="textColor" @click="$store.commit('settings/SET_CHART_COLOR', null)"></i></a

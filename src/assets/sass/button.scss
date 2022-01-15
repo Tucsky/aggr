@@ -16,6 +16,16 @@ button {
   flex-shrink: 0;
   cursor: pointer;
 
+  .lds-spinner {
+    font-size: inherit;
+    margin-left: .5em;
+  }
+
+  &.-loading {
+    pointer-events: none;
+  }
+
+
   &:focus {
     box-shadow: 0 0 0 6px rgba($green, 0.1);
 

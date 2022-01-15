@@ -15,8 +15,11 @@
 
       <span class="mr4">{{ value.label }}</span>
 
-      <button type="button" class="dropdown-option__action btn -green -small mlauto" @mousedown.prevent @click="openPreset(value.id, value.label)">
+      <button type="button" class="dropdown-option__action btn -accent -small mlauto" @mousedown.prevent @click="openPreset(value.id, value.label)">
         <i class="icon-edit"></i>
+      </button>
+      <button type="button" class="dropdown-option__action btn -accent -small" @mousedown.prevent @click="deletePreset(value)">
+        <i class="icon-trash"></i>
       </button>
     </template>
   </dropdown>
@@ -175,6 +178,13 @@ export default class extends Vue {
         title: error.message,
         type: 'error'
       })
+    }
+  }
+
+  async deletePreset(preset) {
+    if (await dialogService.confirm('Remove preset ' + preset.label + ' ?')) {
+      await workspacesService.removePreset(preset.id)
+      await this.getPresets()
     }
   }
 }

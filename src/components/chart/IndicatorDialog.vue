@@ -59,7 +59,7 @@
           :badge="scriptOptionsKeys.length + defaultOptionsKeys.length"
           class="indicator-options indicator-options--tab hide-scrollbar"
         >
-          <section class="section">
+          <section class="section" v-if="scriptOptionsKeys.length">
             <div v-if="sections.indexOf('scriptOptions') > -1">
               <indicator-option
                 v-for="key in scriptOptionsKeys"
@@ -122,7 +122,7 @@
             <div class="section__title" @click="toggleSection('colors')">Colors <i class="icon-up-thin"></i></div>
           </section>
 
-          <section class="section">
+          <section class="section" v-if="scriptOptionsKeys.length">
             <div v-if="sections.indexOf('scriptOptions') > -1">
               <indicator-option
                 v-for="key in scriptOptionsKeys"
@@ -287,9 +287,11 @@ export default {
       return this.indicator.script
     },
     precision() {
-      return this.indicator.options.priceFormat && typeof this.indicator.options.priceFormat.precision === 'number'
-        ? this.indicator.options.priceFormat.precision
-        : 2
+      if (!this.indicator.options.priceFormat || this.indicator.options.priceFormat.auto) {
+        return 'auto'
+      }
+
+      return typeof this.indicator.options.priceFormat.precision === 'number' ? this.indicator.options.priceFormat.precision : 2
     },
     priceFormat() {
       return this.indicator.options.priceFormat ? this.indicator.options.priceFormat.type : 'price'
@@ -682,6 +684,8 @@ export default {
       })
     },
     setPriceFormat(type, precision) {
+      const auto = precision === ''
+
       precision = Math.round(precision)
 
       if (isNaN(precision)) {
@@ -694,7 +698,8 @@ export default {
         value: {
           type,
           precision: precision,
-          minMove: 1 / Math.pow(10, precision)
+          minMove: 1 / Math.pow(10, precision),
+          auto
         }
       })
     },
@@ -751,7 +756,7 @@ export default {
       position: sticky;
       top: 0;
       margin: 0 1px;
-      background-color: var(--theme-background-o75);
+      background-color: var(--theme-background-o75) !important;
       backdrop-filter: blur(1rem);
       z-index: 2;
 
@@ -790,17 +795,24 @@ export default {
   &__prism {
     width: 100%;
     height: auto;
-    color: var(--theme-color-150);
-    font-family: $font-monospace;
     padding: 1rem 2.5rem 1rem 1rem;
     font-size: 0.825em;
-    background-color: rgba(black, 0.085);
   }
 
   &__minimap {
-    flex-basis: 100px;
-    max-width: 100px;
+    flex-basis: 60px;
+    max-width: 60px;
     flex-shrink: 0;
+
+    @media screen and (min-width: 1280px) {
+      flex-basis: 80px;
+      max-width: 80px;
+    }
+
+    @media screen and (min-width: 1440px) {
+      flex-basis: 100px;
+      max-width: 100px;
+    }
   }
 
   &__zoom,

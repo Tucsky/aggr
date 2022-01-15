@@ -21,14 +21,11 @@ import { countDecimals } from '../../utils/helpers'
 })
 export default class extends Vue {
   private content: string
-  private step: number
   private min: number
   private max: number
-  private editable: boolean
   private disabled: boolean
   private clickAt: number
   private changed = false
-  private focused = false
 
   mounted() {
     const el = this.$el as HTMLElement
@@ -73,8 +70,6 @@ export default class extends Vue {
       this.$emit('output', event.target.innerText)
     }
 
-    this.focused = false
-
     if (window.getSelection) {
       window.getSelection().removeAllRanges()
     } else if ((document as any).selection) {
@@ -93,15 +88,12 @@ export default class extends Vue {
     }
 
     if (event.which === 38 || event.which === 40) {
-      this.increment((event.which === 40 ? 1 : -1) * (event.shiftKey ? 100 : 1))
+      this.increment((event.which === 40 ? 1 : -1) * (event.shiftKey ? 10 : 1))
     }
   }
 
   onFocus() {
-    // !this.focused && this.selectAll()
-
     this.changed = false
-    this.focused = true
   }
 
   onClick() {

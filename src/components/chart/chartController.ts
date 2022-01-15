@@ -1,5 +1,5 @@
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
-import { getHms, deepSet, camelize, getTimeframeForHuman, floorTimestampToTimeframe, isOddTimeframe } from '../../utils/helpers'
+import { getHms, camelize, getTimeframeForHuman, floorTimestampToTimeframe, isOddTimeframe, marketDecimals } from '../../utils/helpers'
 import { defaultChartOptions, defaultPlotsOptions, defaultSerieOptions, getChartOptions } from './chartOptions'
 import store from '../../store'
 import * as seriesUtils from './serieUtils'
@@ -11,6 +11,7 @@ import dialogService from '@/services/dialogService'
 import IndicatorDialog from './IndicatorDialog.vue'
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
 import { waitForStateMutation } from '../../utils/store'
+import aggregatorService from '@/services/aggregatorService'
 
 export interface Bar {
   vbuy?: number
@@ -32,6 +33,7 @@ export interface Bar {
 
 export interface IndicatorApi extends TV.ISeriesApi<any> {
   id: string
+  precision?: number
 }
 
 export type IndicatorMarkets = {
@@ -146,7 +148,7 @@ export default class ChartController {
       active: boolean
       historical: boolean
     }
-  }
+  } = {}
   timezoneOffset = 0
   fillGapsWithEmpty = true
   timeframe: number
@@ -163,6 +165,9 @@ export default class ChartController {
   private _releaseQueueInterval: number
   private _releasePanTimeout: number
   private _queueHandler = this.releaseQueue.bind(this)
+  private _refreshDecimalsHandler = this.refreshAutoDecimals.bind(this)
+  private _promiseOfMarkets: Promise<void>
+  private _promiseOfMarketsRender: Promise<void>
 
   constructor(id: string) {
     this.paneId = id
@@ -173,6 +178,7 @@ export default class ChartController {
     this.setTimeframe(store.state[this.paneId].timeframe)
     this.setTimezoneOffset(store.state.settings.timezoneOffset)
     this.refreshMarkets()
+    aggregatorService.on('decimals', this._refreshDecimalsHandler)
 
     this.fillGapsWithEmpty = Boolean(store.state[this.paneId].fillGapsWithEmpty)
   }
@@ -183,8 +189,14 @@ export default class ChartController {
    */
   refreshMarkets() {
     if (!store.state.app.isExchangesReady) {
-      waitForStateMutation(state => state.app.isExchangesReady).then(this.refreshMarkets.bind(this))
+      if (!this._promiseOfMarkets) {
+        this._promiseOfMarkets = waitForStateMutation(state => state.app.isExchangesReady).then(this.refreshMarkets.bind(this))
+      }
+
+      return this._promiseOfMarkets
     }
+
+    this._promiseOfMarkets = null
 
     const markets = store.state.panes.panes[this.paneId].markets
     const mergeUsdt = store.state.settings.searchTypes.mergeUsdt
@@ -224,6 +236,8 @@ export default class ChartController {
     this.updateWatermark()
 
     this.resetPriceScales()
+
+    return Promise.resolve()
   }
 
   /**
@@ -343,17 +357,7 @@ export default class ChartController {
       return
     }
 
-    let rootOptionKey = key
-
-    if (key.indexOf('.') !== -1) {
-      const path = key.split('.')
-
-      deepSet(indicator.options, path, value)
-
-      rootOptionKey = path[0]
-    } else {
-      indicator.options[rootOptionKey] = value
-    }
+    indicator.options[key] = value
 
     if (silent) {
       return
@@ -368,21 +372,21 @@ export default class ChartController {
       }
 
       return
+    } else if (key === 'priceFormat' && value.auto) {
+      this.refreshAutoDecimals(id)
     }
 
     for (let i = 0; i < indicator.apis.length; i++) {
-      let value = indicator.options[rootOptionKey]
-
-      if (this.activeRenderer && typeof this.activeRenderer.indicators[id].plotsOptions[i][key] !== 'undefined') {
-        value = this.activeRenderer.indicators[id].plotsOptions[i][key]
+      if (key === 'priceFormat' && !value.auto) {
+        indicator.apis[i].precision = value.precision
       }
 
       indicator.apis[i].applyOptions({
-        [rootOptionKey]: value
+        [key]: value
       })
     }
 
-    if (this.optionRequiresRedraw(rootOptionKey)) {
+    if (this.optionRequiresRedraw(key)) {
       this.redrawIndicator(id)
     }
   }
@@ -962,6 +966,8 @@ export default class ChartController {
     this.clearChart()
     this.removeChart()
     this.clearQueue()
+
+    aggregatorService.off('decimals', this._refreshDecimalsHandler)
   }
 
   /**
@@ -1461,6 +1467,10 @@ export default class ChartController {
 
       api.id = plot.id
 
+      if (serieOptions.priceFormat && typeof serieOptions.priceFormat.precision === 'number') {
+        api.precision = serieOptions.priceFormat.precision
+      }
+
       this.seriesIndicatorsMap[plot.id] = {
         indicatorId: indicator.id,
         plotIndex: i
@@ -1515,6 +1525,19 @@ export default class ChartController {
   renderAll(refreshInitialPrices?: boolean) {
     if (!this.chartInstance) {
       return
+    }
+
+    if (this._promiseOfMarkets) {
+      if (!this._promiseOfMarketsRender) {
+        this._promiseOfMarketsRender = this._promiseOfMarkets.then(() => {
+          this._promiseOfMarketsRender = null
+          this.renderAll()
+        })
+      }
+
+      console.info('stacking renderAll')
+
+      return this._promiseOfMarketsRender
     }
 
     this.clearChart()
@@ -1839,5 +1862,42 @@ export default class ChartController {
     this.fillGapsWithEmpty = !this.fillGapsWithEmpty
 
     this.renderAll()
+  }
+
+  refreshAutoDecimals(indicatorId?: string) {
+    const chartMarkets = Object.keys(this.markets)
+    const pricedMarket = Object.keys(marketDecimals).find(market => chartMarkets.indexOf(market) !== -1)
+
+    if (pricedMarket) {
+      const precision = marketDecimals[pricedMarket]
+
+      for (let i = 0; i < this.loadedIndicators.length; i++) {
+        if (indicatorId && indicatorId !== this.loadedIndicators[i].id) {
+          continue
+        }
+
+        let priceFormat = this.loadedIndicators[i].options.priceFormat || {
+          type: 'price'
+        }
+
+        if (!priceFormat.auto) {
+          continue
+        }
+
+        priceFormat = {
+          ...priceFormat,
+          precision,
+          minMove: 1 / Math.pow(10, precision)
+        }
+
+        for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
+          this.loadedIndicators[i].apis[j].applyOptions({
+            priceFormat
+          })
+
+          this.loadedIndicators[i].apis[j].precision = precision
+        }
+      }
+    }
   }
 }

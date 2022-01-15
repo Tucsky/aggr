@@ -185,18 +185,20 @@ const actions = {
               console.debug(`[panes/refreshMarketsListeners] ${exchange}'s products acquired`)
             }
 
-            const indexedProduct = indexedProducts[exchange].find(indexedMarket => indexedMarket.pair === pair)
+            if (indexedProducts[exchange]) {
+              const indexedProduct = indexedProducts[exchange].find(indexedMarket => indexedMarket.pair === pair)
 
-            if (!indexedProduct) {
-              // this can happen if a product has been added before, but been delisted and product got automatically refreshed
-              console.error(`[panes/refreshMarketsListeners] market not found in exchange's product`, exchange, '(warning)')
-              continue
-            }
+              if (!indexedProduct) {
+                // this can happen if a product has been added before, but been delisted and product got automatically refreshed
+                console.error(`[panes/refreshMarketsListeners] market not found in exchange's product`, exchange, '(warning)')
+                continue
+              }
 
-            if (indexedProduct) {
-              marketsListeners[marketKey] = indexedProduct
+              if (indexedProduct) {
+                marketsListeners[marketKey] = indexedProduct
 
-              marketsListeners[marketKey].listeners = 0
+                marketsListeners[marketKey].listeners = 0
+              }
             }
           }
         }
@@ -248,10 +250,10 @@ const actions = {
     }
   },
   setMarketsForAll({ dispatch }, markets: string[]) {
-    dispatch('refreshMarketsListeners', { markets })
+    return dispatch('refreshMarketsListeners', { markets })
   },
   setMarketsForPane({ dispatch }, { id, markets }: { id: string; markets: string[] }) {
-    dispatch('refreshMarketsListeners', { id, markets })
+    return dispatch('refreshMarketsListeners', { id, markets })
   },
   duplicatePane({ state, rootState, dispatch }, id: string) {
     if (!state.panes[id] || !rootState[id]) {

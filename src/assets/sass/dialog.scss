@@ -10,6 +10,24 @@
   z-index: 10;
   pointer-events: none;
 
+  &.-loading {
+    .dialog-body {
+      box-shadow: none;
+      pointer-events: none;
+
+      &:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--theme-background-o20);
+        z-index: 1;
+      }
+    }
+  }
+
   &.-mask {
     pointer-events: all;
   }
@@ -211,14 +229,6 @@
       margin: 0 1rem;
       height: auto;
       width: 0.5px;
-    }
-  }
-}
-
-#app.-light .dialog {
-  .dialog-content {
-    textarea {
-      background-color: rgba(white, 0.5);
     }
   }
 }

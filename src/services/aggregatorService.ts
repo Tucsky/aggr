@@ -39,7 +39,7 @@ class AggregatorService extends EventEmitter {
         clearTimeout(this._normalizeDecimalsTimeout)
       }
 
-      this._normalizeDecimalsTimeout = setTimeout(this.normalizeDecimals, 1000)
+      this._normalizeDecimalsTimeout = setTimeout(this.normalizeDecimals.bind(this), 1000)
     })
 
     this.on(
@@ -144,7 +144,7 @@ class AggregatorService extends EventEmitter {
         continue
       }
 
-      const localPair = store.state.panes.marketsListeners[marketKey].local
+      const localPair = store.state.panes.marketsListeners[marketKey].local.replace('USDT', 'USD').replace('USDC', 'USD')
 
       if (!decimalsByLocalMarkets[localPair]) {
         continue
@@ -154,6 +154,8 @@ class AggregatorService extends EventEmitter {
 
       marketDecimals[marketKey] = marketDecimals[localPair] = averageDecimals
     }
+
+    this.emit('decimals')
   }
 }
 

@@ -27,7 +27,7 @@ export default class extends Exchange {
       JSON.stringify({
         method: 'public/subscribe',
         params: {
-          channels: ['trades.' + pair + '.raw']
+          channels: ['trades.' + pair + '.100ms']
         }
       })
     )

@@ -138,7 +138,6 @@ const actions = {
     } catch (error) {
       // empty
     }
-
     if (state.indicators[id] && state.indicators[id].options[key] === value) {
       return
     }
@@ -158,13 +157,15 @@ const actions = {
       state.indicators[id].unsavedChanges &&
       confirm &&
       (await dialogService.confirm({
-        message: `You have unsaved changes on "${id}".<br>Save this indicator to workspace before remove ?`,
+        title: 'Save changes ?',
+        message: `This indicator has unsaved changes.<br>Click save to update ${id} across workspace`,
         cancel: 'DISCARD',
         ok: 'SAVE'
       }))
     ) {
       await dispatch('saveIndicator', id)
     }
+
 
     commit('REMOVE_INDICATOR', id)
 

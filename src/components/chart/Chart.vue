@@ -54,15 +54,9 @@
           </div>
           <div v-for="market of markets" :key="market" @click="toggleMarket($event, market)">
             <label class="checkbox-control -small mb4">
-              <input
-                type="checkbox"
-                class="form-control"
-                :checked="!hiddenMarkets[market]"
-                @change="toggleMarket($event, market)"
-                @click.prevent="toggleMarket($event, market)"
-              />
+              <input type="checkbox" class="form-control" :checked="!hiddenMarkets[market]"  @click.stop.prevent />
               <div></div>
-              <span v-text="market"></span>
+              <span>{{ market }}</span>
             </label>
           </div>
         </div>
@@ -503,9 +497,12 @@ export default class extends Mixins(PaneMixin) {
         const formatFunction = indicator.options.priceFormat && indicator.options.priceFormat.type === 'volume' ? formatAmount : formatPrice
 
         if (typeof data === 'number') {
-          text += formatFunction(data, 0)
+          text += formatFunction(data, api.precision)
         } else if (data.close) {
-          text += `O: ${formatFunction(data.open)} H: ${formatFunction(data.high)} L: ${formatFunction(data.low)} C: ${formatFunction(data.close)}`
+          text += `O: ${formatFunction(data.open, api.precision)} H: ${formatFunction(data.high, api.precision)} L: ${formatFunction(
+            data.low,
+            api.precision
+          )} C: ${formatFunction(data.close, api.precision)}`
         }
       }
 
@@ -701,8 +698,6 @@ export default class extends Mixins(PaneMixin) {
     if (!barsToLoad) {
       return
     }
-
-    console.log('range from:', new Date(this._chartController.chartCache.cacheRange.from*1000).toISOString())
 
     const rangeToFetch = {
       from: this._chartController.chartCache.cacheRange.from - barsToLoad * this.$store.state[this.paneId].timeframe,

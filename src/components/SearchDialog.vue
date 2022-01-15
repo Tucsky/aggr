@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="hide" class="-sticky-footer -mobile-fs -auto">
+  <Dialog @clickOutside="hide" class="-sticky-footer -mobile-fs -auto" :class="[loading && '-loading']">
     <template v-slot:header>
       <div v-if="paneId">
         <div class="title">ADD/REMOVE SOURCES</div>
@@ -252,7 +252,23 @@
         v-text="mobileShowFilters ? 'Hide filters' : 'Show filters'"
       ></a>
       <a href="javascript:void(0);" class="btn -text" @click="hide">Cancel</a>
-      <button class="btn -large ml8 -green" @click="submit" v-text="submitLabel"></button>
+      <button class="btn -large ml8 -green" @click="submit" :class="loading && '-loading'">
+        {{ submitLabel }}
+        <div v-if="loading" class="lds-spinner -center">
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+      </button>
     </footer>
   </Dialog>
 </template>
@@ -284,6 +300,7 @@ export default {
     page: 0,
     query: '',
     markets: [],
+    loading: false,
     selection: [],
     originalSelection: [],
     activeIndex: null,
@@ -344,11 +361,11 @@ export default {
       let label = ''
 
       if (toConnect) {
-        label += `add ${toConnect}`
+        label += `add${this.loading ? 'ing' : ''} ${toConnect}`
       }
 
       if (toDisconnect) {
-        label += `${toConnect ? ' and ' : ''}remove ${toDisconnect}`
+        label += `${toConnect ? ' and ' : ''}remove${this.loading ? 'ing' : ''} ${toDisconnect}`
       }
 
       return label ? label + ' markets' : 'OK'
@@ -589,17 +606,23 @@ export default {
           return
         }
 
+        this.loading = true
+
         if (!Object.keys(this.$store.state.panes.panes).length) {
           await this.$store.dispatch('panes/addPane', { type: 'trades' })
         }
 
-        this.$store.dispatch('panes/setMarketsForAll', this.selection)
+        await this.$store.dispatch('panes/setMarketsForAll', this.selection)
       } else {
-        this.$store.dispatch('panes/setMarketsForPane', {
+        this.loading = true
+
+        await this.$store.dispatch('panes/setMarketsForPane', {
           id: this.paneId,
           markets: this.selection
         })
       }
+
+      this.loading = false
 
       this.hide()
     },

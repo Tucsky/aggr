@@ -233,13 +233,13 @@ body {
   display: flex;
   align-items: center;
   text-transform: uppercase;
-  opacity: 0.5;
+  color: var(--theme-background-300);
 
   &:before,
   &:after {
     content: '';
     height: 1px;
-    background-color: currentColor;
+    background-color: var(--theme-background-150);
     flex-grow: 1;
   }
 
@@ -270,11 +270,6 @@ body {
     &:after {
       margin-top: 1rem;
     }
-  }
-
-  &.-single:before,
-  &.-single:after {
-    margin: 0
   }
 }
 

@@ -1,7 +1,7 @@
 import { ActionTree, Module, MutationTree } from 'vuex'
 
 import DEFAULTS_STATE from './defaultSettings.json'
-import { getColorLuminance, getLogShade, splitRgba } from '@/utils/colors'
+import { getColorLuminance, getLogShade, increaseBrightness, joinRgba, splitRgba } from '@/utils/colors'
 import { ModulesState } from '.'
 import { AggregationLength, SlippageMode } from '@/types/test'
 import aggregatorService from '@/services/aggregatorService'
@@ -64,6 +64,11 @@ const actions = {
       }
     })
   },
+  setTextColor({ commit, dispatch }, rgb) {
+    commit('SET_CHART_COLOR', rgb)
+
+    dispatch('updateCSS')
+  },
   setBackgroundColor({ commit, state, dispatch }, rgb) {
     commit('SET_CHART_BACKGROUND_COLOR', rgb)
 
@@ -91,7 +96,6 @@ const actions = {
 
     document.documentElement.style.setProperty('--theme-background-base', state.backgroundColor)
     document.documentElement.style.setProperty('--theme-background-100', background100)
-    document.documentElement.style.setProperty('--theme-background-115', getLogShade(backgroundRgb, variantMultiplier * 0.019 * backgroundSide))
     document.documentElement.style.setProperty('--theme-background-150', getLogShade(backgroundRgb, variantMultiplier * 0.05 * backgroundSide))
     document.documentElement.style.setProperty('--theme-background-200', getLogShade(backgroundRgb, variantMultiplier * 0.075 * backgroundSide))
     document.documentElement.style.setProperty('--theme-background-300', getLogShade(backgroundRgb, variantMultiplier * 0.1 * backgroundSide))
@@ -119,6 +123,7 @@ const actions = {
     document.documentElement.style.setProperty('--theme-color-100', getLogShade(textColorRgb, 0.1 * colorSide))
     document.documentElement.style.setProperty('--theme-color-150', getLogShade(textColorRgb, 0.2 * colorSide))
     document.documentElement.style.setProperty('--theme-color-200', getLogShade(textColorRgb, 0.5 * colorSide))
+    document.documentElement.style.setProperty('--theme-color-accent', joinRgba(increaseBrightness(textColorRgb, 2)))
     document.documentElement.style.setProperty('--theme-color-o75', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .75)`)
     document.documentElement.style.setProperty('--theme-color-o50', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .5)`)
     document.documentElement.style.setProperty('--theme-color-o20', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .2)`)

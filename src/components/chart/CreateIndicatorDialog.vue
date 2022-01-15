@@ -29,8 +29,8 @@
             </tbody>
           </table>
         </div>
-        <div class="divider -single -horizontal"></div>
-        <div class="divider -single -vertical"></div>
+        <hr class="-single -horizontal" />
+        <hr class="-single -vertical" />
       </template>
       <div class="-unshrinkable">
         <div class="form-group mb16">

@@ -13,7 +13,7 @@
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 
-import { formatPrice, formatAmount, parseMarket } from '@/utils/helpers'
+import { formatMarketPrice, formatAmount, parseMarket } from '@/utils/helpers'
 import { getColorByWeight, getColorLuminance, getAppBackgroundColor, splitRgba } from '@/utils/colors'
 import { SlippageMode, Trade } from '@/types/test'
 import { Threshold } from '@/store/panesSettings/trades'
@@ -403,7 +403,7 @@ export default class extends Mixins(PaneMixin) {
     <div class="trade__side${sideClass}"></div>
     <div class="trade__exchange">${exchangeName}</div>
     ${pairName}
-    <div class="trade__price">${formatPrice(trade.price, marketKey)}${priceSlippage}</div>
+    <div class="trade__price">${formatMarketPrice(trade.price, marketKey)}${priceSlippage}</div>
     <div class="trade__amount">
       <span class="trade__amount__quote">
         <span class="icon-quote"></span>

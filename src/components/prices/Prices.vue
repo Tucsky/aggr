@@ -25,7 +25,7 @@
 import { Component, Mixins, Watch } from 'vue-property-decorator'
 import PricesSortDropdown from '@/components/prices/PricesSortDropdown.vue'
 
-import { formatAmount, formatPrice, parseMarket } from '../../utils/helpers'
+import { formatAmount, formatMarketPrice, parseMarket } from '../../utils/helpers'
 
 import aggregatorService from '@/services/aggregatorService'
 import PaneMixin from '@/mixins/paneMixin'
@@ -169,7 +169,7 @@ export default class extends Mixins(PaneMixin) {
         }
       }
 
-      market.price = formatPrice(marketStats.price, market.id)
+      market.price = formatMarketPrice(marketStats.price, market.id)
     }
 
     if (!this.pauseSort && this._sortFunction !== null) {

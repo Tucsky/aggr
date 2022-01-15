@@ -198,8 +198,18 @@
     margin-top: 0.25rem;
   }
 
+  span + &__action {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
   &__action {
     visibility: hidden;
+
+    + .dropdown-option__action {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
   }
 }
 

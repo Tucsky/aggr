@@ -160,7 +160,7 @@ class ImportService {
   }
 
   async importAnything(file: File) {
-    if (file.type === 'application/json') {
+    if (file.type === 'application/json' || file.type === 'text/plain') {
       const json = await this.getJSON(file)
 
       if (json.type && json.data) {
