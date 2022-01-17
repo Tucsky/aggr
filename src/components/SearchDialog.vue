@@ -833,11 +833,6 @@ export default {
       await this.$store.dispatch('exchanges/disconnect', this.id)
       await this.$store.dispatch('exchanges/connect', this.id)
 
-      this.$store.dispatch('app/showNotice', {
-        type: 'success',
-        title: `${exchangeId}: ${indexedProducts[exchangeId].length} products refreshed`
-      })
-
       this.cacheProducts()
     },
 

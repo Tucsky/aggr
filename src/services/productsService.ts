@@ -14,7 +14,7 @@ export function saveProducts(storage: ProductsStorage) {
   workspacesService.saveProducts(storage)
 }
 
-export async function indexProducts(exchangeId: string, productsData: ProductsData) {
+export async function indexProducts(exchangeId: string, productsData: ProductsData, showNotice?: boolean) {
   let products = []
 
   if (productsData) {
@@ -23,6 +23,13 @@ export async function indexProducts(exchangeId: string, productsData: ProductsDa
     } else {
       products = productsData.products
     }
+  }
+
+  if (showNotice) {
+    store.dispatch('app/showNotice', {
+      title: `Fetched ${products.length} products on ${exchangeId}`,
+      type: 'success'
+    })
   }
 
   store.dispatch('exchanges/indexExchangeProducts', {
@@ -84,7 +91,7 @@ export async function fetchProducts(exchangeId: string, endpoints: string[]): Pr
     })) as ProductsStorage
 
     if (productsData) {
-      indexProducts(exchangeId, productsData)
+      indexProducts(exchangeId, productsData, true)
       saveProducts({
         exchange: exchangeId,
         data: productsData
@@ -119,7 +126,7 @@ export async function getStoredProductsOrFetch(id: string, endpoints: string[], 
       store.commit('exchanges/SET_FETCHED', id)
     }
 
-    indexProducts(id, productsData)
+    indexProducts(id, productsData, forceFetch)
   }
 
   return productsData

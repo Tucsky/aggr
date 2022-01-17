@@ -80,6 +80,10 @@ class WorkspacesService {
               await this.insertDefault(db)
               resolve()
             }
+            tx.onerror = async error => {
+              console.error(`[idb] upgrade error`, error)
+              resolve()
+            }
           })
 
           for (let i = oldVersion ? oldVersion + 1 : oldVersion; i <= newVersion; i++) {
@@ -91,6 +95,7 @@ class WorkspacesService {
           }
         },
         blocked() {
+          alert('Aggr is trying to upgrade.\nClose any other window with aggr open in order to allow it to upgrade.')
           console.log(`[idb] blocked received`)
           // …
         },
@@ -99,6 +104,7 @@ class WorkspacesService {
           // …
         },
         terminated() {
+          alert('Browser abnormally terminated the connection with aggr db.')
           console.log(`[idb] terminated received`)
           // …
         }
@@ -112,8 +118,10 @@ class WorkspacesService {
         })
         .catch(err => {
           console.log(err)
-          this.reset()
-          window.location.reload()
+          alert(
+            err.message +
+              '\n\nEither reset the browser data on this site or contact the devs on the github :\nhttps://github.com/Tucsky/aggr/issues/new'
+          )
         })
     })
   }

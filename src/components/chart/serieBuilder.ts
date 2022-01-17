@@ -384,7 +384,7 @@ export default class SerieBuilder {
     }
 
     // tranform input into valid lightweight-charts data point
-    if (args.length === 1 && ((/{/.test(args[0]) && /}/.test(args[0])) || /^[\w_]+\$/.test(args[0]))) {
+    if (serieType !== 'line' && args.length === 1 && ((/{/.test(args[0]) && /}/.test(args[0])) || /^[\w_]+\$/.test(args[0]))) {
       seriePoint += args[0]
     } else if (expectedInput === 'ohlc') {
       if (args.length === 4) {

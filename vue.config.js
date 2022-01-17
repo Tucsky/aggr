@@ -59,17 +59,6 @@ module.exports = {
       openAnalyzer: false
     }
   },
-  /*configureWebpack: config => {
-    if (process.env.NODE_ENV === 'development') {
-      config.devtool = 'eval-source-map'
-      config.output.devtoolModuleFilenameTemplate = info =>
-        info.resourcePath.match(/\.vue$/) && !info.identifier.match(/type=script/) // this is change ✨
-          ? `webpack-generated:///${info.resourcePath}?${info.hash}`
-          : `webpack-yourCode:///${info.resourcePath}`
-
-      config.output.devtoolFallbackModuleFilenameTemplate = 'webpack:///[resource-path]?[hash]'
-    }
-  },*/
   chainWebpack: config => {
     config.optimization.minimizer('terser').tap(args => {
       args[0].terserOptions.compress.drop_console = true
@@ -88,46 +77,6 @@ module.exports = {
         worker: 'Worker'
       }))
       .end()
-  },
-  devServer: {
-    /*host: 'localhost',
-    // progress: true,
-    // https: true,
-    // port: 8081,
-    proxy: [
-      'https://futures.kraken.com',
-      'https://api.kraken.com',
-      'https://api.binance.com',
-      'https://api.bitfinex.com',
-      'https://api.gdax.com',
-      'https://api.pro.coinbase.com',
-      'https://api.prime.coinbase.com',
-      'https://www.bitstamp.net',
-      'https://api.hitbtc.com',
-      'https://www.poloniex.com',
-      'https://www.okex.com',
-      'https://api.huobi.pro',
-      'https://www.bitmex.com',
-      'https://www.deribit.com',
-      'https://fapi.binance.com',
-      'https://dapi.binance.com',
-      'https://api.hbdm.com',
-      'https://ftx.com',
-      'https://api.bybit.com'
-    ].reduce((obj, domain) => {
-      const reg = `${domain}`
-
-      obj[reg] = {
-        target: domain,
-        secure: false,
-        changeOrigin: true,
-        pathRewrite: {
-          [domain]: ''
-        }
-      }
-
-      return obj
-    }, {})*/
   },
   css: {
     loaderOptions: {

@@ -306,17 +306,6 @@ const actions = {
 
     dispatch('refreshZoom', id)
   },
-  changeZoom({ state, commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
-    if (zoom) {
-      zoom = Math.max(0.1, (state.panes[id].zoom || 1) + zoom)
-    } else {
-      zoom = 1
-    }
-
-    commit('SET_PANE_ZOOM', { id, zoom })
-
-    dispatch('refreshZoom', id)
-  },
   refreshZoom({ state }, id: string) {
     const zoom = Math.max(0.1, state.panes[id].zoom)
     const el = document.getElementById(id) as HTMLElement
@@ -330,6 +319,12 @@ const actions = {
         el.classList.add('-large')
       } else {
         el.classList.remove('-large')
+      }
+
+      if (zoom < 1) {
+        el.classList.add('-small')
+      } else {
+        el.classList.remove('-small')
       }
     }
   },

@@ -185,18 +185,19 @@ export default class ChartController {
 
   /**
    * update watermark when pane's markets changes
-   * @param markets
    */
   refreshMarkets() {
     if (!store.state.app.isExchangesReady) {
+      // exchanges are still loading (probably fetching products)
+      // we need to call this again once fully loaded
       if (!this._promiseOfMarkets) {
         this._promiseOfMarkets = waitForStateMutation(state => state.app.isExchangesReady).then(this.refreshMarkets.bind(this))
+      } else {
+        return this._promiseOfMarkets
       }
-
-      return this._promiseOfMarkets
+    } else if (this._promiseOfMarkets) {
+      this._promiseOfMarkets = null
     }
-
-    this._promiseOfMarkets = null
 
     const markets = store.state.panes.panes[this.paneId].markets
     const mergeUsdt = store.state.settings.searchTypes.mergeUsdt
@@ -207,12 +208,18 @@ export default class ChartController {
       const [exchange] = marketKey.split(':')
       const market = store.state.panes.marketsListeners[marketKey]
 
-      output[marketKey] = {
-        active: store.state.exchanges[exchange] && !store.state.exchanges[exchange].disabled && !store.state[this.paneId].hiddenMarkets[marketKey],
-        historical: market.historical
+      let localPair = marketKey
+      let hasHistorical = false
+
+      if (market) {
+        localPair = market.local
+        hasHistorical = market.historical
       }
 
-      let localPair = market ? market.local : marketKey
+      output[marketKey] = {
+        active: store.state.exchanges[exchange] && !store.state.exchanges[exchange].disabled && !store.state[this.paneId].hiddenMarkets[marketKey],
+        historical: hasHistorical
+      }
 
       if (mergeUsdt) {
         localPair = localPair.replace('USDT', 'USD').replace('USDC', 'USD')
@@ -780,10 +787,12 @@ export default class ChartController {
   /**
    * clear all rendered data on chart (empty the chart)
    */
-  clearChart() {
+  clearChart(triggerPan?: boolean) {
     console.log(`[chart/${this.paneId}/controller] clear chart (all series emptyed)`)
 
-    this.preventPan()
+    if (!triggerPan) {
+      this.preventPan()
+    }
 
     for (const indicator of this.loadedIndicators) {
       this.clearIndicatorSeries(indicator)
@@ -1210,7 +1219,7 @@ export default class ChartController {
    * @param {string[]} indicatorsId id of indicators to render
    * @param {boolean} refreshInitialPrices
    */
-  renderBars(bars, indicatorsIds, refreshInitialPrices?: boolean) {
+  renderBars(bars, indicatorsIds, refreshInitialPrices?: boolean, triggerPan?: boolean) {
     if (!bars.length) {
       return
     }
@@ -1419,7 +1428,7 @@ export default class ChartController {
         this.renderedRange.to = to
       }
     }
-    this.replaceData(computedSeries)
+    this.replaceData(computedSeries, triggerPan)
     if (scrollPosition) {
       this.chartInstance.timeScale().scrollToPosition(scrollPosition, false)
     }
@@ -1520,9 +1529,9 @@ export default class ChartController {
   }
 
   /**
-   * Renders chunks that collides with visible range
+   * Renders all chunks
    */
-  renderAll(refreshInitialPrices?: boolean) {
+  renderAll(refreshInitialPrices?: boolean, triggerPan?: boolean) {
     if (!this.chartInstance) {
       return
     }
@@ -1531,20 +1540,19 @@ export default class ChartController {
       if (!this._promiseOfMarketsRender) {
         this._promiseOfMarketsRender = this._promiseOfMarkets.then(() => {
           this._promiseOfMarketsRender = null
-          this.renderAll()
+          this.renderAll(false, true)
         })
       }
-
-      console.info('stacking renderAll')
 
       return this._promiseOfMarketsRender
     }
 
-    this.clearChart()
+    this.clearChart(triggerPan)
     this.renderBars(
       this.chartCache.chunks.length ? this.chartCache.chunks.reduce((bars, chunk) => bars.concat(chunk.bars), []) : [],
       null,
-      refreshInitialPrices
+      refreshInitialPrices,
+      triggerPan
     )
   }
 
@@ -1552,8 +1560,10 @@ export default class ChartController {
    * replace whole chart with a set of computed series bars
    * @param {Bar[]} seriesData Lightweight Charts formated series
    */
-  replaceData(seriesData: { [id: string]: (TV.LineData | TV.BarData | TV.HistogramData)[] }) {
-    this.preventPan()
+  replaceData(seriesData: { [id: string]: (TV.LineData | TV.BarData | TV.HistogramData)[] }, triggerPan?: boolean) {
+    if (!triggerPan) {
+      this.preventPan()
+    }
 
     for (let i = this.loadedIndicators.length - 1; i >= 0; i--) {
       if (this.loadedIndicators[i].options.visible === false) {
@@ -1563,7 +1573,16 @@ export default class ChartController {
       for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
         const serieId = this.loadedIndicators[i].apis[j].id
         if (seriesData[serieId]) {
-          this.loadedIndicators[i].apis[j].setData(seriesData[serieId])
+          try {
+            this.loadedIndicators[i].apis[j].setData(seriesData[serieId])
+          } catch (error) {
+            store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
+              id: this.loadedIndicators[i].id,
+              error: error.message
+            })
+
+            this.setIndicatorOption(this.loadedIndicators[i].id, 'visible', false)
+          }
         }
       }
     }
@@ -1670,7 +1689,9 @@ export default class ChartController {
     }
 
     this.loadedIndicators = this.loadedIndicators.sort((a, b) => {
-      return a.model.references.length - b.model.references.length
+      const referencesA = a.model ? a.model.references.length : 0
+      const referencesB = b.model ? b.model.references.length : 0
+      return referencesA - referencesB
     })
 
     for (const indicator of this.loadedIndicators) {

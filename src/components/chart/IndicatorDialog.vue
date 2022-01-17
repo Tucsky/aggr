@@ -71,7 +71,7 @@
                 class="indicator-options__option"
               />
             </div>
-            <div class="section__title" @click="toggleSection('scriptOptions')">Script options <i class="icon-up-thin"></i></div>
+            <div class="section__title" @click="toggleSection('scriptOptions', $event)">Script options <i class="icon-up-thin"></i></div>
           </section>
           <section class="section">
             <div v-if="sections.indexOf('defaultOptions') > -1">
@@ -85,12 +85,12 @@
                 class="indicator-options__option"
               />
             </div>
-            <div class="section__title" @click="toggleSection('defaultOptions')">Other options <i class="icon-up-thin"></i></div>
+            <div class="section__title" @click="toggleSection('defaultOptions', $event)">Other options <i class="icon-up-thin"></i></div>
           </section>
         </tab>
       </tabs>
       <hr class="-vertical" />
-      <div class="indicator-options hide-scrollbar">
+      <div class="indicator-options">
         <section class="indicator-options__search section">
           <div>
             <div class="input-group">
@@ -107,7 +107,7 @@
             />
           </div>
         </section>
-        <template v-if="!optionsQuery.length">
+        <div v-if="!optionsQuery.length" class="indicator-options__options-scroller hide-scrollbar">
           <section v-if="colorOptionsKeys.length" class="section">
             <div v-if="sections.indexOf('colors') > -1">
               <indicator-option
@@ -119,7 +119,7 @@
                 :plot-types="plotTypes"
               />
             </div>
-            <div class="section__title" @click="toggleSection('colors')">Colors <i class="icon-up-thin"></i></div>
+            <div class="section__title" @click="toggleSection('colors', $event)">Colors <i class="icon-up-thin"></i></div>
           </section>
 
           <section class="section" v-if="scriptOptionsKeys.length">
@@ -133,7 +133,7 @@
                 :plot-types="plotTypes"
               />
             </div>
-            <div class="section__title" @click="toggleSection('scriptOptions')">Script <i class="icon-up-thin"></i></div>
+            <div class="section__title" @click="toggleSection('scriptOptions', $event)">Script <i class="icon-up-thin"></i></div>
           </section>
 
           <section class="section">
@@ -147,7 +147,7 @@
                 :plot-types="plotTypes"
               />
             </div>
-            <div class="section__title" @click="toggleSection('defaultOptions')">Other <i class="icon-up-thin"></i></div>
+            <div class="section__title" @click="toggleSection('defaultOptions', $event)">Other <i class="icon-up-thin"></i></div>
           </section>
 
           <section class="section">
@@ -164,7 +164,7 @@
                 ></dropdown>
               </div>
             </div>
-            <div class="section__title" @click="toggleSection('position')">Position in chart <i class="icon-up-thin"></i></div>
+            <div class="section__title" @click="toggleSection('position', $event)">Position in chart <i class="icon-up-thin"></i></div>
           </section>
           <section class="section">
             <div v-if="sections.indexOf('format') > -1">
@@ -181,9 +181,9 @@
               </div>
             </div>
 
-            <div class="section__title" @click="toggleSection('format')">Price format <i class="icon-up-thin"></i></div>
+            <div class="section__title" @click="toggleSection('format', $event)">Price format <i class="icon-up-thin"></i></div>
           </section>
-        </template>
+        </div>
       </div>
     </div>
 
@@ -507,7 +507,7 @@ export default {
 
       this.$refs.editorMinimap.updateSize()
     },
-    toggleSection(id) {
+    toggleSection(id, event: Event) {
       const index = this.sections.indexOf(id)
 
       if (index === -1) {
@@ -515,6 +515,14 @@ export default {
       } else {
         this.sections.splice(index, 1)
       }
+
+      this.$nextTick(() => {
+        const sectionEl = (event.target as HTMLElement).parentElement
+
+        if (sectionEl && sectionEl.scrollIntoView) {
+          sectionEl.scrollIntoView()
+        }
+      })
     },
     async getIndicatorPreset() {
       const payload = await dialogService.openAsPromise(IndicatorPresetDialog)
@@ -683,12 +691,13 @@ export default {
         this.$refs.editorMinimap.updateSize()
       })
     },
-    setPriceFormat(type, precision) {
-      const auto = precision === ''
+    setPriceFormat(type, precisionInput) {
+      let auto = false
 
-      precision = Math.round(precision)
+      let precision = Math.round(precisionInput)
 
-      if (isNaN(precision)) {
+      if (precisionInput === '' || isNaN(precision)) {
+        auto = true
         precision = 2
       }
 
@@ -743,26 +752,23 @@ export default {
   }
 
   .indicator-options {
-    overflow-y: auto;
     margin-top: 2.5rem;
     border-top: 1px solid var(--theme-background-200);
+    flex-direction: column;
     display: none;
 
     @media screen and (min-width: 768px) {
-      display: block;
+      display: flex;
     }
 
     &__search {
-      position: sticky;
-      top: 0;
-      margin: 0 1px;
-      background-color: var(--theme-background-o75) !important;
-      backdrop-filter: blur(1rem);
-      z-index: 2;
-
       .input-group + .indicator-option {
         margin-top: 1rem;
       }
+    }
+
+    &__options-scroller {
+      overflow-y: auto;
     }
 
     &--tab {

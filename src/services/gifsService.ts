@@ -50,7 +50,7 @@ class GifsService {
     })
   }
 
-  async getGifs(keyword) {
+  async getGifs(keyword, showNotice?: boolean) {
     if (this.cache[keyword]) {
       return this.cache[keyword]
     }
@@ -69,14 +69,14 @@ class GifsService {
 
         return storedGifs.data
       } else {
-        return this.fetchGifByKeyword(keyword)
+        return this.fetchGifByKeyword(keyword, showNotice)
       }
     })
 
     return this.promisesOfGifs[keyword]
   }
 
-  async fetchGifByKeyword(keyword: string) {
+  async fetchGifByKeyword(keyword: string, showNotice?: boolean) {
     if (!keyword) {
       return
     }
@@ -96,10 +96,12 @@ class GifsService {
           this.cache[keyword].push(item.images.downsized.url)
         }
 
-        store.dispatch('app/showNotice', {
-          title: 'Fetched ' + this.cache[keyword].length + ' ' + keyword + ' gifs',
-          type: 'success'
-        })
+        if (showNotice) {
+          store.dispatch('app/showNotice', {
+            title: 'Fetched ' + this.cache[keyword].length + ' ' + keyword + ' gifs',
+            type: 'success'
+          })
+        }
 
         await workspacesService.saveGifs({
           slug,

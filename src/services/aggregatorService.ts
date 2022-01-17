@@ -45,7 +45,9 @@ class AggregatorService extends EventEmitter {
     this.on(
       'getExchangeProducts',
       async ({ exchangeId, endpoints, forceFetch }: { exchangeId: string; endpoints: string[]; forceFetch?: boolean }, trackingId: string) => {
-        console.debug(`[${exchangeId}] get stored or fetch`)
+        console.debug(
+          `[${exchangeId}] aggregator requested ${exchangeId}'s products (${forceFetch ? 'force fetch products' : 'get stored or fetch'})`
+        )
         const productsData = await getStoredProductsOrFetch(exchangeId, endpoints, forceFetch)
 
         this.dispatch({

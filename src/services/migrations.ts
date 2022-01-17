@@ -1,6 +1,6 @@
 import panesSettings from '@/store/panesSettings'
 import { Workspace } from '@/types/test'
-import { IDBPDatabase, IDBPTransaction } from 'idb'
+import { IDBPDatabase } from 'idb'
 import { AggrDB } from './workspacesService'
 import defaultPanes from '@/store/defaultPanes.json'
 import { Threshold, TradesPaneState } from '@/store/panesSettings/trades'
@@ -52,8 +52,7 @@ export const databaseUpgrades = {
     })
   },
   4: async (/*db: IDBPDatabase<AggrDB>, tx: IDBPTransaction<AggrDB>*/) => {
-    /*
-    const type = 'indicator'
+    /*const type = 'indicator'
     const objectStore: any = tx.objectStore('presets')
     const presets = await objectStore.getAllKeys(IDBKeyRange.bound(type, type + '|', true, true))
 
@@ -63,8 +62,7 @@ export const databaseUpgrades = {
       preset.name = preset.name.replace(/^indicator:/, 'indicator:price:')
       await objectStore.put(preset)
       await objectStore.delete(id)
-    }
-    */
+    }*/
   }
 }
 

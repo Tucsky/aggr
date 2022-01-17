@@ -161,7 +161,7 @@ export default class extends Mixins(PaneMixin) {
           }
           break
         case this.paneId + '/SET_THRESHOLD_GIF':
-          gifsService.getGifs(mutation.payload.value)
+          gifsService.getGifs(mutation.payload.value, true)
           this.refreshList()
           break
         case this.paneId + '/SET_THRESHOLD_AUDIO':
@@ -635,6 +635,18 @@ export default class extends Mixins(PaneMixin) {
       font-size: 75%;
     }
   }
+
+  &.-small .trade {
+    &.-level-0 {
+      line-height: 1.5em !important;
+    }
+    &.-level-1 {
+      line-height: 1.66em !important;
+    }
+    &.-level-2 {
+      line-height: 1.75em !important;
+    }
+  }
 }
 
 .trades-list {
@@ -772,7 +784,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   &.-level-0 {
-    line-height: 2em;
+    line-height: 1.875em;
     font-size: 0.875em;
   }
 

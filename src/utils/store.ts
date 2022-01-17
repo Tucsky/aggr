@@ -8,7 +8,7 @@ import workspacesService from '@/services/workspacesService'
 const persistModulesTimers = {}
 
 export async function syncState(state): Promise<any> {
-  if (!state._id) {
+  if (typeof state._id === 'undefined') {
     // unsupported module?
     return
   }
@@ -24,7 +24,7 @@ export async function syncState(state): Promise<any> {
 }
 
 export function scheduleSync(state, mutation?: string): Promise<void> {
-  if (!state._id) {
+  if (typeof state._id === 'undefined') {
     // unsupported module?
     return
   }
@@ -100,7 +100,7 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
     module = { ...module, state: JSON.parse(JSON.stringify(module.state)) }
   }
 
-  if (module.state._id) {
+  if (typeof module.state._id !== 'undefined') {
     console.debug(`[store] get stored state for module ${id}`)
     module.state = await mergeStoredState(module.state)
   }

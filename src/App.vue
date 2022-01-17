@@ -251,13 +251,13 @@ export default class extends Vue {
       title: 'Reset app',
       message: 'Are you sure ?',
       ok: 'Reset settings',
-      cancel: 'Download workspace ' + workspacesService.workspace.id
+      cancel: workspacesService.workspace ? 'Download workspace ' + workspacesService.workspace.id : 'Cancel'
     })
 
     if (response === true) {
       await workspacesService.reset()
       window.location.reload()
-    } else if (response === false) {
+    } else if (response === false && workspacesService.workspace) {
       workspacesService.downloadWorkspace()
     }
   }

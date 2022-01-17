@@ -166,7 +166,6 @@ const actions = {
       await dispatch('saveIndicator', id)
     }
 
-
     commit('REMOVE_INDICATOR', id)
 
     await sleep(100)
