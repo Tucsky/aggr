@@ -1,7 +1,7 @@
 import { ProductsData, ProductsStorage } from '@/types/test'
 import { EventEmitter } from 'eventemitter3'
 import { dispatchAsync } from './helpers/com'
-import { getHms, randomString } from './helpers/utils'
+import { randomString } from './helpers/utils'
 interface Api extends WebSocket {
   _id: string
   _pending: string[]
@@ -638,8 +638,6 @@ class Exchange extends EventEmitter {
     }
 
     currentDelay = Math.max(minDelay, currentDelay || 0)
-
-    console.debug(`[${this.id}] schedule ${operationId} in ${getHms(currentDelay)}`)
 
     this.scheduledOperations[operationId] = setTimeout(() => {
       console.debug(`[${this.id}] schedule timer fired`)

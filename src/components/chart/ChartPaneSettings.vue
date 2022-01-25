@@ -106,7 +106,7 @@
 </template>
 
 <script lang="ts">
-import { getHms } from '@/worker/helpers/utils'
+import { getHms } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '../framework/picker/Slider.vue'
 

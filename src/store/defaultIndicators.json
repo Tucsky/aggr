@@ -5,6 +5,9 @@
     "script": "plotcandlestick(avg_ohlc(bar))",
     "options": {
       "priceScaleId": "right",
+      "priceFormat": {
+        "auto": true
+      },
       "priceLineVisible": true,
       "lastValueVisible": true,
       "borderVisible": true,

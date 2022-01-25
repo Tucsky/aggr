@@ -54,7 +54,7 @@
           </div>
           <div v-for="market of markets" :key="market" @click="toggleMarket($event, market)">
             <label class="checkbox-control -small mb4">
-              <input type="checkbox" class="form-control" :checked="!hiddenMarkets[market]"  @click.stop.prevent />
+              <input type="checkbox" class="form-control" :checked="!hiddenMarkets[market]" @click.stop.prevent />
               <div></div>
               <span>{{ market }}</span>
             </label>
