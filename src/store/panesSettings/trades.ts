@@ -12,6 +12,7 @@ export interface Threshold {
   sellAudio: string
   buyGif?: string
   sellGif?: string
+  max?: boolean
 }
 
 export type TradeTypeFilter = 'both' | 'liquidations' | 'trades'
@@ -256,6 +257,13 @@ const mutations = {
         }
       }
       threshold.amount = +value
+    }
+  },
+  TOGGLE_THRESHOLD_MAX(state, id) {
+    const threshold = this.getters[state._id + '/getThreshold'](id)
+
+    if (threshold) {
+      threshold.max = !threshold.max
     }
   },
   SET_THRESHOLD_MULTIPLIER(state, { identifier, multiplier }: { identifier: string; multiplier: number }) {

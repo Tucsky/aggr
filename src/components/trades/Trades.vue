@@ -39,18 +39,20 @@ interface TradesPaneCache {
   tradesColors?: PreparedColorStep[]
   minimumTradeAmount?: number
   significantTradeAmount?: number
+  maximumTradeAmount?: number
 
   liquidationsAudios?: PreparedAudioStep[]
   liquidationsColors?: PreparedColorStep[]
   minimumLiquidationAmount?: number
   significantLiquidationAmount?: number
+  maximumLiquidationAmount?: number
 
   audioThreshold?: number
 }
 
 interface PreparedColorStep {
-  min?: number
-  max?: number
+  from?: number
+  to?: number
   range?: number
   level?: number
   buy: {
@@ -273,7 +275,7 @@ export default class extends Mixins(PaneMixin) {
       }
 
       if (!trade.liquidation && this._preferences.showTrades) {
-        if (trade.amount >= this._preferences.minimumTradeAmount) {
+        if (trade.amount >= this._preferences.minimumTradeAmount && trade.amount < this._preferences.maximumTradeAmount) {
           html += this.showTrade(
             trade,
             marketKey,
@@ -281,11 +283,11 @@ export default class extends Mixins(PaneMixin) {
             this._preferences.tradesAudios,
             this._preferences.significantTradeAmount
           )
-        } else if (trade.amount > this._preferences.audioThreshold) {
+        } else if (trade.amount > this._preferences.audioThreshold && trade.amount < this._preferences.maximumTradeAmount) {
           this._preferences.tradesAudios[0][trade.side](audioService, trade.amount / this._preferences.significantTradeAmount)
         }
       } else if (trade.liquidation && this._preferences.showLiquidations) {
-        if (trade.amount >= this._preferences.minimumLiquidationAmount) {
+        if (trade.amount >= this._preferences.minimumLiquidationAmount && trade.amount < this._preferences.maximumLiquidationAmount) {
           html += this.showTrade(
             trade,
             marketKey,
@@ -293,7 +295,7 @@ export default class extends Mixins(PaneMixin) {
             this._preferences.liquidationsAudios,
             this._preferences.significantLiquidationAmount
           )
-        } else if (trade.amount > this._preferences.audioThreshold) {
+        } else if (trade.amount > this._preferences.audioThreshold && trade.amount < this._preferences.maximumLiquidationAmount) {
           this._preferences.liquidationsAudios[0][trade.side](audioService, trade.amount / this._preferences.significantLiquidationAmount)
         }
       }
@@ -305,7 +307,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   getTradeInlineStyles(trade: Trade, colorStep: PreparedColorStep, significantAmount: number) {
-    const percentToNextThreshold = (Math.max(trade.amount, colorStep.min) - colorStep.min) / colorStep.range
+    const percentToNextThreshold = (Math.max(trade.amount, colorStep.from) - colorStep.from) / colorStep.range
     const percentToSignificant = Math.min(1, trade.amount / significantAmount)
 
     const colorBySide = colorStep[trade.side]
@@ -345,16 +347,16 @@ export default class extends Mixins(PaneMixin) {
     }
 
     let level = 0
-    let colorStep: PreparedColorStep
+    let colorStep: PreparedColorStep = colors[level]
 
     for (level = 0; level < colors.length; level++) {
-      if (trade.amount < colors[level].max) {
+      if (trade.amount < colors[level].to) {
         colorStep = colors[level]
         break
       }
     }
 
-    if (trade.amount > this._preferences.audioThreshold) {
+    if (level < colors.length && trade.amount > this._preferences.audioThreshold) {
       audios[level][trade.side](audioService, trade.amount / significantAmount)
     }
 
@@ -444,6 +446,18 @@ export default class extends Mixins(PaneMixin) {
     this._preferences.minimumLiquidationAmount = this.liquidationsThresholds[0].amount
     this._preferences.significantTradeAmount = this.tradesThresholds[1].amount
     this._preferences.significantLiquidationAmount = this.liquidationsThresholds[1].amount
+
+    if (this.tradesThresholds[this.tradesThresholds.length - 1].max) {
+      this._preferences.maximumTradeAmount = this.tradesThresholds[this.tradesThresholds.length - 1].amount
+    } else {
+      this._preferences.maximumTradeAmount = Infinity
+    }
+
+    if (this.liquidationsThresholds[this.liquidationsThresholds.length - 1].max) {
+      this._preferences.maximumLiquidationAmount = this.liquidationsThresholds[this.liquidationsThresholds.length - 1].amount
+    } else {
+      this._preferences.maximumLiquidationAmount = Infinity
+    }
   }
 
   prepareColorsThresholds(thresholds, appBackgroundColor) {
@@ -463,10 +477,11 @@ export default class extends Mixins(PaneMixin) {
       const sellTo = splitRgba(thresholds[i + 1].sellColor, appBackgroundColor)
 
       steps.push({
-        min: thresholds[i].amount,
-        max: thresholds[i + 1].amount,
+        from: thresholds[i].amount,
+        to: thresholds[i + 1].amount,
         range: thresholds[i + 1].amount - thresholds[i].amount,
         level: Math.floor((i / (len - 1)) * 4),
+        max: i === len - 1 && thresholds[i + 1].max,
         buy: {
           from: buyFrom,
           to: buyTo,

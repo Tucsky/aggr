@@ -20,10 +20,16 @@
 
     i.icon {
       position: absolute;
-      right: 7px;
+      left: 7px;
       top: 7px;
-      line-height: 1.4;
+      line-height: 1.45;
       color: lighten($green, 20%);
+    }
+
+    .checkbox-control > div {
+      width: 1.1em;
+      height: 1.1em;
+      padding: 0;
     }
 
     input {

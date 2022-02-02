@@ -39,7 +39,7 @@
                 @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'mergeUsdt')"
               />
               <div></div>
-              <span>hide usd<strong>T</strong> / usd<strong>C</strong></span>
+              <span>Merge stablecoins</span>
             </label>
             <label class="checkbox-control -small mb4">
               <input
@@ -365,7 +365,7 @@ export default {
       }
 
       if (toDisconnect) {
-        label += `${toConnect ? ' and ' : ''}remove${this.loading ? 'ing' : ''} ${toDisconnect}`
+        label += `${toConnect ? ' and ' : ''}remov${this.loading ? 'ing' : 'e'} ${toDisconnect}`
       }
 
       return label ? label + ' markets' : 'OK'

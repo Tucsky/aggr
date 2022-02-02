@@ -4,9 +4,21 @@
       <transition-group name="flip-list" tag="tbody">
         <tr v-for="(threshold, index) in thresholds" :key="threshold.id">
           <td class="table-input">
+            <label class="checkbox-control -small mb4" v-if="index === thresholds.length - 1">
+              <input
+                type="checkbox"
+                class="form-control"
+                :checked="threshold.max"
+                @change="$store.commit(paneId + '/TOGGLE_THRESHOLD_MAX', threshold.id)"
+              />
+              <div></div>
+            </label>
+          </td>
+          <td class="table-input">
+            <i class="icon icon-currency"></i>
             <editable
               placeholder="Amount*"
-              class="pr16 w-100"
+              class="pl16 w-100"
               :content="threshold.amount"
               @output="
                 $store.commit(paneId + '/SET_THRESHOLD_AMOUNT', {
@@ -15,77 +27,84 @@
                 })
               "
             />
-            <i class="icon icon-currency"></i>
           </td>
-          <td class="table-input">
-            <input
-              type="text"
-              placeholder="Giphy"
-              :value="threshold.buyGif"
-              @change="
-                $store.commit(paneId + '/SET_THRESHOLD_GIF', {
-                  id: threshold.id,
-                  side: 'buy',
-                  value: $event.target.value
-                })
-              "
-            />
-          </td>
-          <td class="table-input">
-            <input
-              type="text"
-              placeholder="Giphy"
-              :value="threshold.sellGif"
-              @change="
-                $store.commit(paneId + '/SET_THRESHOLD_GIF', {
-                  id: threshold.id,
-                  side: 'sell',
-                  value: $event.target.value
-                })
-              "
-            />
-          </td>
-          <td class="table-action">
-            <verte
-              picker="square"
-              label="Buy color"
-              menuPosition="left"
-              model="rgb"
-              :value="threshold.buyColor"
-              @input="
-                $store.commit(paneId + '/SET_THRESHOLD_COLOR', {
-                  id: threshold.id,
-                  side: 'buyColor',
-                  value: $event
-                })
-              "
-            ></verte>
-          </td>
-          <td class="table-action">
-            <verte
-              picker="square"
-              label="Sell color"
-              menuPosition="left"
-              model="rgb"
-              :value="threshold.sellColor"
-              @input="
-                $store.commit(paneId + '/SET_THRESHOLD_COLOR', {
-                  id: threshold.id,
-                  side: 'sellColor',
-                  value: $event
-                })
-              "
-            ></verte>
-          </td>
-          <td
-            v-if="useAudio"
-            class="thresholds-table__audio table-action"
-            @click="openThresholdAudio(threshold.id)"
-            title="Configure threshold audio"
-            v-tippy
-          >
-            <button class="btn  -green"><i class="icon-volume-high"></i></button>
-          </td>
+          <template v-if="index === thresholds.length - 1 && threshold.max">
+            <td>
+              <small class="pl8 text-danger"><strong>max</strong></small>
+            </td>
+            <td :colspan="useAudio ? 4 : 3"></td>
+          </template>
+          <template v-else>
+            <td class="table-input">
+              <input
+                type="text"
+                placeholder="Giphy"
+                :value="threshold.buyGif"
+                @change="
+                  $store.commit(paneId + '/SET_THRESHOLD_GIF', {
+                    id: threshold.id,
+                    side: 'buy',
+                    value: $event.target.value
+                  })
+                "
+              />
+            </td>
+            <td class="table-input">
+              <input
+                type="text"
+                placeholder="Giphy"
+                :value="threshold.sellGif"
+                @change="
+                  $store.commit(paneId + '/SET_THRESHOLD_GIF', {
+                    id: threshold.id,
+                    side: 'sell',
+                    value: $event.target.value
+                  })
+                "
+              />
+            </td>
+            <td class="table-action">
+              <verte
+                picker="square"
+                label="Buy color"
+                menuPosition="left"
+                model="rgb"
+                :value="threshold.buyColor"
+                @input="
+                  $store.commit(paneId + '/SET_THRESHOLD_COLOR', {
+                    id: threshold.id,
+                    side: 'buyColor',
+                    value: $event
+                  })
+                "
+              ></verte>
+            </td>
+            <td class="table-action">
+              <verte
+                picker="square"
+                label="Sell color"
+                menuPosition="left"
+                model="rgb"
+                :value="threshold.sellColor"
+                @input="
+                  $store.commit(paneId + '/SET_THRESHOLD_COLOR', {
+                    id: threshold.id,
+                    side: 'sellColor',
+                    value: $event
+                  })
+                "
+              ></verte>
+            </td>
+            <td
+              v-if="useAudio"
+              class="thresholds-table__audio table-action"
+              @click="openThresholdAudio(threshold.id)"
+              title="Configure threshold audio"
+              v-tippy
+            >
+              <button class="btn  -green"><i class="icon-volume-high"></i></button>
+            </td>
+          </template>
           <td
             v-if="thresholds.length > 2 && threshold.id !== 'liquidations' && index > 1"
             class="table-action"

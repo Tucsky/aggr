@@ -522,8 +522,6 @@ export default class extends Mixins(PaneMixin) {
       bars: results.data
     }
 
-    console.debug(`[chart/fetch] prepend 1 new chunk`)
-
     this._chartController.chartCache.saveChunk(chunk)
 
     if (!(this.$store.state[this.paneId] as ChartPaneState).forceNormalizePrice) {
