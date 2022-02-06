@@ -180,6 +180,7 @@ export default class extends Mixins(PaneMixin) {
         case 'settings/SET_CHART_BACKGROUND_COLOR':
         case this.paneId + '/SET_THRESHOLD_COLOR':
         case this.paneId + '/SET_THRESHOLD_AMOUNT':
+        case this.paneId + '/TOGGLE_THRESHOLD_MAX':
         case this.paneId + '/DELETE_THRESHOLD':
         case this.paneId + '/ADD_THRESHOLD':
           this.prepareColors()
@@ -276,6 +277,20 @@ export default class extends Mixins(PaneMixin) {
 
       if (!trade.liquidation && this._preferences.showTrades) {
         if (trade.amount >= this._preferences.minimumTradeAmount && trade.amount < this._preferences.maximumTradeAmount) {
+          /*if (this._preferences.minimumTradeAmount && trade.amount > this._preferences.minimumTradeAmount) {
+            console.log(trade.exchange, trade.size * trade.price, '-> split')
+            const slicedAmount = Math.min(trade.amount, this._preferences.minimumTradeAmount)
+            const slicedSize = slicedAmount / trade.price
+            trades.splice(i + 1, 0, {
+              ...trade,
+              size: trade.size - slicedSize,
+              amount: trade.amount - slicedAmount
+            })
+
+            trade.size = slicedSize
+            trade.amount = slicedAmount
+          }*/
+
           html += this.showTrade(
             trade,
             marketKey,
@@ -443,16 +458,15 @@ export default class extends Mixins(PaneMixin) {
     this._preferences.liquidationsColors = this.prepareColorsThresholds(this.liquidationsThresholds, appBackgroundColor)
 
     this._preferences.minimumTradeAmount = this.tradesThresholds[0].amount
-    this._preferences.minimumLiquidationAmount = this.liquidationsThresholds[0].amount
     this._preferences.significantTradeAmount = this.tradesThresholds[1].amount
-    this._preferences.significantLiquidationAmount = this.liquidationsThresholds[1].amount
-
     if (this.tradesThresholds[this.tradesThresholds.length - 1].max) {
       this._preferences.maximumTradeAmount = this.tradesThresholds[this.tradesThresholds.length - 1].amount
     } else {
       this._preferences.maximumTradeAmount = Infinity
     }
 
+    this._preferences.minimumLiquidationAmount = this.liquidationsThresholds[0].amount
+    this._preferences.significantLiquidationAmount = this.liquidationsThresholds[1].amount
     if (this.liquidationsThresholds[this.liquidationsThresholds.length - 1].max) {
       this._preferences.maximumLiquidationAmount = this.liquidationsThresholds[this.liquidationsThresholds.length - 1].amount
     } else {

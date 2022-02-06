@@ -28,5 +28,10 @@
   },
   "searchExchanges": {},
   "favoriteTimeframes": {},
-  "normalizeWatermarks": true
+  "normalizeWatermarks": true,
+  "alerts": true,
+  "alertsColor": "red",
+  "alertsLineStyle": 2,
+  "alertsLineWidth": 2,
+  "alertsClick": true
 }

@@ -28,7 +28,7 @@ store.subscribe((mutation, state: any) => {
   const moduleId = mutation.type.split('/')[0]
 
   if (state[moduleId] && typeof state[moduleId]._id !== 'undefined') {
-    scheduleSync(state[moduleId], mutation.type)
+    scheduleSync(state[moduleId])
   }
 })
 

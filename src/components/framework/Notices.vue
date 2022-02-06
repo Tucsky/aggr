@@ -12,7 +12,8 @@
     <div v-for="notice in notices" :key="notice.id" class="notice" :class="'-' + notice.type">
       <div class="notice__wrapper" @click="$store.dispatch('app/hideNotice', notice.id)">
         <i v-if="notice.icon" class="notice__icon" :class="notice.icon"></i>
-        <div v-html="notice.title" class="notice__title"></div>
+        <div v-if="!notice.html" v-text="notice.title" class="notice__title"></div>
+        <div v-else v-html="notice.title" class="notice__title"></div>
         <!--<v-btn
           v-if="notice.button"
           :color="notice.button.color || 'dark'"

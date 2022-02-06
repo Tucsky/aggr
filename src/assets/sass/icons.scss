@@ -495,4 +495,9 @@ $iconpath: '../fonts';
     content: $icon-merge; 
   }
 }
+.icon-click {
+  &:before {
+    content: $icon-click; 
+  }
+}
 

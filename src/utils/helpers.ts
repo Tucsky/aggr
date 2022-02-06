@@ -1,3 +1,5 @@
+import store from '@/store'
+
 const DAY = 60 * 60 * 24
 
 export function formatAmount(amount, decimals?: number) {
@@ -38,7 +40,7 @@ export const marketDecimals = {}
 
 export function formatMarketPrice(price, market): number {
   if (!marketDecimals[market]) {
-    return parseInt(price)
+    return price
   }
 
   if (!price) {
@@ -369,4 +371,33 @@ export function parseVersion(version: string): number {
     .split('.')
     .map(n => n.padStart(2, '0'))
     .join('')
+}
+
+export function handleFetchError(err): void {
+  if (err instanceof Error) {
+    const hasSomethingToSay = err.message && err.message !== 'Failed to fetch'
+
+    if (hasSomethingToSay) {
+      store.dispatch('app/showNotice', {
+        title: err.message,
+        type: 'error',
+        timeout: 10000
+      })
+    } else {
+      if (/aggr\.trade$/.test(location.hostname)) {
+        store.dispatch('app/showNotice', {
+          title: `Aggr server seems down 💀`,
+          type: 'error',
+          timeout: 10000
+        })
+      } else {
+        store.dispatch('app/showNotice', {
+          html: true,
+          title: `Failed to reach api<br><a href="https://github.com/Tucsky/aggr-server">Configure aggr-server</a> <strong>to use your own data</strong>`,
+          type: 'error',
+          timeout: 10000
+        })
+      }
+    }
+  }
 }

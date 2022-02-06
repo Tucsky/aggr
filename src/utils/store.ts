@@ -23,7 +23,7 @@ export async function syncState(state): Promise<any> {
   await workspacesService.saveState(state._id, state)
 }
 
-export function scheduleSync(state, mutation?: string): Promise<void> {
+export function scheduleSync(state): Promise<void> {
   if (typeof state._id === 'undefined') {
     // unsupported module?
     return
@@ -35,9 +35,6 @@ export function scheduleSync(state, mutation?: string): Promise<void> {
 
   return new Promise<void>(resolve => {
     persistModulesTimers[state._id] = setTimeout(async () => {
-      if (mutation) {
-        console.log('syncState triggered by', mutation)
-      }
       await syncState(state)
 
       resolve()

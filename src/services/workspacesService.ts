@@ -3,11 +3,12 @@ import defaultPresets from '@/store/defaultPresets.json'
 import defaultPanes from '@/store/defaultPanes.json'
 import store, { boot } from '@/store'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
-import { GifsStorage, ImportedSound, Preset, PresetType, ProductsStorage, Workspace } from '@/types/test'
+import { GifsStorage, ImportedSound, MarketAlerts, Preset, PresetType, ProductsStorage, Workspace } from '@/types/test'
 import { downloadJson, parseVersion, randomString, slugify, uniqueName } from '@/utils/helpers'
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import { databaseUpgrades, workspaceUpgrades } from './migrations'
 import { PanesState } from '@/store/panes'
+import alertService from './alertService'
 
 export interface AggrDB extends DBSchema {
   products: {
@@ -40,6 +41,10 @@ export interface AggrDB extends DBSchema {
     value: string
     key: string
   }
+  alerts: {
+    value: MarketAlerts
+    key: string
+  }
 }
 
 class WorkspacesService {
@@ -61,6 +66,19 @@ class WorkspacesService {
     this.latestWorkspaceVersion = Math.max.apply(null, Object.keys(workspaceUpgrades))
     this.previousAppVersion = parseVersion(localStorage.getItem('version') || '-1')
     this.latestAppVersion = parseVersion(process.env.VUE_APP_VERSION)
+  }
+
+  async initialize() {
+    this.db = await this.createDatabase()
+
+    if (!this.defaultInserted) {
+      // add default presets and indicators post database creation
+      setTimeout(() => {
+        this.insertDefault(this.db)
+      }, 3000)
+    }
+
+    alertService.syncTriggeredAlerts()
   }
 
   async createDatabase() {
@@ -126,20 +144,19 @@ class WorkspacesService {
     })
   }
 
-  async initialize() {
-    this.db = await this.createDatabase()
-
-    if (Object.values((this.db as any).objectStoreNames).indexOf('series') !== -1) {
-      await this.reset()
-
-      window.location.reload()
+  upgradeWorkspace(workspace: Workspace) {
+    if (typeof workspace.version === 'undefined') {
+      workspace.version = 0
     }
 
-    if (!this.defaultInserted) {
-      // add default presets and indicators post database creation
-      setTimeout(() => {
-        this.insertDefault(this.db)
-      }, 3000)
+    while (workspace.version < this.latestWorkspaceVersion) {
+      console.log(`[workspace] upgrade workspace ${workspace.id} (${workspace.version} -> ${workspace.version + 1})`)
+
+      workspace.version++
+
+      if (typeof workspaceUpgrades[workspace.version] === 'function') {
+        workspaceUpgrades[workspace.version](workspace)
+      }
     }
   }
 
@@ -264,20 +281,10 @@ class WorkspacesService {
     return workspace
   }
 
-  upgradeWorkspace(workspace: Workspace) {
-    if (typeof workspace.version === 'undefined') {
-      workspace.version = 0
-    }
+  async addAndSetWorkspace(workspace) {
+    await this.setCurrentWorkspace(await this.addWorkspace(workspace))
 
-    while (workspace.version < this.latestWorkspaceVersion) {
-      console.log(`[workspace] upgrade workspace ${workspace.id} (${workspace.version} -> ${workspace.version + 1})`)
-
-      workspace.version++
-
-      if (typeof workspaceUpgrades[workspace.version] === 'function') {
-        workspaceUpgrades[workspace.version](workspace)
-      }
-    }
+    this.getWorkspaces()
   }
 
   async saveState(stateId, state: any) {
@@ -554,10 +561,22 @@ class WorkspacesService {
     return this.db.delete('colors', color)
   }
 
-  async addAndSetWorkspace(workspace) {
-    await this.setCurrentWorkspace(await this.addWorkspace(workspace))
+  async getAlerts(market: string) {
+    const marketAlerts = await this.db.get('alerts', market)
 
-    this.getWorkspaces()
+    if (marketAlerts) {
+      return marketAlerts.alerts
+    }
+
+    return []
+  }
+
+  saveAlerts(marketAlerts: MarketAlerts) {
+    if (!marketAlerts.alerts.length) {
+      return this.db.delete('alerts', marketAlerts.market)
+    }
+
+    return this.db.put('alerts', marketAlerts)
   }
 
   async reset() {

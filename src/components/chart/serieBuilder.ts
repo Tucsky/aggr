@@ -691,14 +691,6 @@ export default class SerieBuilder {
           continue
         }
         const plot = plots[p]
-        const resultedType =
-          typeof point.value !== 'undefined'
-            ? 'number'
-            : typeof point.open !== 'undefined'
-            ? 'ohlc'
-            : typeof point.higherValue !== 'undefined'
-            ? 'range'
-            : null
 
         if (isNaN(point.time)) {
           throw new Error(`${plot.type}.time expected a valid timestamp (number of seconds since January 1, 1970) but got NaN`)
@@ -708,9 +700,9 @@ export default class SerieBuilder {
           throw new Error(`${plot.type}.time should be the same as the current bar timestamp ${renderer.timestamp}, got ${point.time}`)
         }*/
 
-        if (resultedType && resultedType !== plot.expectedInput) {
+        /*if (resultedType && resultedType !== plot.expectedInput) {
           throw new Error(`Plot ${plot.type} expected ${plot.expectedInput} but got ${resultedType}`)
-        }
+        }*/
 
         /*if (resultedType === 'ohlc') {
           if (isNaN(point.open)) {

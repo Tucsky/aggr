@@ -26,6 +26,9 @@ export default class extends Vue {
   private disabled: boolean
   private clickAt: number
   private changed = false
+  private position: number
+  private _incrementSelectionTimeout: number
+  private _emitTimeout: number
 
   mounted() {
     const el = this.$el as HTMLElement
@@ -38,6 +41,24 @@ export default class extends Vue {
     if ((this.$el as HTMLElement).innerText !== this.content) {
       ;(this.$el as HTMLElement).innerText = this.content
     }
+  }
+
+  getCaretPosition() {
+    let caretPos = 0
+    let sel
+    let range
+
+    if (window.getSelection) {
+      sel = window.getSelection()
+      if (sel.rangeCount) {
+        range = sel.getRangeAt(0)
+        if (range.commonAncestorContainer.parentNode == this.$el) {
+          caretPos = range.endOffset
+        }
+      }
+    }
+
+    return caretPos
   }
 
   selectAll() {
@@ -107,7 +128,37 @@ export default class extends Vue {
   }
 
   increment(direction: number) {
-    const text = (this.$el as HTMLElement).innerText.replace(/[^0-9-.]/g, '')
+    const parts = (this.$el as HTMLElement).innerText.trim().split(',')
+
+    let text
+    let partIndex
+    let count = 0
+    let position
+
+    if (parts.length > 0) {
+      if (this._incrementSelectionTimeout) {
+        clearTimeout(this._incrementSelectionTimeout)
+      }
+
+      if (this.position) {
+        position = this.position
+      } else {
+        position = this.getCaretPosition()
+      }
+
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i]
+        if (position >= count && position <= count + part.length) {
+          text = part.replace(/[^0-9-.]/g, '')
+          partIndex = i
+          break
+        }
+
+        count += part.length + 1
+      }
+    } else {
+      text = parts[0]
+    }
 
     if (isNaN(text as any)) {
       return
@@ -119,7 +170,41 @@ export default class extends Vue {
     const step = 1 / Math.pow(10, precision)
     const change = step * direction * -1
 
-    this.$emit('output', Math.max(min, Math.min(max, +text + change)).toFixed(precision))
+    text = Math.max(min, Math.min(max, +text + change)).toFixed(precision)
+
+    if (parts.length > 1) {
+      this.position = position
+
+      parts[partIndex] = text
+      text = parts.join(',')
+
+      this._incrementSelectionTimeout = setTimeout(() => {
+        this._incrementSelectionTimeout = null
+
+        let sel
+
+        if ((document as any).selection) {
+          sel = (document as any).selection.createRange()
+          sel.moveStart('character', position)
+          sel.select()
+        } else {
+          sel = window.getSelection()
+          sel.collapse(this.$el.lastChild, position)
+        }
+
+        this.position = null
+      }, 100)
+    }
+
+    ;(this.$el as any).innerText = text
+
+    if (this._emitTimeout) {
+      clearTimeout(this._emitTimeout)
+    }
+    this._emitTimeout = setTimeout(() => {
+      this._emitTimeout = null
+      this.$emit('output', text)
+    }, 50)
   }
 
   onWheel(event) {

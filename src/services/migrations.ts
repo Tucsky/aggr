@@ -1,6 +1,6 @@
 import panesSettings from '@/store/panesSettings'
-import { Workspace } from '@/types/test'
-import { IDBPDatabase } from 'idb'
+import { MarketAlert, Workspace } from '@/types/test'
+import { IDBPDatabase, IDBPTransaction } from 'idb'
 import { AggrDB } from './workspacesService'
 import defaultPanes from '@/store/defaultPanes.json'
 import { Threshold, TradesPaneState } from '@/store/panesSettings/trades'
@@ -51,18 +51,28 @@ export const databaseUpgrades = {
       autoIncrement: true
     })
   },
-  4: async (/*db: IDBPDatabase<AggrDB>, tx: IDBPTransaction<AggrDB>*/) => {
-    /*const type = 'indicator'
-    const objectStore: any = tx.objectStore('presets')
-    const presets = await objectStore.getAllKeys(IDBKeyRange.bound(type, type + '|', true, true))
+  5: async (db: IDBPDatabase<AggrDB>) => {
+    db.createObjectStore('alerts', {
+      keyPath: 'market'
+    })
+  },
+  6: async (db: IDBPDatabase<AggrDB>, tx: IDBPTransaction<AggrDB>) => {
+    const objectStore = tx.objectStore('alerts')
+    const markets = (await objectStore.getAllKeys()) as any
 
-    for (const id of presets) {
-      const preset = await objectStore.get(id)
+    for (const market of markets) {
+      const prices = ((await objectStore.get(market)) as any).prices
 
-      preset.name = preset.name.replace(/^indicator:/, 'indicator:price:')
-      await objectStore.put(preset)
-      await objectStore.delete(id)
-    }*/
+      const alerts: MarketAlert[] = prices.map(price => ({
+        price,
+        active: true
+      }))
+
+      await (objectStore as any).put({
+        market,
+        alerts
+      })
+    }
   }
 }
 

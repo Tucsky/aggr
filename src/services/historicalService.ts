@@ -1,5 +1,5 @@
 import { Bar } from '@/components/chart/chartController'
-import { floorTimestampToTimeframe, isOddTimeframe, parseMarket } from '@/utils/helpers'
+import { floorTimestampToTimeframe, handleFetchError, isOddTimeframe, parseMarket } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import store from '../store'
@@ -73,31 +73,7 @@ class HistoricalService extends EventEmitter {
         }
       })
       .catch(err => {
-        if (err instanceof Error) {
-          const hasSomethingToSay = err.message && err.message !== 'Failed to fetch'
-
-          if (hasSomethingToSay) {
-            store.dispatch('app/showNotice', {
-              title: err.message,
-              type: 'error',
-              timeout: 10000
-            })
-          } else {
-            if (/aggr\.trade$/.test(location.hostname)) {
-              store.dispatch('app/showNotice', {
-                title: `Aggr server seems down 💀`,
-                type: 'error',
-                timeout: 10000
-              })
-            } else {
-              store.dispatch('app/showNotice', {
-                title: `Failed to reach api<br><a href="https://github.com/Tucsky/aggr-server">Configure aggr-server</a> <strong>to use your own data</strong>`,
-                type: 'error',
-                timeout: 10000
-              })
-            }
-          }
-        }
+        handleFetchError(err)
 
         throw err
       })
@@ -201,18 +177,6 @@ class HistoricalService extends EventEmitter {
       data[i].exchange = exchange
       data[i].pair = pair
       delete data[i].time
-    }
-
-    // markets.length && console.warn('missing markets', markets.join(', '))
-
-    for (const id of markets) {
-      // const market: string[] = id.split(':')
-
-      if (!refs[id]) {
-        console.warn(`Server did not send anything about ${id} but client expected it (check if server is tracking this market)`)
-
-        continue
-      }
     }
 
     return {

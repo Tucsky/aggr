@@ -158,7 +158,7 @@ const actions = {
       confirm &&
       (await dialogService.confirm({
         title: 'Save changes ?',
-        message: `This indicator has unsaved changes.<br>Click save to update ${id} across workspace`,
+        message: `This indicator has unsaved changes.\nClick save to update ${id} across workspace`,
         cancel: 'DISCARD',
         ok: 'SAVE'
       }))

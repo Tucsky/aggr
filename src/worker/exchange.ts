@@ -532,7 +532,6 @@ class Exchange extends EventEmitter {
     this.emit('subscribed', pair, api._reconnecting)
 
     if (api.readyState !== WebSocket.OPEN) {
-      console.log('(subscribe ' + pair + ') ws connection api', api._id, 'is in opening/closing state')
       // webSocket is in CLOSING or CLOSED state
       return false
     }
@@ -554,7 +553,6 @@ class Exchange extends EventEmitter {
     this.emit('unsubscribed', pair, api._id)
 
     if (api.readyState !== WebSocket.OPEN) {
-      console.log('(unsubscribe ' + pair + ') ws connection api', api._id, 'is in opening/closing state')
       // webSocket is in CLOSING or CLOSED state
       return false
     }
@@ -600,8 +598,6 @@ class Exchange extends EventEmitter {
     if (this.keepAliveIntervals[api.url]) {
       this.stopKeepAlive(api)
     }
-
-    console.debug(`[${this.id}] setup keepalive for ws ${api.url}`)
 
     this.keepAliveIntervals[api.url] = setInterval(() => {
       if (api.readyState === WebSocket.OPEN) {

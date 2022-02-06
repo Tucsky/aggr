@@ -12,7 +12,7 @@
   flex-shrink: 0;
   cursor: pointer;
   background-color: $red;
-  color: var(--theme-background-base);
+  color: var(--theme-color-base);
   font-weight: 600;
 
   &.-small {
@@ -26,6 +26,10 @@
     margin-top: 2px;
     font-size: 1em;
     font-weight: 600;
+  }
+
+  &.-invert {
     background-color: var(--theme-color-base);
+    color: var(--theme-background-base);
   }
 }

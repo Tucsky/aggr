@@ -152,14 +152,20 @@ export default class extends Vue {
 
     const dropdown = this.$refs.options
 
-    const dropdownRect = dropdown.getBoundingClientRect()
+    const dropdownRect = this.$el.getBoundingClientRect()
 
     const container = getScrollParent(dropdown) || document.getElementById('app')
 
     const containerRect = container.getBoundingClientRect()
 
-    if (dropdownRect.y + dropdownRect.height + 32 > containerRect.y + containerRect.height) {
+    const dropdownRelativeY = dropdownRect.y - containerRect.y
+
+    const innerElement = dropdown.children[0] as HTMLElement
+    if (dropdownRelativeY > containerRect.height / 2) {
       dropdown.classList.add('-upside-down')
+      innerElement.style.maxHeight = Math.min(containerRect.height * 0.886, dropdownRelativeY - dropdownRect.height) + 'px'
+    } else {
+      innerElement.style.maxHeight = Math.min(containerRect.height * 0.886, containerRect.height - dropdownRelativeY) + 'px'
     }
   }
 

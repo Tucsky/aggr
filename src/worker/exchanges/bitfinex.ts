@@ -99,7 +99,6 @@ export default class extends Exchange {
     const json = JSON.parse(event.data)
 
     if (json.event === 'subscribed' && json.chanId) {
-      console.debug(`[${this.id}] register channel ${json.chanId} (${json.channel}:${json.pair})`)
       this.channels[json.chanId] = {
         name: json.channel,
         pair: json.pair
@@ -117,7 +116,6 @@ export default class extends Exchange {
     const channel = this.channels[json[0]]
 
     if (!channel.hasSentInitialMessage) {
-      console.debug(`[${this.id}] skip first payload ${channel.name}:${channel.pair}`)
       channel.hasSentInitialMessage = true
       return
     }

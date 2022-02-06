@@ -62,15 +62,12 @@
         </div>
         <div class="chart-overlay__title pane-overlay" @click="showMarketsOverlay = !showMarketsOverlay">
           Markets
-          <button type="button" class="btn badge -compact ml4 mr4" @click="toggleMarketOverlay">
+          <button type="button" class="btn badge -invert -compact ml4 mr4" @click="toggleMarketOverlay">
             {{ markets.length ? visibleMarkets : 'Search markets' }}
           </button>
           <i class="icon-up-thin -higher"></i>
         </div>
       </div>
-    </div>
-    <div class="chart-overlay -right chart__controls" :style="{ marginRight: axis[0] + 'px' }">
-      <button class="chart__screenshot btn -text -large" @click="takeScreenshot"><i class="icon-add-photo"></i></button>
     </div>
     <div class="chart__container" ref="chartContainer">
       <chart-layout v-if="layouting" :pane-id="paneId" :layouting="layouting" :axis="axis"></chart-layout>
@@ -90,7 +87,8 @@ import {
   formatBytes,
   openBase64InNewTab,
   getTimeframeForHuman,
-  floorTimestampToTimeframe
+  floorTimestampToTimeframe,
+  formatMarketPrice
 } from '../../utils/helpers'
 import { defaultChartOptions, getChartCustomColorsOptions } from './chartOptions'
 
@@ -106,6 +104,10 @@ import CreateIndicatorDialog from './CreateIndicatorDialog.vue'
 import { ChartPaneState } from '@/store/panesSettings/chart'
 import { getColorLuminance, joinRgba, splitRgba } from '@/utils/colors'
 import { Chunk } from './chartCache'
+import { isTouchSupported, getEventOffset } from '@/utils/touchevent'
+import workspacesService from '@/services/workspacesService'
+import alertService from '@/services/alertService'
+import { Trade } from '@/types/test'
 
 @Component({
   name: 'Chart',
@@ -162,8 +164,13 @@ export default class extends Mixins(PaneMixin) {
     },
     {
       icon: 'refresh',
-      label: 'Force refresh',
+      label: 'Restart',
       click: this.resetChart
+    },
+    {
+      icon: 'add-photo',
+      label: 'Take screenshot',
+      click: this.takeScreenshot
     }
   ]
 
@@ -176,6 +183,8 @@ export default class extends Mixins(PaneMixin) {
   private _lastCrosshairCoordinates: number
   private _reachedEnd: boolean
   private _loading: boolean
+  private _levelDragMoveHandler: any
+  private _levelDragEndHandler: any
 
   get indicators() {
     return (this.$store.state[this.paneId] as ChartPaneState).indicators
@@ -211,6 +220,10 @@ export default class extends Mixins(PaneMixin) {
 
   get visibleMarkets() {
     return this.markets.filter(a => !this.hiddenMarkets[a]).length
+  }
+
+  get alerts() {
+    return this.$store.state[this.paneId].alerts
   }
 
   $refs!: {
@@ -259,6 +272,7 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/SET_TIMEFRAME':
           this.setTimeframe(mutation.payload)
           break
+        case 'settings/TOGGLE_ALERTS':
         case 'app/EXCHANGE_UPDATED':
         case this.paneId + '/TOGGLE_MARKET':
           this._chartController.refreshMarkets()
@@ -481,6 +495,10 @@ export default class extends Mixins(PaneMixin) {
       let text = ''
 
       for (let j = 0; j < indicator.apis.length; j++) {
+        if (j > 10) {
+          break
+        }
+
         const api = indicator.apis[j]
 
         const data = param.seriesPrices.get(api)
@@ -531,11 +549,12 @@ export default class extends Mixins(PaneMixin) {
     this._chartController.renderAll(true)
   }
 
-  /**
-   * @param{Trade[]} trades trades to process
-   */
-  onTrades(trades) {
+  onTrades(trades: Trade[]) {
     this._chartController.queueTrades(trades)
+  }
+
+  onAlert({ price, market }: { price: number; market: string }) {
+    this._chartController.triggerAlert(market, price)
   }
 
   refreshChartDimensions() {
@@ -565,6 +584,8 @@ export default class extends Mixins(PaneMixin) {
     }
 
     this._onPanTimeout = setTimeout(() => {
+      this._onPanTimeout = null
+
       if (this._chartController.chartCache.cacheRange.from === null) {
         return
       }
@@ -575,25 +596,211 @@ export default class extends Mixins(PaneMixin) {
       this.savePosition(visibleLogicalRange)
 
       this.fetchMore(visibleLogicalRange)
-    }, 1000)
+    }, 500)
   }
 
   bindChartEvents() {
     aggregatorService.on('trades', this.onTrades)
+    aggregatorService.on('alert', this.onAlert)
 
     if (this.showLegend && this.showIndicatorsOverlay) {
       this.bindLegend()
     }
 
     this._chartController.chartInstance.timeScale().subscribeVisibleLogicalRangeChange(this.onPan)
+
+    if (process.env.VUE_APP_PUBLIC_VAPID_KEY) {
+      const canvas = this._chartController.chartElement.querySelector('canvas:nth-child(2)')
+      canvas.addEventListener(isTouchSupported() ? 'touchstart' : 'mousedown', this.onLevelDragStart)
+    }
   }
 
   unbindChartEvents() {
     aggregatorService.off('trades', this.onTrades)
+    aggregatorService.off('alert', this.onAlert)
 
     this.unbindLegend()
 
     this._chartController.chartInstance.timeScale().unsubscribeVisibleLogicalRangeChange(this.onPan)
+
+    if (process.env.VUE_APP_PUBLIC_VAPID_KEY) {
+      const canvas = this._chartController.chartElement.querySelector('canvas:nth-child(2)')
+      canvas.removeEventListener(isTouchSupported() ? 'touchstart' : 'mousedown', this.onLevelDragStart)
+    }
+  }
+
+  onLevelDragStart(event) {
+    if (this._levelDragEndHandler || !this.$store.state.settings.alerts || event.button) {
+      return
+    }
+
+    const dataAtPoint = this._chartController.getPricelineAtPoint(event)
+
+    if (!dataAtPoint.api) {
+      return
+    }
+
+    const canvas = this._chartController.chartElement.querySelector('canvas:nth-child(2)')
+
+    if ((dataAtPoint as any).priceline) {
+      this._chartController.disableCrosshair()
+    }
+
+    this._levelDragMoveHandler = this.onLevelDragMove.bind(this, dataAtPoint, Date.now())
+    canvas.addEventListener(/touch/.test(event.type) ? 'touchmove' : 'mousemove', this._levelDragMoveHandler)
+
+    this._levelDragEndHandler = this.onLevelDragEnd.bind(this, dataAtPoint, Date.now())
+    canvas.addEventListener(/touch/.test(event.type) ? 'touchend' : 'mouseup', this._levelDragEndHandler)
+  }
+
+  onLevelDragMove({ api, priceline, market, originalOffset, offset }, startedAt, event) {
+    const { x, y } = getEventOffset(event)
+
+    const canMove = Math.abs(originalOffset.y - y) > 5 || Date.now() - startedAt > 100
+
+    offset.x = x
+    offset.y = y
+
+    if (priceline) {
+      event.stopPropagation()
+
+      if (!canMove) {
+        return
+      }
+
+      const price = +formatMarketPrice(api.coordinateToPrice(y) as number, market)
+
+      priceline.applyOptions({
+        price
+      })
+    }
+  }
+
+  async onLevelDragEnd({ api, priceline, price, market, canCreate, originalOffset, offset }, startedAt, event) {
+    const canvas = this._chartController.chartElement.querySelector('canvas:nth-child(2)')
+
+    const canMove = Math.abs(originalOffset.y - offset.y) > 5 || Date.now() - startedAt > 200
+    canCreate = !priceline && canCreate && !canMove
+
+    if (priceline || canCreate) {
+      this._chartController.chartInstance.clearCrosshairPosition()
+    }
+
+    // unbind up
+    canvas.removeEventListener(/touch/.test(event.type) ? 'touchend' : 'mouseup', this._levelDragEndHandler)
+    this._levelDragEndHandler = null
+
+    if (this._levelDragMoveHandler) {
+      // unbind move
+      canvas.removeEventListener(/touch/.test(event.type) ? 'touchmove' : 'mousemove', this._levelDragMoveHandler)
+      this._levelDragMoveHandler = null
+    }
+    console.log({
+      canMove: canMove ? 'yes' : 'no',
+      canCreate: canCreate ? 'yes' : 'no',
+      priceline: priceline ? 'yes' : 'no',
+      panTimeout: this._onPanTimeout ? 'yes' : 'no'
+    })
+    if (this._onPanTimeout) {
+      return
+    }
+
+    let marketAlerts
+
+    if (priceline) {
+      this._chartController.enableCrosshair()
+      const alert = this._chartController.markets[market].alerts.find(a => a.price === price)
+      const newPrice = priceline.options().price
+
+      if (price !== newPrice && canMove) {
+        const active = await alertService.moveAlert(market, price, newPrice)
+
+        alert.triggered = false
+        alert.timestamp = Date.now()
+        alert.price = newPrice
+        alert.active = active
+
+        await workspacesService.saveAlerts({
+          market,
+          alerts: this._chartController.markets[market].alerts
+        })
+
+        priceline.applyOptions({
+          title: ''
+        })
+      } else {
+        api.removePriceLine(priceline)
+
+        // unregister alert from server
+        await alertService.unsubscribe(market, price)
+
+        // save remaining active alerts for this market
+        const index = this._chartController.markets[market].alerts.indexOf(alert)
+
+        if (index !== -1) {
+          this._chartController.markets[market].alerts.splice(index, 1)
+        }
+
+        await workspacesService.saveAlerts({
+          market,
+          alerts: this._chartController.markets[market].alerts.filter(a => a.price !== price)
+        })
+      }
+    } else if (canCreate) {
+      // draw line first with 50% opacity
+      const color = splitRgba(this.$store.state.settings.alertsColor)
+      const alpha = color[3] || 1
+      color[3] = alpha * 0.5
+
+      let timestamp
+
+      if (!(event.ctrlKey || event.metaKey)) {
+        timestamp = this._chartController.chartInstance.timeScale().coordinateToTime(offset.x)
+      }
+
+      const priceline = this._chartController.renderAlert(
+        {
+          price,
+          timestamp
+        },
+        market,
+        api,
+        joinRgba(color)
+      )
+
+      const alert = {
+        price,
+        timestamp,
+        active: false
+      }
+
+      this._chartController.markets[market].alerts.push(alert)
+
+      // try subscribe to alert
+      await alertService.subscribe(market, price).then(active => {
+        // make sure alert still exists before switching alpha / saving
+        if (this._chartController.markets[market].alerts.indexOf(alert) !== -1) {
+          alert.active = active
+          const finalAlpha = active ? alpha : alpha * 0.75
+
+          workspacesService.saveAlerts({
+            market,
+            alerts: this._chartController.markets[market].alerts
+          })
+
+          // set line color to original alpha
+          color[3] = finalAlpha
+
+          priceline.applyOptions({
+            color: joinRgba(color)
+          })
+        }
+      })
+    }
+
+    if (marketAlerts) {
+      this._chartController.markets[market].alerts = marketAlerts
+    }
   }
 
   getBarSpacing(visibleLogicalRange) {
@@ -641,8 +848,6 @@ export default class extends Mixins(PaneMixin) {
   }
 
   fixFastRefreshRate() {
-    console.log(new Date().toISOString(), this.paneId, 'fix')
-
     const fontSize = this._chartController.chartInstance.options().layout.fontSize
 
     this._chartController.preventPan()

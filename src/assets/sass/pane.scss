@@ -39,6 +39,7 @@
     }
 
     &:hover {
+      z-index: 1;
       > .vue-resizable-handle {
         display: block;
       }

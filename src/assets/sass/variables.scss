@@ -117,6 +117,7 @@ $icon-star: "\e959";
 $icon-star-filled: "\e95a";
 $icon-save: "\e95b";
 $icon-merge: "\e909";
+$icon-click: "\e93e";
 
 $exchanges: (
   'BITMEX': $icon-BITMEX,
@@ -144,7 +145,6 @@ $exchanges: (
 :root {
   --theme-background-base: #{lighten($dark, 0%)};
   --theme-background-100: #{lighten($dark, 10%)};
-  --theme-background-115: #{lighten($dark, 12.5%)};
   --theme-background-150: #{lighten($dark, 30%)};
   --theme-background-200: #{lighten($dark, 50%)};
   --theme-background-300: #{lighten($dark, 75%)};
@@ -154,7 +154,6 @@ $exchanges: (
   --theme-color-100: #{$light};
   --theme-color-200: #{$light};
   --theme-color-300: #{$light};
-  --theme-color-500: #{$light};
   --theme-color-o20: #{rgba($light, 0.2)};
   --theme-color-o50: #{rgba($light, 0.5)};
   --theme-color-o75: #{rgba($light, 0.75)};

@@ -73,8 +73,10 @@ class Aggregator {
     const activeBuckets = [] // array of buckets IDs
     const bucketEnabledMarkets = [] // array of markets IDs
 
-    console.log('[worker] update buckets using :', bucketsDefinition)
-    console.debug('[worker] previous buckets :', { ...this.buckets }, this.activeBuckets)
+    if (bucketsDefinition.length) {
+      console.log('[worker] update buckets using :', bucketsDefinition)
+      console.debug('[worker] previous buckets :', { ...this.buckets }, this.activeBuckets)
+    }
 
     for (const bucketId in bucketsDefinition) {
       if (activeBuckets.indexOf(bucketId) === -1) {
@@ -124,7 +126,9 @@ class Aggregator {
       }
     }
 
-    console.log('[worker] finished updating buckets (active buckets: ', activeBuckets, ')')
+    if (activeBuckets.length) {
+      console.log('[worker] finished updating buckets (active buckets: ', activeBuckets, ')')
+    }
 
     if (activeBuckets.length && !this.activeBuckets.length) {
       this.startStatsInterval()

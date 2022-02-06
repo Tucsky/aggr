@@ -54,11 +54,7 @@
           </div>
           <i class="icon-up-thin editor__resize" @mousedown="handleResize" @touchstart="handleResize"></i>
         </tab>
-        <tab
-          name="Options"
-          :badge="scriptOptionsKeys.length + defaultOptionsKeys.length"
-          class="indicator-options indicator-options--tab hide-scrollbar"
-        >
+        <tab name="Options" class="indicator-options indicator-options--tab hide-scrollbar">
           <section class="section" v-if="scriptOptionsKeys.length">
             <div v-if="sections.indexOf('scriptOptions') > -1">
               <indicator-option

@@ -129,6 +129,10 @@ body {
   display: flex;
   flex-direction: row;
 
+  &.-wrap {
+    flex-wrap: wrap;
+  }
+
   > .-tight {
     flex-basis: auto;
     flex-grow: 0;
@@ -157,6 +161,11 @@ body {
 
   > .-nowrap {
     white-space: nowrap;
+  }
+
+  > .-fill-70 {
+    flex-grow: 1;
+    flex-basis: 70%;
   }
 
   > div {

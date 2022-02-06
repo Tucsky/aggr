@@ -475,6 +475,7 @@ export default {
       if (
         await dialogService.confirm({
           title: 'Reset everything ?',
+          html: true,
           message: `<strong>${this.workspaces.length + 1} workspace${
             this.workspaces.length > 1 ? 's' : ''
           }</strong> will be deleted along with all presets, indicators & imported sounds.`

@@ -39,12 +39,6 @@
     }
   }
 
-  &.-full-height {
-    .dropdown__scroller {
-      max-height: 420px;
-    }
-  }
-
   &.-left,
   &.-text-left {
     .dropdown__options {
@@ -115,7 +109,6 @@
   &__scroller {
     overflow-y: auto;
     overflow-x: hidden;
-    max-height: 250px;
     border-radius: $border-radius-small;
     scrollbar-width: none;
   }

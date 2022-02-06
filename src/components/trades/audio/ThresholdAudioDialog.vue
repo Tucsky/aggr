@@ -364,6 +364,7 @@ export default {
       })
 
       dialog.$on('test', ({ event, litteral }) => this.testCustom(side, event, litteral))
+      dialog.$on('stop', this.restartWebAudio)
 
       dialog.$on('append', ({ litteral, uploadedSound }) => {
         if (uploadedSound) {

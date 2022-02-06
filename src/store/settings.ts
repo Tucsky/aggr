@@ -8,6 +8,7 @@ import aggregatorService from '@/services/aggregatorService'
 import audioService from '@/services/audioService'
 import Vue from 'vue'
 import { getTimeframeForHuman } from '@/utils/helpers'
+import { isTouchSupported } from '@/utils/touchevent'
 
 export type AudioFilters = { [id: string]: boolean }
 export interface SettingsState {
@@ -28,6 +29,11 @@ export interface SettingsState {
   searchExchanges?: any
   favoriteTimeframes?: { [timeframe: number]: string }
   normalizeWatermarks: boolean
+  alerts: number | boolean
+  alertsLineStyle: number
+  alertsLineWidth: number
+  alertsColor: string
+  alertsClick: boolean
 }
 
 const state = Object.assign(
@@ -123,6 +129,7 @@ const actions = {
     document.documentElement.style.setProperty('--theme-color-100', getLogShade(textColorRgb, 0.1 * colorSide))
     document.documentElement.style.setProperty('--theme-color-150', getLogShade(textColorRgb, 0.2 * colorSide))
     document.documentElement.style.setProperty('--theme-color-200', getLogShade(textColorRgb, 0.5 * colorSide))
+    document.documentElement.style.setProperty('--theme-color-700', getLogShade(textColorRgb, 0.9 * colorSide))
     document.documentElement.style.setProperty('--theme-color-accent', joinRgba(increaseBrightness(textColorRgb, 2)))
     document.documentElement.style.setProperty('--theme-color-o75', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .75)`)
     document.documentElement.style.setProperty('--theme-color-o50', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .5)`)
@@ -243,6 +250,25 @@ const mutations = {
     } else {
       Vue.delete(state.favoriteTimeframes, value)
     }
+  },
+  TOGGLE_ALERTS(state, value) {
+    state.alerts = typeof value !== 'undefined' ? value : !state.alerts
+
+    if (value && isTouchSupported()) {
+      state.alertsClick = true
+    }
+  },
+  SET_ALERTS_COLOR(state, value) {
+    state.alertsColor = value
+  },
+  SET_ALERTS_LINESTYLE(state, value) {
+    state.alertsLineStyle = Math.max(0, Math.min(4, value))
+  },
+  SET_ALERTS_LINEWIDTH(state, value) {
+    state.alertsLineWidth = Math.max(0, +value || 0)
+  },
+  TOGGLE_ALERTS_CLICK(state) {
+    state.alertsClick = !state.alertsClick
   }
 } as MutationTree<SettingsState>
 

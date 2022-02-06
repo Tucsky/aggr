@@ -1,6 +1,7 @@
 .form-group {
   > label {
-    margin-bottom: 5px;
+    margin-top: 2px;
+    margin-bottom: 2px;
     line-height: 1.3;
     // font-family: 'Share Tech Mono';
     display: block;
@@ -10,17 +11,13 @@
       line-height: 0;
       top: 2px;
       position: relative;
-      opacity: 0.3;
+      opacity: 0.5;
       transition: opacity 0.2s $ease-out-expo;
       cursor: help;
 
       &:hover {
         opacity: 1;
       }
-    }
-
-    &:last-child {
-      margin-bottom: 0;
     }
   }
 
@@ -174,6 +171,12 @@
 
     &:after {
       content: unicode($icon-down);
+    }
+  }
+
+  &.-click input ~ div {
+    &:before {
+      content: unicode($icon-click);
     }
   }
 

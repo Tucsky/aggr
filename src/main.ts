@@ -19,7 +19,7 @@ if ('serviceWorker' in navigator) {
 Vue.use(VueTippy, {
   maxWidth: '200px',
   duration: 0,
-  arrow: false,
+  arrow: true,
   animation: 'none',
   delay: [200, 0],
   animateFill: false,

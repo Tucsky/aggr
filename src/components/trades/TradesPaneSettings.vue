@@ -201,8 +201,8 @@
       <div class="form-group" v-if="sections.indexOf('multipliers') > -1">
         <label>
           <div class="d-flex">
-            <div>Decrease threshold<br /><small>Increase visibility</small></div>
-            <div class="text-right mlauto">Increase threshold<br /><small>Decrease visibility</small></div>
+            <div>← Decrease threshold<br /><small>← Increase visibility →</small></div>
+            <div class="text-right mlauto">Increase threshold →<br /><small>Decrease visibility →</small></div>
           </div>
         </label>
         <div class="multipliers" v-if="multipliers.length">
@@ -578,10 +578,12 @@ export default class extends Vue {
 
   .market-exchange {
     line-height: 1;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
   }
 
   &.-disabled {
-    .multipliers-market__id {
+    .market-pair {
       opacity: 0.5;
     }
 

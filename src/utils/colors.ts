@@ -1,5 +1,3 @@
-import store from '@/store'
-
 export const PALETTE = [
   '#F44336',
   '#FF9800',
@@ -139,9 +137,34 @@ export function getColorLuminance(color, backgroundColor?: number[]) {
   return luminance
 }
 
+const colorsByName = {}
+
+export function getColorByName(name) {
+  if (colorsByName[name]) {
+    return colorsByName[name].slice()
+  }
+
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = 1
+  const ctx = canvas.getContext('2d')
+
+  ctx.clearRect(0, 0, 1, 1)
+  ctx.fillStyle = '#000'
+  ctx.fillStyle = name
+  ctx.fillRect(0, 0, 1, 1)
+
+  const color = ctx.getImageData(0, 0, 1, 1).data
+
+  colorsByName[name] = [color[0], color[1], color[2], color[3] / 255]
+
+  return colorsByName[name]
+}
+
 export function splitRgba(string, backgroundColor?: number[]) {
   if (string[0] === '#') {
     return hexToRgb(string)
+  } else if (!/^rgb/.test(string) && /^[a-z]+$/i.test(string)) {
+    return getColorByName(string)
   }
 
   let match
@@ -155,12 +178,6 @@ export function splitRgba(string, backgroundColor?: number[]) {
 
     color = [+match[1], +match[2], +match[3]]
   } catch (error) {
-    store.dispatch('app/showNotice', {
-      title: `${string} isn't a valid color<br>${error.message}`,
-      type: 'error',
-      timeout: 0
-    })
-
     console.error(error)
 
     color = [0, 0, 0]

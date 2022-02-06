@@ -112,4 +112,16 @@ export interface ImportedSound {
   data: any
 }
 
+export interface MarketAlerts {
+  market: string
+  alerts: MarketAlert[]
+}
+
+export interface MarketAlert {
+  price: number
+  active?: boolean
+  timestamp?: number
+  triggered?: boolean
+}
+
 export type ProductsData = string[] | { [prop: string]: any }
