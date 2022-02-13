@@ -42,7 +42,7 @@
 </template>
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
-import { getDefaultIndicatorOptionValue } from './chartOptions'
+import { getDefaultIndicatorOptionValue } from './options'
 
 @Component({
   name: 'IndicatorOption',

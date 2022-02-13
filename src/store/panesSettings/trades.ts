@@ -151,7 +151,7 @@ play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.13, 0.24,,0)`
   showTradesPairs: false,
   tradeType: 'both',
   showLogos: true,
-  monochromeLogos: true
+  monochromeLogos: false
 } as TradesPaneState
 
 const actions = {

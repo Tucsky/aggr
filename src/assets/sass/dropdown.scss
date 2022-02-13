@@ -12,6 +12,7 @@
 }
 
 .dropdown {
+  $self: &;
   position: relative;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -122,6 +123,15 @@
     justify-content: flex-end;
     align-items: center;
     text-decoration: none;
+
+    #{$self}--squished & {
+      padding: 0.5em 1em 0.5em;
+
+      > i {
+        margin: -0.5rem -1rem;
+        padding: 0.5rem;
+      }
+    }
 
     > span {
       line-height: 1;

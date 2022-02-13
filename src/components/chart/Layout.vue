@@ -35,7 +35,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
-import ChartPriceScale from './ChartPriceScale.vue'
+import ChartPriceScale from './PriceScale.vue'
 
 @Component({
   components: { ChartPriceScale },

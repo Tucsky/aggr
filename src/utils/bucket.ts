@@ -1,4 +1,4 @@
-import { defaultPlotsOptions } from '@/components/chart/chartOptions'
+import { defaultPlotsOptions } from '@/components/chart/options'
 import { Volumes } from '@/types/test'
 import { IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts'
 import store from '../store'

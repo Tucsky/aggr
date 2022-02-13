@@ -43,13 +43,13 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 
 import dialogService from '@/services/dialogService'
-import TradesPaneDialog from '../trades/TradesPaneDialog.vue'
-import CountersPaneDialog from '@/components/counters/CountersPaneDialog.vue'
-import ChartPaneDialog from '../chart/ChartPaneDialog.vue'
-import StatsPaneDialog from '../stats/StatsPaneDialog.vue'
-import PricesPaneDialog from '../prices/PricesPaneDialog.vue'
+import TradesDialog from '../trades/TradesDialog.vue'
+import CountersDialog from '@/components/counters/CountersDialog.vue'
+import ChartDialog from '../chart/ChartDialog.vue'
+import StatsDialog from '../stats/StatsDialog.vue'
+import PricesDialog from '../prices/PricesDialog.vue'
 import { getSiblings } from '@/utils/helpers'
-import WebsitePaneDialog from '../website/WebsitePaneDialog.vue'
+import WebsiteDialog from '../website/WebsiteDialog.vue'
 
 @Component({
   name: 'PaneHeader',
@@ -126,22 +126,22 @@ export default class extends Vue {
   async openSettings() {
     switch (this.type) {
       case 'counters':
-        dialogService.open(CountersPaneDialog, { paneId: this.paneId })
+        dialogService.open(CountersDialog, { paneId: this.paneId })
         break
       case 'stats':
-        dialogService.open(StatsPaneDialog, { paneId: this.paneId })
+        dialogService.open(StatsDialog, { paneId: this.paneId })
         break
       case 'chart':
-        dialogService.open(ChartPaneDialog, { paneId: this.paneId })
+        dialogService.open(ChartDialog, { paneId: this.paneId })
         break
       case 'trades':
-        dialogService.open(TradesPaneDialog, { paneId: this.paneId })
+        dialogService.open(TradesDialog, { paneId: this.paneId })
         break
       case 'prices':
-        dialogService.open(PricesPaneDialog, { paneId: this.paneId })
+        dialogService.open(PricesDialog, { paneId: this.paneId })
         break
       case 'website':
-        dialogService.open(WebsitePaneDialog, { paneId: this.paneId })
+        dialogService.open(WebsiteDialog, { paneId: this.paneId })
         break
     }
   }

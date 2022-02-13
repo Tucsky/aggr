@@ -1,5 +1,5 @@
 <template>
-  <div class="dropdown">
+  <div class="dropdown" @keydown="onKeydown">
     <div v-if="label" class="dropdown__label" @click="toggle" v-html="label"></div>
     <button class="dropdown__selected btn" @click="toggle" :class="selectionClass">
       <slot name="selection" :item="selection" :placeholder="placeholder">
@@ -187,6 +187,12 @@ export default class extends Vue {
       if (this.autoClose) {
         this.hide()
       }
+    }
+  }
+
+  onKeydown(event) {
+    if (event.which === 13) {
+      this.hide()
     }
   }
 }

@@ -58,7 +58,7 @@ import PricesSortDropdown from '@/components/prices/PricesSortDropdown.vue'
   components: {
     PricesSortDropdown
   },
-  name: 'PricesPaneSettings',
+  name: 'PricesSettings',
   props: {
     paneId: {
       type: String,

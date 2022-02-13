@@ -8,11 +8,11 @@ import {
   marketDecimals,
   formatMarketPrice
 } from '../../utils/helpers'
-import { defaultChartOptions, defaultPlotsOptions, defaultSerieOptions, getChartCustomColorsOptions, getChartOptions } from './chartOptions'
+import { defaultChartOptions, defaultPlotsOptions, defaultSerieOptions, getChartCustomColorsOptions, getChartOptions } from './options'
 import store from '../../store'
 import * as seriesUtils from './serieUtils'
 import * as TV from 'lightweight-charts'
-import ChartCache, { Chunk } from './chartCache'
+import ChartCache, { Chunk } from './cache'
 import SerieBuilder from './serieBuilder'
 import { MarketAlert, Trade } from '@/types/test'
 import dialogService from '@/services/dialogService'
@@ -285,7 +285,7 @@ export default class ChartController {
       this.type = 'time'
     }
 
-    this.timeframe = parseInt(timeframe)
+    this.timeframe = +timeframe
     this.isOddTimeframe = isOddTimeframe(this.timeframe)
 
     this.updateWatermark()
@@ -1365,7 +1365,6 @@ export default class ChartController {
       // whole chart was rendered from start to finish
 
       scrollPosition = this.chartInstance.timeScale().scrollPosition()
-
       if (!bars.length) {
         this.renderedRange.from = this.renderedRange.to = null
       } else {

@@ -29,6 +29,7 @@
           <input type="checkbox" class="form-control" :checked="showVerticalGridlines" :id="paneId + 'showVerticalGridlines'" />
           <div class="mr8"></div>
         </label>
+        <label :for="paneId + 'showVerticalGridlines'" class="-fill -center ">Show vertical grid lines</label>
         <verte
           v-if="showVerticalGridlines"
           picker="square"
@@ -38,7 +39,6 @@
           :value="verticalGridlinesColor"
           @input="$event !== verticalGridlinesColor && $store.commit(paneId + '/SET_GRIDLINES', { type: 'vertical', value: $event })"
         ></verte>
-        <label :for="paneId + 'showVerticalGridlines'" class="-fill -center ">Show vertical grid lines</label>
       </div>
     </div>
     <div class="form-group mb8">
@@ -47,6 +47,7 @@
           <input type="checkbox" class="form-control" :checked="showHorizontalGridlines" :id="paneId + 'showHorizontalGridlines'" />
           <div class="mr8"></div>
         </label>
+        <label :for="paneId + 'showHorizontalGridlines'" class="-fill -center ">Show horizontal grid lines</label>
         <verte
           v-if="showHorizontalGridlines"
           picker="square"
@@ -56,7 +57,6 @@
           :value="horizontalGridlinesColor"
           @input="$event !== horizontalGridlinesColor && $store.commit(paneId + '/SET_GRIDLINES', { type: 'horizontal', value: $event })"
         ></verte>
-        <label :for="paneId + 'showHorizontalGridlines'" class="-fill -center ">Show horizontal grid lines</label>
       </div>
     </div>
     <div class="form-group mb8">
@@ -94,7 +94,7 @@
           <div class="mr8"></div>
         </label>
         <label for="" class="-fill -center"
-          >Always extend price
+          >Always normalize mean
           <i
             class="icon-info"
             v-tippy
@@ -111,7 +111,7 @@
           <div class="mr8"></div>
         </label>
         <div>
-          <label for="" class="mlauto -center mr16 text-nowrap" :class="[alerts && 'pb8']">Alerts <span class="badge">experimental</span> </label>
+          <label for="" class="mlauto -center mr16 text-nowrap" :class="[alerts && 'pb8']">Alerts </label>
           <div v-if="alerts" class="column mt8">
             <dropdown
               class="-left -center"

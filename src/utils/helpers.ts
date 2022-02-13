@@ -312,7 +312,7 @@ export function getTimeframeForHuman(timeframe, full?: boolean) {
   const normalized = timeframe.toString().trim()
 
   if (normalized[normalized.length - 1] === 't') {
-    return parseInt(normalized) + ' TICKS'
+    return parseInt(normalized) + ' ticks'
   } else if (!isNaN(normalized) && normalized > 0) {
     return full ? getHmsFull(normalized * 1000) : getHms(normalized * 1000)
   }

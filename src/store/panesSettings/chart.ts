@@ -238,7 +238,6 @@ const actions = {
           if (market !== id) {
             continue
           }
-          console.log('[toggle market] toggle ' + market, isHidden ? 'show' : 'hide')
 
           // toggle selected market
           Vue.set(state.hiddenMarkets, market, !isHidden)

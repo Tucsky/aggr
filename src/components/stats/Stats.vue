@@ -16,7 +16,7 @@ import { Component, Mixins } from 'vue-property-decorator'
 import * as TV from 'lightweight-charts'
 import aggregatorService from '@/services/aggregatorService'
 import Bucket from '../../utils/bucket'
-import { defaultStatsChartOptions, getChartOptions, getChartCustomColorsOptions } from '../chart/chartOptions'
+import { defaultStatsChartOptions, getChartOptions, getChartCustomColorsOptions } from '../chart/options'
 
 import StatDialog from './StatDialog.vue'
 import dialogService from '@/services/dialogService'

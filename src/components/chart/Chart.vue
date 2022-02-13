@@ -11,25 +11,36 @@
         <span v-text="timeframeLabel"></span>
       </button>
       <dropdown
-        :options="timeframes"
+        :options="orderedTimeframes"
         :selected="timeframe"
         placeholder="tf."
-        @output="changeTimeframe($event)"
-        class="-full-height"
+        @output="$event.value && changeTimeframe($event.value)"
         selectionClass="-text -arrow"
+        class="dropdown--squished"
+        return-value
       >
+        <template v-slot:option-custom>
+          <div @mousedown.stop class="w-100">
+            <timeframe-input @submit="$store.commit(paneId + '/SET_TIMEFRAME', $event)" placeholder="enter tf." class="form-control text-center" />
+          </div>
+        </template>
         <template v-slot:selection>
           <span>{{ timeframeForHuman }}</span>
         </template>
-        <template v-slot:option="{ index, value }">
-          <i
-            class="-fill icon-star mr8"
-            @mousedown.prevent
-            :class="{ 'icon-star-filled': favoriteTimeframes[index] }"
-            @click="toggleFavoriteTimeframe(index)"
-          ></i>
+        <template v-slot:option="{ value }">
+          <div v-if="value.title" class="timeframe__title">
+            {{ value.title }}
+          </div>
+          <template v-else>
+            <i
+              class="-fill icon-star mr8 timeframe__favorite"
+              @mousedown.prevent
+              :class="{ 'icon-star-filled': favoriteTimeframes[value.value] }"
+              @click="toggleFavoriteTimeframe(value.value)"
+            ></i>
 
-          <span class="mlauto">{{ value }}</span>
+            <span class="mlauto">{{ value.label }}</span>
+          </template>
         </template>
       </dropdown>
     </pane-header>
@@ -78,7 +89,7 @@
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 
-import ChartController, { TimeRange } from './chartController'
+import ChartController, { TimeRange } from './chart'
 
 import {
   formatPrice,
@@ -90,7 +101,7 @@ import {
   floorTimestampToTimeframe,
   formatMarketPrice
 } from '../../utils/helpers'
-import { defaultChartOptions, getChartCustomColorsOptions } from './chartOptions'
+import { defaultChartOptions, getChartCustomColorsOptions } from './options'
 
 import aggregatorService from '@/services/aggregatorService'
 import historicalService, { HistoricalResponse } from '@/services/historicalService'
@@ -99,59 +110,59 @@ import dialogService from '../../services/dialogService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
 import IndicatorControl from './IndicatorControl.vue'
-import ChartLayout from './ChartLayout.vue'
+import ChartLayout from './Layout.vue'
 import CreateIndicatorDialog from './CreateIndicatorDialog.vue'
 import { ChartPaneState } from '@/store/panesSettings/chart'
 import { getColorLuminance, joinRgba, splitRgba } from '@/utils/colors'
-import { Chunk } from './chartCache'
+import { Chunk } from './cache'
 import { isTouchSupported, getEventOffset } from '@/utils/touchevent'
 import workspacesService from '@/services/workspacesService'
 import alertService from '@/services/alertService'
 import { Trade } from '@/types/test'
+import TimeframeInput from './TimeframeInput.vue'
 
 @Component({
   name: 'Chart',
   components: {
     IndicatorControl,
     ChartLayout,
-    PaneHeader
+    PaneHeader,
+    TimeframeInput
   }
 })
 export default class extends Mixins(PaneMixin) {
   axis = [null, null]
 
-  timeframes = {
-    '21t': '21 ticks',
-    '50t': '50 ticks',
-    '89t': '89 ticks',
-    '100t': '100 ticks',
-    '144t': '144 ticks',
-    '200t': '200 ticks',
-    '233t': '233 ticks',
-    '377t': '377 ticks',
-    '610t': '610 ticks',
-    '1000t': '1000 ticks',
-    '1597t': '1597 ticks',
-    1: '1s',
-    3: '3s',
-    5: '5s',
-    10: '10s',
-    15: '15s',
-    30: '30s',
-    60: '1m',
-    [60 * 3]: '3m',
-    [60 * 5]: '5m',
-    [60 * 15]: '15m',
-    [60 * 21]: '21m',
-    [60 * 30]: '30m',
-    [60 * 60]: '1h',
-    [60 * 60 * 2]: '2h',
-    [60 * 60 * 4]: '4h',
-    [60 * 60 * 6]: '6h',
-    [60 * 60 * 8]: '8h',
-    [60 * 60 * 12]: '12h',
-    [60 * 60 * 24]: '1d'
-  }
+  timeframes = [
+    { id: 'custom' },
+    { label: '1s', value: '1' },
+    { label: '3s', value: '3' },
+    { label: '5s', value: '5' },
+    { label: '10s', value: '10' },
+    { label: '15s', value: '15' },
+    { label: '30s', value: '30' },
+    { label: '1m', value: '60' },
+    { label: '3m', value: '180' },
+    { label: '5m', value: '300' },
+    { label: '15m', value: '900' },
+    { label: '21m', value: '1260' },
+    { label: '30m', value: '1800' },
+    { label: '1h', value: '3600' },
+    { label: '2h', value: '7200' },
+    { label: '4h', value: '14400' },
+    { label: '6h', value: '21600' },
+    { label: '8h', value: '28800' },
+    { label: '12h', value: '43200' },
+    { label: '1d', value: '86400' },
+    { label: '21 ticks', value: '21t' },
+    { label: '50 ticks', value: '50t' },
+    { label: '89 ticks', value: '89t' },
+    { label: '100 ticks', value: '100t' },
+    { label: '200 ticks', value: '200t' },
+    { label: '610 ticks', value: '610t' },
+    { label: '1000 ticks', value: '1000t' },
+    { label: '1597 ticks', value: '1597t' }
+  ]
 
   showMarketsOverlay = false
   showIndicatorsOverlay = false
@@ -224,6 +235,54 @@ export default class extends Mixins(PaneMixin) {
 
   get alerts() {
     return this.$store.state[this.paneId].alerts
+  }
+
+  get orderedTimeframes() {
+    const units = ['seconds', 'minutes', 'hours', 'ticks']
+    let unit = -1
+    const minute = 60
+    const hour = minute * 60
+    const day = hour * 24
+
+    return this.timeframes
+      .sort((a, b) => {
+        const x = a.value && a.value[a.value.length - 1] === 't'
+        const y = b.value && b.value[b.value.length - 1] === 't'
+        let order = x === y ? 0 : x ? 100000 : -100000
+
+        order += parseFloat(a.value) - parseFloat(b.value)
+        return order
+      })
+      .reduce((acc, timeframe) => {
+        if (timeframe.id) {
+          acc.push(timeframe)
+
+          return acc
+        }
+        debugger
+        let currentUnit
+        if (+timeframe.value < minute) {
+          currentUnit = 0
+        } else if (+timeframe.value < hour) {
+          currentUnit = 1
+        } else if (+timeframe.value <= day) {
+          currentUnit = 2
+        } else {
+          currentUnit = 3
+        }
+
+        if (currentUnit > unit) {
+          acc.push({
+            title: units[currentUnit]
+          })
+
+          unit = currentUnit
+        }
+
+        acc.push(timeframe)
+
+        return acc
+      }, [])
   }
 
   $refs!: {
@@ -695,12 +754,7 @@ export default class extends Mixins(PaneMixin) {
       canvas.removeEventListener(/touch/.test(event.type) ? 'touchmove' : 'mousemove', this._levelDragMoveHandler)
       this._levelDragMoveHandler = null
     }
-    console.log({
-      canMove: canMove ? 'yes' : 'no',
-      canCreate: canCreate ? 'yes' : 'no',
-      priceline: priceline ? 'yes' : 'no',
-      panTimeout: this._onPanTimeout ? 'yes' : 'no'
-    })
+
     if (this._onPanTimeout) {
       return
     }
@@ -732,7 +786,17 @@ export default class extends Mixins(PaneMixin) {
         api.removePriceLine(priceline)
 
         // unregister alert from server
-        await alertService.unsubscribe(market, price)
+        try {
+          await alertService.unsubscribe(market, price)
+        } catch (err) {
+          if (alert && alert.active) {
+            this.$store.dispatch('app/showNotice', {
+              id: 'alert-registration-failure',
+              title: `${err.message}\nYou need to make sure your browser is set to allow push notifications.`,
+              type: 'error'
+            })
+          }
+        }
 
         // save remaining active alerts for this market
         const index = this._chartController.markets[market].alerts.indexOf(alert)
@@ -776,26 +840,42 @@ export default class extends Mixins(PaneMixin) {
 
       this._chartController.markets[market].alerts.push(alert)
 
-      // try subscribe to alert
-      await alertService.subscribe(market, price).then(active => {
-        // make sure alert still exists before switching alpha / saving
-        if (this._chartController.markets[market].alerts.indexOf(alert) !== -1) {
-          alert.active = active
-          const finalAlpha = active ? alpha : alpha * 0.75
+      let finalColor
 
+      // try subscribe to alert
+      await alertService
+        .subscribe(market, price)
+        .then(active => {
+          // make sure alert still exists before switching alpha / saving
+          if (this._chartController.markets[market].alerts.indexOf(alert) !== -1) {
+            alert.active = active
+            const finalAlpha = active ? alpha : alpha * 0.75
+
+            // set line color to original alpha
+            color[3] = finalAlpha
+
+            finalColor = joinRgba(color)
+          }
+        })
+        .catch(err => {
+          this.$store.dispatch('app/showNotice', {
+            id: 'alert-registration-failure',
+            title: `${err.message}\nYou need to make sure your browser is set to allow push notifications.`,
+            type: 'error'
+          })
+
+          finalColor = this.$store.state.settings.alertsColor
+        })
+        .finally(() => {
           workspacesService.saveAlerts({
             market,
             alerts: this._chartController.markets[market].alerts
           })
 
-          // set line color to original alpha
-          color[3] = finalAlpha
-
           priceline.applyOptions({
-            color: joinRgba(color)
+            color: finalColor
           })
-        }
-      })
+        })
     }
 
     if (marketAlerts) {
@@ -936,6 +1016,13 @@ export default class extends Mixins(PaneMixin) {
   setTimeframe(newTimeframe) {
     const timeframe = parseInt(newTimeframe)
     const type = newTimeframe[newTimeframe.length - 1] === 't' ? 'tick' : 'time'
+
+    if (!this.timeframes.find(a => a.value === newTimeframe)) {
+      this.timeframes.push({
+        label: getTimeframeForHuman(newTimeframe),
+        value: newTimeframe
+      })
+    }
 
     if (
       type === this._chartController.type &&
@@ -1338,6 +1425,32 @@ export default class extends Mixins(PaneMixin) {
 
   &:hover {
     opacity: 1;
+  }
+
+  &__title {
+    flex-grow: 1;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.5;
+    font-size: 0.875em;
+    align-self: flex-end;
+    margin-top: 1rem;
+
+    ~ * {
+      margin-top: 3rem;
+    }
+  }
+
+  &__favorite {
+    &:hover {
+      background-color: var(--theme-color-o20);
+    }
+
+    &.icon-star-filled {
+      background-color: $red;
+      color: white;
+      font-weight: 600;
+    }
   }
 }
 

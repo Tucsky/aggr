@@ -1,4 +1,4 @@
-import { Bar, TimeRange } from './chartController'
+import { Bar, TimeRange } from './chart'
 
 export interface Chunk {
   from: number

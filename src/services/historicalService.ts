@@ -1,4 +1,4 @@
-import { Bar } from '@/components/chart/chartController'
+import { Bar } from '@/components/chart/chart'
 import { floorTimestampToTimeframe, handleFetchError, isOddTimeframe, parseMarket } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 

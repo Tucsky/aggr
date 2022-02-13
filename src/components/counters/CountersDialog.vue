@@ -4,17 +4,17 @@
       <div class="title -editable" @dblclick="renamePane" v-text="name"></div>
       <div class="column -center"></div>
     </template>
-    <counters-pane-settings :paneId="paneId" />
+    <counters-settings :paneId="paneId" />
   </Dialog>
 </template>
 
 <script>
 import DialogMixin from '../../mixins/dialogMixin'
 import PaneDialogMixin from '../../mixins/paneDialogMixin'
-import CountersPaneSettings from './CountersPaneSettings.vue'
+import CountersSettings from './CountersSettings.vue'
 
 export default {
-  components: { CountersPaneSettings },
+  components: { CountersSettings },
   mixins: [DialogMixin, PaneDialogMixin],
   data: () => ({
     renaming: false
