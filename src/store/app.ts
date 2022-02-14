@@ -39,7 +39,6 @@ export interface Product {
   base: string
   quote: string
   local: string
-  historical: boolean
 }
 
 export interface ListenedProduct extends Product {

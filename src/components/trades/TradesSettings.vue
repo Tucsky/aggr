@@ -201,7 +201,7 @@
       <div class="form-group" v-if="sections.indexOf('multipliers') > -1">
         <label>
           <div class="d-flex">
-            <div>← Decrease threshold<br /><small>← Increase visibility →</small></div>
+            <div>← Decrease threshold<br /><small>← Increase visibility</small></div>
             <div class="text-right mlauto">Increase threshold →<br /><small>Decrease visibility →</small></div>
           </div>
         </label>

@@ -259,7 +259,7 @@ export default class extends Mixins(PaneMixin) {
 
           return acc
         }
-        debugger
+
         let currentUnit
         if (+timeframe.value < minute) {
           currentUnit = 0

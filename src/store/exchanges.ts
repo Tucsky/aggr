@@ -93,7 +93,7 @@ const actions = {
 
     await aggregatorService.connect(markets)
   },
-  indexExchangeProducts({ rootState }, { exchangeId, symbols }: { exchangeId: string; symbols: string[] }) {
+  indexExchangeProducts(store, { exchangeId, symbols }: { exchangeId: string; symbols: string[] }) {
     const products = []
 
     const baseRegex = '([a-z0-9]{2,})'
@@ -200,7 +200,6 @@ const actions = {
         pair: symbol,
         local: localSymbol,
         exchange: exchangeId,
-        historical: rootState.app.historicalMarkets.indexOf(id) !== -1,
         type
       }
 

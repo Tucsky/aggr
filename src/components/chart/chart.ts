@@ -214,6 +214,7 @@ export default class ChartController {
     }
 
     const markets = store.state.panes.panes[this.paneId].markets
+    const historicalMarkets = store.state.app.historicalMarkets
 
     const marketsForWatermark = []
     const promisesOfAlerts = []
@@ -224,19 +225,17 @@ export default class ChartController {
       const market = store.state.panes.marketsListeners[marketKey]
 
       let localPair = marketKey
-      let hasHistorical = false
 
       if (market) {
         localPair = market.local.replace('USDT', 'USD').replace('USDC', 'USD')
-        hasHistorical = market.historical
       }
 
       cachedMarkets[marketKey] = {
         active: store.state.exchanges[exchange] && !store.state.exchanges[exchange].disabled && !store.state[this.paneId].hiddenMarkets[marketKey],
-        historical: hasHistorical
+        historical: historicalMarkets.indexOf(marketKey) !== -1
       }
 
-      if (hasHistorical) {
+      if (cachedMarkets[marketKey].historical) {
         if (this.markets[marketKey] && typeof this.markets[marketKey].alerts !== 'undefined') {
           cachedMarkets[marketKey].alerts = this.markets[marketKey].alerts
         } else {
@@ -285,7 +284,7 @@ export default class ChartController {
       this.type = 'time'
     }
 
-    this.timeframe = +timeframe
+    this.timeframe = parseFloat(timeframe)
     this.isOddTimeframe = isOddTimeframe(this.timeframe)
 
     this.updateWatermark()

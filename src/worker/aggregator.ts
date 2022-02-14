@@ -665,7 +665,22 @@ class Aggregator {
   }
 
   formatExchangeProducts({ exchangeId, response }, trackingId: string) {
-    const productsData = getExchangeById(exchangeId).formatProducts(response)
+    let productsData = null
+
+    try {
+      productsData = getExchangeById(exchangeId).formatProducts(response)
+    } catch (error) {
+      console.error(error.message)
+
+      ctx.postMessage({
+        op: 'notice',
+        data: {
+          id: exchangeId + '-products',
+          type: 'error',
+          title: `Failed to format ${exchangeId}'s products`
+        }
+      })
+    }
 
     ctx.postMessage({
       op: 'formatExchangeProducts',
