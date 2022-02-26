@@ -26,21 +26,15 @@
           </div>
         </div>
       </div>
-      <div class="form-group mt8">
-        <small class="mb4 d-block">
-          Products : <strong>{{ indexedProductsLength }}</strong>
-        </small>
-      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { formatAmount } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '@/components/framework/picker/Slider.vue'
 import aggregatorService from '@/services/aggregatorService'
-import { indexedProducts } from '@/services/productsService'
+import { formatAmount } from '@/services/productsService'
 
 @Component({
   name: 'Exchange',
@@ -80,10 +74,6 @@ export default class extends Vue {
 
   get active() {
     return this.markets.length
-  }
-
-  get indexedProductsLength() {
-    return indexedProducts[this.id].length
   }
 
   async toggleExchange() {

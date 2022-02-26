@@ -1,6 +1,6 @@
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
-import { getBucketId, parseMarket, slugify, uniqueName } from '@/utils/helpers'
+import { getBucketId, slugify, uniqueName } from '@/utils/helpers'
 import { registerModule } from '@/utils/store'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
@@ -9,7 +9,7 @@ import panesSettings from './panesSettings'
 import defaultPanes from './defaultPanes.json'
 import { ListenedProduct } from './app'
 import { GRID_COLS } from '@/utils/constants'
-import { indexedProducts, requestProducts } from '../services/productsService'
+import { getMarketProduct, parseMarket, requestProducts } from '../services/productsService'
 
 export type PaneType = 'trades' | 'chart' | 'stats' | 'counters' | 'prices' | 'website'
 export type MarketsListeners = { [market: string]: ListenedProduct }
@@ -142,7 +142,7 @@ const actions = {
       commit('REMOVE_GRID_ITEM', index)
     }
   },
-  async refreshMarketsListeners({ commit, state }, { markets, id } = {}) {
+  async refreshMarketsListeners({ commit, state, rootState }, { markets, id } = {}) {
     // cache original listeners (market: n listeners)
     const originalListeners: { [marketKey: string]: number } = Object.keys(state.marketsListeners).reduce((listenersByMarkets, marketKey) => {
       listenersByMarkets[marketKey] = state.marketsListeners[marketKey].listeners
@@ -179,27 +179,15 @@ const actions = {
           } else {
             const [exchange, pair] = parseMarket(marketKey)
 
-            if (!indexedProducts[exchange]) {
+            if (!rootState.exchanges[exchange].fetched) {
               console.warn(`[panes/refreshMarketsListeners] products not found for exchange`, exchange, '-> requesting now')
               await requestProducts(exchange)
               console.debug(`[panes/refreshMarketsListeners] ${exchange}'s products acquired`)
             }
 
-            if (indexedProducts[exchange]) {
-              const indexedProduct = indexedProducts[exchange].find(indexedMarket => indexedMarket.pair === pair)
+            marketsListeners[marketKey] = getMarketProduct(exchange, pair, true)
 
-              if (!indexedProduct) {
-                // this can happen if a product has been added before, but been delisted and product got automatically refreshed
-                console.error(`[panes/refreshMarketsListeners] market not found in exchange's product`, exchange, '(warning)')
-                continue
-              }
-
-              if (indexedProduct) {
-                marketsListeners[marketKey] = indexedProduct
-
-                marketsListeners[marketKey].listeners = 0
-              }
-            }
+            marketsListeners[marketKey].listeners = 0
           }
         }
 
@@ -342,12 +330,12 @@ const actions = {
       state.layout = layoutDesktop
 
       if (innerWidth >= 1920) {
-        initialZoom = 1.2
+        initialZoom = 1.25
       }
     } else {
       // start with mobile layout
       state.layout = layoutMobile
-      initialZoom = 1.2
+      initialZoom = 1.25
 
       delete state.panes.liquidations
     }

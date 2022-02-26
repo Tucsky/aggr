@@ -103,6 +103,7 @@ class AudioService {
   output: any
   count = 0
   minTime = 0
+  gainNode: any
 
   connect() {
     console.log(`[sfx] connect`)
@@ -213,6 +214,12 @@ class AudioService {
       effects.push(new this.tuna[name](this.filtersOptions[id]))
     }
 
+    this.gainNode = new this.tuna.Gain({
+      gain: store.state.settings.audioVolume
+    })
+
+    effects.push(this.gainNode)
+
     if (effects.length) {
       let source
 
@@ -233,6 +240,10 @@ class AudioService {
       console.debug(`[sfx] created output (no effect)`)
       this.output = this.context.destination
     }
+  }
+
+  setVolume(gain: number) {
+    this.gainNode.gain.value = gain
   }
 
   fetchArrayBuffer(url: string) {
@@ -422,7 +433,7 @@ class AudioService {
     let functionMatch = null
 
     if (gainMultiplier === null) {
-      gainMultiplier = store.state.settings.audioVolume
+      gainMultiplier = 1
     }
 
     try {

@@ -114,10 +114,11 @@
   </Dialog>
 </template>
 
-<script>
+<script lang="ts">
 import DialogMixin from '@/mixins/dialogMixin'
 import Behave from 'behave-js'
-import { findClosingBracketMatchIndex, formatAmount, parseFunctionArguments } from '@/utils/helpers'
+import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
+import { formatAmount } from '@/services/productsService'
 import audioService, { audioParametersDefinitions, audioParametersDescriptions } from '@/services/audioService'
 import dialogService from '@/services/dialogService'
 import AudioAssistantDialog from './AudioAssistantDialog.vue'
@@ -328,7 +329,7 @@ export default {
         const adapter = await audioService.buildAudioFunction(litteral, side, this.audioPitch, this.audioVolume, true)
 
         if (typeof percent !== 'undefined') {
-          adapter(audioService, percent, side, this.index)
+          adapter(audioService, percent)
         }
 
         this[side + 'Error'] = null

@@ -16,7 +16,7 @@
 
 <script lang="ts">
 import { Threshold } from '@/store/panesSettings/trades'
-import { formatAmount } from '@/utils/helpers'
+import { formatAmount } from '@/services/productsService'
 import { Component, Vue } from 'vue-property-decorator'
 
 @Component({

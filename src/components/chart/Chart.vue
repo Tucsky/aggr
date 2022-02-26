@@ -21,7 +21,8 @@
       >
         <template v-slot:option-custom>
           <div @mousedown.stop class="w-100">
-            <timeframe-input @submit="$store.commit(paneId + '/SET_TIMEFRAME', $event)" placeholder="enter tf." class="form-control text-center" />
+            <timeframe-input @submit="$store.commit(paneId + '/SET_TIMEFRAME', $event)" placeholder="enter tf." class="text-center" />
+            <span></span>
           </div>
         </template>
         <template v-slot:selection>
@@ -51,7 +52,7 @@
 
           <a href="javascript:void(0);" @click="addIndicator" class="btn mt8 mb8 -text"> Add <i class="icon-plus ml8 "></i> </a>
         </div>
-        <div class="chart-overlay__title pane-overlay" @click="toggleIndicatorOverlay">Indicators <i class="icon-up-thin -higher"></i></div>
+        <div class="chart-overlay__title pane-overlay" @click="toggleIndicatorOverlay">Indicators <i class="icon-up-thin"></i></div>
       </div>
 
       <div class="chart-overlay__panel chart__markets">
@@ -73,10 +74,10 @@
         </div>
         <div class="chart-overlay__title pane-overlay" @click="showMarketsOverlay = !showMarketsOverlay">
           Markets
-          <button type="button" class="btn badge -invert -compact ml4 mr4" @click="toggleMarketOverlay">
+          <button type="button" class="btn badge -outline ml4 mr4" @click="toggleMarketOverlay">
             {{ markets.length ? visibleMarkets : 'Search markets' }}
           </button>
-          <i class="icon-up-thin -higher"></i>
+          <i class="icon-up-thin"></i>
         </div>
       </div>
     </div>
@@ -91,21 +92,13 @@ import { Component, Mixins } from 'vue-property-decorator'
 
 import ChartController, { TimeRange } from './chart'
 
-import {
-  formatPrice,
-  formatAmount,
-  getHms,
-  formatBytes,
-  openBase64InNewTab,
-  getTimeframeForHuman,
-  floorTimestampToTimeframe,
-  formatMarketPrice
-} from '../../utils/helpers'
+import { getHms, formatBytes, openBase64InNewTab, getTimeframeForHuman, floorTimestampToTimeframe } from '@/utils/helpers'
+import { formatPrice, formatAmount, formatMarketPrice } from '@/services/productsService'
 import { defaultChartOptions, getChartCustomColorsOptions } from './options'
 
 import aggregatorService from '@/services/aggregatorService'
 import historicalService, { HistoricalResponse } from '@/services/historicalService'
-import dialogService from '../../services/dialogService'
+import dialogService from '@/services/dialogService'
 
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
@@ -118,8 +111,8 @@ import { Chunk } from './cache'
 import { isTouchSupported, getEventOffset } from '@/utils/touchevent'
 import workspacesService from '@/services/workspacesService'
 import alertService from '@/services/alertService'
-import { Trade } from '@/types/test'
-import TimeframeInput from './TimeframeInput.vue'
+import { MarketAlert, Trade } from '@/types/test'
+import TimeframeInput from '@/components/chart/TimeframeInput.vue'
 
 @Component({
   name: 'Chart',
@@ -170,7 +163,7 @@ export default class extends Mixins(PaneMixin) {
   paneControls = [
     {
       icon: 'resize-height',
-      label: 'Move indicators',
+      label: 'Arrange',
       click: this.toggleLayout
     },
     {
@@ -180,12 +173,11 @@ export default class extends Mixins(PaneMixin) {
     },
     {
       icon: 'add-photo',
-      label: 'Take screenshot',
+      label: 'Snapshot',
       click: this.takeScreenshot
     }
   ]
 
-  private _onStoreMutation: () => void
   private _timeToRecycle: number
   private _recycleTimeout: number
   private _onPanTimeout: number
@@ -396,6 +388,8 @@ export default class extends Mixins(PaneMixin) {
     this.showIndicatorsOverlay = this.$parent.$el.clientHeight > 420
 
     this.createChart()
+
+    console.log(this)
   }
 
   async createChart() {
@@ -408,9 +402,7 @@ export default class extends Mixins(PaneMixin) {
     this.bindChartEvents()
     this.setupRecycle()
 
-    await this.fetch()
-
-    this.updateChartAxis()
+    this.fetch()
 
     this._chartController.setupQueue()
   }
@@ -425,7 +417,6 @@ export default class extends Mixins(PaneMixin) {
 
   beforeDestroy() {
     this.destroyChart()
-    this._onStoreMutation()
   }
 
   /**
@@ -759,11 +750,9 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
-    let marketAlerts
-
     if (priceline) {
       this._chartController.enableCrosshair()
-      const alert = this._chartController.markets[market].alerts.find(a => a.price === price)
+      const alert = this._chartController.alerts[market].find(a => a.price === price)
       const newPrice = priceline.options().price
 
       if (price !== newPrice && canMove) {
@@ -776,7 +765,7 @@ export default class extends Mixins(PaneMixin) {
 
         await workspacesService.saveAlerts({
           market,
-          alerts: this._chartController.markets[market].alerts
+          alerts: this._chartController.alerts[market].filter(a => a.market === alert.market)
         })
 
         priceline.applyOptions({
@@ -799,15 +788,15 @@ export default class extends Mixins(PaneMixin) {
         }
 
         // save remaining active alerts for this market
-        const index = this._chartController.markets[market].alerts.indexOf(alert)
+        const index = this._chartController.alerts[market].indexOf(alert)
 
         if (index !== -1) {
-          this._chartController.markets[market].alerts.splice(index, 1)
+          this._chartController.alerts[market].splice(index, 1)
         }
 
         await workspacesService.saveAlerts({
           market,
-          alerts: this._chartController.markets[market].alerts.filter(a => a.price !== price)
+          alerts: this._chartController.alerts[market].filter(a => a.price !== price)
         })
       }
     } else if (canCreate) {
@@ -825,20 +814,21 @@ export default class extends Mixins(PaneMixin) {
       const priceline = this._chartController.renderAlert(
         {
           price,
+          market,
           timestamp
         },
-        market,
         api,
         joinRgba(color)
       )
 
-      const alert = {
+      const alert: MarketAlert = {
         price,
+        market,
         timestamp,
         active: false
       }
 
-      this._chartController.markets[market].alerts.push(alert)
+      this._chartController.alerts[market].push(alert)
 
       let finalColor
 
@@ -847,7 +837,7 @@ export default class extends Mixins(PaneMixin) {
         .subscribe(market, price)
         .then(active => {
           // make sure alert still exists before switching alpha / saving
-          if (this._chartController.markets[market].alerts.indexOf(alert) !== -1) {
+          if (this._chartController.alerts[market].indexOf(alert) !== -1) {
             alert.active = active
             const finalAlpha = active ? alpha : alpha * 0.75
 
@@ -869,17 +859,13 @@ export default class extends Mixins(PaneMixin) {
         .finally(() => {
           workspacesService.saveAlerts({
             market,
-            alerts: this._chartController.markets[market].alerts
+            alerts: this._chartController.alerts[market]
           })
 
           priceline.applyOptions({
             color: finalColor
           })
         })
-    }
-
-    if (marketAlerts) {
-      this._chartController.markets[market].alerts = marketAlerts
     }
   }
 
@@ -1180,6 +1166,7 @@ export default class extends Mixins(PaneMixin) {
     }
 
     lines.push(currentLine)
+    lines.push(this._chartController.watermark + ' (' + this.markets.length + ' market' + (this.markets.length ? 's' : '') + ')')
 
     const lineHeight = Math.round(textPadding)
     const headerHeight = Math.round(textPadding * 2 + lines.length * lineHeight)
@@ -1216,7 +1203,7 @@ export default class extends Mixins(PaneMixin) {
     const luminance = getColorLuminance(splitRgba(backgroundColor))
     const textColor = luminance < 170 ? '#ffffff' : '#000000'
 
-    if (this.showMarketsOverlay) {
+    if (this.showIndicatorsOverlay) {
       Object.values(this.indicators).forEach((indicator, index) => {
         const options = indicator.options as any
 
@@ -1400,15 +1387,14 @@ export default class extends Mixins(PaneMixin) {
     cursor: pointer;
     user-select: none;
     place-self: flex-start;
-    padding: 0.2em 0.25em;
-    line-height: 1.4;
+    padding: 0.25em;
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+    line-height: 1;
 
     &:hover {
       color: var(--theme-color-base);
-    }
-
-    .icon-up-thin {
-      vertical-align: middle;
     }
 
     &:first-child {

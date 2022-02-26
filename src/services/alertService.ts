@@ -1,4 +1,3 @@
-import store from '@/store'
 import { handleFetchError } from '@/utils/helpers'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
@@ -196,13 +195,6 @@ class AlertService {
           throw new Error(json.error)
         }
 
-        if (!unsubscribe) {
-          store.dispatch('app/showNotice', {
-            title: `${market} @ ${price} ⏰`,
-            type: 'success'
-          })
-        }
-
         return true
       })
       .catch(err => {
@@ -237,10 +229,6 @@ class AlertService {
         if (json.error) {
           throw new Error(json.error)
         }
-
-        store.dispatch('app/showNotice', {
-          title: `${market} @ ${newPrice} ↕`
-        })
 
         return true
       })

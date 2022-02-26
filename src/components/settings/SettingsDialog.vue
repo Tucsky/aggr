@@ -35,7 +35,7 @@
           </dropdown>
           <dropdown :options="workspacesToolsMenu" selectionClass="-text">
             <template v-slot:selection>
-              <i class="icon-plus"></i>
+              <i class="icon-plus" title="New template" v-tippy></i>
             </template>
             <template v-slot:option="{ value }">
               <i :class="'icon-' + value.icon"></i>
@@ -53,12 +53,12 @@
           <tbody>
             <tr v-for="workspace of workspaces" :key="workspace.id" class="option -action" @click="openWorkspace(workspace.id)">
               <td class="table-input table-ellipsis text-nowrap" v-text="workspace.name" :title="workspace.name" v-tippy></td>
-              <td class="table-input"><small v-text="'' + ago(workspace.updatedAt) + ' ago'"></small></td>
+              <td class="table-input">{{ ago(workspace.updatedAt) }} ago</td>
               <td class="table-action">
                 <button class="btn  -text" @click.stop="openWorkspace(workspace.id, true)"><i class="icon-external-link-square-alt"></i></button>
               </td>
               <td class="table-action">
-                <button class="btn  -red -small" @click.stop="removeWorkspace(workspace.id)"><i class="icon-trash"></i></button>
+                <button class="btn  -red -small" @click.stop="removeWorkspace(workspace.id)"><i class="icon-more"></i></button>
               </td>
             </tr>
           </tbody>
@@ -67,6 +67,7 @@
 
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'workspaces')">
         Workspaces
+        <small>your templates</small>
         <i class="icon-up-thin"></i>
       </div>
     </section>
@@ -118,6 +119,7 @@
       </div>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'list')">
         Trades
+        <small>aggregation, slippage, currency</small>
         <i class="icon-up-thin"></i>
       </div>
     </section>
@@ -126,6 +128,7 @@
       <audio-settings v-if="settings.indexOf('audio') > -1"></audio-settings>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'audio')">
         Audio
+        <small>main volume</small>
         <i class="icon-up-thin"></i>
       </div>
     </section>
@@ -163,6 +166,7 @@
       </div>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'chart')">
         Chart
+        <small>background color, timezone</small>
         <i class="icon-up-thin"></i>
       </div>
     </section>
@@ -175,6 +179,7 @@
       </div>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'exchanges')">
         Exchanges
+        <small>enable/disable exchange globally</small>
         <i class="icon-up-thin"></i>
       </div>
     </section>

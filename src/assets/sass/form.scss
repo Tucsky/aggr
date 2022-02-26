@@ -21,10 +21,6 @@
     }
   }
 
-  label + .help-text {
-    margin: -0.5em 0 0.5em;
-  }
-
   .checkbox-control {
     margin-bottom: 0;
   }
@@ -90,6 +86,10 @@
 
 .input-group {
   position: relative;
+
+  > .form-control {
+    width: 100%;
+  }
 
   > .btn {
     position: absolute;
@@ -190,9 +190,7 @@
         font-family: inherit;
         position: relative;
         line-height: 1;
-        order: 0;
-        font-size: 80%;
-        line-height: 1rem;
+        text-transform: uppercase;
       }
 
       i {
@@ -282,7 +280,7 @@
   }
 
   > div {
-    padding: 0.594rem;
+    padding: 0.5rem;
     border: 1px solid var(--theme-background-200);
     width: 1em;
     height: 1em;

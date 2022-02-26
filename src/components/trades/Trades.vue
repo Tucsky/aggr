@@ -1,6 +1,38 @@
 <template>
   <div class="pane-trades">
-    <pane-header :paneId="paneId" />
+    <pane-header :paneId="paneId" ref="paneHeader">
+      <tippy
+        :to="paneId"
+        :interactive="true"
+        :delay="[0, 400]"
+        :distance="16"
+        placement="bottom"
+        :theme="'transparent'"
+        append-to="parent"
+        trigger="click"
+      >
+        <div class="mt4 mb4 text-nowrap -no-grab">
+          <slider
+            style="width: 100px"
+            :min="0"
+            :max="2"
+            :step="0.01"
+            label
+            :show-completion="false"
+            class="mt8"
+            :gradient="gradient"
+            :value="thresholdsMultipler"
+            @input="$store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', { value: $event, market: market })"
+            @reset="$store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', { value: 1, market: market })"
+          >
+            <template v-slot:tooltip> {{ +(thresholdsMultipler * 100).toFixed(2) }}% </template>
+          </slider>
+        </div>
+      </tippy>
+      <button :name="paneId">
+        <i class="icon-gauge"></i>
+      </button>
+    </pane-header>
     <div
       ref="tradesContainer"
       class="trades-list"
@@ -13,102 +45,33 @@
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 
-import { formatMarketPrice, formatAmount, parseMarket } from '@/utils/helpers'
-import { getColorByWeight, getColorLuminance, getAppBackgroundColor, splitRgba } from '@/utils/colors'
-import { SlippageMode, Trade } from '@/types/test'
-import { Threshold } from '@/store/panesSettings/trades'
+import { Trade } from '@/types/test'
 
 import aggregatorService from '@/services/aggregatorService'
 import gifsService from '@/services/gifsService'
-import audioService, { AudioFunction } from '@/services/audioService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '@/components/panes/PaneHeader.vue'
 import TradesPlaceholder from '@/components/trades/TradesPlaceholder.vue'
-
-interface TradesPaneCache {
-  showTrades?: boolean
-  showLiquidations?: boolean
-  slippageMode?: SlippageMode
-  showGifs?: boolean
-  showLogos?: boolean
-  showTradesPairs?: boolean
-  marketsMultipliers?: { [identifier: string]: number }
-  paneMarkets?: { [identifier: string]: boolean }
-
-  tradesAudios?: PreparedAudioStep[]
-  tradesColors?: PreparedColorStep[]
-  minimumTradeAmount?: number
-  significantTradeAmount?: number
-  maximumTradeAmount?: number
-
-  liquidationsAudios?: PreparedAudioStep[]
-  liquidationsColors?: PreparedColorStep[]
-  minimumLiquidationAmount?: number
-  significantLiquidationAmount?: number
-  maximumLiquidationAmount?: number
-
-  audioThreshold?: number
-}
-
-interface PreparedColorStep {
-  from?: number
-  to?: number
-  range?: number
-  level?: number
-  buy: {
-    from: number[]
-    to: number[]
-    fromLuminance: number
-    toLuminance: number
-    gif: string
-  }
-  sell: {
-    from: number[]
-    to: number[]
-    fromLuminance: number
-    toLuminance: number
-    gif: string
-  }
-}
-
-interface PreparedAudioStep {
-  buy: AudioFunction
-  sell: AudioFunction
-}
+import { parseMarket } from '@/services/productsService'
+import TradesFeed from '@/components/trades/tradesFeed'
+import Slider from '@/components/framework/picker/Slider.vue'
 
 @Component({
-  components: { PaneHeader, TradesPlaceholder },
+  components: { PaneHeader, TradesPlaceholder, Slider },
   name: 'Trades'
 })
 export default class extends Mixins(PaneMixin) {
   showPlaceholder = true
 
-  private _onStoreMutation: () => void
-  private _timeAgoInterval: number
   private _tradesCount = 0
-  private _lastTradeTimestamp: number
-  private _lastSide: string
+  private feed: TradesFeed
 
-  private _preferences: TradesPaneCache
+  get market() {
+    return this.pane.markets[0]
+  }
 
   get maxRows() {
     return this.$store.state[this.paneId].maxRows
-  }
-
-  get tradesThresholds(): Threshold[] {
-    return this.$store.state[this.paneId].thresholds
-  }
-
-  get liquidationsThresholds(): Threshold[] {
-    return this.$store.state[this.paneId].liquidations
-  }
-
-  get tradeType() {
-    return this.$store.state[this.paneId].tradeType
-  }
-
-  get showTradesPairs() {
-    return this.$store.state[this.paneId].showTradesPairs
   }
 
   get showLogos() {
@@ -119,12 +82,15 @@ export default class extends Mixins(PaneMixin) {
     return this.$store.state[this.paneId].monochromeLogos
   }
 
-  get exchanges() {
-    return this.$store.state.exchanges
+  get thresholdsMultipler() {
+    return this.$store.state[this.paneId].thresholdsMultipler
   }
 
-  get audioThreshold() {
-    return this.$store.state[this.paneId].audioThreshold
+  get gradient() {
+    return [
+      this.$store.state[this.paneId].thresholds[0].buyColor,
+      this.$store.state[this.paneId].thresholds[this.$store.state[this.paneId].thresholds.length - 1].buyColor
+    ]
   }
 
   $refs!: {
@@ -132,14 +98,6 @@ export default class extends Mixins(PaneMixin) {
   }
 
   created() {
-    this._tradesCount = 0
-
-    this.cachePreferences()
-    this.cachePaneMarkets()
-    this.loadGifs()
-    this.prepareColors()
-    this.prepareAudio()
-
     aggregatorService.on('trades', this.onTrades)
 
     this._onStoreMutation = this.$store.subscribe(mutation => {
@@ -149,7 +107,7 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/TOGGLE_TRADE_TYPE':
         case this.paneId + '/TOGGLE_TRADES_PAIRS':
         case this.paneId + '/TOGGLE_LOGOS':
-          this.cachePreferences()
+          this.feed.cachePreferences()
           this.refreshList()
           break
         case this.paneId + '/SET_MAX_ROWS':
@@ -158,7 +116,7 @@ export default class extends Mixins(PaneMixin) {
         case 'panes/SET_PANE_MARKETS':
         case this.paneId + '/SET_THRESHOLD_MULTIPLIER':
           if (mutation.type !== 'panes/SET_PANE_MARKETS' || mutation.payload.id === this.paneId) {
-            this.cachePaneMarkets()
+            this.feed.cachePaneMarkets()
             this.refreshList()
           }
           break
@@ -171,428 +129,53 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/SET_AUDIO_PITCH':
         case 'settings/SET_AUDIO_VOLUME':
         case 'settings/TOGGLE_AUDIO':
-          this.prepareAudio()
+          this.feed.cacheAudio()
           break
         case this.paneId + '/SET_AUDIO_THRESHOLD':
         case this.paneId + '/TOGGLE_MUTED':
-          this.prepareAudio(false)
+          this.feed.cacheAudio(false)
           break
         case 'settings/SET_CHART_BACKGROUND_COLOR':
         case this.paneId + '/SET_THRESHOLD_COLOR':
         case this.paneId + '/SET_THRESHOLD_AMOUNT':
+        case this.paneId + '/SET_THRESHOLDS_MULTIPLER':
         case this.paneId + '/TOGGLE_THRESHOLD_MAX':
         case this.paneId + '/DELETE_THRESHOLD':
         case this.paneId + '/ADD_THRESHOLD':
-          this.prepareColors()
+          this.feed.prepareColors()
           this.refreshList()
 
           if (mutation.type === this.paneId + '/DELETE_THRESHOLD' || this.paneId + '/ADD_THRESHOLD') {
-            this.prepareAudio()
+            this.feed.cacheAudio()
           }
           break
       }
     })
   }
+
   mounted() {
-    this.startTimeAgoInterval()
+    this.feed = new TradesFeed(this.paneId, this.$refs.tradesContainer)
   }
 
   beforeDestroy() {
     aggregatorService.off('trades', this.onTrades)
 
-    this._onStoreMutation()
-
-    clearInterval(this._timeAgoInterval)
-  }
-
-  startTimeAgoInterval() {
-    let now
-
-    const timeAgo = milliseconds => {
-      if (milliseconds < 60000) {
-        return Math.floor(milliseconds / 1000) + 's'
-      } else if (milliseconds < 3600000) {
-        return Math.floor(milliseconds / 60000) + 'm'
-      } else {
-        return Math.floor(milliseconds / 3600000) + 'h'
-      }
+    if (this.feed) {
+      this.feed.destroy()
     }
-
-    this._timeAgoInterval = setInterval(() => {
-      const elements = this.$el.getElementsByClassName('-timestamp')
-      const length = elements.length
-
-      if (!length) {
-        return
-      }
-
-      now = Date.now()
-
-      const topOfTheMinute = (now / 1000) % 60 < 1
-
-      let previousRowTimeAgo
-
-      for (let i = 0; i < length; i++) {
-        if (typeof elements[i] === 'undefined') {
-          break
-        }
-
-        const milliseconds = now - (elements[i] as any).getAttribute('data-timestamp')
-        const txt = timeAgo(milliseconds)
-
-        if (txt === previousRowTimeAgo && txt) {
-          elements[i - 1].textContent = ''
-          elements[i - 1].className = 'trade__time'
-          continue
-        }
-
-        if (txt != elements[i].textContent) {
-          elements[i].textContent = txt
-
-          if (!topOfTheMinute && txt[txt.length - 1] !== 's') {
-            break
-          }
-        }
-
-        previousRowTimeAgo = txt
-      }
-    }, 1000)
   }
 
   onTrades(trades: Trade[]) {
-    let html = ''
+    const html = this.feed.processTrades(trades)
 
-    for (let i = 0; i < trades.length; i++) {
-      const marketKey = trades[i].exchange + ':' + trades[i].pair
-
-      if (!this._preferences.paneMarkets[marketKey]) {
-        continue
+    if (html.length > 0) {
+      if (!this._tradesCount++) {
+        this.showPlaceholder = false
       }
-
-      const trade = trades[i]
-
-      if (typeof this._preferences.marketsMultipliers[marketKey] !== 'undefined') {
-        trade.amount /= this._preferences.marketsMultipliers[marketKey]
-      }
-
-      if (!trade.liquidation && this._preferences.showTrades) {
-        if (trade.amount >= this._preferences.minimumTradeAmount && trade.amount < this._preferences.maximumTradeAmount) {
-          /*if (this._preferences.minimumTradeAmount && trade.amount > this._preferences.minimumTradeAmount) {
-            console.log(trade.exchange, trade.size * trade.price, '-> split')
-            const slicedAmount = Math.min(trade.amount, this._preferences.minimumTradeAmount)
-            const slicedSize = slicedAmount / trade.price
-            trades.splice(i + 1, 0, {
-              ...trade,
-              size: trade.size - slicedSize,
-              amount: trade.amount - slicedAmount
-            })
-
-            trade.size = slicedSize
-            trade.amount = slicedAmount
-          }*/
-
-          html += this.showTrade(
-            trade,
-            marketKey,
-            this._preferences.tradesColors,
-            this._preferences.tradesAudios,
-            this._preferences.significantTradeAmount
-          )
-        } else if (trade.amount > this._preferences.audioThreshold && trade.amount < this._preferences.maximumTradeAmount) {
-          this._preferences.tradesAudios[0][trade.side](audioService, trade.amount / this._preferences.significantTradeAmount)
-        }
-      } else if (trade.liquidation && this._preferences.showLiquidations) {
-        if (trade.amount >= this._preferences.minimumLiquidationAmount && trade.amount < this._preferences.maximumLiquidationAmount) {
-          html += this.showTrade(
-            trade,
-            marketKey,
-            this._preferences.liquidationsColors,
-            this._preferences.liquidationsAudios,
-            this._preferences.significantLiquidationAmount
-          )
-        } else if (trade.amount > this._preferences.audioThreshold && trade.amount < this._preferences.maximumLiquidationAmount) {
-          this._preferences.liquidationsAudios[0][trade.side](audioService, trade.amount / this._preferences.significantLiquidationAmount)
-        }
-      }
+      this.$refs.tradesContainer.insertAdjacentHTML('afterbegin', html)
     }
-
-    this.$refs.tradesContainer.insertAdjacentHTML('afterbegin', html)
 
     this.trimRows()
-  }
-
-  getTradeInlineStyles(trade: Trade, colorStep: PreparedColorStep, significantAmount: number) {
-    const percentToNextThreshold = (Math.max(trade.amount, colorStep.from) - colorStep.from) / colorStep.range
-    const percentToSignificant = Math.min(1, trade.amount / significantAmount)
-
-    const colorBySide = colorStep[trade.side]
-
-    let backgroundGif = ''
-
-    if (this._preferences.showGifs && colorStep[trade.side].gif) {
-      const keyword = colorStep[trade.side].gif
-
-      if (gifsService.cache[keyword]) {
-        backgroundGif = `background-image:url('${gifsService.cache[keyword][Math.floor(Math.random() * (gifsService.cache[keyword].length - 1))]}')`
-      }
-    }
-
-    // 0-255 luminance of nearest color
-    const luminance = colorBySide[(percentToNextThreshold < 0.5 ? 'from' : 'to') + 'Luminance']
-
-    // background color simple color to color based on percentage of amount to next threshold
-    const backgroundColor = getColorByWeight(colorBySide.from, colorBySide.to, percentToNextThreshold)
-
-    // take background color and apply logarithmic shade based on amount to this._significantThresholdAmount percentage
-    // darken if luminance of background is high, lighten otherwise
-    let foregroundColor
-
-    if (luminance > (backgroundGif ? 144 : 170)) {
-      foregroundColor = 'rgba(0, 0, 0, ' + Math.min(1, 0.33 + percentToSignificant) + ')'
-    } else {
-      foregroundColor = 'rgba(255, 255, 255, ' + Math.min(1, 0.33 + percentToSignificant) + ')'
-    }
-
-    return `background-color:rgb(${backgroundColor[0]}, ${backgroundColor[1]}, ${backgroundColor[2]});color:${foregroundColor};${backgroundGif}`
-  }
-
-  showTrade(trade: Trade, marketKey: string, colors: PreparedColorStep[], audios: PreparedAudioStep[], significantAmount: number) {
-    if (!this._tradesCount++) {
-      this.showPlaceholder = false
-    }
-
-    let level = 0
-    let colorStep: PreparedColorStep = colors[level]
-
-    for (level = 0; level < colors.length; level++) {
-      if (trade.amount < colors[level].to) {
-        colorStep = colors[level]
-        break
-      }
-    }
-
-    if (level < colors.length && trade.amount > this._preferences.audioThreshold) {
-      audios[level][trade.side](audioService, trade.amount / significantAmount)
-    }
-
-    return this.renderRow(trade, marketKey, colorStep, significantAmount)
-  }
-
-  renderRow(trade: Trade, marketKey: string, colorStep: PreparedColorStep, significantAmount: number) {
-    let timestampClass = ''
-
-    if (trade.timestamp !== this._lastTradeTimestamp) {
-      timestampClass = ' -timestamp'
-
-      this._lastTradeTimestamp = trade.timestamp
-    }
-
-    let priceSlippage = ''
-
-    if (this._preferences.slippageMode && trade.slippage) {
-      priceSlippage = `<small>${trade.slippage > 0 ? '+' : ''}${trade.slippage}${this._preferences.slippageMode === 'bps' ? 'bps' : ''}</small>`
-    }
-
-    let exchangeName = ''
-
-    if (!this._preferences.showLogos) {
-      exchangeName = trade.exchange.replace('_', ' ')
-    }
-
-    let sideClass = ''
-
-    const sideType = trade.side + (trade.liquidation ? '-liquidation' : '')
-
-    if (sideType !== this._lastSide) {
-      sideClass = ' icon-side'
-      this._lastSide = sideType
-    }
-
-    let pairName = ''
-
-    if (this._preferences.showTradesPairs) {
-      pairName = `<div class="trade__pair">${trade.pair.replace('_', ' ')}</div>`
-    }
-
-    return `<li class="trade -${trade.exchange} -${trade.side} -level-${colorStep.level}${trade.liquidation ? ' -liquidation' : ''}" title="${
-      trade.exchange
-    }:${trade.pair}" style="${this.getTradeInlineStyles(trade, colorStep, significantAmount)}">
-    <div class="trade__side${sideClass}"></div>
-    <div class="trade__exchange">${exchangeName}</div>
-    ${pairName}
-    <div class="trade__price">${formatMarketPrice(trade.price, marketKey)}${priceSlippage}</div>
-    <div class="trade__amount">
-      <span class="trade__amount__quote">
-        <span class="icon-quote"></span>
-        <span>${formatAmount(trade.size * trade.price)}</span>
-      </span>
-      <span class="trade__amount__base">
-        <span class="icon-base"></span>
-        <span>${formatAmount(trade.size)}</span>
-      </span>
-    </div>
-    <div class="trade__time ${timestampClass}" data-timestamp="${trade.timestamp.toString()}"></div>
-    </li>`
-  }
-
-  async loadGifs() {
-    this.loadThresholdsGifs(this.tradesThresholds)
-    this.loadThresholdsGifs(this.liquidationsThresholds)
-  }
-
-  async loadThresholdsGifs(thresholds) {
-    for (const threshold of thresholds) {
-      if (threshold.buyGif) {
-        gifsService.getGifs(threshold.buyGif)
-      }
-
-      if (threshold.sellGif) {
-        gifsService.getGifs(threshold.sellGif)
-      }
-    }
-  }
-
-  prepareColors() {
-    const appBackgroundColor = getAppBackgroundColor()
-    this._preferences.tradesColors = this.prepareColorsThresholds(this.tradesThresholds, appBackgroundColor)
-    this._preferences.liquidationsColors = this.prepareColorsThresholds(this.liquidationsThresholds, appBackgroundColor)
-
-    this._preferences.minimumTradeAmount = this.tradesThresholds[0].amount
-    this._preferences.significantTradeAmount = this.tradesThresholds[1].amount
-    if (this.tradesThresholds[this.tradesThresholds.length - 1].max) {
-      this._preferences.maximumTradeAmount = this.tradesThresholds[this.tradesThresholds.length - 1].amount
-    } else {
-      this._preferences.maximumTradeAmount = Infinity
-    }
-
-    this._preferences.minimumLiquidationAmount = this.liquidationsThresholds[0].amount
-    this._preferences.significantLiquidationAmount = this.liquidationsThresholds[1].amount
-    if (this.liquidationsThresholds[this.liquidationsThresholds.length - 1].max) {
-      this._preferences.maximumLiquidationAmount = this.liquidationsThresholds[this.liquidationsThresholds.length - 1].amount
-    } else {
-      this._preferences.maximumLiquidationAmount = Infinity
-    }
-  }
-
-  prepareColorsThresholds(thresholds, appBackgroundColor) {
-    const steps = []
-
-    const len = thresholds.length
-
-    for (let i = 0; i < len; i++) {
-      if (i === len - 1) {
-        steps.push({ ...steps[steps.length - 1], max: Infinity })
-        break
-      }
-
-      const buyFrom = splitRgba(thresholds[i].buyColor, appBackgroundColor)
-      const buyTo = splitRgba(thresholds[i + 1].buyColor, appBackgroundColor)
-      const sellFrom = splitRgba(thresholds[i].sellColor, appBackgroundColor)
-      const sellTo = splitRgba(thresholds[i + 1].sellColor, appBackgroundColor)
-
-      steps.push({
-        from: thresholds[i].amount,
-        to: thresholds[i + 1].amount,
-        range: thresholds[i + 1].amount - thresholds[i].amount,
-        level: Math.floor((i / (len - 1)) * 4),
-        max: i === len - 1 && thresholds[i + 1].max,
-        buy: {
-          from: buyFrom,
-          to: buyTo,
-          fromLuminance: getColorLuminance(buyFrom),
-          toLuminance: getColorLuminance(buyTo),
-          gif: thresholds[i].buyGif
-        },
-        sell: {
-          from: sellFrom,
-          to: sellTo,
-          fromLuminance: getColorLuminance(sellFrom),
-          toLuminance: getColorLuminance(sellTo),
-          gif: thresholds[i].sellGif
-        }
-      })
-    }
-
-    return steps
-  }
-
-  async prepareAudio(prepareThresholds = true) {
-    if (!this.$store.state.settings.useAudio || this.$store.state[this.paneId].muted || this.$store.state[this.paneId].audioVolume === 0) {
-      this._preferences.audioThreshold = Infinity
-      return
-    }
-
-    if (this.audioThreshold) {
-      if (typeof this.audioThreshold === 'string' && /\d\s*%$/.test(this.audioThreshold)) {
-        this._preferences.audioThreshold = this._preferences.minimumTradeAmount * (parseFloat(this.audioThreshold) / 100)
-      } else {
-        this._preferences.audioThreshold = +this.audioThreshold
-      }
-    } else {
-      this._preferences.audioThreshold = this._preferences.minimumTradeAmount * 0.1
-    }
-
-    if (!this._preferences.tradesAudios || prepareThresholds) {
-      const audioPitch = this.$store.state[this.paneId].audioPitch
-      const paneVolume = this.$store.state[this.paneId].audioVolume
-
-      this._preferences.tradesAudios = await this.prepareAudioThresholds(this.tradesThresholds, audioPitch, paneVolume)
-      this._preferences.liquidationsAudios = await this.prepareAudioThresholds(this.liquidationsThresholds, audioPitch, paneVolume)
-    }
-  }
-
-  async prepareAudioThresholds(thresholds, audioPitch, paneVolume) {
-    const audios = []
-
-    for (let i = 0; i < thresholds.length; i++) {
-      audios.push({
-        buy: await audioService.buildAudioFunction(thresholds[i].buyAudio, 'buy', audioPitch, paneVolume),
-        sell: await audioService.buildAudioFunction(thresholds[i].sellAudio, 'sell', audioPitch, paneVolume)
-      })
-    }
-
-    return audios
-  }
-
-  cachePreferences() {
-    if (!this._preferences) {
-      this._preferences = {
-        paneMarkets: {},
-        marketsMultipliers: {}
-      }
-    }
-
-    this._preferences.slippageMode = this.$store.state.settings.calculateSlippage
-    this._preferences.showTrades = this.tradeType === 'both' || this.tradeType === 'trades'
-    this._preferences.showLiquidations = this.tradeType === 'both' || this.tradeType === 'liquidations'
-    this._preferences.showGifs = !this.$store.state.settings.disableAnimations
-    this._preferences.showLogos = this.showLogos
-    this._preferences.showTradesPairs = this.showTradesPairs
-  }
-
-  cachePaneMarkets() {
-    this._preferences.marketsMultipliers = {}
-    this._preferences.paneMarkets = this.$store.state.panes.panes[this.paneId].markets.reduce((output, marketKey) => {
-      const [exchange] = marketKey.split(':')
-
-      if (!this.$store.state.app.activeExchanges[exchange]) {
-        output[marketKey] = false
-        return output
-      }
-
-      const multiplier = this.$store.state[this.paneId].multipliers[marketKey]
-
-      if (typeof multiplier !== 'undefined') {
-        this._preferences.marketsMultipliers[marketKey] = multiplier
-      }
-
-      output[marketKey] = true
-      return output
-    }, {})
-  }
-
-  refreshThresholdsCache() {
-    this.prepareColors()
   }
 
   clearList() {
@@ -635,17 +218,8 @@ export default class extends Mixins(PaneMixin) {
       trades.push(trade)
     }
 
-    this.clearList()
-
-    const audioThresholdValue = this._preferences.audioThreshold
-    this._preferences.audioThreshold = Infinity
-    const showGifsValue = this._preferences.showGifs
-    this._preferences.showGifs = false
-
-    this.onTrades(trades)
-
-    this._preferences.audioThreshold = audioThresholdValue
-    this._preferences.showGifs = showGifsValue
+    this.$refs.tradesContainer.innerHTML = this.feed.processTradesSilent(trades)
+    this._tradesCount = this.$refs.tradesContainer.children.length
   }
 
   trimRows() {

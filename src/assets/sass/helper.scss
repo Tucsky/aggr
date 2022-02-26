@@ -247,6 +247,10 @@ $unit: 'px'; // Feel free to change the unit.
   color: lighten($red, 10%);
 }
 
+.text-info {
+  color: $blue;
+}
+
 .text-success {
   color: lighten($green, 10%);
 }

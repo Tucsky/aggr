@@ -119,6 +119,7 @@ export interface MarketAlerts {
 
 export interface MarketAlert {
   price: number
+  market?: string
   active?: boolean
   timestamp?: number
   triggered?: boolean

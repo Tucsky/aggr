@@ -107,10 +107,7 @@ export default class extends Vue {
   }
 
   handleDrag(event) {
-    if (event.button === 2) {
-      return
-    }
-    if (event.target.classList.contains('-no-grab')) {
+    if (event.button === 2 || event.target.classList.contains('-no-grab') || event.target.parentElement.classList.contains('-no-grab')) {
       return
     }
     event.preventDefault()

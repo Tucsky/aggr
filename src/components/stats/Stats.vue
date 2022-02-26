@@ -21,7 +21,8 @@ import { defaultStatsChartOptions, getChartOptions, getChartCustomColorsOptions 
 import StatDialog from './StatDialog.vue'
 import dialogService from '@/services/dialogService'
 
-import { formatAmount, getBucketId } from '@/utils/helpers'
+import { getBucketId } from '@/utils/helpers'
+import { formatAmount } from '@/services/productsService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
 
@@ -37,7 +38,6 @@ export default class extends Mixins(PaneMixin) {
   }
 
   private _refreshChartDimensionsTimeout: number
-  private _onStoreMutation: () => void
   private _chart: TV.IChartApi
   private _buckets: { [id: string]: Bucket } = {}
   private _feed: string = null
@@ -122,7 +122,6 @@ export default class extends Mixins(PaneMixin) {
 
     this.clearBuckets()
     this.removeChart()
-    this._onStoreMutation()
 
     this._chart = null
   }

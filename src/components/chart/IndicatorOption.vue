@@ -201,5 +201,9 @@ export default class extends Vue {
     width: 100%;
     max-width: 200px;
   }
+
+  .dropdown {
+    width: 100%;
+  }
 }
 </style>

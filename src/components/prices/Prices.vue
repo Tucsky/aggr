@@ -25,12 +25,11 @@
 import { Component, Mixins, Watch } from 'vue-property-decorator'
 import PricesSortDropdown from '@/components/prices/PricesSortDropdown.vue'
 
-import { formatAmount, formatMarketPrice, parseMarket } from '../../utils/helpers'
-
 import aggregatorService from '@/services/aggregatorService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
 import { Market } from '@/types/test'
+import { formatAmount, formatMarketPrice, parseMarket } from '@/services/productsService'
 
 type MarketsBarMarketStatus = '-pending' | '-up' | '-down' | '-neutral'
 type MarketStats = Market & { price: number; change: number; volume: number; status: MarketsBarMarketStatus }
@@ -45,7 +44,6 @@ export default class extends Mixins(PaneMixin) {
   markets: MarketStats[] = []
 
   private _sortFunction: (a: MarketStats, b: MarketStats) => number
-  private _onStoreMutation: () => void
 
   @Watch('pane.markets')
   private marketChange(currentMarket, previousMarkets) {
@@ -121,8 +119,6 @@ export default class extends Mixins(PaneMixin) {
   }
 
   beforeDestroy() {
-    this._onStoreMutation()
-
     aggregatorService.off('prices', this.updateMarkets)
   }
 

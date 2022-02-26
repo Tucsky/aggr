@@ -2,66 +2,6 @@ import store from '@/store'
 
 const DAY = 60 * 60 * 24
 
-export function formatAmount(amount, decimals?: number) {
-  const negative = amount < 0
-
-  amount = Math.abs(amount)
-
-  if (amount >= 1000000000) {
-    amount = +(amount / 1000000000).toFixed(isNaN(decimals) ? 1 : decimals) + 'B'
-  } else if (amount >= 1000000) {
-    amount = +(amount / 1000000).toFixed(isNaN(decimals) ? 1 : decimals) + 'M'
-  } else if (amount >= 100000) {
-    amount = +(amount / 1000).toFixed(isNaN(decimals) ? 0 : decimals) + 'K'
-  } else if (amount >= 1000) {
-    amount = +(amount / 1000).toFixed(isNaN(decimals) ? 1 : decimals) + 'K'
-  } else {
-    amount = +amount.toFixed(4)
-  }
-
-  if (negative) {
-    return '-' + amount
-  } else {
-    return amount
-  }
-}
-
-export function countDecimals(value) {
-  const parts = value.toString().split('.')
-
-  if (parts.length === 2) {
-    return parts[1].length
-  }
-
-  return 0
-}
-
-export const marketDecimals = {}
-
-export function formatMarketPrice(price, market): number {
-  if (!marketDecimals[market]) {
-    return price
-  }
-
-  if (!price) {
-    price = 0
-  }
-
-  return price.toFixed(marketDecimals[market])
-}
-
-export function formatPrice(price, precision?: number): number {
-  if (!precision) {
-    return parseInt(price)
-  }
-
-  if (!price) {
-    price = 0
-  }
-
-  return price.toFixed(precision)
-}
-
 export function ago(timestamp) {
   const seconds = Math.floor((Date.now() - timestamp) / 1000)
   let interval, output
@@ -179,10 +119,6 @@ export function getBucketId(markets: string[]) {
       return mA.localeCompare(mB)
     })
     .join('')
-}
-
-export function parseMarket(market: string) {
-  return market.match(/([^:]*):(.*)/).slice(1, 3)
 }
 
 export function openBase64InNewTab(data, mimeType) {
@@ -392,6 +328,7 @@ export function handleFetchError(err): void {
         })
       } else {
         store.dispatch('app/showNotice', {
+          id: 'fetch-error',
           html: true,
           title: `Failed to reach api<br><a href="https://github.com/Tucsky/aggr-server">Configure aggr-server</a> <strong>to use your own data</strong>`,
           type: 'error',

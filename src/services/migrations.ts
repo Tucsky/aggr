@@ -4,6 +4,7 @@ import { IDBPDatabase, IDBPTransaction } from 'idb'
 import { AggrDB } from './workspacesService'
 import defaultPanes from '@/store/defaultPanes.json'
 import { Threshold, TradesPaneState } from '@/store/panesSettings/trades'
+import { getMarketProduct, parseMarket } from './productsService'
 
 export const databaseUpgrades = {
   0: (db: IDBPDatabase<any>) => {
@@ -56,22 +57,41 @@ export const databaseUpgrades = {
       keyPath: 'market'
     })
   },
-  6: async (db: IDBPDatabase<AggrDB>, tx: IDBPTransaction<AggrDB>) => {
+  7: async (db: IDBPDatabase<AggrDB>, tx: IDBPTransaction<AggrDB>) => {
     const objectStore = tx.objectStore('alerts')
     const markets = (await objectStore.getAllKeys()) as any
 
     for (const market of markets) {
-      const prices = ((await objectStore.get(market)) as any).prices
+      const [exchange, pair] = parseMarket(market)
+      const { local } = getMarketProduct(exchange, pair, true)
 
-      const alerts: MarketAlert[] = prices.map(price => ({
-        price,
-        active: true
-      }))
+      const record = (await objectStore.get(market)) as any
 
-      await (objectStore as any).put({
-        market,
-        alerts
-      })
+      let alerts: MarketAlert[]
+
+      if (record.prices) {
+        alerts = record.prices.map(price => ({
+          price,
+          market: local,
+          active: true
+        }))
+      } else {
+        alerts = record.alerts.map(alert => ({
+          ...alert,
+          market: local
+        }))
+      }
+
+      alerts = alerts.filter(alert => alert.price >= 0)
+
+      await (objectStore as any).delete(market)
+
+      if (alerts.length) {
+        await (objectStore as any).put({
+          market: local,
+          alerts
+        })
+      }
     }
   }
 }
@@ -299,6 +319,12 @@ export const workspaceUpgrades = {
         state.thresholds[i].sellGif = (state.thresholds[i] as any).gif
         delete (state.thresholds[i] as any).gif
       }
+    }
+  },
+  5: (workspace: Workspace) => {
+    for (const paneId in workspace.states.panes.panes) {
+      const pane = workspace.states.panes.panes[paneId]
+      pane.zoom = Math.ceil(pane.zoom / 0.0625) * 0.0625
     }
   }
 }

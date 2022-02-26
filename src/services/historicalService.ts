@@ -1,8 +1,9 @@
 import { Bar } from '@/components/chart/chart'
-import { floorTimestampToTimeframe, handleFetchError, isOddTimeframe, parseMarket } from '@/utils/helpers'
+import { floorTimestampToTimeframe, handleFetchError, isOddTimeframe } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import store from '../store'
+import { parseMarket } from './productsService'
 
 export interface HistoricalResponse {
   format: 'point'

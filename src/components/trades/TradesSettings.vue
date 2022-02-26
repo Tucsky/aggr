@@ -1,12 +1,10 @@
 <template>
   <div>
     <div class="column mb16">
-      <div class="form-group -fill">
-        <label>
-          Max rows
-          <span class="icon-info" title="Numbers of trades to keep rendered" v-tippy></span>
-        </label>
+      <div class="form-group -fill" title="Number of trades rendered" v-tippy="{ boundary: 'window', placement: 'left' }">
+        <label>Limit</label>
         <input
+          id="trades-limit"
           type="number"
           min="0"
           max="1000"
@@ -16,45 +14,44 @@
           @change="$store.commit(paneId + '/SET_MAX_ROWS', $event.target.value)"
         />
       </div>
-
-      <div class="form-group -tight" title="Show exchange's logo when available" v-tippy>
-        <label>Logo</label>
-        <label class="checkbox-control checkbox-control-input flex-right">
-          <input type="checkbox" class="form-control" :checked="showLogos" @change="$store.commit(paneId + '/TOGGLE_LOGOS', $event.target.checked)" />
-          <div></div>
-        </label>
+      <div class="form-group  -unshrinkable">
+        <label>Type</label>
+        <div
+          class="checkbox-control -auto checkbox-control-input"
+          @click.stop="$store.commit(paneId + '/TOGGLE_TRADE_TYPE')"
+          title="Filter trade / liquidation"
+          v-tippy
+        >
+          <input type="checkbox" class="form-control" :checked="tradeType !== 'both'" />
+          <div :on="tradeType === 'liquidations' ? 'Liq. only' : 'Trades only'" off="All"></div>
+        </div>
       </div>
 
-      <div v-if="showLogos" class="form-group -tight" title="Show exchange's logo when available" v-tippy>
-        <label>Couleur</label>
-        <label class="checkbox-control -auto checkbox-control-input flex-right">
-          <input
-            type="checkbox"
-            class="form-control"
-            :checked="monochromeLogos"
-            @change="$store.commit(paneId + '/TOGGLE_MONOCHROME_LOGOS', $event.target.checked)"
-          />
-          <div on="monochrome" off="original"></div>
-        </label>
+      <div class="form-group  -unshrinkable">
+        <label>Symbols</label>
+        <div
+          class="checkbox-control -auto checkbox-control-input"
+          @click.stop="$store.commit(paneId + '/TOGGLE_TRADES_PAIRS')"
+          title="Show symbol's names (ex: BTC-USD)"
+          v-tippy
+        >
+          <input type="checkbox" class="form-control" :checked="showTradesPairs" />
+          <div on="Visible" off="Hidden"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="form-group mb8">
-      <label class="checkbox-control" v-tippy="{ placement: 'left' }" title="ex: BTC-USD">
-        <input type="checkbox" class="form-control" :checked="showTradesPairs" @change="$store.commit(paneId + '/TOGGLE_TRADES_PAIRS')" />
-        <div></div>
-        <span>Trades symbols are {{ showTradesPairs ? 'visible' : 'hidden' }}</span>
-      </label>
-    </div>
-
-    <div class="form-group mb8">
-      <label class="checkbox-control" :class="{ '-rip': tradeType === 'liquidations' }">
-        <input type="checkbox" class="form-control" :checked="tradeType" @change="$store.commit(paneId + '/TOGGLE_TRADE_TYPE')" />
-        <div></div>
-        <span v-if="tradeType === 'both'"> Show both trades and liquidations </span>
-        <span v-if="tradeType === 'liquidations'"> Only show liquidations </span>
-        <span v-if="tradeType === 'trades'">Only show trades</span>
-      </label>
+      <div class="form-group  -unshrinkable">
+        <label>Logos</label>
+        <div
+          class="checkbox-control -auto checkbox-control-input"
+          @click.stop="$store.commit(paneId + '/TOGGLE_LOGOS')"
+          title="Show exchange's logo when available"
+          v-tippy
+        >
+          <input type="checkbox" class="form-control" :checked="showLogos" />
+          <div :on="monochromeLogos ? 'Monochrome ' : 'Color'" off="No logo"></div>
+        </div>
+      </div>
     </div>
 
     <section class="section">
@@ -70,6 +67,25 @@
             {{ showThresholdsAsTable ? 'table' : 'slider' }}
           </button>
           <presets type="threshold" :adapter="getAudioPreset" @apply="applyAudioPreset($event)" label="Presets" />
+        </div>
+        <div class="form-group mb16">
+          <label> Ajust <strong>all thresholds</strong> at once </label>
+
+          <slider
+            :min="0"
+            :max="2"
+            :step="0.01"
+            label
+            :show-completion="false"
+            class="mt8"
+            :value="thresholdsMultipler"
+            @input="$store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', { value: $event, market: markets[0] })"
+            @reset="$store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', { value: 1, market: markets[0] })"
+          >
+            <template v-slot:tooltip>
+              {{ formatAmount(thresholds[0].amount) }} ➜ {{ formatAmount(thresholds[1].amount) }} ({{ +(thresholdsMultipler * 100).toFixed(2) }}%)
+            </template>
+          </slider>
         </div>
 
         <div class="form-group" v-if="tradeType !== 'liquidations'" key="liquidations">
@@ -241,9 +257,6 @@
                 </template>
               </slider>
             </div>
-            <!--<a href="javascript:void(0);" class="text-center -center pl16 multipliers-market__action" title="Detach" v-tippy>
-          <i class="icon-cross"></i>
-        </a>-->
           </div>
         </div>
         <a v-else href="javascript:void(0);" @click="$store.dispatch('app/showSearch', paneId)">
@@ -263,12 +276,13 @@
 import dialogService from '@/services/dialogService'
 import panesSettings from '@/store/panesSettings'
 import { TradesPaneState } from '@/store/panesSettings/trades'
-import { formatAmount, parseMarket, randomString } from '@/utils/helpers'
+import { randomString } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '../framework/picker/Slider.vue'
 import Thresholds from '../settings/Thresholds.vue'
 import ThresholdPresetDialog from './ThresholdPresetDialog.vue'
 import merge from 'lodash.merge'
+import { formatAmount, parseMarket } from '@/services/productsService'
 
 @Component({
   components: { Thresholds, Slider },
@@ -366,6 +380,10 @@ export default class extends Vue {
 
   get mutipliersCount() {
     return this.multipliers.filter(market => market.multiplier !== 1).length
+  }
+
+  get thresholdsMultipler() {
+    return (this.$store.state[this.paneId] as TradesPaneState).thresholdsMultipler
   }
 
   get disableAnimations() {
@@ -515,7 +533,8 @@ export default class extends Vue {
 
       merge(this.$store.state[this.paneId], {
         thresholds: defaultSettings.thresholds,
-        liquidations: defaultSettings.liquidations
+        liquidations: defaultSettings.liquidations,
+        thresholdsMultipler: 1
       })
     }
 

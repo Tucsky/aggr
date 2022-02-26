@@ -135,11 +135,11 @@
             <button
               v-for="(markets, localPair) of groupedSelection"
               :key="localPair"
-              class="btn  -accent -accent-200 -pill"
+              class="btn -accent -accent-200 -pill"
               :title="'Click to remove ' + markets.join(', ')"
               @click="deselectMarkets(markets)"
             >
-              <span v-if="markets.length > 1" class="badge -compact" v-text="markets.length"></span>
+              <span v-if="markets.length > 1" class="badge -compact ml8" v-text="markets.length"></span>
               <span v-text="localPair"></span>
             </button>
           </template>
@@ -281,7 +281,7 @@ import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
-import { indexedProducts, requestProducts } from '@/services/productsService'
+import { indexedProducts, indexProducts, requestProducts } from '@/services/productsService'
 
 const RESULTS_PER_PAGE = 50
 
@@ -528,9 +528,9 @@ export default {
     }
   },
   async created() {
-    this.initSelection()
-
     await this.ensureProducts()
+
+    this.initSelection()
 
     this.cacheProducts()
   },
@@ -687,8 +687,16 @@ export default {
 
     async ensureProducts() {
       for (const exchangeId of this.$store.getters['exchanges/getExchanges']) {
-        if (!this.$store.state.exchanges[exchangeId].fetched && this.$store.state.exchanges[exchangeId].disabled !== true) {
+        if (this.$store.state.exchanges[exchangeId].disabled === true) {
+          continue
+        }
+
+        if (!this.$store.state.exchanges[exchangeId].fetched) {
           await requestProducts(exchangeId)
+        }
+
+        if (this.$store.state.exchanges[exchangeId].fetched && !indexedProducts[exchangeId]) {
+          await indexProducts(exchangeId)
         }
       }
     },
@@ -830,8 +838,8 @@ export default {
         }
       })
 
-      await this.$store.dispatch('exchanges/disconnect', this.id)
-      await this.$store.dispatch('exchanges/connect', this.id)
+      await this.$store.dispatch('exchanges/disconnect', exchangeId)
+      await this.$store.dispatch('exchanges/connect', exchangeId)
 
       this.cacheProducts()
     },
@@ -906,7 +914,7 @@ export default {
   &__selection {
     display: flex;
     flex-wrap: wrap;
-    padding: 6px 16px 2px 6px;
+    padding: 6px 2rem 2px 6px;
     position: relative;
 
     &-controls > button,
@@ -932,6 +940,7 @@ export default {
     top: 0;
     right: 0;
     margin: 6px !important;
+    background: var(--theme-background-100);
   }
 }
 

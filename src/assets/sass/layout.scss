@@ -168,12 +168,15 @@ body {
     flex-basis: 70%;
   }
 
+  > .-unshrinkable {
+    flex-shrink: 0;
+  }
+
   > div {
     margin-right: 8px;
     flex-grow: 1;
 
     > .btn {
-      height: 100%;
       white-space: nowrap;
     }
 
@@ -310,6 +313,10 @@ code {
 
   &:hover {
     background-color: rgba(black, 0.05);
+
+    .section__title small {
+      visibility: visible;
+    }
   }
 
   .section__horizontal-scroll {
@@ -324,7 +331,6 @@ code {
     position: absolute;
     right: 1rem;
     margin-top: -2.6rem;
-    z-index: 2;
     line-height: 1;
   }
 
@@ -333,7 +339,6 @@ code {
     align-items: center;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    opacity: 0.8;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
@@ -342,6 +347,19 @@ code {
     user-select: none;
     margin: -1rem -1rem 0rem;
     padding: 1rem;
+    color: var(--theme-color-base);
+
+    small {
+      visibility: hidden;
+      margin-left: auto;
+      opacity: 0.5;
+      font-size: 12px;
+      text-align: right;
+
+      + .icon-up-thin {
+        margin-left: 1rem;
+      }
+    }
 
     &:hover {
       opacity: 1;
@@ -356,6 +374,7 @@ code {
     &:first-child {
       margin: -1rem;
       padding-bottom: 1rem;
+      color: var(--theme-color-200);
 
       .icon-up-thin {
         transform: rotateZ(180deg);

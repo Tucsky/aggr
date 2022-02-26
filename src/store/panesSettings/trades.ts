@@ -2,6 +2,7 @@ import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 
 import Vue from 'vue'
 import { randomString } from '@/utils/helpers'
+import { formatMarketPrice } from '@/services/productsService'
 
 export interface Threshold {
   id: string
@@ -32,6 +33,7 @@ export interface TradesPaneState {
   monochromeLogos: boolean
   showTradesPairs: boolean
   multipliers: { [identifier: string]: number }
+  thresholdsMultipler: number
 }
 
 const getters = {
@@ -151,7 +153,8 @@ play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.13, 0.24,,0)`
   showTradesPairs: false,
   tradeType: 'both',
   showLogos: true,
-  monochromeLogos: false
+  monochromeLogos: false,
+  thresholdsMultipler: 1
 } as TradesPaneState
 
 const actions = {
@@ -192,8 +195,19 @@ const mutations = {
   SET_MAX_ROWS(state, value) {
     state.maxRows = value
   },
-  TOGGLE_LOGOS(state, value) {
-    state.showLogos = value ? true : false
+  TOGGLE_LOGOS(state) {
+    if (state.monochromeLogos) {
+      console.log(state.showLogos, state.monochromeLogos, 'toggle no logo')
+      state.showLogos = false
+      state.monochromeLogos = false
+    } else if (!state.showLogos) {
+      console.log(state.showLogos, state.monochromeLogos, 'toggle monochrome')
+      state.showLogos = true
+      state.monochromeLogos = false
+    } else {
+      console.log(state.showLogos, state.monochromeLogos, 'toggle original')
+      state.monochromeLogos = true
+    }
   },
   TOGGLE_MUTED(state) {
     state.muted = !state.muted
@@ -348,6 +362,20 @@ const mutations = {
   },
   SET_AUDIO_THRESHOLD(state, amount: number) {
     state.audioThreshold = amount
+  },
+  SET_THRESHOLDS_MULTIPLER(state, { value, market }: { value: number; market: string }) {
+    value = Math.max(value, 0.01)
+    const change = (value - state.thresholdsMultipler) / state.thresholdsMultipler
+
+    state.thresholdsMultipler = value
+
+    for (const threshold of state.thresholds) {
+      threshold.amount = +formatMarketPrice(threshold.amount + threshold.amount * change, market)
+    }
+
+    for (const threshold of state.liquidations) {
+      threshold.amount = +formatMarketPrice(threshold.amount + threshold.amount * change, market)
+    }
   }
 } as MutationTree<TradesPaneState>
 

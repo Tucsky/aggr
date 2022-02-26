@@ -56,7 +56,7 @@
         </tab>
         <tab name="Options" class="indicator-options indicator-options--tab hide-scrollbar">
           <section class="section" v-if="scriptOptionsKeys.length">
-            <div v-if="sections.indexOf('scriptOptions') > -1">
+            <div v-if="sections.indexOf('scriptOptions') > -1" class="section__content">
               <indicator-option
                 v-for="key in scriptOptionsKeys"
                 :key="key"
@@ -69,8 +69,22 @@
             </div>
             <div class="section__title" @click="toggleSection('scriptOptions', $event)">Script options <i class="icon-up-thin"></i></div>
           </section>
+          <section class="section" v-if="colorOptionsKeys.length">
+            <div v-if="sections.indexOf('colors') > -1" class="section__content">
+              <indicator-option
+                v-for="key in colorOptionsKeys"
+                :key="key"
+                :name="key"
+                :pane-id="paneId"
+                :indicator-id="indicatorId"
+                :plot-types="plotTypes"
+                class="indicator-options__option"
+              />
+            </div>
+            <div class="section__title" @click="toggleSection('colors', $event)">Colors <i class="icon-up-thin"></i></div>
+          </section>
           <section class="section">
-            <div v-if="sections.indexOf('defaultOptions') > -1">
+            <div v-if="sections.indexOf('defaultOptions') > -1" class="section__content">
               <indicator-option
                 v-for="key in defaultOptionsKeys"
                 :key="key"
@@ -105,7 +119,7 @@
         </section>
         <div v-if="!optionsQuery.length" class="indicator-options__options-scroller hide-scrollbar">
           <section v-if="colorOptionsKeys.length" class="section">
-            <div v-if="sections.indexOf('colors') > -1">
+            <div v-if="sections.indexOf('colors') > -1" class="section__content">
               <indicator-option
                 v-for="key in colorOptionsKeys"
                 :key="key"
@@ -119,7 +133,7 @@
           </section>
 
           <section class="section" v-if="scriptOptionsKeys.length">
-            <div v-if="sections.indexOf('scriptOptions') > -1">
+            <div v-if="sections.indexOf('scriptOptions') > -1" class="section__content">
               <indicator-option
                 v-for="key in scriptOptionsKeys"
                 :key="key"
@@ -133,7 +147,7 @@
           </section>
 
           <section class="section">
-            <div v-if="sections.indexOf('defaultOptions') > -1">
+            <div v-if="sections.indexOf('defaultOptions') > -1" class="section__content">
               <indicator-option
                 v-for="key in defaultOptionsKeys"
                 :key="key"
@@ -147,7 +161,7 @@
           </section>
 
           <section class="section">
-            <div v-if="sections.indexOf('position') > -1">
+            <div v-if="sections.indexOf('position') > -1" class="section__content">
               <div class="form-group">
                 <label>Scale with <i class="icon-info" v-tippy :title="helps.priceScaleId"></i></label>
                 <dropdown
@@ -163,7 +177,7 @@
             <div class="section__title" @click="toggleSection('position', $event)">Position in chart <i class="icon-up-thin"></i></div>
           </section>
           <section class="section">
-            <div v-if="sections.indexOf('format') > -1">
+            <div v-if="sections.indexOf('format') > -1" class="section__content">
               <div class="d-flex">
                 <dropdown
                   :selected="priceFormat"
@@ -738,6 +752,10 @@ export default {
     flex-direction: column;
     flex-grow: 1;
 
+    @media screen and (min-width: 768px) {
+      width: 50vw;
+    }
+
     @media screen and (min-width: 1400px) {
       width: 25vw;
     }
@@ -769,17 +787,24 @@ export default {
 
     &--tab {
       margin: 0;
-      display: block;
       border: 0;
+      display: block;
+      overflow: auto;
 
-      @media screen and (min-width: 768px) {
-        display: block;
+      .section {
+        &__content {
+          margin: -0.25rem;
+        }
       }
 
       .indicator-options__option {
-        width: 184px;
+        width: calc(50% - 1rem);
         display: inline-block;
-        margin-right: 16px;
+        margin: 0.5rem;
+
+        @media screen and (min-width: 768px) {
+          width: auto;
+        }
 
         .form-control {
           max-width: 100%;

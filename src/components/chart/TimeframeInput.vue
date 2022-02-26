@@ -1,5 +1,5 @@
 <template>
-  <div contenteditable class="form-control w-100" ref="input" @input="onInput" @keydown="onKeydown" :placeholder="placeholder"></div>
+  <div contenteditable class="w-100" ref="input" @input="onInput" @keydown="onKeydown" :placeholder="placeholder"></div>
 </template>
 
 <script lang="ts">

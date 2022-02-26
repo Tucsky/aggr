@@ -1,35 +1,29 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  font-size: inherit;
   text-transform: uppercase;
   font-family: $font-condensed;
   font-size: 0.75em;
-  padding: 0.45em 0.5em;
-  border-radius: 4px;
+  padding: 0.25em;
+  border-radius: 0.25em;
   color: inherit;
   line-height: 1;
   flex-shrink: 0;
   cursor: pointer;
   background-color: $red;
-  color: var(--theme-color-base);
+  color: white;
   font-weight: 600;
+  letter-spacing: 0.0625rem;
 
-  &.-small {
-    padding: 0.2em 0.25em;
+  &.-outline {
+    background: 0;
+    box-shadow: inset 0 0 0 0.09375em var(--theme-color-base);
+    color: var(--theme-color-base);
+    padding: 0.125em 0.25em 0.25em;
+    font-weight: 400;
   }
 
   &.-compact {
-    padding: 0.25em 0.2em;
-    font-weight: 600;
-    line-height: 0.6;
-    margin-top: 2px;
-    font-size: 1em;
-    font-weight: 600;
-  }
-
-  &.-invert {
-    background-color: var(--theme-color-base);
-    color: var(--theme-background-base);
+    font-size: 0.875rem;
   }
 }

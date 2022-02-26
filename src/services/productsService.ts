@@ -1,21 +1,46 @@
 import store from '@/store'
 import { ProductsData, ProductsStorage } from '@/types/test'
+import { PRODUCTS_EXPIRES_AFTER } from '@/utils/constants'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
-const promisesOfProducts = []
+const baseRegex = '([a-z0-9]{2,})'
+const quoteRegexKnown = '(eur|usd|usdt|usdc|tusd)'
+const quoteRegexOthers = '([a-z0-9]{3,})'
 
-export const indexedProducts = []
+const baseQuoteLookup1 = new RegExp(`^${baseRegex}[^a-z0-9]?${quoteRegexKnown}$`, 'i')
+const baseQuoteLookup2 = new RegExp(`^${baseRegex}[^a-z0-9]?${quoteRegexOthers}$`, 'i')
+const baseQuoteLookupPoloniex = new RegExp(`^(.*)_(.*)$`)
+
+const promisesOfProducts = {}
+
+export const indexedProducts = {}
+
+export const marketDecimals = {}
+
+export async function getProducts(exchangeId: string) {
+  const storage = await workspacesService.getProducts(exchangeId)
+
+  if (storage && Date.now() - storage.timestamp < PRODUCTS_EXPIRES_AFTER) {
+    return storage.data
+  }
+
+  return null
+}
 
 export function saveProducts(storage: ProductsStorage) {
   console.log(`[products.${storage.exchange}] saving products`, storage.data)
   storage.timestamp = Date.now()
 
-  workspacesService.saveProducts(storage)
+  return workspacesService.saveProducts(storage)
 }
 
 export async function indexProducts(exchangeId: string, productsData: ProductsData, showNotice?: boolean) {
-  let products = []
+  let products
+
+  if (!productsData) {
+    productsData = await getProducts(exchangeId)
+  }
 
   if (productsData) {
     if (Array.isArray(productsData)) {
@@ -25,6 +50,10 @@ export async function indexProducts(exchangeId: string, productsData: ProductsDa
     }
   }
 
+  if (!products) {
+    products = []
+  }
+
   if (showNotice) {
     store.dispatch('app/showNotice', {
       title: `Fetched ${products.length} products on ${exchangeId}`,
@@ -32,9 +61,11 @@ export async function indexProducts(exchangeId: string, productsData: ProductsDa
     })
   }
 
+  console.debug(`[products.${exchangeId}] indexed ${products.length} products`)
+
   store.dispatch('exchanges/indexExchangeProducts', {
     exchangeId,
-    symbols: products || []
+    symbols: products
   })
 }
 
@@ -91,7 +122,7 @@ export async function fetchProducts(exchangeId: string, endpoints: string[]): Pr
     })) as ProductsStorage
 
     if (productsData) {
-      indexProducts(exchangeId, productsData, true)
+      //indexProducts(exchangeId, productsData, true)
       saveProducts({
         exchange: exchangeId,
         data: productsData
@@ -105,28 +136,29 @@ export async function fetchProducts(exchangeId: string, endpoints: string[]): Pr
   }
 }
 
-export async function getStoredProductsOrFetch(id: string, endpoints: string[], forceFetch?: boolean): Promise<ProductsData> {
-  let productsData: ProductsData
+export async function getStoredProductsOrFetch(exchangeId: string, endpoints: string[], forceFetch?: boolean): Promise<ProductsData> {
+  let productsData: ProductsData = await getProducts(exchangeId)
 
-  console.debug(`[products.${id}] reading stored products`)
-  const storage = await workspacesService.getProducts(id)
+  console.debug(`[products.${exchangeId}] reading stored products`)
 
-  if (!forceFetch && storage && Date.now() - storage.timestamp < 1000 * 60 * 60 * 24 * 7) {
-    console.debug(`[products.${id}] using products exchange storage`)
+  if (!productsData || forceFetch) {
+    console.debug(`[products.${exchangeId}] fetch products using provided endpoints`)
 
-    productsData = storage.data
+    if (indexProducts[exchangeId]) {
+      delete indexProducts[exchangeId]
+    }
+
+    productsData = await fetchProducts(exchangeId, endpoints)
   } else {
-    console.debug(`[products.${id}] fetch products using provided endpoints`)
-
-    productsData = await fetchProducts(id, endpoints)
+    console.debug(`[products.${exchangeId}] using products exchange storage`)
   }
 
   if (productsData) {
-    if (!store.state.exchanges[id].fetched) {
-      store.commit('exchanges/SET_FETCHED', id)
+    if (!store.state.exchanges[exchangeId].fetched) {
+      store.commit('exchanges/SET_FETCHED', exchangeId)
     }
 
-    indexProducts(id, productsData, forceFetch)
+    //indexProducts(exchangeId, productsData, forceFetch)
   }
 
   return productsData
@@ -138,10 +170,178 @@ export function requestProducts(exchangeId: string) {
     return promisesOfProducts[exchangeId]
   }
 
-  promisesOfProducts[exchangeId] = aggregatorService.dispatchAsync({
-    op: 'fetchExchangeProducts',
-    data: { exchangeId }
-  })
+  promisesOfProducts[exchangeId] = aggregatorService
+    .dispatchAsync({
+      op: 'fetchExchangeProducts',
+      data: { exchangeId }
+    })
+    .then(data => {
+      delete promisesOfProducts[exchangeId]
+      return data
+    })
 
   return promisesOfProducts[exchangeId]
+}
+
+export function parseMarket(market: string) {
+  return market.match(/([^:]*):(.*)/).slice(1, 3)
+}
+
+export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
+  const id = exchangeId + ':' + symbol
+  let type = 'spot'
+
+  if (/[UZ_-]\d{2}/.test(symbol)) {
+    type = 'future'
+  } else if (exchangeId === 'BYBIT' && !/-SPOT$/.test(symbol)) {
+    type = 'perp'
+  } else if (exchangeId === 'BITMEX' || /(-|_)swap$|(-|_|:)perp/i.test(symbol)) {
+    type = 'perp'
+  } else if (exchangeId === 'BINANCE_FUTURES') {
+    type = 'perp'
+  } else if (exchangeId === 'BITFINEX' && /F0$/.test(symbol)) {
+    type = 'perp'
+  } else if (exchangeId === 'PHEMEX' && symbol[0] !== 's') {
+    type = 'perp'
+  } else if (exchangeId === 'HUOBI' && /_(CW|CQ|NW|NQ)$/.test(symbol)) {
+    type = 'future'
+  } else if (exchangeId === 'HUOBI' && /-/.test(symbol)) {
+    type = 'perp'
+  } else if (exchangeId === 'KRAKEN' && /PI_/.test(symbol)) {
+    type = 'perp'
+  }
+
+  let localSymbol = symbol
+
+  if (exchangeId === 'BYBIT') {
+    localSymbol = localSymbol.replace(/-SPOT$/, '')
+  }
+
+  if (exchangeId === 'KRAKEN') {
+    localSymbol = localSymbol.replace(/PI_/, '').replace(/FI_/, '')
+  }
+
+  if (exchangeId === 'BITFINEX') {
+    localSymbol = localSymbol.replace(/(.*)F0:USTF0/, '$1USDT').replace(/UST$/, 'USDT')
+  }
+
+  if (exchangeId === 'HUOBI') {
+    localSymbol = localSymbol.replace(/_CW|_CQ|_NW|_NQ/i, 'USD')
+  }
+
+  localSymbol = localSymbol
+    .replace(/-PERP(ETUAL)?/i, 'USD')
+    .replace(/[^a-z0-9](perp|swap|perpetual)$/i, '')
+    .replace(/[^a-z0-9]\d+$/i, '')
+    .replace(/[-_/:]/, '')
+    .replace(/XBT/i, 'BTC')
+    .toUpperCase()
+
+  let match
+
+  if (exchangeId === 'POLONIEX') {
+    match = symbol.match(baseQuoteLookupPoloniex)
+
+    if (match) {
+      match[0] = match[2]
+      match[2] = match[1]
+      match[1] = match[0]
+
+      localSymbol = match[1] + match[2]
+    }
+  } else {
+    match = localSymbol.match(baseQuoteLookup1)
+
+    if (!match) {
+      match = localSymbol.match(baseQuoteLookup2)
+    }
+  }
+
+  if (!match && (exchangeId === 'DERIBIT' || exchangeId === 'FTX' || exchangeId === 'HUOBI')) {
+    match = localSymbol.match(/(\w+)[^a-z0-9]/i)
+
+    if (match) {
+      match[2] = match[1]
+    }
+  }
+
+  let base
+  let quote
+
+  if (match) {
+    base = match[1]
+    quote = match[2]
+
+    if (noStable) {
+      localSymbol = base + quote.replace(/usd[a-z]/i, 'USD')
+    }
+  }
+
+  return {
+    id,
+    base,
+    quote,
+    pair: symbol,
+    local: localSymbol,
+    exchange: exchangeId,
+    type
+  }
+}
+
+export function formatAmount(amount, decimals?: number) {
+  const negative = amount < 0
+
+  amount = Math.abs(amount)
+
+  if (amount >= 1000000000) {
+    amount = +(amount / 1000000000).toFixed(isNaN(decimals) ? 1 : decimals) + 'B'
+  } else if (amount >= 1000000) {
+    amount = +(amount / 1000000).toFixed(isNaN(decimals) ? 1 : decimals) + 'M'
+  } else if (amount >= 100000) {
+    amount = +(amount / 1000).toFixed(isNaN(decimals) ? 0 : decimals) + 'K'
+  } else if (amount >= 1000) {
+    amount = +(amount / 1000).toFixed(isNaN(decimals) ? 1 : decimals) + 'K'
+  } else {
+    amount = +amount.toFixed(4)
+  }
+
+  if (negative) {
+    return '-' + amount
+  } else {
+    return amount
+  }
+}
+
+export function countDecimals(value) {
+  const parts = value.toString().split('.')
+
+  if (parts.length === 2) {
+    return parts[1].length
+  }
+
+  return 0
+}
+
+export function formatMarketPrice(price, market): number {
+  if (!marketDecimals[market]) {
+    return price
+  }
+
+  if (!price) {
+    price = 0
+  }
+
+  return price.toFixed(marketDecimals[market])
+}
+
+export function formatPrice(price, precision?: number): number {
+  if (!precision) {
+    return parseInt(price)
+  }
+
+  if (!price) {
+    price = 0
+  }
+
+  return price.toFixed(precision)
 }

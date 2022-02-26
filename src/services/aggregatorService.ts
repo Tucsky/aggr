@@ -1,10 +1,10 @@
 import store from '@/store'
 import { AggregatorPayload } from '@/types/test'
-import { countDecimals, marketDecimals, parseMarket, randomString } from '@/utils/helpers'
+import { randomString } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import Worker from 'worker-loader!@/worker/aggregator'
-import { getStoredProductsOrFetch } from './productsService'
+import { countDecimals, marketDecimals, getStoredProductsOrFetch, parseMarket } from './productsService'
 import workspacesService from './workspacesService'
 
 class AggregatorService extends EventEmitter {

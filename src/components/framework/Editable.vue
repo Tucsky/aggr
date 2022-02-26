@@ -13,8 +13,8 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
+import { countDecimals } from '@/services/productsService'
 
-import { countDecimals } from '../../utils/helpers'
 @Component({
   name: 'Editable',
   props: ['content', 'step', 'min', 'max', 'editable', 'disabled']

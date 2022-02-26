@@ -18,7 +18,7 @@
               <i class="icon-minus"></i>
             </div>
             <div class="btn -text text-monospace" @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 1 })" style="display: block">
-              × {{ zoom.toFixed(1) }}
+              × {{ zoom.toFixed(2) }}
             </div>
             <div class="btn -green" @click="zoomIn">
               <i class="icon-plus"></i>
@@ -151,12 +151,12 @@ export default class extends Vue {
   }
 
   zoomIn() {
-    const zoom = (this.zoom * 16 + 1) / 16
+    const zoom = this.zoom + 0.125
     this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: zoom })
   }
 
   zoomOut() {
-    const zoom = (this.zoom * 16 - 1) / 16
+    const zoom = this.zoom - 0.125
     this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: zoom })
   }
 

@@ -150,6 +150,7 @@
             transform: 'translateX(' + this.panelCaretPosition + 'px)'
           }"
         ></div>
+        <h3>@ {{ formatAmount(selectedThreshold.amount) }}</h3>
         <a href="#" class="threshold-panel__close icon-cross" @click=";(selectedThresholdId = null), (editing = false)"></a>
 
         <div class="form-group mb8 threshold-panel__gif">
@@ -159,7 +160,7 @@
               <input
                 type="text"
                 class="form-control w-100"
-                placeholder="Buy gif"
+                placeholder="Giphy keyword"
                 :value="selectedThreshold.buyGif"
                 @change="
                   $store.commit(paneId + '/SET_THRESHOLD_GIF', {
@@ -175,7 +176,7 @@
               <input
                 type="text"
                 class="form-control w-100"
-                placeholder="Buy gif"
+                placeholder="Giphy keyword"
                 :value="selectedThreshold.sellGif"
                 @change="
                   $store.commit(paneId + '/SET_THRESHOLD_GIF', {
@@ -187,11 +188,6 @@
               />
             </div>
           </div>
-          <small class="help-text mb4">
-            Le
-            <a href="https://giphy.com/search/cash" target="_blank">Giphy</a>
-            keyword
-          </small>
         </div>
         <div class="form-group mb8 threshold-panel__colors">
           <label>Custom colors</label>
@@ -243,7 +239,8 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import { formatAmount, sleep } from '../../utils/helpers'
+import { sleep } from '@/utils/helpers'
+import { formatAmount } from '@/services/productsService'
 
 import dialogService from '@/services/dialogService'
 import ThresholdAudioDialog from '../trades/audio/ThresholdAudioDialog.vue'
@@ -640,7 +637,7 @@ export default class extends Vue {
     border-radius: 50%;
     transition: box-shadow 0.2s $ease-elastic, transform 0.2s $ease-out-expo;
     box-shadow: 0 1px 0 1px rgba(black, 0.2);
-    cursor: move;
+    cursor: grab;
 
     &:before {
       position: absolute;
@@ -649,10 +646,6 @@ export default class extends Vue {
       left: 50%;
       transform: translateX(-50%);
       font-size: 0.89em;
-    }
-
-    &.-selected {
-      box-shadow: 0 1px 0 1px rgba(black, 0.2), 0 0 0 12px rgba(white, 0.2);
     }
   }
 }

@@ -98,73 +98,86 @@
           <i
             class="icon-info"
             v-tippy
-            title="When enabled, the chart will always copy initial price to the start of the chart to garantee price aggregation continuity."
+            title="When enabled, the chart will always copy intial realtime price of a market to the start of the chart to garantee global average consistency (warning: leads to incorrect past price)."
           ></i>
         </label>
       </div>
     </div>
     <hr />
-    <div class="form-group">
-      <div class="form-group column">
-        <label class="checkbox-control" @change="toggleAlerts($event.target.checked)">
-          <input type="checkbox" class="form-control" :checked="alerts" />
-          <div class="mr8"></div>
-        </label>
-        <div>
-          <label for="" class="mlauto -center mr16 text-nowrap" :class="[alerts && 'pb8']">Alerts </label>
-          <div v-if="alerts" class="column mt8">
-            <dropdown
-              class="-left -center"
-              :selected="alertsLineStyle"
-              :options="{ 0: 'Solid', 1: 'Dotted', 2: 'Dashed', 3: 'LargeDashed', 4: 'SparseDotted' }"
-              selectionClass="-outline form-control -arrow flex-grow-1"
-              placeholder="lineStyle"
-              @output="$store.commit('settings/SET_ALERTS_LINESTYLE', $event)"
-              title="Line style"
-              v-tippy
-            ></dropdown>
-            <editable
-              :content="alertsLineWidth"
-              @output="$store.commit('settings/SET_ALERTS_LINEWIDTH', $event)"
-              class="form-control -center"
-              title="Line width"
-              v-tippy
-            ></editable>
-            <verte
-              picker="square"
-              menuPosition="left"
-              class="mr8  -center -small"
-              model="rgb"
-              :value="alertsColor"
-              @input="$store.commit('settings/SET_ALERTS_COLOR', $event)"
-            ></verte>
-            <label
-              class="checkbox-control -click -small"
-              @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
-              title="1 click only (instead of shift + click)"
-              v-tippy
-            >
-              <input type="checkbox" class="form-control" :checked="alertsClick" />
-              <div class="mr8"></div>
-            </label>
-          </div>
-          <label
-            v-else-if="notificationsPermissions === 'denied'"
-            class="ml16 -center text-danger"
+
+    <toggable-group :value="alerts" label="Alerts" @change="toggleAlerts($event)">
+      <div class="column">
+        <div class="form-group">
+          <label>Line style</label>
+          <dropdown
+            class="-left -center w-100"
+            :selected="alertsLineStyle"
+            :options="{ 0: 'Solid', 1: 'Dotted', 2: 'Dashed', 3: 'LargeDashed', 4: 'SparseDotted' }"
+            selectionClass="-outline form-control -arrow flex-grow-1"
+            placeholder="lineStyle"
+            @output="$store.commit('settings/SET_ALERTS_LINESTYLE', $event)"
+            title="Line style (ex: dashed)"
             v-tippy
-            :title="`${helps['notifications-disabled']} ${helps['notifications-grant']}`"
-          >
-            <i class="icon-warning mr4"></i> Notifications are disabled
-          </label>
-          <span v-else class="-fill"> </span>
+          ></dropdown>
+        </div>
+        <div class="form-group">
+          <label>Line width</label>
+          <editable
+            :content="alertsLineWidth"
+            @output="$store.commit('settings/SET_ALERTS_LINEWIDTH', $event)"
+            class="form-control -center w-100"
+            title="Line width (ex: 2)"
+            v-tippy
+          ></editable>
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <verte
+            picker="square"
+            menuPosition="left"
+            model="rgb"
+            :value="alertsColor"
+            @input="$store.commit('settings/SET_ALERTS_COLOR', $event)"
+          ></verte>
         </div>
       </div>
-      <p class="help-text">
+
+      <label
+        class="checkbox-control -click -small mt16"
+        @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
+        title="1 click only (instead of shift + click)"
+        v-tippy="{ placement: 'left', distance: 24, boundary: 'window' }"
+      >
+        <input type="checkbox" class="form-control" :checked="alertsClick" />
+        <div class="mr8"></div>
+        <span>{{ alertsClick ? '1 click' : 'shift + click' }}</span>
+      </label>
+
+      <p class="help-text mb0">
         <span v-if="alertsClick"><code>CLICK</code></span>
         <span v-else><code>SHIFT</code> + <code>CLICK</code></span> on the chart<br />to
-        <u title="sent within 0-60s<br />active 24h only<br>use at own risk" v-tippy>create an alert</u> at that price
+        <u title="sent within 0-15s<br />active 24h to 7d (may, may not)<br>use at own risk" v-tippy>create an alert</u> at that price
       </p>
-    </div>
+
+      <template #off>
+        <label
+          v-if="notificationsPermissions === 'denied'"
+          class="text-danger help-text mt0 mb0"
+          v-tippy
+          :title="`${helps['notifications-disabled']} ${helps['notifications-grant']}`"
+        >
+          <i class="icon-warning mr4"></i> Notifications are blocked.
+        </label>
+        <p
+          v-else-if="notificationsPermissions !== 'granted'"
+          class="text-info help-text mt0 mb0"
+          v-tippy
+          :title="`${helps['notifications-disabled']} ${helps['notifications-grant']}`"
+        >
+          <i class="icon-info mr4"></i> Awaiting browser persmission.
+        </p>
+      </template>
+    </toggable-group>
   </div>
 </template>
 
@@ -172,9 +185,10 @@
 import { getHms } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '../framework/picker/Slider.vue'
+import ToggableGroup from '../framework/ToggableGroup.vue'
 
 @Component({
-  components: { Slider },
+  components: { Slider, ToggableGroup },
   name: 'ChartSettings',
   props: {
     paneId: {
@@ -188,7 +202,7 @@ export default class extends Vue {
   notificationsPermissions: string = null
   helps = {
     'notifications-disabled': 'Push notification are disabled.',
-    'notifications-grant': 'Enable notifications in the site settings on your browser.'
+    'notifications-grant': 'Enable notifications for this site in your browser.'
   }
 
   get showLegend() {
@@ -232,7 +246,7 @@ export default class extends Vue {
   }
 
   get alerts() {
-    return this.notificationsPermissions === ('granted' || 'prompt') && this.$store.state.settings.alerts
+    return this.$store.state.settings.alerts
   }
 
   get alertsColor() {
@@ -270,12 +284,16 @@ export default class extends Vue {
       })
   }
 
-  async toggleAlerts(value) {
+  async toggleAlerts(event) {
+    let checked = event.target.checked
+
     if (this.notificationsPermissions !== 'granted') {
       this.notificationsPermissions = await Notification.requestPermission()
     }
 
-    if (this.notificationsPermissions === 'denied' && value) {
+    if (this.notificationsPermissions === 'denied' && checked) {
+      checked = false
+
       this.$store.dispatch('app/showNotice', {
         id: 'alert-notifications',
         type: 'error',
@@ -288,11 +306,12 @@ export default class extends Vue {
       this.$store.dispatch('app/showNotice', {
         id: 'alert-notifications',
         type: 'info',
-        title: value ? `Alerts are enabled` : 'Alerts are disabled'
+        title: checked ? `Alerts are enabled` : 'Alerts are disabled'
       })
     }
 
-    this.$store.commit('settings/TOGGLE_ALERTS', value)
+    event.target.checked = checked
+    this.$store.commit('settings/TOGGLE_ALERTS', checked)
   }
 }
 </script>

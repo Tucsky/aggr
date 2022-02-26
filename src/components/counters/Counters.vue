@@ -19,7 +19,8 @@
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 
-import { formatAmount, getBucketId, getHms } from '../../utils/helpers'
+import { getBucketId, getHms } from '@/utils/helpers'
+import { formatAmount } from '@/services/productsService'
 
 import aggregatorService from '@/services/aggregatorService'
 import PaneMixin from '@/mixins/paneMixin'
@@ -50,7 +51,6 @@ interface CounterStep {
 export default class extends Mixins(PaneMixin) {
   steps: CounterStep[] = []
 
-  private _onStoreMutation: () => void
   private _populateCountersInterval: number
   private _activeChunk: CounterChunk
   private _counters: Counter[]
@@ -102,8 +102,6 @@ export default class extends Mixins(PaneMixin) {
     if (this._feed) {
       aggregatorService.off(this._feed, this.onVolume)
     }
-
-    this._onStoreMutation()
 
     clearInterval(this._populateCountersInterval)
   }

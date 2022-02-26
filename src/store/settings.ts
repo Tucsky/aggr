@@ -140,6 +140,8 @@ const actions = {
   setAudioVolume({ commit, state }, volume: number) {
     commit('SET_AUDIO_VOLUME', volume)
 
+    audioService.setVolume(volume)
+
     if (volume && !state.useAudio) {
       commit('TOGGLE_AUDIO', true)
     } else if (!volume && state.useAudio) {

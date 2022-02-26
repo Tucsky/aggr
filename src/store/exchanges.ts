@@ -2,7 +2,7 @@ import aggregatorService from '@/services/aggregatorService'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
-import { indexedProducts, requestProducts } from '../services/productsService'
+import { getMarketProduct, indexedProducts, requestProducts } from '../services/productsService'
 
 export interface ExchangeSettings {
   disabled?: boolean
@@ -16,11 +16,7 @@ const supportedExchanges = process.env.VUE_APP_EXCHANGES.split(',').map(id => id
 const state = supportedExchanges.reduce(
   (exchangesState: ExchangesState, id: string) => {
     exchangesState[id] = {
-      fetched: false
-    }
-
-    if (/HITBTC|PHEMEX|BINANCE_US|SERUM|OKEX|HUOBI/.test(id)) {
-      exchangesState[id].disabled = true
+      disabled: /HITBTC|PHEMEX|BINANCE_US|SERUM|OKEX|HUOBI/.test(id)
     }
 
     return exchangesState
@@ -96,114 +92,8 @@ const actions = {
   indexExchangeProducts(store, { exchangeId, symbols }: { exchangeId: string; symbols: string[] }) {
     const products = []
 
-    const baseRegex = '([a-z0-9]{2,})'
-    const quoteRegexKnown = '(eur|usd|usdt|usdc|tusd)'
-    const quoteRegexOthers = '([a-z0-9]{3,})'
-
-    const baseQuoteLookup1 = new RegExp(`^${baseRegex}[^a-z0-9]?${quoteRegexKnown}$`, 'i')
-    const baseQuoteLookup2 = new RegExp(`^${baseRegex}[^a-z0-9]?${quoteRegexOthers}$`, 'i')
-    const baseQuoteLookupPoloniex = new RegExp(`^(.*)_(.*)$`)
-
     for (let i = 0; i < symbols.length; i++) {
-      const symbol = symbols[i]
-      const id = exchangeId + ':' + symbol
-      let type = 'spot'
-
-      if (/[UZ_-]\d{2}/.test(symbol)) {
-        type = 'future'
-      } else if (exchangeId === 'BYBIT' && !/-SPOT$/.test(symbol)) {
-        type = 'perp'
-      } else if (exchangeId === 'BITMEX' || /(-|_)swap$|(-|_|:)perp/i.test(symbol)) {
-        type = 'perp'
-      } else if (exchangeId === 'BINANCE_FUTURES') {
-        type = 'perp'
-      } else if (exchangeId === 'BITFINEX' && /F0$/.test(symbol)) {
-        type = 'perp'
-      } else if (exchangeId === 'PHEMEX' && symbol[0] !== 's') {
-        type = 'perp'
-      } else if (exchangeId === 'HUOBI' && /_(CW|CQ|NW|NQ)$/.test(symbol)) {
-        type = 'future'
-      } else if (exchangeId === 'HUOBI' && /-/.test(symbol)) {
-        type = 'perp'
-      } else if (exchangeId === 'KRAKEN' && /PI_/.test(symbol)) {
-        type = 'perp'
-      }
-
-      let localSymbol = symbol
-
-      if (exchangeId === 'BYBIT') {
-        localSymbol = localSymbol.replace(/-SPOT$/, '')
-      }
-
-      if (exchangeId === 'KRAKEN') {
-        localSymbol = localSymbol.replace(/PI_/, '').replace(/FI_/, '')
-      }
-
-      if (exchangeId === 'BITFINEX') {
-        localSymbol = localSymbol.replace(/(.*)F0:USTF0/, '$1USDT').replace(/UST$/, 'USDT')
-      }
-
-      if (exchangeId === 'HUOBI') {
-        localSymbol = localSymbol.replace(/_CW|_CQ|_NW|_NQ/i, 'USD')
-      }
-
-      localSymbol = localSymbol
-        .replace(/-PERP(ETUAL)?/i, 'USD')
-        .replace(/[^a-z0-9](perp|swap|perpetual)$/i, '')
-        .replace(/[^a-z0-9]\d+$/i, '')
-        .replace(/[-_/:]/, '')
-        .replace(/XBT/i, 'BTC')
-        .toUpperCase()
-
-      let match
-
-      if (exchangeId === 'POLONIEX') {
-        match = symbol.match(baseQuoteLookupPoloniex)
-
-        if (match) {
-          match[0] = match[2]
-          match[2] = match[1]
-          match[1] = match[0]
-
-          localSymbol = match[1] + match[2]
-        }
-      } else {
-        match = localSymbol.match(baseQuoteLookup1)
-
-        if (!match) {
-          match = localSymbol.match(baseQuoteLookup2)
-        }
-      }
-
-      if (!match && (exchangeId === 'DERIBIT' || exchangeId === 'FTX' || exchangeId === 'HUOBI')) {
-        match = localSymbol.match(/(\w+)[^a-z0-9]/i)
-
-        if (match) {
-          match[2] = match[1]
-        }
-      }
-
-      let base
-      let quote
-
-      if (match) {
-        base = match[1]
-        quote = match[2]
-
-        // localSymbol = base + quote.replace(/usdt/i, 'USD')
-      }
-
-      const product = {
-        id,
-        base,
-        quote,
-        pair: symbol,
-        local: localSymbol,
-        exchange: exchangeId,
-        type
-      }
-
-      products.push(product)
+      products.push(getMarketProduct(exchangeId, symbols[i]))
     }
 
     indexedProducts[exchangeId] = products

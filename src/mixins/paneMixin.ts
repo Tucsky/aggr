@@ -12,6 +12,7 @@ import Component from 'vue-class-component'
 })
 export default class PaneMixin extends Vue {
   paneId: string
+  protected _onStoreMutation: () => void
 
   get pane(): Pane {
     return this.$store.state.panes.panes[this.paneId]
@@ -35,6 +36,10 @@ export default class PaneMixin extends Vue {
 
   beforeDestroy() {
     this.$el.removeEventListener('mousedown', this.focusPane)
+
+    if (this._onStoreMutation) {
+      this._onStoreMutation()
+    }
   }
 
   refreshZoom() {

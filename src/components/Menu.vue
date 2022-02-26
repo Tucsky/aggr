@@ -12,7 +12,7 @@
         <span class="mr4" v-text="isFullscreen ? 'exit' : 'fullscreen'"></span>
         <i class="icon-enlarge"></i>
       </button>
-      <tippy to="myTrigger" :interactive="true" :delay="[0, 400]" :distance="20" placement="left" :theme="'transparent'">
+      <tippy to="MenuVolume" :interactive="true" :delay="[0, 400]" :distance="20" placement="left" :theme="'transparent'">
         <div class="mt4 mb4 text-nowrap">
           <slider
             style="width: 100px"
@@ -27,7 +27,7 @@
           ></slider>
         </div>
       </tippy>
-      <button type="button" class="menu-action btn -volume" @click="$store.commit('settings/TOGGLE_AUDIO', !useAudio)" name="myTrigger">
+      <button type="button" class="menu-action btn -volume" @click="$store.commit('settings/TOGGLE_AUDIO', !useAudio)" name="MenuVolume">
         <span class="mr4">Audio</span>
         <i v-if="!useAudio" class="icon-volume-off"></i>
         <i v-else class="icon-volume-medium" :class="{ 'icon-volume-high': audioVolume > 1 }"></i>

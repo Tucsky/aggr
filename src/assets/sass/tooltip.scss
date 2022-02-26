@@ -1,47 +1,50 @@
 .tippy-tooltip {
   max-width: 180px;
-  filter: drop-shadow(-1em -1em 3em var(--theme-background-base));
 
   &.dark-theme {
-    background-color: var(--theme-background-150);
-    color: var(--theme-color-base);
+    filter: drop-shadow(-1em -1em 3em var(--theme-background-base));
+    color: white;
+    background-color: rgba(black, 0.75);
   }
 
   &.transparent-theme {
     background-color: transparent;
-  }
 
-  ul,
-  ol {
-    text-align: left;
-    line-height: 1.2;
-    padding-left: 20px;
-
-    li {
-      margin-bottom: 5px;
-
-      &:last-child {
-        margin: 0;
-      }
+    .tippy-arrow {
+      display: none;
     }
   }
 }
 
-.tippy-popper[x-placement^='bottom'] .tippy-arrow {
-  border-bottom-color: var(--theme-background-150);
-  top: -8px;
+.tippy-popper[x-placement^='bottom'] {
+  .tippy-arrow {
+    border-bottom-color: rgba(black, 0.75);
+    top: -8px;
+  }
+
+  .slider__label {
+    bottom: auto;
+    top: 2rem;
+
+    &:before {
+      bottom: auto;
+      top: -0.5rem;
+      border-width: 0 0.5rem 0.5rem 0.5rem;
+      border-color: transparent transparent rgba(black, 0.75) transparent;
+    }
+  }
 }
 
 .tippy-popper[x-placement^='top'] .tippy-arrow {
-  border-top-color: var(--theme-background-150);
+  border-top-color: rgba(black, 0.75);
   bottom: -8px;
 }
 
 .tippy-popper[x-placement^='left'] .tippy-arrow {
-  border-left-color: var(--theme-background-150);
+  border-left-color: rgba(black, 0.75);
   right: -8px;
 }
 .tippy-popper[x-placement^='right'] .tippy-arrow {
-  border-right-color: var(--theme-background-150);
+  border-right-color: rgba(black, 0.75);
   left: -8px;
 }

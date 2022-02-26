@@ -49,19 +49,20 @@ import { Component, Vue } from 'vue-property-decorator'
 
 import aggregatorService from './services/aggregatorService'
 
-import Notices from './components/framework/Notices.vue'
-import Menu from './components/Menu.vue'
+import Notices from '@/components/framework/Notices.vue'
+import Menu from '@/components/Menu.vue'
 
 import Panes from '@/components/panes/Panes.vue'
 
-import upFavicon from './assets/up.png'
-import downFavicon from './assets/down.png'
+import upFavicon from '@/assets/up.png'
+import downFavicon from '@/assets/down.png'
 
-import { formatMarketPrice } from './utils/helpers'
-import { Notice } from './store/app'
-import workspacesService from './services/workspacesService'
-import dialogService from './services/dialogService'
-import importService from './services/importService'
+import { Notice } from '@/store/app'
+
+import workspacesService from '@/services/workspacesService'
+import { formatMarketPrice } from '@/services/productsService'
+import dialogService from '@/services/dialogService'
+import importService from '@/services/importService'
 
 @Component({
   name: 'App',
@@ -150,6 +151,7 @@ export default class extends Vue {
     aggregatorService.on('prices', this.updatePrice)
 
     document.addEventListener('keydown', this.onDocumentKeyPress)
+    window.addEventListener('blur', this.onBlur)
   }
 
   beforeDestroy() {
@@ -244,6 +246,10 @@ export default class extends Vue {
     } else if (/^[0-9]$/i.test(event.key)) {
       this.$store.dispatch('app/showTimeframe')
     }
+  }
+
+  onBlur() {
+    this.$store.commit('app/SET_FOCUSED_PANE', null)
   }
 
   async resetAndReload() {

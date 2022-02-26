@@ -1,8 +1,8 @@
 import dialogService from '@/services/dialogService'
+import { parseMarket } from '@/services/productsService'
 import workspacesService from '@/services/workspacesService'
 import { Pane } from '@/store/panes'
 import panesSettings from '@/store/panesSettings'
-import { parseMarket } from '@/utils/helpers'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 
