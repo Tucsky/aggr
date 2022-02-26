@@ -34,6 +34,9 @@ export default class TradesFeed {
   paneId: string
   containerElement: HTMLElement
 
+  private count: number
+  private maxCount: number
+
   private showGifs: boolean
   private showTrades: boolean
   private showLiquidations: boolean
@@ -61,9 +64,11 @@ export default class TradesFeed {
   private lastTimestamp: number
   private timeUpdateInterval: number
 
-  constructor(paneId: string, containerElement: HTMLElement) {
+  constructor(paneId: string, containerElement: HTMLElement, maxCount: number) {
     this.paneId = paneId
     this.containerElement = containerElement
+    this.count = 0
+    this.maxCount = maxCount
 
     this.cachePreferences()
     this.cachePaneMarkets()
@@ -105,7 +110,13 @@ export default class TradesFeed {
       }
     }
 
-    return html
+    if (html.length) {
+      this.containerElement.insertAdjacentHTML('afterbegin', html)
+      this.trim()
+      return true
+    } else {
+      return false
+    }
   }
 
   processTradesSilent(trades: Trade[]) {
@@ -117,13 +128,11 @@ export default class TradesFeed {
     this.audioThreshold = Infinity
     this.showGifs = false
 
-    const html = this.processTrades(trades)
+    this.processTrades(trades)
 
     // rollack to original values
     this.audioThreshold = audioThresholdValue
     this.showGifs = showGifsValue
-
-    return html
   }
 
   getTradeInlineStyles(trade: Trade, colorStep: PreparedColorStep, significantAmount: number) {
@@ -175,6 +184,8 @@ export default class TradesFeed {
     if (level < colors.length && trade.amount > this.audioThreshold) {
       audios[level][trade.side](audioService, trade.amount / significantAmount)
     }
+
+    this.count++
 
     return this.renderRow(trade, marketKey, colorStep, significantAmount)
   }
@@ -451,6 +462,22 @@ export default class TradesFeed {
         previousRowTimeAgo = txt
       }
     }, 1000)
+  }
+
+  setMaxCount(maxCount: number) {
+    this.maxCount = maxCount
+  }
+
+  trim() {
+    while (this.count > this.maxCount) {
+      this.containerElement.removeChild(this.containerElement.lastChild)
+      this.count--
+    }
+  }
+
+  clear() {
+    this.containerElement.innerHTML = ''
+    this.count = 0
   }
 
   destroy() {

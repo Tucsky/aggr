@@ -9,6 +9,10 @@
   justify-content: center;
   z-index: 10;
   pointer-events: none;
+  
+  &.-internal-scroll .dialog-body {
+    overflow: hidden;
+  }
 
   &.-loading {
     .dialog-body {

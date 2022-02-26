@@ -1,6 +1,6 @@
 {
   "name": "aggr",
-  "version": "3.0.8",
+  "version": "3.0.9",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -18,7 +18,7 @@
     "core-js": "^3.6.5",
     "eventemitter3": "^4.0.7",
     "idb": "^6.0.0",
-    "lightweight-charts": "https://github.com/Tucsky/lightweight-charts.git#aba8eb19f97641dd856902add58c6d4a5920e69e",
+    "lightweight-charts": "https://github.com/Tucsky/lightweight-charts.git#17a9ff10c9e098b6d328338a9b71b38679a20f44",
     "lodash.merge": "^4.6.2",
     "pako": "^1.0.6",
     "prismjs": "^1.25.0",

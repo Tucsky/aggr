@@ -160,7 +160,7 @@ class AlertService {
     if (marketPrice) {
       const percentChangeToAlert = (price / marketPrice - 1) * 100
 
-      if (percentChangeToAlert > 100 || percentChangeToAlert < -50) {
+      if (price < 0 || percentChangeToAlert > 100 || percentChangeToAlert < -50) {
         console.error(`[alert] price ${price} is too far from market price (${marketPrice})`)
         return false
       }
@@ -180,7 +180,7 @@ class AlertService {
       return
     }
 
-    const origin = location.href
+    const origin = location.href.replace(/#.*/, '')
 
     return fetch(this.url, {
       method: 'POST',

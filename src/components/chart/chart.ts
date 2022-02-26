@@ -222,7 +222,7 @@ export default class ChartController {
       let localPair = marketKey
 
       if (market) {
-        localPair = market.local
+        localPair = market.local.replace(/usd[a-z]/i, 'USD')
       }
 
       cachedMarkets[marketKey] = {
@@ -743,9 +743,7 @@ export default class ChartController {
 
     if (!priceScale) {
       // create default price scale
-      priceScale = {
-        alignLabels: true
-      }
+      priceScale = {}
 
       if (indicator && indicator.options.scaleMargins) {
         // use indicator priceScale
@@ -1242,7 +1240,7 @@ export default class ChartController {
       this.prependInitialPrices(bars, refreshInitialPrices)
     }
 
-    this.prependActiveBars(bars)
+    // this.prependActiveBars(bars)
 
     if (!bars.length) {
       return
@@ -1329,8 +1327,8 @@ export default class ChartController {
       temporaryRenderer.sources[marketKey].empty = false
       temporaryRenderer.sources[marketKey].active = isActive
     }
-
     if (this.activeRenderer) {
+      console.log(this.activeRenderer.bar.vbuy, this.activeRenderer.bar.vsell)
       this.activeRenderer.bar = temporaryRenderer.bar
       for (const id in temporaryRenderer.indicators) {
         this.activeRenderer.indicators[id] = temporaryRenderer.indicators[id]
@@ -1534,8 +1532,7 @@ export default class ChartController {
     const priceScale: PriceScaleSettings = store.state[this.paneId].priceScales[priceScaleId]
 
     this.chartInstance.priceScale(priceScaleId).applyOptions({
-      ...priceScale,
-      alignLabels: false
+      ...priceScale
     })
   }
 
@@ -2099,7 +2096,7 @@ export default class ChartController {
       return
     }
 
-    let priceline = api.getPriceLine(price)
+    let priceline = api.getPriceLine(price, this.chartInstance.timeScale().coordinateToLogical(originalOffset.x))
 
     let market
 

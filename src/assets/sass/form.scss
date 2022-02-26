@@ -51,7 +51,7 @@
     text-decoration: underline;
   }
 
-  i {
+  i[class^='icon-'] {
     vertical-align: text-bottom;
   }
 }

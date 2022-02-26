@@ -164,7 +164,7 @@ class AudioService {
             store.dispatch('app/showNotice', {
               id: 'audio',
               type: 'error',
-              title: 'Browser prevented audio from starting 😣<br>Click somewhere to retry.'
+              title: 'Browser prevented audio from playing\nClick somewhere to resume.'
             })
           }
 

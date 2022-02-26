@@ -27,7 +27,7 @@
           ></slider>
         </div>
       </tippy>
-      <button type="button" class="menu-action btn -volume" @click="$store.commit('settings/TOGGLE_AUDIO', !useAudio)" name="MenuVolume">
+      <button type="button" class="menu-action btn -volume" @click="toggleAudio" name="MenuVolume">
         <span class="mr4">Audio</span>
         <i v-if="!useAudio" class="icon-volume-off"></i>
         <i v-else class="icon-volume-medium" :class="{ 'icon-volume-high': audioVolume > 1 }"></i>
@@ -81,7 +81,7 @@ export default class extends Vue {
     },
     stats: {
       title: 'Stats',
-      description: 'Rolling metrics'
+      description: 'Custom rolling metrics'
     },
     counters: {
       title: 'Counters',
@@ -144,6 +144,8 @@ export default class extends Vue {
 
   addPane(type: PaneType) {
     this.$store.dispatch('panes/addPane', { type })
+
+    this.toggleMenu()
   }
 
   onClickItem(event) {
@@ -154,37 +156,8 @@ export default class extends Vue {
     this.toggleMenu()
   }
 
-  beforeEnter(element) {
-    element.style.height = '0px'
-  }
-
-  enter(element) {
-    const wrapper = element.children[0]
-
-    let height = wrapper.offsetHeight
-    height += parseInt(window.getComputedStyle(wrapper).getPropertyValue('margin-top'))
-    height += parseInt(window.getComputedStyle(wrapper).getPropertyValue('margin-bottom'))
-    height += 'px'
-
-    element.dataset.height = height
-
-    setTimeout(() => {
-      element.style.height = height
-    }, 100)
-  }
-
-  afterEnter(element) {
-    element.style.height = ''
-  }
-
-  beforeLeave(element) {
-    element.style.height = element.dataset.height
-  }
-
-  leave(element) {
-    setTimeout(() => {
-      element.style.height = '0px'
-    })
+  toggleAudio() {
+    this.$store.commit('settings/TOGGLE_AUDIO', !this.useAudio)
   }
 }
 </script>

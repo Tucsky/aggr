@@ -164,7 +164,7 @@ export async function getStoredProductsOrFetch(exchangeId: string, endpoints: st
   return productsData
 }
 
-export function requestProducts(exchangeId: string) {
+export function requestProducts(exchangeId: string, forceFetch = false) {
   if (promisesOfProducts[exchangeId]) {
     console.debug(`[products.${exchangeId}] use promise of products`)
     return promisesOfProducts[exchangeId]
@@ -173,7 +173,7 @@ export function requestProducts(exchangeId: string) {
   promisesOfProducts[exchangeId] = aggregatorService
     .dispatchAsync({
       op: 'fetchExchangeProducts',
-      data: { exchangeId }
+      data: { exchangeId, forceFetch }
     })
     .then(data => {
       delete promisesOfProducts[exchangeId]

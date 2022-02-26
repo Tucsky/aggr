@@ -388,8 +388,6 @@ export default class extends Mixins(PaneMixin) {
     this.showIndicatorsOverlay = this.$parent.$el.clientHeight > 420
 
     this.createChart()
-
-    console.log(this)
   }
 
   async createChart() {
@@ -759,7 +757,6 @@ export default class extends Mixins(PaneMixin) {
         const active = await alertService.moveAlert(market, price, newPrice)
 
         alert.triggered = false
-        alert.timestamp = Date.now()
         alert.price = newPrice
         alert.active = active
 

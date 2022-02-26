@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="hide" class="-sticky-footer -mobile-fs -auto" :class="[loading && '-loading']">
+  <Dialog @clickOutside="hide" class="-sticky-footer -mobile-fs -internal-scroll -auto" :class="[loading && '-loading']">
     <template v-slot:header>
       <div v-if="paneId">
         <div class="title">ADD/REMOVE SOURCES</div>
@@ -18,7 +18,7 @@
       <div class="column -center"></div>
     </template>
     <div class="search">
-      <div class="search__side" :class="{ '-show': mobileShowFilters }">
+      <div class="search__side hide-scrollbar" :class="{ '-show': mobileShowFilters }">
         <div class="search-filters mb16">
           <div class="search-filters__content" v-if="showExtraFilters">
             <label class="checkbox-control -small mb4">
@@ -123,13 +123,13 @@
           <div class="search-filters__title text-muted mb8" @click="showExchanges = !showExchanges">Exchanges <i class="icon-up-thin"></i></div>
         </div>
       </div>
-      <div class="search__wrapper">
-        <div class="search__selection form-control">
+      <div class="search__wrapper hide-scrollbar">
+        <div class="search__selection form-control" :class="groupsCount < 10 && '-sticky'">
           <div v-if="selection.length" class="search__selection-controls">
             <button class="btn -text" @click="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')" v-tippy title="Toggle grouping">
               <i class="icon-merge"></i>
             </button>
-            <button class="btn -text" @click="clearSelection" title="Clear" v-tippy><i class="icon-cross"></i></button>
+            <button class="btn -text" @click="clearSelection" title="Clear" v-tippy><i class="icon-eraser"></i></button>
           </div>
           <template v-if="searchTypes.normalize">
             <button
@@ -154,15 +154,9 @@
               v-text="market"
             ></button>
           </template>
-          <input
-            ref="input"
-            type="text"
-            placeholder="Search symbol (ex: EXCHANGE:SYMBOL)"
-            :value="query"
-            @input=";(page = 0), (query = $event.target.value)"
-          />
+          <input ref="input" type="text" placeholder="Search" :value="query" @input=";(page = 0), (query = $event.target.value)" />
         </div>
-        <div class="search__results hide-scrollbar">
+        <div class="search__results">
           <template v-if="results.length">
             <div v-if="page > 0" class="d-flex mt8">
               <button class="btn -text -small mlauto" @click="showLess">👆 back to page {{ page + 1 }}</button>
@@ -279,7 +273,6 @@ import DonoDropdown from '@/components/settings/DonoDropdown.vue'
 import DialogMixin from '@/mixins/dialogMixin'
 import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
-import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
 import { indexedProducts, indexProducts, requestProducts } from '@/services/productsService'
 
@@ -517,6 +510,9 @@ export default {
 
         return groups
       }, {})
+    },
+    groupsCount() {
+      return Object.keys(this.groupedSelection).length
     }
   },
 
@@ -830,13 +826,8 @@ export default {
         this.canRefreshProducts = true
       }, 3000)
 
-      await aggregatorService.dispatchAsync({
-        op: 'fetchExchangeProducts',
-        data: {
-          exchangeId,
-          forceFetch: true
-        }
-      })
+      await requestProducts(exchangeId, true)
+      await indexProducts(exchangeId)
 
       await this.$store.dispatch('exchanges/disconnect', exchangeId)
       await this.$store.dispatch('exchanges/connect', exchangeId)
@@ -861,14 +852,15 @@ export default {
 <style lang="scss" scoped>
 .search {
   display: flex;
-  padding: 1rem;
-  align-items: flex-start;
+  align-items: stretch;
+  height: 100%;
+  overflow: hidden;
 
   &__side {
-    margin-right: 1rem;
-    position: sticky;
-    top: 1rem;
     width: 11rem;
+    min-width: 11rem;
+    padding: 1rem 0 1rem 1rem;
+    overflow: auto;
 
     @media screen and (max-width: 550px) {
       display: none;
@@ -883,6 +875,8 @@ export default {
     flex-grow: 1;
     width: 650px;
     max-width: 650px;
+    padding: 1rem;
+    overflow: auto;
   }
 
   &__results {
@@ -916,6 +910,17 @@ export default {
     flex-wrap: wrap;
     padding: 6px 2rem 2px 6px;
     position: relative;
+    min-width: 19rem;
+
+    &.-sticky {
+      @media screen and (min-width: 550px) {
+        backdrop-filter: blur(1rem);
+        background-color: var(--theme-background-o75);
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+    }
 
     &-controls > button,
     > button,

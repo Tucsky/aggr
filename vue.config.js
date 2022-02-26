@@ -52,6 +52,7 @@ module.exports = {
         ],
         theme_color: '#171b29',
         background_color: '#171b29',
+        orientation: 'omit',
         display: 'standalone'
       })
     ]

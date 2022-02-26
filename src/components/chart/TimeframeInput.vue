@@ -3,6 +3,7 @@
 </template>
 
 <script lang="ts">
+import { isTouchSupported } from '@/utils/touchevent'
 import { Component, Vue } from 'vue-property-decorator'
 
 @Component({
@@ -33,9 +34,11 @@ export default class extends Vue {
   }
 
   mounted() {
-    this.$nextTick(() => {
-      this.$refs.input.focus()
-    })
+    if (!isTouchSupported()) {
+      this.$nextTick(() => {
+        this.$refs.input.focus()
+      })
+    }
   }
 
   onKeydown(event) {

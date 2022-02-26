@@ -34,20 +34,31 @@ import { Component, Vue } from 'vue-property-decorator'
   }
 })
 export default class extends Vue {
-  private single: boolean
+  mounted() {
+    this.$nextTick(() => {
+      const element = this.$el as HTMLElement
+      element.dataset.height = this.getChildrenHeight(element)
+    })
+  }
+
+  private getChildrenHeight(element: HTMLElement): string {
+    const children = element.children[0] as HTMLElement
+
+    let height = children.offsetHeight
+
+    const styles = window.getComputedStyle(children)
+    height += parseInt(styles.getPropertyValue('margin-top'))
+    height += parseInt(styles.getPropertyValue('margin-bottom'))
+
+    return height + 'px'
+  }
 
   beforeEnter(element) {
     element.style.height = '0px'
   }
 
   enter(element) {
-    const wrapper = element.children[0]
-
-    let height = wrapper.offsetHeight
-    height += parseInt(window.getComputedStyle(wrapper).getPropertyValue('margin-top'))
-    height += parseInt(window.getComputedStyle(wrapper).getPropertyValue('margin-bottom'))
-    height += 'px'
-
+    const height = this.getChildrenHeight(element)
     element.dataset.height = height
 
     setTimeout(() => {

@@ -155,8 +155,11 @@
 
       <p class="help-text mb0">
         <span v-if="alertsClick"><code>CLICK</code></span>
-        <span v-else><code>SHIFT</code> + <code>CLICK</code></span> on the chart<br />to
-        <u title="sent within 0-15s<br />active 24h to 7d (may, may not)<br>use at own risk" v-tippy>create an alert</u> at that price
+        <span v-else><code>SHIFT</code> + <code>CLICK</code></span> on the chart to
+        <span title="- sent within 0-15s<br />- active 24h for alts<br />- active 7d for btc/eth<br>- use at own risk" v-tippy="{ theme: 'left' }">
+          create an alert
+        </span>
+        at that price.
       </p>
 
       <template #off>

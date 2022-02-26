@@ -63,15 +63,10 @@ import Slider from '@/components/framework/picker/Slider.vue'
 export default class extends Mixins(PaneMixin) {
   showPlaceholder = true
 
-  private _tradesCount = 0
   private feed: TradesFeed
 
   get market() {
     return this.pane.markets[0]
-  }
-
-  get maxRows() {
-    return this.$store.state[this.paneId].maxRows
   }
 
   get showLogos() {
@@ -111,7 +106,7 @@ export default class extends Mixins(PaneMixin) {
           this.refreshList()
           break
         case this.paneId + '/SET_MAX_ROWS':
-          this.trimRows()
+          this.feed.setMaxCount(mutation.payload)
           break
         case 'panes/SET_PANE_MARKETS':
         case this.paneId + '/SET_THRESHOLD_MULTIPLIER':
@@ -154,7 +149,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   mounted() {
-    this.feed = new TradesFeed(this.paneId, this.$refs.tradesContainer)
+    this.feed = new TradesFeed(this.paneId, this.$refs.tradesContainer, this.$store.state[this.paneId].maxRows)
   }
 
   beforeDestroy() {
@@ -166,29 +161,12 @@ export default class extends Mixins(PaneMixin) {
   }
 
   onTrades(trades: Trade[]) {
-    const html = this.feed.processTrades(trades)
-
-    if (html.length > 0) {
-      if (!this._tradesCount++) {
-        this.showPlaceholder = false
-      }
-      this.$refs.tradesContainer.insertAdjacentHTML('afterbegin', html)
+    if (this.feed.processTrades(trades) === this.showPlaceholder) {
+      this.showPlaceholder = false
     }
-
-    this.trimRows()
-  }
-
-  clearList() {
-    this.$refs.tradesContainer.innerHTML = ''
-    this._tradesCount = 0
-    this.showPlaceholder = true
   }
 
   refreshList() {
-    if (!this._tradesCount) {
-      return this.clearList()
-    }
-
     const elements = this.$el.getElementsByClassName('trade')
 
     const trades: Trade[] = []
@@ -218,15 +196,8 @@ export default class extends Mixins(PaneMixin) {
       trades.push(trade)
     }
 
-    this.$refs.tradesContainer.innerHTML = this.feed.processTradesSilent(trades)
-    this._tradesCount = this.$refs.tradesContainer.children.length
-  }
-
-  trimRows() {
-    while (this._tradesCount > this.maxRows) {
-      this.$refs.tradesContainer.removeChild(this.$refs.tradesContainer.lastChild)
-      this._tradesCount--
-    }
+    this.feed.clear()
+    this.feed.processTradesSilent(trades)
   }
 }
 </script>

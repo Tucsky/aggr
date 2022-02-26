@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented here.
 
+## [3.0.9] - 2022-02-26
+### Added
+- Price alerts
+- All-in-one trades threshold slider
+
 ## [3.0.8] - 2022-01-10
 ### Added
 - Indicator script syntax highlighter

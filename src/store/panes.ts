@@ -295,7 +295,7 @@ const actions = {
     dispatch('refreshZoom', id)
   },
   refreshZoom({ state }, id: string) {
-    const zoom = Math.max(0.1, state.panes[id].zoom)
+    const zoom = state.panes[id].zoom ? Math.max(0.1, state.panes[id].zoom) : 1
     const el = document.getElementById(id) as HTMLElement
 
     if (el) {
