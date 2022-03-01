@@ -33,5 +33,5 @@
   "alertsColor": "red",
   "alertsLineStyle": 2,
   "alertsLineWidth": 2,
-  "alertsClick": true
+  "alertsClick": null
 }

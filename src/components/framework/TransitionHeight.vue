@@ -37,7 +37,10 @@ export default class extends Vue {
   mounted() {
     this.$nextTick(() => {
       const element = this.$el as HTMLElement
-      element.dataset.height = this.getChildrenHeight(element)
+
+      if (element instanceof Element) {
+        element.dataset.height = this.getChildrenHeight(element)
+      }
     })
   }
 

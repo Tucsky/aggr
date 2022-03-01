@@ -19,6 +19,7 @@ class Aggregator {
   connectionChange = 0
 
   private onGoingAggregations: { [identifier: string]: AggregatedTrade } = {}
+  private aggregationTimeouts: { [identifier: string]: number } = {}
   private pendingTrades: Trade[] = []
   private marketsStats: { [marketId: string]: { initialPrice?: number; decimals?: number; price: number; volume?: number } } = {}
   private _connectionChangeNoticeTimeout: number
@@ -182,7 +183,6 @@ class Aggregator {
 
         if (aggTrade.timestamp + this.settings.aggregationLength > trade.timestamp && aggTrade.side === trade.side) {
           aggTrade.size += trade.size
-          aggTrade.prices += trade.price * trade.size
           aggTrade.price = trade.price
           aggTrade.count++
           continue
@@ -194,8 +194,7 @@ class Aggregator {
       trade.originalPrice = this.marketsStats[marketKey].price || trade.price
 
       trade.count = 1
-      trade.prices = trade.price * trade.size
-      trade.timeout = now + 50
+      this.aggregationTimeouts[marketKey] = now + 50
       this.onGoingAggregations[marketKey] = trade
     }
   }
@@ -243,7 +242,7 @@ class Aggregator {
       }
 
       trade.count = 1
-      trade.timeout = now + 50
+      this.aggregationTimeouts[tradeKey] = now + 50
       this.onGoingAggregations[tradeKey] = trade
     }
   }
@@ -308,7 +307,7 @@ class Aggregator {
     for (let i = 0; i < tradeKeys.length; i++) {
       const aggTrade = this.onGoingAggregations[tradeKeys[i]]
 
-      if (now > aggTrade.timeout) {
+      if (now > this.aggregationTimeouts[tradeKeys[i]]) {
         if (aggTrade.liquidation) {
           this.pendingTrades.push(this.processLiquidation(aggTrade))
         } else {

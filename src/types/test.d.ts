@@ -21,9 +21,7 @@ export interface AggregatorPayload {
 }
 
 export interface AggregatedTrade extends Trade {
-  prices: number
-  count: number
-  timeout: number
+  originalPrice: number
 }
 
 export interface AggregatorSettings {

@@ -193,19 +193,19 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
 
   if (/[UZ_-]\d{2}/.test(symbol)) {
     type = 'future'
-  } else if (exchangeId === 'BYBIT' && !/-SPOT$/.test(symbol)) {
-    type = 'perp'
-  } else if (exchangeId === 'BITMEX' || /(-|_)swap$|(-|_|:)perp/i.test(symbol)) {
-    type = 'perp'
-  } else if (exchangeId === 'BINANCE_FUTURES') {
+  } else if (exchangeId === 'BINANCE_FUTURES' || exchangeId === 'DYDX') {
     type = 'perp'
   } else if (exchangeId === 'BITFINEX' && /F0$/.test(symbol)) {
-    type = 'perp'
-  } else if (exchangeId === 'PHEMEX' && symbol[0] !== 's') {
     type = 'perp'
   } else if (exchangeId === 'HUOBI' && /_(CW|CQ|NW|NQ)$/.test(symbol)) {
     type = 'future'
   } else if (exchangeId === 'HUOBI' && /-/.test(symbol)) {
+    type = 'perp'
+  } else if (exchangeId === 'BYBIT' && !/-SPOT$/.test(symbol)) {
+    type = 'perp'
+  } else if (exchangeId === 'BITMEX' || /(-|_)swap$|(-|_|:)perp/i.test(symbol)) {
+    type = 'perp'
+  } else if (exchangeId === 'PHEMEX' && symbol[0] !== 's') {
     type = 'perp'
   } else if (exchangeId === 'KRAKEN' && /PI_/.test(symbol)) {
     type = 'perp'
@@ -323,7 +323,7 @@ export function countDecimals(value) {
 }
 
 export function formatMarketPrice(price, market): number {
-  if (!marketDecimals[market]) {
+  if (typeof marketDecimals[market] === 'undefined') {
     return price
   }
 

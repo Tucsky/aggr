@@ -1240,8 +1240,6 @@ export default class ChartController {
       this.prependInitialPrices(bars, refreshInitialPrices)
     }
 
-    // this.prependActiveBars(bars)
-
     if (!bars.length) {
       return
     }
@@ -1254,6 +1252,42 @@ export default class ChartController {
 
     let temporaryRenderer: Renderer
     let computedBar: any
+
+    if (this.activeRenderer && this.activeRenderer.timestamp > bars[bars.length - 1].timestamp) {
+      const activeBars = Object.values(this.activeRenderer.sources).filter(bar => bar.empty === false)
+
+      for (let i = 0; i < activeBars.length; i++) {
+        const activeBar = activeBars[i]
+
+        activeBar.timestamp = this.activeRenderer.timestamp
+
+        for (let j = bars.length - 1; j >= 0; j--) {
+          const cachedBar = bars[j]
+
+          if (cachedBar.timestamp < this.activeRenderer.timestamp) {
+            bars.splice(j + 1, 0, activeBar)
+            activeBars.splice(i, 1)
+            i--
+            break
+          } else if (cachedBar.exchange === activeBar.exchange && cachedBar.pair === activeBar.pair) {
+            cachedBar.vbuy += activeBar.vbuy
+            cachedBar.vsell += activeBar.vsell
+            cachedBar.cbuy += activeBar.cbuy
+            cachedBar.csell += activeBar.csell
+            cachedBar.lbuy += activeBar.lbuy
+            cachedBar.lsell += activeBar.lsell
+            cachedBar.open = activeBar.open
+            cachedBar.high = activeBar.high
+            cachedBar.low = activeBar.low
+            cachedBar.close = activeBar.close
+            activeBars.splice(i, 1)
+            i--
+
+            break
+          }
+        }
+      }
+    }
 
     let barCount = 0
 
@@ -1328,7 +1362,6 @@ export default class ChartController {
       temporaryRenderer.sources[marketKey].active = isActive
     }
     if (this.activeRenderer) {
-      console.log(this.activeRenderer.bar.vbuy, this.activeRenderer.bar.vsell)
       this.activeRenderer.bar = temporaryRenderer.bar
       for (const id in temporaryRenderer.indicators) {
         this.activeRenderer.indicators[id] = temporaryRenderer.indicators[id]
@@ -1413,50 +1446,6 @@ export default class ChartController {
         })
 
         bars.unshift(bar)
-      }
-    }
-  }
-
-  prependActiveBars(bars) {
-    if (this.activeRenderer) {
-      const activeBars = Object.values(this.activeRenderer.sources).filter(bar => bar.empty === false)
-
-      for (let i = 0; i < activeBars.length; i++) {
-        const activeBar = activeBars[i]
-
-        activeBar.timestamp = this.activeRenderer.timestamp
-
-        if (bars.length) {
-          for (let j = bars.length - 1; j >= 0; j--) {
-            const cachedBar = bars[j]
-
-            if (cachedBar.timestamp < this.activeRenderer.timestamp) {
-              bars.splice(j + 1, 0, activeBar)
-              activeBars.splice(i, 1)
-              i--
-              break
-            } else if (cachedBar.exchange === activeBar.exchange && cachedBar.pair === activeBar.pair) {
-              cachedBar.vbuy += activeBar.vbuy
-              cachedBar.vsell += activeBar.vsell
-              cachedBar.cbuy += activeBar.cbuy
-              cachedBar.csell += activeBar.csell
-              cachedBar.lbuy += activeBar.lbuy
-              cachedBar.lsell += activeBar.lsell
-              cachedBar.open = activeBar.open
-              cachedBar.high = activeBar.high
-              cachedBar.low = activeBar.low
-              cachedBar.close = activeBar.close
-              activeBars.splice(i, 1)
-              i--
-
-              break
-            } else if (j === 0) {
-              bars.push(activeBar)
-            }
-          }
-        } else {
-          bars.push(activeBar)
-        }
       }
     }
   }

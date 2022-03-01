@@ -45,6 +45,10 @@ const state = Object.assign(
 
 const actions = {
   async boot({ state, dispatch }) {
+    if (state.alertsClick === null) {
+      state.alertsClick = window.innerWidth >= 768
+    }
+
     aggregatorService.dispatch({
       op: 'configureAggregator',
       data: { key: 'calculateSlippage', value: state.calculateSlippage }
