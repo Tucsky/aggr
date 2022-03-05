@@ -1296,6 +1296,11 @@ export default class ChartController {
 
       if (!bar || !temporaryRenderer || bar.timestamp > temporaryRenderer.timestamp) {
         if (temporaryRenderer) {
+          if (temporaryRenderer.bar.empty && !this.fillGapsWithEmpty) {
+            this.nextBar(bar.timestamp, temporaryRenderer)
+            continue
+          }
+
           if (from === null) {
             from = temporaryRenderer.timestamp
           }
@@ -1347,7 +1352,7 @@ export default class ChartController {
 
       const isActive = this.markets[marketKey].active
 
-      if (isActive) {
+      if (isActive && !bar.empty) {
         temporaryRenderer.bar.empty = false
         temporaryRenderer.bar.vbuy += bar.vbuy
         temporaryRenderer.bar.vsell += bar.vsell
