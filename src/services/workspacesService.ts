@@ -4,7 +4,7 @@ import defaultPanes from '@/store/defaultPanes.json'
 import store, { boot } from '@/store'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
 import { GifsStorage, ImportedSound, MarketAlerts, Preset, PresetType, ProductsStorage, Workspace } from '@/types/test'
-import { downloadJson, parseVersion, randomString, slugify, uniqueName } from '@/utils/helpers'
+import { downloadAnything, parseVersion, randomString, slugify, uniqueName } from '@/utils/helpers'
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import { databaseUpgrades, workspaceUpgrades } from './migrations'
 import { PanesState } from '@/store/panes'
@@ -316,7 +316,7 @@ class WorkspacesService {
       delete (this.workspace.states.panes as PanesState).marketsListeners
     }
 
-    downloadJson(this.workspace, this.workspace.id + '_' + slugify(this.workspace.name))
+    downloadAnything(this.workspace, this.workspace.id + '_' + slugify(this.workspace.name))
   }
 
   async getState(stateId: string) {
@@ -590,6 +590,26 @@ class WorkspacesService {
 
     localStorage.removeItem('workspace')
     localStorage.removeItem('version')
+  }
+
+  async exportDatabase() {
+    const { Dexie } = (await import('dexie')) as any
+    const { exportDB } = await import('dexie-export-import')
+
+    const db = await new Dexie('aggr').open()
+    const blob = await exportDB(db, {
+      filter: tableName => {
+        if (tableName === 'products' || tableName === 'gifs') {
+          return false
+        }
+
+        return true
+      }
+    })
+
+    const workspaces = (await this.getWorkspaces()).sort((a, b) => b.updatedAt - a.updatedAt).map(a => a.id)
+
+    downloadAnything(blob, 'aggr-' + workspaces.join('-'))
   }
 }
 

@@ -14,7 +14,7 @@ import { waitForStateMutation } from '../../utils/store'
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
 import { getEventOffset } from '@/utils/touchevent'
-import { formatMarketPrice, marketDecimals } from '@/services/productsService'
+import { formatPrice, marketDecimals } from '@/services/productsService'
 
 export interface Bar {
   vbuy?: number
@@ -2115,7 +2115,7 @@ export default class ChartController {
     }
 
     if (!priceline) {
-      price = +formatMarketPrice(price, market)
+      price = +formatPrice(price, api.options().priceFormat.precision)
     }
 
     const canCreate = store.state.settings.alerts && (event.shiftKey || store.state.settings.alertsClick)

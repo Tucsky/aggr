@@ -24,15 +24,17 @@
   align-items: center;
 
   &__selected.-arrow {
+    padding-right: 0.25em;
+
     &:after {
       content: unicode($icon-down-thin);
       transform: rotateZ(180deg);
       font-family: 'icon';
-      padding: 0 0.2em;
       position: relative;
       line-height: 0;
       transition: transform 0.2s cubic-bezier(0, 1.4, 1, 1);
       margin-left: auto;
+      padding: 0 0.25em;
     }
 
     &:last-child:after {

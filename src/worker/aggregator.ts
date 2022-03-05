@@ -459,14 +459,17 @@ class Aggregator {
 
     this._connectionChangeNoticeTimeout = setTimeout(() => {
       this._connectionChangeNoticeTimeout = null
-      ctx.postMessage({
-        op: 'notice',
-        data: {
-          id: 'connections',
-          type: 'success',
-          title: this.connectionsCount + ' connections (' + (this.connectionChange > 0 ? '+' : '') + this.connectionChange + ')'
-        }
-      })
+
+      if (this.connectionChange) {
+        ctx.postMessage({
+          op: 'notice',
+          data: {
+            id: 'connections',
+            type: 'success',
+            title: this.connectionsCount + ' connections (' + (this.connectionChange > 0 ? '+' : '') + this.connectionChange + ')'
+          }
+        })
+      }
 
       this.connectionChange = 0
     }, 3000)

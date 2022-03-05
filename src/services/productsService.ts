@@ -29,7 +29,7 @@ export async function getProducts(exchangeId: string) {
 }
 
 export function saveProducts(storage: ProductsStorage) {
-  console.log(`[products.${storage.exchange}] saving products`, storage.data)
+  console.log(`[products.${storage.exchange}] saving products`)
   storage.timestamp = Date.now()
 
   return workspacesService.saveProducts(storage)

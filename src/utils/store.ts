@@ -85,8 +85,6 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
     console.debug(`[store] module created using pane's type "${pane.type}"`)
 
     if (typeof pane.settings === 'object') {
-      console.debug(`[store] found default settings in pane's definition -> merge into pane's module`, pane.settings, 'into', module.state)
-
       if (pane.settings._id) {
         delete pane.settings._id
       }
@@ -102,7 +100,6 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
     module.state = await mergeStoredState(module.state)
   }
 
-  console.debug(`[store] store.registerModule ${id}`, module)
   store.registerModule(id, module)
 
   if (boot && pane) {

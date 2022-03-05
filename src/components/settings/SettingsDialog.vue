@@ -55,10 +55,12 @@
               <td class="table-input table-ellipsis text-nowrap" v-text="workspace.name" :title="workspace.name" v-tippy></td>
               <td class="table-input">{{ ago(workspace.updatedAt) }} ago</td>
               <td class="table-action">
-                <button class="btn  -text" @click.stop="openWorkspace(workspace.id, true)"><i class="icon-external-link-square-alt"></i></button>
+                <button class="btn   -small" @click.stop="openWorkspace(workspace.id, true)">
+                  <i class="icon-external-link-square-alt"></i>
+                </button>
               </td>
               <td class="table-action">
-                <button class="btn  -red -small" @click.stop="removeWorkspace(workspace.id)"><i class="icon-more"></i></button>
+                <button class="btn   -red -small" @click.stop="removeWorkspace(workspace.id)"><i class="icon-trash"></i></button>
               </td>
             </tr>
           </tbody>
@@ -206,7 +208,15 @@
             <dono-dropdown class="-top -text-left" />
           </span>
           <i class="pipe -center">|</i>
-          <button class="btn -text" @click="reset()">reset</button>
+          <span>
+            <dropdown :options="databaseMenu" placeholder="Reset" selectionClass="-text -arrow">
+              <template v-slot:option="{ value }">
+                <i :class="'icon-' + value.icon" class="-fill"></i>
+
+                <span class="ml4">{{ value.label }}</span>
+              </template>
+            </dropdown>
+          </span>
         </div>
       </div>
     </footer>
@@ -307,6 +317,20 @@ export default {
 
   methods: {
     createMenus() {
+      this.databaseMenu = [
+        {
+          icon: 'upload',
+          label: 'Export database',
+          click: this.exportDatabase
+        },
+        {
+          icon: 'warning',
+          color: 'danger',
+          label: 'Reset to default',
+          click: this.reset
+        }
+      ]
+
       this.activeWorkspaceMenu = [
         {
           icon: 'trash',
@@ -476,6 +500,10 @@ export default {
       this.getWorkspaces()
     },
 
+    async exportDatabase() {
+      return workspacesService.exportDatabase()
+    },
+
     async reset() {
       if (
         await dialogService.confirm({
@@ -507,12 +535,6 @@ export default {
 .settings__footer {
   margin-top: auto;
 
-  .form-group {
-    flex-basis: auto;
-    max-width: none;
-    flex-grow: 1;
-  }
-
   .version-date {
     opacity: 0.75;
     line-height: 1;
@@ -523,28 +545,11 @@ export default {
 
   .pipe {
     opacity: 0.5;
-    margin: 0 0.25rem;
     line-height: 1;
   }
 
-  .settings__browse-import {
-    position: relative;
-    input[type='file'] {
-      opacity: 0;
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      width: 100%;
-      max-width: 100%;
-      overflow: hidden;
-
-      &,
-      &::-webkit-file-upload-button {
-        cursor: pointer;
-      }
-    }
+  .btn {
+    background: 0 !important;
   }
 }
 

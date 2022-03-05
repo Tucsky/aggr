@@ -48,7 +48,7 @@
 <script>
 import DialogMixin from '@/mixins/dialogMixin'
 import workspacesService from '@/services/workspacesService'
-import { downloadJson, slugify, ago } from '@/utils/helpers'
+import { downloadAnything, slugify, ago } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 
 export default {
@@ -109,7 +109,7 @@ export default {
       this.close()
     },
     downloadPreset() {
-      downloadJson(this.preset, slugify(this.preset.name))
+      downloadAnything(this.preset, slugify(this.preset.name))
     },
     retrieveDataProperties(obj) {
       for (const prop in obj) {

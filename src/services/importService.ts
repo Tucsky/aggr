@@ -163,7 +163,9 @@ class ImportService {
     if (file.type === 'application/json' || file.type === 'text/plain') {
       const json = await this.getJSON(file)
 
-      if (json.type && json.data) {
+      if (json.formatName) {
+        await this.importDatabase(file)
+      } else if (json.type && json.data) {
         if (json.type === 'indicator') {
           this.importIndicator(json)
         } else {
@@ -175,6 +177,49 @@ class ImportService {
     } else if (/^audio\//.test(file.type)) {
       await this.importSound(file)
     }
+  }
+
+  async importDatabase(file) {
+    if (
+      !(await dialogService.confirm({
+        message: `This action will override ALL your aggr data.`,
+        ok: 'Yes override please',
+        cancel: 'Cancel'
+      })) ||
+      !(await dialogService.confirm({
+        message: `Are you sure ?`,
+        ok: 'Proceed with import',
+        cancel: 'Cancel'
+      }))
+    ) {
+      return
+    }
+
+    ;(await import('dexie')) as any
+    const { importDB } = await import('dexie-export-import')
+
+    const currentWorkspaceId = workspacesService.workspace.id
+
+    await workspacesService.reset()
+
+    let id
+
+    const match = file.name.match(/aggr-(\w{4})/)
+
+    if (match && match[1]) {
+      id = match[1]
+    }
+
+    await importDB(file)
+
+    setTimeout(() => {
+      if (id) {
+        localStorage.setItem('workspace', id)
+        window.location.href = window.location.href.replace(currentWorkspaceId, '')
+      } else {
+        window.location.reload()
+      }
+    }, 250)
   }
 }
 

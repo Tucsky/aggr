@@ -14,7 +14,7 @@
             class="dropdown__option"
             v-for="(value, index) in options"
             :key="index"
-            :class="{ active: !alwaysShowPlaceholder && index === selected }"
+            :class="[!alwaysShowPlaceholder && index === selected && 'active', value.color && 'text-' + value.color]"
           >
             <slot v-if="value.id && $slots['option-' + value.id]" :name="'option-' + value.id">
               {{ value }}

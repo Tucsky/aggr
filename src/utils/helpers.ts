@@ -96,12 +96,26 @@ export const slugify = string => {
     .replace(/-+$/, '') // Trim - from end of text
 }
 
-export const downloadJson = (json, filename) => {
-  const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(json, null, 2))
+export const downloadAnything = (data, filename) => {
   const downloadAnchorNode = document.createElement('a')
-  downloadAnchorNode.setAttribute('href', dataStr)
-  downloadAnchorNode.setAttribute('download', filename + '.json')
-  document.body.appendChild(downloadAnchorNode) // required for firefox
+
+  let href
+
+  if (!data) {
+    return
+  }
+
+  if (data instanceof Blob) {
+    href = URL.createObjectURL(data)
+  } else if (typeof data === 'object') {
+    href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data, null, 2))
+  } else if (typeof data === 'string') {
+    href = 'data:text/json;charset=utf-8,' + encodeURIComponent(data)
+  }
+
+  downloadAnchorNode.setAttribute('href', href)
+  downloadAnchorNode.setAttribute('download', filename + '.txt')
+  document.body.appendChild(downloadAnchorNode)
   downloadAnchorNode.click()
   downloadAnchorNode.remove()
 }

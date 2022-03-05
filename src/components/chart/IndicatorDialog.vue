@@ -237,7 +237,7 @@ import IndicatorDialog from './IndicatorDialog.vue'
 import dialogService from '../../services/dialogService'
 import merge from 'lodash.merge'
 import IndicatorPresetDialog from './IndicatorPresetDialog.vue'
-import { copyTextToClipboard, downloadJson } from '@/utils/helpers'
+import { copyTextToClipboard, downloadAnything } from '@/utils/helpers'
 import CodeMinimap from '../framework/CodeMinimap.vue'
 
 const ignoredOptionsKeys = ['crosshairMarkerVisible', 'minLength', 'visible', 'priceScaleId', 'priceFormat']
@@ -471,7 +471,7 @@ export default {
       }
     },
     async downloadIndicator() {
-      await downloadJson(
+      await downloadAnything(
         {
           type: 'indicator',
           name: 'indicator:' + this.name,

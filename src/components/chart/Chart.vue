@@ -93,7 +93,7 @@ import { Component, Mixins } from 'vue-property-decorator'
 import ChartController, { TimeRange } from './chart'
 
 import { getHms, formatBytes, openBase64InNewTab, getTimeframeForHuman, floorTimestampToTimeframe } from '@/utils/helpers'
-import { formatPrice, formatAmount, formatMarketPrice } from '@/services/productsService'
+import { formatPrice, formatAmount } from '@/services/productsService'
 import { defaultChartOptions, getChartCustomColorsOptions } from './options'
 
 import aggregatorService from '@/services/aggregatorService'
@@ -701,7 +701,7 @@ export default class extends Mixins(PaneMixin) {
     canvas.addEventListener(/touch/.test(event.type) ? 'touchend' : 'mouseup', this._levelDragEndHandler)
   }
 
-  onLevelDragMove({ api, priceline, market, originalOffset, offset }, startedAt, event) {
+  onLevelDragMove({ api, priceline, originalOffset, offset }, startedAt, event) {
     const { x, y } = getEventOffset(event)
 
     const canMove = Math.abs(originalOffset.y - y) > 5 || Date.now() - startedAt > 100
@@ -716,7 +716,7 @@ export default class extends Mixins(PaneMixin) {
         return
       }
 
-      const price = +formatMarketPrice(api.coordinateToPrice(y) as number, market)
+      const price = +formatPrice(api.coordinateToPrice(y) as number, api.options().priceFormat.precision)
 
       priceline.applyOptions({
         price

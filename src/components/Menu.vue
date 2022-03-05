@@ -167,7 +167,7 @@ export default class extends Vue {
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
-  z-index: 11;
+  z-index: 10;
 
   .menu__button {
     width: 2.5rem;

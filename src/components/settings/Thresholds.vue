@@ -102,7 +102,7 @@
               title="Configure threshold audio"
               v-tippy
             >
-              <button class="btn  -green"><i class="icon-volume-high"></i></button>
+              <button class="btn -text"><i class="icon-music-note"></i></button>
             </td>
           </template>
           <td
@@ -112,7 +112,7 @@
             title="Remove"
             v-tippy
           >
-            <button class="btn  -red"><i class="icon-cross"></i></button>
+            <button class="btn -text"><i class="icon-trash"></i></button>
           </td>
         </tr>
       </transition-group>
