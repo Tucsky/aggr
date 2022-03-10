@@ -678,7 +678,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   onLevelDragStart(event) {
-    if (this._levelDragEndHandler || !this.$store.state.settings.alerts || event.button) {
+    if (this._levelDragEndHandler || !this.$store.state.settings.alerts || event.button || dialogService.hasDialogOpened) {
       return
     }
 
@@ -1108,16 +1108,14 @@ export default class extends Mixins(PaneMixin) {
   }
 
   updateChartAxis() {
-    setTimeout(() => {
-      if (!this.$refs.chartContainer) {
-        return
-      }
+    if (!this.$refs.chartContainer) {
+      return
+    }
 
-      this.axis = [
-        this.$refs.chartContainer.querySelector('td:last-child canvas:nth-child(2)').clientWidth,
-        this.$refs.chartContainer.querySelector('tr:last-child').clientHeight
-      ]
-    }, 1000)
+    this.axis = [
+      this.$refs.chartContainer.querySelector('td:last-child canvas:nth-child(2)').clientWidth,
+      this.$refs.chartContainer.querySelector('tr:last-child').clientHeight
+    ]
   }
 
   takeScreenshot() {
@@ -1261,6 +1259,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   toggleLayout() {
+    this.updateChartAxis()
     this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING')
   }
 

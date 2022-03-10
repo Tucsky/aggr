@@ -62,7 +62,6 @@
     }
   },
   "volume": {
-    "enabled": true,
     "name": "Volume",
     "script": "plothistogram({ time: time, value: vbuy + vsell, color: vbuy > vsell ? options.upColor : options.downColor})",
     "options": {
@@ -79,7 +78,6 @@
     }
   },
   "volume_delta": {
-    "enabled": true,
     "name": "Volume Δ",
     "script": "plothistogram({ time: time, value: Math.abs(vbuy-vsell), color: vbuy - vsell > 0 ? options.upColor : options.downColor})",
     "options": {
@@ -95,21 +93,24 @@
       }
     }
   },
-  "volume_buy_sell": {
-    "name": "Buy/sells volume",
-    "script": "plotcloudarea(-vsell, vbuy)\nplotline(0, color=rgba(255,255,255,.25), lineStyle=2)",
+  "volume-plus": {
+    "enabled": true,
+    "name": "Volume Δ+",
     "options": {
+      "priceScaleId": "volume",
       "priceFormat": {
         "type": "volume"
       },
-      "upColor": "#3BCA6D",
-      "downColor": "#EB1E2F",
-      "priceScaleId": "volume",
+      "upColor": "rgb(59,202,109)",
+      "downColor": "rgb(239,83,80)",
       "scaleMargins": {
         "top": 0.84,
-        "bottom": 0
-      }
-    }
+        "bottom": 0.01
+      },
+      "sumDownColor": "rgba(235,30,47,0.5)",
+      "sumUpColor": "rgba(59,202,109,0.33)"
+    },
+    "script": "plothistogram({ time: time, value: vbuy-vsell, color: vbuy - vsell > 0 ? options.upColor : options.downColor})\nvar vol = vbuy+vsell\nplothistogram({ time: time, value: vbuy > vsell ? vol : -vol, color: vbuy - vsell > 0 ? options.sumUpColor : options.sumDownColor})"
   },
   "liquidations": {
     "enabled": true,
@@ -141,7 +142,7 @@
       "color": "#3BCA6D",
       "scaleMargins": {
         "top": 0.84,
-        "bottom": 0
+        "bottom": 0.01
       }
     }
   },
@@ -266,7 +267,7 @@
     }
   },
   "rsi": {
-    "script": "src = $price.close\nchange = src - src[1]\nup = ema(Math.max(change, 0), options.length)\ndown = ema(-Math.min(change, 0), options.length)\nrsi = down == 0 ? 100 : up == 0 ? 0 : 100 - (100 / (1 + up / down))\nline(80, color=options.thresholdColor)\nline(20, color=options.thresholdColor)\nline(rsi)",
+    "script": "// rsi\nsrc(50) = $price.close\nvar change = src - src[1]\nvar up = ema(Math.max(change, 0), options.length)\nvar down = ema(-Math.min(change, 0), options.length)\nrsi = down == 0 ? 100 : up == 0 ? 0 : 100 - (100 / (1 + up / down))\nline(rsi)\nbrokenarea(options.thresholdUp, options.thresholdLow, color=options.thresholdColor)\n\nif (options.showDivs) {\n  // <markers utils>\n  if (markers === 0) {\n    markers = []\n  }\n  \n  if (pendingMarker && pendingMarker.time < time) {\n    markers.push(pendingMarker)\n    pendingMarker = null\n  }\n  \n  var newMarker = null\n  // </markers utils>\n  \n  // find long signals\n  pl = pivot_low(rsi, options.pivotLeftLength, options.pivotRightLength)\n  if (pl && pl !== _pl) {\n    var plsrc = src[options.pivotRightLength]\n    if (pl > _pl && plsrc < _plsrc && (pl < options.thresholdLow || _pl < options.thresholdLow)) {\n      newMarker = {\n        time: time - options.pivotRightLength * bar.timeframe,\n        position: 'belowBar',\n        text: '🔺',\n        size: 1\n      }\n    }\n    \n    _plsrc = plsrc\n    _pl = pl\n  }\n  \n  // find sell signals\n  ph = pivot_high(rsi, options.pivotLeftLength, options.pivotRightLength)\n  \n  if (ph && ph !== _ph) {\n    var phsrc = src[options.pivotRightLength]\n    if (ph < _ph && phsrc > _phsrc && (ph > options.thresholdUp || _ph > options.thresholdUp)) {\n      newMarker = {\n        time: time - options.pivotRightLength * bar.timeframe,\n        position: 'aboveBar',\n        text: '🔻',\n        size: 1\n      }\n    }\n    \n    _phsrc = phsrc\n    _ph = ph\n  }\n  \n  // <markers utils>\n  if (newMarker || (pendingMarker && !newMarker)) {\n    pendingMarker = newMarker\n    \n    if (markers.length > 200) {\n      markers.splice(0, 1)\n    }\n    \n    if (series[0].setMarkers) {\n      series[0].setMarkers(markers.concat(pendingMarker))\n    }\n  }\n  // </markers utils>\n}",
     "name": "RSI",
     "options": {
       "priceScaleId": "rsi",
@@ -274,9 +275,35 @@
         "top": 0.01,
         "bottom": 0.83
       },
-      "thresholdColor": "rgba(255,255,255,0.5)",
-      "color": "rgb(255,255,255)",
-      "length": 14
+      "thresholdColor": "rgba(102,187,106,0.1)",
+      "color": "rgb(165,214,167)",
+      "length": 14,
+      "pivotLeftLength": 3,
+      "pivotRightLength": 3,
+      "thresholdLow": 20,
+      "thresholdUp": 70,
+      "showDivs": false
     }
+  },
+  "pivot-vwap": {
+    "name": "VWAP Pivots",
+    "version": "3.0.9",
+    "options": {
+      "priceScaleId": "right",
+      "pivotLeftLength": 14,
+      "pivotRightLength": 14,
+      "lowerLineColor": "rgb(41,98,255)",
+      "higherLineColor": "rgb(41,98,255)",
+      "positiveColor": "rgba(41,98,255,0.25)",
+      "negativeColor": "rgba(41,98,255,0.25)",
+      "showVwap": true,
+      "showPivot": false,
+      "showStdBands": false,
+      "devMultA1": 1.5,
+      "devMultA2": 1.618,
+      "devMultB1": 2,
+      "devMultB2": 2.236
+    },
+    "script": "ph = pivot_high($price.close, options.pivotLeftLength, options.pivotRightLength)\npl = pivot_low($price.close, options.pivotLeftLength, options.pivotRightLength)\n\n\nsrcHigh(50) = $price.close\nvHigh(50) = vsell + vbuy\n\nif (ph && _ph !== ph) {\n  if (ph > _ph) {\n    var lookbackLength = (options.pivotRightLength+options.pivotRightLength)/2\n    \n    var _volHigh = 0\n    var _srcVolHigh  = 0\n    var _srcSrcVolHigh  = 0\n    \n    for (var i = lookbackLength - 1; i > 0; i--) {\n      var src = srcHigh[i]\n      var vol = vHigh[i]\n      _volHigh = _volHigh + vol\n      _srcVolHigh = _srcVolHigh + src * vol\n      _srcSrcVolHigh = _srcSrcVolHigh + vol * Math.pow(src, 2)\n    }\n    \n    fns[2].state.open = _volHigh\n    fns[3].state.open = _srcVolHigh\n    fns[4].state.open = _srcSrcVolHigh\n  }\n  \n  _ph = ph\n}\n\nvar volHigh = cum(vHigh)\nvar srcVolHigh = cum(srcHigh * vHigh)\nvar srcSrcVolHigh = cum(vHigh * Math.pow(srcHigh, 2))\nvar vwapHigh = srcVolHigh / volHigh \nvar varianceHigh = srcSrcVolHigh  / volHigh - Math.pow(vwapHigh, 2)\nvar stDevHigh = Math.sqrt(varianceHigh )\n\nsrcLow(50) = $price.close\nvLow(50) = vbuy + vsell\n\nif (pl && _pl !== pl) {\n  if (pl < _pl) {\n    var lookbackLength = (options.pivotRightLength+options.pivotRightLength)/2\n    \n    var _volLow = 0\n    var _srcVolLow  = 0\n    var _srcSrcVolLow  = 0\n    \n    for (var i = lookbackLength - 1; i > 0; i--) {\n      var src = srcLow[i]\n      var vol = vLow[i]\n      _volLow = _volLow + vol\n      _srcVolLow = _srcVolLow + src * vol\n      _srcSrcVolLow = _srcSrcVolLow + vol * Math.pow(src, 2)\n    }\n    \n    fns[5].state.open = _volLow\n    fns[6].state.open = _srcVolLow\n    fns[7].state.open = _srcSrcVolLow\n  }\n  \n  _pl = pl\n}\n\nvar volLow = cum(vLow)\nvar srcVolLow = cum(srcLow * vLow)\nvar srcSrcVolLow = cum(vLow * Math.pow(srcLow, 2))\nvar vwapLow = srcVolLow / volLow\nvar varianceLow = srcSrcVolLow / volLow- Math.pow(vwapLow, 2)\nvar stDevLow = Math.sqrt(varianceLow)\n\nif (options.showStdBands) {\n  cloudarea({\n    time: time,\n    higherValue: vwapHigh + stDevHigh * options.devMultA1,\n    lowerValue: vwapHigh + stDevHigh * options.devMultA2\n  },\n    positiveColor= options.negativeColor,\n    negativeColor= options.negativeColor,\n    higherLineColor= options.higherLineColor,\n    lowerLineColor= options.higherLineColor\n  )\n  \n  cloudarea({\n    time: time,\n    higherValue: vwapHigh + stDevHigh * options.devMultB1,\n    lowerValue: vwapHigh + stDevHigh * options.devMultB2\n  },\n    positiveColor= options.negativeColor,\n    negativeColor= options.negativeColor,\n    higherLineColor= options.higherLineColor,\n    lowerLineColor= options.higherLineColor\n  )\n  \n  cloudarea({\n    time: time,\n    higherValue: vwapLow - stDevLow * options.devMultA1,\n    lowerValue: vwapLow - stDevLow * options.devMultA2\n  },\n    positiveColor= options.positiveColor,\n    negativeColor= options.positiveColor,\n    higherLineColor= options.lowerLineColor,\n    lowerLineColor= options.lowerLineColor\n  )\n  \n  cloudarea({\n    time: time,\n    higherValue: vwapLow - stDevLow * options.devMultB1,\n    lowerValue: vwapLow - stDevLow * options.devMultB2\n  },\n    positiveColor = options.positiveColor,\n    negativeColor = options.positiveColor,\n    higherLineColor = options.lowerLineColor,\n    lowerLineColor = options.lowerLineColor\n  )\n}\n\nif (options.showVwap) {\n  cloudarea(vwapLow, vwapHigh)\n}\n\nif (options.showPivot) {\n  line(_ph, offset=(-options.pivotRightLength-options.pivotRightLength)/2)\n  line(_pl, offset=(-options.pivotRightLength-options.pivotRightLength)/2)\n}"
   }
 }

@@ -945,7 +945,6 @@ export default {
     top: 0;
     right: 0;
     margin: 6px !important;
-    background: var(--theme-background-100);
   }
 }
 

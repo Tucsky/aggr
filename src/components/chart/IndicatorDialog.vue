@@ -375,14 +375,7 @@ export default {
     initIndicatorMenu() {
       this.indicatorMenu = [
         {
-          label: 'Download',
-          icon: 'download',
-          click: this.downloadIndicator
-        },
-        {
-          label: 'Make a copy',
-          icon: 'copy-paste',
-          click: this.duplicateIndicator
+          id: 'use-as-default'
         },
         {
           label: 'Resize',
@@ -390,11 +383,19 @@ export default {
           click: this.resizeIndicator
         },
         {
-          id: 'use-as-default'
+          label: 'Download',
+          icon: 'download',
+          click: this.downloadIndicator
+        },
+        {
+          label: 'Clone',
+          icon: 'copy-paste',
+          click: this.duplicateIndicator
         },
         {
           label: 'Unload',
           icon: 'cross',
+          color: 'danger',
           click: this.removeIndicator
         }
       ]
@@ -471,12 +472,24 @@ export default {
       }
     },
     async downloadIndicator() {
+      const priceScale = store.state[this.paneId].priceScales[this.indicator.options.priceScaleId] || {}
+
+      const exportableIndicator = Object.assign(
+        {},
+        store.state[this.paneId].indicators[this.indicatorId].options,
+        priceScale
+          ? {
+              scaleMargins: priceScale.scaleMargins
+            }
+          : {}
+      )
+
       await downloadAnything(
         {
           type: 'indicator',
-          name: 'indicator:' + this.name,
+          name: 'indicator:' + this.indicator.name,
           data: {
-            options: store.state[this.paneId].indicators[this.indicatorId].options,
+            options: exportableIndicator,
             script: this.script
           }
         },

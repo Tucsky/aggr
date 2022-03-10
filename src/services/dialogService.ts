@@ -8,6 +8,7 @@ import PromptDialog from '@/components/framework/PromptDialog.vue'
 class DialogService {
   mountedComponents = {}
   isInteracting = false
+  hasDialogOpened = false
   pickerInstance: any
 
   createComponent(component, props: any = {}, resolve = null, dialogId?: string): Vue {
@@ -22,6 +23,8 @@ class DialogService {
           destroyed: () => {
             if (dialogId && this.mountedComponents[dialogId]) {
               delete this.mountedComponents[dialogId]
+
+              this.hasDialogOpened = Object.keys(this.mountedComponents).length > 0
             }
 
             if (this.pickerInstance === cmp) {
@@ -71,6 +74,8 @@ class DialogService {
       }
 
       this.mountedComponents[id] = cmp
+
+      this.hasDialogOpened = Object.keys(this.mountedComponents).length > 0
     }
   }
 

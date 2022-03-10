@@ -2040,11 +2040,22 @@ export default class ChartController {
           type: 'price'
         }
 
+        if (!priceFormat.auto || priceFormat.type === 'volume' || priceFormat.precision === precision) {
+          continue
+        }
+
         priceFormat = {
           ...priceFormat,
           precision,
           minMove: 1 / Math.pow(10, precision)
         }
+
+        store.dispatch(this.paneId + '/setIndicatorOption', {
+          id: this.loadedIndicators[i].id,
+          key: 'priceFormat',
+          value: priceFormat,
+          silent: true
+        })
 
         for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
           this.loadedIndicators[i].apis[j].applyOptions({
