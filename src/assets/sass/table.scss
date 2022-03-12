@@ -9,7 +9,7 @@
       padding: 0.42rem 0.5rem;
       font-weight: 400;
       border-bottom: 0;
-      opacity: .6;
+      opacity: 0.6;
     }
   }
 
@@ -51,6 +51,11 @@
     max-width: 1px;
   }
 
+  &-min {
+    white-space: nowrap;
+    width: 1px;
+  }
+
   &-action {
     border: 0;
     cursor: pointer;
@@ -59,10 +64,15 @@
     min-width: 1px;
     padding: 0 0.25rem;
     text-align: center;
+    width: 1px;
 
     &.-disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+
+    &.-hover .btn {
+      visibility: hidden;
     }
 
     + .table-action {
@@ -110,6 +120,10 @@
       &:first-child {
         border-left: 0;
       }
+    }
+
+    &:hover .table-action.-hover .btn {
+      visibility: visible;
     }
   }
 

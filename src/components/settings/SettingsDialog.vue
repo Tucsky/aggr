@@ -52,15 +52,20 @@
           </thead>
           <tbody>
             <tr v-for="workspace of workspaces" :key="workspace.id" class="option -action" @click="openWorkspace(workspace.id)">
-              <td class="table-input table-ellipsis text-nowrap" v-text="workspace.name" :title="workspace.name" v-tippy></td>
-              <td class="table-input">{{ ago(workspace.updatedAt) }} ago</td>
-              <td class="table-action">
-                <button class="btn   -small" @click.stop="openWorkspace(workspace.id, true)">
+              <td
+                class="table-input table-ellipsis text-nowrap"
+                v-text="workspace.name"
+                :title="workspace.name"
+                v-tippy="{ placement: 'right' }"
+              ></td>
+              <td class="table-input table-min">{{ ago(workspace.updatedAt) }} ago</td>
+              <td class="table-action -hover">
+                <button class="btn -small" @click.stop="openWorkspace(workspace.id, true)">
                   <i class="icon-external-link-square-alt"></i>
                 </button>
               </td>
-              <td class="table-action">
-                <button class="btn   -red -small" @click.stop="removeWorkspace(workspace.id)"><i class="icon-trash"></i></button>
+              <td class="table-action -hover">
+                <button class="btn -red -small" @click.stop="removeWorkspace(workspace.id)"><i class="icon-trash"></i></button>
               </td>
             </tr>
           </tbody>

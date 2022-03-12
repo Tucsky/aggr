@@ -171,6 +171,7 @@ $unit: 'px'; // Feel free to change the unit.
 @media screen and (min-width: 768px) {
   .min-768 {
     display: inline-block;
+    display: revert;
   }
 
   .max-767 {

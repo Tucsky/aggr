@@ -159,7 +159,7 @@
         <div class="search__results">
           <template v-if="results.length">
             <div v-if="page > 0" class="d-flex mt8">
-              <button class="btn -text -small mlauto" @click="showLess">👆 back to page {{ page + 1 }}</button>
+              <button class="btn -text mlauto" @click="showLess">... go page {{ page }}</button>
             </div>
 
             <table class="table" v-if="searchTypes.normalize">
@@ -211,8 +211,8 @@
             </table>
 
             <div class="mt8 d-flex">
-              <button class="btn -text -small" @click="addAll">👆 add all of the above</button>
-              <button class="btn -text -small mlauto" @click="showMore" v-if="results.length === resultsPerPage">👇 see page {{ page + 2 }}</button>
+              <button class="btn -text" @click="addAll"><i class="icon-plus mr8"></i> add all of the above</button>
+              <button class="btn -text mlauto" @click="showMore" v-if="results.length === resultsPerPage">go page {{ page + 2 }} ...</button>
             </div>
           </template>
 

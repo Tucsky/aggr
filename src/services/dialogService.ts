@@ -6,7 +6,7 @@ import ConfirmDialog from '@/components/framework/ConfirmDialog.vue'
 import PromptDialog from '@/components/framework/PromptDialog.vue'
 
 class DialogService {
-  mountedComponents = {}
+  mountedComponents: { [id: string]: any } = {}
   isInteracting = false
   hasDialogOpened = false
   pickerInstance: any

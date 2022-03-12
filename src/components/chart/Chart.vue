@@ -194,6 +194,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   get layouting() {
+    this.updateChartAxis()
     return (this.$store.state[this.paneId] as ChartPaneState).layouting
   }
 
@@ -1259,7 +1260,6 @@ export default class extends Mixins(PaneMixin) {
   }
 
   toggleLayout() {
-    this.updateChartAxis()
     this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING')
   }
 

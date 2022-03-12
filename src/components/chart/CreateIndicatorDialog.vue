@@ -16,14 +16,18 @@
             <thead>
               <tr>
                 <th>Name</th>
+                <th class="min-768">Description</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="indicator of filteredIndicators" :key="indicator.id" @click="selectIndicator(indicator)" class="-action">
-                <td class="table-input" v-text="indicator.displayName || indicator.name"></td>
-                <td class="table-action" @click.stop="removeIndicator(indicator)">
-                  <button class="btn  -text -small"><i class="icon-cross"></i></button>
+                <td class="table-input">{{ (indicator.displayName || indicator.name).replace(/\{[\w_]+\}/g, '') }}</td>
+                <td class="min-768 table-input">
+                  <span class="text-muted">{{ indicator.description }}</span>
+                </td>
+                <td class="table-action -hover" @click.stop="removeIndicator(indicator)">
+                  <button class="btn -text -small"><i class="icon-trash text-danger"></i></button>
                 </td>
               </tr>
             </tbody>
@@ -130,7 +134,7 @@ export default {
   },
   methods: {
     async getIndicators() {
-      this.indicators = await workspacesService.getIndicators()
+      this.indicators = (await workspacesService.getIndicators()).sort((a, b) => (b.uses || 0) - (a.uses || 0))
     },
     async handleFile(event) {
       try {
@@ -186,6 +190,8 @@ export default {
       this.close(null)
     },
     selectIndicator(indicator) {
+      workspacesService.incrementIndicatorUsage(indicator.id)
+
       this.$store.dispatch(this.paneId + '/addIndicator', indicator)
       this.close(null)
     },

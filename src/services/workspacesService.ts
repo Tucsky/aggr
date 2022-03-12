@@ -179,7 +179,7 @@ class WorkspacesService {
     for (const id in defaultIndicators) {
       const indicator: IndicatorSettings = defaultIndicators[id]
 
-      if (parseVersion(indicator.version) < this.previousAppVersion || existing.indexOf(id) !== -1) {
+      if (parseVersion(indicator.version) <= this.previousAppVersion || existing.indexOf(id) !== -1) {
         continue
       }
 
@@ -507,6 +507,22 @@ class WorkspacesService {
     })
 
     return this.db.put('indicators', indicator)
+  }
+
+  async incrementIndicatorUsage(id: string): Promise<string> {
+    const indicator = await this.getIndicator(id)
+
+    if (!indicator) {
+      return
+    }
+
+    if (!indicator.uses) {
+      indicator.uses = 0
+    }
+
+    indicator.uses++
+
+    return this.saveIndicator(indicator)
   }
 
   getIndicator(id: string): Promise<IndicatorSettings> {

@@ -32,6 +32,7 @@ export interface IndicatorSettings {
   unsavedChanges?: boolean
   series?: string[]
   version?: string
+  uses?: number
 }
 export interface ChartPaneState {
   _id?: string
@@ -121,6 +122,7 @@ const actions = {
     }
 
     commit('ADD_INDICATOR', indicator)
+    commit('UPDATE_INDICATOR_DISPLAY_NAME', indicator.id)
 
     return indicator.id
   },
@@ -153,6 +155,10 @@ const actions = {
     }
   },
   async removeIndicator({ state, commit, dispatch }, { id, confirm = true }: { id: string; confirm?: boolean }) {
+    if (dialogService.mountedComponents.indicator && dialogService.mountedComponents.indicator.indicatorId === id) {
+      await dialogService.mountedComponents.indicator.close()
+    }
+
     if (
       state.indicators[id].unsavedChanges &&
       confirm &&
