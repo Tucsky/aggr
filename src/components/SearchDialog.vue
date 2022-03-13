@@ -457,7 +457,7 @@ export default {
 
       if (this.searchTypes.normalize) {
         const marketsByPair = this.filteredProducts
-          .filter(product => this.selection.indexOf(product.id) === -1 && this.queryFilter.test(product.local))
+          .filter(product => this.selection.indexOf(product.id) === -1 && this.queryFilter.test(product.exchange + ':' + product.local))
           .reduce((groups, product) => {
             let local = product.local
 

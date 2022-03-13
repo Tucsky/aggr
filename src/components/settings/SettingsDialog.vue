@@ -514,9 +514,10 @@ export default {
         await dialogService.confirm({
           title: 'Reset everything ?',
           html: true,
-          message: `<strong>${this.workspaces.length + 1} workspace${
-            this.workspaces.length > 1 ? 's' : ''
-          }</strong> will be deleted along with all presets, indicators & imported sounds.`
+          ok: 'Reset & reload',
+          message: `Everything will be removed\n\t- your ${this.workspaces.length + 1} workspace${
+            this.workspaces.length + 1 > 1 ? 's' : ''
+          }\n\t- indicators\n\t- presets\n\t- custom sounds\n\t- alerts\n\n...and everything else.`
         })
       ) {
         await workspacesService.reset()

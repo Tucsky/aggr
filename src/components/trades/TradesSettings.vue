@@ -69,23 +69,25 @@
           <presets type="threshold" :adapter="getAudioPreset" @apply="applyAudioPreset($event)" label="Presets" />
         </div>
         <div class="form-group mb16">
-          <label> Ajust <strong>all thresholds</strong> at once </label>
-
-          <slider
-            :min="0"
-            :max="2"
-            :step="0.01"
-            label
-            :show-completion="false"
-            class="mt8"
-            :value="thresholdsMultipler"
-            @input="$store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', { value: $event, market: markets[0] })"
-            @reset="$store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', { value: 1, market: markets[0] })"
-          >
-            <template v-slot:tooltip>
-              {{ formatAmount(thresholds[0].amount) }} ➜ {{ formatAmount(thresholds[1].amount) }} ({{ +(thresholdsMultipler * 100).toFixed(2) }}%)
-            </template>
-          </slider>
+          <div class="column">
+            <div class="text-nowrap" v-text="useAudio ? '← Louder' : '← Faster'"></div>
+            <slider
+              :min="0"
+              :max="2"
+              :step="0.01"
+              label
+              :show-completion="false"
+              class="mt4 -fill"
+              :value="thresholdsMultipler"
+              @input="$store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', { value: $event, market: markets[0] })"
+              @reset="$store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', { value: 1, market: markets[0] })"
+            >
+              <template v-slot:tooltip>
+                {{ formatAmount(thresholds[0].amount) }} ➜ {{ formatAmount(thresholds[1].amount) }} ({{ +(thresholdsMultipler * 100).toFixed(2) }}%)
+              </template>
+            </slider>
+            <div class="text-right text-nowrap mlauto" v-text="useAudio ? 'Quiter →' : 'Slower →'"></div>
+          </div>
         </div>
 
         <div class="form-group" v-if="tradeType !== 'liquidations'" key="liquidations">

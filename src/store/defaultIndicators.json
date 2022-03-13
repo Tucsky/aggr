@@ -6,7 +6,8 @@
     "options": {
       "priceScaleId": "right",
       "priceFormat": {
-        "auto": true
+        "auto": true,
+        "precision": 1
       },
       "priceLineVisible": true,
       "lastValueVisible": true,
@@ -48,58 +49,25 @@
     }
   },
   "volume": {
-    "name": "Volume",
-    "description": "Just the volume",
-    "script": "plothistogram({ time: time, value: vbuy + vsell, color: vbuy > vsell ? options.upColor : options.downColor})",
-    "options": {
-      "priceFormat": {
-        "type": "volume"
-      },
-      "upColor": "rgba(59, 202, 109, .5)",
-      "downColor": "rgba(235, 30, 47, .5)",
-      "priceScaleId": "volume",
-      "scaleMargins": {
-        "top": 0.84,
-        "bottom": 0
-      }
-    }
-  },
-  "volume_delta": {
-    "name": "Volume Δ",
-    "description": "Just the delta",
-    "script": "plothistogram({ time: time, value: Math.abs(vbuy-vsell), color: vbuy - vsell > 0 ? options.upColor : options.downColor})",
-    "options": {
-      "priceFormat": {
-        "type": "volume"
-      },
-      "upColor": "#3BCA6D",
-      "downColor": "#EB1E2F",
-      "priceScaleId": "volume",
-      "scaleMargins": {
-        "top": 0.84,
-        "bottom": 0
-      }
-    }
-  },
-  "volume-plus": {
     "enabled": true,
-    "name": "Volume Δ+",
-    "description": "Volume by side & delta",
+    "name": "Volume",
+    "description": "Volume + delta",
+    "script": "if (upColor === 0) {\n  if (options.showDelta) {\n    upColor = options.upBgColor\n    downColor = options.downBgColor\n  } else {\n    upColor = options.upColor\n    downColor = options.downColor\n  }\n}\n\nif (options.showDelta) {\n  plothistogram({ time: time, value: Math.abs(vbuy-vsell), color: vbuy - vsell > 0 ? options.upColor : options.downColor})\n}\n\nplothistogram({ time: time, value: vbuy + vsell, color: vbuy > vsell ? upColor : downColor })",
     "options": {
-      "priceScaleId": "volume",
       "priceFormat": {
         "type": "volume"
       },
       "upColor": "rgb(59,202,109)",
-      "downColor": "rgb(239,83,80)",
+      "downColor": "rgb(235,30,47)",
+      "priceScaleId": "volume",
       "scaleMargins": {
         "top": 0.84,
-        "bottom": 0.01
+        "bottom": 0
       },
-      "sumDownColor": "rgba(235,30,47,0.5)",
-      "sumUpColor": "rgba(59,202,109,0.33)"
-    },
-    "script": "plothistogram({ time: time, value: vbuy-vsell, color: vbuy - vsell > 0 ? options.upColor : options.downColor})\nvar vol = vbuy+vsell\nplothistogram({ time: time, value: vbuy > vsell ? vol : -vol, color: vbuy - vsell > 0 ? options.sumUpColor : options.sumDownColor})"
+      "showDelta": true,
+      "upBgColor": "rgba(59,202,109,0.5)",
+      "downBgColor": "rgba(235,30,47,0.5)"
+    }
   },
   "liquidations": {
     "enabled": true,
@@ -132,7 +100,7 @@
       "color": "#3BCA6D",
       "scaleMargins": {
         "top": 0.84,
-        "bottom": 0.01
+        "bottom": 0.00
       }
     }
   },
@@ -270,7 +238,7 @@
     }
   },
   "pivot-vwap": {
-    "script": "ph = pivot_high($price.high, options.pivotLeftLength, options.pivotRightLength)\npl = pivot_low($price.low, options.pivotLeftLength, options.pivotRightLength)\n\nsrcClose(100) = $price.close\nsrcLow(100) = $price.low\nsrcHigh(100) = $price.high\nvol(100) = vbuy + vsell\n\nif (ph && _ph !== ph) {  \n  if (ph > _ph && ((!options.showBands && ph > vwapHighHigh) || (options.showBands && ph > highestBand))) {\n    var _vol = 0\n    var _srcVolClose  = 0\n    var _srcSrcVolClose  = 0\n    var _srcVolHigh  = 0\n    var _srcSrcVolHigh  = 0\n    var _srcVolLow  = 0\n    var _srcSrcVolLow  = 0\n    \n    for (var i = options.pivotRightLength; i > 0; i--) {\n      var srcAtIndex = srcClose[i]\n      var volAtIndex = vol[i]\n      _vol = _vol + volAtIndex \n      _srcVolClose = _srcVolClose + srcAtIndex * volAtIndex\n      _srcSrcVolClose = _srcSrcVolClose + volAtIndex * Math.pow(srcAtIndex, 2)\n  \n      srcAtIndex = srcHigh[i]\n      _srcVolHigh = _srcVolHigh + srcAtIndex * volAtIndex\n      _srcSrcVolHigh = _srcSrcVolHigh + volAtIndex * Math.pow(srcAtIndex, 2)\n  \n      srcAtIndex = srcLow[i]\n      _srcVolLow = _srcVolLow + srcAtIndex * volAtIndex\n      _srcSrcVolLow = _srcSrcVolLow + volAtIndex * Math.pow(srcAtIndex, 2)\n    }\n    \n    fns[2].state.open = _vol \n    fns[3].state.open = _srcVolClose\n    fns[4].state.open = _srcVolHigh\n    fns[5].state.open = _srcVolLow\n    fns[6].state.open = _srcSrcVolClose\n    fns[7].state.open = _srcSrcVolHigh\n    fns[8].state.open = _srcSrcVolLow\n  }\n  \n  _ph = ph\n}\n\nvar volHigh = cum(vol)\nvar srcVolHighClose = cum(srcClose * vol)\nvar srcVolHighHigh = cum(srcHigh * vol)\nvar srcVolHighLow = cum(srcLow * vol)\nvwapHighClose = srcVolHighClose / volHigh \nvwapHighHigh = srcVolHighHigh / volHigh \nvwapHighLow = srcVolHighLow / volHigh \n\nif (options.showVwapHigh) {\n  if (options.showVwapArea) {\n    cloudarea(vwapHighHigh, vwapHighLow)\n  }\n\n  if (options.showVwapClose) {\n    line(vwapHighClose)\n  }\n\n  if (options.showBands) {\n    var srcSrcVolHighClose = cum(vol * Math.pow(srcClose, 2))\n    var srcSrcVolHighHigh = cum(vol * Math.pow(srcHigh, 2))\n    var srcSrcVolHighLow = cum(vol * Math.pow(srcLow, 2))\n    var stDevHighClose = Math.sqrt(srcSrcVolHighClose / volHigh - Math.pow(vwapHighClose, 2))\n    var stDevHighHigh = Math.sqrt(srcSrcVolHighHigh / volHigh - Math.pow(vwapHighHigh, 2))\n    var stDevHighLow = Math.sqrt(srcSrcVolHighLow / volHigh - Math.pow(vwapHighLow, 2))\n    highestBand = vwapHighClose + stDevHighClose * options.bandMultiplier\n\n    if (options.showVwapArea) {\n      cloudarea(vwapHighLow - stDevHighLow * options.bandMultiplier, vwapHighHigh - stDevHighHigh * options.bandMultiplier)\n      cloudarea(vwapHighLow + stDevHighLow * options.bandMultiplier, vwapHighHigh + stDevHighHigh * options.bandMultiplier)\n    }\n  \n    line(vwapHighClose - stDevHighClose * options.bandMultiplier)\n    line(highestBand)\n  }\n}\n\nif (pl && _pl !== pl) {\n  if (pl < _pl && ((!options.showBands && pl < vwapLowLow) || (options.showBands && pl < lowestBand))) {\n    var _vol = 0\n    var _srcVolClose  = 0\n    var _srcSrcVolClose  = 0\n    var _srcVolHigh  = 0\n    var _srcSrcVolHigh  = 0\n    var _srcVolLow  = 0\n    var _srcSrcVolLow  = 0\n    \n    for (var i = options.pivotRightLength; i > 0; i--) {\n      var srcAtIndex = srcClose[i]\n      var volAtIndex = vol[i]\n      _vol = _vol + volAtIndex \n      _srcVolClose = _srcVolClose + srcAtIndex * volAtIndex\n      _srcSrcVolClose = _srcSrcVolClose + volAtIndex * Math.pow(srcAtIndex, 2)\n\n      srcAtIndex = srcHigh[i]\n      _srcVolHigh = _srcVolHigh + srcAtIndex * volAtIndex\n      _srcSrcVolHigh = _srcSrcVolHigh + volAtIndex * Math.pow(srcAtIndex, 2)\n\n      srcAtIndex = srcLow[i]\n      _srcVolLow = _srcVolLow + srcAtIndex * volAtIndex\n      _srcSrcVolLow = _srcSrcVolLow + volAtIndex * Math.pow(srcAtIndex, 2)\n    }\n    \n    fns[9].state.open = _vol \n    fns[10].state.open = _srcVolClose\n    fns[11].state.open = _srcVolHigh\n    fns[12].state.open = _srcVolLow\n    fns[13].state.open = _srcSrcVolClose\n    fns[14].state.open = _srcSrcVolHigh\n    fns[15].state.open = _srcSrcVolLow\n  }\n\n  _pl = pl\n}\n\nvar volLow = cum(vol)\nvar srcVolLowClose = cum(srcClose * vol)\nvar srcVolLowHigh = cum(srcHigh * vol)\nvar srcVolLowLow = cum(srcLow * vol)\nvwapLowClose = srcVolLowClose / volLow \nvwapLowHigh = srcVolLowHigh / volLow \nvwapLowLow = srcVolLowLow / volLow \n\nif (options.showVwapLow) {\n  if (options.showVwapArea) {\n    cloudarea(vwapLowHigh, vwapLowLow)\n  }\n  if (options.showVwapClose) {\n    line(vwapLowClose)\n  }\n\n  if (options.showBands) {\n    var srcSrcVolLowClose = cum(vol * Math.pow(srcClose, 2))\n    var srcSrcVolLowHigh = cum(vol * Math.pow(srcHigh, 2))\n    var srcSrcVolLowLow = cum(vol * Math.pow(srcLow, 2))\n    var stDevLowClose = Math.sqrt(srcSrcVolLowClose / volLow - Math.pow(vwapLowClose, 2))\n    var stDevLowHigh = Math.sqrt(srcSrcVolLowHigh / volLow - Math.pow(vwapLowHigh, 2))\n    var stDevLowLow = Math.sqrt(srcSrcVolLowLow / volLow - Math.pow(vwapLowLow, 2))\n    lowestBand = vwapLowClose - stDevLowClose * options.bandMultiplier\n    \n    if (options.showVwapArea) {\n      cloudarea(vwapLowLow - stDevLowLow * options.bandMultiplier, vwapLowHigh - stDevLowHigh * options.bandMultiplier)\n      cloudarea(vwapLowLow + stDevLowLow * options.bandMultiplier, vwapLowHigh + stDevLowHigh * options.bandMultiplier)\n    }\n  \n    line(lowestBand)\n    line(vwapLowClose + stDevLowClose * options.bandMultiplier)\n  }\n}\n\nif (options.showMedianVwap) {\n  line((vwapLowClose + vwapLowHigh + vwapLowLow + vwapHighClose + vwapHighHigh + vwapHighLow) / 6)\n}\n\nif (options.showPivot) {\n  if (_ph) line(_ph, offset=(-options.pivotRightLength-options.pivotRightLength)/2)\n  if (_pl) line(_pl, offset=(-options.pivotRightLength-options.pivotRightLength)/2)\n}",
+    "script": "ph = pivot_high($price.high, options.pivotLeftLength, options.pivotRightLength)\npl = pivot_low($price.low, options.pivotLeftLength, options.pivotRightLength)\n\nsrcClose(100) = $price.close\nsrcLow(100) = $price.low\nsrcHigh(100) = $price.high\nvol(100) = vbuy + vsell\n\nif (ph && _ph !== ph) {  \n  if (ph > _ph && ((!options.showBands && ph > vwapHighHigh) || (options.showBands && ph > highestBand))) {\n    var _vol = 0\n    var _srcVolClose  = 0\n    var _srcSrcVolClose  = 0\n    var _srcVolHigh  = 0\n    var _srcSrcVolHigh  = 0\n    var _srcVolLow  = 0\n    var _srcSrcVolLow  = 0\n    \n    for (var i = options.pivotRightLength; i > 0; i--) {\n      var srcAtIndex = srcClose[i]\n      var volAtIndex = vol[i]\n      _vol = _vol + volAtIndex \n      _srcVolClose = _srcVolClose + srcAtIndex * volAtIndex\n      _srcSrcVolClose = _srcSrcVolClose + volAtIndex * Math.pow(srcAtIndex, 2)\n  \n      srcAtIndex = srcHigh[i]\n      _srcVolHigh = _srcVolHigh + srcAtIndex * volAtIndex\n      _srcSrcVolHigh = _srcSrcVolHigh + volAtIndex * Math.pow(srcAtIndex, 2)\n  \n      srcAtIndex = srcLow[i]\n      _srcVolLow = _srcVolLow + srcAtIndex * volAtIndex\n      _srcSrcVolLow = _srcSrcVolLow + volAtIndex * Math.pow(srcAtIndex, 2)\n    }\n    \n    fns[2].state.open = _vol \n    fns[3].state.open = _srcVolClose\n    fns[4].state.open = _srcVolHigh\n    fns[5].state.open = _srcVolLow\n    fns[6].state.open = _srcSrcVolClose\n    fns[7].state.open = _srcSrcVolHigh\n    fns[8].state.open = _srcSrcVolLow\n  }\n  \n  _ph = ph\n}\n\nvar volHigh = cum(vol)\nvar srcVolHighClose = cum(srcClose * vol)\nvar srcVolHighHigh = cum(srcHigh * vol)\nvar srcVolHighLow = cum(srcLow * vol)\nvwapHighClose = srcVolHighClose / volHigh \nvwapHighHigh = srcVolHighHigh / volHigh \nvwapHighLow = srcVolHighLow / volHigh \n\nif (options.showBands) {\n  var srcSrcVolHighClose = cum(vol * Math.pow(srcClose, 2))\n  var srcSrcVolHighHigh = cum(vol * Math.pow(srcHigh, 2))\n  var srcSrcVolHighLow = cum(vol * Math.pow(srcLow, 2))\n  var stDevHighClose = Math.sqrt(srcSrcVolHighClose / volHigh - Math.pow(vwapHighClose, 2))\n  var stDevHighHigh = Math.sqrt(srcSrcVolHighHigh / volHigh - Math.pow(vwapHighHigh, 2))\n  var stDevHighLow = Math.sqrt(srcSrcVolHighLow / volHigh - Math.pow(vwapHighLow, 2))\n  highestBand = vwapHighClose + stDevHighClose * options.bandMultiplier\n\n  cloudarea(vwapHighLow + stDevHighLow * options.bandMultiplier, vwapHighHigh + stDevHighHigh * options.bandMultiplier)\n}\n\nif (pl && _pl !== pl) {\n  if (pl < _pl && ((!options.showBands && pl < vwapLowLow) || (options.showBands && pl < lowestBand))) {\n    var _vol = 0\n    var _srcVolClose  = 0\n    var _srcSrcVolClose  = 0\n    var _srcVolHigh  = 0\n    var _srcSrcVolHigh  = 0\n    var _srcVolLow  = 0\n    var _srcSrcVolLow  = 0\n    \n    for (var i = options.pivotRightLength; i > 0; i--) {\n      var srcAtIndex = srcClose[i]\n      var volAtIndex = vol[i]\n      _vol = _vol + volAtIndex \n      _srcVolClose = _srcVolClose + srcAtIndex * volAtIndex\n      _srcSrcVolClose = _srcSrcVolClose + volAtIndex * Math.pow(srcAtIndex, 2)\n\n      srcAtIndex = srcHigh[i]\n      _srcVolHigh = _srcVolHigh + srcAtIndex * volAtIndex\n      _srcSrcVolHigh = _srcSrcVolHigh + volAtIndex * Math.pow(srcAtIndex, 2)\n\n      srcAtIndex = srcLow[i]\n      _srcVolLow = _srcVolLow + srcAtIndex * volAtIndex\n      _srcSrcVolLow = _srcSrcVolLow + volAtIndex * Math.pow(srcAtIndex, 2)\n    }\n    \n    fns[9].state.open = _vol \n    fns[10].state.open = _srcVolClose\n    fns[11].state.open = _srcVolHigh\n    fns[12].state.open = _srcVolLow\n    fns[13].state.open = _srcSrcVolClose\n    fns[14].state.open = _srcSrcVolHigh\n    fns[15].state.open = _srcSrcVolLow\n  }\n\n  _pl = pl\n}\n\nvar volLow = cum(vol)\nvar srcVolLowClose = cum(srcClose * vol)\nvar srcVolLowHigh = cum(srcHigh * vol)\nvar srcVolLowLow = cum(srcLow * vol)\nvwapLowClose = srcVolLowClose / volLow \nvwapLowHigh = srcVolLowHigh / volLow \nvwapLowLow = srcVolLowLow / volLow \n\nif (options.showBands) {\n  var srcSrcVolLowClose = cum(vol * Math.pow(srcClose, 2))\n  var srcSrcVolLowHigh = cum(vol * Math.pow(srcHigh, 2))\n  var srcSrcVolLowLow = cum(vol * Math.pow(srcLow, 2))\n  var stDevLowClose = Math.sqrt(srcSrcVolLowClose / volLow - Math.pow(vwapLowClose, 2))\n  var stDevLowHigh = Math.sqrt(srcSrcVolLowHigh / volLow - Math.pow(vwapLowHigh, 2))\n  var stDevLowLow = Math.sqrt(srcSrcVolLowLow / volLow - Math.pow(vwapLowLow, 2))\n  lowestBand = vwapLowClose - stDevLowClose * options.bandMultiplier\n  \n  cloudarea(vwapLowLow - stDevLowLow * options.bandMultiplier, vwapLowHigh - stDevLowHigh * options.bandMultiplier)\n}\n\nif (options.showMedianVwap) {\n  line((vwapLowClose + vwapLowHigh + vwapLowLow + vwapHighClose + vwapHighHigh + vwapHighLow) / 6)\n}\n\nif (options.showPivot) {\n  if (_ph) line(_ph, offset=(-options.pivotRightLength-options.pivotRightLength)/2)\n  if (_pl) line(_pl, offset=(-options.pivotRightLength-options.pivotRightLength)/2)\n}",
     "name": "Pivot VWAP {pivotLeftLength} {pivotRightLength}",
     "version": "3.1.0",
     "options": {
@@ -278,18 +246,14 @@
       "pivotLeftLength": 14,
       "pivotRightLength": 14,
       "showPivot": false,
-      "showVwapHigh": true,
-      "showVwapLow": true,
-      "showMedianVwap": true,
+      "showMedianVwap": false,
       "bandMultiplier": 1.5,
-      "showBands": false,
-      "showVwapClose": false,
-      "showVwapArea": false,
+      "showBands": true,
       "color": "rgb(255,255,255)",
-      "lowerLineColor": "rgb(41,98,255)",
-      "higherLineColor": "rgb(41,98,255)",
-      "negativeColor": "rgba(41,98,255,0.2)",
-      "positiveColor": "rgba(41,98,255,0.2)"
+      "lowerLineColor": "rgba(255,255,255,0.55)",
+      "higherLineColor": "rgba(255,255,255,0.55)",
+      "negativeColor": "rgba(255,255,255,0.2)",
+      "positiveColor": "rgba(255,255,255,0.2)"
     }
   },
   "sma-bands": {
