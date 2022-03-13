@@ -57,7 +57,6 @@ export default class extends Exchange {
   }
 
   onMessage(event, api) {
-    // channel:"live_trades_btcusd"
     const json = JSON.parse(event.data)
 
     if (!json || !json.data || !json.data.amount) {
