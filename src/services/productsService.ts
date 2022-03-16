@@ -229,6 +229,10 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     localSymbol = localSymbol.replace(/_CW|_CQ|_NW|_NQ/i, 'USD')
   }
 
+  if (exchangeId === 'DERIBIT') {
+    localSymbol = localSymbol.replace(/_(\w+)-PERPETUAL/i, '$1')
+  }
+
   localSymbol = localSymbol
     .replace(/-PERP(ETUAL)?/i, 'USD')
     .replace(/[^a-z0-9](perp|swap|perpetual)$/i, '')
