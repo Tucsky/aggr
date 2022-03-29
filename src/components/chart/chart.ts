@@ -14,7 +14,7 @@ import { waitForStateMutation } from '../../utils/store'
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
 import { getEventOffset } from '@/utils/touchevent'
-import { formatPrice, marketDecimals } from '@/services/productsService'
+import { formatPrice, formatStablecoin, marketDecimals } from '@/services/productsService'
 
 export interface Bar {
   vbuy?: number
@@ -211,7 +211,7 @@ export default class ChartController {
 
     const markets = store.state.panes.panes[this.paneId].markets
     const historicalMarkets = store.state.app.historicalMarkets
-
+    const normalizeWatermarks = store.state.settings.normalizeWatermarks
     const marketsForWatermark = []
     const cachedMarkets: any = {}
 
@@ -222,7 +222,7 @@ export default class ChartController {
       let localPair = marketKey
 
       if (market) {
-        localPair = market.local.replace(/usd[a-z]/i, 'USD')
+        localPair = formatStablecoin(market.local)
       }
 
       cachedMarkets[marketKey] = {
@@ -232,7 +232,7 @@ export default class ChartController {
       }
 
       if (cachedMarkets[marketKey].active && marketsForWatermark.indexOf(localPair) === -1) {
-        marketsForWatermark.push(localPair)
+        marketsForWatermark.push((!normalizeWatermarks && market ? market.exchange + ':' : '') + localPair)
       }
     }
 
@@ -535,7 +535,7 @@ export default class ChartController {
    */
   updateFontSize() {
     const multiplier = store.state.panes.panes[this.paneId].zoom || 1
-    const watermarkBaseFontSize = store.state.settings.normalizeWatermarks ? 72 : 24
+    const watermarkBaseFontSize = store.state.settings.normalizeWatermarks ? 72 : 48
 
     this.chartInstance.applyOptions({
       layout: {

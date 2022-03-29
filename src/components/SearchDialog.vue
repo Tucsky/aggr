@@ -61,6 +61,24 @@
         </div>
 
         <div class="search-filters mb16">
+          <div class="search-filters__content" v-if="showQuoteFilters">
+            <label class="checkbox-control -small mb4" v-for="quote of quoteCurrencies" :key="quote">
+              <input
+                type="checkbox"
+                class="form-control"
+                :checked="searchQuotes[quote] === true || searchQuotes[quote] === undefined"
+                @change="$store.commit('settings/TOGGLE_SEARCH_QUOTE', quote)"
+              />
+              <div></div>
+              <span>{{ quote }}</span>
+            </label>
+          </div>
+          <div class="search-filters__title text-muted mb8" @click="showQuoteFilters = !showQuoteFilters">
+            Quote currency <i class="icon-up-thin"></i>
+          </div>
+        </div>
+
+        <div class="search-filters mb16">
           <div class="search-filters__content" v-if="showTypeFilters">
             <label class="checkbox-control -small mb4">
               <input
@@ -274,7 +292,7 @@ import DialogMixin from '@/mixins/dialogMixin'
 import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import { indexedProducts, indexProducts, requestProducts } from '@/services/productsService'
+import { formatStablecoin, indexedProducts, indexProducts, requestProducts } from '@/services/productsService'
 
 const RESULTS_PER_PAGE = 50
 
@@ -300,10 +318,12 @@ export default {
     mobileShowFilters: false,
     showExchanges: true,
     showExtraFilters: true,
+    showQuoteFilters: false,
     showTypeFilters: true,
     onlyConnected: false,
     canRefreshProducts: true,
-    flattenedProducts: []
+    flattenedProducts: [],
+    quoteCurrencies: ['USD', 'USDT', 'USDC', 'UST', 'ETH', 'BTC', 'BNB', 'EUR', 'AUD', 'GBP']
   }),
   computed: {
     resultsPerPage() {
@@ -354,27 +374,26 @@ export default {
       let label = ''
 
       if (toConnect) {
-        label += `add${this.loading ? 'ing' : ''} ${toConnect}`
+        label += `connect${this.loading ? 'ing' : ''} ${toConnect}`
       }
 
       if (toDisconnect) {
-        label += `${toConnect ? ' and ' : ''}remov${this.loading ? 'ing' : 'e'} ${toDisconnect}`
+        label += `${toConnect ? ' and ' : ''}disconnect${this.loading ? 'ing' : ''} ${toDisconnect}`
       }
 
-      return label ? label + ' markets' : 'OK'
+      return label ? label : 'REFRESH'
     },
     searchTypes() {
-      return Object.assign(
-        {
-          historical: false,
-          spots: true,
-          perpetuals: true,
-          futures: false,
-          normalize: true,
-          mergeUsdt: true
-        },
-        this.$store.state.settings.searchTypes
-      )
+      return this.$store.state.settings.searchTypes
+    },
+    searchQuotes() {
+      const searchQuotesPreferences = this.$store.state.settings.searchQuotes
+
+      return this.quoteCurrencies.reduce((acc, quote) => {
+        acc[quote] = typeof searchQuotesPreferences[quote] === 'undefined' ? false : searchQuotesPreferences[quote]
+
+        return acc
+      }, {})
     },
     exchanges() {
       return this.$store.getters['exchanges/getExchanges']
@@ -416,20 +435,27 @@ export default {
       }
     },
     filteredProducts() {
-      const exchanges = this.searchExchanges
       const hasHistorical = this.searchTypes.historical
       const hasSpot = this.searchTypes.spots
       const hasPerpetuals = this.searchTypes.perpetuals
       const hasFutures = this.searchTypes.futures
+
+      const exchanges = this.searchExchanges
       const isConnected = this.onlyConnected
       const activeMarkets = this.activeMarkets
       const hasTypeFilters = hasSpot || hasPerpetuals || hasFutures
+
+      const searchQuotes = this.searchQuotes
 
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       this.page = 0
 
       return this.flattenedProducts.filter(a => {
         if (hasHistorical && this.historicalMarkets.indexOf(a.id) === -1) {
+          return false
+        }
+
+        if (searchQuotes[a.quote] === false) {
           return false
         }
 
@@ -441,11 +467,7 @@ export default {
           return false
         }
 
-        if (hasTypeFilters) {
-          if ((hasFutures && a.type === 'future') || (hasPerpetuals && a.type === 'perp') || (hasSpot && a.type === 'spot')) {
-            return true
-          }
-
+        if (hasTypeFilters && ((!hasFutures && a.type === 'future') || (!hasPerpetuals && a.type === 'perp') || (!hasSpot && a.type === 'spot'))) {
           return false
         }
 
@@ -462,7 +484,7 @@ export default {
             let local = product.local
 
             if (this.searchTypes.mergeUsdt) {
-              local = local.replace('USDT', 'USD').replace('USDC', 'USD')
+              local = formatStablecoin(local)
             }
 
             if (!groups[local]) {
@@ -499,7 +521,7 @@ export default {
         let localPair = indexedProduct ? indexedProduct.local : market
 
         if (this.searchTypes.mergeUsdt) {
-          localPair = localPair.replace('USDT', 'USD').replace('USDC', 'USD')
+          localPair = formatStablecoin(localPair)
         }
 
         if (!groups[localPair]) {

@@ -197,15 +197,12 @@ const mutations = {
   },
   TOGGLE_LOGOS(state) {
     if (state.monochromeLogos) {
-      console.log(state.showLogos, state.monochromeLogos, 'toggle no logo')
       state.showLogos = false
       state.monochromeLogos = false
     } else if (!state.showLogos) {
-      console.log(state.showLogos, state.monochromeLogos, 'toggle monochrome')
       state.showLogos = true
       state.monochromeLogos = false
     } else {
-      console.log(state.showLogos, state.monochromeLogos, 'toggle original')
       state.monochromeLogos = true
     }
   },

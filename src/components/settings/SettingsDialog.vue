@@ -324,15 +324,15 @@ export default {
     createMenus() {
       this.databaseMenu = [
         {
-          icon: 'upload',
-          label: 'Export database',
-          click: this.exportDatabase
-        },
-        {
           icon: 'warning',
           color: 'danger',
           label: 'Reset to default',
           click: this.reset
+        },
+        {
+          icon: 'upload',
+          label: 'Export database',
+          click: this.exportDatabase
         }
       ]
 
@@ -510,14 +510,45 @@ export default {
     },
 
     async reset() {
+      const sounds = await workspacesService.db.getAllKeys('sounds')
+      const indicators = await workspacesService.db.getAllKeys('indicators')
+      const presets = await workspacesService.db.getAllKeys('presets')
+      const alerts = await workspacesService.db.getAllKeys('alerts')
+
+      const content = []
+
+      if (this.workspaces.length) {
+        content.push(['workspace', this.workspaces.length])
+      }
+
+      if (indicators.length) {
+        content.push(['indicator', indicators.length])
+      }
+
+      if (sounds.length) {
+        content.push(['sound', sounds.length])
+      }
+
+      if (presets.length) {
+        content.push(['preset', presets.length])
+      }
+
+      if (alerts.length) {
+        content.push(['alert', alerts.length])
+      }
+
       if (
         await dialogService.confirm({
           title: 'Reset everything ?',
           html: true,
           ok: 'Reset & reload',
-          message: `Everything will be removed\n\t- your ${this.workspaces.length + 1} workspace${
-            this.workspaces.length + 1 > 1 ? 's' : ''
-          }\n\t- indicators\n\t- presets\n\t- custom sounds\n\t- alerts\n\n...and everything else.`
+          message: `Everything will be removed${
+            content.length
+              ? ' including : \n\t - ' +
+                content.map(([thing, count]) => count + ' ' + thing + (count > 1 ? 's' : '')).join('\n\t - ') +
+                '\n\n...and everything else!'
+              : '.'
+          }`
         })
       ) {
         await workspacesService.reset()

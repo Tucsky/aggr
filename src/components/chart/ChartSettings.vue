@@ -164,7 +164,7 @@
 
       <template #off>
         <label
-          v-if="notificationsPermissions === 'denied'"
+          v-if="notificationsPermissionState === 'denied'"
           class="text-danger help-text mt0 mb0"
           v-tippy
           :title="`${helps['notifications-disabled']} ${helps['notifications-grant']}`"
@@ -172,7 +172,7 @@
           <i class="icon-warning mr4"></i> Notifications are blocked.
         </label>
         <p
-          v-else-if="notificationsPermissions !== 'granted'"
+          v-else-if="notificationsPermissionState !== 'granted'"
           class="text-info help-text mt0 mb0"
           v-tippy
           :title="`${helps['notifications-disabled']} ${helps['notifications-grant']}`"
@@ -190,6 +190,8 @@ import { Component, Vue } from 'vue-property-decorator'
 import Slider from '../framework/picker/Slider.vue'
 import ToggableGroup from '../framework/ToggableGroup.vue'
 
+let notificationsPermission
+
 @Component({
   components: { Slider, ToggableGroup },
   name: 'ChartSettings',
@@ -202,11 +204,11 @@ import ToggableGroup from '../framework/ToggableGroup.vue'
 })
 export default class extends Vue {
   paneId: string
-  notificationsPermissions: string = null
   helps = {
     'notifications-disabled': 'Push notification are disabled.',
     'notifications-grant': 'Enable notifications for this site in your browser.'
   }
+  notificationsPermissionState = 'granted'
 
   get showLegend() {
     return this.$store.state[this.paneId].showLegend
@@ -273,28 +275,44 @@ export default class extends Vue {
   }
 
   created() {
-    this.checkPermissions()
+    this.checkNotificationsPermission()
   }
 
-  checkPermissions() {
+  checkNotificationsPermission() {
     navigator.permissions
       .query({ name: 'notifications' })
       .then(result => {
-        this.notificationsPermissions = result.state
+        if (!notificationsPermission) {
+          result.onchange = (event: any) => {
+            this.setNotificationsPermission(event.target.state)
+          }
+
+          notificationsPermission = result
+        }
+
+        this.setNotificationsPermission(result.state)
       })
       .catch(err => {
         console.error(err.message)
       })
   }
 
+  setNotificationsPermission(state) {
+    this.notificationsPermissionState = state
+
+    if (this.notificationsPermissionState !== 'granted' && this.alerts) {
+      this.$store.commit('settings/TOGGLE_ALERTS', false)
+    }
+  }
+
   async toggleAlerts(event) {
     let checked = event.target.checked
 
-    if (this.notificationsPermissions !== 'granted') {
-      this.notificationsPermissions = await Notification.requestPermission()
+    if (checked) {
+      this.notificationsPermissionState = await Notification.requestPermission()
     }
 
-    if (this.notificationsPermissions === 'denied' && checked) {
+    if (this.notificationsPermissionState === 'denied' && checked) {
       checked = false
 
       this.$store.dispatch('app/showNotice', {

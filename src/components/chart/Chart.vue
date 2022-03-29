@@ -92,7 +92,7 @@ import { Component, Mixins } from 'vue-property-decorator'
 
 import ChartController, { TimeRange } from './chart'
 
-import { getHms, formatBytes, openBase64InNewTab, getTimeframeForHuman, floorTimestampToTimeframe } from '@/utils/helpers'
+import { formatBytes, openBase64InNewTab, getTimeframeForHuman, floorTimestampToTimeframe } from '@/utils/helpers'
 import { formatPrice, formatAmount } from '@/services/productsService'
 import { defaultChartOptions, getChartCustomColorsOptions } from './options'
 
@@ -1124,16 +1124,6 @@ export default class extends Mixins(PaneMixin) {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
 
-    let timeframe = this.$store.state[this.paneId].timeframe as any
-
-    if (!isNaN(+timeframe)) {
-      timeframe = getHms(timeframe * 1000).toUpperCase()
-    } else {
-      timeframe = parseInt(timeframe) + ' TICKS'
-    }
-
-    const text = timeframe
-
     const zoom = this.$store.state.panes.panes[this.paneId].zoom || 1
 
     const textPadding = 16 * zoom
@@ -1143,33 +1133,19 @@ export default class extends Mixins(PaneMixin) {
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
 
-    const words = text.split(' ')
     const lines = []
-    const date = new Date().toISOString()
-    const dateWidth = ctx.measureText(date).width
+    const dateString = new Date().toUTCString()
 
-    let currentLine = ' |'
-
-    for (let i = 0; i < words.length; i++) {
-      const word = words[i]
-      const width = (!lines.length ? dateWidth : 0) + ctx.measureText(currentLine + ' ' + word).width
-      if (width < chartCanvas.width - textPadding * 2) {
-        currentLine += ' ' + word
-      } else {
-        lines.push(currentLine)
-        currentLine = word
-      }
-    }
-
-    lines.push(currentLine)
-    lines.push(this._chartController.watermark + ' (' + this.markets.length + ' market' + (this.markets.length ? 's' : '') + ')')
+    lines.push(dateString + ' | ' + this.timeframeForHuman)
+    lines.push(
+      this._chartController.watermark +
+        (this.visibleMarkets > 1 && this.$store.state.settings.normalizeWatermarks ? ' (' + this.visibleMarkets + ' markets)' : '')
+    )
 
     const lineHeight = Math.round(textPadding)
-    const headerHeight = Math.round(textPadding * 2 + lines.length * lineHeight)
     canvas.height = chartCanvas.height
 
     const backgroundColor = this.$store.state.settings.backgroundColor
-    const backgroundColor300 = getComputedStyle(document.documentElement).getPropertyValue('--theme-background-300')
     const color100 = getComputedStyle(document.documentElement).getPropertyValue('--theme-color-100')
 
     ctx.fillStyle = backgroundColor
@@ -1178,29 +1154,26 @@ export default class extends Mixins(PaneMixin) {
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.drawImage(chartCanvas, 0, 0)
 
-    ctx.fillStyle = backgroundColor300
+    ctx.fillStyle = color100
     ctx.font = `${textFontsize}px Share Tech Mono`
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
 
+    let offsetY = 0
+
     for (let i = 0; i < lines.length; i++) {
-      let offset = 0
+      ctx.fillText(lines[i], textPadding, textPadding + offsetY)
 
-      if (i === 0) {
-        ctx.fillStyle = color100
-        ctx.fillText(date, textPadding, textPadding)
-        offset = dateWidth
-        ctx.fillStyle = color100
-      }
-
-      ctx.fillText(lines[i], offset + textPadding, textPadding + lineHeight * i)
+      offsetY += lineHeight * (i + 1)
     }
 
     const luminance = getColorLuminance(splitRgba(backgroundColor))
     const textColor = luminance < 170 ? '#ffffff' : '#000000'
 
     if (this.showIndicatorsOverlay) {
-      Object.values(this.indicators).forEach((indicator, index) => {
+      offsetY += textPadding * 2
+
+      Object.values(this.indicators).forEach(indicator => {
         const options = indicator.options as any
 
         if (options.visible === false) {
@@ -1221,8 +1194,15 @@ export default class extends Mixins(PaneMixin) {
           // not rgb(a)
         }
 
+        const text = indicator.displayName || indicator.name
+
+        ctx.fillStyle = backgroundColor
+        ctx.fillText(text, textPadding + 1, offsetY + 1)
+        ctx.fillText(text, textPadding - 1, offsetY - 1)
         ctx.fillStyle = color
-        ctx.fillText(indicator.displayName || indicator.name, textPadding, headerHeight + textPadding + index * lineHeight * 1.2)
+        ctx.fillText(text, textPadding, offsetY)
+
+        offsetY += lineHeight * 1.2
       })
     }
 

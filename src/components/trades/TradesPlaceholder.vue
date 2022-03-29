@@ -16,7 +16,7 @@
 
 <script lang="ts">
 import { Threshold } from '@/store/panesSettings/trades'
-import { formatAmount } from '@/services/productsService'
+import { formatAmount, formatStablecoin } from '@/services/productsService'
 import { Component, Vue } from 'vue-property-decorator'
 
 @Component({
@@ -53,7 +53,7 @@ export default class extends Vue {
       let localPair = market ? market.local : marketKey
 
       if (mergeUsdt) {
-        localPair = localPair.replace('USDT', 'USD').replace('USDC', 'USD')
+        localPair = formatStablecoin(localPair)
       }
 
       if (pairs.indexOf(localPair) === -1) {

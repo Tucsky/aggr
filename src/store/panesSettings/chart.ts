@@ -78,7 +78,7 @@ const state = {
   horizontalGridlinesColor: 'rgba(255,255,255,.1)',
   showVerticalGridlines: false,
   verticalGridlinesColor: 'rgba(255,255,255,.1)',
-  showWatermark: false,
+  showWatermark: true,
   watermarkColor: 'rgba(255,255,255,.1)',
   hiddenMarkets: {},
   barSpacing: null

@@ -26,6 +26,7 @@ export interface SettingsState {
   disableAnimations?: boolean
   autoHideHeaders?: boolean
   searchTypes?: any
+  searchQuotes?: any
   searchExchanges?: any
   favoriteTimeframes?: { [timeframe: number]: string }
   normalizeWatermarks: boolean
@@ -45,10 +46,6 @@ const state = Object.assign(
 
 const actions = {
   async boot({ state, dispatch }) {
-    if (state.alertsClick === null) {
-      state.alertsClick = window.innerWidth >= 768
-    }
-
     aggregatorService.dispatch({
       op: 'configureAggregator',
       data: { key: 'calculateSlippage', value: state.calculateSlippage }
@@ -235,6 +232,9 @@ const mutations = {
   },
   TOGGLE_SEARCH_TYPE(state, key: string) {
     Vue.set(state.searchTypes, key, !state.searchTypes[key])
+  },
+  TOGGLE_SEARCH_QUOTE(state, key: string) {
+    Vue.set(state.searchQuotes, key, state.searchQuotes[key] === undefined ? false : !state.searchQuotes[key])
   },
   TOGGLE_SEARCH_EXCHANGE(state, key: string) {
     Vue.set(state.searchExchanges, key, typeof state.searchExchanges[key] === 'boolean' ? !state.searchExchanges[key] : false)

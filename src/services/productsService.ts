@@ -164,6 +164,10 @@ export async function getStoredProductsOrFetch(exchangeId: string, endpoints: st
   return productsData
 }
 
+export function formatStablecoin(quote) {
+  return quote.replace(/([bh^])?usd?[a-z]$/i, '$1USD')
+}
+
 export function requestProducts(exchangeId: string, forceFetch = false) {
   if (promisesOfProducts[exchangeId]) {
     console.debug(`[products.${exchangeId}] use promise of products`)
@@ -189,6 +193,7 @@ export function parseMarket(market: string) {
 
 export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   const id = exchangeId + ':' + symbol
+
   let type = 'spot'
 
   if (/[UZ_-]\d{2}/.test(symbol)) {
@@ -204,7 +209,11 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   } else if (exchangeId === 'BYBIT' && !/-SPOT$/.test(symbol)) {
     type = 'perp'
   } else if (exchangeId === 'BITMEX' || /(-|_)swap$|(-|_|:)perp/i.test(symbol)) {
-    type = 'perp'
+    if (/\d{2}/.test(symbol)) {
+      type = 'future'
+    } else {
+      type = 'perp'
+    }
   } else if (exchangeId === 'PHEMEX' && symbol[0] !== 's') {
     type = 'perp'
   } else if (exchangeId === 'KRAKEN' && /PI_/.test(symbol)) {
@@ -222,7 +231,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   }
 
   if (exchangeId === 'BITFINEX') {
-    localSymbol = localSymbol.replace(/(.*)F0:USTF0/, '$1USDT').replace(/UST$/, 'USDT')
+    localSymbol = localSymbol.replace(/(.*)F0:USTF0/, '$1USDT')
   }
 
   if (exchangeId === 'HUOBI') {
@@ -238,7 +247,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     .replace(/[^a-z0-9](perp|swap|perpetual)$/i, '')
     .replace(/[^a-z0-9]\d+$/i, '')
     .replace(/[-_/:]/, '')
-    .replace(/XBT/i, 'BTC')
+    .replace(/xbt$|^xbt/i, 'BTC')
     .toUpperCase()
 
   let match
@@ -277,7 +286,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     quote = match[2]
 
     if (noStable) {
-      localSymbol = base + quote.replace(/usd[a-z]/i, 'USD')
+      localSymbol = base + formatStablecoin(quote)
     }
   }
 
