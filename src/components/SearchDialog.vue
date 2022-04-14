@@ -67,7 +67,12 @@
                 type="checkbox"
                 class="form-control"
                 :checked="searchQuotes[quote] === true || searchQuotes[quote] === undefined"
-                @change="$store.commit('settings/TOGGLE_SEARCH_QUOTE', quote)"
+                @change="
+                  $store.commit('settings/TOGGLE_SEARCH_QUOTE', {
+                    key: quote,
+                    value: $event.target.checked
+                  })
+                "
               />
               <div></div>
               <span>{{ quote }}</span>
@@ -177,7 +182,7 @@
         <div class="search__results">
           <template v-if="results.length">
             <div v-if="page > 0" class="d-flex mt8">
-              <button class="btn -text mlauto" @click="showLess">... go page {{ page }}</button>
+              <button class="btn -text mlauto switch-page" @click="showLess">... go page {{ page }}</button>
             </div>
 
             <table class="table" v-if="searchTypes.normalize">
@@ -230,14 +235,16 @@
 
             <div class="mt8 d-flex">
               <button class="btn -text" @click="addAll"><i class="icon-plus mr8"></i> add all of the above</button>
-              <button class="btn -text mlauto" @click="showMore" v-if="results.length === resultsPerPage">go page {{ page + 2 }} ...</button>
+              <button class="btn -text mlauto switch-page" @click="showMore" v-if="results.length === resultsPerPage">
+                go page {{ page + 2 }} ...
+              </button>
             </div>
           </template>
 
           <div class="text-danger search__no-result" v-if="!results.length">
             <p class="mt0 mb0 px16 pb0">
               No results found
-              <template v-if="hasFilters"> (<button class="btn -text color-100 pl0 pr0" @click="clearFilters">clear filters</button>)</template>
+              <button class="btn -text -red" @click="clearFilters">clear filters</button>
             </p>
             <div v-if="searchTypes.historical" class="color-100 px16 pt0 notice -success" style="font-size: 14px;">
               <div class="notice__wrapper">
@@ -294,7 +301,7 @@ import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import { formatStablecoin, indexedProducts, indexProducts, requestProducts } from '@/services/productsService'
 
-const RESULTS_PER_PAGE = 50
+const RESULTS_PER_PAGE = 25
 
 export default {
   mixins: [DialogMixin],
@@ -323,7 +330,7 @@ export default {
     onlyConnected: false,
     canRefreshProducts: true,
     flattenedProducts: [],
-    quoteCurrencies: ['USD', 'USDT', 'USDC', 'UST', 'ETH', 'BTC', 'BNB', 'EUR', 'AUD', 'GBP']
+    quoteCurrencies: ['USD', 'USDT', 'UST', 'USDC', 'BUSD', 'ETH', 'BTC', 'BNB', 'EUR', 'AUD', 'GBP', 'OTHERS']
   }),
   computed: {
     resultsPerPage() {
@@ -395,6 +402,9 @@ export default {
         return acc
       }, {})
     },
+    allQuotes() {
+      return !Object.values(this.searchQuotes).find(a => !!a)
+    },
     exchanges() {
       return this.$store.getters['exchanges/getExchanges']
     },
@@ -446,6 +456,7 @@ export default {
       const hasTypeFilters = hasSpot || hasPerpetuals || hasFutures
 
       const searchQuotes = this.searchQuotes
+      const allQuotes = this.allQuotes
 
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       this.page = 0
@@ -455,7 +466,11 @@ export default {
           return false
         }
 
-        if (searchQuotes[a.quote] === false) {
+        if (
+          !allQuotes &&
+          ((typeof searchQuotes[a.quote] === 'boolean' && searchQuotes[a.quote] === false) ||
+            (typeof searchQuotes[a.quote] !== 'boolean' && !searchQuotes.OTHERS))
+        ) {
           return false
         }
 
@@ -481,7 +496,7 @@ export default {
         const marketsByPair = this.filteredProducts
           .filter(product => this.selection.indexOf(product.id) === -1 && this.queryFilter.test(product.local))
           .reduce((groups, product) => {
-            let local = product.local
+            let local = product.base + '/' + product.quote
 
             if (this.searchTypes.mergeUsdt) {
               local = formatStablecoin(local)
@@ -738,6 +753,7 @@ export default {
 
     clearFilters() {
       this.$store.commit('settings/CLEAR_SEARCH_FILTERS')
+      this.onlyConnected = false
     },
 
     onPaste(event) {
@@ -1018,5 +1034,14 @@ export default {
       visibility: visible;
     }
   }
+}
+
+.switch-page {
+  height: 0;
+  display: block;
+  padding: 0;
+  line-height: 0;
+  border: 0;
+  background: 0 !important;
 }
 </style>

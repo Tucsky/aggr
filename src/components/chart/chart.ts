@@ -521,9 +521,7 @@ export default class ChartController {
      */
     this.chartInstance.applyOptions({
       watermark: {
-        text: `\u00A0\u00A0\u00A0\u00A0${this.watermark +
-          ' | ' +
-          getTimeframeForHuman(store.state[this.paneId].timeframe).toUpperCase()}\u00A0\u00A0\u00A0\u00A0`,
+        text: `\u00A0\u00A0\u00A0\u00A0${this.watermark + ' | ' + getTimeframeForHuman(store.state[this.paneId].timeframe)}\u00A0\u00A0\u00A0\u00A0`,
         visible: store.state[this.paneId].showWatermark,
         color: store.state[this.paneId].watermarkColor
       }
@@ -1155,8 +1153,6 @@ export default class ChartController {
         this.resetBar(this.activeRenderer.sources[identifier])
       }
 
-      this.activeRenderer.sources[identifier].empty = false
-
       const isActive = this.markets[identifier].active
 
       if (trade.liquidation) {
@@ -1171,12 +1167,27 @@ export default class ChartController {
         continue
       }
 
-      this.activeRenderer.sources[identifier].high = Math.max(this.activeRenderer.sources[identifier].high, +trade.price)
-      this.activeRenderer.sources[identifier].low = Math.min(this.activeRenderer.sources[identifier].low, +trade.price)
       this.activeRenderer.sources[identifier].close = +trade.price
+
+      if (this.activeRenderer.sources[identifier].empty) {
+        this.activeRenderer.sources[identifier].open = this.activeRenderer.sources[identifier].high = this.activeRenderer.sources[
+          identifier
+        ].low = this.activeRenderer.sources[identifier].close
+      } else {
+        this.activeRenderer.sources[identifier].high = Math.max(
+          this.activeRenderer.sources[identifier].high,
+          this.activeRenderer.sources[identifier].close
+        )
+        this.activeRenderer.sources[identifier].low = Math.min(
+          this.activeRenderer.sources[identifier].low,
+          this.activeRenderer.sources[identifier].close
+        )
+      }
 
       this.activeRenderer.sources[identifier]['c' + trade.side] += trade.count
       this.activeRenderer.sources[identifier]['v' + trade.side] += amount
+
+      this.activeRenderer.sources[identifier].empty = false
 
       if (isActive) {
         this.activeRenderer.bar['v' + trade.side] += amount
@@ -1296,7 +1307,7 @@ export default class ChartController {
 
       if (!bar || !temporaryRenderer || bar.timestamp > temporaryRenderer.timestamp) {
         if (temporaryRenderer) {
-          if (temporaryRenderer.bar.empty && !this.fillGapsWithEmpty) {
+          if (temporaryRenderer.bar.empty && !this.fillGapsWithEmpty && bar) {
             this.nextBar(bar.timestamp, temporaryRenderer)
             continue
           }
@@ -1889,9 +1900,6 @@ export default class ChartController {
     renderer.timestamp += renderer.timeframe
     renderer.localTimestamp += renderer.timeframe
 
-    if (renderer.bar.empty) {
-      return
-    }
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       const rendererSerieData = renderer.indicators[this.loadedIndicators[i].id]
 
@@ -1976,6 +1984,7 @@ export default class ChartController {
       bar.high = bar.close
       bar.low = bar.close
     }
+
     bar.vbuy = 0
     bar.vsell = 0
     bar.cbuy = 0

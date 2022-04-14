@@ -100,6 +100,7 @@ export default class SerieBuilder {
    * @returns
    */
   normalizeInput(input, strings) {
+    input = input.replace(/([^.])?\b(indicatorId)\b/gi, `$1'${this.indicatorId}'`)
     input = input.replace(/([^.])?\b(bar)\b/gi, '$1renderer')
     input = input.replace(/([^.]|^)\b(vbuy|vsell|cbuy|csell|lbuy|lsell)\b/gi, '$1renderer.bar.$2')
     input = input.replace(/([^.]|^)\b(time)\b([^:])/gi, '$1renderer.localTimestamp$3')

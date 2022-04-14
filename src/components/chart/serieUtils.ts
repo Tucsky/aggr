@@ -18,7 +18,7 @@ export function avg_ohlc$(state, renderer) {
   }
 
   for (const identifier in renderer.sources) {
-    if (!renderer.sources[identifier].active || renderer.sources[identifier].open === null) {
+    if (!renderer.sources[identifier].active || renderer.sources[identifier].close === null) {
       continue
     }
 
@@ -41,8 +41,41 @@ export function avg_ohlc$(state, renderer) {
     state.open = open / nbSources
   }
 
-  state.high = high / nbSources
-  state.low = low / nbSources
+  state.high = Math.max(state.high, high / nbSources)
+  state.low = Math.min(state.low, low / nbSources)
+  state.close = close / nbSources
+
+  return { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }
+}
+
+export function avg_real_ohlc$(state, renderer) {
+  let nbSources = 0
+
+  let open = 0
+  let high = 0
+  let low = 0
+  let close = 0
+
+  for (const identifier in renderer.sources) {
+    if (!renderer.sources[identifier].active || renderer.sources[identifier].open === null) {
+      continue
+    }
+
+    open += renderer.sources[identifier].open
+    high += renderer.sources[identifier].high
+    low += renderer.sources[identifier].low
+    close += renderer.sources[identifier].close
+
+    nbSources++
+  }
+
+  if (!nbSources) {
+    return { time: renderer.localTimestamp }
+  }
+
+  state.open = open / nbSources
+  state.high = Math.max(state.high === null ? -Infinity : state.high, high / nbSources)
+  state.low = Math.min(state.low === null ? Infinity : state.low, low / nbSources)
   state.close = close / nbSources
 
   return { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }

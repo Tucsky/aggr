@@ -4,12 +4,8 @@ import { PRODUCTS_EXPIRES_AFTER } from '@/utils/constants'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
-const baseRegex = '([a-z0-9]{2,})'
-const quoteRegexKnown = '(eur|usd|usdt|usdc|tusd)'
-const quoteRegexOthers = '([a-z0-9]{3,})'
-
-const baseQuoteLookup1 = new RegExp(`^${baseRegex}[^a-z0-9]?${quoteRegexKnown}$`, 'i')
-const baseQuoteLookup2 = new RegExp(`^${baseRegex}[^a-z0-9]?${quoteRegexOthers}$`, 'i')
+const baseQuoteLookupKnown = new RegExp(`^([A-Z0-9]{3,})[-/:]?(USDT|USDC|TUSD|BUSD)$|^([A-Z0-9]{2,})[-/:]?(UST|EUR|USD)$`)
+const baseQuoteLookupOthers = new RegExp(`^([A-Z0-9]{2,})[-/]?([A-Z0-9]{3,})$`)
 const baseQuoteLookupPoloniex = new RegExp(`^(.*)_(.*)$`)
 
 const promisesOfProducts = {}
@@ -224,31 +220,26 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
 
   if (exchangeId === 'BYBIT') {
     localSymbol = localSymbol.replace(/-SPOT$/, '')
-  }
-
-  if (exchangeId === 'KRAKEN') {
+  } else if (exchangeId === 'KRAKEN') {
     localSymbol = localSymbol.replace(/PI_/, '').replace(/FI_/, '')
-  }
-
-  if (exchangeId === 'BITFINEX') {
-    localSymbol = localSymbol.replace(/(.*)F0:USTF0/, '$1USDT')
-  }
-
-  if (exchangeId === 'HUOBI') {
+  } else if (exchangeId === 'FTX' && type === 'future') {
+    localSymbol = localSymbol.replace(/(\w+)-\d+$/, '$1-USD')
+  } else if (exchangeId === 'BITFINEX') {
+    localSymbol = localSymbol.replace(/(.*)F0:(\w+)F0/, '$1-$2')
+  } else if (exchangeId === 'HUOBI') {
     localSymbol = localSymbol.replace(/_CW|_CQ|_NW|_NQ/i, 'USD')
-  }
-
-  if (exchangeId === 'DERIBIT') {
+  } else if (exchangeId === 'DERIBIT') {
     localSymbol = localSymbol.replace(/_(\w+)-PERPETUAL/i, '$1')
   }
 
   localSymbol = localSymbol
-    .replace(/-PERP(ETUAL)?/i, 'USD')
+    .replace(/xbt$|^xbt/i, 'BTC')
+    .replace(/-PERP(ETUAL)?/i, '-USD')
     .replace(/[^a-z0-9](perp|swap|perpetual)$/i, '')
     .replace(/[^a-z0-9]\d+$/i, '')
-    .replace(/[-_/:]/, '')
-    .replace(/xbt$|^xbt/i, 'BTC')
     .toUpperCase()
+
+  let localSymbolAlpha = localSymbol.replace(/[-_/:]/, '')
 
   let match
 
@@ -260,18 +251,18 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
       match[2] = match[1]
       match[1] = match[0]
 
-      localSymbol = match[1] + match[2]
+      localSymbolAlpha = match[1] + match[2]
     }
   } else {
-    match = localSymbol.match(baseQuoteLookup1)
+    match = localSymbol.match(baseQuoteLookupKnown)
 
     if (!match) {
-      match = localSymbol.match(baseQuoteLookup2)
+      match = localSymbolAlpha.match(baseQuoteLookupOthers)
     }
   }
 
   if (!match && (exchangeId === 'DERIBIT' || exchangeId === 'FTX' || exchangeId === 'HUOBI')) {
-    match = localSymbol.match(/(\w+)[^a-z0-9]/i)
+    match = localSymbolAlpha.match(/(\w+)[^a-z0-9]/i)
 
     if (match) {
       match[2] = match[1]
@@ -282,11 +273,18 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   let quote
 
   if (match) {
-    base = match[1]
-    quote = match[2]
+    if (match[1] === undefined && match[2] === undefined) {
+      base = match[3]
+      quote = match[4]
+    } else {
+      base = match[1]
+      quote = match[2]
+    }
 
     if (noStable) {
-      localSymbol = base + formatStablecoin(quote)
+      localSymbolAlpha = base + formatStablecoin(quote)
+    } else {
+      localSymbolAlpha = base + quote
     }
   }
 
@@ -295,7 +293,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     base,
     quote,
     pair: symbol,
-    local: localSymbol,
+    local: localSymbolAlpha,
     exchange: exchangeId,
     type
   }

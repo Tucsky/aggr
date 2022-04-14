@@ -1127,7 +1127,7 @@ export default class extends Mixins(PaneMixin) {
     const zoom = this.$store.state.panes.panes[this.paneId].zoom || 1
 
     const textPadding = 16 * zoom
-    const textFontsize = 16 * zoom
+    const textFontsize = 12 * zoom
     canvas.width = chartCanvas.width
     ctx.font = `${textFontsize}px Share Tech Mono`
     ctx.textAlign = 'left'
@@ -1142,7 +1142,7 @@ export default class extends Mixins(PaneMixin) {
         (this.visibleMarkets > 1 && this.$store.state.settings.normalizeWatermarks ? ' (' + this.visibleMarkets + ' markets)' : '')
     )
 
-    const lineHeight = Math.round(textPadding)
+    const lineHeight = Math.round(textFontsize)
     canvas.height = chartCanvas.height
 
     const backgroundColor = this.$store.state.settings.backgroundColor

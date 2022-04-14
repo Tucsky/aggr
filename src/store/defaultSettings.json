@@ -28,9 +28,9 @@
   },
   "searchQuotes": {
     "USD": true,
-    "USDT": true
+    "USDT": true,
+    "UST": true
   },
-  "searchExchanges": {},
   "favoriteTimeframes": {},
   "normalizeWatermarks": true,
   "alerts": true,

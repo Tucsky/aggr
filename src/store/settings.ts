@@ -233,8 +233,8 @@ const mutations = {
   TOGGLE_SEARCH_TYPE(state, key: string) {
     Vue.set(state.searchTypes, key, !state.searchTypes[key])
   },
-  TOGGLE_SEARCH_QUOTE(state, key: string) {
-    Vue.set(state.searchQuotes, key, state.searchQuotes[key] === undefined ? false : !state.searchQuotes[key])
+  TOGGLE_SEARCH_QUOTE(state, { key, value }: { key: string; value: boolean }) {
+    Vue.set(state.searchQuotes, key, value)
   },
   TOGGLE_SEARCH_EXCHANGE(state, key: string) {
     Vue.set(state.searchExchanges, key, typeof state.searchExchanges[key] === 'boolean' ? !state.searchExchanges[key] : false)
@@ -249,6 +249,7 @@ const mutations = {
     }
 
     Vue.set(state, 'searchTypes', state.searchTypes)
+    Vue.set(state, 'searchQuotes', { ...DEFAULTS_STATE.searchQuotes })
   },
   TOGGLE_FAVORITE_TIMEFRAME(state, value) {
     if (typeof state.favoriteTimeframes[value] === 'undefined') {
