@@ -94,7 +94,7 @@ export interface Workspace {
   states: { [id: string]: any }
 }
 
-export type PresetType = ('audio' | 'colors') | PaneType
+export type PresetType = ('audio' | 'colors' | 'indicator') | PaneType
 
 export interface Preset {
   name: string

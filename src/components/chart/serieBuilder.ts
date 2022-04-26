@@ -1,15 +1,12 @@
-/* eslint-disable no-unused-vars */
-import * as seriesUtils from './serieUtils'
+import seriesUtils from './serieUtils'
 
 import {
-  Renderer,
   IndicatorRealtimeAdapter,
   IndicatorTranspilationResult,
   IndicatorPlot,
   IndicatorVariable,
   IndicatorFunction,
   LoadedIndicator,
-  IndicatorApi,
   IndicatorReference,
   IndicatorMarkets
 } from './chart'
@@ -67,18 +64,6 @@ export default class SerieBuilder {
       this.determineVariableState(instruction)
     }
 
-    // run test (will affect functions length)
-    const type = this.test(result, indicator.options)
-
-    // rollback states to original
-    for (const instruction of result.functions) {
-      this.determineFunctionState(instruction)
-    }
-
-    for (const instruction of result.variables) {
-      this.determineVariableState(instruction)
-    }
-
     return {
       output: result.output,
       silentOutput: result.silentOutput,
@@ -86,8 +71,7 @@ export default class SerieBuilder {
       variables: result.variables,
       references: result.references,
       markets: result.markets,
-      plots: result.plots,
-      type
+      plots: result.plots
     }
   }
 
@@ -156,18 +140,14 @@ export default class SerieBuilder {
    * @returns void
    */
   determineFunctionState(instruction: IndicatorFunction) {
-    if (typeof seriesUtils[instruction.name] && typeof seriesUtils[instruction.name] === 'object') {
+    if (typeof seriesUtils[instruction.name] && typeof seriesUtils[instruction.name].state === 'object') {
       instruction.state = {}
 
-      for (const prop in seriesUtils[instruction.name]) {
-        if (prop === 'lengthIndexes') {
-          continue
-        }
-
+      for (const prop in seriesUtils[instruction.name].state) {
         try {
-          instruction.state[prop] = JSON.parse(JSON.stringify(seriesUtils[instruction.name][prop]))
+          instruction.state[prop] = JSON.parse(JSON.stringify(seriesUtils[instruction.name].state[prop]))
         } catch (error) {
-          instruction.state[prop] = seriesUtils[instruction.name]
+          instruction.state[prop] = seriesUtils[instruction.name].state[prop]
         }
       }
 
@@ -224,13 +204,13 @@ export default class SerieBuilder {
 
     output = this.parseVariables(output, variables)
 
+    output = this.parseMarkets(output, markets)
+
     for (let i = 0; i < strings.length; i++) {
       output = output.replace(new RegExp('#STRING_' + i + '#', 'g'), strings[i].replace(/\$/g, '$$$'))
     }
 
     output = this.parseFunctions(output, functions, plots)
-
-    output = this.parseMarkets(output, markets)
     output = this.parseReferences(output, references, plots)
 
     output = this.formatOutput(output)
@@ -482,12 +462,7 @@ export default class SerieBuilder {
           continue
         }
 
-        const instruction: IndicatorFunction = {
-          name: functionName,
-          args: []
-        }
-
-        const targetFunction = seriesUtils[functionName + '$']
+        const targetFunction = seriesUtils[functionName]
 
         if (!targetFunction) {
           if (/for|if|rgba/i.test(functionName)) {
@@ -498,22 +473,48 @@ export default class SerieBuilder {
           }
         }
 
-        const start = functionMatch.index
-        const end = findClosingBracketMatchIndex(output, start + functionMatch[1].length)
-
-        instruction.args = parseFunctionArguments(output.slice(start + functionMatch[1].length + 1, end))
-
-        if ((functionName === 'ohlc' || functionName === 'cum_ohlc') && instruction.args.length === 1) {
-          // ohlc and cum_ohlc that uses number as input need bar timestamp to construct the point
-          instruction.args.push('renderer.localTimestamp')
+        const instruction: IndicatorFunction = {
+          name: functionName,
+          args: []
         }
 
-        // replace original function call, add function state to arguments
-        output = `${output.slice(0, start)}utils.${functionName}$(${FUNCTIONS_VAR_NAME}[${instructions.length}].state,${instruction.args.join(
-          ','
-        )})${output.slice(end + 1, output.length)}`
+        let injectedArgCount = 0
 
-        // register instruction
+        const customArgsStartIndex = functionMatch.index
+        const customArgsEndIndex = findClosingBracketMatchIndex(output, customArgsStartIndex + functionMatch[1].length)
+        const customArgs = parseFunctionArguments(output.slice(customArgsStartIndex + functionMatch[1].length + 1, customArgsEndIndex))
+        let totalArgsCount = (targetFunction.args ? targetFunction.args.length : 0) + customArgs.length
+
+        for (let i = 0; i < totalArgsCount; i++) {
+          const argDefinition = targetFunction.args && targetFunction.args[i] ? targetFunction.args[i] : {}
+
+          const arg = {
+            ...argDefinition
+          }
+
+          if (argDefinition.injected) {
+            injectedArgCount++
+
+            instruction.args.push(arg)
+
+            continue
+          } else {
+            totalArgsCount--
+          }
+
+          const customArg = customArgs[i - injectedArgCount]
+
+          if (typeof customArg !== 'undefined') {
+            arg.instruction = customArg
+          }
+
+          instruction.args.push(arg)
+        }
+
+        output = `${output.slice(0, customArgsStartIndex)}utils.${functionName}.update(${FUNCTIONS_VAR_NAME}[${
+          instructions.length
+        }].state,${instruction.args.map(a => a.instruction).join(',')})${output.slice(customArgsEndIndex + 1, output.length)}`
+
         instructions.push(instruction)
       }
     } while (functionMatch && ++iterations < 1000)
@@ -663,223 +664,6 @@ export default class SerieBuilder {
     return output
   }
 
-  test({ silentOutput, functions, variables, markets, plots, references }: IndicatorTranspilationResult, options) {
-    let adapter: IndicatorRealtimeAdapter
-    try {
-      adapter = this.getAdapter(silentOutput)
-    } catch (error) {
-      console.log('%c' + silentOutput, 'font-size: 8px;line-height:1;')
-
-      throw new Error(`Syntax error: ${error.message} - see console`)
-    }
-
-    let renderer = this.getFakeRenderer(null, functions, variables, markets, references)
-
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    const series = (plots.map(() => ({ update: () => {} })) as unknown) as IndicatorApi[]
-
-    for (let t = 0; t < 3; t++) {
-      try {
-        adapter(renderer, functions, variables, series, options, seriesUtils)
-      } catch (error) {
-        throw new Error('Syntax error: ' + (typeof error === 'string' ? error : error.message))
-      }
-
-      for (let p = 0; p < renderer.indicators[this.indicatorId].series.length; p++) {
-        const point = renderer.indicators[this.indicatorId].series[p]
-
-        if (typeof point === 'undefined') {
-          continue
-        }
-        const plot = plots[p]
-
-        if (isNaN(point.time)) {
-          throw new Error(`${plot.type}.time expected a valid timestamp (number of seconds since January 1, 1970) but got NaN`)
-        }
-
-        /*if (point.time < renderer.timestamp) {
-          throw new Error(`${plot.type}.time should be the same as the current bar timestamp ${renderer.timestamp}, got ${point.time}`)
-        }*/
-
-        /*if (resultedType && resultedType !== plot.expectedInput) {
-          throw new Error(`Plot ${plot.type} expected ${plot.expectedInput} but got ${resultedType}`)
-        }*/
-
-        /*if (resultedType === 'ohlc') {
-          if (isNaN(point.open)) {
-            throw new Error(`${plot.type}.open expected value to be a number, got NaN`)
-          }
-          if (isNaN(point.high)) {
-            throw new Error(`${plot.type}.high expected value to be a number, got NaN`)
-          }
-          if (isNaN(point.low)) {
-            throw new Error(`${plot.type}.low expected value to be a number, got NaN`)
-          }
-          if (isNaN(point.close)) {
-            throw new Error(`${plot.type}.close expected value to be a number, got NaN`)
-          }
-        }
-
-        if (resultedType === 'number') {
-          if (isNaN(point.value)) {
-            throw new Error(`${plot.type} expected value to be a number, got NaN`)
-          }
-        }*/
-      }
-
-      renderer = this.getFakeRenderer(renderer, functions, variables, markets, references)
-      this.refreshSerieMeta(functions, variables)
-    }
-  }
-
-  refreshSerieMeta(functions: IndicatorFunction[], variables: IndicatorVariable[]) {
-    for (let f = 0; f < functions.length; f++) {
-      const instruction = functions[f]
-
-      if (typeof instruction.state.count !== 'undefined') {
-        instruction.state.count++
-      }
-
-      if (typeof instruction.state.points !== 'undefined') {
-        instruction.state.points.push(instruction.state.output)
-        instruction.state.sum += instruction.state.output
-
-        if (instruction.state.count > instruction.length) {
-          instruction.state.sum -= instruction.state.points.shift()
-          instruction.state.count--
-        }
-      } else if (instruction.state.open !== 'undefined') {
-        instruction.state.open = instruction.state.close
-        instruction.state.high = instruction.state.close
-        instruction.state.low = instruction.state.close
-      }
-    }
-
-    for (let v = 0; v < variables.length; v++) {
-      const instruction = variables[v]
-
-      if (instruction.length > 1) {
-        instruction.state.unshift(instruction.state[0])
-
-        if (instruction.state.length > instruction.length) {
-          instruction.state.pop()
-        }
-      }
-    }
-  }
-
-  getFakeRenderer(
-    previousRenderer,
-    functions: IndicatorFunction[],
-    variables: IndicatorVariable[],
-    markets: IndicatorMarkets,
-    references: IndicatorReference[]
-  ) {
-    const sample = {
-      open: 58137,
-      high: 58137,
-      low: 58102,
-      close: 58112,
-      pair: 'BTCUSD',
-      vbuy: 3532,
-      vsell: 54550,
-      cbuy: 7,
-      csell: 15,
-      lbuy: 0,
-      lsell: 0
-    }
-
-    const renderer: Renderer = previousRenderer || {
-      timeframe: 10,
-      timestamp: null,
-      localTimestamp: null,
-      length: 1,
-      bar: {
-        vbuy: 11,
-        vsell: 22,
-        cbuy: 2,
-        csell: 3,
-        lbuy: 1,
-        lsell: 0
-      },
-      sources: {},
-      indicators: {
-        [this.indicatorId]: {
-          functions,
-          variables,
-          series: [],
-          plotsOptions: []
-        }
-      }
-    }
-
-    if (!previousRenderer) {
-      renderer.timestamp = Math.floor(Math.round(Date.now() / 1000) / 10) * 10
-      renderer.localTimestamp = renderer.timestamp
-
-      // fake references
-      for (const reference of references) {
-        if (!renderer.indicators[reference.indicatorId]) {
-          renderer.indicators[reference.indicatorId] = {
-            canRender: false,
-            series: [],
-            plotsOptions: [],
-            functions: [],
-            variables: []
-          }
-
-          if (reference.indicatorId === this.indicatorId) {
-            renderer.indicators[reference.indicatorId].functions = functions
-            renderer.indicators[reference.indicatorId].variables = variables
-          }
-        }
-
-        renderer.indicators[reference.indicatorId].series[reference.plotIndex] = {
-          time: renderer.timestamp,
-          value: 1,
-          open: 2,
-          high: 2,
-          low: 2,
-          close: 2
-        }
-      }
-    } else {
-      renderer.timestamp = previousRenderer.timestamp + 10
-      renderer.localTimestamp = renderer.timestamp
-    }
-
-    for (const id in markets) {
-      const exchangeBar = Object.assign({}, sample)
-
-      const priceVariation = (Math.random() - 0.5) / 100
-      const volumeVariation = (Math.random() - 0.5) / 100
-
-      if (previousRenderer) {
-        exchangeBar.open *= previousRenderer.sources[id].close
-      }
-      exchangeBar.close = Math.abs(exchangeBar.close * priceVariation)
-      exchangeBar.high = Math.max(exchangeBar.high, exchangeBar.close)
-      exchangeBar.low = Math.min(exchangeBar.low, exchangeBar.close)
-      exchangeBar.vbuy = Math.abs(exchangeBar.vbuy * volumeVariation)
-      exchangeBar.vsell = Math.abs(exchangeBar.vsell * volumeVariation)
-      exchangeBar.cbuy = Math.abs(exchangeBar.cbuy * volumeVariation)
-      exchangeBar.csell = Math.abs(exchangeBar.csell * volumeVariation)
-      exchangeBar.lbuy = Math.abs(exchangeBar.lbuy * volumeVariation)
-      exchangeBar.lsell = Math.abs(exchangeBar.lsell * volumeVariation)
-
-      renderer.bar.vbuy += exchangeBar.vbuy
-      renderer.bar.vsell += exchangeBar.vsell
-      renderer.bar.cbuy += exchangeBar.cbuy
-      renderer.bar.csell += exchangeBar.csell
-      renderer.bar.lbuy += exchangeBar.lbuy
-      renderer.bar.lsell += exchangeBar.lsell
-
-      renderer.sources[id] = exchangeBar
-    }
-
-    return renderer
-  }
-
   getAdapter(output) {
     return (function() {
       'use strict'
@@ -898,39 +682,29 @@ export default class SerieBuilder {
 
     // update functions arguments from script input
     for (const instruction of functions) {
+      instruction.length = 0
+
       for (let i = 0; i < instruction.args.length; i++) {
+        if (typeof instruction.args[i].instruction === 'undefined' || instruction.args[i].instruction === '') {
+          continue
+        }
+
         try {
-          instruction.args[i] = new Function('options', `'use strict'; return ${instruction.args[i]}`)(indicator.options)
+          instruction.args[i].instruction = new Function('options', `'use strict'; return ${instruction.args[i].instruction}`)(indicator.options)
+
+          if (instruction.state.points && instruction.args[i].length && !isNaN(instruction.args[i].instruction)) {
+            instruction.length += instruction.args[i].instruction
+          }
         } catch (error) {
           // nothing to see here
         }
       }
 
-      instruction.length = 0
-
       if (!instruction.state.points) {
         continue
       }
 
-      if (seriesUtils[instruction.name].baseLength > 0) {
-        instruction.length = seriesUtils[instruction.name].baseLength
-      }
-
-      const lengthIndexes = seriesUtils[instruction.name].lengthIndexes || [1]
-
-      for (const index of lengthIndexes) {
-        if (!isNaN(instruction.args[index])) {
-          instruction.length += instruction.args[index]
-        }
-      }
-
       indicator.options.minLength = Math.max(indicator.options.minLength, instruction.length)
-
-      if (!instruction.length) {
-        delete instruction.state.points
-        delete instruction.state.count
-        delete instruction.state.sum
-      }
     }
 
     const plotsOptions = []

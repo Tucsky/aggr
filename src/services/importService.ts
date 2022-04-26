@@ -61,11 +61,7 @@ class ImportService {
       throw new Error('Preset is empty')
     }
 
-    if (presetType && preset.type !== presetType) {
-      throw new Error('Preset is not ' + presetType + ' type')
-    }
-
-    await workspacesService.savePreset(preset)
+    await workspacesService.savePreset(preset, presetType)
 
     store.dispatch('app/showNotice', {
       title: `Successfully imported preset ${preset.name}`,
@@ -166,7 +162,8 @@ class ImportService {
       if (json.formatName) {
         await this.importDatabase(file)
       } else if (json.type && json.data) {
-        if (json.type === 'indicator') {
+        debugger
+        if (json.type === 'indicator' && json.name.split(':').length < 3) {
           this.importIndicator(json)
         } else {
           await this.importPreset(file)

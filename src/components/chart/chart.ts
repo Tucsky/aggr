@@ -2,7 +2,7 @@ import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
 import { getHms, camelize, getTimeframeForHuman, floorTimestampToTimeframe, isOddTimeframe } from '../../utils/helpers'
 import { defaultChartOptions, defaultPlotsOptions, defaultSerieOptions, getChartCustomColorsOptions, getChartOptions } from './options'
 import store from '../../store'
-import * as seriesUtils from './serieUtils'
+import seriesUtils from './serieUtils'
 import * as TV from 'lightweight-charts'
 import ChartCache, { Chunk } from './cache'
 import SerieBuilder from './serieBuilder'
@@ -87,6 +87,7 @@ export interface IndicatorFunction {
   args?: any[]
   length?: number
   state?: any
+  next?: Function
 }
 export interface IndicatorVariable {
   length?: number
@@ -370,12 +371,7 @@ export default class ChartController {
     }
 
     if (key === 'visible') {
-      if (!value) {
-        this.removeIndicatorSeries(indicator)
-      } else {
-        this.createIndicatorSeries(indicator)
-        this.redrawIndicator(id)
-      }
+      this.toggleIndicatorVisibility(indicator, value)
 
       return
     } else if (key === 'priceFormat' && value.auto) {
@@ -394,6 +390,19 @@ export default class ChartController {
 
     if (this.optionRequiresRedraw(key)) {
       this.redrawIndicator(id)
+    }
+  }
+
+  toggleIndicatorVisibility(indicator: LoadedIndicator, value: boolean) {
+    if (!value) {
+      this.removeIndicatorSeries(indicator)
+    } else {
+      if (!indicator.model) {
+        this.prepareIndicator(indicator)
+      } else {
+        this.createIndicatorSeries(indicator)
+      }
+      this.redrawIndicator(indicator.id)
     }
   }
 
@@ -1251,10 +1260,6 @@ export default class ChartController {
       this.prependInitialPrices(bars, refreshInitialPrices)
     }
 
-    if (!bars.length) {
-      return
-    }
-
     this.clearPriceLines(indicatorsIds)
 
     const computedSeries = {}
@@ -1264,7 +1269,15 @@ export default class ChartController {
     let temporaryRenderer: Renderer
     let computedBar: any
 
-    if (this.activeRenderer && this.activeRenderer.timestamp > bars[bars.length - 1].timestamp) {
+    if (!bars.length) {
+      if (this.activeRenderer && this.activeRenderer.bar && !this.activeRenderer.bar.empty) {
+        bars = Object.values(this.activeRenderer.sources).filter(bar => bar.empty === false)
+      }
+
+      if (!bars.length) {
+        return
+      }
+    } else if (this.activeRenderer && this.activeRenderer.timestamp > bars[bars.length - 1].timestamp) {
       const activeBars = Object.values(this.activeRenderer.sources).filter(bar => bar.empty === false)
 
       for (let i = 0; i < activeBars.length; i++) {
@@ -1912,29 +1925,8 @@ export default class ChartController {
       for (let f = 0; f < rendererSerieData.functions.length; f++) {
         const instruction = rendererSerieData.functions[f]
 
-        if (typeof instruction.state.count !== 'undefined') {
-          instruction.state.count++
-        }
-
-        if (typeof instruction.state.points !== 'undefined') {
-          instruction.state.points.push(instruction.state.output)
-          instruction.state.sum += instruction.state.output
-
-          if (instruction.state.count > instruction.length - 1) {
-            instruction.state.sum -= instruction.state.points.shift()
-            instruction.state.count--
-          }
-        } else if (typeof instruction.state.open !== 'undefined') {
-          if (typeof instruction.state.point !== 'undefined') {
-            instruction.state.point.open = instruction.state.open
-            instruction.state.point.high = instruction.state.high
-            instruction.state.point.low = instruction.state.low
-            instruction.state.point.close = instruction.state.close
-          } else {
-            instruction.state.open = instruction.state.close
-            instruction.state.high = instruction.state.close
-            instruction.state.low = instruction.state.close
-          }
+        if (typeof seriesUtils[instruction.name].next === 'function') {
+          seriesUtils[instruction.name].next(instruction)
         }
       }
 

@@ -41,7 +41,7 @@
           <label>Import indicator</label>
           <button class="btn -blue -large -cases w-100 -file">
             <i class="icon-upload mr8"></i> Browse
-            <input type="file" accept="application/json" @change="handleFile" />
+            <input type="file" @change="handleFile" />
           </button>
           <div class="divider -horizontal" style="display:flex;">Or</div>
           <label>Create blank indicator</label>

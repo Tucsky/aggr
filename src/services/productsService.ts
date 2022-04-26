@@ -212,7 +212,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     }
   } else if (exchangeId === 'PHEMEX' && symbol[0] !== 's') {
     type = 'perp'
-  } else if (exchangeId === 'KRAKEN' && /PI_/.test(symbol)) {
+  } else if (exchangeId === 'KRAKEN' && /_/.test(symbol) && type === 'spot') {
     type = 'perp'
   }
 

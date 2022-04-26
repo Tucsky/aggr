@@ -3,9 +3,9 @@
     <template v-slot:header>
       <div>
         <div class="title">
-          <div @dblclick="renamePreset" v-text="name"></div>
+          <div @dblclick="renamePreset" v-text="meta.name"></div>
         </div>
-        <div class="subtitle" v-text="preset.type"></div>
+        <div class="subtitle" v-text="meta.type"></div>
       </div>
     </template>
 
@@ -34,13 +34,17 @@
 
     <footer>
       <dropdown class="-left -text-left mr16" :options="menu" selectionClass="-text -large mrauto" placeholder="Options">
-        <template v-slot:selection>Manage preset</template>
+        <template v-slot:selection>
+          <i class="icon-cog mr4"></i>
+          <span>Manage</span>
+        </template>
         <template v-slot:option="{ value }">
           <i :class="[value.icon === 'trash' && 'text-danger', 'icon-' + value.icon]"> </i>
           <span :class="value.icon === 'trash' ? 'text-danger' : ''">{{ value.label }}</span>
         </template>
       </dropdown>
-      <button type="button" class="btn -blue -large mlauto" @click="replacePreset"><i class="icon-check mr4"></i> Set</button>
+      <button type="button" class="btn -text -large mlauto" @click="copyPreset"><i class="icon-copy-paste mr4"></i> Copy</button>
+      <button type="button" class="btn -blue -large ml16" @click="replacePreset"><i class="icon-check mr4"></i> Set</button>
     </footer>
   </Dialog>
 </template>
@@ -48,7 +52,7 @@
 <script>
 import DialogMixin from '@/mixins/dialogMixin'
 import workspacesService from '@/services/workspacesService'
-import { downloadAnything, slugify, ago } from '@/utils/helpers'
+import { downloadAnything, slugify, ago, copyTextToClipboard } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 
 export default {
@@ -60,9 +64,6 @@ export default {
   },
   data() {
     return {
-      name: null,
-      type: null,
-      cat: null,
       menu: [
         {
           icon: 'swap',
@@ -86,12 +87,18 @@ export default {
       showDetails: false
     }
   },
-  created() {
-    const [, type, cat, name] = this.preset.name.match(/^([a-z-]+):?([a-z-]+)?:(.*)/)
-    this.type = type
-    this.cat = cat
-    this.name = name
+  computed: {
+    meta() {
+      const [, type, cat, name] = this.preset.name.match(/^([a-z-]+):?([a-z-]+)?:(.*)/)
 
+      return {
+        type,
+        cat,
+        name
+      }
+    }
+  },
+  created() {
     this.retrieveDataProperties(this.preset.data)
 
     if (this.preset.updatedAt) {
@@ -123,16 +130,24 @@ export default {
     replacePreset() {
       this.close('replace')
     },
+    async copyPreset() {
+      await copyTextToClipboard(JSON.stringify(this.preset))
+
+      this.$store.dispatch('app/showNotice', {
+        id: 'preset-clipboard',
+        title: `Copied preset ${this.preset.name} to clipboard`
+      })
+    },
     async renamePreset() {
       const name = await dialogService.prompt({
         action: 'Rename',
         input: this.name
       })
 
-      if (name && name !== this.name) {
+      if (name && name !== this.meta.name) {
         await workspacesService.removePreset(this.preset.name)
 
-        this.preset.name = this.type + ':' + (this.cat ? ':' + this.cat : '') + name
+        this.preset.name = this.meta.type + ':' + (this.meta.cat ? this.meta.cat + ':' : '') + name
 
         await workspacesService.savePreset(this.preset)
       }

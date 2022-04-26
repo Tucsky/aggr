@@ -9,6 +9,7 @@ import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import { databaseUpgrades, workspaceUpgrades } from './migrations'
 import { PanesState } from '@/store/panes'
 import alertService from './alertService'
+import dialogService from './dialogService'
 
 export interface AggrDB extends DBSchema {
   products: {
@@ -537,7 +538,33 @@ class WorkspacesService {
     return this.db.delete('indicators', id)
   }
 
-  savePreset(preset: Preset) {
+  async savePreset(preset: Preset, type?: string, confirmOverride = true) {
+    if (type) {
+      // ex indicator:price
+
+      const inputType = preset.type.split(':')[0] as PresetType
+      const targetType = type.split(':')[0]
+
+      if (targetType !== inputType) {
+        throw new Error(`Preset type ${inputType} is not ${targetType} type`)
+      }
+
+      preset.type = targetType
+      preset.name = type + ':' + preset.name.split(':').pop()
+    }
+
+    if (
+      confirmOverride &&
+      (await this.getPreset(preset.name)) &&
+      !(await dialogService.confirm({
+        message: `This preset already exists (${preset.name}).`,
+        ok: 'Continue anyway',
+        cancel: 'Cancel'
+      }))
+    ) {
+      throw new Error(`Save preset : aborted`)
+    }
+
     return this.db.put('presets', preset)
   }
 

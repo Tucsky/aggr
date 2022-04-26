@@ -945,7 +945,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   async fetchMore(visibleLogicalRange) {
-    if (this._loading || this._reachedEnd || !visibleLogicalRange || visibleLogicalRange.from > 0) {
+    if (this._loading || this._reachedEnd || !visibleLogicalRange || visibleLogicalRange.from > 0 || !this.visibleMarkets) {
       return
     }
 

@@ -113,16 +113,13 @@ export default class extends Vue {
     event.preventDefault()
     const lastMove = Object.assign({}, this.delta)
     const startPosition = getEventCords(event)
-    const dialogWidth = this.$refs.dialogContent.clientWidth
     const startOffset = this.$refs.dialogContent.offsetTop
-    const maxX = (window.innerWidth - dialogWidth) / 2
-    const minX = -maxX
     const minY = startOffset * -1
 
     this._handleDragging = evnt => {
       const endPosition = getEventCords(evnt)
 
-      const x = Math.max(minX, Math.min(maxX, lastMove.x + endPosition.x - startPosition.x))
+      const x = lastMove.x + endPosition.x - startPosition.x
       const y = Math.max(minY, lastMove.y + endPosition.y - startPosition.y)
 
       this.target.x = x

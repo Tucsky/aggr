@@ -1,11 +1,19 @@
 <template>
-  <dropdown :options="presets" @output="onSelect" :placeholder="label" class="mrauto" selectionClass="ml0 -green -arrow">
+  <dropdown
+    :options="presets"
+    @output="onSelect"
+    @open="bindPaste"
+    @close="unbindPaste"
+    :placeholder="label"
+    class="mrauto"
+    selectionClass="ml0 -green -arrow"
+  >
     <template v-slot:option-custom>
       <div class="column" @mousedown.prevent>
         <div class="btn -green" @click="savePreset()"><i class="icon-plus"></i></div>
         <div class="btn -blue -file">
           <i class="icon-upload"></i>
-          <input type="file" accept="application/json" @change="handleFile" />
+          <input type="file" @change="handleFile" />
         </div>
         <div class="btn -red" @click="applyDefault"><i class="icon-eraser"></i><span class="ml8">Reset</span></div>
       </div>
@@ -58,8 +66,14 @@ export default class extends Vue {
     }
   ] as any
 
+  private _pasteHandler: (event: Event) => void
+
   created() {
     this.getPresets()
+  }
+
+  beforeDestroy() {
+    this.unbindPaste()
   }
 
   async getPresets() {
@@ -129,25 +143,19 @@ export default class extends Vue {
 
     name = this.type + ':' + name
 
-    const updatedAt = Date.now()
-
+    const now = Date.now()
     const original = await workspacesService.getPreset(name)
 
-    let createdAt
-
-    if (original) {
-      createdAt = original.createdAt
-    } else {
-      createdAt = updatedAt
-    }
-
-    await workspacesService.savePreset({
-      name,
-      type: this.type,
-      data,
-      createdAt,
-      updatedAt
-    })
+    await workspacesService.savePreset(
+      {
+        name,
+        type: this.type,
+        data,
+        createdAt: original ? original.createdAt : now,
+        updatedAt: original ? now : null
+      },
+      this.type
+    )
 
     await this.getPresets()
   }
@@ -185,6 +193,60 @@ export default class extends Vue {
     if (await dialogService.confirm('Remove preset ' + preset.label + ' ?')) {
       await workspacesService.removePreset(preset.id)
       await this.getPresets()
+    }
+  }
+
+  bindPaste() {
+    if (this._pasteHandler) {
+      return
+    }
+
+    this._pasteHandler = this.onPaste.bind(this)
+    document.addEventListener('paste', this._pasteHandler)
+  }
+
+  unbindPaste() {
+    if (!this._pasteHandler) {
+      return
+    }
+
+    document.removeEventListener('paste', this._pasteHandler)
+    this._pasteHandler = null
+  }
+
+  async onPaste(event) {
+    if (document.activeElement) {
+      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+        return
+      }
+    }
+
+    try {
+      const preset = JSON.parse(event.clipboardData.getData('text/plain'))
+
+      if (!preset.name || !preset.type || !preset.data) {
+        throw new Error('missing name or type or data property')
+      }
+
+      const now = +new Date()
+
+      await workspacesService.savePreset(
+        {
+          name: preset.name,
+          type: preset.type,
+          data: preset.data,
+          createdAt: now,
+          updatedAt: null
+        },
+        this.type
+      )
+
+      await this.getPresets()
+    } catch (error) {
+      this.$store.dispatch('app/showNotice', {
+        type: 'error',
+        title: `Unable to parse preset (paste error)\n${error.message}`
+      })
     }
   }
 }
