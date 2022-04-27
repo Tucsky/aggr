@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented here.
 
+## [3.1.0] - 2022-04-16
+### Added
+- Added avg_ohlc_with_gaps for printing candle with real open price
+
+### Changed
+- Updated avg_heikinashi to use selected markets only
+
 ## [3.0.9] - 2022-02-26
 ### Added
 - Price alerts

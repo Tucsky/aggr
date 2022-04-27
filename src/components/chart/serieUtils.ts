@@ -171,17 +171,17 @@ export default {
 
       state.high /= nbSources
       state.low /= nbSources
-      state.close /= nbSources
+      state.open /= nbSources
+      state.close = (state.open + state.high + state.low + state.close / nbSources) / 4
 
       if (typeof state.point !== 'undefined') {
         state.open = (state.point.open + state.point.close) / 2
-        state.close = 0.25 * (state.open + state.high + state.low + state.close)
-
-        state.low = Math.min(state.open, state.low, state.close)
-        state.high = Math.max(state.open, state.high, state.close)
       } else {
-        state.open /= nbSources
+        state.open = (state.open + state.close) / 2
       }
+
+      state.low = Math.min(state.open, state.low, state.close)
+      state.high = Math.max(state.open, state.high, state.close)
 
       return { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }
     }

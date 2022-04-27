@@ -2,10 +2,10 @@ const fs = require('fs')
 const path = require('path')
 const ServiceWorkerWebpackPlugin = require('serviceworker-webpack-plugin')
 const WebpackPwaManifest = require('webpack-pwa-manifest')
+const gitprocess = require('child_process')
 
+const date = new Date(gitprocess.execSync('git log -1 --date=format:"%Y/%m/%d %T" --format="%ad"').toString())
 process.env.VUE_APP_VERSION = require('./package.json').version
-
-const date = new Date()
 process.env.VUE_APP_BUILD_DATE = date.getDate() + ' ' + date.toLocaleString('en-US', { month: 'short' }).toLowerCase()
 const exchanges = []
 
