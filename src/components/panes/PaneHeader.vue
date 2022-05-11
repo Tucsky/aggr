@@ -14,13 +14,13 @@
       <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)" selectionClass="-text">
         <template v-slot:option-zoom>
           <div class="column" @mousedown.prevent>
-            <div class="btn -green" @click="zoomOut">
+            <div class="btn -green" @click="changeZoom($event, -1)">
               <i class="icon-minus"></i>
             </div>
             <div class="btn -text text-monospace" @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 1 })" style="display: block">
               × {{ zoom.toFixed(2) }}
             </div>
-            <div class="btn -green" @click="zoomIn">
+            <div class="btn -green" @click="changeZoom($event, 1)">
               <i class="icon-plus"></i>
             </div>
           </div>
@@ -79,11 +79,6 @@ export default class extends Vue {
       label: 'Maximize',
       click: this.maximizePane
     },
-    /*{
-      icon: 'search',
-      label: 'Add markets',
-      click: this.openSearch
-    },*/
     {
       icon: 'copy-paste',
       label: 'Duplicate',
@@ -150,13 +145,8 @@ export default class extends Vue {
     this.$store.dispatch('app/showSearch', this.paneId)
   }
 
-  zoomIn() {
-    const zoom = this.zoom + 0.125
-    this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: zoom })
-  }
-
-  zoomOut() {
-    const zoom = this.zoom - 0.125
+  changeZoom(event, direction) {
+    const zoom = this.zoom + (event.shiftKey ? 0.0625 : 0.125) * direction
     this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: zoom })
   }
 

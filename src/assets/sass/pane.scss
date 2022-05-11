@@ -8,29 +8,35 @@
     touch-action: none;
     overflow: hidden;
 
+    &.vue-draggable-dragging,
+    &.resizing {
+      > div {
+        pointer-events: none;
+      }
+    }
+
     > .vue-resizable-handle {
       display: none;
       width: auto;
       height: auto;
-      background: 0;
-      font-size: 1em;
-      padding: 0em 3em 3em 0em;
-      width: 2em;
-      height: 2em;
+      font-size: 2rem;
+      width: 3rem;
+      height: 3rem;
       opacity: 0.5;
-      line-height: 0.5em;
       text-align: center;
       z-index: 2;
-      margin: 0.5em;
+      background: 0;
+      padding: 0;
+      line-height: 0;
+      margin: 0;
 
       &:before {
         font-family: 'icon';
         content: $icon-up-thin;
         transform: rotateZ(-225deg) scale(1);
         display: block;
-        font-size: 2em;
-        width: 1em;
-        height: 1em;
+        width: 2rem;
+        height: 2rem;
       }
 
       &:hover {
@@ -159,7 +165,6 @@
   height: 1.5em;
   min-width: 100%;
   background-color: rgba(black, 0.5);
-  backdrop-filter: blur(1em);
   align-items: stretch;
   flex-shrink: 0;
   cursor: move;

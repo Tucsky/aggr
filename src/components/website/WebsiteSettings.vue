@@ -12,8 +12,15 @@
         :value="url"
         v-tippy
         title="Original URL"
-        @change="$store.commit(paneId + '/SET_URL', $event.target.value)"
+        @change="$store.dispatch(paneId + '/setUrl', $event.target.value)"
       />
+    </div>
+    <div class="form-group">
+      <label class="checkbox-control">
+        <input type="checkbox" class="form-control" :checked="interactive" @change="$store.commit(paneId + '/TOGGLE_INTERACTIVE')" />
+        <div></div>
+        <span>Interactive</span>
+      </label>
     </div>
   </div>
 </template>
@@ -50,6 +57,10 @@ export default class extends Vue {
 
   get url() {
     return this.$store.state[this.paneId].url
+  }
+
+  get interactive() {
+    return this.$store.state[this.paneId].interactive
   }
 }
 </script>
