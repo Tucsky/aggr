@@ -225,7 +225,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   } else if (exchangeId === 'FTX' && type === 'future') {
     localSymbol = localSymbol.replace(/(\w+)-\d+$/, '$1-USD')
   } else if (exchangeId === 'BITFINEX') {
-    localSymbol = localSymbol.replace(/(.*)F0:(\w+)F0/, '$1-$2')
+    localSymbol = localSymbol.replace(/(.*)F0:(\w+)F0/, '$1-$2').replace(/UST($|F0)/, 'USDT$1')
   } else if (exchangeId === 'HUOBI') {
     localSymbol = localSymbol.replace(/_CW|_CQ|_NW|_NQ/i, 'USD')
   } else if (exchangeId === 'DERIBIT') {
