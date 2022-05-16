@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented here.
 
+## [3.1.1] - 2022-05-16
+### Added
+- Custom alert sound
+
 ## [3.1.0] - 2022-04-16
 ### Added
 - Added avg_ohlc_with_gaps for printing candle with real open price

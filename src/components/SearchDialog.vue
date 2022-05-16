@@ -143,7 +143,19 @@
               </label>
             </template>
           </div>
-          <div class="search-filters__title text-muted mb8" @click="showExchanges = !showExchanges">Exchanges <i class="icon-up-thin"></i></div>
+          <div class="search-filters__title text-muted mb8" @click="showExchanges = !showExchanges">
+            Exchanges
+            <a
+              v-if="canRefreshProducts"
+              href="javascript:void(0);"
+              class="search-filters__refresh-all -text"
+              @click="refreshExchangeProducts()"
+              title="Refresh products"
+            >
+              <i class="icon-refresh ml8"> </i>
+            </a>
+            <i class="icon-up-thin"></i>
+          </div>
         </div>
       </div>
       <div class="search__wrapper hide-scrollbar">
@@ -856,6 +868,14 @@ export default {
     },
 
     async refreshExchangeProducts(exchangeId) {
+      if (!exchangeId) {
+        for (const exchange of this.exchanges) {
+          await this.refreshExchangeProducts(exchange)
+        }
+
+        return
+      }
+
       this.canRefreshProducts = false
 
       await workspacesService.deleteProducts(exchangeId)
@@ -995,6 +1015,10 @@ export default {
     @media screen and (min-width: 550px) {
       display: none;
     }
+  }
+
+  &__refresh-all > .icon-refresh {
+    vertical-align: middle;
   }
 
   &__controls {

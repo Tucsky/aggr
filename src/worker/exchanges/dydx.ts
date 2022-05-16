@@ -74,8 +74,6 @@ export default class extends Exchange {
         return
       }
 
-      console.log(json.contents.trades)
-
       return this.emitTrades(
         api.id,
         json.contents.trades.map(trade => this.formatTrade(trade, json.id))
