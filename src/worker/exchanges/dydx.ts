@@ -1,10 +1,7 @@
-import { Trade } from '@/types/test'
 import Exchange from '../exchange'
 
 export default class extends Exchange {
   id = 'DYDX'
-
-  pendingHistoricalTrades: Trade[]
 
   protected endpoints = { PRODUCTS: 'https://api.dydx.exchange/v3/markets' }
 
@@ -74,35 +71,15 @@ export default class extends Exchange {
 
     if (json.channel === 'v3_trades') {
       if (json.type === 'subscribed') {
-        if (!this.pendingHistoricalTrades) {
-          this.pendingHistoricalTrades = []
-        }
-
-        Array.prototype.push.apply(
-          this.pendingHistoricalTrades,
-          json.contents.trades.map(trade => this.formatTrade(trade, json.id))
-        )
-
         return
       }
 
-      if (this.pendingHistoricalTrades) {
-        this.emitPendingHistoricalTrades()
-      }
+      console.log(json.contents.trades)
 
       return this.emitTrades(
         api.id,
         json.contents.trades.map(trade => this.formatTrade(trade, json.id))
       )
     }
-  }
-
-  emitPendingHistoricalTrades() {
-    this.emitTrades(
-      null,
-      this.pendingHistoricalTrades.sort((a, b) => a.timestamp - b.timestamp)
-    )
-
-    this.pendingHistoricalTrades = null
   }
 }

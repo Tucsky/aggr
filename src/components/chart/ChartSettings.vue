@@ -142,25 +142,37 @@
         </div>
       </div>
 
-      <label
-        class="checkbox-control -click -small mt16"
-        @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
-        title="1 click only (instead of shift + click)"
-        v-tippy="{ placement: 'left', distance: 24, boundary: 'window' }"
-      >
-        <input type="checkbox" class="form-control" :checked="alertsClick" />
-        <div class="mr8"></div>
-        <span>{{ alertsClick ? '1 click' : 'shift + click' }}</span>
-      </label>
+      <div class="form-group mb16 mt16">
+        <label><i class="icon-click mr8"></i> Control</label>
+        <label
+          class="checkbox-control -click -small"
+          @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
+          title="1 click only (instead of shift + click)"
+          v-tippy="{ placement: 'left', distance: 24, boundary: 'window' }"
+        >
+          <input type="checkbox" class="form-control" :checked="alertsClick" />
+          <div class="mr8"></div>
+          <span v-if="alertsClick" class="mr4"><code>CLICK</code></span>
+          <span v-else class="mr4"><code>SHIFT</code> + <code>CLICK</code></span> on the chart to
+          <span
+            class="ml4 mr4"
+            title="- sent within 0-15s<br />- active 24h for alts<br />- active 7d for btc/eth<br>- use at own risk"
+            v-tippy="{ theme: 'left' }"
+          >
+            create an alert
+          </span>
+          at that price.
+        </label>
+      </div>
 
-      <p class="help-text mb0">
-        <span v-if="alertsClick"><code>CLICK</code></span>
-        <span v-else><code>SHIFT</code> + <code>CLICK</code></span> on the chart to
-        <span title="- sent within 0-15s<br />- active 24h for alts<br />- active 7d for btc/eth<br>- use at own risk" v-tippy="{ theme: 'left' }">
-          create an alert
-        </span>
-        at that price.
-      </p>
+      <div class="form-group mb16">
+        <label for="audio-assistant-source"><i class="icon-music-note mr8"></i> Alert sound</label>
+        <button class="btn -file -blue -large -cases" @change="handleAlertSoundFile">
+          <i class="icon-upload mr8"></i> {{ alertSound || 'Browse' }}
+          <i v-if="alertSound" class="icon-cross mr8 btn__suffix" @click.stop.prevent="removeAlertSound"></i>
+          <input type="file" accept="audio/*" />
+        </button>
+      </div>
 
       <template #off>
         <label
@@ -187,6 +199,8 @@
 <script lang="ts">
 import { getHms } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
+import audioService from '../../services/audioService'
+import importService from '../../services/importService'
 import Slider from '../framework/picker/Slider.vue'
 import ToggableGroup from '../framework/ToggableGroup.vue'
 
@@ -248,6 +262,10 @@ export default class extends Vue {
 
   get watermarkColor() {
     return this.$store.state[this.paneId].watermarkColor
+  }
+
+  get alertSound() {
+    return this.$store.state.settings.alertSound
   }
 
   get alerts() {
@@ -333,6 +351,36 @@ export default class extends Vue {
 
     event.target.checked = checked
     this.$store.commit('settings/TOGGLE_ALERTS', checked)
+  }
+
+  async handleAlertSoundFile(event) {
+    const file = event.target.files[0]
+
+    if (!file) {
+      return
+    }
+
+    try {
+      await importService.importSound(file)
+
+      this.$store.commit('settings/SET_ALERT_SOUND', file.name)
+
+      audioService.playOnce(file.name)
+    } catch (error) {
+      this.$store.dispatch('app/showNotice', {
+        title: error.message,
+        type: 'error'
+      })
+      return
+    }
+  }
+
+  removeAlertSound() {
+    if (!this.alertSound) {
+      return
+    }
+
+    this.$store.commit('settings/SET_ALERT_SOUND', null)
   }
 }
 </script>

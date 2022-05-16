@@ -162,7 +162,6 @@ class ImportService {
       if (json.formatName) {
         await this.importDatabase(file)
       } else if (json.type && json.data) {
-        debugger
         if (json.type === 'indicator' && json.name.split(':').length < 3) {
           this.importIndicator(json)
         } else {

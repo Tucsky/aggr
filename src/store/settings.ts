@@ -35,6 +35,7 @@ export interface SettingsState {
   alertsLineWidth: number
   alertsColor: string
   alertsClick: boolean
+  alertSound: string
 }
 
 const state = Object.assign(
@@ -276,6 +277,9 @@ const mutations = {
   },
   TOGGLE_ALERTS_CLICK(state) {
     state.alertsClick = !state.alertsClick
+  },
+  SET_ALERT_SOUND(state, value) {
+    state.alertSound = value
   }
 } as MutationTree<SettingsState>
 

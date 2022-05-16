@@ -47,6 +47,10 @@ export default class extends Vue {
   private getChildrenHeight(element: HTMLElement): string {
     const children = element.children[0] as HTMLElement
 
+    if (!children) {
+      return 0 + 'px'
+    }
+
     let height = children.offsetHeight
 
     const styles = window.getComputedStyle(children)

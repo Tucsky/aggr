@@ -531,6 +531,12 @@ class AudioService {
       }
     }
   }
+
+  async playOnce(url) {
+    await this.loadSoundBuffer(url)
+
+    this.playurl(url, 1, 1, 0, 0, 0, 0, 0.00001, 0.00001)
+  }
 }
 
 export default new AudioService()

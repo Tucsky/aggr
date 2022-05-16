@@ -15,6 +15,7 @@ import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
 import { getEventOffset } from '@/utils/touchevent'
 import { formatPrice, formatStablecoin, marketDecimals } from '@/services/productsService'
+import audioService from '../../services/audioService'
 
 export interface Bar {
   vbuy?: number
@@ -1662,6 +1663,10 @@ export default class ChartController {
     const alert = this.alerts[market].find(a => a.price === price)
 
     if (alert) {
+      if (store.state.settings.alertSound) {
+        audioService.playOnce(store.state.settings.alertSound)
+      }
+
       alert.triggered = true
 
       const api = this.getPriceApi()
