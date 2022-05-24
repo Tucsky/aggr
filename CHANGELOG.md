@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented here.
 
+## [3.1.2] - 2022-05-23
+### Added
+- last(value, length) script function
+- search history
+
 ## [3.1.1] - 2022-05-16
 ### Added
 - Custom alert sound

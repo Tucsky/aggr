@@ -147,6 +147,7 @@ class ImportService {
       name: name,
       script: json.data.script || '',
       options: json.data.options || {},
+      description: json.data.description || null,
       unsavedChanges: true
     }
 

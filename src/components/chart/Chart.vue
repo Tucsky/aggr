@@ -1126,8 +1126,9 @@ export default class extends Mixins(PaneMixin) {
 
     const zoom = this.$store.state.panes.panes[this.paneId].zoom || 1
 
-    const textPadding = 16 * zoom
-    const textFontsize = 12 * zoom
+    const pxRatio = window.devicePixelRatio || 1
+    const textPadding = 16 * zoom * pxRatio
+    const textFontsize = 12 * zoom * pxRatio
     canvas.width = chartCanvas.width
     ctx.font = `${textFontsize}px Share Tech Mono`
     ctx.textAlign = 'left'

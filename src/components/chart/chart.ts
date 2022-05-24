@@ -116,7 +116,6 @@ export interface Renderer {
   sources: { [name: string]: Bar }
   indicators: { [id: string]: RendererIndicatorData }
   empty?: boolean
-  historical?: boolean
 }
 
 interface RendererIndicatorData {
@@ -1403,8 +1402,6 @@ export default class ChartController {
       this.activeRenderer = temporaryRenderer
     }
 
-    this.activeRenderer.historical = false
-
     let scrollPosition: number
 
     if (!indicatorsIds || !indicatorsIds.length) {
@@ -1843,7 +1840,6 @@ export default class ChartController {
       length: 1,
       indicators: {},
       sources: {},
-      historical: true,
 
       bar: {
         vbuy: 0,

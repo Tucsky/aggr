@@ -490,6 +490,7 @@ export default {
           name: 'indicator:' + this.indicator.name,
           data: {
             options: exportableIndicator,
+            description: this.description,
             script: this.script
           }
         },

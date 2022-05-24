@@ -260,12 +260,12 @@ button {
 
     .badge {
       top: -0.25rem;
-      right: -0.5rem;
+      right: -0.33rem;
       position: absolute;
       z-index: 1;
 
       + span {
-        padding-right: 0.5em;
+        padding-right: 0.5rem;
       }
     }
   }

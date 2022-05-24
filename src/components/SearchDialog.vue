@@ -159,8 +159,8 @@
         </div>
       </div>
       <div class="search__wrapper hide-scrollbar">
-        <div class="search__selection form-control" :class="groupsCount < 10 && '-sticky'">
-          <div v-if="selection.length" class="search__selection-controls">
+        <div class="search-selection search__tags form-control" :class="groupsCount < 10 && '-sticky'">
+          <div v-if="selection.length" class="search-selection__controls">
             <button class="btn -text" @click="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')" v-tippy title="Toggle grouping">
               <i class="icon-merge"></i>
             </button>
@@ -192,6 +192,23 @@
           <input ref="input" type="text" placeholder="Search" :value="query" @input=";(page = 0), (query = $event.target.value)" />
         </div>
         <div class="search__results">
+          <div v-if="previousSearchSelections.length" class="search-history">
+            <div class="search__tags">
+              <button
+                v-for="savedSelection of previousSearchSelections"
+                :key="savedSelection.label"
+                class="btn -accent -accent-200 -pill -small"
+                :title="savedSelection.markets.join(', ')"
+                @click="selectMarkets(savedSelection.markets)"
+              >
+                <span v-if="savedSelection.count > 1" class="badge -compact ml8" v-text="savedSelection.markets.length"></span>
+                <span v-text="savedSelection.label"></span>
+              </button>
+            </div>
+            <button class="btn -outline search-history__clear">
+              <i class="icon-cross -small" @click="$store.commit('settings/CLEAR_SEARCH_HISTORY')"></i>
+            </button>
+          </div>
           <template v-if="results.length">
             <div v-if="page > 0" class="d-flex mt8">
               <button class="btn -text mlauto switch-page" @click="showLess">... go page {{ page }}</button>
@@ -252,25 +269,14 @@
               </button>
             </div>
           </template>
+          <p class="mb0 pb0" v-else-if="query.length">
+            <span>No results found for "{{ query }}".</span>
+            <br />
 
-          <div class="text-danger search__no-result" v-if="!results.length">
-            <p class="mt0 mb0 px16 pb0">
-              No results found
-              <button class="btn -text -red" @click="clearFilters">clear filters</button>
-            </p>
-            <div v-if="searchTypes.historical" class="color-100 px16 pt0 notice -success" style="font-size: 14px;">
-              <div class="notice__wrapper">
-                <div class="notice__title">
-                  <div class=" mt8 ml8">In need for more historical data ?</div>
-                  <div class="mt0">
-                    <a class="btn -text" href="https://github.com/Tucsky/aggr-server" target="_blank">🤓 Run your own aggr</a>
-                    <dono-dropdown label="🚀 support the project" class="-left " />
-                    <a class="btn -text" href="https://github.com/Tucsky/aggr/discussions" target="_blank">🍀 Suggest it on github</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            <button v-if="hasFilters || !allExchangesEnabled" class="btn -outline -cases" @click="clearFilters">
+              <i class="icon-refresh"></i> Retry without filters
+            </button>
+          </p>
         </div>
       </div>
     </div>
@@ -306,7 +312,6 @@
 
 <script>
 import Dialog from '@/components/framework/Dialog.vue'
-import DonoDropdown from '@/components/settings/DonoDropdown.vue'
 import DialogMixin from '@/mixins/dialogMixin'
 import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
@@ -318,8 +323,7 @@ const RESULTS_PER_PAGE = 25
 export default {
   mixins: [DialogMixin],
   components: {
-    Dialog,
-    DonoDropdown
+    Dialog
   },
   props: {
     paneId: {
@@ -345,6 +349,9 @@ export default {
     quoteCurrencies: ['USD', 'USDT', 'UST', 'USDC', 'BUSD', 'ETH', 'BTC', 'BNB', 'EUR', 'AUD', 'GBP', 'OTHERS']
   }),
   computed: {
+    previousSearchSelections() {
+      return this.$store.state.settings.previousSearchSelections
+    },
     resultsPerPage() {
       return RESULTS_PER_PAGE
     },
@@ -441,8 +448,8 @@ export default {
       const hasSpot = this.searchTypes.spots
       const hasPerpetuals = this.searchTypes.perpetuals
       const hasFutures = this.searchTypes.futures
-      const isNormalized = this.searchTypes.normalize
-      return isNormalized || hasHistorical || hasSpot || hasPerpetuals || hasFutures || this.onlyConnected
+      const isMergeStables = this.searchTypes.mergeUsdt
+      return isMergeStables || hasHistorical || hasSpot || hasPerpetuals || hasFutures || this.onlyConnected
     },
     historicalMarkets() {
       return this.$store.state.app.historicalMarkets
@@ -632,7 +639,18 @@ export default {
       this.selection.push(market)
     },
     selectMarkets(markets) {
-      this.selection = this.selection.concat(markets)
+      const marketsToAdd = markets.filter(market => this.selection.indexOf(market) === -1)
+
+      if (!marketsToAdd.length) {
+        this.$store.dispatch('app/showNotice', {
+          id: 'select-market-already-added',
+          title: `You already selected ${markets.length > 1 ? 'these markets' : markets[0]} !`,
+          type: 'error'
+        })
+        return
+      }
+
+      this.selection = this.selection.concat(marketsToAdd)
     },
     deselectMarket(market) {
       this.selection.splice(this.selection.indexOf(market), 1)
@@ -643,6 +661,8 @@ export default {
       }
     },
     async submit() {
+      this.$store.dispatch('settings/saveSearchSelection', this.selection)
+
       if (!this.paneId) {
         if (
           this.containMultipleMarketsConfigurations() &&
@@ -765,6 +785,7 @@ export default {
 
     clearFilters() {
       this.$store.commit('settings/CLEAR_SEARCH_FILTERS')
+      this.toggleAll(true)
       this.onlyConnected = false
     },
 
@@ -854,14 +875,16 @@ export default {
       this.selectMarkets(markets)
     },
 
-    toggleAll() {
-      const deselectAll = Boolean(this.allExchangesEnabled)
+    toggleAll(selectAll) {
+      if (typeof selectAll !== 'boolean') {
+        selectAll = Boolean(!this.allExchangesEnabled)
+      }
 
       this.$set(
         this.$store.state.settings,
         'searchExchanges',
         this.exchanges.reduce((output, id) => {
-          output[id] = deselectAll ? false : true
+          output[id] = selectAll ? true : false
           return output
         }, {})
       )
@@ -963,28 +986,16 @@ export default {
     }
   }
 
-  &__selection {
+  &__tags {
     display: flex;
     flex-wrap: wrap;
     padding: 6px 2rem 2px 6px;
-    position: relative;
-    min-width: 19rem;
-
-    &.-sticky {
-      @media screen and (min-width: 550px) {
-        backdrop-filter: blur(1rem);
-        background-color: var(--theme-background-o75);
-        position: sticky;
-        top: 0;
-        z-index: 1;
-      }
-    }
 
     &-controls > button,
     > button,
     > input {
       margin-bottom: 4px;
-      margin-right: 4px;
+      margin-right: 5px;
       height: 32px;
     }
 
@@ -998,69 +1009,111 @@ export default {
     }
   }
 
-  &__selection-controls {
-    position: absolute;
-    top: 0;
-    right: 0;
-    margin: 6px !important;
-  }
-}
+  &-selection {
+    position: relative;
+    min-width: 19rem;
 
-.search-filters {
-  display: flex;
-  flex-direction: column-reverse;
-  position: relative;
+    &.-sticky {
+      @media screen and (min-width: 550px) {
+        backdrop-filter: blur(1rem);
+        background-color: var(--theme-background-o75);
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+    }
 
-  &__toggle {
-    @media screen and (min-width: 550px) {
-      display: none;
+    &__controls {
+      position: absolute;
+      top: 0;
+      right: 0;
+      margin: 6px !important;
     }
   }
 
-  &__refresh-all > .icon-refresh {
-    vertical-align: middle;
-  }
-
-  &__controls {
-    position: absolute;
-    right: 0;
-    top: 0;
-    font-size: 0.875em;
-    z-index: 1;
-  }
-
-  &__title {
-    cursor: pointer;
-    user-select: none;
+  &-history {
     display: flex;
+    justify-content: space-between;
     align-items: center;
 
-    .icon-up-thin {
-      transition: transform 0.2s $ease-out-expo;
-      line-height: inherit;
-      margin-left: auto;
+    small {
+      text-transform: uppercase;
     }
 
-    &:first-child {
-      .icon-up-thin {
-        display: inline-block;
-        transform: rotateZ(180deg);
+    &__clear {
+      padding: 0;
+      margin: 0.5rem;
+    }
+
+    .search__tags {
+      padding-right: 0;
+      margin-right: auto;
+
+      button,
+      button:hover {
+        background: none;
+        border: 1px dashed currentColor;
+        height: 24px;
       }
     }
   }
 
-  .checkbox-control {
-    a {
-      visibility: hidden;
+  &-filters {
+    display: flex;
+    flex-direction: column-reverse;
+    position: relative;
+
+    &__toggle {
+      @media screen and (min-width: 550px) {
+        display: none;
+      }
     }
 
-    &:hover a {
-      visibility: visible;
+    &__refresh-all > .icon-refresh {
+      vertical-align: middle;
+    }
+
+    &__controls {
+      position: absolute;
+      right: 0;
+      top: 0;
+      font-size: 0.875em;
+      z-index: 1;
+    }
+
+    &__title {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+
+      .icon-up-thin {
+        transition: transform 0.2s $ease-out-expo;
+        line-height: inherit;
+        margin-left: auto;
+      }
+
+      &:first-child {
+        .icon-up-thin {
+          display: inline-block;
+          transform: rotateZ(180deg);
+        }
+      }
+    }
+
+    .checkbox-control {
+      a {
+        visibility: hidden;
+      }
+
+      &:hover a {
+        visibility: visible;
+      }
     }
   }
 }
 
-.switch-page {
+.search .switch-page {
   height: 0;
   display: block;
   padding: 0;

@@ -3,12 +3,13 @@ import { ActionTree, Module, MutationTree } from 'vuex'
 import DEFAULTS_STATE from './defaultSettings.json'
 import { getColorLuminance, getLogShade, increaseBrightness, joinRgba, splitRgba } from '@/utils/colors'
 import { ModulesState } from '.'
-import { AggregationLength, SlippageMode } from '@/types/test'
+import { AggregationLength, PreviousSearchSelection, SlippageMode } from '@/types/test'
 import aggregatorService from '@/services/aggregatorService'
 import audioService from '@/services/audioService'
 import Vue from 'vue'
 import { getTimeframeForHuman } from '@/utils/helpers'
 import { isTouchSupported } from '@/utils/touchevent'
+import { getMarketProduct, parseMarket } from '../services/productsService'
 
 export type AudioFilters = { [id: string]: boolean }
 export interface SettingsState {
@@ -28,6 +29,7 @@ export interface SettingsState {
   searchTypes?: any
   searchQuotes?: any
   searchExchanges?: any
+  previousSearchSelections?: PreviousSearchSelection[]
   favoriteTimeframes?: { [timeframe: number]: string }
   normalizeWatermarks: boolean
   alerts: number | boolean
@@ -149,6 +151,43 @@ const actions = {
     } else if (!volume && state.useAudio) {
       commit('TOGGLE_AUDIO', false)
     }
+  },
+  saveSearchSelection({ commit }, selection: string[]) {
+    const sortedSelection = selection.sort((a, b) => a.localeCompare(b))
+
+    const pairs = []
+    const exchanges = []
+
+    for (const market of sortedSelection) {
+      const [exchange, pair] = parseMarket(market)
+      const { local } = getMarketProduct(exchange, pair, true)
+
+      if (pairs.indexOf(local) === -1) {
+        pairs.push(local)
+      }
+
+      if (exchanges.indexOf(exchange) === -1) {
+        exchanges.push(exchange)
+      }
+    }
+
+    let label
+    let count = 0
+
+    if (sortedSelection.length === 1) {
+      label = sortedSelection[0]
+    } else if (exchanges.length === 1) {
+      label = exchanges[0] + ':' + pairs.join('+')
+    } else {
+      label = pairs.join('+')
+      count = sortedSelection.length
+    }
+
+    commit('SAVE_SEARCH_SELECTION', {
+      label: label.length > 32 ? label.slice(0, 29) + '...' : label,
+      markets: sortedSelection,
+      count
+    })
   }
 } as ActionTree<SettingsState, ModulesState>
 
@@ -250,7 +289,7 @@ const mutations = {
     }
 
     Vue.set(state, 'searchTypes', state.searchTypes)
-    Vue.set(state, 'searchQuotes', { ...DEFAULTS_STATE.searchQuotes })
+    Vue.set(state, 'searchQuotes', {})
   },
   TOGGLE_FAVORITE_TIMEFRAME(state, value) {
     if (typeof state.favoriteTimeframes[value] === 'undefined') {
@@ -280,6 +319,22 @@ const mutations = {
   },
   SET_ALERT_SOUND(state, value) {
     state.alertSound = value
+  },
+  SAVE_SEARCH_SELECTION(state, value) {
+    const matchingSavedSearch = state.previousSearchSelections.find(a => a.label === value.label && a.count === value.count)
+
+    if (matchingSavedSearch) {
+      state.previousSearchSelections.splice(state.previousSearchSelections.indexOf(matchingSavedSearch), 1)
+    }
+
+    state.previousSearchSelections.unshift(value)
+
+    if (state.previousSearchSelections.length > 16) {
+      state.previousSearchSelections.splice(16, state.previousSearchSelections.length - 16)
+    }
+  },
+  CLEAR_SEARCH_HISTORY(state) {
+    state.previousSearchSelections = []
   }
 } as MutationTree<SettingsState>
 

@@ -31,6 +31,7 @@
     "USDT": true,
     "UST": true
   },
+  "previousSearchSelections": [],
   "searchExchanges": {},
   "favoriteTimeframes": {},
   "normalizeWatermarks": true,

@@ -621,6 +621,24 @@ export default {
       return state.output
     }
   },
+  last: {
+    args: [
+      {},
+      {
+        length: true
+      }
+    ],
+    state: {
+      points: [],
+      count: 0
+    },
+    next: accumulatePoints,
+    update(state, value) {
+      state.output = value
+
+      return state.count ? state.points[0] : value
+    }
+  },
   rma: {
     args: [
       {},

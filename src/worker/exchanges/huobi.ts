@@ -98,12 +98,7 @@ export default class extends Exchange {
       })
     )
 
-    api.send(
-      JSON.stringify({
-        sub: `public.${pair}.liquidation_orders`,
-        id: pair
-      })
-    )
+    this.subscribeLiquidations(api, pair)
 
     return true
   }
@@ -124,8 +119,6 @@ export default class extends Exchange {
         id: pair
       })
     )
-
-    this.subscribeLiquidations(api, pair)
 
     return true
   }
@@ -219,7 +212,7 @@ export default class extends Exchange {
     if (api.url === 'wss://api.hbdm.com/swap-ws') {
       api._marketDataApi = new WebSocket('wss://api.hbdm.com/swap-notification') // coin margined
     } else if (api.url === 'wss://api.hbdm.com/linear-swap-ws') {
-      api._marketDataApi = new WebSocket('wss://api.btcgateway.pro/linear-swap-notification') // usdt margined
+      api._marketDataApi = new WebSocket('wss://api.hbdm.com/linear-swap-notification') // usdt margined
     }
 
     if (api._marketDataApi) {

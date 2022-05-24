@@ -160,8 +160,8 @@ export async function getStoredProductsOrFetch(exchangeId: string, endpoints: st
   return productsData
 }
 
-export function formatStablecoin(quote) {
-  return quote.replace(/([bh^])?usd?[a-z]$/i, '$1USD')
+export function formatStablecoin(pair) {
+  return pair.replace(/b?usd?[a-z]?$/i, 'USD')
 }
 
 export function requestProducts(exchangeId: string, forceFetch = false) {

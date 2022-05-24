@@ -124,3 +124,9 @@ export interface MarketAlert {
 }
 
 export type ProductsData = string[] | { [prop: string]: any }
+
+export interface PreviousSearchSelection {
+  label: string
+  count: number
+  markets: string[]
+}

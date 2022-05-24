@@ -164,7 +164,7 @@ export default class SerieBuilder {
    */
   determineVariableState(instruction: IndicatorVariable) {
     if (instruction.length > 1) {
-      instruction.state = []
+      instruction.state = [0]
     } else {
       instruction.state = 0
     }
