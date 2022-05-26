@@ -34,6 +34,8 @@ export interface TradesPaneState {
   showTradesPairs: boolean
   multipliers: { [identifier: string]: number }
   thresholdsMultipler: number
+  showTimeAgo: boolean
+  showPrice: boolean
 }
 
 const getters = {
@@ -154,6 +156,8 @@ play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.13, 0.24,,0)`
   tradeType: 'both',
   showLogos: true,
   monochromeLogos: false,
+  showTimeAgo: true,
+  showPrice: true,
   thresholdsMultipler: 1
 } as TradesPaneState
 
@@ -252,6 +256,12 @@ const mutations = {
     const index = Math.max(0, values.indexOf(state.tradeType))
 
     state.tradeType = values[(index + 1) % values.length]
+  },
+  TOGGLE_TIME_AGO(state) {
+    state.showTimeAgo = !state.showTimeAgo
+  },
+  TOGGLE_PRICE(state) {
+    state.showPrice = !state.showPrice
   },
   TOGGLE_THRESHOLDS_TABLE(state, value) {
     state.showThresholdsAsTable = value ? true : false

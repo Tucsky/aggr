@@ -121,7 +121,7 @@ export default class extends Exchange {
     return {
       exchange: this.id,
       pair: trade.instId,
-      timestamp: trade.ts,
+      timestamp: +trade.ts,
       price: +trade.px,
       size: +size,
       side: trade.side

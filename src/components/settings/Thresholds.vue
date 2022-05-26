@@ -666,7 +666,7 @@ export default class extends Vue {
 
 .threshold-panel {
   position: relative;
-  background-color: var(--theme-background-200);
+  background-color: var(--theme-background-150);
   border-radius: 4px;
   padding: 1em;
   margin: 1.5em auto 0;
@@ -679,7 +679,7 @@ export default class extends Vue {
     .form-control {
       background: none;
       border: 1px solid var(--theme-background-300);
-      color: white;
+      color: var(--theme-color-base);
     }
   }
 
@@ -691,7 +691,7 @@ export default class extends Vue {
   h3 {
     font-weight: 400;
     margin: 0 0 1em;
-    color: rgba(white, 0.6);
+    color: var(--theme-color-base);
 
     [contenteditable] {
       color: black;
@@ -723,7 +723,7 @@ export default class extends Vue {
     top: -0.75em;
     border-left: 0.75em solid transparent;
     border-right: 0.75em solid transparent;
-    border-bottom: 0.75em solid var(--theme-background-200);
+    border-bottom: 0.75em solid var(--theme-background-150);
     margin-left: -1.75em;
     transition: transform 0.2s $ease-out-expo;
   }

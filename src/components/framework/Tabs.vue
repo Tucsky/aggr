@@ -178,7 +178,6 @@ export default class extends Vue {
     z-index: 1;
     color: var(--theme-color-base);
     box-shadow: 0 1px var(--theme-color-o50);
-    background-color: rgba(white, 0.075);
 
     &:active {
       box-shadow: 0 1px rgb(246 246 246 / 20%);

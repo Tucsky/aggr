@@ -42,6 +42,8 @@ export default class TradesFeed {
   private showLiquidations: boolean
   private showLogos: boolean
   private showTradesPairs: boolean
+  private showPrice: boolean
+  private showTimeAgo: boolean
   private slippageMode: SlippageMode
   private marketsMultipliers: { [identifier: string]: number }
   private paneMarkets: { [identifier: string]: boolean }
@@ -75,8 +77,6 @@ export default class TradesFeed {
     this.loadGifs()
     this.prepareColors()
     this.cacheAudio()
-
-    this.setupTimeUpdateInterval()
   }
 
   processTrades(trades: Trade[]) {
@@ -192,17 +192,23 @@ export default class TradesFeed {
 
   renderRow(trade: Trade, marketKey: string, colorStep: PreparedColorStep, significantAmount: number) {
     let timestampClass = ''
+    let timestampText = ''
 
     if (trade.timestamp !== this.lastTimestamp) {
       timestampClass = ' -timestamp'
 
       this.lastTimestamp = trade.timestamp
+
+      if (!this.showTimeAgo) {
+        timestampText = new Date(+trade.timestamp).toLocaleTimeString().replace(/:\d{2}$/, '')
+        timestampClass += ' -fixed'
+      }
     }
 
     let priceSlippage = ''
 
     if (this.slippageMode && trade.slippage) {
-      priceSlippage = `<small>${trade.slippage > 0 ? '+' : ''}${trade.slippage}${this.slippageMode === 'bps' ? 'bps' : ''}</small>`
+      priceSlippage = `<small>${trade.slippage > 0 ? '+' : ''}${trade.slippage}${this.slippageMode === 'bps' ? ' bps' : ''}</small>`
     }
 
     let exchangeName = ''
@@ -232,7 +238,7 @@ export default class TradesFeed {
     <div class="trade__side${sideClass}"></div>
     <div class="trade__exchange">${exchangeName}</div>
     ${pairName}
-    <div class="trade__price">${formatMarketPrice(trade.price, marketKey)}${priceSlippage}</div>
+    ${this.showPrice ? `<div class="trade__price">${formatMarketPrice(trade.price, marketKey)}${priceSlippage}</div>` : ''}
     <div class="trade__amount">
       <span class="trade__amount__quote">
         <span class="icon-quote"></span>
@@ -243,7 +249,7 @@ export default class TradesFeed {
         <span>${formatAmount(trade.size)}</span>
       </span>
     </div>
-    <div class="trade__time ${timestampClass}" data-timestamp="${trade.timestamp.toString()}"></div>
+    <div class="trade__time ${timestampClass}" data-timestamp="${trade.timestamp.toString()}">${timestampText}</div>
     </li>`
   }
 
@@ -387,6 +393,15 @@ export default class TradesFeed {
     this.showGifs = !store.state.settings.disableAnimations
     this.showLogos = store.state[this.paneId].showLogos
     this.showTradesPairs = store.state[this.paneId].showTradesPairs
+    this.showPrice = store.state[this.paneId].showPrice
+    this.showTimeAgo = store.state[this.paneId].showTimeAgo
+
+    if (this.showTimeAgo && !this.timeUpdateInterval) {
+      this.setupTimeUpdateInterval()
+    } else if (!this.showTimeAgo && this.timeUpdateInterval) {
+      clearInterval(this.timeUpdateInterval)
+      this.timeUpdateInterval = null
+    }
   }
 
   cachePaneMarkets() {

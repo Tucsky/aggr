@@ -201,11 +201,11 @@
                 :title="savedSelection.markets.join(', ')"
                 @click="selectMarkets(savedSelection.markets)"
               >
-                <span v-if="savedSelection.count > 1" class="badge -compact ml8" v-text="savedSelection.markets.length"></span>
-                <span v-text="savedSelection.label"></span>
+                <span v-if="savedSelection.count > 1" class="badge -invert ml8" v-text="savedSelection.markets.length"></span>
+                <span>{{ savedSelection.label }}</span>
               </button>
             </div>
-            <button class="btn -outline search-history__clear">
+            <button class="btn -outline search-history__clear" v-tippy title="Clear recent searches">
               <i class="icon-cross -small" @click="$store.commit('settings/CLEAR_SEARCH_HISTORY')"></i>
             </button>
           </div>
@@ -661,7 +661,9 @@ export default {
       }
     },
     async submit() {
-      this.$store.dispatch('settings/saveSearchSelection', this.selection)
+      if (this.selection.length) {
+        this.$store.dispatch('settings/saveSearchSelection', this.selection)
+      }
 
       if (!this.paneId) {
         if (

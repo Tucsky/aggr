@@ -16,10 +16,14 @@
 
   &.-outline {
     background: 0;
-    box-shadow: inset 0 0 0 0.09375em var(--theme-color-base);
+    box-shadow: inset 0 0 0 0.0952380952em var(--theme-color-base);
     color: var(--theme-color-base);
-    padding: 0.125em 0.25em 0.25em;
     font-weight: 400;
+  }
+
+  &.-invert {
+    background-color: var(--theme-color-base);
+    color: var(--theme-background-base);
   }
 
   &.-compact {

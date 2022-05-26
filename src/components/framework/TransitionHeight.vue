@@ -1,6 +1,6 @@
 <template>
   <component
-    :is="single ? 'transition' : 'transition-group'"
+    :is="name ? (single ? 'transition' : 'transition-group') : 'div'"
     :name="name"
     :tag="tag"
     @beforeEnter="beforeEnter"
@@ -20,7 +20,8 @@ import { Component, Vue } from 'vue-property-decorator'
   props: {
     name: {
       type: String,
-      required: true
+      required: false,
+      default: null
     },
     single: {
       type: Boolean,

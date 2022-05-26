@@ -1,58 +1,63 @@
 <template>
   <div>
-    <div class="column mb16">
-      <div class="form-group -fill" title="Number of trades rendered" v-tippy="{ boundary: 'window', placement: 'left' }">
-        <label>Limit</label>
-        <input
-          id="trades-limit"
-          type="number"
-          min="0"
-          max="1000"
-          step="1"
-          class="form-control"
-          :value="maxRows"
-          @change="$store.commit(paneId + '/SET_MAX_ROWS', $event.target.value)"
-        />
-      </div>
-      <div class="form-group  -unshrinkable">
-        <label>Type</label>
-        <div
-          class="checkbox-control -auto checkbox-control-input"
-          @click.stop="$store.commit(paneId + '/TOGGLE_TRADE_TYPE')"
-          title="Filter trade / liquidation"
-          v-tippy
-        >
-          <input type="checkbox" class="form-control" :checked="tradeType !== 'both'" />
-          <div :on="tradeType === 'liquidations' ? 'Liq. only' : 'Trades only'" off="All"></div>
+    <section class="section">
+      <div v-if="sections.indexOf('display') > -1">
+        <div class="form-group column mb8" title="Number of trades rendered" v-tippy="{ boundary: 'window', placement: 'left' }">
+          <label class="-fill -center">Max trades to render</label>
+          <input
+            id="trades-limit"
+            type="number"
+            min="0"
+            max="1000"
+            step="1"
+            class="form-control"
+            :value="maxRows"
+            @change="$store.commit(paneId + '/SET_MAX_ROWS', $event.target.value)"
+          />
         </div>
-      </div>
 
-      <div class="form-group  -unshrinkable">
-        <label>Symbols</label>
-        <div
-          class="checkbox-control -auto checkbox-control-input"
-          @click.stop="$store.commit(paneId + '/TOGGLE_TRADES_PAIRS')"
-          title="Show symbol's names (ex: BTC-USD)"
-          v-tippy
-        >
-          <input type="checkbox" class="form-control" :checked="showTradesPairs" />
-          <div on="Visible" off="Hidden"></div>
+        <div class="form-group column mb8" @click.stop="$store.commit(paneId + '/TOGGLE_TRADE_TYPE')">
+          <label class="-fill -center">Type of feed</label>
+          <div class="checkbox-control -auto checkbox-control-input -unshrinkable" title="Filter trade / liquidation" v-tippy>
+            <input type="checkbox" class="form-control" :checked="tradeType !== 'both'" />
+            <div :on="tradeType === 'liquidations' ? 'Liq. only' : 'Trades only'" off="All"></div>
+          </div>
         </div>
-      </div>
 
-      <div class="form-group  -unshrinkable">
-        <label>Logos</label>
-        <div
-          class="checkbox-control -auto checkbox-control-input"
-          @click.stop="$store.commit(paneId + '/TOGGLE_LOGOS')"
-          title="Show exchange's logo when available"
-          v-tippy
-        >
-          <input type="checkbox" class="form-control" :checked="showLogos" />
-          <div :on="monochromeLogos ? 'Monochrome ' : 'Color'" off="No logo"></div>
+        <div class="form-group column mb8" @click.stop="$store.commit(paneId + '/TOGGLE_TRADES_PAIRS')">
+          <label class="-fill -center">Show trade's symbols</label>
+          <div class="checkbox-control -auto checkbox-control-input -unshrinkable" title="Show symbol's names (ex: BTC-USD)" v-tippy>
+            <input type="checkbox" class="form-control" :checked="showTradesPairs" />
+            <div on="Visible" off="Hidden"></div>
+          </div>
+        </div>
+
+        <div class="form-group column mb8" @click.stop="$store.commit(paneId + '/TOGGLE_LOGOS')">
+          <label class="-fill -center">Show exchange's logos</label>
+          <div class="checkbox-control -auto checkbox-control-input -unshrinkable" title="Show exchange's logo when available" v-tippy>
+            <input type="checkbox" class="form-control" :checked="showLogos" />
+            <div :on="monochromeLogos ? 'Monochrome ' : 'Color'" off="No logo"></div>
+          </div>
+        </div>
+
+        <div class="form-group column mb8" @click.stop="$store.commit(paneId + '/TOGGLE_PRICE')">
+          <label class="-fill -center">Show price</label>
+          <div class="checkbox-control checkbox-control-input -unshrinkable">
+            <input type="checkbox" class="form-control" :checked="showPrice" />
+            <div />
+          </div>
+        </div>
+
+        <div class="form-group column" @click.stop="$store.commit(paneId + '/TOGGLE_TIME_AGO')">
+          <label class="-fill -center">Time format</label>
+          <div class="checkbox-control -auto checkbox-control-input -unshrinkable" title="Time format preference" v-tippy>
+            <input type="checkbox" class="form-control" :checked="showTimeAgo" />
+            <div on="Time since" off="HH:MM"></div>
+          </div>
         </div>
       </div>
-    </div>
+      <div class="section__title" @click="toggleSection('display')">DISPLAY <i class="icon-up-thin"></i></div>
+    </section>
 
     <section class="section">
       <div v-if="sections.indexOf('thresholds') > -1">
@@ -70,7 +75,7 @@
         </div>
         <div class="form-group mb16">
           <div class="column">
-            <div class="text-nowrap" v-text="useAudio ? '← Louder' : '← Faster'"></div>
+            <div class="text-nowrap">← Faster</div>
             <slider
               :min="0"
               :max="2"
@@ -86,7 +91,7 @@
                 {{ formatAmount(thresholds[0].amount) }} ➜ {{ formatAmount(thresholds[1].amount) }} ({{ +(thresholdsMultipler * 100).toFixed(2) }}%)
               </template>
             </slider>
-            <div class="text-right text-nowrap mlauto" v-text="useAudio ? 'Quiter →' : 'Slower →'"></div>
+            <div class="text-right text-nowrap mlauto">Slower →</div>
           </div>
         </div>
 
@@ -326,6 +331,14 @@ export default class extends Vue {
 
   get monochromeLogos() {
     return (this.$store.state[this.paneId] as TradesPaneState).monochromeLogos
+  }
+
+  get showTimeAgo() {
+    return (this.$store.state[this.paneId] as TradesPaneState).showTimeAgo
+  }
+
+  get showPrice() {
+    return (this.$store.state[this.paneId] as TradesPaneState).showPrice
   }
 
   get tradeType() {

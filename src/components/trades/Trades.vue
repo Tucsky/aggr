@@ -102,6 +102,8 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/TOGGLE_TRADE_TYPE':
         case this.paneId + '/TOGGLE_TRADES_PAIRS':
         case this.paneId + '/TOGGLE_LOGOS':
+        case this.paneId + '/TOGGLE_TIME_AGO':
+        case this.paneId + '/TOGGLE_PRICE':
           this.feed.cachePreferences()
           this.refreshList()
           break
@@ -175,7 +177,7 @@ export default class extends Mixins(PaneMixin) {
       const [exchange, pair] = parseMarket(element.getAttribute('title'))
 
       const timestamp = element.querySelector('.trade__time').getAttribute('data-timestamp')
-      const price = parseFloat((element.querySelector('.trade__price') as HTMLElement).innerText) || 0
+      const price = parseFloat((element.querySelector('.trade__price') as HTMLElement)?.innerText) || 0
       const size = parseFloat((element.querySelector('.trade__amount__base') as HTMLElement).innerText) || 0
       const side: 'buy' | 'sell' = element.classList.contains('-buy') ? 'buy' : 'sell'
       const amount = size * (this.$store.state.settings.preferQuoteCurrencySize ? price : 1)
@@ -204,12 +206,6 @@ export default class extends Mixins(PaneMixin) {
 
 <style lang="scss">
 .pane-trades {
-  &.-large {
-    .trade__time {
-      font-size: 75%;
-    }
-  }
-
   &.-small .trade {
     &.-level-0 {
       line-height: 1.5em !important;
@@ -233,6 +229,10 @@ export default class extends Mixins(PaneMixin) {
   scrollbar-width: none;
 
   &:not(.-logos) {
+    .trade__side + div {
+      padding-left: 1em;
+    }
+
     .trade__exchange,
     .trade__pair {
       font-size: 75%;
@@ -243,8 +243,7 @@ export default class extends Mixins(PaneMixin) {
     .trade__exchange {
       overflow: visible;
       text-align: center;
-      max-width: 10%;
-      flex-basis: 10%;
+      flex-grow: 0.5;
 
       &:before {
         font-family: 'icon';
@@ -298,6 +297,7 @@ export default class extends Mixins(PaneMixin) {
   background-size: cover;
   background-blend-mode: overlay;
   position: relative;
+  padding: 0 2rem 0 1.5rem;
 
   &:after {
     content: '';
@@ -384,6 +384,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   > div {
+    flex-grow: 1;
     flex-basis: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -391,10 +392,8 @@ export default class extends Mixins(PaneMixin) {
   }
 
   .trade__side {
-    overflow: visible;
-    max-width: 10%;
-    flex-basis: 10%;
-    text-align: center;
+    position: absolute;
+    left: 0.5rem;
     line-height: inherit;
   }
 
@@ -410,24 +409,13 @@ export default class extends Mixins(PaneMixin) {
 
   .trade__pair {
     font-size: 87.5%;
-    text-align: left;
-    flex-grow: 0.4;
-    margin-left: 2%;
-
-    + .trade__price {
-      flex-grow: 0.5;
-    }
   }
 
   .trade__exchange {
     text-align: left;
-    flex-grow: 0.4;
   }
 
   .trade__price {
-    flex-grow: 0.6;
-    margin-left: 2%;
-
     small {
       font-size: 0.75em;
       font-weight: 400;
@@ -439,8 +427,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   .trade__amount {
-    flex-grow: 0.5;
-    padding-left: 2%;
+    padding: 0 0.5em;
 
     .trade__amount__base {
       display: none;
@@ -458,12 +445,14 @@ export default class extends Mixins(PaneMixin) {
   }
 
   .trade__time {
+    position: absolute;
+    right: 0.5rem;
     text-align: right;
     overflow: visible;
-    max-width: 9%;
-    flex-basis: 9%;
-    margin-right: 2%;
-    font-size: 87.5%;
+
+    &.-fixed {
+      font-size: 87.5%;
+    }
   }
 }
 

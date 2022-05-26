@@ -74,7 +74,7 @@
         </div>
         <div class="chart-overlay__title pane-overlay" @click="showMarketsOverlay = !showMarketsOverlay">
           Markets
-          <button type="button" class="btn badge -outline ml4 mr4" @click="toggleMarketOverlay">
+          <button type="button" class="btn badge -outline" @click="toggleMarketOverlay">
             {{ markets.length ? visibleMarkets : 'Search markets' }}
           </button>
           <i class="icon-up-thin"></i>

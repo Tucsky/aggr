@@ -18,6 +18,7 @@ class Aggregator {
   connectionsCount = 0
   connectionChange = 0
 
+  private baseAggregationTimeout = 50
   private onGoingAggregations: { [identifier: string]: AggregatedTrade } = {}
   private aggregationTimeouts: { [identifier: string]: number } = {}
   private pendingTrades: Trade[] = []
@@ -194,7 +195,7 @@ class Aggregator {
       trade.originalPrice = this.marketsStats[marketKey].price || trade.price
 
       trade.count = 1
-      this.aggregationTimeouts[marketKey] = now + 50
+      this.aggregationTimeouts[marketKey] = now + this.baseAggregationTimeout
       this.onGoingAggregations[marketKey] = trade
     }
   }
@@ -699,6 +700,7 @@ class Aggregator {
     this.settings[key] = value
 
     if (key === 'aggregationLength') {
+      this.baseAggregationTimeout = Math.max(50, value)
       // update trades event handler (if 0 mean simple trade emit else group inc trades)
       this.bindTradesEvent()
     }

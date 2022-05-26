@@ -20,23 +20,21 @@
         <button v-if="buyAudio !== threshold.buyAudio" class="btn -green mr8" @click="testOriginal('buy', $event)" title="Original" v-tippy>
           <i class="icon-volume-high"></i>
         </button>
-        <textarea
-          cols="40"
-          rows="4"
-          ref="buyBehave"
-          class="form-control"
-          :value="buyAudio"
-          spellcheck="false"
+        <prism-editor
+          class="editor__prism hide-scrollbar form-control"
+          v-model="buyAudio"
+          :highlight="highlighter"
           :class="[dropping === 'buy' && '-dropping']"
-          @blur="setInput($event.target.value, 'buy')"
-          @focus="focusedSide = 'buy'"
+          ref="editor"
+          @blur="liveAnnotation = null"
+          @focus="scheduleLiveAnnotation($event, 'buy')"
           @drop="handleDrop($event, 'buy')"
           @dragover="handleDrop($event, 'buy')"
           @dragenter="handleDropEnter('buy')"
           @dragleave="dropping = null"
           @keyup="scheduleLiveAnnotation($event, 'buy')"
-          @mousedown="scheduleLiveAnnotation($event, 'buy')"
-        ></textarea>
+          @click="scheduleLiveAnnotation($event, 'buy')"
+        ></prism-editor>
         <button
           class="btn -green ml8"
           :class="[loopingSide === 'buy' && 'shake-hard']"
@@ -67,23 +65,21 @@
         <button v-if="sellAudio !== threshold.sellAudio" class="btn -red mr8" @click="testOriginal('sell', $event)" title="Original" v-tippy>
           <i class="icon-volume-high"></i>
         </button>
-        <textarea
-          cols="40"
-          rows="4"
-          ref="sellBehave"
-          class="form-control"
-          :value="sellAudio"
-          spellcheck="false"
+        <prism-editor
+          class="editor__prism hide-scrollbar form-control"
+          v-model="sellAudio"
+          :highlight="highlighter"
           :class="[dropping === 'sell' && '-dropping']"
-          @blur="setInput($event.target.value, 'sell')"
-          @focus="focusedSide = 'sell'"
+          ref="editor"
+          @blur="liveAnnotation = null"
+          @focus="scheduleLiveAnnotation($event, 'sell')"
           @drop="handleDrop($event, 'sell')"
           @dragover="handleDrop($event, 'sell')"
           @dragenter="handleDropEnter('sell')"
           @dragleave="dropping = null"
           @keyup="scheduleLiveAnnotation($event, 'sell')"
-          @mousedown="scheduleLiveAnnotation($event, 'sell')"
-        ></textarea>
+          @click="scheduleLiveAnnotation($event, 'sell')"
+        ></prism-editor>
         <button
           class="btn -red ml8"
           :class="[loopingSide === 'sell' && 'shake-hard']"
@@ -109,14 +105,13 @@
         <i class="icon-refresh mr8"></i> Restart audio
       </a>
       <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
-      <button class="btn -large" @click="saveInputs()"><i class="icon-check mr4"></i> Save</button>
+      <button class="btn -large -green" @click="saveInputs()"><i class="icon-check mr4"></i> Save</button>
     </footer>
   </Dialog>
 </template>
 
 <script lang="ts">
 import DialogMixin from '@/mixins/dialogMixin'
-import Behave from 'behave-js'
 import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
 import { formatAmount } from '@/services/productsService'
 import audioService, { audioParametersDefinitions, audioParametersDescriptions } from '@/services/audioService'
@@ -126,7 +121,15 @@ import panesSettings from '@/store/panesSettings'
 import workspacesService from '@/services/workspacesService'
 import importService from '@/services/importService'
 
+import { PrismEditor } from 'vue-prism-editor'
+import { highlight, languages } from 'prismjs/components/prism-core'
+import 'prismjs/components/prism-clike'
+import 'prismjs/components/prism-javascript'
+
 export default {
+  components: {
+    PrismEditor
+  },
   props: {
     paneId: {
       required: true,
@@ -177,8 +180,6 @@ export default {
     }
   },
   created() {
-    this._behaves = []
-
     if (!this.threshold) {
       return this.$nextTick(() => this.close(false))
     }
@@ -187,7 +188,7 @@ export default {
     this.sellAudio = this.threshold.sellAudio || ''
   },
   mounted() {
-    this.$nextTick(() => this.initBehave())
+    // this.$nextTick(() => this.initBehave())
   },
   beforeDestroy() {
     if (this._loopingTimeout) {
@@ -203,12 +204,11 @@ export default {
         })
       })
     }
-
-    for (const behave of this._behaves) {
-      behave.destroy()
-    }
   },
   methods: {
+    highlighter(code) {
+      return highlight(code, languages.js, 'js') // languages.<insert language> to return html with markup
+    },
     setInput(input, side) {
       this[side + 'Audio'] = input
       this.liveAnnotation = null
@@ -280,7 +280,7 @@ export default {
     },
     loopSide(side) {
       if (!this._loopingTimeout) {
-        this[side + 'Audio'] = this.$refs[side + 'Behave'].value // fix behave / vue reactivity conflict
+        // this[side + 'Audio'] = this.$refs[side + 'Behave'].value // fix behave / vue reactivity conflict
         this.loopingSide = side
       }
 
@@ -339,23 +339,6 @@ export default {
         this[side + 'Error'] = error.message
 
         return false
-      }
-    },
-    initBehave() {
-      for (const el of [this.$refs.buyBehave, this.$refs.sellBehave]) {
-        this._behaves.push(
-          new Behave({
-            textarea: el,
-            replaceTab: true,
-            softTabs: true,
-            tabSize: 2,
-            autoOpen: true,
-            overwrite: true,
-            autoStrip: true,
-            autoIndent: true,
-            fence: false
-          })
-        )
       }
     },
     openSoundAssistant(type, side) {
@@ -424,6 +407,8 @@ export default {
       }
     },
     async scheduleLiveAnnotation(event, side) {
+      this.focusedSide = side
+
       if (this._liveAnnotationTimeout) {
         clearTimeout(this._liveAnnotationTimeout)
       }
@@ -503,7 +488,7 @@ export default {
       return
     },
     showParameterAnnotation(type, i, side) {
-      this[side + 'Audio'] = this.$refs[side + 'Behave'].value // fix behave / vue reactivity conflict
+      // this[side + 'Audio'] = this.$refs[side + 'Behave'].value // fix behave / vue reactivity conflict
 
       let annotation
 

@@ -161,7 +161,7 @@ button {
     background-color: var(--theme-background-100);
     border-color: var(--theme-background-100);
     border: 1px solid var(--theme-background-100);
-    color: 1px solid var(--theme-color-base);
+    color: var(--theme-color-base);
 
     &.-text {
       color: var(--theme-background-300);
@@ -265,7 +265,7 @@ button {
       z-index: 1;
 
       + span {
-        padding-right: 0.5rem;
+        padding-right: 0.5em;
       }
     }
   }
