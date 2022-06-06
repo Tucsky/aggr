@@ -14,7 +14,7 @@
         target="_blank"
         title="Scripting documentation"
         v-tippy
-        class="btn -text -white mlauto -center  -no-grab"
+        class="btn -text -white mlauto -center -no-grab"
         ><i class="icon-info"></i><span class="ml8">Wiki</span></a
       >
 
@@ -218,9 +218,7 @@
 
           <span>{{ value.label }}</span>
         </template>
-        <template v-slot:selection>
-          Options
-        </template>
+        <template v-slot:selection> Options </template>
       </dropdown>
     </footer>
   </Dialog>

@@ -4,7 +4,7 @@ import { randomString } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import Worker from 'worker-loader!@/worker/aggregator'
-import { countDecimals, marketDecimals, getStoredProductsOrFetch, parseMarket } from './productsService'
+import { countDecimals, marketDecimals, getStoredProductsOrFetch, parseMarket, formatStablecoin } from './productsService'
 import workspacesService from './workspacesService'
 
 class AggregatorService extends EventEmitter {
@@ -146,7 +146,7 @@ class AggregatorService extends EventEmitter {
         continue
       }
 
-      const localPair = store.state.panes.marketsListeners[marketKey].local.replace('USDT', 'USD').replace('USDC', 'USD')
+      const localPair = formatStablecoin(store.state.panes.marketsListeners[marketKey].local)
 
       if (!decimalsByLocalMarkets[localPair]) {
         continue

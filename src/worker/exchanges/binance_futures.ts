@@ -1,5 +1,4 @@
 import Exchange from '../exchange'
-import { sleep } from '../helpers/utils'
 
 export default class extends Exchange {
   id = 'BINANCE_FUTURES'
@@ -8,6 +7,7 @@ export default class extends Exchange {
   private specs: { [pair: string]: number }
   private dapi: { [pair: string]: string }
   protected maxConnectionsPerApi = 100
+  protected delayBetweenMessages = 100
   protected endpoints = { PRODUCTS: ['https://fapi.binance.com/fapi/v1/exchangeInfo', 'https://dapi.binance.com/dapi/v1/exchangeInfo'] }
 
   getUrl(pair: string) {
@@ -64,7 +64,7 @@ export default class extends Exchange {
 
     this.subscriptions[pair] = ++this.lastSubscriptionId
 
-    const params = [pair + '@trade', pair + '@forceOrder']
+    const params = [pair + '@aggTrade', pair + '@forceOrder']
 
     api.send(
       JSON.stringify({
@@ -73,9 +73,6 @@ export default class extends Exchange {
         id: this.subscriptions[pair]
       })
     )
-
-    // BINANCE: WebSocket connections have a limit of 5 incoming messages per second.
-    await sleep(101)
 
     return true
   }
@@ -90,7 +87,7 @@ export default class extends Exchange {
       return
     }
 
-    const params = [pair + '@trade', pair + '@forceOrder']
+    const params = [pair + '@aggTrade', pair + '@forceOrder']
 
     api.send(
       JSON.stringify({
@@ -102,9 +99,6 @@ export default class extends Exchange {
 
     delete this.subscriptions[pair]
 
-    // BINANCE: WebSocket connections have a limit of 5 incoming messages per second.
-    await sleep(101)
-
     return true
   }
 
@@ -114,7 +108,7 @@ export default class extends Exchange {
     if (!json) {
       return
     } else {
-      if (json.e === 'trade' && json.X !== 'INSURANCE_FUND') {
+      if (json.e === 'aggTrade' && json.X !== 'INSURANCE_FUND') {
         let size = +json.q
 
         const symbol = json.s.toLowerCase()
@@ -130,7 +124,8 @@ export default class extends Exchange {
             timestamp: json.T,
             price: +json.p,
             size: size,
-            side: json.m ? 'sell' : 'buy'
+            side: json.m ? 'sell' : 'buy',
+            count: json.l - json.f + 1
           }
         ])
       } else if (json.e === 'forceOrder') {

@@ -43,7 +43,7 @@
             <i class="icon-upload mr8"></i> Browse
             <input type="file" @change="handleFile" />
           </button>
-          <div class="divider -horizontal" style="display:flex;">Or</div>
+          <div class="divider -horizontal" style="display: flex">Or</div>
           <label>Create blank indicator</label>
           <input class="form-control" v-model="name" placeholder="Name it" />
         </div>

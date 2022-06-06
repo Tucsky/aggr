@@ -169,7 +169,7 @@
               </slider>
               <editable
                 class="-center text-nowrap ml8"
-                style="line-height:1"
+                style="line-height: 1"
                 :content="'× ' + audioVolume"
                 @output="$store.commit(paneId + '/SET_AUDIO_VOLUME', $event)"
               ></editable>
@@ -191,7 +191,7 @@
               </slider>
               <editable
                 class="-center text-nowrap ml8"
-                style="line-height:1"
+                style="line-height: 1"
                 :content="'× ' + audioPitch"
                 @output="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
               ></editable>
@@ -199,9 +199,7 @@
           </div>
         </div>
         <div class="form-group" v-if="useAudio && !muted">
-          <label>
-            Minimum for a trade to trigger a sound
-          </label>
+          <label> Minimum for a trade to trigger a sound </label>
           <input
             class="form-control"
             :value="audioThreshold"
@@ -248,7 +246,7 @@
             </div>
             <div class="-fill -center ml16">
               <slider
-                style="width: 100%;min-width:150px;"
+                style="width: 100%; min-width: 150px"
                 :min="0"
                 :max="2"
                 :label="market.multiplier !== 1"
@@ -266,9 +264,7 @@
             </div>
           </div>
         </div>
-        <a v-else href="javascript:void(0);" @click="$store.dispatch('app/showSearch', paneId)">
-          Add markets to pane
-        </a>
+        <a v-else href="javascript:void(0);" @click="$store.dispatch('app/showSearch', paneId)"> Add markets to pane </a>
       </div>
 
       <div class="section__title" @click="toggleSection('multipliers')">

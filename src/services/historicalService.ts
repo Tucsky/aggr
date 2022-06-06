@@ -6,7 +6,6 @@ import store from '../store'
 import { parseMarket } from './productsService'
 
 export interface HistoricalResponse {
-  format: 'point'
   from: number
   to: number
   data: Bar[]
@@ -50,28 +49,15 @@ class HistoricalService extends EventEmitter {
           throw new Error(json && json.error ? json.error : 'empty-response')
         }
 
-        const format = json.format
-        let data = json.results
-
-        if (!data.length) {
+        if (!json.results.length) {
           throw new Error('No more data')
         }
 
-        switch (json.format) {
-          case 'point':
-            ;({ from, to, data, markets } = this.normalizePoints(data, timeframe, markets))
-            break
-          default:
-            break
+        if (json.format !== 'point') {
+          throw new Error('Bad data')
         }
 
-        return {
-          format: format,
-          data: data,
-          from: from,
-          to: to,
-          markets: markets
-        }
+        return this.normalizePoints(json.results, json.columns, timeframe, markets)
       })
       .catch(err => {
         handleFetchError(err)
@@ -87,7 +73,7 @@ class HistoricalService extends EventEmitter {
 
     return this.promisesOfData[url]
   }
-  normalizePoints(data, timeframe, markets: string[]) {
+  normalizePoints(data, columns, timeframe, markets: string[]) {
     const lastClosedBars = {}
 
     markets = markets.slice()
@@ -115,18 +101,18 @@ class HistoricalService extends EventEmitter {
       if (!data[i].time && data[i][0]) {
         // new format is array, transform into objet
         data[i] = {
-          time: data[i][0],
-          cbuy: data[i][1],
-          close: data[i][2],
-          csell: data[i][3],
-          high: data[i][4],
-          lbuy: data[i][5],
-          low: data[i][6],
-          lsell: data[i][7],
-          market: data[i][8],
-          open: data[i][9],
-          vbuy: data[i][10],
-          vsell: data[i][11]
+          time: typeof columns['time'] !== 'undefined' ? data[i][columns['time']] : 0,
+          cbuy: typeof columns['cbuy'] !== 'undefined' ? data[i][columns['cbuy']] : 0,
+          close: typeof columns['close'] !== 'undefined' ? data[i][columns['close']] : 0,
+          csell: typeof columns['csell'] !== 'undefined' ? data[i][columns['csell']] : 0,
+          high: typeof columns['high'] !== 'undefined' ? data[i][columns['high']] : 0,
+          lbuy: typeof columns['lbuy'] !== 'undefined' ? data[i][columns['lbuy']] : 0,
+          low: typeof columns['low'] !== 'undefined' ? data[i][columns['low']] : 0,
+          lsell: typeof columns['lsell'] !== 'undefined' ? data[i][columns['lsell']] : 0,
+          market: typeof columns['market'] !== 'undefined' ? data[i][columns['market']] : 0,
+          open: typeof columns['open'] !== 'undefined' ? data[i][columns['open']] : 0,
+          vbuy: typeof columns['vbuy'] !== 'undefined' ? data[i][columns['vbuy']] : 0,
+          vsell: typeof columns['vsell'] !== 'undefined' ? data[i][columns['vsell']] : 0
         }
         data[i].timestamp = data[i].time
       } else {

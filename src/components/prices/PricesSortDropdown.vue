@@ -1,7 +1,7 @@
 <template>
   <dropdown
     :selected="sortType"
-    :options="['none', 'price', 'volume', 'change']"
+    :options="['none', 'price', 'volume', 'delta', 'change']"
     :selection-class="selectionClass"
     return-value
     @output="selectSortType($event)"

@@ -2,9 +2,7 @@
   <Dialog @clickOutside="close" class="-sticky-footer" contentClass="settings">
     <template v-slot:header
       ><div>
-        <div class="title">
-          Settings
-        </div>
+        <div class="title">Settings</div>
         <div class="subtitle" v-if="hits"><i class="icon-bolt"></i> <code v-text="hits"></code> messages /s</div>
       </div>
       <div class="column -center"></div>

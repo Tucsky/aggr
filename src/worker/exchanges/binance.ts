@@ -1,11 +1,12 @@
 import Exchange from '../exchange'
-import { sleep } from '../helpers/utils'
 
 export default class extends Exchange {
   id = 'BINANCE'
   private lastSubscriptionId = 0
   private subscriptions = {}
   protected endpoints = { PRODUCTS: 'https://api.binance.com/api/v3/exchangeInfo' }
+  protected maxConnectionsPerApi = 100
+  protected delayBetweenMessages = 250
 
   getUrl() {
     return `wss://stream.binance.com:9443/ws`
@@ -27,7 +28,7 @@ export default class extends Exchange {
 
     this.subscriptions[pair] = ++this.lastSubscriptionId
 
-    const params = [pair + '@trade']
+    const params = [pair + '@aggTrade']
 
     api.send(
       JSON.stringify({
@@ -36,9 +37,6 @@ export default class extends Exchange {
         id: this.subscriptions[pair]
       })
     )
-
-    // BINANCE: WebSocket connections have a limit of 5 incoming messages per second.
-    await sleep(250)
 
     return true
   }
@@ -53,7 +51,7 @@ export default class extends Exchange {
       return
     }
 
-    const params = [pair + '@trade']
+    const params = [pair + '@aggTrade']
 
     api.send(
       JSON.stringify({
@@ -77,9 +75,10 @@ export default class extends Exchange {
         {
           exchange: this.id,
           pair: json.s.toLowerCase(),
-          timestamp: json.E,
+          timestamp: json.T,
           price: +json.p,
           size: +json.q,
+          count: json.l - json.f + 1,
           side: json.m ? 'sell' : 'buy'
         }
       ])

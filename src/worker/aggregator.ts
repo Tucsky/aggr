@@ -22,7 +22,9 @@ class Aggregator {
   private onGoingAggregations: { [identifier: string]: AggregatedTrade } = {}
   private aggregationTimeouts: { [identifier: string]: number } = {}
   private pendingTrades: Trade[] = []
-  private marketsStats: { [marketId: string]: { initialPrice?: number; decimals?: number; price: number; volume?: number } } = {}
+  private marketsStats: {
+    [marketId: string]: { initialPrice?: number; decimals?: number; price: number; volume?: number; volumeDelta?: number }
+  } = {}
   private _connectionChangeNoticeTimeout: number
 
   constructor() {
@@ -269,6 +271,7 @@ class Aggregator {
     trade.amount = (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
 
     this.marketsStats[marketKey].volume += trade.amount
+    this.marketsStats[marketKey].volumeDelta += trade.amount * (trade.side === 'buy' ? 1 : -1)
 
     this.marketsStats[marketKey].price = trade.price
 
@@ -401,6 +404,7 @@ class Aggregator {
 
     this.marketsStats[marketKey] = {
       volume: 0,
+      volumeDelta: 0,
       initialPrice: null,
       price: null
     }
@@ -549,6 +553,22 @@ class Aggregator {
         if (exchange.requiresProducts) {
           // shouldn't happen, products are ensured on the client before we get to this point
           await exchange.getProducts()
+        }
+
+        const estimatedTimeToConnectThemAll = exchange.getEstimatedTimeToConnect(marketsByExchange[exchangeId].length)
+
+        if (estimatedTimeToConnectThemAll > 1000 * 20) {
+          ctx.postMessage({
+            op: 'notice',
+            data: {
+              id: exchangeId + '-connection-delay',
+              type: 'warning',
+              timeout: estimatedTimeToConnectThemAll,
+              title: `Connecting to ${marketsByExchange[exchangeId].length} markets on ${exchangeId}\nThis could take some time (about ${Math.round(
+                estimatedTimeToConnectThemAll / 1000
+              )}s)`
+            }
+          })
         }
 
         promises.push(

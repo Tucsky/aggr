@@ -1368,7 +1368,7 @@ export default class ChartController {
           }
           this.nextBar(bar.timestamp, temporaryRenderer)
         } else {
-          temporaryRenderer = this.createRenderer(bar.timestamp, indicatorsIds)
+          temporaryRenderer = this.createRenderer(bar.timestamp || this.activeRenderer.timestamp, indicatorsIds)
         }
       }
 
@@ -2130,6 +2130,8 @@ export default class ChartController {
       if (!market) {
         market = Object.values(this.markets)[0].index
       }
+
+      market = market.replace(/PERP$/, '')
     }
 
     if (!priceline) {

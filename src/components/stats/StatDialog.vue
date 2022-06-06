@@ -22,7 +22,7 @@
       ></dropdown>
     </template>
     <div class="column mb8">
-      <div class="form-group  -fill">
+      <div class="form-group -fill">
         <label>Name</label>
         <input
           type="text"

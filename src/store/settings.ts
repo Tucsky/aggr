@@ -160,7 +160,9 @@ const actions = {
 
     for (const market of sortedSelection) {
       const [exchange, pair] = parseMarket(market)
-      const { local } = getMarketProduct(exchange, pair, true)
+      const product = getMarketProduct(exchange, pair, true)
+
+      const local = product.local
 
       if (pairs.indexOf(local) === -1) {
         pairs.push(local)
@@ -178,6 +180,7 @@ const actions = {
       label = sortedSelection[0]
     } else if (exchanges.length === 1) {
       label = exchanges[0] + ':' + pairs.join('+')
+      count = sortedSelection.length
     } else {
       label = pairs.join('+')
       count = sortedSelection.length
@@ -335,6 +338,13 @@ const mutations = {
   },
   CLEAR_SEARCH_HISTORY(state) {
     state.previousSearchSelections = []
+  },
+  REMOVE_SEARCH_HISTORY(state, markets) {
+    const match = state.previousSearchSelections.find(a => a.markets === markets)
+
+    if (match) {
+      state.previousSearchSelections.splice(state.previousSearchSelections.indexOf(match), 1)
+    }
   }
 } as MutationTree<SettingsState>
 

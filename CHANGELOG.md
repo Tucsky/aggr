@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented here.
 
+## [3.1.3] - 2022-06-05
+### Added
+- Add volume delta to markets pane
+- Add period (reset counts upon every 1m / 15m / 30m / 1h / 4h) to markets pane
+
+### Changed
+- Suffix local perps symbols with "PERP" (ex: BINANCE_FUTURES:btcusdt -> BTCUSDTPERP)
+- use Binance's aggTrade streams instead of raw
+
 ## [3.1.2] - 2022-05-23
 ### Added
 - last(value, length) script function

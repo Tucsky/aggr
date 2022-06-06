@@ -23,7 +23,7 @@
       </div>
 
       <div class="mt8" v-if="useAudio">
-        <div class="btn -text px0 " v-for="filter of filters" :key="filter">
+        <div class="btn -text px0" v-for="filter of filters" :key="filter">
           <label class="checkbox-control checkbox-control-input -auto" v-tippy :title="filtersDescriptions[filter]">
             <input
               type="checkbox"

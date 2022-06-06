@@ -5,6 +5,9 @@ export interface PricesPaneState {
   animateSort?: boolean
   showPairs?: boolean
   showVolume?: boolean
+  showVolumeDelta?: boolean
+  period?: number
+  showPrice?: boolean
   showChange?: boolean
   sortOrder?: 1 | -1
   sortType?: 'price' | 'change' | 'volume' | null
@@ -18,7 +21,10 @@ const state = {
   animateSort: true,
   showPairs: true,
   showVolume: true,
+  showVolumeDelta: true,
+  period: 0,
   showChange: true,
+  showPrice: true,
   sortType: 'change',
   sortOrder: -1
 } as PricesPaneState
@@ -35,8 +41,17 @@ const mutations = {
   TOGGLE_VOLUME(state) {
     state.showVolume = !state.showVolume
   },
+  TOGGLE_VOLUME_DELTA(state) {
+    state.showVolumeDelta = !state.showVolumeDelta
+  },
+  SET_PERIOD(state, value) {
+    state.period = value
+  },
   TOGGLE_CHANGE(state) {
     state.showChange = !state.showChange
+  },
+  TOGGLE_PRICE(state) {
+    state.showPrice = !state.showPrice
   },
   TOGGLE_SORT_ORDER(state) {
     state.sortOrder = state.sortOrder > 0 ? -1 : 1

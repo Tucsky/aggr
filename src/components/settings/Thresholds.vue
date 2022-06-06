@@ -193,9 +193,7 @@
           <label>Custom colors</label>
           <div class="column mt8">
             <div class="form-group column flex-center" title="When buy" v-tippy="{ placement: 'bottom' }">
-              <p class="help-text -center mr16 mt0 mb0">
-                Buy
-              </p>
+              <p class="help-text -center mr16 mt0 mb0">Buy</p>
               <verte
                 picker="square"
                 menuPosition="left"
@@ -212,9 +210,7 @@
               ></verte>
             </div>
             <div class="form-group column flex-center" title="When sell" v-tippy="{ placement: 'bottom' }">
-              <p class="help-text -center mr16 mt0 mb0">
-                Sell
-              </p>
+              <p class="help-text -center mr16 mt0 mb0">Sell</p>
               <verte
                 picker="square"
                 menuPosition="left"

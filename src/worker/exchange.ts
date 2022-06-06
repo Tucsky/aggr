@@ -1,5 +1,6 @@
 import { ProductsData, ProductsStorage } from '@/types/test'
 import { EventEmitter } from 'eventemitter3'
+import { sleep } from './helpers/utils'
 import { dispatchAsync } from './helpers/com'
 import { randomString } from './helpers/utils'
 interface Api extends WebSocket {
@@ -14,6 +15,7 @@ class Exchange extends EventEmitter {
   public id: string
   public pairs: string[] = []
   public products: string[] = null
+  protected delayBetweenMessages: number
   protected maxConnectionsPerApi: number
   protected endpoints: { [id: string]: string | string[] }
 
@@ -536,6 +538,10 @@ class Exchange extends EventEmitter {
       return false
     }
 
+    if (this.delayBetweenMessages) {
+      await sleep(this.delayBetweenMessages)
+    }
+
     return true
   }
 
@@ -555,6 +561,10 @@ class Exchange extends EventEmitter {
     if (api.readyState !== WebSocket.OPEN) {
       // webSocket is in CLOSING or CLOSED state
       return false
+    }
+
+    if (this.delayBetweenMessages) {
+      await sleep(this.delayBetweenMessages)
     }
 
     return api.readyState === WebSocket.OPEN
@@ -698,6 +708,20 @@ class Exchange extends EventEmitter {
     api._connected.splice(connectedIndex, 1)
 
     return true
+  }
+
+  getEstimatedTimeToConnect(count) {
+    if (!this.delayBetweenMessages) {
+      return count
+    }
+
+    const delay = count * this.delayBetweenMessages
+
+    if (this.maxConnectionsPerApi && count > this.maxConnectionsPerApi) {
+      return delay / Math.ceil(count / this.maxConnectionsPerApi)
+    }
+
+    return delay
   }
 }
 

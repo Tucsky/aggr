@@ -29,7 +29,7 @@
           <input type="checkbox" class="form-control" :checked="showVerticalGridlines" :id="paneId + 'showVerticalGridlines'" />
           <div class="mr8"></div>
         </label>
-        <label :for="paneId + 'showVerticalGridlines'" class="-fill -center ">Show vertical grid lines</label>
+        <label :for="paneId + 'showVerticalGridlines'" class="-fill -center">Show vertical grid lines</label>
         <verte
           v-if="showVerticalGridlines"
           picker="square"
@@ -47,7 +47,7 @@
           <input type="checkbox" class="form-control" :checked="showHorizontalGridlines" :id="paneId + 'showHorizontalGridlines'" />
           <div class="mr8"></div>
         </label>
-        <label :for="paneId + 'showHorizontalGridlines'" class="-fill -center ">Show horizontal grid lines</label>
+        <label :for="paneId + 'showHorizontalGridlines'" class="-fill -center">Show horizontal grid lines</label>
         <verte
           v-if="showHorizontalGridlines"
           picker="square"

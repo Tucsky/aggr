@@ -200,7 +200,8 @@ export default class TradesFeed {
       this.lastTimestamp = trade.timestamp
 
       if (!this.showTimeAgo) {
-        timestampText = new Date(+trade.timestamp).toLocaleTimeString().replace(/:\d{2}$/, '')
+        const date = new Date(+trade.timestamp)
+        timestampText = date.getHours() + ':' + date.getMinutes()
         timestampClass += ' -fixed'
       }
     }

@@ -161,7 +161,7 @@ export async function getStoredProductsOrFetch(exchangeId: string, endpoints: st
 }
 
 export function formatStablecoin(pair) {
-  return pair.replace(/b?usd?[a-z]?$/i, 'USD')
+  return pair.replace(/(\w{3})?b?(usd|ust|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?(PERP)?$/i, '$1$2$3')
 }
 
 export function requestProducts(exchangeId: string, forceFetch = false) {
@@ -282,10 +282,14 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     }
 
     if (noStable) {
-      localSymbolAlpha = base + formatStablecoin(quote)
+      localSymbolAlpha = formatStablecoin(base + quote)
     } else {
       localSymbolAlpha = base + quote
     }
+  }
+
+  if (type === 'perp') {
+    localSymbolAlpha += 'PERP'
   }
 
   return {
@@ -313,7 +317,7 @@ export function formatAmount(amount, decimals?: number) {
   } else if (amount >= 1000) {
     amount = +(amount / 1000).toFixed(isNaN(decimals) ? 1 : decimals) + 'K'
   } else {
-    amount = +amount.toFixed(4)
+    amount = +amount.toFixed(2)
   }
 
   if (negative) {

@@ -21,7 +21,7 @@
           @input="frequency = $event"
           @reset="reset('frequency')"
         ></slider>
-        <editable class="-center text-nowrap ml8" style="line-height:1" :content="frequency" @output="frequency = $event"></editable>
+        <editable class="-center text-nowrap ml8" style="line-height: 1" :content="frequency" @output="frequency = $event"></editable>
       </div>
     </div>
     <div v-else class="form-group mb16">
@@ -194,9 +194,7 @@
     </section>
 
     <div class="form-group mt16">
-      <label for="audio-assistant-output">
-        Output
-      </label>
+      <label for="audio-assistant-output"> Output </label>
       <div class="d-flex">
         <textarea
           id="audio-assistant-output"

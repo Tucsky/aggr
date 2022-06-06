@@ -10,9 +10,7 @@
       </div>
     </template>
     <div class="form-group mb16">
-      <label for>
-        When buy
-      </label>
+      <label for> When buy </label>
       <div class="live-annotation" v-if="liveAnnotation && focusedSide === 'buy'">
         <div class="live-annotation__tooltip">{{ liveAnnotation }}</div>
       </div>
@@ -55,9 +53,7 @@
       <p v-if="buyError" class="form-feedback"><i class="icon-warning mr4"></i> {{ buyError }}</p>
     </div>
     <div class="form-group mb16">
-      <label for>
-        When sell
-      </label>
+      <label for> When sell </label>
       <div class="live-annotation" v-if="liveAnnotation && focusedSide === 'sell'">
         <div class="live-annotation__tooltip">{{ liveAnnotation }}</div>
       </div>
@@ -415,7 +411,7 @@ export default {
 
       this._liveAnnotationTimeout = setTimeout(this.findCurrentParameter.bind(this, event.currentTarget, side), 200)
     },
-    findCurrentParameter(input, side) {
+    findCurrentParameter(input) {
       this._liveAnnotationTimeout = null
 
       if (!('selectionStart' in input && document.activeElement == input)) {
@@ -472,7 +468,7 @@ export default {
           let currentPosition = start + type.length + 1
           for (let i = 0; i < args.length; i++) {
             if (cursorIndex <= currentPosition + args[i].length - 1) {
-              this.showParameterAnnotation(type, i, side)
+              this.showParameterAnnotation(type, i)
               return
             }
 
@@ -487,9 +483,7 @@ export default {
 
       return
     },
-    showParameterAnnotation(type, i, side) {
-      // this[side + 'Audio'] = this.$refs[side + 'Behave'].value // fix behave / vue reactivity conflict
-
+    showParameterAnnotation(type, i) {
       let annotation
 
       const prop = audioParametersDefinitions[type][i]

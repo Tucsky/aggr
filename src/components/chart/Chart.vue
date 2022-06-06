@@ -50,7 +50,7 @@
         <div class="chart-overlay__content chart__indicators" v-if="showIndicatorsOverlay">
           <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" />
 
-          <a href="javascript:void(0);" @click="addIndicator" class="btn mt8 mb8 -text"> Add <i class="icon-plus ml8 "></i> </a>
+          <a href="javascript:void(0);" @click="addIndicator" class="btn mt8 mb8 -text"> Add <i class="icon-plus ml8"></i> </a>
         </div>
         <div class="chart-overlay__title pane-overlay" @click="toggleIndicatorOverlay">Indicators <i class="icon-up-thin"></i></div>
       </div>
@@ -460,7 +460,7 @@ export default class extends Mixins(PaneMixin) {
       }
 
       rangeToFetch = {
-        from: rightTime - timeframe * 10,
+        from: rightTime - timeframe * 20,
         to: rightTime
       }
     } else {

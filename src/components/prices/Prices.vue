@@ -3,21 +3,24 @@
     <pane-header :paneId="paneId">
       <prices-sort-dropdown :pane-id="paneId" />
     </pane-header>
-    <component
-      :is="animateSort ? 'transition-group' : 'div'"
-      :name="transitionGroupName"
-      tag="div"
-      class="markets-bar hide-scrollbar pane"
-      :class="[mode === 'vertical' && '-vertical']"
-    >
-      <div v-for="market in markets" :key="market.id" class="market" :class="market.status" :title="market.id">
-        <div class="market__exchange" :class="market.exchange"></div>
-        <div v-if="showPairs" class="market__pair" v-text="market.pair"></div>
-        <div class="market__price" v-text="market.price"></div>
-        <div v-if="showChange" class="market__change">({{ market.change >= 0 ? '+' : '' }}{{ market.change.toFixed(2) }}%)</div>
-        <div v-if="showVolume" class="market__volume" v-text="formatAmount(market.volume, 2)"></div>
-      </div>
-    </component>
+    <div class="markets-bar__wrapper hide-scrollbar">
+      <component
+        :is="animateSort ? 'transition-group' : 'div'"
+        :name="transitionGroupName"
+        tag="div"
+        class="markets-bar hide-scrollbar pane"
+        :class="[mode === 'horizontal' && '-horizontal']"
+      >
+        <div v-for="market in markets" :key="market.id" class="market" :class="market.status" :title="market.id">
+          <div class="market__exchange" :class="market.exchange"></div>
+          <div v-if="showPairs" class="market__pair">{{ market.local }}</div>
+          <div class="market__price" v-if="showPrice">{{ market.price }}</div>
+          <div class="market__change" v-if="showChange">{{ (market.change >= 0 ? '+' : '') + market.change.toFixed(2) }}%</div>
+          <div v-if="showVolume" class="market__volume">{{ formatAmount(market.volume, 2) }}</div>
+          <div v-if="showVolumeDelta" class="market__volume">{{ formatAmount(market.volumeDelta, 2) }}</div>
+        </div>
+      </component>
+    </div>
   </div>
 </template>
 
@@ -29,21 +32,37 @@ import aggregatorService from '@/services/aggregatorService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
 import { Market } from '@/types/test'
-import { formatAmount, formatMarketPrice, parseMarket } from '@/services/productsService'
+import { formatAmount, formatMarketPrice, parseMarket, getMarketProduct } from '@/services/productsService'
 
 type MarketsBarMarketStatus = '-pending' | '-up' | '-down' | '-neutral'
-type MarketStats = Market & { price: number; change: number; volume: number; status: MarketsBarMarketStatus }
+type MarketStats = Market & {
+  local: string
+  price: number
+  change: number
+  volume: number
+  volumeDelta: number
+  status: MarketsBarMarketStatus
+}
 
 @Component({
   components: { PaneHeader, PricesSortDropdown },
   name: 'Prices'
 })
 export default class extends Mixins(PaneMixin) {
-  mode = '-vertical'
+  mode = 'vertical'
   pauseSort = false
   markets: MarketStats[] = []
 
   private _sortFunction: (a: MarketStats, b: MarketStats) => number
+
+  private _initialValues: {
+    [id: string]: {
+      volume: number
+      volumeDelta: number
+      change: number
+    }
+  }
+  private _resetTimeout: number
 
   @Watch('pane.markets')
   private marketChange(currentMarket, previousMarkets) {
@@ -66,6 +85,15 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
+  @Watch('period', { immediate: true })
+  private periodChange(period) {
+    if (period > 0) {
+      this.periodReset()
+    } else {
+      this.clearPeriodReset()
+    }
+  }
+
   get exchanges() {
     return this.$store.state.exchanges
   }
@@ -82,8 +110,16 @@ export default class extends Mixins(PaneMixin) {
     return this.$store.state[this.paneId].showChange
   }
 
+  get showPrice() {
+    return this.$store.state[this.paneId].showPrice
+  }
+
   get showVolume() {
     return this.$store.state[this.paneId].showVolume
+  }
+
+  get showVolumeDelta() {
+    return this.$store.state[this.paneId].showVolumeDelta
   }
 
   get animateSort() {
@@ -98,6 +134,10 @@ export default class extends Mixins(PaneMixin) {
     return this.$store.state[this.paneId].sortOrder
   }
 
+  get period() {
+    return this.$store.state[this.paneId].period
+  }
+
   get transitionGroupName() {
     if (this.animateSort) {
       return 'flip-list'
@@ -107,6 +147,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   created() {
+    this._initialValues = {}
     this._onStoreMutation = this.$store.watch(state => [state[this.paneId].sortType, state[this.paneId].sortOrder], this.cacheSortFunction)
 
     this.cacheSortFunction()
@@ -120,6 +161,10 @@ export default class extends Mixins(PaneMixin) {
 
   beforeDestroy() {
     aggregatorService.off('prices', this.updateMarkets)
+
+    if (this._resetTimeout) {
+      clearTimeout(this._resetTimeout)
+    }
   }
 
   refreshMarkets() {
@@ -146,10 +191,11 @@ export default class extends Mixins(PaneMixin) {
         continue
       }
 
-      market.volume = marketStats.volume
+      market.volume = marketStats.volume - this._initialValues[market.id].volume
+      market.volumeDelta = marketStats.volumeDelta - this._initialValues[market.id].volumeDelta
 
-      if (showChange) {
-        const change = marketStats.price - marketStats.initialPrice
+      if (showChange && marketStats.price) {
+        const change = marketStats.price - marketStats.initialPrice - this._initialValues[market.id].change
 
         market.change = (change / marketStats.price) * 100
         market.status = change > 0 ? '-up' : '-down'
@@ -174,6 +220,10 @@ export default class extends Mixins(PaneMixin) {
   }
 
   removeMarketFromList(market: string) {
+    if (this._initialValues[market]) {
+      delete this._initialValues[market]
+    }
+
     const index = this.markets.indexOf(this.markets.find(m => m.id === market))
 
     if (index !== -1) {
@@ -184,17 +234,27 @@ export default class extends Mixins(PaneMixin) {
   }
 
   addMarketToList(market: Market) {
+    this._initialValues[market.id] = {
+      change: 0,
+      volume: 0,
+      volumeDelta: 0
+    }
+
+    const product = getMarketProduct(market.exchange, market.pair)
+
     this.markets.push({
       ...market,
+      local: product.local,
       status: '-pending',
       price: null,
       change: 0,
-      volume: 0
+      volume: 0,
+      volumeDelta: 0
     })
   }
 
   cacheSortFunction() {
-    const order = this.mode === '-horizontal' ? (this.sortOrder > 0 ? -1 : 1) : this.sortOrder
+    const order = this.mode === 'horizontal' ? (this.sortOrder > 0 ? -1 : 1) : this.sortOrder
     const by = this.sortType
 
     if (!by || by === 'none') {
@@ -208,21 +268,23 @@ export default class extends Mixins(PaneMixin) {
       } else {
         this._sortFunction = (a, b) => b.price - a.price
       }
-    }
-
-    if (by === 'change') {
+    } else if (by === 'change') {
       if (order === 1) {
         this._sortFunction = (a, b) => a.change - b.change
       } else {
         this._sortFunction = (a, b) => b.change - a.change
       }
-    }
-
-    if (by === 'volume') {
+    } else if (by === 'volume') {
       if (order === 1) {
         this._sortFunction = (a, b) => a.volume - b.volume
       } else {
         this._sortFunction = (a, b) => b.volume - a.volume
+      }
+    } else if (by === 'delta') {
+      if (order === 1) {
+        this._sortFunction = (a, b) => a.volumeDelta - b.volumeDelta
+      } else {
+        this._sortFunction = (a, b) => b.volumeDelta - a.volumeDelta
       }
     }
 
@@ -234,17 +296,79 @@ export default class extends Mixins(PaneMixin) {
   }
 
   onResize(width: number, height: number) {
-    this.mode = width > height * 1.5 ? 'horizontal' : 'vertical'
+    this.mode = width > height * 1.75 ? 'horizontal' : 'vertical'
+  }
+
+  getTimeToNextReset() {
+    const now = Date.now()
+    const periodMs = this.period * 1000 * 60
+    const timeOfReset = Math.ceil(now / periodMs) * periodMs
+
+    return timeOfReset - now
+  }
+
+  scheduleNextPeriodReset() {
+    if (this._resetTimeout) {
+      clearTimeout(this._resetTimeout)
+    }
+
+    this._resetTimeout = setTimeout(this.periodReset.bind(this), this.getTimeToNextReset())
+  }
+
+  periodReset() {
+    aggregatorService.once('prices', marketsStats => {
+      for (const market of this.markets) {
+        if (!marketsStats[market.id]) {
+          continue
+        }
+
+        this._initialValues[market.id].change = marketsStats[market.id].price - marketsStats[market.id].initialPrice
+        this._initialValues[market.id].volume = marketsStats[market.id].volume
+        this._initialValues[market.id].volumeDelta = marketsStats[market.id].volumeDelta
+      }
+
+      this.updateMarkets(marketsStats)
+
+      if (this.period) {
+        this.scheduleNextPeriodReset()
+      }
+    })
+  }
+
+  clearPeriodReset() {
+    for (const market in this._initialValues) {
+      this._initialValues[market].change = this._initialValues[market].volume = this._initialValues[market].volumeDelta = 0
+    }
+
+    if (this._resetTimeout) {
+      clearTimeout(this._resetTimeout)
+      this._resetTimeout = null
+    }
   }
 }
 </script>
 
 <style lang="scss" scoped>
 .markets-bar {
-  display: flex;
-  flex-direction: row;
-  height: 30px;
-  overflow-x: auto;
+  $self: &;
+  display: table;
+  text-align: right;
+
+  &__wrapper {
+    overflow-y: auto;
+    height: 100%;
+    padding: 0 0.5em;
+  }
+
+  > div {
+    display: table-row;
+
+    > div {
+      display: table-cell;
+      vertical-align: middle;
+    }
+  }
+
   height: 100%;
 
   @each $exchange, $icon in $exchanges {
@@ -253,93 +377,81 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  &.-vertical {
-    flex-direction: column;
-    overflow-x: hidden;
-    overflow-y: auto;
-    width: 100%;
-    height: 100%;
-    text-align: right;
+  &.-horizontal {
+    display: flex;
+    flex-direction: row;
+    overflow-y: hidden;
+    overflow-x: auto;
+    text-align: center;
+
+    #{$self}__wrapper {
+      display: block;
+    }
 
     .market {
-      &__price {
-        margin-left: auto;
-        flex-basis: auto;
-      }
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.25em;
 
-      &__pair {
-        text-align: left;
-        overflow: hidden;
-        text-overflow: ellipsis;
+      > div {
+        display: block;
+        padding: 0;
       }
 
       &__change {
-        margin-left: 0.5em;
+        width: auto;
       }
     }
   }
-}
 
-.market {
-  padding: 0.5em;
-  display: flex;
-  flex-direction: row;
-  font-size: 0.875em;
-  align-items: center;
-  flex-grow: 1;
-  position: relative;
-
-  &__exchange {
-    background-repeat: no-repeat;
-    background-size: 1.25em;
-    width: 2em;
-    align-self: stretch;
-    flex-shrink: 0;
-    background-position: center;
-  }
-
-  &__pair {
-    white-space: nowrap;
-    margin-right: 0.5rem;
-    padding-bottom: 2px;
-  }
-
-  &__volume {
-    margin-left: 0.5rem;
+  .market {
+    font-size: 0.875em;
     font-family: $font-monospace;
-    flex-basis: 20%;
-  }
 
-  &__price {
-    font-family: $font-monospace;
-    flex-basis: 20%;
-  }
+    > div {
+      padding: 0 0.25em;
+    }
 
-  &__change {
-    font-family: $font-monospace;
-  }
+    &.-up {
+      background-color: transparent;
+      color: lighten($green, 10%);
+    }
 
-  &.-up {
-    background-color: transparent;
-    color: lighten($green, 10%);
-  }
+    &.-down {
+      background-color: transparent;
+      color: $red;
+    }
 
-  &.-down {
-    background-color: transparent;
-    color: $red;
-  }
+    &.-neutral {
+      color: var(--theme-color-o50);
+    }
 
-  &.-neutral {
-    color: var(--theme-color-o50);
-  }
+    &.-pending {
+      background-color: rgba(var(--theme-color-base), 0.2);
+      opacity: 0.5;
+    }
 
-  &.-pending {
-    background-color: rgba(var(--theme-color-base), 0.2);
-    opacity: 0.5;
-  }
+    &__change {
+      width: 1px;
+      padding-left: 0.25em;
+    }
 
-  &.-hidden {
-    text-decoration: line-through;
+    &__exchange {
+      background-repeat: no-repeat;
+      background-size: 1.25em;
+      width: 2em;
+      align-self: stretch;
+      flex-shrink: 0;
+      background-position: center;
+    }
+
+    &__pair {
+      white-space: nowrap;
+      margin-right: 0.5rem;
+      font-family: $font-base;
+      text-align: left;
+    }
   }
 }
 </style>
