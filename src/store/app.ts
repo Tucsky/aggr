@@ -89,8 +89,8 @@ const state = {
 } as AppState
 
 const actions = {
-  async boot({ commit }) {
-    commit('SET_API_SUPPORTED_PAIRS', process.env.VUE_APP_API_SUPPORTED_PAIRS)
+  async boot({ commit, dispatch }) {
+    await dispatch('getApiSupportedPairs')
     commit('SET_API_SUPPORTED_TIMEFRAMES', process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES)
     commit('SET_VERSION', process.env.VUE_APP_VERSION)
     commit('SET_BUILD_DATE', process.env.VUE_APP_BUILD_DATE)
@@ -204,6 +204,41 @@ const actions = {
     }
 
     commit('TOGGLE_SEARCH', false)
+  },
+  async getApiSupportedPairs({ commit }) {
+    let products = process.env.VUE_APP_API_SUPPORTED_PAIRS
+
+    if (products === 'undefined') {
+      products = []
+    }
+
+    if (process.env.VUE_APP_API_SUPPORTED_PAIRS_URL) {
+      const now = Date.now()
+
+      try {
+        const cache = JSON.parse(localStorage.getItem('API_SUPPORTED_PAIRS'))
+
+        if (!cache || !cache.products) {
+          throw new Error('api supported pairs products cache is invalid')
+        }
+
+        if (now - cache.timestamp > 1000 * 60 * 15) {
+          throw new Error('api supported pairs products cache has expired')
+        }
+
+        products = cache.products
+      } catch (error) {
+        products = await fetch(process.env.VUE_APP_API_SUPPORTED_PAIRS_URL)
+          .then(response => response.json())
+          .catch(err => {
+            console.log(err)
+          })
+
+        localStorage.setItem('API_SUPPORTED_PAIRS', JSON.stringify({ products, timestamp: now }))
+      }
+    }
+
+    commit('SET_API_SUPPORTED_PAIRS', products)
   }
 } as ActionTree<AppState, ModulesState>
 

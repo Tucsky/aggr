@@ -137,7 +137,9 @@ export default class extends Exchange {
       return this.emitLiquidations(
         api.id,
         json[1]
-          .filter(a => api._connected.indexOf(a[4].substring(1)) !== -1)
+          .filter(
+            liquidation => !liquidation[8] && !liquidation[10] && !liquidation[11] && api._connected.indexOf(liquidation[4].substring(1)) !== -1
+          )
           .map(a => {
             const pair = a[4].substring(1)
 

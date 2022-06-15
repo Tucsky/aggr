@@ -228,7 +228,7 @@ export default class ChartController {
 
       cachedMarkets[marketKey] = {
         active: store.state.exchanges[exchange] && !store.state.exchanges[exchange].disabled && !store.state[this.paneId].hiddenMarkets[marketKey],
-        index: localPair,
+        index: localPair.replace(/PERP$/, ''),
         historical: historicalMarkets.indexOf(marketKey) !== -1
       }
 

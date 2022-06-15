@@ -159,7 +159,7 @@ class Aggregator {
         trade.originalPrice = this.marketsStats[marketKey].price || trade.price
       }
 
-      trade.count = 1
+      trade.count = trade.count || 1
 
       this.processTrade(trade)
     }
@@ -187,7 +187,7 @@ class Aggregator {
         if (aggTrade.timestamp + this.settings.aggregationLength > trade.timestamp && aggTrade.side === trade.side) {
           aggTrade.size += trade.size
           aggTrade.price = trade.price
-          aggTrade.count++
+          aggTrade.count += trade.count || 1
           continue
         } else {
           this.pendingTrades.push(this.processTrade(aggTrade))
@@ -196,7 +196,7 @@ class Aggregator {
 
       trade.originalPrice = this.marketsStats[marketKey].price || trade.price
 
-      trade.count = 1
+      trade.count = trade.count || 1
       this.aggregationTimeouts[marketKey] = now + this.baseAggregationTimeout
       this.onGoingAggregations[marketKey] = trade
     }

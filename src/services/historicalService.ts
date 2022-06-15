@@ -14,7 +14,7 @@ export interface HistoricalResponse {
 class HistoricalService extends EventEmitter {
   promisesOfData: { [keyword: string]: Promise<HistoricalResponse> } = {}
 
-  getHistoricalMarktets(markets: string[]) {
+  filterOutUnavailableMarkets(markets: string[]) {
     return markets.filter(market => store.state.app.historicalMarkets.indexOf(market) !== -1)
   }
 
@@ -28,6 +28,7 @@ class HistoricalService extends EventEmitter {
 
     return url
   }
+
   fetch(from: number, to: number, timeframe: number, markets: string[]): Promise<HistoricalResponse> {
     const url = this.getApiUrl(from, to, timeframe, markets)
 

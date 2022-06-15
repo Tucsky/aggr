@@ -22,6 +22,7 @@ process.env.VUE_APP_PUBLIC_VAPID_KEY = process.env.PUBLIC_VAPID_KEY
 process.env.VUE_APP_API_URL = process.env.API_URL
 process.env.VUE_APP_API_SUPPORTED_PAIRS = process.env.API_SUPPORTED_PAIRS
 process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES = process.env.API_SUPPORTED_TIMEFRAMES
+process.env.VUE_APP_API_SUPPORTED_PAIRS_URL = process.env.API_SUPPORTED_PAIRS_URL
 
 const publicPath = process.env.PUBLIC_PATH || '/'
 
