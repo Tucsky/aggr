@@ -222,7 +222,11 @@ const actions = {
           throw new Error('api supported pairs products cache is invalid')
         }
 
-        if (now - cache.timestamp > 1000 * 60 * 15) {
+        if (!cache.products.length) {
+          throw new Error('api supported pairs need a refresh')
+        }
+
+        if (now - cache.timestamp > 1000 * 60 * 5) {
           throw new Error('api supported pairs products cache has expired')
         }
 

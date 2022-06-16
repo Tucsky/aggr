@@ -144,7 +144,14 @@
                 <div :class="'icon-' + id"></div>
                 <span>
                   <span v-text="id"></span>
-                  <a v-if="canRefreshProducts" href="javascript:void(0);" class="-text" @click="refreshExchangeProducts(id)" title="Refresh products">
+                  <a
+                    v-if="canRefreshProducts"
+                    href="javascript:void(0);"
+                    class="-text"
+                    @click="refreshExchangeProducts(id)"
+                    :title="`Refresh ${id}'s products`"
+                    v-tippy
+                  >
                     <i class="icon-refresh ml8"></i>
                   </a>
                 </span>
@@ -158,7 +165,8 @@
               href="javascript:void(0);"
               class="search-filters__refresh-all -text"
               @click="refreshExchangeProducts()"
-              title="Refresh products"
+              title="Refresh ALL exchange's products (might take a while)"
+              v-tippy
             >
               <i class="icon-refresh ml8"></i>
             </a>
@@ -210,25 +218,23 @@
           />
         </div>
         <div class="search__results">
-          <transition-height name="search-history" single>
-            <div v-if="showHistory && previousSearchSelections.length" class="search-history">
-              <div class="search__tags">
-                <button
-                  v-for="savedSelection of previousSearchSelections"
-                  :key="savedSelection.label"
-                  class="btn -accent -accent-200 -pill -small"
-                  :title="savedSelection.markets.join(', ')"
-                  @click="selectMarkets(savedSelection.markets, $event.shiftKey)"
-                >
-                  <span v-if="savedSelection.count > 1" class="badge -invert ml8" v-text="savedSelection.markets.length"></span>
-                  <span>{{ savedSelection.label }}</span>
-                </button>
-              </div>
-              <button class="btn -outline search-history__clear" v-tippy title="Clear recent searches<br><i>💡 SHIFT+CLIC to delete 1 item</i>">
-                <i class="icon-trash -small" @click="$store.commit('settings/CLEAR_SEARCH_HISTORY')"></i>
+          <div v-if="previousSearchSelections.length" class="search-history">
+            <carousel class="search__tags">
+              <button
+                v-for="savedSelection of previousSearchSelections"
+                :key="savedSelection.label"
+                class="btn -accent -accent-200 -pill -small"
+                :title="savedSelection.markets.join(', ')"
+                @click="selectMarkets(savedSelection.markets, $event.shiftKey)"
+              >
+                <span v-if="savedSelection.count > 1" class="badge -invert ml8" v-text="savedSelection.markets.length"></span>
+                <span>{{ savedSelection.label }}</span>
               </button>
-            </div>
-          </transition-height>
+            </carousel>
+            <button class="btn -outline search-history__clear" v-tippy title="Clear recent searches<br><i>💡 SHIFT+CLIC to delete 1 item</i>">
+              <i class="icon-trash -small" @click="$store.commit('settings/CLEAR_SEARCH_HISTORY')"></i>
+            </button>
+          </div>
           <template v-if="results.length">
             <div v-if="page > 0" class="d-flex mt8">
               <button class="btn -text mlauto switch-page" @click="showLess">... go page {{ page }}</button>
@@ -339,7 +345,7 @@ import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import { formatStablecoin, indexedProducts, indexProducts, requestProducts } from '@/services/productsService'
-import TransitionHeight from '@/components/framework/TransitionHeight.vue'
+import Carousel from '@/components/framework/Carousel.vue'
 
 const RESULTS_PER_PAGE = 25
 
@@ -347,7 +353,7 @@ export default {
   mixins: [DialogMixin],
   components: {
     Dialog,
-    TransitionHeight
+    Carousel
   },
   props: {
     paneId: {
@@ -1001,8 +1007,6 @@ export default {
   }
 
   &__tags {
-    display: flex;
-    flex-wrap: wrap;
     padding: 6px 2rem 2px 6px;
 
     &-controls > button,
@@ -1060,8 +1064,10 @@ export default {
     }
 
     .search__tags {
-      padding-right: 0;
-      margin-right: auto;
+      padding: 0;
+      max-width: 100%;
+      overflow: hidden;
+      flex-grow: 1;
 
       button,
       button:hover {
@@ -1134,26 +1140,5 @@ export default {
   line-height: 0;
   border: 0;
   background: 0 !important;
-}
-
-.search-history-enter-active,
-.search-history-leave-active {
-  overflow: hidden;
-}
-.search-history-enter-active {
-  transition: all 0.4s $ease-elastic, height 0.4s $ease-out-expo;
-}
-.search-history-leave-active {
-  transition: all 1s $ease-out-expo;
-}
-
-.search-history-enter,
-.search-history-leave-to {
-  opacity: 0;
-}
-
-.search-history-enter,
-.search-history-leave-to {
-  transform: translateY(-1rem);
 }
 </style>
