@@ -7,9 +7,9 @@
       '-expanded': expanded
     }"
   >
-    <div class="settings-exchange__header">
-      <div class="settings-exchange__identity" :title="'Toggle ' + id" v-tippy @click="toggleExchange">
-        <div class="settings-exchange__name">{{ name }}</div>
+    <div class="settings-exchange__header" @click="toggleExchange">
+      <div class="settings-exchange__name">
+        <span>{{ name }}</span>
       </div>
       <div class="settings-exchange__controls">
         <button class="settings-exchange__more" @click.stop.prevent="expanded = !expanded">
@@ -21,29 +21,20 @@
       <div class="form-group" v-if="markets.length">
         <small class="mb4 d-block">Connections</small>
         <div>
-          <div v-for="market in markets" :key="market.identifier" class="d-flex">
-            <div class="-fill -center">{{ market.pair }}</div>
-            <div class="-center">{{ prices[market.identifier] }}</div>
+          <div v-for="market in markets" :key="market.id" class="d-flex">
+            <div class="-fill -center">{{ market.id }}</div>
           </div>
         </div>
-      </div>
-      <div class="form-group mt8">
-        <small class="mb4 d-block">
-          Products : <strong>{{ indexedProducts.length }}</strong>
-        </small>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-// import { getExchangeById } from '@/exchanges'
-// import Exchange from '@/exchanges/exchangeAbstract'
-// import aggregatorService from '@/services/aggregatorService'
-import { formatAmount, formatPrice } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '@/components/framework/picker/Slider.vue'
 import aggregatorService from '@/services/aggregatorService'
+import { formatAmount } from '@/services/productsService'
 
 @Component({
   name: 'Exchange',
@@ -78,15 +69,11 @@ export default class extends Vue {
   }
 
   get markets() {
-    return this.$store.state.app.activeMarkets.filter(m => m.exchange === this.id).sort((a, b) => this.prices[a.id] - this.prices[b.id])
+    return (Object as any).values(this.$store.state.panes.marketsListeners).filter(a => a.exchange === this.id)
   }
 
   get active() {
     return this.markets.length
-  }
-
-  get indexedProducts() {
-    return this.$store.state.app.indexedProducts[this.id] || []
   }
 
   async toggleExchange() {
@@ -96,16 +83,12 @@ export default class extends Vue {
   formatAmount(amount) {
     return formatAmount(amount)
   }
-
-  formatPrice(price) {
-    return formatPrice(price)
-  }
 }
 </script>
 
 <style lang="scss">
 .settings-exchange {
-  background-color: rgba(white, 0.15);
+  background-color: var(--theme-background-o75);
   transition: all 0.2s $ease-out-expo;
   border-radius: 3px;
   margin-bottom: 8px;
@@ -116,24 +99,12 @@ export default class extends Vue {
     margin-right: 8px;
   }
 
-  &.-loading {
-    background-color: $blue;
-
-    .settings-exchange__header:before {
-      transition: all 0.2s $ease-elastic;
-      display: block;
-      opacity: 1;
-      width: 16px;
-      height: 16px;
-    }
-  }
-
   &.-enabled {
     .settings-exchange__threshold {
       display: block;
     }
 
-    .settings-exchange__name:before {
+    .settings-exchange__name span:before {
       width: 0%;
     }
   }
@@ -164,46 +135,41 @@ export default class extends Vue {
 
   &.-expanded {
     .settings-exchange__more i:before {
-      content: unicode($icon-up);
+      content: unicode($icon-up-thin);
     }
   }
 }
 
-.settings-exchange__identity {
+.settings-exchange__name {
   position: relative;
-  margin: 0 0 0 0.5rem;
   display: flex;
   flex-direction: column;
   height: 40px;
   justify-content: center;
-  font-size: 80%;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-}
+  font-size: 0.875em;
+  padding-left: 0.75em;
+  flex-grow: 1;
 
-.settings-exchange__name {
-  position: relative;
-  margin-right: auto;
-  text-transform: uppercase;
-  white-space: normal;
-  font-weight: 600;
+  > span {
+    position: relative;
+    margin-right: auto;
+    text-transform: uppercase;
+    white-space: normal;
+    font-weight: 600;
 
-  .icon-line-chart {
-    position: absolute;
-    right: -1.5em;
-    top: 0.05em;
-  }
-
-  &:before {
-    content: '';
-    position: absolute;
-    top: calc(50% + 1px);
-    height: 1px;
-    background-color: white;
-    transition: width 0.2s $ease-out-expo 0.2s;
-    left: -2px;
-    width: calc(100% + 4px);
+    &:before {
+      content: '';
+      position: absolute;
+      top: calc(50% - 1px);
+      height: 2px;
+      background-color: currentColor;
+      transition: width 0.2s $ease-out-expo 0.2s;
+      left: -3px;
+      width: calc(100% + 8px);
+    }
   }
 }
 
@@ -232,35 +198,6 @@ export default class extends Vue {
   position: relative;
   cursor: pointer;
 
-  &:before {
-    content: '';
-    width: 0px;
-    height: 0px;
-
-    background-color: #fff;
-    border-radius: 50%;
-    animation: circle-scaleout 1s infinite ease-in-out;
-    transition: all 0.2s $ease-elastic, visibility 0.2s linear 0.2s;
-    left: 3px;
-    display: none;
-    align-self: center;
-    position: relative;
-
-    opacity: 0;
-
-    @keyframes circle-scaleout {
-      0% {
-        -webkit-transform: scale(0);
-        transform: scale(0);
-      }
-      100% {
-        -webkit-transform: scale(1);
-        transform: scale(1);
-        opacity: 0;
-      }
-    }
-  }
-
   .icon-warning {
     display: none;
   }
@@ -283,8 +220,8 @@ export default class extends Vue {
     display: flex;
     align-items: center;
 
-    .icon-down,
-    .icon-up {
+    .icon-down-thin,
+    .icon-up-thin {
       font-size: 80%;
     }
 

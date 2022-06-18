@@ -1,18 +1,20 @@
-import { Bar } from '@/components/chart/chartController'
-import { parseMarket } from '@/utils/helpers'
+import { Bar } from '@/components/chart/chart'
+import { floorTimestampToTimeframe, handleFetchError, isOddTimeframe } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import store from '../store'
+import { parseMarket } from './productsService'
 
 export interface HistoricalResponse {
-  format: 'point'
   from: number
   to: number
   data: Bar[]
 }
 
 class HistoricalService extends EventEmitter {
-  getHistoricalMarkets(markets: string[]) {
+  promisesOfData: { [keyword: string]: Promise<HistoricalResponse> } = {}
+
+  filterOutUnavailableMarkets(markets: string[]) {
     return markets.filter(market => store.state.app.historicalMarkets.indexOf(market) !== -1)
   }
 
@@ -30,58 +32,49 @@ class HistoricalService extends EventEmitter {
   fetch(from: number, to: number, timeframe: number, markets: string[]): Promise<HistoricalResponse> {
     const url = this.getApiUrl(from, to, timeframe, markets)
 
+    if (this.promisesOfData[url]) {
+      return this.promisesOfData[url]
+    }
+
     store.commit('app/TOGGLE_LOADING', true)
 
-    return new Promise((resolve, reject) => {
-      fetch(url)
-        .then(response => response.json())
-        .then(json => {
-          if (!json || typeof json !== 'object') {
-            return reject('invalid-data')
-          }
-
-          const format = json.format
-          let data = json.results
-
-          if (!data.length) {
-            return reject('no-more-data')
-          }
-
-          switch (json.format) {
-            case 'point':
-              ;({ from, to, data, markets } = this.normalisePoints(data, timeframe, markets))
-              break
-            default:
-              break
-          }
-
-          const output = {
-            format: format,
-            data: data,
-            from: from,
-            to: to,
-            markets: markets
-          }
-
-          resolve(output)
+    this.promisesOfData[url] = fetch(url)
+      .then(response =>
+        response.json().then(json => {
+          json.status = response.status
+          return json
         })
-        .catch(err => {
-          err &&
-            store.dispatch('app/showNotice', {
-              type: 'error',
-              title: `API error (${
-                err.response && err.response.data && err.response.data.error ? err.response.data.error : err.message || 'unknown error'
-              })`
-            })
+      )
+      .then(json => {
+        if (!json || json.error) {
+          throw new Error(json && json.error ? json.error : 'empty-response')
+        }
 
-          reject()
-        })
-        .then(() => {
-          store.commit('app/TOGGLE_LOADING', false)
-        })
-    })
+        if (!json.results.length) {
+          throw new Error('No more data')
+        }
+
+        if (json.format !== 'point') {
+          throw new Error('Bad data')
+        }
+
+        return this.normalizePoints(json.results, json.columns, timeframe, markets)
+      })
+      .catch(err => {
+        handleFetchError(err)
+
+        throw err
+      })
+      .then(data => {
+        store.commit('app/TOGGLE_LOADING', false)
+        delete this.promisesOfData[url]
+
+        return data
+      })
+
+    return this.promisesOfData[url]
   }
-  normalisePoints(data, timeframe, markets: string[]) {
+  normalizePoints(data, columns, timeframe, markets: string[]) {
     const lastClosedBars = {}
 
     markets = markets.slice()
@@ -103,22 +96,24 @@ class HistoricalService extends EventEmitter {
 
     const refs = {}
 
+    const isOdd = isOddTimeframe(timeframe)
+
     for (let i = 0; i < data.length; i++) {
       if (!data[i].time && data[i][0]) {
         // new format is array, transform into objet
         data[i] = {
-          time: data[i][0],
-          cbuy: data[i][1],
-          close: data[i][2],
-          csell: data[i][3],
-          high: data[i][4],
-          lbuy: data[i][5],
-          low: data[i][6],
-          lsell: data[i][7],
-          market: data[i][8],
-          open: data[i][9],
-          vbuy: data[i][10],
-          vsell: data[i][11]
+          time: typeof columns['time'] !== 'undefined' ? data[i][columns['time']] : 0,
+          cbuy: typeof columns['cbuy'] !== 'undefined' ? data[i][columns['cbuy']] : 0,
+          close: typeof columns['close'] !== 'undefined' ? data[i][columns['close']] : 0,
+          csell: typeof columns['csell'] !== 'undefined' ? data[i][columns['csell']] : 0,
+          high: typeof columns['high'] !== 'undefined' ? data[i][columns['high']] : 0,
+          lbuy: typeof columns['lbuy'] !== 'undefined' ? data[i][columns['lbuy']] : 0,
+          low: typeof columns['low'] !== 'undefined' ? data[i][columns['low']] : 0,
+          lsell: typeof columns['lsell'] !== 'undefined' ? data[i][columns['lsell']] : 0,
+          market: typeof columns['market'] !== 'undefined' ? data[i][columns['market']] : 0,
+          open: typeof columns['open'] !== 'undefined' ? data[i][columns['open']] : 0,
+          vbuy: typeof columns['vbuy'] !== 'undefined' ? data[i][columns['vbuy']] : 0,
+          vsell: typeof columns['vsell'] !== 'undefined' ? data[i][columns['vsell']] : 0
         }
         data[i].timestamp = data[i].time
       } else {
@@ -134,7 +129,7 @@ class HistoricalService extends EventEmitter {
         }
 
         // format pending bar time floored to timeframe
-        data[i].timestamp = Math.floor(+new Date(data[i].time) / 1000 / timeframe) * timeframe
+        data[i].timestamp = floorTimestampToTimeframe(data[i].time / 1000, timeframe, isOdd)
 
         if (!lastClosedBars[data[i].market] || lastClosedBars[data[i].market].timestamp < data[i].timestamp) {
           // store reference bar for this market (either because it didn't exist or because reference bar time is < than pending bar time)
@@ -170,18 +165,6 @@ class HistoricalService extends EventEmitter {
       data[i].exchange = exchange
       data[i].pair = pair
       delete data[i].time
-    }
-
-    // markets.length && console.warn('missing markets', markets.join(', '))
-
-    for (const id of markets) {
-      // const market: string[] = id.split(':')
-
-      if (!refs[id]) {
-        console.warn(`Server did not send anything about ${id} but client expected it (check if server is tracking this market)`)
-
-        continue
-      }
     }
 
     return {

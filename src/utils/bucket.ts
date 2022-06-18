@@ -1,4 +1,4 @@
-import { defaultPlotsOptions } from '@/components/chart/chartOptions'
+import { defaultPlotsOptions } from '@/components/chart/options'
 import { Volumes } from '@/types/test'
 import { IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts'
 import store from '../store'
@@ -101,7 +101,7 @@ export default class Bucket {
 
   appendStack(timestamp) {
     if (!timestamp) {
-      timestamp = +new Date()
+      timestamp = Date.now()
     }
 
     if (!this.stacks.length || this.stacks[this.stacks.length - 1]) {

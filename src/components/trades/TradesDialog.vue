@@ -1,20 +1,23 @@
 <template>
-  <Dialog @clickOutside="close" class="pane-dialog">
+  <Dialog @clickOutside="close" class="pane-dialog -medium -mobile-fs">
     <template v-slot:header>
       <div class="title -editable" @dblclick="renamePane" v-text="name"></div>
       <div class="column -center"></div>
     </template>
-    <stats-pane-settings :paneId="paneId" />
+    <trades-settings :paneId="paneId" />
+    <footer>
+      <presets type="trades" :adapter="getPreset" @apply="resetPane($event)" class="-left -top" />
+    </footer>
   </Dialog>
 </template>
 
 <script>
 import DialogMixin from '../../mixins/dialogMixin'
 import PaneDialogMixin from '../../mixins/paneDialogMixin'
-import StatsPaneSettings from './StatsPaneSettings.vue'
+import TradesSettings from './TradesSettings.vue'
 
 export default {
-  components: { StatsPaneSettings },
+  components: { TradesSettings },
   mixins: [DialogMixin, PaneDialogMixin],
   data: () => ({
     renaming: false

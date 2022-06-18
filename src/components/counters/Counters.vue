@@ -1,8 +1,8 @@
 <template>
   <div class="pane-counters">
     <pane-header :paneId="paneId" />
-    <ul class="counters hide-scrollbar">
-      <li v-for="(step, index) in activeSteps" :key="index" v-bind:duration="step.duration" class="counter">
+    <div class="counters hide-scrollbar">
+      <div v-for="(step, index) in activeSteps" :key="index" v-bind:duration="step.duration" class="counter">
         <div class="counter__side -buy" v-bind:style="{ width: (step.buy / (step.buy + step.sell)) * 100 + '%' }">
           <span v-if="!countersCount">{{ formatAmount(step.buy) }}</span>
           <span v-else>{{ step.buy }}</span>
@@ -11,15 +11,16 @@
           <span v-if="!countersCount">{{ formatAmount(step.sell) }}</span>
           <span v-else>{{ step.sell }}</span>
         </div>
-      </li>
-    </ul>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 
-import { formatAmount, formatPrice, getBucketId, getHms } from '../../utils/helpers'
+import { getBucketId, getHms } from '@/utils/helpers'
+import { formatAmount } from '@/services/productsService'
 
 import aggregatorService from '@/services/aggregatorService'
 import PaneMixin from '@/mixins/paneMixin'
@@ -50,15 +51,10 @@ interface CounterStep {
 export default class extends Mixins(PaneMixin) {
   steps: CounterStep[] = []
 
-  private _onStoreMutation: () => void
   private _populateCountersInterval: number
   private _activeChunk: CounterChunk
   private _counters: Counter[]
   private _feed: string = null
-
-  get preferQuoteCurrencySize() {
-    return this.$store.state.settings.preferQuoteCurrencySize
-  }
 
   get liquidationsOnly() {
     return this.$store.state[this.paneId].liquidationsOnly
@@ -106,8 +102,6 @@ export default class extends Mixins(PaneMixin) {
     if (this._feed) {
       aggregatorService.off(this._feed, this.onVolume)
     }
-
-    this._onStoreMutation()
 
     clearInterval(this._populateCountersInterval)
   }
@@ -192,7 +186,7 @@ export default class extends Mixins(PaneMixin) {
     }
   }
   populateCounters() {
-    const now = +new Date()
+    const now = Date.now()
 
     if (this._activeChunk.timestamp) {
       this._counters[0].chunks.push({
@@ -244,14 +238,14 @@ export default class extends Mixins(PaneMixin) {
   formatAmount(amount) {
     return formatAmount(amount)
   }
-
-  formatPrice(price) {
-    return formatPrice(price)
-  }
 }
 </script>
 
 <style lang="scss">
+.pane-counters.-large {
+  font-weight: 500;
+}
+
 .counters {
   display: flex;
   flex-direction: column;
@@ -260,6 +254,7 @@ export default class extends Mixins(PaneMixin) {
   padding: 0;
   height: 100%;
   overflow: auto;
+  color: white;
 }
 
 .counter {
@@ -274,43 +269,18 @@ export default class extends Mixins(PaneMixin) {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(black, 0.1);
-    border-radius: 4px;
+    border-radius: $border-radius-small;
     padding: 0.25em;
-    font-size: 0.85em;
+    font-size: 0.825em;
     text-align: center;
     pointer-events: none;
     line-height: 1;
-    color: rgba(white, 0.75);
     font-family: $font-monospace;
+    opacity: 0.5;
   }
 
-  .highlight {
-    position: absolute;
-    top: -0.2em;
-    animation: fly-high 2s $ease-in-expo;
-    opacity: 0;
-    padding: 0.3em 0.4em;
-    box-shadow: 0 1px 1px rgba(black, 0.5);
-    box-shadow: 0 1px 16px rgba(black, 0.1);
-    z-index: 10;
-    font-size: 0.5em;
-    font-weight: 600;
-    font-family: 'Barlow Semi Condensed';
-
-    @keyframes fly-high {
-      0% {
-        opacity: 1;
-        transform: translateY(-10%);
-      }
-      75% {
-        opacity: 0.75;
-      }
-      100% {
-        transform: translateY(-2em);
-        opacity: 0;
-      }
-    }
+  &:hover:before {
+    background-color: black;
   }
 
   &__side {
@@ -320,30 +290,17 @@ export default class extends Mixins(PaneMixin) {
 
     span {
       position: relative;
-      padding: 0.5em;
-      font-size: 0.9em;
+      padding: 0 0.5em;
       display: block;
     }
 
     &.-buy {
       background-color: $green;
-
-      .highlight {
-        background-color: lighten($green, 10%);
-
-        left: 0.5em;
-      }
     }
 
     &.-sell {
       background-color: $red;
       justify-content: flex-end;
-
-      .highlight {
-        background-color: lighten($red, 10%);
-
-        right: 0.5em;
-      }
     }
   }
 }

@@ -49,6 +49,10 @@
   font-weight: 500;
   color: white;
 
+  &__title {
+    white-space: pre-line;
+  }
+
   &__icon {
     padding: 0.25rem;
 
@@ -97,8 +101,4 @@
     margin-top: 0.5rem;
     display: block;
   }
-}
-
-#app.-light .notice .notice__wrapper {
-  background-color: lighten($green, .5);
 }

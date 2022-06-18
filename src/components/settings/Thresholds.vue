@@ -2,33 +2,62 @@
   <div class="thresholds" :class="{ '-dragging': dragging, '-rendering': rendering }">
     <table class="table thresholds-table" v-if="showThresholdsAsTable">
       <transition-group name="flip-list" tag="tbody">
-        <tr v-for="(threshold, index) in thresholdsRows" :key="threshold.id" :class="{ '-divider': !!threshold.divider }">
-          <template v-if="threshold.divider">
-            <td colspan="100%" v-text="threshold.divider"></td>
+        <tr v-for="(threshold, index) in thresholds" :key="threshold.id">
+          <td class="table-input">
+            <label class="checkbox-control -small mb4" v-if="index === thresholds.length - 1">
+              <input
+                type="checkbox"
+                class="form-control"
+                :checked="threshold.max"
+                @change="$store.commit(paneId + '/TOGGLE_THRESHOLD_MAX', threshold.id)"
+              />
+              <div></div>
+            </label>
+          </td>
+          <td class="table-input">
+            <i class="icon icon-currency"></i>
+            <editable
+              placeholder="Amount*"
+              class="pl16 w-100"
+              :content="threshold.amount"
+              @output="
+                $store.commit(paneId + '/SET_THRESHOLD_AMOUNT', {
+                  id: threshold.id,
+                  value: $event
+                })
+              "
+            />
+          </td>
+          <template v-if="index === thresholds.length - 1 && threshold.max">
+            <td>
+              <small class="pl8 text-danger"><strong>max</strong></small>
+            </td>
+            <td :colspan="useAudio ? 4 : 3"></td>
           </template>
           <template v-else>
             <td class="table-input">
-              <editable
-                placeholder="Amount*"
-                class="pr16 w-100"
-                :content="threshold.amount"
-                @output="
-                  $store.commit(paneId + '/SET_THRESHOLD_AMOUNT', {
+              <input
+                type="text"
+                placeholder="Giphy"
+                :value="threshold.buyGif"
+                @change="
+                  $store.commit(paneId + '/SET_THRESHOLD_GIF', {
                     id: threshold.id,
-                    value: $event
+                    side: 'buy',
+                    value: $event.target.value
                   })
                 "
               />
-              <i class="icon icon-currency"></i>
             </td>
             <td class="table-input">
               <input
                 type="text"
                 placeholder="Giphy"
-                :value="threshold.gif"
+                :value="threshold.sellGif"
                 @change="
                   $store.commit(paneId + '/SET_THRESHOLD_GIF', {
                     id: threshold.id,
+                    side: 'sell',
                     value: $event.target.value
                   })
                 "
@@ -73,18 +102,18 @@
               title="Configure threshold audio"
               v-tippy
             >
-              <button class="btn  -green"><i class="icon-volume-high"></i></button>
-            </td>
-            <td
-              v-if="thresholds.length > 2 && threshold.id !== 'liquidations' && index > 1"
-              class="table-action"
-              @click="deleteThreshold(threshold.id)"
-              title="Remove"
-              v-tippy
-            >
-              <button class="btn  -red"><i class="icon-cross"></i></button>
+              <button class="btn -text"><i class="icon-music-note"></i></button>
             </td>
           </template>
+          <td
+            v-if="thresholds.length > 2 && threshold.id !== 'liquidations' && index > 1"
+            class="table-action"
+            @click="deleteThreshold(threshold.id)"
+            title="Remove"
+            v-tippy
+          >
+            <button class="btn -text"><i class="icon-trash"></i></button>
+          </td>
         </tr>
       </transition-group>
     </table>
@@ -121,34 +150,50 @@
             transform: 'translateX(' + this.panelCaretPosition + 'px)'
           }"
         ></div>
+        <h3>@ {{ formatAmount(selectedThreshold.amount) }}</h3>
         <a href="#" class="threshold-panel__close icon-cross" @click=";(selectedThresholdId = null), (editing = false)"></a>
 
         <div class="form-group mb8 threshold-panel__gif">
-          <label>Show gif</label>
-          <input
-            type="text"
-            class="form-control w-100"
-            :value="selectedThreshold.gif"
-            @change="
-              $store.commit(paneId + '/SET_THRESHOLD_GIF', {
-                id: selectedThreshold.id,
-                value: $event.target.value
-              })
-            "
-          />
-          <small class="help-text mb4">
-            Le
-            <a href="https://tenor.com/" target="_blank">Tenor</a>
-            keyword
-          </small>
+          <div class="column">
+            <div class="form-group">
+              <label>Buy gif</label>
+              <input
+                type="text"
+                class="form-control w-100"
+                placeholder="Giphy keyword"
+                :value="selectedThreshold.buyGif"
+                @change="
+                  $store.commit(paneId + '/SET_THRESHOLD_GIF', {
+                    id: selectedThreshold.id,
+                    side: 'buy',
+                    value: $event.target.value
+                  })
+                "
+              />
+            </div>
+            <div class="form-group">
+              <label>Sell gif</label>
+              <input
+                type="text"
+                class="form-control w-100"
+                placeholder="Giphy keyword"
+                :value="selectedThreshold.sellGif"
+                @change="
+                  $store.commit(paneId + '/SET_THRESHOLD_GIF', {
+                    id: selectedThreshold.id,
+                    side: 'sell',
+                    value: $event.target.value
+                  })
+                "
+              />
+            </div>
+          </div>
         </div>
         <div class="form-group mb8 threshold-panel__colors">
           <label>Custom colors</label>
           <div class="column mt8">
             <div class="form-group column flex-center" title="When buy" v-tippy="{ placement: 'bottom' }">
-              <p class="help-text -center mr16 mt0 mb0">
-                Buy
-              </p>
+              <p class="help-text -center mr16 mt0 mb0">Buy</p>
               <verte
                 picker="square"
                 menuPosition="left"
@@ -165,9 +210,7 @@
               ></verte>
             </div>
             <div class="form-group column flex-center" title="When sell" v-tippy="{ placement: 'bottom' }">
-              <p class="help-text -center mr16 mt0 mb0">
-                Sell
-              </p>
+              <p class="help-text -center mr16 mt0 mb0">Sell</p>
               <verte
                 picker="square"
                 menuPosition="left"
@@ -192,10 +235,12 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import { formatAmount, formatPrice, sleep } from '../../utils/helpers'
+import { sleep } from '@/utils/helpers'
+import { formatAmount } from '@/services/productsService'
 
 import dialogService from '@/services/dialogService'
-import ThresholdAudioDialog from '../trades/ThresholdAudioDialog.vue'
+import ThresholdAudioDialog from '../trades/audio/ThresholdAudioDialog.vue'
+import { Threshold } from '@/store/panesSettings/trades'
 
 @Component({
   name: 'Thresholds',
@@ -204,15 +249,14 @@ import ThresholdAudioDialog from '../trades/ThresholdAudioDialog.vue'
       type: String,
       required: true
     },
-    showLiquidationsThreshold: {
-      type: Boolean,
-      default: true
+    thresholds: {
+      required: true
     }
   }
 })
 export default class extends Vue {
   paneId: string
-  showLiquidationsThreshold: boolean
+  thresholds: Threshold[]
 
   rendering = true
   dragging = null
@@ -238,10 +282,6 @@ export default class extends Vue {
   private _doResize: () => void
   private _width: number
 
-  get thresholds() {
-    return this.$store.state[this.paneId].thresholds
-  }
-
   get selectedThreshold() {
     const threshold = this.$store.getters[this.paneId + '/getThreshold'](this.selectedThresholdId)
     return threshold
@@ -251,34 +291,8 @@ export default class extends Vue {
     return this.$store.state[this.paneId].showThresholdsAsTable
   }
 
-  get preferQuoteCurrencySize() {
-    return this.$store.state.settings.preferQuoteCurrencySize
-  }
-
   get useAudio() {
     return this.$store.state.settings.useAudio
-  }
-
-  get thresholdsRows() {
-    let rows: any[] = []
-
-    if (this.showLiquidationsThreshold) {
-      rows = [
-        {
-          id: 'divider-1',
-          divider: 'For liquidations'
-        },
-        this.$store.state[this.paneId].liquidations,
-        {
-          id: 'divider-2',
-          divider: 'For trades'
-        }
-      ]
-    }
-
-    rows = [...rows, ...this.thresholds]
-
-    return rows
   }
 
   $refs!: {
@@ -374,7 +388,7 @@ export default class extends Vue {
       this.refreshCaretPosition(event.target)
 
       this._dragReference = {
-        timestamp: +new Date(),
+        timestamp: Date.now(),
         position: x
       }
     })
@@ -390,7 +404,7 @@ export default class extends Vue {
     if (
       this.selectedElement === null ||
       !this._dragReference ||
-      (+new Date() - this._dragReference.timestamp < 1000 && Math.abs(this._dragReference.position - x) < 3)
+      (Date.now() - this._dragReference.timestamp < 1000 && Math.abs(this._dragReference.position - x) < 3)
     ) {
       return
     }
@@ -421,7 +435,7 @@ export default class extends Vue {
 
     this.$store.commit(this.paneId + '/SET_THRESHOLD_AMOUNT', {
       id: this.selectedThresholdId,
-      value: +formatPrice(amount)
+      value: amount
     })
   }
 
@@ -510,7 +524,7 @@ export default class extends Vue {
   }
 
   reorderThresholds() {
-    this.$store.state[this.paneId].thresholds = this.thresholds.sort((a, b) => a.amount - b.amount)
+    this.thresholds.sort((a, b) => a.amount - b.amount)
   }
 
   deleteThreshold(id: string) {
@@ -524,6 +538,7 @@ export default class extends Vue {
   openThresholdAudio(thresholdId) {
     dialogService.open(ThresholdAudioDialog, {
       paneId: this.paneId,
+      thresholds: this.thresholds,
       thresholdId
     })
   }
@@ -618,7 +633,7 @@ export default class extends Vue {
     border-radius: 50%;
     transition: box-shadow 0.2s $ease-elastic, transform 0.2s $ease-out-expo;
     box-shadow: 0 1px 0 1px rgba(black, 0.2);
-    cursor: move;
+    cursor: grab;
 
     &:before {
       position: absolute;
@@ -627,10 +642,6 @@ export default class extends Vue {
       left: 50%;
       transform: translateX(-50%);
       font-size: 0.89em;
-    }
-
-    &.-selected {
-      box-shadow: 0 1px 0 1px rgba(black, 0.2), 0 0 0 12px rgba(white, 0.2);
     }
   }
 }
@@ -651,7 +662,7 @@ export default class extends Vue {
 
 .threshold-panel {
   position: relative;
-  background-color: var(--theme-background-200);
+  background-color: var(--theme-background-150);
   border-radius: 4px;
   padding: 1em;
   margin: 1.5em auto 0;
@@ -664,7 +675,7 @@ export default class extends Vue {
     .form-control {
       background: none;
       border: 1px solid var(--theme-background-300);
-      color: white;
+      color: var(--theme-color-base);
     }
   }
 
@@ -676,7 +687,7 @@ export default class extends Vue {
   h3 {
     font-weight: 400;
     margin: 0 0 1em;
-    color: rgba(white, 0.6);
+    color: var(--theme-color-base);
 
     [contenteditable] {
       color: black;
@@ -708,7 +719,7 @@ export default class extends Vue {
     top: -0.75em;
     border-left: 0.75em solid transparent;
     border-right: 0.75em solid transparent;
-    border-bottom: 0.75em solid var(--theme-background-200);
+    border-bottom: 0.75em solid var(--theme-background-150);
     margin-left: -1.75em;
     transition: transform 0.2s $ease-out-expo;
   }

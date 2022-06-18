@@ -28,11 +28,6 @@ export default {
     currentColor: null,
     dialogInstance: null
   }),
-  /* watch: {
-    value(newColor) {
-      this.currentColor = newColor
-    }
-  }, */
   beforeDestroy() {
     if (this.dialogInstance) {
       this.dialogInstance.close()
@@ -45,7 +40,8 @@ export default {
         color => {
           this.$emit('input', color)
         },
-        this.label
+        this.label,
+        () => this.$emit('close')
       )
     }
   }

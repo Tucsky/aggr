@@ -1,7 +1,7 @@
 <template>
-  <div class="slider" ref="wrapper" :class="{ '-vertical': vertical, '-disabled': disabled }">
-    <div class="slider__track" ref="track" v-on="trackSlide ? { mousedown: select, touchstart: select } : {}">
-      <div class="slider__fill" ref="fill"></div>
+  <div class="slider" ref="wrapper" :class="{ '-disabled': disabled }">
+    <div class="slider__track" ref="track">
+      <div class="slider__fill" ref="fill" @mousedown="select" @touchstart="select"></div>
       <div v-if="showCompletion && handles[0]" class="slider__completion" :style="`width: ${handles[0].positionX}px`"></div>
       <div
         class="slider__handle"
@@ -31,8 +31,6 @@ export default {
     gradient: Array,
     colorCode: { type: Boolean, default: false },
     label: { type: Boolean, default: false },
-    trackSlide: { type: Boolean, default: true },
-    vertical: { type: Boolean, default: false },
     disabled: { type: Boolean, default: false },
     min: { type: Number, default: 0 },
     max: { type: Number, default: 255 },
@@ -126,9 +124,13 @@ export default {
      */
     select(event) {
       event.preventDefault()
-      event.stopPropagation()
+
       // check if  left mouse is clicked
       if (event.buttons === 2) return
+
+      if (this._dblClickTimeout) {
+        clearTimeout(this._dblClickTimeout)
+      }
 
       // check if a double click
       if (this.pendingDblClick) {
@@ -137,11 +139,8 @@ export default {
         return
       }
 
-      // next click might be double click, for the next 300ms
+      // next click might be double click, for the next 150ms
       this.pendingDblClick = true
-      this._dblClickTimeout = window.setTimeout(() => {
-        this.pendingDblClick = false
-      }, 300)
 
       this.updateSize()
       this.track.classList.add('slider--dragging')
@@ -185,21 +184,20 @@ export default {
       document.removeEventListener('touchmove', this.tempDrag)
       document.removeEventListener('mouseup', this.tempRelease)
       document.removeEventListener('touchend', this.tempRelease)
+
+      if (this.pendingDblClick) {
+        this._dblClickTimeout = window.setTimeout(() => {
+          this.pendingDblClick = false
+          this._dblClickTimeout = null
+        }, 150)
+      }
     },
     getStepValue(event) {
-      const { x, y } = getEventCords(event)
+      const { x } = getEventCords(event)
 
-      let stepValue
-
-      if (this.vertical) {
-        const mouseValue = y - this.currentY
-        const stepCount = parseInt((this.height - mouseValue) / this.stepHeight + 0.5, 10)
-        stepValue = stepCount * this.step + this.min
-      } else {
-        const mouseValue = x - this.currentX
-        const stepCount = parseInt(mouseValue / this.stepWidth + 0.5, 10)
-        stepValue = stepCount * this.step + this.min
-      }
+      const mouseValue = x - this.currentX
+      const stepCount = parseInt(mouseValue / this.stepWidth + 0.5, 10)
+      const stepValue = stepCount * this.step + this.min
 
       if (!this.decimalsCount) {
         return stepValue
@@ -209,35 +207,19 @@ export default {
     updateSize() {
       const trackRect = this.track.getBoundingClientRect()
 
-      if (this.vertical) {
-        this.currentY = trackRect.top
+      this.currentX = trackRect.left
 
-        this.height = this.$el.clientHeight
+      this.width = this.$el.clientWidth
 
-        if (!this.height) {
-          this.height = parseInt(this.track.parentElement.style.height)
-        }
-
-        if (!this.height && trackRect.height) {
-          this.height = trackRect.height
-        }
-
-        this.stepHeight = (this.height / (this.max - this.min)) * this.step
-      } else {
-        this.currentX = trackRect.left
-
-        this.width = this.$el.clientWidth
-
-        if (!this.width) {
-          this.width = parseInt(this.track.parentElement.style.width)
-        }
-
-        if (!this.width && trackRect.width) {
-          this.width = trackRect.width
-        }
-
-        this.stepWidth = (this.width / (this.max - this.min)) * this.step
+      if (!this.width) {
+        this.width = parseInt(this.track.parentElement.style.width)
       }
+
+      if (!this.width && trackRect.width) {
+        this.width = trackRect.width
+      }
+
+      this.stepWidth = (this.width / (this.max - this.min)) * this.step
     },
     /**
      * get the filled area percentage
@@ -321,18 +303,14 @@ export default {
         const positionPercentage = this.getPositionPercentage(normalized)
 
         if (this.fill) {
-          this.fill.translate = positionPercentage * (this.vertical ? this.height : this.width)
+          this.fill.translate = positionPercentage * this.width
           this.fill.scale = 1 - positionPercentage
         }
 
         this.values[this.activeHandle] = normalized
         this.handles[this.activeHandle].value = normalized
 
-        if (this.vertical) {
-          this.handles[this.activeHandle].positionY = (1 - positionPercentage) * this.height
-        } else {
-          this.handles[this.activeHandle].positionX = positionPercentage * this.width
-        }
+        this.handles[this.activeHandle].positionX = positionPercentage * this.width
 
         this.currentValue = normalized
 
@@ -378,7 +356,7 @@ export default {
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  z-index: 1;
+  z-index: 2;
 
   &.-alpha {
     .slider__track {
@@ -398,31 +376,6 @@ export default {
     .slider__label {
       visibility: visible;
       opacity: 1;
-    }
-  }
-
-  &.-vertical {
-    .slider__track {
-      width: 8px;
-      height: 100%;
-    }
-
-    .slider__handle {
-      margin: -8px -4px 0 -4px;
-    }
-
-    .slider__label {
-      left: -40px;
-      bottom: -6px;
-
-      &:before {
-        left: auto;
-        right: -0.5em;
-        top: 50%;
-        border-width: 0.5em 0 0.5em 0.5em;
-        border-color: transparent transparent transparentvar(--theme-background-100);
-        transform: translate3d(-1px, -50%, 0);
-      }
     }
   }
 }
@@ -471,15 +424,14 @@ export default {
   left: 0;
   will-change: transform;
   color: black;
-  margin: -4px 0 0 -8px;
-  width: 12px;
-  height: 12px;
-  border: 2px solid white;
+  margin: -0.25rem -0.5rem;
+  width: 1rem;
+  height: 1rem;
+  border: 0;
   background-color: currentColor;
   border-radius: 50%;
-  box-shadow: 0 1px 4px -2px rgba(black, 10%), 0 1px 2px rgba(black, 20%);
-  transition: box-shadow 0.2s $ease-out-expo;
   cursor: grab;
+  box-shadow: 0 1px 0 1px rgba(black, 0.2);
 
   &:active,
   &:hover {
@@ -493,17 +445,18 @@ export default {
 
 .slider__label {
   position: absolute;
-  bottom: 25px;
-  left: 6px;
+  bottom: 2rem;
+  left: 50%;
   z-index: 999;
-  padding: 0.5em;
-  min-width: 3em;
+  padding: 0.5rem;
+  min-width: 1rem;
   border-radius: 4px;
-  background-color: var(--theme-background-150);
+  filter: drop-shadow(-1em -1em 3em var(--theme-background-base));
   color: white;
+  background-color: rgba(black, 0.75);
   text-align: center;
   font-size: 14px;
-  line-height: 1em;
+  line-height: 1rem;
   transform: translate(-50%, 0);
   white-space: nowrap;
   visibility: hidden;
@@ -511,14 +464,14 @@ export default {
 
   &:before {
     position: absolute;
-    bottom: -0.5em;
+    bottom: -0.5rem;
     left: 50%;
     display: block;
     width: 0;
     height: 0;
-    border-width: 0.5em 0.5em 0 0.5em;
+    border-width: 0.5rem 0.5rem 0 0.5rem;
     border-style: solid;
-    border-color: var(--theme-background-150) transparent transparent transparent;
+    border-color: rgba(black, 0.75) transparent transparent transparent;
     content: '';
     transform: translate3d(-50%, 0, 0);
   }
@@ -538,5 +491,7 @@ export default {
 
   border-radius: 10px;
   background-color: $green;
+
+  pointer-events: none;
 }
 </style>

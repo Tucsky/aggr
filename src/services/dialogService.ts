@@ -6,20 +6,25 @@ import ConfirmDialog from '@/components/framework/ConfirmDialog.vue'
 import PromptDialog from '@/components/framework/PromptDialog.vue'
 
 class DialogService {
-  mountedComponents = {}
+  mountedComponents: { [id: string]: any } = {}
+  isInteracting = false
+  hasDialogOpened = false
   pickerInstance: any
 
-  createComponent(component, props = {}, resolve = null, dialogId?: string): Vue {
+  createComponent(component, props: any = {}, resolve = null, dialogId?: string): Vue {
     const Factory = Vue.extend(Object.assign({ store }, component))
 
-    const cmp = new Factory(
+    const cmp: any = new Factory(
       Object.assign(
         {},
         {
+          dialogId: dialogId,
           propsData: Object.assign({}, props),
           destroyed: () => {
-            if (dialogId) {
-              this.mountedComponents[dialogId]--
+            if (dialogId && this.mountedComponents[dialogId]) {
+              delete this.mountedComponents[dialogId]
+
+              this.hasDialogOpened = Object.keys(this.mountedComponents).length > 0
             }
 
             if (this.pickerInstance === cmp) {
@@ -34,11 +39,7 @@ class DialogService {
       )
     )
 
-    if (dialogId && !this.mountedComponents[dialogId]) {
-      this.mountedComponents[dialogId] = 0
-    }
-
-    this.mountedComponents[dialogId]++
+    cmp.dialogId = dialogId
 
     return cmp
   }
@@ -51,8 +52,8 @@ class DialogService {
     })
   }
 
-  open(component, props = {}, dialogId?: string): Vue {
-    component = this.createComponent(component, props, null, dialogId)
+  open(component, props = {}, dialogId?: string, onClose?: Function): Vue {
+    component = this.createComponent(component, props, onClose, dialogId)
 
     this.mountDialog(component)
 
@@ -61,14 +62,28 @@ class DialogService {
 
   mountDialog(cmp: Vue) {
     const container = document.getElementById('app') || document.body
-    container.appendChild(cmp.$mount().$el)
+
+    const mounted = cmp.$mount()
+    container.appendChild(mounted.$el)
+
+    const id = (cmp as any).dialogId
+
+    if (id) {
+      if (this.mountedComponents[id]) {
+        this.mountedComponents[id].close()
+      }
+
+      this.mountedComponents[id] = cmp
+
+      this.hasDialogOpened = Object.keys(this.mountedComponents).length > 0
+    }
   }
 
   isDialogOpened(name) {
     return !!this.mountedComponents[name]
   }
 
-  openPicker(initialColor, cb, title?: string) {
+  openPicker(initialColor, cb, title?: string, onClose?: Function) {
     if (this.pickerInstance) {
       this.pickerInstance.selectColor(initialColor, true)
 
@@ -78,10 +93,15 @@ class DialogService {
 
       this.pickerInstance.$off('input')
     } else {
-      this.pickerInstance = this.open(VerteDialog, {
-        value: initialColor,
-        title
-      })
+      this.pickerInstance = this.open(
+        VerteDialog,
+        {
+          value: initialColor,
+          title
+        },
+        null,
+        onClose
+      )
     }
 
     if (typeof cb === 'function') {

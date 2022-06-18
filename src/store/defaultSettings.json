@@ -3,7 +3,6 @@
   "aggregationLength": 1,
   "disableAnimations": false,
   "calculateSlippage": null,
-  "decimalPrecision": null,
   "autoHideHeaders": true,
   "theme": "dark",
   "backgroundColor": "rgb(23,27,41)",
@@ -19,16 +18,27 @@
     "LowPassFilter": false
   },
   "settings": ["other", "workspaces", "chart", "stats", "counters", "audio"],
-  "recentColors": [],
   "searchTypes": {
-    "historical": false,
+    "historical": true,
     "spots": true,
     "perpetuals": true,
     "futures": false,
     "normalize": true,
     "mergeUsdt": true
   },
+  "searchQuotes": {
+    "USD": true,
+    "USDT": true,
+    "UST": true
+  },
+  "previousSearchSelections": [],
   "searchExchanges": {},
   "favoriteTimeframes": {},
-  "normalizeWatermarks": true
+  "normalizeWatermarks": true,
+  "alerts": true,
+  "alertsColor": "red",
+  "alertsLineStyle": 2,
+  "alertsLineWidth": 2,
+  "alertsClick": false,
+  "alertSound": null
 }

@@ -1,9 +1,9 @@
 <template>
-  <div class="dropdown">
+  <div class="dropdown" @keydown="onKeydown">
     <div v-if="label" class="dropdown__label" @click="toggle" v-html="label"></div>
     <button class="dropdown__selected btn" @click="toggle" :class="selectionClass">
-      <slot name="selection" :item="options[selected]" :placeholder="placeholder">
-        {{ (alwaysShowPlaceholder && options[selected]) || placeholder || 'Selection' }}
+      <slot name="selection" :item="selection" :placeholder="placeholder">
+        <span>{{ (alwaysShowPlaceholder && selection) || placeholder }}</span>
       </slot>
     </button>
     <transition name="dropdown">
@@ -14,7 +14,7 @@
             class="dropdown__option"
             v-for="(value, index) in options"
             :key="index"
-            :class="{ active: !alwaysShowPlaceholder && index === selected }"
+            :class="[!alwaysShowPlaceholder && index === selected && 'active', value.color && 'text-' + value.color]"
           >
             <slot v-if="value.id && $slots['option-' + value.id]" :name="'option-' + value.id">
               {{ value }}
@@ -46,7 +46,8 @@ import { Component, Vue } from 'vue-property-decorator'
       required: false
     },
     placeholder: {
-      required: false
+      required: false,
+      default: 'Selection'
     },
     alwaysShowPlaceholder: {
       default: true
@@ -57,18 +58,32 @@ import { Component, Vue } from 'vue-property-decorator'
     selectionClass: {
       required: false,
       default: '-arrow'
+    },
+    returnValue: {
+      type: Boolean,
+      default: false
     }
   }
 })
 export default class extends Vue {
   options: any
   autoClose: boolean
+  returnValue: boolean
+  selected: any
   isOpen = false
 
   private _clickOutsideHandler: () => void
 
   $refs!: {
     options: HTMLElement
+  }
+
+  get selection() {
+    if (!this.returnValue) {
+      return this.options[this.selected]
+    }
+
+    return this.selected
   }
 
   toggle() {
@@ -137,14 +152,20 @@ export default class extends Vue {
 
     const dropdown = this.$refs.options
 
-    const dropdownRect = dropdown.getBoundingClientRect()
+    const dropdownRect = this.$el.getBoundingClientRect()
 
     const container = getScrollParent(dropdown) || document.getElementById('app')
 
     const containerRect = container.getBoundingClientRect()
 
-    if (dropdownRect.y + dropdownRect.height + 32 > containerRect.y + containerRect.height) {
+    const dropdownRelativeY = dropdownRect.y - containerRect.y
+
+    const innerElement = dropdown.children[0] as HTMLElement
+    if (dropdownRelativeY > containerRect.height / 2) {
       dropdown.classList.add('-upside-down')
+      innerElement.style.maxHeight = Math.min(containerRect.height * 0.886, dropdownRelativeY - dropdownRect.height) + 'px'
+    } else {
+      innerElement.style.maxHeight = Math.min(containerRect.height * 0.886, containerRect.height - dropdownRelativeY) + 'px'
     }
   }
 
@@ -161,11 +182,17 @@ export default class extends Vue {
     }
 
     if (!event.defaultPrevented) {
-      this.$emit('output', index)
+      this.$emit('output', this.returnValue ? this.options[index] : index)
 
       if (this.autoClose) {
         this.hide()
       }
+    }
+  }
+
+  onKeydown(event) {
+    if (event.which === 13) {
+      this.hide()
     }
   }
 }

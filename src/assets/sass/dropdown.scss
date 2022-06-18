@@ -12,6 +12,7 @@
 }
 
 .dropdown {
+  $self: &;
   position: relative;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -23,15 +24,17 @@
   align-items: center;
 
   &__selected.-arrow {
+    padding-right: 0.25em;
+
     &:after {
-      content: unicode($icon-down);
+      content: unicode($icon-down-thin);
       transform: rotateZ(180deg);
       font-family: 'icon';
-      padding: 0 0.2em;
       position: relative;
-      top: 1px;
-      line-height: 1;
+      line-height: 0;
       transition: transform 0.2s cubic-bezier(0, 1.4, 1, 1);
+      margin-left: auto;
+      padding: 0 0.25em;
     }
 
     &:last-child:after {
@@ -107,9 +110,10 @@
   }
 
   &__scroller {
-    overflow: auto;
-    max-height: 250px;
+    overflow-y: auto;
+    overflow-x: hidden;
     border-radius: $border-radius-small;
+    scrollbar-width: none;
   }
 
   &__option {
@@ -121,6 +125,15 @@
     justify-content: flex-end;
     align-items: center;
     text-decoration: none;
+
+    #{$self}--squished & {
+      padding: 0.5em 1em 0.5em;
+
+      > i {
+        margin: -0.5rem -1rem;
+        padding: 0.5rem;
+      }
+    }
 
     > span {
       line-height: 1;
@@ -147,17 +160,17 @@
     }
 
     span + i {
-      margin-left: 1rem;
+      margin-left: 0.5rem;
+      align-self: center;
     }
 
-    i {
+    > i {
       align-self: stretch;
       margin: -0.75rem -1rem;
       padding: 0.75rem 1rem;
 
-      + i,
-      + span {
-        margin-left: 0.5rem;
+      &:first-child {
+        margin-right: 0;
       }
     }
 
@@ -186,11 +199,22 @@
 .dropdown-option {
   &__description {
     opacity: 0.5;
-    font-size: 80%;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+  }
+
+  span + &__action {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
   }
 
   &__action {
     visibility: hidden;
+
+    + .dropdown-option__action {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
   }
 }
 

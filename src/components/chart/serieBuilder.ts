@@ -1,23 +1,19 @@
-/* eslint-disable no-unused-vars */
-import * as seriesUtils from './serieUtils'
+import seriesUtils from './serieUtils'
 
 import {
-  Renderer,
   IndicatorRealtimeAdapter,
   IndicatorTranspilationResult,
   IndicatorPlot,
   IndicatorVariable,
   IndicatorFunction,
   LoadedIndicator,
-  IndicatorApi,
   IndicatorReference,
   IndicatorMarkets
-} from './chartController'
+} from './chart'
 import store from '@/store'
-import { findClosingBracketMatchIndex, parseFunctionArguments, slugify, uniqueName } from '@/utils/helpers'
-import { plotTypesMap } from './chartOptions'
-const VARIABLE_REGEX = /(?:^|\n)([a-zA-Z0-9_]+)\(?(\d*)\)?\s*=\s*([^;,]*)?/
-const SERIE_UPDATE_REGEX = /series\[\d+\]\.update\(/
+import { findClosingBracketMatchIndex, parseFunctionArguments, randomString, uniqueName } from '@/utils/helpers'
+import { plotTypesMap } from './options'
+const SERIE_UPDATE_REGEX = /series\[[a-zA-Z0-9+\-$ ]+\]\.update\(/
 const VARIABLES_VAR_NAME = 'vars'
 const FUNCTIONS_VAR_NAME = 'fns'
 const SERIE_TYPES = {
@@ -27,7 +23,8 @@ const SERIE_TYPES = {
   histogram: 'number',
   area: 'number',
   cloudarea: 'range',
-  brokenarea: 'range'
+  brokenarea: 'range',
+  baseline: 'number'
 }
 export default class SerieBuilder {
   private paneId: string
@@ -67,18 +64,6 @@ export default class SerieBuilder {
       this.determineVariableState(instruction)
     }
 
-    // run test (will affect functions length)
-    const type = this.test(result, indicator.options)
-
-    // rollback states to original
-    for (const instruction of result.functions) {
-      this.determineFunctionState(instruction)
-    }
-
-    for (const instruction of result.variables) {
-      this.determineVariableState(instruction)
-    }
-
     return {
       output: result.output,
       silentOutput: result.silentOutput,
@@ -86,8 +71,7 @@ export default class SerieBuilder {
       variables: result.variables,
       references: result.references,
       markets: result.markets,
-      plots: result.plots,
-      type
+      plots: result.plots
     }
   }
 
@@ -99,32 +83,53 @@ export default class SerieBuilder {
    * @param input
    * @returns
    */
-  normalizeInput(input) {
+  normalizeInput(input, strings) {
+    input = input.replace(/([^.])?\b(indicatorId)\b/gi, `$1'${this.indicatorId}'`)
     input = input.replace(/([^.])?\b(bar)\b/gi, '$1renderer')
     input = input.replace(/([^.]|^)\b(vbuy|vsell|cbuy|csell|lbuy|lsell)\b/gi, '$1renderer.bar.$2')
-    input = input.replace(/([^.]|^)\b(time)\b\s*([^:])/gi, '$1renderer.localTimestamp$3')
+    input = input.replace(/([^.]|^)\b(time)\b([^:])/gi, '$1renderer.localTimestamp$3')
     input = input.replace(/(\n|^)\s*?\/\/.*/g, '')
-    input = input.replace(/[^\S\r\n]/g, '')
-    //input = input.replace(/([^({[])\n/g, '$1,').replace(/\s/g, '')
+
+    const STRING_REGEX = /'([^']*)'|"([^"]*)"/
+    let stringMatch = null
+    let iterations = 0
+
+    do {
+      if ((stringMatch = STRING_REGEX.exec(input))) {
+        let refIndex = strings.indexOf(stringMatch[0])
+
+        if (refIndex === -1) {
+          refIndex = strings.push(stringMatch[0]) - 1
+        }
+        input = input.slice(0, stringMatch.index) + '#STRING_' + refIndex + '#' + input.slice(stringMatch.index + stringMatch[0].length)
+      }
+    } while (stringMatch && ++iterations < 1000)
+
+    // input = input.replace(/[^\S\r\n]/g, '')
 
     const PARANTHESIS_REGEX = /\(/g
     let paranthesisMatch
+    iterations = 0
+
     do {
       if ((paranthesisMatch = PARANTHESIS_REGEX.exec(input))) {
         const closingParenthesisIndex = findClosingBracketMatchIndex(input, paranthesisMatch.index, /\(|{|\[/, /\)|}|\]/)
-        const contentWithinParenthesis = input.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/\n/g, ' ')
 
-        input =
-          input.slice(0, paranthesisMatch.index) +
-          input.slice(paranthesisMatch.index, paranthesisMatch.index + 1) +
-          contentWithinParenthesis.replace(/\n/g, '') +
-          input.slice(closingParenthesisIndex, closingParenthesisIndex + 1) +
-          '\n' +
-          input.slice(closingParenthesisIndex + 1, input.length)
+        if (closingParenthesisIndex !== -1) {
+          const contentWithinParenthesis = input.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/\n/g, ' ')
 
-        PARANTHESIS_REGEX.lastIndex = closingParenthesisIndex
+          input =
+            input.slice(0, paranthesisMatch.index) +
+            input.slice(paranthesisMatch.index, paranthesisMatch.index + 1) +
+            contentWithinParenthesis.replace(/\n/g, '') +
+            input.slice(closingParenthesisIndex, closingParenthesisIndex + 1) +
+            '\n' +
+            input.slice(closingParenthesisIndex + 1, input.length)
+
+          PARANTHESIS_REGEX.lastIndex = closingParenthesisIndex
+        }
       }
-    } while (paranthesisMatch)
+    } while (paranthesisMatch && ++iterations < 1000)
 
     return input
   }
@@ -135,24 +140,15 @@ export default class SerieBuilder {
    * @returns void
    */
   determineFunctionState(instruction: IndicatorFunction) {
-    if (typeof seriesUtils[instruction.name] && typeof seriesUtils[instruction.name] === 'object') {
-      instruction.persistence = []
+    if (typeof seriesUtils[instruction.name] && typeof seriesUtils[instruction.name].state === 'object') {
       instruction.state = {}
 
-      const ignoreFromPersistance = ['count', 'points', 'sum']
-
-      for (const prop in seriesUtils[instruction.name]) {
+      for (const prop in seriesUtils[instruction.name].state) {
         try {
-          instruction.state[prop] = JSON.parse(JSON.stringify(seriesUtils[instruction.name][prop]))
+          instruction.state[prop] = JSON.parse(JSON.stringify(seriesUtils[instruction.name].state[prop]))
         } catch (error) {
-          instruction.state[prop] = seriesUtils[instruction.name]
+          instruction.state[prop] = seriesUtils[instruction.name].state[prop]
         }
-
-        if (ignoreFromPersistance.indexOf(prop) !== -1) {
-          continue
-        }
-
-        instruction.persistence.push(prop)
       }
 
       return
@@ -168,7 +164,7 @@ export default class SerieBuilder {
    */
   determineVariableState(instruction: IndicatorVariable) {
     if (instruction.length > 1) {
-      instruction.state = []
+      instruction.state = [0]
     } else {
       instruction.state = 0
     }
@@ -178,13 +174,15 @@ export default class SerieBuilder {
     let silentOutput = originalOutput
 
     let instructionMatch = null
+    let iterations = 0
+
     do {
       if ((instructionMatch = SERIE_UPDATE_REGEX.exec(silentOutput))) {
         const openingParenthesisIndex = instructionMatch.index + instructionMatch[0].length - 1
         const closingParenthesisIndex = findClosingBracketMatchIndex(silentOutput, openingParenthesisIndex)
         silentOutput = silentOutput.replace(instructionMatch[0] + silentOutput.slice(openingParenthesisIndex + 1, closingParenthesisIndex + 1), 1)
       }
-    } while (instructionMatch)
+    } while (instructionMatch && ++iterations < 1000)
 
     return silentOutput
   }
@@ -200,14 +198,19 @@ export default class SerieBuilder {
     const plots: IndicatorPlot[] = []
     const markets: IndicatorMarkets = {}
     const references: IndicatorReference[] = []
+    const strings = []
 
-    let output = this.normalizeInput(input)
+    let output = this.normalizeInput(input, strings)
 
     output = this.parseVariables(output, variables)
 
-    output = this.parseFunctions(output, functions, plots)
-
     output = this.parseMarkets(output, markets)
+
+    for (let i = 0; i < strings.length; i++) {
+      output = output.replace(new RegExp('#STRING_' + i + '#', 'g'), strings[i].replace(/\$/g, '$$$'))
+    }
+
+    output = this.parseFunctions(output, functions, plots)
     output = this.parseReferences(output, references, plots)
 
     output = this.formatOutput(output)
@@ -227,7 +230,10 @@ export default class SerieBuilder {
 
   formatOutput(input) {
     const PARANTHESIS_REGEX = /\(|{|\[/g
+
     let paranthesisMatch
+    let iterations = 0
+
     do {
       if ((paranthesisMatch = PARANTHESIS_REGEX.exec(input))) {
         const lineBreakIt = paranthesisMatch[0] === '('
@@ -235,7 +241,7 @@ export default class SerieBuilder {
         const closingParenthesisIndex = findClosingBracketMatchIndex(input, paranthesisMatch.index, /\(|{|\[/, /\)|}|\]/)
         const contentWithinParenthesis = input.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/\n/g, ' ')
 
-        if (/if|for/.test(input.slice(paranthesisMatch.index - 2, 2))) {
+        if (/if|for|else/.test(input.slice(paranthesisMatch.index - 2, 2))) {
           input =
             input.slice(0, paranthesisMatch.index) +
             input.slice(paranthesisMatch.index, paranthesisMatch.index + 1) +
@@ -247,7 +253,7 @@ export default class SerieBuilder {
 
         PARANTHESIS_REGEX.lastIndex = closingParenthesisIndex
       }
-    } while (paranthesisMatch)
+    } while (paranthesisMatch && ++iterations < 1000)
 
     const lines = input.trim().split(/\n/)
 
@@ -265,16 +271,29 @@ export default class SerieBuilder {
   }
 
   parseVariables(output, variables): string {
+    const VARIABLE_REGEX = /(?:^|\n)\s*((?:var )?[a-zA-Z0-9_]+)\(?(\d*)\)?\s*=\s*([^\n;,]*)?/
     let variableMatch = null
+    let iterations = 0
+
+    const nonPersistentVariables = []
+
     do {
       if ((variableMatch = VARIABLE_REGEX.exec(output))) {
-        const variableName = variableMatch[1]
+        let variableName = variableMatch[1]
+        const isNonPersistent = /^var/.test(variableName)
 
-        if (/^var/.test(variableName)) {
-          output = output.replace(variableMatch[0], '\nvar ' + variableName.slice(3) + '=' + variableMatch[3])
-          VARIABLE_REGEX.lastIndex += variableMatch[1].length
+        if (nonPersistentVariables.indexOf(variableName) !== -1 || isNonPersistent) {
+          if (isNonPersistent) {
+            variableName = variableName.replace(/var\s*/, '')
+            output = output.replace(variableMatch[0], '\nvar ' + variableName + '=' + variableMatch[3])
+            nonPersistentVariables.push(variableName)
+          }
+
+          // eslint-disable-next-line no-useless-escape
+          output = output.replace(new RegExp('([^.$]|^)\\b(' + variableName + ')\\b(?!:)(?!\\()(?!\\$)', 'ig'), `$1${variableName}$`)
           continue
         }
+
         const variableLength = +variableMatch[2] || 1
 
         output = output.replace(new RegExp('([^.]|^)\\b(' + variableName + ')\\b(?!:)', 'ig'), `$1${VARIABLES_VAR_NAME}[${variables.length}]`)
@@ -284,10 +303,9 @@ export default class SerieBuilder {
         }
 
         variables.push(variable)
-
         output = output.replace(new RegExp(`(${VARIABLES_VAR_NAME}\\[${variables.length - 1}\\])\\(${variable.length}\\)\\s*=\\s*`), '$1=')
       }
-    } while (variableMatch && variables.length < 50)
+    } while (variableMatch && ++iterations < 1000)
 
     output = this.determineVariablesType(output, variables)
 
@@ -310,7 +328,7 @@ export default class SerieBuilder {
     const serieOptions: { [key: string]: any } = {}
 
     // parse and store serie options in dedicated object (eg. color=red in plotline arguments)
-    for (let i = 0; i < args.length; i++) {
+    for (let i = 1; i < args.length; i++) {
       try {
         const [, key, value] = args[i].match(/^(\w+)\s*=(.*)/)
 
@@ -347,27 +365,31 @@ export default class SerieBuilder {
     }
 
     // tranform input into valid lightweight-charts data point
-    if (args.length === 1 && /{/.test(args[0]) && /}/.test(args[0])) {
+    if (serieType !== 'line' && args.length === 1 && ((/{/.test(args[0]) && /}/.test(args[0])) || /^[\w_]+\$/.test(args[0]))) {
       seriePoint += args[0]
     } else if (expectedInput === 'ohlc') {
       if (args.length === 4) {
         seriePoint += `{ time: ${timeProperty}, open: ${args[0]}, high: ${args[1]}, low: ${args[2]}, close: ${args[3]} }`
       } else if (args.length === 1) {
-        seriePoint += args[0]
+        if (/^[A-Z_]+:\w+/.test(args[0])) {
+          seriePoint += `${args[0]}.close === null ? { time: ${timeProperty} } : { time: ${timeProperty}, open: ${args[0]}.open, high: ${args[0]}.high, low: ${args[0]}.low, close: ${args[0]}.close }`
+        } else {
+          seriePoint += args[0]
+        }
       } else {
-        throw new Error(`invalid input for function ${match[1]}, expected a ohlc object or 4 number`)
+        throw new Error(`Invalid input for function ${match[1]}, expected a ohlc object or 4 number`)
       }
     } else if (expectedInput === 'range') {
       if (args.length === 2) {
         seriePoint += `{ time: ${timeProperty}, lowerValue: ${args[0]}, higherValue: ${args[1]} }`
       } else {
-        throw new Error(`invalid input for function ${match[1]}, expected 2 arguments (lowerValue and higherValue)`)
+        throw new Error(`Invalid input for function ${match[1]}, expected 2 arguments (lowerValue and higherValue)`)
       }
     } else if (expectedInput === 'number') {
       if (args.length === 1) {
         seriePoint += `{ time: ${timeProperty}, value: ${args[0]} }`
       } else {
-        throw new Error(`invalid input for function ${match[1]}, expected 1 value (number)`)
+        throw new Error(`Invalid input for function ${match[1]}, expected 1 value (number)`)
       }
     }
 
@@ -398,8 +420,10 @@ export default class SerieBuilder {
       id = serieOptions.id
 
       delete serieOptions.id
+    } else if (plots.length === 0) {
+      id = this.indicatorId
     } else {
-      id = this.getPlotId(rawFunctionArguments)
+      id = randomString(8)
     }
 
     const names = Object.keys(this.serieIndicatorsMap).concat(plots.map(plot => plot.id))
@@ -416,9 +440,10 @@ export default class SerieBuilder {
   }
 
   parseFunctions(output: string, instructions: IndicatorFunction[], plots: IndicatorPlot[]): string {
-    let functionMatch = null
-
     const FUNCTION_LOOKUP_REGEX = new RegExp(`([a-zA-Z0_9_]+)\\(`, 'g')
+
+    let functionMatch = null
+    let iterations = 0
 
     do {
       if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(output))) {
@@ -431,94 +456,108 @@ export default class SerieBuilder {
         if (isMathFunction || isSerieFunction || isMethod) {
           FUNCTION_LOOKUP_REGEX.lastIndex = functionMatch.index + functionMatch[0].length
 
-          if (isSerieFunction) {
+          if (typeof isSerieFunction === 'string') {
             output = this.parseSerie(output, functionMatch, plots)
           }
           continue
         }
 
-        const instruction: IndicatorFunction = {
-          name: functionName
-        }
-
-        const targetFunction = seriesUtils[functionName + '$']
+        const targetFunction = seriesUtils[functionName]
 
         if (!targetFunction) {
-          if (/for|if/i.test(functionName)) {
+          if (/for|if|rgba/i.test(functionName)) {
             FUNCTION_LOOKUP_REGEX.lastIndex = functionMatch.index + functionMatch[0].length
             continue
           } else {
-            throw new Error(`function ${functionName} doesn't exists`)
+            throw new Error(`Function ${functionName} doesn't exists`)
           }
         }
 
-        const start = functionMatch.index
-        const end = findClosingBracketMatchIndex(output, start + functionMatch[1].length)
-
-        const args = parseFunctionArguments(output.slice(start + functionMatch[1].length + 1, end))
-
-        // in order to know how many points to keep in the state in order to calculate averages
-        // some functions require length to be known from controller
-        // eg. sma, ema and all periodic functions
-        // we just guess that the length is the second argument
-        if (args.length === 2) {
-          instruction.arg = args[1]
+        const instruction: IndicatorFunction = {
+          name: functionName,
+          args: []
         }
 
-        // this is pretty bad...
-        if ((functionName === 'ohlc' || functionName === 'cum_ohlc') && args.length === 1) {
-          // ohlc and cum_ohlc that uses number as input need bar timestamp to construct the point
-          args.push('renderer.localTimestamp')
+        let injectedArgCount = 0
+
+        const customArgsStartIndex = functionMatch.index
+        const customArgsEndIndex = findClosingBracketMatchIndex(output, customArgsStartIndex + functionMatch[1].length)
+        const customArgs = parseFunctionArguments(output.slice(customArgsStartIndex + functionMatch[1].length + 1, customArgsEndIndex))
+        let totalArgsCount = (targetFunction.args ? targetFunction.args.length : 0) + customArgs.length
+
+        for (let i = 0; i < totalArgsCount; i++) {
+          const argDefinition = targetFunction.args && targetFunction.args[i] ? targetFunction.args[i] : {}
+
+          const arg = {
+            ...argDefinition
+          }
+
+          if (argDefinition.injected) {
+            injectedArgCount++
+
+            instruction.args.push(arg)
+
+            continue
+          } else {
+            totalArgsCount--
+          }
+
+          const customArg = customArgs[i - injectedArgCount]
+
+          if (typeof customArg !== 'undefined') {
+            arg.instruction = customArg
+          }
+
+          instruction.args.push(arg)
         }
 
-        // replace original function call, add function state to arguments
-        output = `${output.slice(0, start)}utils.${functionName}$(${FUNCTIONS_VAR_NAME}[${instructions.length}].state,${args.join(
-          ','
-        )})${output.slice(end + 1, output.length)}`
+        output = `${output.slice(0, customArgsStartIndex)}utils.${functionName}.update(${FUNCTIONS_VAR_NAME}[${
+          instructions.length
+        }].state,${instruction.args.map(a => a.instruction).join(',')})${output.slice(customArgsEndIndex + 1, output.length)}`
 
-        // register instruction
         instructions.push(instruction)
       }
-    } while (functionMatch)
+    } while (functionMatch && ++iterations < 1000)
 
     return output
   }
 
   parseMarkets(output: string, markets: IndicatorMarkets): string {
-    if (!this.markets.length) {
-      return output
-    }
-
-    const EXCHANGE_REGEX = /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{5,})(:[\w]{4,})?\.?([a-z]{4,})?\b/
+    const EXCHANGE_REGEX = /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{5,})(:[\w]{4,})?\.?([a-z]{3,})?\b/g
 
     let marketMatch = null
+    let iterations = 0
 
     do {
       if ((marketMatch = EXCHANGE_REGEX.exec(output))) {
         const marketName = marketMatch[1] + (marketMatch[2] ? marketMatch[2] : '')
-        const marketId = marketName.replace(':', '')
         const marketDataKey = marketMatch[3]
 
-        if (!markets[marketId]) {
-          markets[marketId] = []
+        if (!markets[marketName]) {
+          markets[marketName] = []
         }
 
         if (marketDataKey) {
-          if (markets[marketId].indexOf(marketDataKey) === -1) {
-            markets[marketId].push(marketDataKey)
+          if (markets[marketName].indexOf(marketDataKey) === -1) {
+            markets[marketName].push(marketDataKey)
           }
         }
 
-        output = output.replace(new RegExp('([^.$])\\b(' + marketName + ')\\b', 'i'), `$1renderer.sources['${marketId}']`)
+        const replacement = `renderer.sources['${marketName}']${marketDataKey ? '.' + marketDataKey : ''}`
+
+        EXCHANGE_REGEX.lastIndex = marketMatch.index + replacement.length
+
+        output = output.slice(0, marketMatch.index) + replacement + output.slice(marketMatch.index + marketMatch[0].length)
       }
-    } while (marketMatch)
+    } while (marketMatch && ++iterations < 1000)
 
     return output
   }
   parseReferences(output: string, references: IndicatorReference[], plots: IndicatorPlot[]): string {
-    const REFERENCE_REGEX = new RegExp('\\$([a-z_\\-0-9]+)\\b')
+    const REFERENCE_REGEX = new RegExp('\\$(\\w+[a-z_\\-0-9]+)\\b')
 
     let referenceMatch = null
+    let iterations = 0
 
     do {
       if ((referenceMatch = REFERENCE_REGEX.exec(output))) {
@@ -544,7 +583,7 @@ export default class SerieBuilder {
           }
         }
       }
-    } while (referenceMatch)
+    } while (referenceMatch && ++iterations < 1000)
 
     return output
   }
@@ -588,6 +627,7 @@ export default class SerieBuilder {
       const VARIABLE_LENGTH_REGEX = new RegExp(`${VARIABLES_VAR_NAME}\\[${index}\\](?:\\[(\\d+)\\])?`, 'g')
 
       let lengthMatch = null
+      let iterations = 0
 
       do {
         if ((lengthMatch = VARIABLE_LENGTH_REGEX.exec(output))) {
@@ -595,7 +635,8 @@ export default class SerieBuilder {
           const position = lengthMatch.index + lengthMatch[0].length
 
           if (typeof variableLength === 'undefined') {
-            output = output.substring(0, position) + '.state[0]' + output.substring(position)
+            const hasSpecifiedIndex = output[position] === '['
+            output = output.substring(0, position) + '.state' + (!hasSpecifiedIndex ? '[0]' : '') + output.substring(position)
           } else {
             const beforeVariable = output.substring(0, lengthMatch.index)
             const variableReplacement = `${VARIABLES_VAR_NAME}[${index}].state[Math.min(${VARIABLES_VAR_NAME}[${index}].state.length-1,${variableLength})]`
@@ -607,10 +648,10 @@ export default class SerieBuilder {
 
           variable.length = Math.max(variable.length, (+variableLength || 0) + 1)
         }
-      } while (lengthMatch)
+      } while (lengthMatch && ++iterations < 1000)
 
       if (!variable.length) {
-        throw new Error('unexpected no length on var')
+        throw new Error('Unexpected no length on var')
       }
 
       if (variable.length === 1) {
@@ -623,233 +664,6 @@ export default class SerieBuilder {
     return output
   }
 
-  test({ silentOutput, functions, variables, markets, plots, references }: IndicatorTranspilationResult, options) {
-    let adapter: IndicatorRealtimeAdapter
-    try {
-      adapter = this.getAdapter(silentOutput)
-    } catch (error) {
-      throw new Error(`syntax error: ${error.message}`)
-    }
-
-    let renderer = this.getFakeRenderer(null, functions, variables, markets, references)
-
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    const series = (plots.map(() => ({ update: () => {} })) as unknown) as IndicatorApi[]
-
-    for (let t = 0; t < 3; t++) {
-      try {
-        adapter(renderer, functions, variables, series, options, seriesUtils)
-      } catch (error) {
-        throw new Error('syntax error: ' + (typeof error === 'string' ? error : error.message))
-      }
-
-      for (let p = 0; p < renderer.indicators[this.indicatorId].series.length; p++) {
-        const point = renderer.indicators[this.indicatorId].series[p]
-
-        if (typeof point === 'undefined') {
-          continue
-        }
-        const plot = plots[p]
-        const resultedType =
-          typeof point.value !== 'undefined'
-            ? 'number'
-            : typeof point.open !== 'undefined'
-            ? 'ohlc'
-            : typeof point.higherValue !== 'undefined'
-            ? 'range'
-            : null
-
-        if (isNaN(point.time)) {
-          throw new Error(`${plot.type}.time expected a valid timestamp (number of seconds since January 1, 1970) but got NaN`)
-        }
-
-        /*if (point.time < renderer.timestamp) {
-          throw new Error(`${plot.type}.time should be the same as the current bar timestamp ${renderer.timestamp}, got ${point.time}`)
-        }*/
-
-        if (resultedType && resultedType !== plot.expectedInput) {
-          throw new Error(`plot ${plot.type} expected ${plot.expectedInput} but got ${resultedType}`)
-        }
-
-        /*if (resultedType === 'ohlc') {
-          if (isNaN(point.open)) {
-            throw new Error(`${plot.type}.open expected value to be a number, got NaN`)
-          }
-          if (isNaN(point.high)) {
-            throw new Error(`${plot.type}.high expected value to be a number, got NaN`)
-          }
-          if (isNaN(point.low)) {
-            throw new Error(`${plot.type}.low expected value to be a number, got NaN`)
-          }
-          if (isNaN(point.close)) {
-            throw new Error(`${plot.type}.close expected value to be a number, got NaN`)
-          }
-        }
-
-        if (resultedType === 'number') {
-          if (isNaN(point.value)) {
-            throw new Error(`${plot.type} expected value to be a number, got NaN`)
-          }
-        }*/
-      }
-
-      renderer = this.getFakeRenderer(renderer, functions, variables, markets, references)
-      this.refreshSerieMeta(functions, variables)
-    }
-  }
-
-  refreshSerieMeta(functions: IndicatorFunction[], variables: IndicatorVariable[]) {
-    for (let f = 0; f < functions.length; f++) {
-      const instruction = functions[f]
-
-      if (typeof instruction.state.count !== 'undefined') {
-        instruction.state.count++
-      }
-
-      if (typeof instruction.state.points !== 'undefined') {
-        instruction.state.points.push(instruction.state.output)
-        instruction.state.sum += instruction.state.output
-
-        if (instruction.state.count > instruction.arg) {
-          instruction.state.sum -= instruction.state.points.shift()
-          instruction.state.count--
-        }
-      } else if (instruction.state.open !== 'undefined') {
-        instruction.state.open = instruction.state.close
-        instruction.state.high = instruction.state.close
-        instruction.state.low = instruction.state.close
-      } else if (instruction.persistence) {
-        for (let j = 0; j < instruction.persistence.length; j++) {
-          instruction.state['_' + instruction.persistence[j]] = instruction.state[instruction.persistence[j]]
-        }
-      }
-    }
-
-    for (let v = 0; v < variables.length; v++) {
-      const instruction = variables[v]
-
-      if (instruction.length > 1) {
-        instruction.state.unshift(instruction.state[0])
-
-        if (instruction.state.length > instruction.length) {
-          instruction.state.pop()
-        }
-      }
-    }
-  }
-
-  getFakeRenderer(
-    previousRenderer,
-    functions: IndicatorFunction[],
-    variables: IndicatorVariable[],
-    markets: IndicatorMarkets,
-    references: IndicatorReference[]
-  ) {
-    const sample = {
-      open: 58137,
-      high: 58137,
-      low: 58102,
-      close: 58112,
-      pair: 'BTCUSD',
-      vbuy: 3532,
-      vsell: 54550,
-      cbuy: 7,
-      csell: 15,
-      lbuy: 0,
-      lsell: 0
-    }
-
-    const renderer: Renderer = previousRenderer || {
-      timeframe: 10,
-      timestamp: null,
-      localTimestamp: null,
-      length: 1,
-      bar: {
-        vbuy: 11,
-        vsell: 22,
-        cbuy: 2,
-        csell: 3,
-        lbuy: 1,
-        lsell: 0
-      },
-      sources: {},
-      indicators: {
-        [this.indicatorId]: {
-          functions,
-          variables,
-          series: [],
-          plotsOptions: []
-        }
-      }
-    }
-
-    if (!previousRenderer) {
-      renderer.timestamp = Math.floor(Math.round(+new Date() / 1000) / 10) * 10
-      renderer.localTimestamp = renderer.timestamp
-
-      // fake references
-      for (const reference of references) {
-        if (!renderer.indicators[reference.indicatorId]) {
-          renderer.indicators[reference.indicatorId] = {
-            canRender: false,
-            series: [],
-            plotsOptions: [],
-            functions: [],
-            variables: []
-          }
-
-          if (reference.indicatorId === this.indicatorId) {
-            renderer.indicators[reference.indicatorId].functions = functions
-            renderer.indicators[reference.indicatorId].variables = variables
-          }
-        }
-
-        renderer.indicators[reference.indicatorId].series[reference.plotIndex] = {
-          time: renderer.timestamp,
-          value: 1,
-          open: 2,
-          high: 2,
-          low: 2,
-          close: 2
-        }
-      }
-    } else {
-      renderer.timestamp = previousRenderer.timestamp + 10
-      renderer.localTimestamp = renderer.timestamp
-    }
-
-    for (const id in markets) {
-      const exchangeBar = Object.assign({}, sample)
-
-      const priceVariation = (Math.random() - 0.5) / 100
-      const volumeVariation = (Math.random() - 0.5) / 100
-
-      if (previousRenderer) {
-        exchangeBar.open *= previousRenderer.sources[id].close
-      }
-      exchangeBar.close = Math.abs(exchangeBar.close * priceVariation)
-      exchangeBar.high = Math.max(exchangeBar.high, exchangeBar.close)
-      exchangeBar.low = Math.min(exchangeBar.low, exchangeBar.close)
-      exchangeBar.vbuy = Math.abs(exchangeBar.vbuy * volumeVariation)
-      exchangeBar.vsell = Math.abs(exchangeBar.vsell * volumeVariation)
-      exchangeBar.cbuy = Math.abs(exchangeBar.cbuy * volumeVariation)
-      exchangeBar.csell = Math.abs(exchangeBar.csell * volumeVariation)
-      exchangeBar.lbuy = Math.abs(exchangeBar.lbuy * volumeVariation)
-      exchangeBar.lsell = Math.abs(exchangeBar.lsell * volumeVariation)
-
-      renderer.bar.vbuy += exchangeBar.vbuy
-      renderer.bar.vsell += exchangeBar.vsell
-      renderer.bar.cbuy += exchangeBar.cbuy
-      renderer.bar.csell += exchangeBar.csell
-      renderer.bar.lbuy += exchangeBar.lbuy
-      renderer.bar.lsell += exchangeBar.lsell
-
-      renderer.sources[id] = exchangeBar
-    }
-
-    return renderer
-  }
-
   getAdapter(output) {
     return (function() {
       'use strict'
@@ -858,67 +672,71 @@ export default class SerieBuilder {
   }
 
   /**
-   * generate an id from argument passed to plot function
-   * @param input
-   * @returns
+   * get fresh state of indicator for the renderer
+   * @param indicator
    */
-  getPlotId(input: string) {
-    input = input.replace(/options\.([a-zA-Z0-9_]+)/g, '')
+  getRendererIndicatorData(indicator: LoadedIndicator) {
+    const { functions, variables, plots } = JSON.parse(JSON.stringify(indicator.model)) as IndicatorTranspilationResult
 
-    const marketsUsed = input.match(new RegExp(`\\b(${this.markets.sort((a, b) => b.length - a.length).join('|')})\\b(?:\\.\\w+)`, 'g')) || []
-
-    // const referencesUsed = (input.match(new RegExp('\\$([a-z_\\-0-9]+)\\b')) || []).slice(1).map(name => name.replace('$', ''))
-
-    const dataUsed = (input.match(/renderer\.bar\.([a-zA-Z0-9_]+)/g) || [])
-      .map(name => name.replace('renderer.bar.', ''))
-      .filter(name => name !== 'bar')
-
-    const functionUsed = (input.match(new RegExp(`([a-zA-Z0_9_]+)\\(`, 'g')) || [])
-      .map(name => name.trim().slice(0, -1))
-      .filter(name => seriesUtils[name + '$'])
-
-    const meta = [...functionUsed, ...marketsUsed, ...dataUsed].filter((v, i, a) => a.indexOf(v) === i)
-
-    return slugify(meta.join('-'))
-  }
-
-  /**
-   * update functions & plots with corresponding options
-   * @param functions
-   * @param plots
-   * @param options
-   */
-  parseScriptOptions(functions: IndicatorFunction[], plots: IndicatorPlot[], options) {
-    let minLength = 0
+    indicator.options.minLength = 0
 
     // update functions arguments from script input
     for (const instruction of functions) {
-      if (typeof instruction.arg === 'undefined') {
-        continue
-      }
+      instruction.length = 0
 
-      try {
-        instruction.arg = eval(instruction.arg as string)
-
-        if (typeof instruction.arg === 'number') {
-          minLength = Math.max(minLength, instruction.arg)
+      for (let i = 0; i < instruction.args.length; i++) {
+        if (typeof instruction.args[i].instruction === 'undefined' || instruction.args[i].instruction === '') {
+          continue
         }
-      } catch (error) {
-        // nothing to see here
-      }
-    }
 
-    options.minLength = minLength
-
-    // update plot options from script input
-    for (const plot of plots) {
-      for (const prop in plot.options) {
         try {
-          plot.options[prop] = eval(plot.options[prop])
+          instruction.args[i].instruction = new Function('options', `'use strict'; return ${instruction.args[i].instruction}`)(indicator.options)
+
+          if (instruction.state.points && instruction.args[i].length && !isNaN(instruction.args[i].instruction)) {
+            instruction.length += instruction.args[i].instruction
+          }
         } catch (error) {
           // nothing to see here
         }
       }
+
+      if (!instruction.state.points) {
+        continue
+      }
+
+      indicator.options.minLength = Math.max(indicator.options.minLength, instruction.length)
     }
+
+    const plotsOptions = []
+
+    // update plot options from script input
+    for (const plot of plots) {
+      plotsOptions.push(this.getCustomPlotOptions(indicator, plot))
+    }
+
+    return {
+      canRender: indicator.options.minLength <= 1,
+      series: [],
+      functions,
+      variables,
+      plotsOptions,
+      minLength: indicator.options.minLength
+    }
+  }
+
+  getCustomPlotOptions(indicator, plot) {
+    // update plot options from script input
+
+    const options = {}
+
+    for (const prop in plot.options) {
+      try {
+        options[prop] = new Function('options', `'use strict'; return ${plot.options[prop]}`)(indicator.options)
+      } catch (error) {
+        options[prop] = plot.options[prop]
+      }
+    }
+
+    return options
   }
 }

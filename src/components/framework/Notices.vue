@@ -1,39 +1,22 @@
 <template>
-  <transition-group
-    :name="transitionGroupName"
-    @beforeEnter="beforeEnter"
-    @enter="enter"
-    @afterEnter="afterEnter"
-    @beforeLeave="beforeLeave"
-    @leave="leave"
-    tag="div"
-    class="notices"
-  >
+  <transition-height :name="transitionGroupName" tag="div" class="notices">
     <div v-for="notice in notices" :key="notice.id" class="notice" :class="'-' + notice.type">
       <div class="notice__wrapper" @click="$store.dispatch('app/hideNotice', notice.id)">
         <i v-if="notice.icon" class="notice__icon" :class="notice.icon"></i>
-        <div v-html="notice.title" class="notice__title"></div>
-        <!--<v-btn
-          v-if="notice.button"
-          :color="notice.button.color || 'dark'"
-          class="ml-4 notice__action "
-          outlined
-          small
-          @click.stop="onButtonClick(notice)"
-        >
-          <v-icon v-if="notice.button.icon" left small>{{ notice.button.icon }}</v-icon>
-          {{ notice.button.text }}
-        </v-btn>-->
+        <div v-if="!notice.html" v-text="notice.title" class="notice__title"></div>
+        <div v-else v-html="notice.title" class="notice__title"></div>
       </div>
     </div>
-  </transition-group>
+  </transition-height>
 </template>
 
 <script lang="ts">
 import { Notice } from '@/store/app'
 import { Component, Vue } from 'vue-property-decorator'
+import TransitionHeight from './TransitionHeight.vue'
 
 @Component({
+  components: { TransitionHeight },
   name: 'Notices'
 })
 export default class extends Vue {
@@ -61,39 +44,6 @@ export default class extends Vue {
     }
 
     hide !== false && this.$store.dispatch('app/hideNotice', notice.id)
-  }
-
-  beforeEnter(element) {
-    element.style.height = '0px'
-  }
-
-  enter(element) {
-    const wrapper = element.children[0]
-
-    let height = wrapper.offsetHeight
-    height += parseInt(window.getComputedStyle(wrapper).getPropertyValue('margin-top'))
-    height += parseInt(window.getComputedStyle(wrapper).getPropertyValue('margin-bottom'))
-    height += 'px'
-
-    element.dataset.height = height
-
-    setTimeout(() => {
-      element.style.height = height
-    }, 100)
-  }
-
-  afterEnter(element) {
-    element.style.height = ''
-  }
-
-  beforeLeave(element) {
-    element.style.height = element.dataset.height
-  }
-
-  leave(element) {
-    setTimeout(() => {
-      element.style.height = '0px'
-    })
   }
 }
 </script>

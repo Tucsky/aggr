@@ -10,7 +10,7 @@
       </div>
     </div>
     <div class="iframe__wrapper" v-else>
-      <iframe :src="url" frameborder="0" :class="customId" width="100%" height="100%"></iframe>
+      <iframe :src="url" ref="iframe" frameborder="0" width="100%" height="100%" :style="style"></iframe>
     </div>
   </div>
 </template>
@@ -28,14 +28,35 @@ import PaneHeader from '../panes/PaneHeader.vue'
 export default class extends Mixins(PaneMixin) {
   customId = ''
 
+  $refs!: {
+    iframe: HTMLElement
+  }
+
   get locked() {
     return this.$store.state[this.paneId].locked
   }
 
   get url() {
-    const url = this.$store.state[this.paneId].url
-    this.customId = this.getCustomId(url)
-    return url
+    return this.$store.state[this.paneId].url
+  }
+
+  get interactive() {
+    return this.$store.state[this.paneId].interactive
+  }
+
+  get zoom() {
+    return this.$store.state.panes.panes[this.paneId].zoom
+  }
+
+  get style() {
+    const size = (1 / this.zoom) * 100
+
+    return {
+      transform: `scale(${this.zoom})`,
+      width: size + '%',
+      height: size + '%',
+      pointerEvents: this.interactive ? 'all' : 'none'
+    }
   }
 
   get trimmedUrl() {
@@ -44,16 +65,6 @@ export default class extends Mixins(PaneMixin) {
     } else {
       return this.url.slice(0, 15) + '[...]' + this.url.substr(-15)
     }
-  }
-
-  getCustomId(url) {
-    const urlHash = url.split('#')
-
-    if (urlHash.length === 0 || urlHash[urlHash.length - 1].trim().length === 0) {
-      return ''
-    }
-
-    return '-' + urlHash[urlHash.length - 1].trim()
   }
 }
 </script>
@@ -77,24 +88,7 @@ export default class extends Mixins(PaneMixin) {
     border: 0;
     width: 100%;
     height: 100%;
-
-    &.-okotoki {
-      transform: translate(-30px, -55px);
-      height: calc(100% + 135px);
-      width: calc(100% + 280px);
-    }
-
-    &.-okotoki-mini {
-      transform: translate(-13%, calc(-13% - 34px)) scale(0.75);
-      height: calc(137% + 112px);
-      width: calc(135% + 246px);
-    }
-
-    &.-okotoki-small {
-      transform: translate(-8%, calc(-9% - 34px)) scale(0.85);
-      height: calc(122% + 112px);
-      width: calc(122% + 247px);
-    }
+    transform-origin: top left;
   }
 }
 </style>

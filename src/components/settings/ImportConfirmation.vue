@@ -34,13 +34,13 @@
     </div>
     <div v-if="panes.length" class="form-group mt16">
       <label>Markets</label>
-      <button v-for="(market, index) in markets" :key="index" type="button" disabled class="btn -green -small mr4 mb4">
+      <button v-for="(market, index) in markets" :key="index" type="button" disabled class="btn -accent -small mr4 mb4">
         {{ market }}
       </button>
     </div>
     <footer>
       <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
-      <button class="btn -large -primary" @click="close(workspace)">IMPORT & LOAD</button>
+      <button class="btn -large -green" @click="close(workspace)">IMPORT</button>
     </footer>
   </Dialog>
 </template>

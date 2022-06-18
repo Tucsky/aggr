@@ -6,7 +6,7 @@
     <p class="mx0" v-if="question">{{ question }}</p>
     <form @submit.prevent="submit">
       <div class="form-group">
-        <input ref="input" type="text" class="form-control w-100" v-model="value" />
+        <input type="text" class="form-control w-100" v-model="value" v-autofocus />
       </div>
 
       <footer>
@@ -42,11 +42,6 @@ export default {
     if (this.input && this.input.length) {
       this.value = this.input
     }
-  },
-  mounted() {
-    this.$nextTick(() => {
-      this.$refs.input.focus()
-    })
   },
   methods: {
     submit() {

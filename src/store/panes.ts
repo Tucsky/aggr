@@ -1,6 +1,6 @@
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
-import { getBucketId, parseMarket, sleep, slugify, uniqueName } from '@/utils/helpers'
+import { getBucketId, slugify, uniqueName } from '@/utils/helpers'
 import { registerModule } from '@/utils/store'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
@@ -9,6 +9,7 @@ import panesSettings from './panesSettings'
 import defaultPanes from './defaultPanes.json'
 import { ListenedProduct } from './app'
 import { GRID_COLS } from '@/utils/constants'
+import { getMarketProduct, parseMarket, requestProducts } from '../services/productsService'
 
 export type PaneType = 'trades' | 'chart' | 'stats' | 'counters' | 'prices' | 'website'
 export type MarketsListeners = { [market: string]: ListenedProduct }
@@ -37,12 +38,27 @@ export interface PanesState {
   marketsListeners: MarketsListeners
 }
 
+const layoutDesktop = [
+  { i: 'chart', type: 'chart', x: 0, y: 0, w: 20, h: 24 },
+  { i: 'trades', type: 'trades', x: 20, y: 0, w: 4, h: 20 },
+  { i: 'liquidations', type: 'trades', x: 20, y: 20, w: 4, h: 4 }
+]
+
+const layoutMobile = [
+  { i: 'chart', type: 'chart', x: 0, y: 0, w: 24, h: 16 },
+  { i: 'trades', type: 'trades', x: 0, y: 0, w: 24, h: 8 }
+]
+
 const state: PanesState = JSON.parse(JSON.stringify(defaultPanes))
 
 const getters = {} as GetterTree<PanesState, ModulesState>
 
 const actions = {
-  async boot({ state }) {
+  async boot({ state, dispatch }) {
+    if (!state.layout) {
+      dispatch('setupLayout')
+    }
+
     for (const market in state.marketsListeners) {
       if (typeof state.marketsListeners[market] === 'number') {
         delete state.marketsListeners[market]
@@ -52,14 +68,6 @@ const actions = {
     }
   },
   async addPane({ commit, dispatch, state }, options: Pane & { settings?: any; originalGridItem?: any }) {
-    if (!options || !options.type) {
-      this.dispatch('app/showNotice', {
-        title: 'Invalid addPane options',
-        type: 'error'
-      })
-      return
-    }
-
     if (!panesSettings[options.type]) {
       this.dispatch('app/showNotice', {
         title: 'Unrecognized pane type "' + options.type + '"',
@@ -90,7 +98,7 @@ const actions = {
       window.scrollTo(0, document.body.scrollHeight)
     })
   },
-  async removePane({ commit, state, dispatch }, id: string) {
+  async removePane({ commit, state, dispatch, rootState }, id: string) {
     const item = state.panes[id]
 
     if (!item) {
@@ -100,6 +108,10 @@ const actions = {
     dispatch('removePaneGridItems', id)
     commit('REMOVE_PANE', id)
     dispatch('refreshMarketsListeners')
+
+    if (rootState.app.focusedPaneId === id) {
+      this.commit('app/SET_FOCUSED_PANE', null)
+    }
 
     await workspacesService.removeState(id)
 
@@ -130,10 +142,10 @@ const actions = {
       commit('REMOVE_GRID_ITEM', index)
     }
   },
-  async refreshMarketsListeners({ commit, state, rootState }) {
+  async refreshMarketsListeners({ commit, state, rootState }, { markets, id } = {}) {
     // cache original listeners (market: n listeners)
-    const originalListeners: { [market: string]: number } = Object.keys(state.marketsListeners).reduce((listenersByMarkets, market) => {
-      listenersByMarkets[market] = state.marketsListeners[market].listeners
+    const originalListeners: { [marketKey: string]: number } = Object.keys(state.marketsListeners).reduce((listenersByMarkets, marketKey) => {
+      listenersByMarkets[marketKey] = state.marketsListeners[marketKey].listeners
 
       return listenersByMarkets
     }, {})
@@ -144,54 +156,43 @@ const actions = {
     // bucketed markets stored here
     const buckets = {}
 
-    for (const id in state.panes) {
-      const markets = state.panes[id].markets
-
-      if (!markets) {
-        continue
+    for (const paneId in state.panes) {
+      let paneMarkets = state.panes[paneId].markets
+      if (markets && (!id || paneId === id)) {
+        paneMarkets = markets
       }
 
-      if (state.panes[id].type === 'counters' || state.panes[id].type === 'stats') {
+      if (state.panes[paneId].type === 'counters' || state.panes[paneId].type === 'stats') {
         // market used in a bucket
-        const bucketId = getBucketId(markets)
+        const bucketId = getBucketId(paneMarkets)
 
         if (!buckets[bucketId]) {
-          buckets[bucketId] = markets.map(market => market.replace(':', ''))
+          buckets[bucketId] = paneMarkets
         }
       }
 
-      for (const market of markets) {
-        if (typeof marketsListeners[market] === 'undefined') {
-          if (state.marketsListeners[market]) {
-            marketsListeners[market] = state.marketsListeners[market]
-            marketsListeners[market].listeners = 0
+      for (const marketKey of paneMarkets) {
+        if (typeof marketsListeners[marketKey] === 'undefined') {
+          if (state.marketsListeners[marketKey]) {
+            marketsListeners[marketKey] = state.marketsListeners[marketKey]
+            marketsListeners[marketKey].listeners = 0
           } else {
-            const [exchange, pair] = parseMarket(market)
+            const [exchange, pair] = parseMarket(marketKey)
 
-            if (!rootState.app.indexedProducts[exchange]) {
-              // this shouldn't happen since **ALL** exchanges got their products fetched on boot
-              console.error(`[panes/refreshMarketsListeners] products required for exchange`, exchange, '(critical)')
-              continue
+            if (!rootState.exchanges[exchange].fetched) {
+              console.warn(`[panes/refreshMarketsListeners] products not found for exchange`, exchange, '-> requesting now')
+              await requestProducts(exchange)
+              console.debug(`[panes/refreshMarketsListeners] ${exchange}'s products acquired`)
             }
 
-            const indexedProduct = rootState.app.indexedProducts[exchange].find(indexedMarket => indexedMarket.pair === pair)
+            marketsListeners[marketKey] = getMarketProduct(exchange, pair, true)
 
-            if (!indexedProduct) {
-              // this can happen if a product has been added before, but been delisted and product got automatically refreshed
-              console.error(`[panes/refreshMarketsListeners] market not found in exchange's product`, exchange, '(warning)')
-              continue
-            }
-
-            if (indexedProduct) {
-              marketsListeners[market] = indexedProduct
-
-              marketsListeners[market].listeners = 0
-            }
+            marketsListeners[marketKey].listeners = 0
           }
         }
 
-        if (typeof marketsListeners[market] !== 'undefined') {
-          marketsListeners[market].listeners++
+        if (typeof marketsListeners[marketKey] !== 'undefined') {
+          marketsListeners[marketKey].listeners++
         }
       }
     }
@@ -203,12 +204,6 @@ const actions = {
     const toConnect = []
     const toDisconnect = []
 
-    console.debug(
-      `[panes] refreshMarketsListeners` +
-        (toConnect.length ? `\n\tto connect : ${toConnect.join(', ')}` : '') +
-        (toDisconnect.length ? `\n\tto disconnect : ${toDisconnect.join(', ')}` : '')
-    )
-
     for (const market of allUniqueMarkets) {
       const previousListeners = originalListeners[market]
       const currentListeners = marketsListeners[market] && marketsListeners[market].listeners
@@ -218,9 +213,9 @@ const actions = {
       } else if (previousListeners && !currentListeners) {
         toDisconnect.push(market)
 
-        if (state.marketsListeners[market].listeners) {
-          // clear listeners for that market
-          state.marketsListeners[market].listeners = 0
+        if (state.marketsListeners[market]) {
+          // dlete market from store
+          delete state.marketsListeners[market]
         }
       }
     }
@@ -233,18 +228,20 @@ const actions = {
     })
 
     commit('SET_MARKETS_LISTENERS', marketsListeners)
-  },
-  setMarketsForAll({ commit, state, dispatch }, markets: string[]) {
-    for (const id in state.panes) {
-      commit('SET_PANE_MARKETS', { id, markets })
+
+    if (markets) {
+      for (const paneId in state.panes) {
+        if (!id || paneId === id) {
+          commit('SET_PANE_MARKETS', { id: paneId, markets })
+        }
+      }
     }
-
-    dispatch('refreshMarketsListeners')
   },
-  setMarketsForPane({ commit, dispatch }, { id, markets }: { id: string; markets: string[] }) {
-    commit('SET_PANE_MARKETS', { id, markets })
-
-    dispatch('refreshMarketsListeners')
+  setMarketsForAll({ dispatch }, markets: string[]) {
+    return dispatch('refreshMarketsListeners', { markets })
+  },
+  setMarketsForPane({ dispatch }, { id, markets }: { id: string; markets: string[] }) {
+    return dispatch('refreshMarketsListeners', { id, markets })
   },
   duplicatePane({ state, rootState, dispatch }, id: string) {
     if (!state.panes[id] || !rootState[id]) {
@@ -274,9 +271,11 @@ const actions = {
       currentPaneState = Object.assign({}, rootState[id], data)
     }
 
-    rootState[id]._booted = false
+    const layoutItem = state.layout.find(a => a.i === id)
 
-    await sleep(100)
+    const originalPaneType = layoutItem.type
+
+    layoutItem.type = 'div'
 
     this.unregisterModule(id)
 
@@ -286,28 +285,17 @@ const actions = {
       await workspacesService.saveState(id, currentPaneState)
     }
 
-    await sleep(100)
-
     await registerModule(id, {}, true, pane)
+
+    layoutItem.type = originalPaneType
   },
   setZoom({ commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
     commit('SET_PANE_ZOOM', { id, zoom })
 
     dispatch('refreshZoom', id)
   },
-  changeZoom({ state, commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
-    if (zoom) {
-      zoom = Math.max(0.1, (state.panes[id].zoom || 1) + zoom)
-    } else {
-      zoom = 1
-    }
-
-    commit('SET_PANE_ZOOM', { id, zoom })
-
-    dispatch('refreshZoom', id)
-  },
   refreshZoom({ state }, id: string) {
-    const zoom = Math.max(0.1, state.panes[id].zoom)
+    const zoom = state.panes[id].zoom ? Math.max(0.1, state.panes[id].zoom) : 1
     const el = document.getElementById(id) as HTMLElement
 
     if (el) {
@@ -315,10 +303,46 @@ const actions = {
 
       parent.style.fontSize = zoom ? zoom + 'rem' : ''
 
-      if (zoom > 1) {
+      if (zoom >= 1) {
         el.classList.add('-large')
       } else {
         el.classList.remove('-large')
+      }
+
+      if (zoom < 1) {
+        el.classList.add('-small')
+      } else {
+        el.classList.remove('-small')
+      }
+    }
+  },
+  setupLayout({ state }) {
+    // first time load
+    // app not even loaded yet
+
+    let initialZoom = 1
+    const innerWidth = window.innerWidth
+
+    console.info('[panes/setupLayout] @' + innerWidth)
+
+    if (innerWidth >= 768) {
+      // start with desktop layout
+      state.layout = layoutDesktop
+
+      if (innerWidth >= 1920) {
+        initialZoom = 1.25
+      }
+    } else {
+      // start with mobile layout
+      state.layout = layoutMobile
+      initialZoom = 1.25
+
+      delete state.panes.liquidations
+    }
+
+    if (initialZoom > 1) {
+      for (const paneId in state.panes) {
+        state.panes[paneId].zoom = initialZoom
       }
     }
   }
@@ -334,8 +358,9 @@ const mutations = {
   ADD_GRID_ITEM: (state, item) => {
     if (typeof item.x === 'undefined') {
       const cols = GRID_COLS
-      const width = item.w || 4
-      const height = item.h || 4
+      const size = window.innerWidth <= 500 ? 16 : window.innerWidth < 768 ? 8 : 4
+      const width = item.w || size
+      const height = item.h || size
 
       const items = state.layout.slice().sort((a, b) => a.x + a.y * 2 - (b.x + b.y * 2))
 
@@ -389,12 +414,6 @@ const mutations = {
   },
   SET_PANE_MARKETS: (state, { id, markets }: { id: string; markets: string[] }) => {
     state.panes[id].markets = markets
-  },
-  REMOVE_PAIR_MARKET: (state, { id, index }: { id: string; index: number }) => {
-    state.panes[id].markets.splice(index, 1)
-  },
-  ADD_PAIR_MARKET: (state, { id, market }: { id: string; market: string }) => {
-    state.panes[id].markets.push(market)
   },
   SET_PANE_NAME: (state, { id, name }: { id: string; name: string }) => {
     state.panes[id].name = name

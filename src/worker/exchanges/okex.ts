@@ -1,54 +1,50 @@
 import Exchange from '../exchange'
-import pako from 'pako'
 
 export default class extends Exchange {
   id = 'OKEX'
   private specs: { [pair: string]: number }
-  private types: { [pair: string]: string }
   private inversed: { [pair: string]: boolean }
 
   protected endpoints = {
     PRODUCTS: [
-      'https://www.okex.com/api/spot/v3/instruments',
-      'https://www.okex.com/api/futures/v3/instruments',
-      'https://www.okex.com/api/swap/v3/instruments'
+      'https://www.okex.com/api/v5/public/instruments?instType=SPOT',
+      'https://www.okex.com/api/v5/public/instruments?instType=FUTURES',
+      'https://www.okex.com/api/v5/public/instruments?instType=SWAP'
     ]
   }
 
   getUrl() {
-    return 'wss://real.okex.com:8443/ws/v3'
+    return 'wss://ws.okex.com:8443/ws/v5/public'
   }
 
   formatProducts(response) {
     const products = []
     const specs = {}
-    const types = {}
+    const aliases = {}
     const inversed = {}
 
     for (const data of response) {
-      for (const product of data) {
-        const pair = product.instrument_id
+      for (const product of data.data) {
+        const type = product.instType
+        const pair = product.instId
 
-        if (product.alias) {
+        if (type === 'FUTURES') {
           // futures
 
-          specs[pair] = +product.contract_val
-          types[pair] = 'futures'
+          specs[pair] = +product.ctVal
+          aliases[pair] = product.alias
 
-          if (product.is_inverse === 'true') {
+          if (product.ctType === 'inverse') {
             inversed[pair] = true
           }
-        } else if (/-SWAP/.test(product.instrument_id)) {
+        } else if (type === 'SWAP') {
           // swap
 
-          specs[pair] = +product.contract_val
-          types[pair] = 'swap'
+          specs[pair] = +product.ctVal
 
-          if (product.is_inverse === 'true') {
+          if (product.ctType === 'inverse') {
             inversed[pair] = true
           }
-        } else {
-          types[pair] = 'spot'
         }
 
         products.push(pair)
@@ -58,7 +54,7 @@ export default class extends Exchange {
     return {
       products,
       specs,
-      types,
+      aliases,
       inversed
     }
   }
@@ -73,12 +69,15 @@ export default class extends Exchange {
       return
     }
 
-    const type = this.types[pair]
-
     api.send(
       JSON.stringify({
         op: 'subscribe',
-        args: [`${type}/trade:${pair}`]
+        args: [
+          {
+            channel: 'trades',
+            instId: pair
+          }
+        ]
       })
     )
 
@@ -95,59 +94,50 @@ export default class extends Exchange {
       return
     }
 
-    const type = this.types[pair]
-
     api.send(
       JSON.stringify({
         op: 'unsubscribe',
-        args: [`${type}/trade:${pair}`]
+        args: [
+          {
+            channel: 'trades',
+            instId: pair
+          }
+        ]
       })
     )
 
     return true
   }
 
-  onMessage(event, api) {
-    let json
+  formatTrade(trade) {
+    let size
 
-    try {
-      if (typeof event === 'string') {
-        json = JSON.parse(event)
-      } else {
-        json = JSON.parse(pako.inflateRaw(event.data, { to: 'string' }))
-      }
-    } catch (error) {
-      return
+    if (typeof this.specs[trade.instId] !== 'undefined') {
+      size = (trade.sz * this.specs[trade.instId]) / (this.inversed[trade.instId] ? trade.px : 1)
+    } else {
+      size = trade.sz
     }
 
-    !json.table && console.log(json)
+    return {
+      exchange: this.id,
+      pair: trade.instId,
+      timestamp: +trade.ts,
+      price: +trade.px,
+      size: +size,
+      side: trade.side
+    }
+  }
 
-    if (!json || !json.data || !json.data.length) {
+  onMessage(event, api) {
+    const json = JSON.parse(event.data)
+
+    if (!json || !json.data) {
       return
     }
 
     return this.emitTrades(
       api.id,
-      json.data.map(trade => {
-        let size
-        const name = this.id
-
-        if (typeof this.specs[trade.instrument_id] !== 'undefined') {
-          size = ((trade.size || trade.qty) * this.specs[trade.instrument_id]) / (this.inversed[trade.instrument_id] ? trade.price : 1)
-          // name += '_futures'
-        } else {
-          size = trade.size
-        }
-
-        return {
-          exchange: name,
-          pair: trade.instrument_id,
-          timestamp: +new Date(trade.timestamp),
-          price: +trade.price,
-          size: +size,
-          side: trade.side
-        }
-      })
+      json.data.map(trade => this.formatTrade(trade))
     )
   }
 }

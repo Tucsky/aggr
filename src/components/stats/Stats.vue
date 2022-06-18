@@ -16,12 +16,13 @@ import { Component, Mixins } from 'vue-property-decorator'
 import * as TV from 'lightweight-charts'
 import aggregatorService from '@/services/aggregatorService'
 import Bucket from '../../utils/bucket'
-import { defaultStatsChartOptions, getChartOptions, getCustomColorsOptions } from '../chart/chartOptions'
+import { defaultStatsChartOptions, getChartOptions, getChartCustomColorsOptions } from '../chart/options'
 
 import StatDialog from './StatDialog.vue'
 import dialogService from '@/services/dialogService'
 
-import { formatAmount, getBucketId } from '@/utils/helpers'
+import { getBucketId } from '@/utils/helpers'
+import { formatAmount } from '@/services/productsService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
 
@@ -37,7 +38,6 @@ export default class extends Mixins(PaneMixin) {
   }
 
   private _refreshChartDimensionsTimeout: number
-  private _onStoreMutation: () => void
   private _chart: TV.IChartApi
   private _buckets: { [id: string]: Bucket } = {}
   private _feed: string = null
@@ -55,12 +55,12 @@ export default class extends Mixins(PaneMixin) {
       switch (mutation.type) {
         case 'settings/SET_CHART_COLOR':
           if (this._chart && mutation.payload) {
-            this._chart.applyOptions(getCustomColorsOptions(mutation.payload))
+            this._chart.applyOptions(getChartCustomColorsOptions(mutation.payload))
           }
           break
         case 'settings/SET_CHART_THEME':
           if (this._chart) {
-            this._chart.applyOptions(getCustomColorsOptions())
+            this._chart.applyOptions(getChartCustomColorsOptions())
           }
           break
         case 'panes/SET_PANE_MARKETS':
@@ -122,7 +122,6 @@ export default class extends Mixins(PaneMixin) {
 
     this.clearBuckets()
     this.removeChart()
-    this._onStoreMutation()
 
     this._chart = null
   }
@@ -383,7 +382,7 @@ export default class extends Mixins(PaneMixin) {
   &__value {
     text-align: right;
     white-space: nowrap;
-    font-family: 'Barlow Semi Condensed';
+    font-family: $font-condensed;
     z-index: 1;
     flex-grow: 1;
     font-weight: 600;

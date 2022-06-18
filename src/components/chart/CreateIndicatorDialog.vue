@@ -16,27 +16,34 @@
             <thead>
               <tr>
                 <th>Name</th>
+                <th class="min-768">Description</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="indicator of filteredIndicators" :key="indicator.id" @click="selectIndicator(indicator)" class="-action">
-                <td class="table-input" v-text="indicator.displayName || indicator.name"></td>
-                <td class="table-action" @click.stop="removeIndicator(indicator)">
-                  <button class="btn  -text -small"><i class="icon-cross"></i></button>
+                <td class="table-input">{{ (indicator.displayName || indicator.name).replace(/\{[\w_]+\}/g, '') }}</td>
+                <td class="min-768 table-input">
+                  <span class="text-muted">{{ indicator.description }}</span>
+                </td>
+                <td class="table-action -hover" @click.stop="removeIndicator(indicator)">
+                  <button class="btn -text -small"><i class="icon-trash text-danger"></i></button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="divider -single -horizontal"></div>
-        <div class="divider -single -vertical"></div>
+        <hr class="-single -horizontal" />
+        <hr class="-single -vertical" />
       </template>
       <div class="-unshrinkable">
         <div class="form-group mb16">
           <label>Import indicator</label>
-          <button class="btn -blue -large -cases w-100" @click="importIndicator"><i class="icon-upload mr8"></i> Browse</button>
-          <div class="divider -horizontal" style="display:flex;">Or</div>
+          <button class="btn -blue -large -cases w-100 -file">
+            <i class="icon-upload mr8"></i> Browse
+            <input type="file" @change="handleFile" />
+          </button>
+          <div class="divider -horizontal" style="display: flex">Or</div>
           <label>Create blank indicator</label>
           <input class="form-control" v-model="name" placeholder="Name it" />
         </div>
@@ -66,7 +73,7 @@ import DialogMixin from '@/mixins/dialogMixin'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import IndicatorDialog from './IndicatorDialog.vue'
-import { browseFile } from '@/utils/helpers'
+import importService from '@/services/importService'
 
 export default {
   mixins: [DialogMixin],
@@ -96,9 +103,7 @@ export default {
       return new RegExp(this.query.replace(/\W/, '.*'), 'i')
     },
     filteredIndicators: function() {
-      return this.indicators.filter(
-        a => !this.$store.state[this.paneId].indicators[a.id] && (this.queryFilter.test(a.name) || this.queryFilter.test(a.displayName))
-      )
+      return this.indicators.filter(a => this.queryFilter.test(a.name) || this.queryFilter.test(a.displayName))
     },
     availableScales: function() {
       return this.indicators
@@ -129,29 +134,11 @@ export default {
   },
   methods: {
     async getIndicators() {
-      this.indicators = await workspacesService.getIndicators()
+      this.indicators = (await workspacesService.getIndicators()).sort((a, b) => (b.uses || 0) - (a.uses || 0))
     },
-    async importIndicator() {
-      let content
-
+    async handleFile(event) {
       try {
-        content = await browseFile()
-      } catch (error) {
-        this.$store.dispatch('app/showNotice', {
-          title: error.message,
-          type: 'error'
-        })
-        return
-      }
-
-      let preset
-
-      try {
-        if (typeof content === 'string') {
-          preset = JSON.parse(content)
-        } else {
-          throw new Error('invalid file, must be text/json')
-        }
+        const preset = await importService.getJSON(event.target.files[0])
 
         if (!preset.data) {
           throw new Error('indicator is empty')
@@ -161,29 +148,19 @@ export default {
           throw new Error('not an indicator')
         }
 
-        if (preset.name) {
-          preset.name = preset.name
+        this.createIndicator({
+          name: preset.name
             .split(':')
             .slice(1)
-            .join(':')
-        }
-
-        this.createIndicator({
-          name: preset.name || 'Imported indicator',
+            .join(':'),
           script: preset.data.script || '',
           options: preset.data.options || {}
         })
-
-        this.$store.dispatch('app/showNotice', {
-          title: `Added 1 indicator`,
-          type: 'info'
-        })
       } catch (error) {
         this.$store.dispatch('app/showNotice', {
-          title: `Couldn't import indicator : ${error.message}`,
+          title: error.message,
           type: 'error'
         })
-        return
       }
     },
     async createIndicator(indicator) {
@@ -213,6 +190,8 @@ export default {
       this.close(null)
     },
     selectIndicator(indicator) {
+      workspacesService.incrementIndicatorUsage(indicator.id)
+
       this.$store.dispatch(this.paneId + '/addIndicator', indicator)
       this.close(null)
     },
@@ -221,8 +200,6 @@ export default {
         workspacesService.deleteIndicator(indicator.id)
 
         this.indicators.splice(this.indicators.indexOf(indicator), 1)
-
-        this.getIndicatorId()
       }
     },
     ago(timestamp) {

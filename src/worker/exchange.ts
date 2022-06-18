@@ -1,7 +1,8 @@
 import { ProductsData, ProductsStorage } from '@/types/test'
 import { EventEmitter } from 'eventemitter3'
+import { sleep } from './helpers/utils'
 import { dispatchAsync } from './helpers/com'
-import { getHms, randomString, sleep } from './helpers/utils'
+import { randomString } from './helpers/utils'
 interface Api extends WebSocket {
   _id: string
   _pending: string[]
@@ -14,7 +15,10 @@ class Exchange extends EventEmitter {
   public id: string
   public pairs: string[] = []
   public products: string[] = null
+  protected delayBetweenMessages: number
+  protected maxConnectionsPerApi: number
   protected endpoints: { [id: string]: string | string[] }
+
   /**
    * ping timers
    * @type {{[url: string]: number}}
@@ -66,7 +70,7 @@ class Exchange extends EventEmitter {
     super()
   }
 
-  get requireProducts() {
+  get requiresProducts() {
     return !this.products && this.endpoints.PRODUCTS
   }
 
@@ -94,7 +98,7 @@ class Exchange extends EventEmitter {
    */
   /* eslint-disable @typescript-eslint/no-unused-vars */
   getUrl(pair: string): string {
-    throw new Error('not implemented')
+    throw new Error('Not implemented')
   }
 
   /**
@@ -115,7 +119,7 @@ class Exchange extends EventEmitter {
   }
 
   resolveApi(pair) {
-    let api = this.getActiveApiByPair(pair)
+    let api = this.getActiveApiByUrl(this.getUrl(pair))
 
     if (!api) {
       api = this.createWs(pair)
@@ -143,17 +147,6 @@ class Exchange extends EventEmitter {
       )
     }
 
-    /* if (this.connecting[api.url]) {
-      console.log(`[${this.id}.resolveApi] attach ${pair} to connecting api ${api.url}`)
-      //return this.connecting[api.url].promise
-    } else {
-      console.log(`[${this.id}.resolveApi] attach ${pair} to already opened api ${api.url}`)
-      //return Promise.resolve(api)
-    } */
-
-    // return immediately
-    // return Promise.resolve(api)
-
     return api
   }
 
@@ -176,7 +169,7 @@ class Exchange extends EventEmitter {
       this.count++
 
       if (this.onMessage(event, api) === true) {
-        api._timestamp = +new Date()
+        api._timestamp = Date.now()
       }
     }
 
@@ -191,7 +184,7 @@ class Exchange extends EventEmitter {
         }, 10000)
       }
 
-      this.markLoadingAsCompleted(this.connecting, url, true)
+      this.markLoadingAsCompleted(this.connecting, api._id, true)
 
       this.subscribePendingPairs(api)
 
@@ -204,11 +197,11 @@ class Exchange extends EventEmitter {
         delete this.clearReconnectionDelayTimeout[url]
       }
 
-      this.markLoadingAsCompleted(this.connecting, url, false)
+      this.markLoadingAsCompleted(this.connecting, api._id, false)
 
       this.onClose(event, api._connected)
       // resolve disconnecting (as success)
-      this.markLoadingAsCompleted(this.disconnecting, url, true)
+      this.markLoadingAsCompleted(this.disconnecting, api._id, true)
 
       const pairsToReconnect = [...api._pending, ...api._connected]
 
@@ -241,10 +234,10 @@ class Exchange extends EventEmitter {
       this.onError(event, api._connected)
     }
 
-    this.connecting[url] = {}
+    this.connecting[api._id] = {}
 
-    this.connecting[url].promise = new Promise((resolve, reject) => {
-      this.connecting[url].resolver = success => {
+    this.connecting[api._id].promise = new Promise((resolve, reject) => {
+      this.connecting[api._id].resolver = success => {
         if (success) {
           this.onApiCreated(api)
 
@@ -282,7 +275,7 @@ class Exchange extends EventEmitter {
       return
     }
 
-    if (api._connected.indexOf(pair) === -1 && api._pending.indexOf(pair) === -1) {
+    if (api._connected.indexOf(pair) === -1) {
       console.debug(`[${this.id}.unlink] "${pair}" does not exist on exchange ${this.id} (resolved immediately)`)
       return
     }
@@ -305,10 +298,24 @@ class Exchange extends EventEmitter {
    * @returns {WebSocket}
    */
   getActiveApiByPair(pair) {
-    const url = this.getUrl(pair)
-
     for (let i = 0; i < this.apis.length; i++) {
-      if (this.apis[i].url === url) {
+      if (this.apis[i]._connected.indexOf(pair) !== -1) {
+        return this.apis[i]
+      }
+    }
+  }
+
+  /**
+   * Get active websocket api by url
+   * @param {string} url
+   * @returns {WebSocket}
+   */
+  getActiveApiByUrl(url) {
+    for (let i = 0; i < this.apis.length; i++) {
+      if (
+        this.apis[i].url === url &&
+        (!this.maxConnectionsPerApi || this.apis[i]._connected.length + this.apis[i]._pending.length < this.maxConnectionsPerApi)
+      ) {
         return this.apis[i]
       }
     }
@@ -319,27 +326,27 @@ class Exchange extends EventEmitter {
    * @param {WebSocket} api
    * @returns {Promise<void>}
    */
-  removeWs(api) {
+  removeWs(api: Api) {
     let promiseOfClose
 
     if (api.readyState !== WebSocket.CLOSED) {
       if (api._connected.length) {
-        throw new Error(`cannot unbind api that still has pairs linked to it`)
+        throw new Error(`Cannot unbind api that still has pairs linked to it`)
       }
 
       console.debug(`[${this.id}.removeWs] close api ${api.url}`)
 
-      this.disconnecting[api.url] = {}
+      this.disconnecting[api._id] = {}
 
-      this.disconnecting[api.url].promise = new Promise<void>((resolve, reject) => {
+      this.disconnecting[api._id].promise = new Promise<void>((resolve, reject) => {
         if (api.readyState < WebSocket.CLOSING) {
           api.close()
         }
 
-        this.disconnecting[api.url].resolver = success => (success ? resolve() : reject())
+        this.disconnecting[api._id].resolver = success => (success ? resolve() : reject())
       })
 
-      promiseOfClose = this.disconnecting[api.url].promise
+      promiseOfClose = this.disconnecting[api._id].promise
     } else {
       promiseOfClose = Promise.resolve()
     }
@@ -395,7 +402,7 @@ class Exchange extends EventEmitter {
    */
   setProducts(productsData: ProductsData): boolean {
     if (!productsData) {
-      console.debug(`[${this.id}] set products (null)`)
+      console.debug(`[${this.id}] set products with no data (setting null)`)
       // worker will ask for products next time the market connect
       this.products = null
       return null
@@ -420,14 +427,10 @@ class Exchange extends EventEmitter {
   }
 
   async getProducts(forceFetch?: boolean): Promise<void> {
-    console.debug(`[${this.id}] request product`)
-
-    if (forceFetch) {
-      await sleep(1000)
-    }
+    console.debug(`[${this.id}] request product ${forceFetch ? '(force fetching)' : ''}`)
 
     // ask client for exchange's products
-    // will ever retrieve stored or fetch new
+    // will either retrieve stored or fetch new
     // fetched product will be sent back to worker for formatting then back to client
     const storage = (await dispatchAsync({
       op: 'getExchangeProducts',
@@ -436,9 +439,9 @@ class Exchange extends EventEmitter {
         endpoints: this.endpoints.PRODUCTS,
         forceFetch: forceFetch
       }
-    })) as ProductsStorage | boolean
+    })) as ProductsStorage
 
-    if (storage === true) {
+    if (this.setProducts(storage.data) === false) {
       return this.getProducts(true)
     }
 
@@ -478,7 +481,7 @@ class Exchange extends EventEmitter {
    * @param {WebSocket} api WebSocket instance
    */
   onMessage(event, api): boolean {
-    throw new Error('not implemented')
+    throw new Error('Not implemented')
   }
 
   /**
@@ -531,9 +534,12 @@ class Exchange extends EventEmitter {
     this.emit('subscribed', pair, api._reconnecting)
 
     if (api.readyState !== WebSocket.OPEN) {
-      console.log('(subscribe ' + pair + ') ws connection api', api._id, 'is in opening/closing state')
       // webSocket is in CLOSING or CLOSED state
       return false
+    }
+
+    if (this.delayBetweenMessages) {
+      await sleep(this.delayBetweenMessages)
     }
 
     return true
@@ -546,7 +552,6 @@ class Exchange extends EventEmitter {
    */
   async unsubscribe(api, pair) {
     if (!this.markPairAsDisconnected(api, pair)) {
-      console.log(pair, 'pair is already detached')
       // pair is already detached
       return false
     }
@@ -554,9 +559,12 @@ class Exchange extends EventEmitter {
     this.emit('unsubscribed', pair, api._id)
 
     if (api.readyState !== WebSocket.OPEN) {
-      console.log('(unsubscribe ' + pair + ') ws connection api', api._id, 'is in opening/closing state')
       // webSocket is in CLOSING or CLOSED state
       return false
+    }
+
+    if (this.delayBetweenMessages) {
+      await sleep(this.delayBetweenMessages)
     }
 
     return api.readyState === WebSocket.OPEN
@@ -601,8 +609,6 @@ class Exchange extends EventEmitter {
       this.stopKeepAlive(api)
     }
 
-    console.debug(`[${this.id}] setup keepalive for ws ${api.url}`)
-
     this.keepAliveIntervals[api.url] = setInterval(() => {
       if (api.readyState === WebSocket.OPEN) {
         api.send(JSON.stringify(payload))
@@ -621,10 +627,10 @@ class Exchange extends EventEmitter {
     delete this.keepAliveIntervals[api.url]
   }
 
-  markLoadingAsCompleted(type: { [url: string]: { promise?: Promise<any>; resolver?: (success: boolean) => void } }, url: string, success: boolean) {
-    if (type[url]) {
-      type[url].resolver(success)
-      delete type[url]
+  markLoadingAsCompleted(type: { [id: string]: { promise?: Promise<any>; resolver?: (success: boolean) => void } }, id: string, success: boolean) {
+    if (type[id]) {
+      type[id].resolver(success)
+      delete type[id]
     }
   }
 
@@ -638,8 +644,6 @@ class Exchange extends EventEmitter {
     }
 
     currentDelay = Math.max(minDelay, currentDelay || 0)
-
-    console.debug(`[${this.id}] schedule ${operationId} in ${getHms(currentDelay)}`)
 
     this.scheduledOperations[operationId] = setTimeout(() => {
       console.debug(`[${this.id}] schedule timer fired`)
@@ -662,8 +666,6 @@ class Exchange extends EventEmitter {
     const pendingIndex = api._pending.indexOf(pair)
 
     if (pendingIndex !== -1) {
-      // console.debug(`[${this.id}.markPairAsConnected] ${pair} was connecting. move from _pending to _connected`)
-
       api._pending.splice(pendingIndex, 1)
     } else {
       console.warn(`[${this.id}.markPairAsConnected] ${pair} appears to be NOT connecting anymore (prevent undesired subscription)`)
@@ -678,8 +680,6 @@ class Exchange extends EventEmitter {
     }
 
     api._connected.push(pair)
-
-    // console.debug(`[${this.id}.markPairAsConnected] ${pair} added to _connected list at index ${api._connected.length - 1}`)
 
     return true
   }
@@ -707,9 +707,21 @@ class Exchange extends EventEmitter {
 
     api._connected.splice(connectedIndex, 1)
 
-    // console.debug(`[${this.id}.markPairAsDisconnected] ${pair} removed from _connected list`)
-
     return true
+  }
+
+  getEstimatedTimeToConnect(count) {
+    if (!this.delayBetweenMessages) {
+      return count
+    }
+
+    const delay = count * this.delayBetweenMessages
+
+    if (this.maxConnectionsPerApi && count > this.maxConnectionsPerApi) {
+      return delay / Math.ceil(count / this.maxConnectionsPerApi)
+    }
+
+    return delay
   }
 }
 

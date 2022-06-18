@@ -2,9 +2,7 @@
   <Dialog @clickOutside="close" class="-sticky-footer" contentClass="settings">
     <template v-slot:header
       ><div>
-        <div class="title">
-          Settings
-        </div>
+        <div class="title">Settings</div>
         <div class="subtitle" v-if="hits"><i class="icon-bolt"></i> <code v-text="hits"></code> messages /s</div>
       </div>
       <div class="column -center"></div>
@@ -29,38 +27,43 @@
               <i class="icon-cog"></i>
             </template>
             <template v-slot:option="{ value }">
-              <span>{{ value.label }}</span>
               <i :class="'icon-' + value.icon"></i>
+              <span>{{ value.label }}</span>
             </template>
           </dropdown>
           <dropdown :options="workspacesToolsMenu" selectionClass="-text">
             <template v-slot:selection>
-              <i class="icon-plus"></i>
+              <i class="icon-plus" title="New template" v-tippy></i>
             </template>
             <template v-slot:option="{ value }">
-              <span>{{ value.label }}</span>
               <i :class="'icon-' + value.icon"></i>
+              <span>{{ value.label }}</span>
             </template>
           </dropdown>
         </div>
         <table v-if="workspaces.length" class="table">
           <thead>
             <tr>
-              <th>Id</th>
               <th>Name</th>
               <th>Use</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="workspace of workspaces" :key="workspace.id" class="option -action" @click="openWorkspace(workspace.id)">
-              <td class="table-input"><code v-text="workspace.id"></code></td>
-              <td class="table-input table-ellipsis text-nowrap" v-text="workspace.name" :title="workspace.name" v-tippy></td>
-              <td class="table-input"><small v-text="'' + ago(workspace.updatedAt) + ' ago'"></small></td>
-              <td class="table-action">
-                <button class="btn  -text" @click.stop="openWorkspace(workspace.id, true)"><i class="icon-external-link-square-alt"></i></button>
+              <td
+                class="table-input table-ellipsis text-nowrap"
+                v-text="workspace.name"
+                :title="workspace.name"
+                v-tippy="{ placement: 'right' }"
+              ></td>
+              <td class="table-input table-min">{{ ago(workspace.updatedAt) }} ago</td>
+              <td class="table-action -hover">
+                <button class="btn -small" @click.stop="openWorkspace(workspace.id, true)">
+                  <i class="icon-external-link-square-alt"></i>
+                </button>
               </td>
-              <td class="table-action">
-                <button class="btn  -red -small" @click.stop="removeWorkspace(workspace.id)"><i class="icon-trash"></i></button>
+              <td class="table-action -hover">
+                <button class="btn -red -small" @click.stop="removeWorkspace(workspace.id)"><i class="icon-trash"></i></button>
               </td>
             </tr>
           </tbody>
@@ -69,7 +72,8 @@
 
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'workspaces')">
         Workspaces
-        <i class="icon-up"></i>
+        <small>your templates</small>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 
@@ -120,7 +124,8 @@
       </div>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'list')">
         Trades
-        <i class="icon-up"></i>
+        <small>aggregation, slippage, currency</small>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 
@@ -128,7 +133,8 @@
       <audio-settings v-if="settings.indexOf('audio') > -1"></audio-settings>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'audio')">
         Audio
-        <i class="icon-up"></i>
+        <small>main volume</small>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 
@@ -156,7 +162,7 @@
             menuPosition="left"
             model="rgb"
             :value="textColor"
-            @input="$event !== textColor && $store.commit('settings/SET_CHART_COLOR', $event)"
+            @input="$event !== textColor && $store.dispatch('settings/setTextColor', $event)"
           ></verte>
           <label for="" class="-fill -center ml8"
             >Text color <a><i class="icon-cross text-small" v-if="textColor" @click="$store.commit('settings/SET_CHART_COLOR', null)"></i></a
@@ -165,7 +171,8 @@
       </div>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'chart')">
         Chart
-        <i class="icon-up"></i>
+        <small>background color, timezone</small>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 
@@ -177,7 +184,8 @@
       </div>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'exchanges')">
         Exchanges
-        <i class="icon-up"></i>
+        <small>enable/disable exchange globally</small>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 
@@ -185,7 +193,7 @@
       <other-settings v-if="settings.indexOf('other') > -1"></other-settings>
       <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'other')">
         Other
-        <i class="icon-up"></i>
+        <i class="icon-up-thin"></i>
       </div>
     </section>
 
@@ -203,7 +211,15 @@
             <dono-dropdown class="-top -text-left" />
           </span>
           <i class="pipe -center">|</i>
-          <button class="btn -text" @click="reset()">reset</button>
+          <span>
+            <dropdown :options="databaseMenu" placeholder="Reset" selectionClass="-text -arrow">
+              <template v-slot:option="{ value }">
+                <i :class="'icon-' + value.icon" class="-fill"></i>
+
+                <span class="ml4">{{ value.label }}</span>
+              </template>
+            </dropdown>
+          </span>
         </div>
       </div>
     </footer>
@@ -215,7 +231,6 @@ import { ago, browseFile } from '../../utils/helpers'
 
 import Exchange from './Exchange.vue'
 import DonoDropdown from './DonoDropdown.vue'
-import SettingsImportConfirmation from './ImportConfirmation.vue'
 
 import dialogService from '../../services/dialogService'
 import AudioSettings from './AudioSettings.vue'
@@ -227,6 +242,7 @@ import { APPLICATION_START_TIME } from '@/utils/constants'
 
 import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
+import importService from '@/services/importService'
 
 export default {
   mixins: [DialogMixin],
@@ -304,6 +320,20 @@ export default {
 
   methods: {
     createMenus() {
+      this.databaseMenu = [
+        {
+          icon: 'warning',
+          color: 'danger',
+          label: 'Reset to default',
+          click: this.reset
+        },
+        {
+          icon: 'upload',
+          label: 'Export database',
+          click: this.exportDatabase
+        }
+      ]
+
       this.activeWorkspaceMenu = [
         {
           icon: 'trash',
@@ -348,21 +378,15 @@ export default {
 
       this._hitsTimeout = setTimeout(async () => {
         const hits = await aggregatorService.dispatchAsync({ op: 'getHits' })
-        const elapsed = +new Date() - APPLICATION_START_TIME
+        const elapsed = Date.now() - APPLICATION_START_TIME
         this.hits = (hits / (elapsed / 1000)).toFixed()
 
         this.getHits()
       }, 1000)
     },
 
-    async importWorkspace(workspace) {
-      await workspacesService.setCurrentWorkspace(await workspacesService.importWorkspace(workspace), true)
-
-      this.getWorkspaces()
-    },
-
     async getWorkspaces() {
-      const workspaces = await workspacesService.getWorkspaces()
+      const workspaces = (await workspacesService.getWorkspaces()).filter(workspace => workspace.id !== workspacesService.workspace.id)
 
       this.workspaces = workspaces
 
@@ -382,7 +406,7 @@ export default {
 
       const workspace = await workspacesService.getWorkspace(id)
 
-      await workspacesService.setCurrentWorkspace(workspace, true)
+      await workspacesService.setCurrentWorkspace(workspace)
 
       this.getWorkspaces()
     },
@@ -425,7 +449,7 @@ export default {
           nextWorkspace = await workspacesService.createWorkspace()
         }
 
-        await workspacesService.setCurrentWorkspace(nextWorkspace, true)
+        await workspacesService.setCurrentWorkspace(nextWorkspace)
       }
 
       if (!isCurrent) {
@@ -445,28 +469,23 @@ export default {
       await this.close()
       const workspace = await workspacesService.createWorkspace()
 
-      await workspacesService.setCurrentWorkspace(workspace, true)
+      await workspacesService.setCurrentWorkspace(workspace)
     },
 
     async uploadWorkspace() {
-      const content = await browseFile()
+      try {
+        const file = await browseFile()
 
-      const workspace = workspacesService.validateWorkspace(content)
+        if (!file) {
+          return
+        }
 
-      if (!workspace) {
-        return
-      }
-
-      if (
-        (await workspacesService.getWorkspace(workspace.id)) &&
-        !(await dialogService.confirm({ message: `Workspace ${workspace.id} already exists`, ok: 'Import anyway', cancel: 'Annuler' }))
-      ) {
-        return
-      }
-
-      if (await dialogService.openAsPromise(SettingsImportConfirmation, { workspace })) {
-        this.close().then(() => {
-          this.importWorkspace(workspace)
+        await importService.importWorkspace(file)
+      } catch (error) {
+        this.$store.dispatch('app/showNotice', {
+          title: error.message,
+          type: 'error',
+          timeout: 60000
         })
       }
     },
@@ -484,13 +503,50 @@ export default {
       this.getWorkspaces()
     },
 
+    async exportDatabase() {
+      return workspacesService.exportDatabase()
+    },
+
     async reset() {
+      const sounds = await workspacesService.db.getAllKeys('sounds')
+      const indicators = await workspacesService.db.getAllKeys('indicators')
+      const presets = await workspacesService.db.getAllKeys('presets')
+      const alerts = await workspacesService.db.getAllKeys('alerts')
+
+      const content = []
+
+      if (this.workspaces.length) {
+        content.push(['workspace', this.workspaces.length])
+      }
+
+      if (indicators.length) {
+        content.push(['indicator', indicators.length])
+      }
+
+      if (sounds.length) {
+        content.push(['sound', sounds.length])
+      }
+
+      if (presets.length) {
+        content.push(['preset', presets.length])
+      }
+
+      if (alerts.length) {
+        content.push(['alert', alerts.length])
+      }
+
       if (
         await dialogService.confirm({
-          title: 'Reset ?',
-          message: `This will remove your <strong>${this.workspaces.length} workspace${
-            this.workspaces.length > 1 ? 's' : ''
-          }</strong>.<br>All associated data will be lost forever.`
+          title: 'Reset everything ?',
+          html: true,
+          ok: 'Reset & reload',
+          message: `Everything will be removed${
+            content.length
+              ? ' including : \n\t - ' +
+                content.map(([thing, count]) => count + ' ' + thing + (count > 1 ? 's' : '')).join('\n\t - ') +
+                '\n\n...and everything else!'
+              : '.'
+          }`
         })
       ) {
         await workspacesService.reset()
@@ -514,12 +570,6 @@ export default {
 .settings__footer {
   margin-top: auto;
 
-  .form-group {
-    flex-basis: auto;
-    max-width: none;
-    flex-grow: 1;
-  }
-
   .version-date {
     opacity: 0.75;
     line-height: 1;
@@ -530,28 +580,11 @@ export default {
 
   .pipe {
     opacity: 0.5;
-    margin: 0 0.25rem;
     line-height: 1;
   }
 
-  .settings__browse-import {
-    position: relative;
-    input[type='file'] {
-      opacity: 0;
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      width: 100%;
-      max-width: 100%;
-      overflow: hidden;
-
-      &,
-      &::-webkit-file-upload-button {
-        cursor: pointer;
-      }
-    }
+  .btn {
+    background: 0 !important;
   }
 }
 

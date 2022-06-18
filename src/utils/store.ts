@@ -8,7 +8,7 @@ import workspacesService from '@/services/workspacesService'
 const persistModulesTimers = {}
 
 export async function syncState(state): Promise<any> {
-  if (!state._id) {
+  if (typeof state._id === 'undefined') {
     // unsupported module?
     return
   }
@@ -23,8 +23,8 @@ export async function syncState(state): Promise<any> {
   await workspacesService.saveState(state._id, state)
 }
 
-export function scheduleSync(state, delay = 500): Promise<void> {
-  if (!state._id) {
+export function scheduleSync(state): Promise<void> {
+  if (typeof state._id === 'undefined') {
     // unsupported module?
     return
   }
@@ -38,7 +38,7 @@ export function scheduleSync(state, delay = 500): Promise<void> {
       await syncState(state)
 
       resolve()
-    }, delay)
+    }, 500)
   })
 }
 
@@ -57,20 +57,34 @@ export async function mergeStoredState(state: any) {
   return state
 }
 
+/**
+ * Prepare pane state if needed
+ * Not all panes type have a boot method
+ * @param paneId
+ */
+export async function bootPane(paneId) {
+  console.info(`booting pane ${paneId}`)
+  if ((store as any)._actions[paneId + '/boot']) {
+    try {
+      await store.dispatch(paneId + '/boot')
+    } catch (error) {
+      console.error(error)
+    }
+  }
+}
+
 export async function registerModule(id, module: Module<any, any>, boot?: boolean, pane?: Pane) {
   console.debug(`[store] registering module ${id}`)
 
   if (pane) {
+    // module is a pane
     module = { ...panesSettings[pane.type], state: JSON.parse(JSON.stringify(panesSettings[pane.type].state)) }
 
     module.state._id = id
-    module.state._booted = false
 
     console.debug(`[store] module created using pane's type "${pane.type}"`)
 
     if (typeof pane.settings === 'object') {
-      console.debug(`[store] found default settings in pane's definition -> merge into pane's module`, pane.settings, 'into', module.state)
-
       if (pane.settings._id) {
         delete pane.settings._id
       }
@@ -81,24 +95,27 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
     module = { ...module, state: JSON.parse(JSON.stringify(module.state)) }
   }
 
-  if (module.state._id) {
+  if (typeof module.state._id !== 'undefined') {
     console.debug(`[store] get stored state for module ${id}`)
     module.state = await mergeStoredState(module.state)
   }
 
-  console.debug(`[store] store.registerModule ${id}`, module)
   store.registerModule(id, module)
 
-  if (boot && typeof module.actions.boot !== 'undefined') {
-    console.debug(`[store] booting module ${id}`)
-    await store.dispatch(id + '/boot')
+  if (boot && pane) {
+    await bootPane(id)
   }
 
   syncState(module.state)
 }
 
-export const normalizeSymbol = (symbol: string) => {
-  return symbol.replace(/(?:%7F)+/g, '_').trim()
+export function waitForStateMutation(getter): Promise<any> {
+  return new Promise(resolve => {
+    const unsubscribe = store.watch(getter, value => {
+      resolve(value)
+      unsubscribe()
+    })
+  })
 }
 
 export function dumpSettings(): { [id: string]: any } {

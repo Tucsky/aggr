@@ -1,53 +1,13 @@
-import dialogService from '@/services/dialogService'
-import store from '../store'
+import store from '@/store'
 
-export function formatAmount(amount, decimals?: number) {
-  const negative = amount < 0
-
-  amount = Math.abs(amount)
-
-  if (amount >= 1000000000) {
-    amount = +(amount / 1000000000).toFixed(isNaN(decimals) ? 1 : decimals) + 'B'
-  } else if (amount >= 1000000) {
-    amount = +(amount / 1000000).toFixed(isNaN(decimals) ? 1 : decimals) + 'M'
-  } else if (amount >= 100000) {
-    amount = +(amount / 1000).toFixed(isNaN(decimals) ? 0 : decimals) + 'K'
-  } else if (amount >= 1000) {
-    amount = +(amount / 1000).toFixed(isNaN(decimals) ? 1 : decimals) + 'K'
-  } else {
-    amount = +amount.toFixed(4)
-  }
-
-  if (negative) {
-    return '-' + amount
-  } else {
-    return amount
-  }
-}
-
-export function countDecimals(value) {
-  if (Math.floor(value) === value) return 0
-  return value.toString().split('.')[1].length || 0
-}
-
-export function formatPrice(price) {
-  price = +price || 0
-
-  if (store.state.settings.decimalPrecision) {
-    return price.toFixed(store.state.settings.decimalPrecision)
-  } else if (store.state.app.optimalDecimal) {
-    return price.toFixed(store.state.app.optimalDecimal)
-  } else {
-    return price.toFixed(2)
-  }
-}
+const DAY = 60 * 60 * 24
 
 export function ago(timestamp) {
-  const seconds = Math.floor((+new Date() - timestamp) / 1000)
+  const seconds = Math.floor((Date.now() - timestamp) / 1000)
   let interval, output
 
-  if ((interval = Math.floor(seconds / 31536000)) > 1) output = interval + 'y'
-  else if ((interval = Math.floor(seconds / 2592000)) >= 1) output = interval + 'm'
+  if ((interval = Math.floor(seconds / 31536000)) > 1) output = interval + 'yr'
+  else if ((interval = Math.floor(seconds / 2592000)) >= 1) output = interval + 'mo'
   else if ((interval = Math.floor(seconds / 86400)) >= 1) output = interval + 'd'
   else if ((interval = Math.floor(seconds / 3600)) >= 1) output = interval + 'h'
   else if ((interval = Math.floor(seconds / 60)) >= 1) output = interval + 'm'
@@ -119,24 +79,6 @@ export function uniqueName(name, names) {
   return name
 }
 
-export function formatTime(time) {
-  const date = new Date(time * 1000)
-
-  return date.getDate() + '/' + (date.getMonth() + 1) + ' ' + date.toTimeString().split(' ')[0]
-}
-
-export const deepSet = (object, path, value) => {
-  if (path.length === 1) object[path[0]] = value
-  else if (path.length === 0) throw 'error'
-  else {
-    if (object[path[0]]) return deepSet(object[path[0]], path.slice(1), value)
-    else {
-      object[path[0]] = {}
-      return deepSet(object[path[0]], path.slice(1), value)
-    }
-  }
-}
-
 export const slugify = string => {
   const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;'
   const b = 'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz------'
@@ -154,12 +96,26 @@ export const slugify = string => {
     .replace(/-+$/, '') // Trim - from end of text
 }
 
-export const downloadJson = (json, filename) => {
-  const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(json, null, 2))
+export const downloadAnything = (data, filename) => {
   const downloadAnchorNode = document.createElement('a')
-  downloadAnchorNode.setAttribute('href', dataStr)
-  downloadAnchorNode.setAttribute('download', filename + '.json')
-  document.body.appendChild(downloadAnchorNode) // required for firefox
+
+  let href
+
+  if (!data) {
+    return
+  }
+
+  if (data instanceof Blob) {
+    href = URL.createObjectURL(data)
+  } else if (typeof data === 'object') {
+    href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data, null, 2))
+  } else if (typeof data === 'string') {
+    href = 'data:text/json;charset=utf-8,' + encodeURIComponent(data)
+  }
+
+  downloadAnchorNode.setAttribute('href', href)
+  downloadAnchorNode.setAttribute('download', filename + '.txt')
+  document.body.appendChild(downloadAnchorNode)
   downloadAnchorNode.click()
   downloadAnchorNode.remove()
 }
@@ -170,22 +126,6 @@ export function sleep(duration = 1000): Promise<void> {
   })
 }
 
-export function capitalizeFirstLetter(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1)
-}
-
-export function getErrorMessage(error: Error | string) {
-  let errorMessage = 'Something wrong happened.'
-
-  if (error instanceof Error) {
-    errorMessage = error.message
-  } else if (typeof error === 'string') {
-    errorMessage = error
-  }
-
-  return errorMessage
-}
-
 export function getBucketId(markets: string[]) {
   return markets
     .map(m => m.replace(/[^a-zA-Z]+/gi, ''))
@@ -193,10 +133,6 @@ export function getBucketId(markets: string[]) {
       return mA.localeCompare(mB)
     })
     .join('')
-}
-
-export function parseMarket(market: string) {
-  return market.match(/([^:]*):(.*)/).slice(1, 3)
 }
 
 export function openBase64InNewTab(data, mimeType) {
@@ -230,7 +166,7 @@ export function findClosingBracketMatchIndex(str, pos, open = /\(/, close = /\)/
   return -1 // No matching closing parenthesis
 }
 
-export function parseFunctionArguments(str) {
+export function parseFunctionArguments(str, trimArguments = true, maxIterations = 100) {
   const PARANTHESIS_REGEX = /\(|{|\[/g
   let paranthesisMatch
   let iteration = 0
@@ -241,13 +177,19 @@ export function parseFunctionArguments(str) {
       const contentWithinParenthesis = str.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/,/g, '#COMMA#')
       str = str.slice(0, paranthesisMatch.index + 1) + contentWithinParenthesis + str.slice(closingParenthesisIndex, str.length)
     }
-  } while (paranthesisMatch && iteration < 100)
+  } while (paranthesisMatch && iteration < maxIterations)
 
-  if (iteration >= 100) {
-    throw new Error('maxiumum parseFunctionArguments iteration reached')
+  if (iteration >= maxIterations) {
+    throw new Error('Maxiumum parseFunctionArguments iteration reached')
   }
 
-  return str.split(',').map(arg => arg.trim().replace(/#COMMA#/g, ','))
+  return str.split(',').map(arg => {
+    if (trimArguments) {
+      arg = arg.trim()
+    }
+
+    return arg.replace(/#COMMA#/g, ',')
+  })
 }
 
 export function camelize(str) {
@@ -266,43 +208,6 @@ export function formatBytes(bytes, decimals = 2) {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
-}
-
-export function getDiff(obj, model) {
-  if (typeof model === 'undefined' || typeof obj === 'undefined') {
-    return obj
-  }
-
-  const isArray = Array.isArray(obj)
-
-  for (const prop in obj) {
-    if (Array.isArray(obj) && obj[prop] && model[prop] && obj[prop].id !== model[prop].id) {
-      continue
-    }
-
-    if (!isArray && prop !== '_id' && obj[prop] === model[prop]) {
-      delete obj[prop]
-      continue
-    }
-
-    if (obj[prop] && typeof obj[prop] === 'object') {
-      obj[prop] = getDiff(obj[prop], model[prop])
-    }
-  }
-
-  return obj
-}
-
-export function isElementInteractive(el: HTMLElement) {
-  while (el) {
-    if (el.tagName === 'A' || el.tagName === 'BUTTON') {
-      return true
-    }
-
-    el = el.parentElement
-  }
-
-  return false
 }
 
 export function fallbackCopyTextToClipboard(text) {
@@ -325,40 +230,19 @@ export function fallbackCopyTextToClipboard(text) {
   } catch (err) {
     console.error('Fallback: Oops, unable to copy', err)
   }
-
-  document.body.removeChild(textArea)
 }
 
-export function browseFile(): Promise<string | ArrayBuffer> {
+export function browseFile(): Promise<File> {
   const input = document.createElement('input') as HTMLInputElement
   input.type = 'file'
 
   return new Promise(resolve => {
     input.onchange = (event: any) => {
       if (!event.target.files.length) {
-        throw new Error('Invalid selection')
+        resolve(null)
       }
 
-      const file = event.target.files[0]
-      const reader = new FileReader()
-      reader.readAsText(file, 'UTF-8')
-
-      reader.onload = async readerEvent => {
-        return dialogService
-          .confirm({
-            title: 'Disclaimer',
-            message: `Aggr disclaims all liability for damages , consequential or otherwise,<br>arising out of or in connection with the current import.`,
-            ok: 'I understand',
-            cancel: 'Cancel import'
-          })
-          .then(accepted => {
-            if (accepted) {
-              resolve(readerEvent.target.result)
-            } else {
-              throw new Error('Rejected disclaimer')
-            }
-          })
-      }
+      resolve(event.target.files[0])
     }
 
     input.click()
@@ -378,7 +262,7 @@ export function getTimeframeForHuman(timeframe, full?: boolean) {
   const normalized = timeframe.toString().trim()
 
   if (normalized[normalized.length - 1] === 't') {
-    return parseInt(normalized) + ' TICKS'
+    return parseInt(normalized) + ' ticks'
   } else if (!isNaN(normalized) && normalized > 0) {
     return full ? getHmsFull(normalized * 1000) : getHms(normalized * 1000)
   }
@@ -409,4 +293,62 @@ export function getSiblings(elem) {
   return Array.prototype.filter.call(elem.parentNode.children, function(sibling) {
     return sibling !== elem
   })
+}
+
+export function isOddTimeframe(timeframe) {
+  return DAY % timeframe !== 0 && timeframe < DAY
+}
+
+export function floorTimestampToTimeframe(timestamp: number, timeframe: number, isOdd?: boolean) {
+  if (typeof isOdd === 'undefined') {
+    isOdd = isOddTimeframe(timeframe)
+  }
+
+  if (isOdd) {
+    const dayOpen = Math.floor(timestamp / DAY) * DAY
+    return dayOpen + Math.floor((timestamp - dayOpen) / timeframe) * timeframe
+  } else {
+    return Math.floor(timestamp / timeframe) * timeframe
+  }
+}
+
+export function parseVersion(version: string): number {
+  if (!version) {
+    return 0
+  }
+
+  return +version
+    .split('.')
+    .map(n => n.padStart(2, '0'))
+    .join('')
+}
+
+export function handleFetchError(err): void {
+  if (err instanceof Error) {
+    const hasSomethingToSay = err.message && err.message !== 'Failed to fetch'
+
+    if (hasSomethingToSay) {
+      store.dispatch('app/showNotice', {
+        title: err.message,
+        type: 'error',
+        timeout: 10000
+      })
+    } else {
+      if (/aggr\.trade$/.test(location.hostname)) {
+        store.dispatch('app/showNotice', {
+          title: `Aggr server seems down 💀`,
+          type: 'error',
+          timeout: 10000
+        })
+      } else {
+        store.dispatch('app/showNotice', {
+          id: 'fetch-error',
+          html: true,
+          title: `Failed to reach api<br><a href="https://github.com/Tucsky/aggr-server">Configure aggr-server</a> <strong>to use your own data</strong>`,
+          type: 'error',
+          timeout: 10000
+        })
+      }
+    }
+  }
 }

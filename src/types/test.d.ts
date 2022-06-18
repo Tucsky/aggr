@@ -21,9 +21,7 @@ export interface AggregatorPayload {
 }
 
 export interface AggregatedTrade extends Trade {
-  prices: number
-  count: number
-  timeout: number
+  originalPrice: number
 }
 
 export interface AggregatorSettings {
@@ -46,6 +44,7 @@ export interface Trade {
   price: number
   size: number
   side: 'buy' | 'sell'
+  amount?: number
   count?: number
   originalPrice?: number
   liquidation?: boolean
@@ -95,7 +94,7 @@ export interface Workspace {
   states: { [id: string]: any }
 }
 
-export type PresetType = ('audio' | 'colors') | PaneType
+export type PresetType = ('audio' | 'colors' | 'indicator') | PaneType
 
 export interface Preset {
   name: string
@@ -103,6 +102,31 @@ export interface Preset {
   data: any
   createdAt: number
   updatedAt: number
+  version?: string
+}
+
+export interface ImportedSound {
+  name: string
+  data: any
+}
+
+export interface MarketAlerts {
+  market: string
+  alerts: MarketAlert[]
+}
+
+export interface MarketAlert {
+  price: number
+  market?: string
+  active?: boolean
+  timestamp?: number
+  triggered?: boolean
 }
 
 export type ProductsData = string[] | { [prop: string]: any }
+
+export interface PreviousSearchSelection {
+  label: string
+  count: number
+  markets: string[]
+}

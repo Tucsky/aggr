@@ -9,7 +9,7 @@
       padding: 0.42rem 0.5rem;
       font-weight: 400;
       border-bottom: 0;
-      opacity: .6;
+      opacity: 0.6;
     }
   }
 
@@ -20,10 +20,16 @@
 
     i.icon {
       position: absolute;
-      right: 7px;
+      left: 7px;
       top: 7px;
-      line-height: 1.4;
+      line-height: 1.45;
       color: lighten($green, 20%);
+    }
+
+    .checkbox-control > div {
+      width: 1.1em;
+      height: 1.1em;
+      padding: 0;
     }
 
     input {
@@ -45,18 +51,28 @@
     max-width: 1px;
   }
 
+  &-min {
+    white-space: nowrap;
+    width: 1px;
+  }
+
   &-action {
     border: 0;
     cursor: pointer;
     padding: 0;
     margin: 0;
     min-width: 1px;
-    width: 2.25rem;
+    padding: 0 0.25rem;
     text-align: center;
+    width: 1px;
 
     &.-disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+
+    &.-hover .btn {
+      visibility: hidden;
     }
 
     + .table-action {
@@ -65,9 +81,9 @@
 
     .btn {
       display: block;
-      height: 1.5rem;
-      width: 1.5rem;
-      font-size: 11px;
+      height: 1.75rem;
+      width: 1.75rem;
+      font-size: 12px;
       display: inline-block;
       padding: 0;
     }
@@ -104,6 +120,10 @@
       &:first-child {
         border-left: 0;
       }
+    }
+
+    &:hover .table-action.-hover .btn {
+      visibility: visible;
     }
   }
 

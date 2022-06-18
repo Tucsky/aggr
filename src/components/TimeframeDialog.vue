@@ -10,7 +10,7 @@
     </template>
     <form @submit.prevent="submit">
       <div class="text-center">
-        <div contenteditable class="form-control w-100" ref="input" @input="onInput" @keydown="onKeyDown" :placeholder="placeholder"></div>
+        <timeframe-input :placeholder="placeholder" @timeframe="onTimeframe" @submit="submit" class="form-control w-100" />
       </div>
 
       <div class="timeframe-for-human">
@@ -28,8 +28,10 @@
 <script>
 import DialogMixin from '@/mixins/dialogMixin'
 import { getTimeframeForHuman } from '@/utils/helpers'
+import TimeframeInput from './chart/TimeframeInput.vue'
 
 export default {
+  components: { TimeframeInput },
   props: {
     timeframe: {
       type: String
@@ -45,9 +47,7 @@ export default {
       return this.$store.state.panes.panes[this.paneId].name || this.paneId
     },
     timeframeForHuman() {
-      const normalized = this.format(this.newTimeframe)
-
-      return getTimeframeForHuman(normalized)
+      return getTimeframeForHuman(this.newTimeframe)
     },
     valid() {
       return this.timeframeForHuman !== null
@@ -69,60 +69,21 @@ export default {
 
     this.placeholder = this.$store.state[this.paneId].timeframe
   },
-  mounted() {
-    this.$nextTick(() => {
-      this.$refs.input.focus()
-    })
-  },
   methods: {
-    onInput(event) {
-      this.newTimeframe = event.currentTarget.innerText
+    hide() {
+      this.$store.dispatch('app/hideSearch')
     },
-    onKeyDown(event) {
-      if (this.disabled || event.which === 13) {
-        event.preventDefault()
-
-        this.submit()
-
-        return
-      }
+    onTimeframe(timeframeMs) {
+      this.newTimeframe = timeframeMs
     },
     submit() {
       if (!this.valid) {
         return
       }
 
-      const timeframe = this.format(this.newTimeframe)
-
-      this.$store.commit(this.paneId + '/SET_TIMEFRAME', timeframe)
+      this.$store.commit(this.paneId + '/SET_TIMEFRAME', this.newTimeframe)
 
       this.hide()
-    },
-    hide() {
-      this.$store.dispatch('app/hideSearch')
-    },
-    format(input) {
-      const trimmed = input.trim()
-
-      let output
-
-      if (/t$|ticks?$/i.test(trimmed)) {
-        return (output = parseInt(trimmed) + 't')
-      } else {
-        if (/d$/i.test(trimmed)) {
-          output = parseFloat(trimmed) * 60 * 60 * 24
-        } else if (/h$/i.test(trimmed)) {
-          output = parseFloat(trimmed) * 60 * 60
-        } else if (/m$/i.test(trimmed)) {
-          output = parseFloat(trimmed) * 60
-        } else if (/ms$/i.test(trimmed)) {
-          output = parseFloat(trimmed) / 1000
-        } else {
-          output = parseFloat(trimmed)
-        }
-      }
-
-      return output
     }
   }
 }

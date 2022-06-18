@@ -1,20 +1,20 @@
 <template>
-  <Dialog @clickOutside="close" class="pane-dialog" @mousedown="clickOutsideClose = false" @mouseup="clickOutsideClose = true">
+  <Dialog @clickOutside="close" class="pane-dialog">
     <template v-slot:header>
       <div class="title -editable" @dblclick="renamePane" v-text="name"></div>
       <div class="column -center"></div>
     </template>
-    <website-pane-settings :paneId="paneId" />
+    <counters-settings :paneId="paneId" />
   </Dialog>
 </template>
 
 <script>
 import DialogMixin from '../../mixins/dialogMixin'
 import PaneDialogMixin from '../../mixins/paneDialogMixin'
-import WebsitePaneSettings from './WebsitePaneSettings.vue'
+import CountersSettings from './CountersSettings.vue'
 
 export default {
-  components: { WebsitePaneSettings },
+  components: { CountersSettings },
   mixins: [DialogMixin, PaneDialogMixin],
   data: () => ({
     renaming: false

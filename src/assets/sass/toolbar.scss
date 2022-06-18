@@ -11,12 +11,13 @@
   > button > span,
   .dropdown > .dropdown__selected > span {
     padding: 0;
-    font-family: 'Barlow Semi Condensed';
+    font-family: $font-condensed;
     font-size: 0.64em;
     align-self: center;
     display: block;
     line-height: 1;
     padding: 0.15em 0.4em 0.25em;
+    text-transform: none;
   }
 
   .dropdown {
@@ -55,7 +56,7 @@
   .dropdown__selected > i,
   button > i {
     font-size: 70%;
-    padding: 0 0.25em 0.125em;
+    padding: 0 0.25em;
     min-width: 1.5em;
 
     + span {

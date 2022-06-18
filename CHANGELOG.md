@@ -2,6 +2,64 @@
 
 All notable changes to this project will be documented here.
 
+## [3.1.3] - 2022-06-05
+### Added
+- Add volume delta to markets pane
+- Add period (reset counts upon every 1m / 15m / 30m / 1h / 4h) to markets pane
+
+### Changed
+- Suffix local perps symbols with "PERP" (ex: BINANCE_FUTURES:btcusdt -> BTCUSDTPERP)
+- use Binance's aggTrade streams instead of raw
+
+## [3.1.2] - 2022-05-23
+### Added
+- last(value, length) script function
+- search history
+
+## [3.1.1] - 2022-05-16
+### Added
+- Custom alert sound
+
+## [3.1.0] - 2022-04-16
+### Added
+- Added avg_ohlc_with_gaps for printing candle with real open price
+
+### Changed
+- Updated avg_heikinashi to use selected markets only
+
+## [3.0.9] - 2022-02-26
+### Added
+- Price alerts
+- All-in-one trades threshold slider
+
+## [3.0.8] - 2022-01-10
+### Added
+- Indicator script syntax highlighter
+
+## [3.0.7] - 2021-12-22
+### Added
+- Threshold audio assistant
+- Import audio files (dragndrop)
+- Configure multiple thresholds for both trade type simultaneously
+- Separate gifs for both side
+- Add volume to prices pane
+
+### Changed
+- Trade pane refactor
+
+## [3.0.6] - 2021-12-05
+
+### Added
+- rma() indicator functions 
+
+### Changed
+- pivot_high & pivot_low to take left & right argument
+- Aggregate liquidations if trade aggregation is enabled
+
+## [3.0.5] - 2021-09-12
+
+### Added
+- Indicator functions pivot_high + pivot_low
 
 ## [3.0.4] - 2021-08-24
 

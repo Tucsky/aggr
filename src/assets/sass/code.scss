@@ -1,0 +1,306 @@
+.prism-editor-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  overflow: auto;
+  background-color: rgba(black, 0.085);
+  color: var(--theme-color-150);
+  font-family: $font-monospace;
+  tab-size: 1.5em;
+  -moz-tab-size: 1.5em;
+
+  @media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    .prism-editor__textarea {
+      color: transparent !important;
+    }
+    .prism-editor__textarea::selection {
+      background-color: #accef7 !important;
+      color: transparent !important;
+    }
+  }
+
+  .prism-editor__container {
+    position: relative;
+    text-align: left;
+    box-sizing: border-box;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    min-height: 100%;
+  }
+
+  .prism-editor__line-numbers {
+    height: 100%;
+    overflow: hidden;
+    flex-shrink: 0;
+    padding-top: 4px;
+    margin-top: 0;
+    margin-right: 10px;
+  }
+  .prism-editor__line-number {
+    /* padding: 0 3px 0 5px; */
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .prism-editor__textarea {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    min-height: 100%;
+    width: 100%;
+    resize: none;
+    color: inherit;
+    overflow: hidden;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .prism-editor__textarea,
+  .prism-editor__editor {
+    margin: 0;
+    border: 0;
+    background: none;
+    box-sizing: inherit;
+    display: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    font-style: inherit;
+    font-variant-ligatures: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    line-height: inherit;
+    tab-size: inherit;
+    text-indent: inherit;
+    text-rendering: inherit;
+    text-transform: inherit;
+    white-space: pre-wrap;
+    word-wrap: keep-all;
+    overflow-wrap: break-word;
+    padding: 0;
+  }
+  .prism-editor__textarea--empty {
+    -webkit-text-fill-color: inherit !important;
+  }
+  /* highlight */
+  .prism-editor__editor {
+    position: relative;
+    pointer-events: none;
+  }
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #7c7c7c;
+}
+
+.token.punctuation {
+  color: #c5c8c6;
+}
+
+.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.keyword,
+.token.tag {
+  color: #96cbfe;
+}
+
+.token.class-name {
+  color: #ffffb6;
+  text-decoration: underline;
+}
+
+.token.boolean,
+.token.constant {
+  color: #99cc99;
+}
+
+.token.symbol,
+.token.deleted {
+  color: #f92672;
+}
+
+.token.number {
+  color: #ff73fd;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #a8ff60;
+}
+
+.token.variable {
+  color: #c6c5fe;
+}
+
+.token.operator {
+  color: #ededed;
+}
+
+.token.entity {
+  color: #ffffb6;
+  cursor: help;
+}
+
+.token.url {
+  color: #96cbfe;
+}
+
+.language-css .token.string,
+.style .token.string {
+  color: #87c38a;
+}
+
+.token.atrule,
+.token.attr-value {
+  color: #f9ee98;
+}
+
+.token.function {
+  color: #dad085;
+}
+
+.token.regex {
+  color: #e9c062;
+}
+
+.token.important {
+  color: #fd971f;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+#app.-light {
+  .prism-editor-wrapper {
+    background-color: rgba(white, 0.3);
+  }
+
+  .token.comment,
+  .token.prolog,
+  .token.doctype,
+  .token.cdata {
+    color: #008000;
+    font-style: italic;
+  }
+
+  .token.namespace {
+    opacity: 0.7;
+  }
+
+  .token.string {
+    color: #a31515;
+  }
+
+  .token.punctuation,
+  .token.operator {
+    color: #393a34; /* no highlight */
+  }
+
+  .token.url,
+  .token.symbol,
+  .token.number,
+  .token.boolean,
+  .token.variable,
+  .token.constant,
+  .token.inserted {
+    color: #36acaa;
+  }
+
+  .token.atrule,
+  .token.keyword,
+  .token.attr-value,
+  .language-autohotkey .token.selector,
+  .language-json .token.boolean,
+  .language-json .token.number,
+  code[class*='language-css'] {
+    color: #0000ff;
+  }
+
+  .token.function {
+    color: #393a34;
+  }
+
+  .token.deleted,
+  .language-autohotkey .token.tag {
+    color: #9a050f;
+  }
+
+  .token.selector,
+  .language-autohotkey .token.keyword {
+    color: #00009f;
+  }
+
+  .token.important {
+    color: #e90;
+  }
+
+  .token.important,
+  .token.bold {
+    font-weight: bold;
+  }
+
+  .token.italic {
+    font-style: italic;
+  }
+
+  .token.class-name,
+  .language-json .token.property {
+    color: #2b91af;
+  }
+
+  .token.tag,
+  .token.selector {
+    color: #800000;
+  }
+
+  .token.attr-name,
+  .token.property,
+  .token.regex,
+  .token.entity {
+    color: #ff0000;
+  }
+
+  .token.directive.tag .tag {
+    background: #ffff00;
+    color: #393a34;
+  }
+
+  /* overrides color-values for the Line Numbers plugin
+   * http://prismjs.com/plugins/line-numbers/
+   */
+  .line-numbers.line-numbers .line-numbers-rows {
+    border-right-color: #a5a5a5;
+  }
+
+  .line-numbers .line-numbers-rows > span:before {
+    color: #2b91af;
+  }
+
+  /* overrides color-values for the Line Highlight plugin
+  * http://prismjs.com/plugins/line-highlight/
+  */
+  .line-highlight.line-highlight {
+    background: rgba(193, 222, 241, 0.2);
+    background: -webkit-linear-gradient(left, rgba(193, 222, 241, 0.2) 70%, rgba(221, 222, 241, 0));
+    background: linear-gradient(to right, rgba(193, 222, 241, 0.2) 70%, rgba(221, 222, 241, 0));
+  }
+}

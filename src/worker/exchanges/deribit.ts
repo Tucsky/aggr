@@ -3,14 +3,46 @@ import Exchange from '../exchange'
 
 export default class extends Exchange {
   id = 'DERIBIT'
-  protected endpoints = { PRODUCTS: 'https://www.deribit.com/api/v1/public/getinstruments' }
+
+  private types: { [pair: string]: 'reversed' | 'linear' }
+
+  protected endpoints = {
+    PRODUCTS: [
+      'https://www.deribit.com/api/v2/public/get_instruments?currency=BTC&kind=future',
+      'https://www.deribit.com/api/v2/public/get_instruments?currency=ETH&kind=future',
+      'https://www.deribit.com/api/v2/public/get_instruments?currency=USDC&kind=future'
+    ]
+  }
 
   getUrl() {
     return `wss://www.deribit.com/ws/api/v2`
   }
 
-  formatProducts(data) {
-    return data.result.map(product => product.instrumentName)
+  formatProducts(response) {
+    const products = []
+    const types = {}
+
+    for (const data of response) {
+      for (const product of data.result) {
+        if (!product.is_active) {
+          continue
+        }
+
+        types[product.instrument_name] = product.future_type
+
+        products.push(product.instrument_name)
+      }
+    }
+
+    return { products, types }
+  }
+
+  validateProducts(data) {
+    if (!data || !data.types) {
+      return false
+    }
+
+    return true
   }
 
   /**
@@ -27,7 +59,7 @@ export default class extends Exchange {
       JSON.stringify({
         method: 'public/subscribe',
         params: {
-          channels: ['trades.' + pair + '.raw']
+          channels: ['trades.' + pair + '.100ms']
         }
       })
     )
@@ -64,25 +96,44 @@ export default class extends Exchange {
       return
     }
 
-    return this.emitTrades(
-      api.id,
-      json.params.data.map(a => {
-        const trade: Trade = {
-          exchange: this.id,
-          pair: a.instrument_name,
-          timestamp: +a.timestamp,
-          price: +a.price,
-          size: a.amount / a.price,
-          side: a.direction
-        }
+    const trades = []
+    const liquidations = []
 
-        if (a.liquidation) {
-          trade.liquidation = true
-        }
+    for (let i = 0; i < json.params.data.length; i++) {
+      const trade = json.params.data[i]
+      let size = trade.amount
 
-        return trade
-      })
-    )
+      if (this.types[trade.instrument_name] === 'reversed') {
+        size /= trade.price
+      }
+
+      const output: Trade = {
+        exchange: this.id,
+        pair: trade.instrument_name,
+        timestamp: +trade.timestamp,
+        price: +trade.price,
+        size: size,
+        side: trade.direction
+      }
+
+      if (trade.liquidation) {
+        output.liquidation = true
+
+        liquidations.push(output)
+      } else {
+        trades.push(output)
+      }
+    }
+
+    if (trades.length) {
+      this.emitTrades(api.id, trades)
+    }
+
+    if (liquidations.length) {
+      this.emitLiquidations(api.id, liquidations)
+    }
+
+    return true
   }
 
   onApiCreated(api) {

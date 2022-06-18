@@ -1,10 +1,21 @@
 <template>
-  <dropdown :options="presets" @output="onSelect" :placeholder="label" class="mrauto" selectionClass="ml0 -green -arrow">
+  <dropdown
+    :options="presets"
+    @output="onSelect"
+    @open="bindPaste"
+    @close="unbindPaste"
+    :placeholder="label"
+    class="mrauto"
+    selectionClass="ml0 -green -arrow"
+  >
     <template v-slot:option-custom>
       <div class="column" @mousedown.prevent>
-        <div class="btn -green" @click="savePreset"><i class="icon-plus"></i></div>
-        <div class="btn -blue" @click="uploadPreset"><i class="icon-upload"></i></div>
-        <div class="btn -red" @click="applyDefault"><i class="icon-eraser mr8"></i> Reset</div>
+        <div class="btn -green" @click="savePreset()"><i class="icon-plus"></i></div>
+        <div class="btn -blue -file">
+          <i class="icon-upload"></i>
+          <input type="file" @change="handleFile" />
+        </div>
+        <div class="btn -red" @click="applyDefault"><i class="icon-eraser"></i><span class="ml8">Reset</span></div>
       </div>
     </template>
     <template v-slot:option="{ value }">
@@ -12,7 +23,12 @@
 
       <span class="mr4">{{ value.label }}</span>
 
-      <button type="button" class="dropdown-option__action btn -small mlauto" @mousedown.prevent @click="savePreset(value.label)">update</button>
+      <button type="button" class="dropdown-option__action btn -accent -small mlauto" @mousedown.prevent @click="openPreset(value.id, value.label)">
+        <i class="icon-edit"></i>
+      </button>
+      <button type="button" class="dropdown-option__action btn -accent -small" @mousedown.prevent @click="deletePreset(value)">
+        <i class="icon-trash"></i>
+      </button>
     </template>
   </dropdown>
 </template>
@@ -20,11 +36,11 @@
 <script lang="ts">
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
+import importService from '@/services/importService'
 import { Preset, PresetType } from '@/types/test'
 import { Component, Vue } from 'vue-property-decorator'
 import Dropdown from '@/components/framework/Dropdown.vue'
 import PresetDialog from '../settings/PresetDialog.vue'
-import { browseFile } from '@/utils/helpers'
 
 @Component({
   components: { Dropdown },
@@ -50,8 +66,14 @@ export default class extends Vue {
     }
   ] as any
 
+  private _pasteHandler: (event: Event) => void
+
   created() {
     this.getPresets()
+  }
+
+  beforeDestroy() {
+    this.unbindPaste()
   }
 
   async getPresets() {
@@ -62,10 +84,7 @@ export default class extends Vue {
     for (let i = 0; i < keys.length; i++) {
       this.presets.push({
         id: keys[i],
-        label: keys[i]
-          .split(':')
-          .slice(1)
-          .join(':')
+        label: keys[i].split(':').pop()
       })
     }
   }
@@ -77,14 +96,26 @@ export default class extends Vue {
 
     const preset = await workspacesService.getPreset(this.presets[index].id)
 
-    if (await dialogService.openAsPromise(PresetDialog, { preset })) {
+    this.applyPreset(preset)
+  }
+
+  async openPreset(id: string, name: string) {
+    const preset = await workspacesService.getPreset(id)
+
+    const postClose = await dialogService.openAsPromise(PresetDialog, { preset })
+
+    if (postClose === 'replace') {
+      this.savePreset(name)
+    } else if (postClose === 'set') {
       this.applyPreset(preset)
     }
 
-    await this.getPresets()
+    this.getPresets()
   }
 
   async savePreset(name?: string) {
+    const isOverride = !!name
+
     if (!name || typeof name !== 'string') {
       name = await dialogService.prompt('Enter a name')
     } else if (!(await dialogService.confirm(`Override preset ${name} with current settings ?`))) {
@@ -100,7 +131,7 @@ export default class extends Vue {
     if (!data) {
       this.$store.dispatch('app/showNotice', {
         type: 'error',
-        title: `Preset should contain data. Not saving this preset.`
+        title: isOverride ? `Canceled preset override` : `Canceled preset creation`
       })
 
       return
@@ -112,25 +143,19 @@ export default class extends Vue {
 
     name = this.type + ':' + name
 
-    const updatedAt = +new Date()
+    const now = Date.now()
+    const original = await workspacesService.getPreset(name)
 
-    const original = this.presets.find(preset => preset.name === name)
-
-    let createdAt
-
-    if (original) {
-      createdAt = original.createdAt
-    } else {
-      createdAt = updatedAt
-    }
-
-    await workspacesService.savePreset({
-      name,
-      type: this.type,
-      data,
-      createdAt,
-      updatedAt
-    })
+    await workspacesService.savePreset(
+      {
+        name,
+        type: this.type,
+        data,
+        createdAt: original ? original.createdAt : now,
+        updatedAt: original ? now : null
+      },
+      this.type
+    )
 
     await this.getPresets()
   }
@@ -145,51 +170,84 @@ export default class extends Vue {
     this.$emit('apply', preset.data)
   }
 
-  async uploadPreset() {
-    let content
+  async handleFile(event: Event) {
+    const file = (event.target as HTMLInputElement).files[0]
+
+    if (!file) {
+      return
+    }
 
     try {
-      content = await browseFile()
+      if (await importService.importPreset(file, this.type)) {
+        await this.getPresets()
+      }
     } catch (error) {
       this.$store.dispatch('app/showNotice', {
         title: error.message,
         type: 'error'
       })
+    }
+  }
+
+  async deletePreset(preset) {
+    if (await dialogService.confirm('Remove preset ' + preset.label + ' ?')) {
+      await workspacesService.removePreset(preset.id)
+      await this.getPresets()
+    }
+  }
+
+  bindPaste() {
+    if (this._pasteHandler) {
       return
     }
 
-    let preset
+    this._pasteHandler = this.onPaste.bind(this)
+    document.addEventListener('paste', this._pasteHandler)
+  }
+
+  unbindPaste() {
+    if (!this._pasteHandler) {
+      return
+    }
+
+    document.removeEventListener('paste', this._pasteHandler)
+    this._pasteHandler = null
+  }
+
+  async onPaste(event) {
+    if (document.activeElement) {
+      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+        return
+      }
+    }
 
     try {
-      if (typeof content === 'string') {
-        preset = JSON.parse(content)
-      } else {
-        throw new Error('invalid file, must be text/json')
+      const preset = JSON.parse(event.clipboardData.getData('text/plain'))
+
+      if (!preset.name || !preset.type || !preset.data) {
+        throw new Error('missing name or type or data property')
       }
 
-      if (!preset.data) {
-        throw new Error('preset is empty')
-      }
+      const now = +new Date()
 
-      if (preset.type !== this.type) {
-        throw new Error('preset is not ' + this.type + ' type')
-      }
+      await workspacesService.savePreset(
+        {
+          name: preset.name,
+          type: preset.type,
+          data: preset.data,
+          createdAt: now,
+          updatedAt: null
+        },
+        this.type
+      )
+
+      await this.getPresets()
     } catch (error) {
       this.$store.dispatch('app/showNotice', {
-        title: `Couldn't import preset : ${error.message}`,
-        type: 'error'
+        type: 'error',
+        title: `Unable to parse preset (paste error)\n${error.message}`
       })
-      return
     }
-
-    await workspacesService.savePreset(preset)
-
-    this.$store.dispatch('app/showNotice', {
-      title: `Preset ${preset.name} imported successfully`,
-      type: 'info'
-    })
-
-    await this.getPresets()
   }
 }
 </script>

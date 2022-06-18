@@ -2,22 +2,6 @@
   <div>
     <div class="form-group mb8">
       <label class="checkbox-control">
-        <input
-          type="checkbox"
-          class="form-control"
-          :checked="!!decimalPrecision"
-          @change="$store.commit('settings/SET_DECIMAL_PRECISION', decimalPrecision ? null : 2)"
-        />
-        <div></div>
-        <span @click.stop.prevent="$event.currentTarget.children[0].focus()">
-          Round up to
-          <editable placeholder="auto" :content="decimalPrecision" @output="$store.commit('settings/SET_DECIMAL_PRECISION', $event)"></editable
-          >&nbsp;decimal(s)
-        </span>
-      </label>
-    </div>
-    <div class="form-group mb8">
-      <label class="checkbox-control">
         <input type="checkbox" class="form-control" :checked="autoHideHeaders" @change="$store.commit('settings/TOGGLE_AUTO_HIDE_HEADERS')" />
         <div></div>
         <span>Auto hide headers</span>
@@ -47,7 +31,7 @@
       <label class="checkbox-control -animations">
         <input type="checkbox" class="form-control" :checked="normalizeWatermarks" @change="$store.commit('settings/TOGGLE_NORMAMIZE_WATERMARKS')" />
         <div></div>
-        <span v-text="normalizeWatermarks ? 'Show normalized watermarks' : 'Show detailed watermark'"></span>
+        <span>Simple watermarks</span>
       </label>
     </div>
   </div>
@@ -61,10 +45,6 @@ import { Component, Vue } from 'vue-property-decorator'
 })
 export default class extends Vue {
   responsiveEnabled: boolean = null
-
-  get decimalPrecision() {
-    return this.$store.state.settings.decimalPrecision
-  }
 
   get animationsEnabled() {
     return !this.$store.state.settings.disableAnimations

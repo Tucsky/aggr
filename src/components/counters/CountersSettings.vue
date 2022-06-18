@@ -19,9 +19,9 @@
       <div class="form-group -fill">
         <input
           v-tippy
-          title="Counters step separed by a comma (ex: 1m, 5m, 10m, 15m)"
+          title="Comma separated list of steps (ex: 1m, 5m, 10m, 15m)"
           type="string"
-          placeholder="Enter a set of timeframe (ie 1m, 15m)"
+          placeholder="Enter a set of timeframes (ie 1m, 15m)"
           class="form-control"
           :value="countersStepsStringified"
           @change="replaceCounters($event.target.value)"
@@ -71,7 +71,7 @@ export default class extends Vue {
   }
 
   get countersStepsStringified() {
-    const now = +new Date()
+    const now = Date.now()
 
     return this.countersSteps.map(a => ago(now - a)).join(', ')
   }

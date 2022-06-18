@@ -1,7 +1,7 @@
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import { parseMarket, sleep, slugify, uniqueName } from '@/utils/helpers'
-import { scheduleSync } from '@/utils/store'
+import { sleep, slugify, uniqueName } from '@/utils/helpers'
+import { scheduleSync, syncState } from '@/utils/store'
 import { PriceScaleMargins, PriceScaleMode, SeriesOptions, SeriesType } from 'lightweight-charts'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
@@ -12,21 +12,30 @@ export interface PriceScaleSettings {
   mode?: PriceScaleMode
 }
 
+export interface IndicatorNavigationState {
+  sections: string[]
+  tab: string
+  optionsQuery: string
+  fontSize: number
+}
+
 export interface IndicatorSettings {
   id?: string
   name?: string
   displayName?: string
   description?: string
+  navigationState?: IndicatorNavigationState
   script?: string
   options?: SeriesOptions<SeriesType>
   createdAt?: number
   updatedAt?: number
   unsavedChanges?: boolean
   series?: string[]
+  version?: string
+  uses?: number
 }
 export interface ChartPaneState {
   _id?: string
-  _booted?: boolean
   indicators?: { [id: string]: IndicatorSettings }
   priceScales: { [id: string]: PriceScaleSettings }
   layouting: boolean | string
@@ -35,6 +44,7 @@ export interface ChartPaneState {
   refreshRate?: number
   showLegend: boolean
   fillGapsWithEmpty: boolean
+  forceNormalizePrice: boolean
   showHorizontalGridlines: boolean
   horizontalGridlinesColor: string
   showVerticalGridlines: boolean
@@ -63,11 +73,12 @@ const state = {
   refreshRate: 1000,
   showLegend: true,
   fillGapsWithEmpty: true,
+  forceNormalizePrice: false,
   showHorizontalGridlines: false,
   horizontalGridlinesColor: 'rgba(255,255,255,.1)',
   showVerticalGridlines: false,
   verticalGridlinesColor: 'rgba(255,255,255,.1)',
-  showWatermark: false,
+  showWatermark: true,
   watermarkColor: 'rgba(255,255,255,.1)',
   hiddenMarkets: {},
   barSpacing: null
@@ -95,12 +106,11 @@ const actions = {
 
       scheduleSync(state)
     }
-
-    state._booted = true
   },
-  addIndicator({ commit }, indicator) {
-    // const ids = Object.keys(state.indicators)
-    // const id = uniqueName(slugify(indicator.name), ids)
+  addIndicator({ state, commit }, indicator) {
+    const ids = Object.keys(state.indicators)
+
+    indicator.id = uniqueName(indicator.id, ids)
 
     indicator = {
       script: 'plotline(avg_close(bar))',
@@ -112,6 +122,7 @@ const actions = {
     }
 
     commit('ADD_INDICATOR', indicator)
+    commit('UPDATE_INDICATOR_DISPLAY_NAME', indicator.id)
 
     return indicator.id
   },
@@ -123,18 +134,17 @@ const actions = {
         !state.indicators[id].options || typeof state.indicators[id].options.visible === 'undefined' ? false : !state.indicators[id].options.visible
     })
   },
-  setIndicatorOption({ commit, state }, { id, key, value }) {
+  setIndicatorOption({ commit, state }, { id, key, value, silent }) {
     try {
       value = JSON.parse(value)
     } catch (error) {
       // empty
     }
-
     if (state.indicators[id] && state.indicators[id].options[key] === value) {
       return
     }
 
-    commit('SET_INDICATOR_OPTION', { id, key, value })
+    commit('SET_INDICATOR_OPTION', { id, key, value, silent })
 
     if (!state.indicators[id].unsavedChanges) {
       commit('FLAG_INDICATOR_AS_UNSAVED', id)
@@ -145,11 +155,16 @@ const actions = {
     }
   },
   async removeIndicator({ state, commit, dispatch }, { id, confirm = true }: { id: string; confirm?: boolean }) {
+    if (dialogService.mountedComponents.indicator && dialogService.mountedComponents.indicator.indicatorId === id) {
+      await dialogService.mountedComponents.indicator.close()
+    }
+
     if (
       state.indicators[id].unsavedChanges &&
       confirm &&
       (await dialogService.confirm({
-        message: `You have unsaved changes on "${id}".<br>Save this indicator to workspace before remove ?`,
+        title: 'Save changes ?',
+        message: `This indicator has unsaved changes.\nClick save to update ${id} across workspace`,
         cancel: 'DISCARD',
         ok: 'SAVE'
       }))
@@ -200,6 +215,10 @@ const actions = {
       }
     }
   },
+  async setIndicatorNavigationState({ state }, { id, navigationState }: { id: string; navigationState: IndicatorNavigationState }) {
+    state.indicators[id].navigationState = navigationState
+    syncState(state)
+  },
   async undoIndicator({ state, commit }, indicatorId) {
     const savedIndicator = await workspacesService.getIndicator(indicatorId)
 
@@ -225,7 +244,6 @@ const actions = {
           if (market !== id) {
             continue
           }
-          console.log('[toggle market] toggle ' + market, isHidden ? 'show' : 'hide')
 
           // toggle selected market
           Vue.set(state.hiddenMarkets, market, !isHidden)
@@ -241,8 +259,7 @@ const actions = {
           Vue.set(state.hiddenMarkets, market, !containsHidden)
         }
       } else {
-        const [exchange] = parseMarket(market)
-        const indexedMarket = rootState.app.indexedProducts[exchange].find(product => product.id === market)
+        const indexedMarket = rootState.panes.marketsListeners[market]
 
         const hide = type !== indexedMarket.type
 
@@ -350,6 +367,9 @@ const mutations = {
   },
   TOGGLE_FILL_GAPS_WITH_EMPTY(state) {
     state.fillGapsWithEmpty = !state.fillGapsWithEmpty
+  },
+  TOGGLE_FORCE_NORMALIZE_PRICE(state) {
+    state.forceNormalizePrice = !state.forceNormalizePrice
   },
   UPDATE_INDICATOR_DISPLAY_NAME(state, id) {
     const displayName = state.indicators[id].name.replace(/\{([\w\d_]+)\}/g, (match, key) => state.indicators[id].options[key] || '')

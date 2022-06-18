@@ -17,6 +17,7 @@ import Bybit from './bybit'
 import Ftx from './ftx'
 import Phemex from './phemex'
 import Serum from './serum'
+import Dydx from './dydx'
 
 export const exchanges = [
   new Bitmex(),
@@ -35,7 +36,8 @@ export const exchanges = [
   new Bybit(),
   new Ftx(),
   new Phemex(),
-  new Serum()
+  new Serum(),
+  new Dydx()
 ] as Exchange[]
 
 export function getExchangeById(id: string) {
@@ -44,6 +46,4 @@ export function getExchangeById(id: string) {
       return exchange
     }
   }
-
-  throw new Error('[worker] failed to get exchange by id "' + id + '"')
 }

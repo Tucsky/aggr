@@ -7,14 +7,36 @@ button {
   align-items: center;
   font-size: inherit;
   text-transform: uppercase;
-  font-family: 'Barlow Semi Condensed';
-  padding: 0.45em 0.5em 0.55em;
+  font-family: $font-condensed;
+  padding: 0.5em;
   border: 0;
-  border-radius: 4px;
+  border-radius: .25rem;
   color: inherit;
   line-height: 1;
   flex-shrink: 0;
   cursor: pointer;
+
+  .btn__suffix {
+    position: relative;
+    z-index: 1;
+    padding: .5rem;
+    margin: -.5rem -.5rem -.5rem 0.5rem;
+    border-radius: 0 .25rem .25rem 0;
+
+    &:hover {
+      background-color: rgba(white, .2);
+    }
+  }
+
+  .lds-spinner {
+    font-size: inherit;
+    margin-left: .5em;
+  }
+
+  &.-loading {
+    pointer-events: none;
+  }
+
 
   &:focus {
     box-shadow: 0 0 0 6px rgba($green, 0.1);
@@ -71,7 +93,11 @@ button {
     color: white;
 
     &.-text {
-      color: $red;
+      color: lighten($red, 5%);
+
+      &:focus {
+        background-color: rgba($red, 0.2);
+      }
     }
 
     &.-outline {
@@ -85,8 +111,8 @@ button {
     }
 
     &:hover {
-      background-color: lighten($red, 10%);
-      border-color: lighten($red, 10%);
+      background-color: lighten($red, 5%);
+      border-color: lighten($red, 5%);
 
       &.-text {
         background: 0;
@@ -103,6 +129,10 @@ button {
 
     &.-text {
       color: $blue;
+
+      &:focus {
+        background-color: rgba($blue, 0.2);
+      }
     }
 
     &.-outline {
@@ -131,10 +161,14 @@ button {
     background-color: var(--theme-background-100);
     border-color: var(--theme-background-100);
     border: 1px solid var(--theme-background-100);
-    color: 1px solid var(--theme-color-base);
+    color: var(--theme-color-base);
 
     &.-text {
       color: var(--theme-background-300);
+
+      &:focus {
+        background-color: var(--theme-background-100);
+      }
     }
 
     &.-outline {
@@ -172,8 +206,9 @@ button {
 
     &.-text {
       color: $green;
-      &:hover {
-        border-color: transparent;
+
+      &:focus {
+        background-color: rgba($green, 0.2);
       }
     }
 
@@ -204,18 +239,38 @@ button {
     border: transparent 1px solid;
   }
 
-  &.-badge {
+  &.-file {
+    position: relative;
+
+    input[type='file'] {
+      opacity: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  &.-pill {
     position: relative;
 
     .badge {
-      top: -0.75em;
-      right: -0.75em;
+      top: -0.25rem;
+      right: -0.33rem;
       position: absolute;
       z-index: 1;
 
       + span {
-        padding-right: .5em;
+        padding-right: 0.5em;
       }
+    }
+
+    &.-small .badge + span {
+      padding-right: 0.25em;
     }
   }
 }

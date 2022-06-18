@@ -8,7 +8,13 @@
       :style="{ transform: `translate(${delta.x}px, ${delta.y}px)` }"
       @mousedown="onMouseDown"
     >
-      <header v-if="header" @mousedown="handleDrag" @touchstart="handleDrag" :style="{ color: headerColor, background: headerBackground }">
+      <header
+        v-if="header"
+        @mousedown="handleDrag"
+        @touchstart="handleDrag"
+        @dblclick="toggleFullscreen"
+        :style="{ color: headerColor, background: headerBackground }"
+      >
         <slot name="header"></slot>
         <div class="dialog-controls">
           <slot name="controls"></slot>
@@ -26,6 +32,7 @@
 </template>
 
 <script lang="ts">
+import dialogService from '@/services/dialogService'
 import { getColorLuminance, splitRgba } from '@/utils/colors'
 import { Component, Vue } from 'vue-property-decorator'
 import { getEventCords } from '../../utils/picker'
@@ -64,7 +71,7 @@ export default class extends Vue {
   delta = { x: 0, y: 0 }
   target = { x: 0, y: 0 }
   animating = false
-  private clickOutsideClose: boolean
+  private _deinteractionTimeout: number
   private _handleRelease: () => void
   private _handleDragging: (evnt: any) => void
 
@@ -82,8 +89,6 @@ export default class extends Vue {
   }
 
   created() {
-    this.clickOutsideClose = true
-
     if (this.startPosition) {
       if (this.startPosition.x) {
         this.delta.x = window.innerWidth * this.startPosition.x
@@ -102,22 +107,20 @@ export default class extends Vue {
   }
 
   handleDrag(event) {
-    if (event.button === 2) {
-      return
-    }
-    if (event.target.classList.contains('-no-grab')) {
+    if (event.button === 2 || event.target.classList.contains('-no-grab') || event.target.parentElement.classList.contains('-no-grab')) {
       return
     }
     event.preventDefault()
     const lastMove = Object.assign({}, this.delta)
     const startPosition = getEventCords(event)
-
     const startOffset = this.$refs.dialogContent.offsetTop
+    const minY = startOffset * -1
+
     this._handleDragging = evnt => {
       const endPosition = getEventCords(evnt)
 
       const x = lastMove.x + endPosition.x - startPosition.x
-      const y = Math.max(startOffset * -1, lastMove.y + endPosition.y - startPosition.y)
+      const y = Math.max(minY, lastMove.y + endPosition.y - startPosition.y)
 
       this.target.x = x
       this.target.y = y
@@ -139,13 +142,18 @@ export default class extends Vue {
   }
 
   onMouseDown() {
-    this.clickOutsideClose = false
+    if (this._deinteractionTimeout) {
+      clearTimeout(this._deinteractionTimeout)
+    }
+
+    dialogService.isInteracting = true
 
     const handler = () => {
       document.removeEventListener('mouseup', handler)
 
-      setTimeout(() => {
-        this.clickOutsideClose = true
+      this._deinteractionTimeout = setTimeout(() => {
+        dialogService.isInteracting = false
+        this._deinteractionTimeout = null
       }, 100)
     }
 
@@ -166,7 +174,7 @@ export default class extends Vue {
   }
 
   clickOutside() {
-    if (!this.clickOutsideClose) {
+    if (dialogService.isInteracting) {
       return false
     }
 
@@ -175,6 +183,10 @@ export default class extends Vue {
 
   close() {
     this.$emit('clickOutside')
+  }
+
+  toggleFullscreen() {
+    //
   }
 }
 </script>

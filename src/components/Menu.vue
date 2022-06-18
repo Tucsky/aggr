@@ -12,7 +12,7 @@
         <span class="mr4" v-text="isFullscreen ? 'exit' : 'fullscreen'"></span>
         <i class="icon-enlarge"></i>
       </button>
-      <tippy to="myTrigger" :interactive="true" :delay="[0, 400]" :distance="20" placement="left" :theme="'transparent'">
+      <tippy to="MenuVolume" :interactive="true" :delay="[0, 400]" :distance="20" placement="left" :theme="'transparent'">
         <div class="mt4 mb4 text-nowrap">
           <slider
             style="width: 100px"
@@ -27,7 +27,7 @@
           ></slider>
         </div>
       </tippy>
-      <button type="button" class="menu-action btn -volume" @click="$store.commit('settings/TOGGLE_AUDIO', !useAudio)" name="myTrigger">
+      <button type="button" class="menu-action btn -volume" @click="toggleAudio" name="MenuVolume">
         <span class="mr4">Audio</span>
         <i v-if="!useAudio" class="icon-volume-off"></i>
         <i v-else class="icon-volume-medium" :class="{ 'icon-volume-high': audioVolume > 1 }"></i>
@@ -81,7 +81,7 @@ export default class extends Vue {
     },
     stats: {
       title: 'Stats',
-      description: 'Rolling metrics'
+      description: 'Custom rolling metrics'
     },
     counters: {
       title: 'Counters',
@@ -89,7 +89,7 @@ export default class extends Vue {
     },
     prices: {
       title: 'Markets',
-      description: 'Tickers sorted by price'
+      description: 'Price change & volume'
     },
     website: {
       title: 'Website',
@@ -144,6 +144,8 @@ export default class extends Vue {
 
   addPane(type: PaneType) {
     this.$store.dispatch('panes/addPane', { type })
+
+    this.toggleMenu()
   }
 
   onClickItem(event) {
@@ -154,37 +156,8 @@ export default class extends Vue {
     this.toggleMenu()
   }
 
-  beforeEnter(element) {
-    element.style.height = '0px'
-  }
-
-  enter(element) {
-    const wrapper = element.children[0]
-
-    let height = wrapper.offsetHeight
-    height += parseInt(window.getComputedStyle(wrapper).getPropertyValue('margin-top'))
-    height += parseInt(window.getComputedStyle(wrapper).getPropertyValue('margin-bottom'))
-    height += 'px'
-
-    element.dataset.height = height
-
-    setTimeout(() => {
-      element.style.height = height
-    }, 100)
-  }
-
-  afterEnter(element) {
-    element.style.height = ''
-  }
-
-  beforeLeave(element) {
-    element.style.height = element.dataset.height
-  }
-
-  leave(element) {
-    setTimeout(() => {
-      element.style.height = '0px'
-    })
+  toggleAudio() {
+    this.$store.commit('settings/TOGGLE_AUDIO', !this.useAudio)
   }
 }
 </script>
@@ -194,7 +167,7 @@ export default class extends Vue {
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
-  z-index: 11;
+  z-index: 10;
 
   .menu__button {
     width: 2.5rem;
@@ -202,6 +175,8 @@ export default class extends Vue {
     border-radius: 50%;
     justify-content: center;
     background-color: var(--theme-background-100);
+    z-index: 1;
+    position: relative;
 
     &:hover {
       color: white;
@@ -216,6 +191,7 @@ export default class extends Vue {
     flex-direction: column-reverse;
     align-items: flex-end;
     width: 0;
+    filter: drop-shadow(-1em -1em 3em var(--theme-background-base));
   }
 
   .menu-action {

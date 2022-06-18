@@ -129,6 +129,10 @@ body {
   display: flex;
   flex-direction: row;
 
+  &.-wrap {
+    flex-wrap: wrap;
+  }
+
   > .-tight {
     flex-basis: auto;
     flex-grow: 0;
@@ -159,12 +163,20 @@ body {
     white-space: nowrap;
   }
 
+  > .-fill-70 {
+    flex-grow: 1;
+    flex-basis: 70%;
+  }
+
+  > .-unshrinkable {
+    flex-shrink: 0;
+  }
+
   > div {
     margin-right: 8px;
     flex-grow: 1;
 
     > .btn {
-      height: 100%;
       white-space: nowrap;
     }
 
@@ -225,7 +237,7 @@ body {
 }
 
 #app.-no-animations *.flip-list-move {
-  transition: transform 0.4s linear !important;
+  transition: transform 0.2s linear !important;
 }
 
 .divider {
@@ -233,13 +245,13 @@ body {
   display: flex;
   align-items: center;
   text-transform: uppercase;
-  opacity: 0.5;
+  color: var(--theme-background-300);
 
   &:before,
   &:after {
     content: '';
     height: 1px;
-    background-color: currentColor;
+    background-color: var(--theme-background-150);
     flex-grow: 1;
   }
 
@@ -271,11 +283,6 @@ body {
       margin-top: 1rem;
     }
   }
-
-  &.-single:before,
-  &.-single:after {
-    margin: 0
-  }
 }
 
 blockquote {
@@ -306,6 +313,10 @@ code {
 
   &:hover {
     background-color: rgba(black, 0.05);
+
+    .section__title small {
+      visibility: visible;
+    }
   }
 
   .section__horizontal-scroll {
@@ -320,7 +331,6 @@ code {
     position: absolute;
     right: 1rem;
     margin-top: -2.6rem;
-    z-index: 2;
     line-height: 1;
   }
 
@@ -329,31 +339,45 @@ code {
     align-items: center;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    opacity: 0.8;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    margin: -1rem -1rem 1rem;
-    padding: 1rem 1rem 0;
+    margin: -1rem -1rem 0rem;
+    padding: 1rem;
+    color: var(--theme-color-base);
+
+    small {
+      visibility: hidden;
+      margin-left: auto;
+      opacity: 0.5;
+      font-size: 12px;
+      text-align: right;
+      padding-left: 1rem;
+
+      + .icon-up-thin {
+        margin-left: 1rem;
+      }
+    }
 
     &:hover {
       opacity: 1;
       cursor: pointer;
     }
 
-    .icon-up {
+    .icon-up-thin {
       transition: transform 0.2s $ease-elastic;
-      margin-left: 0.5em;
+      margin-left: auto;
     }
 
     &:first-child {
       margin: -1rem;
       padding-bottom: 1rem;
+      color: var(--theme-color-100);
 
-      .icon-up {
+      .icon-up-thin {
         transform: rotateZ(180deg);
       }
     }

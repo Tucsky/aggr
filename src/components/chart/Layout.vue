@@ -9,7 +9,7 @@
   >
     <div class="chart-layout__controls">
       <button class="btn -red -small" title="Close menu while reverting chart layout to it's original state" @click="cancel">
-        Revert <i class="icon-eraser ml4"></i>
+        Cancel <i class="icon-eraser ml4"></i>
       </button>
       <button
         class="btn -green -small ml8"
@@ -35,7 +35,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
-import ChartPriceScale from './ChartPriceScale.vue'
+import ChartPriceScale from './PriceScale.vue'
 
 @Component({
   components: { ChartPriceScale },
@@ -112,8 +112,6 @@ export default class extends Vue {
 
   syncMoveWithOthers(priceScaleId, side, scaleMargins): boolean {
     const originalScaleMargins = this.activePriceScales[priceScaleId].scaleMargins
-    /*const originalValue = originalScaleMargins[side]
-    const oppositeSide = side === 'top' ? 'bottom' : side === 'bottom' ? 'top' : null*/
 
     let hasSynced = false
 
@@ -124,25 +122,7 @@ export default class extends Vue {
 
       const otherScaleMargins = this.activePriceScales[otherId].scaleMargins
 
-      /*if (otherScaleMargins[oppositeSide] === +(1 - originalValue).toFixed(2)) {
-        // sync adjacent
-
-        Vue.set(
-          otherScaleMargins,
-          oppositeSide,
-          +(otherScaleMargins[oppositeSide] + (this.activePriceScales[id].scaleMargins[side] - scaleMargins[side])).toFixed(2)
-        )
-
-        this.$store.commit(this.paneId + '/SET_PRICE_SCALE', {
-          id: otherId,
-          priceScale: this.activePriceScales[otherId]
-        })
-
-        hasSynced = true
-      } else*/ if (
-        otherScaleMargins.top === originalScaleMargins.top &&
-        otherScaleMargins.bottom === originalScaleMargins.bottom
-      ) {
+      if (otherScaleMargins.top === originalScaleMargins.top && otherScaleMargins.bottom === originalScaleMargins.bottom) {
         // sync overlapping
 
         Vue.set(this.activePriceScales[otherId], 'scaleMargins', scaleMargins)

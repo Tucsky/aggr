@@ -1,5 +1,4 @@
 import dialogService from '@/services/dialogService'
-import { Market } from '@/types/test'
 import { randomString } from '@/utils/helpers'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
@@ -49,12 +48,11 @@ export interface ListenedProduct extends Product {
 export interface AppState {
   isBooted: boolean
   isLoading: boolean
+  isExchangesReady: boolean
   showSearch: boolean
   historicalMarkets: string[]
   apiSupportedTimeframes: number[]
-  indexedProducts: { [exchangeId: string]: Product[] }
   activeExchanges: { [exchangeId: string]: boolean }
-  activeMarkets: Market[]
   proxyUrl: string
   apiUrl: string
   version: string
@@ -71,15 +69,14 @@ export interface AppState {
 const state = {
   isBooted: false,
   isLoading: false,
+  isExchangesReady: false,
   optimalDecimal: null,
   pairs: [],
   showSearch: false,
   activeExchanges: {},
-  activeMarkets: [],
   notices: [],
   historicalMarkets: [],
   apiSupportedTimeframes: [],
-  indexedProducts: {},
   proxyUrl: null,
   apiUrl: null,
   version: 'DEV',
@@ -92,15 +89,13 @@ const state = {
 } as AppState
 
 const actions = {
-  async boot({ commit }) {
-    commit('SET_API_SUPPORTED_PAIRS', process.env.VUE_APP_API_SUPPORTED_PAIRS)
+  async boot({ commit, dispatch }) {
+    await dispatch('getApiSupportedPairs')
     commit('SET_API_SUPPORTED_TIMEFRAMES', process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES)
     commit('SET_VERSION', process.env.VUE_APP_VERSION)
     commit('SET_BUILD_DATE', process.env.VUE_APP_BUILD_DATE)
     commit('SET_API_URL', process.env.VUE_APP_API_URL)
     commit('SET_PROXY_URL', process.env.VUE_APP_PROXY_URL)
-
-    this.dispatch('app/refreshCurrencies')
   },
   setBooted({ commit }, value = true) {
     commit('SET_BOOTED', value)
@@ -181,58 +176,6 @@ const actions = {
       notice
     })
   },
-  refreshCurrencies({ commit, state }) {
-    const market = state.activeMarkets[0]
-
-    if (!market) {
-      return
-    }
-
-    const pair = market.pair
-
-    const symbols = {
-      BTC: ['bitcoin', '฿'],
-      XBT: ['bitcoin', '฿'],
-      GBP: ['pound', '£'],
-      EUR: ['euro', '€'],
-      USD: ['dollar', '$'],
-      JPY: ['yen', '¥'],
-      ETH: ['ethereum', 'ETH'],
-      XRP: ['xrp', 'XRP'],
-      LTC: ['ltc', 'LTC'],
-      TRX: ['trx', 'TRX'],
-      ADA: ['ada', 'ADA'],
-      IOTA: ['iota', 'IOTA'],
-      XMR: ['xmr', 'XMR'],
-      NEO: ['neo', 'NEO'],
-      EOS: ['eos', 'EOS']
-    }
-
-    const currencies: BaseQuoteCurrencies = {
-      base: 'coin',
-      baseSymbol: '฿',
-      quote: 'dollar',
-      quoteSymbol: '$'
-    }
-
-    for (const symbol of Object.keys(symbols)) {
-      if (new RegExp(symbol + '$').test(pair)) {
-        currencies.quote = symbols[symbol][0]
-        currencies.quoteSymbol = symbols[symbol][1]
-      }
-
-      if (new RegExp('^' + symbol).test(pair)) {
-        currencies.base = symbols[symbol][0]
-        currencies.baseSymbol = symbols[symbol][1]
-      }
-    }
-
-    console.log(
-      `[app] refresh currencies\n\tbase: ${currencies.base} - ${currencies.baseSymbol}\n\tquote: ${currencies.quote} - ${currencies.quoteSymbol}`
-    )
-
-    commit('SET_CURRENCIES', currencies)
-  },
   showSearch({ commit, state }, paneId?: string) {
     if (state.showSearch) {
       return
@@ -261,12 +204,54 @@ const actions = {
     }
 
     commit('TOGGLE_SEARCH', false)
+  },
+  async getApiSupportedPairs({ commit }) {
+    let products = process.env.VUE_APP_API_SUPPORTED_PAIRS
+
+    if (products === 'undefined') {
+      products = []
+    }
+
+    if (process.env.VUE_APP_API_SUPPORTED_PAIRS_URL) {
+      const now = Date.now()
+
+      try {
+        const cache = JSON.parse(localStorage.getItem('API_SUPPORTED_PAIRS'))
+
+        if (!cache || !cache.products) {
+          throw new Error('api supported pairs products cache is invalid')
+        }
+
+        if (!cache.products.length) {
+          throw new Error('api supported pairs need a refresh')
+        }
+
+        if (now - cache.timestamp > 1000 * 60 * 5) {
+          throw new Error('api supported pairs products cache has expired')
+        }
+
+        products = cache.products
+      } catch (error) {
+        products = await fetch(process.env.VUE_APP_API_SUPPORTED_PAIRS_URL)
+          .then(response => response.json())
+          .catch(err => {
+            console.log(err)
+          })
+
+        localStorage.setItem('API_SUPPORTED_PAIRS', JSON.stringify({ products, timestamp: now }))
+      }
+    }
+
+    commit('SET_API_SUPPORTED_PAIRS', products)
   }
 } as ActionTree<AppState, ModulesState>
 
 const mutations = {
   SET_BOOTED: (state, value: boolean) => {
     state.isBooted = value
+  },
+  SET_EXCHANGES_READY(state) {
+    state.isExchangesReady = true
   },
   EXCHANGE_UPDATED(state, exchangeId: string) {
     Vue.set(state.activeExchanges, exchangeId, !this.state.exchanges[exchangeId].disabled)
@@ -320,33 +305,6 @@ const mutations = {
   },
   SET_BUILD_DATE(state, value) {
     state.buildDate = value
-  },
-  INDEX_EXCHANGE_PRODUCTS(state, { exchangeId, products }: { exchangeId: string; products: Product[] }) {
-    Vue.set(state.indexedProducts, exchangeId, products)
-  },
-  ADD_ACTIVE_MARKET(state, { exchangeId, pair }: { exchangeId: string; pair: string }) {
-    const market = state.activeMarkets.find(m => m.exchange === exchangeId && m.pair === pair)
-
-    if (market) {
-      throw new Error('add-active-market-already-exist')
-    }
-
-    state.activeMarkets.push({
-      id: exchangeId + pair,
-      exchange: exchangeId,
-      pair
-    })
-  },
-  REMOVE_ACTIVE_MARKET(state, { exchangeId, pair }: { exchangeId: string; pair: string }) {
-    const market = state.activeMarkets.find(m => m.exchange === exchangeId && m.pair === pair)
-
-    if (!market) {
-      throw new Error('remove-active-market-not-found')
-    }
-
-    const index = state.activeMarkets.indexOf(market)
-
-    state.activeMarkets.splice(index, 1)
   },
   SET_CURRENCIES(state, currencies: BaseQuoteCurrencies) {
     state.baseCurrency = currencies.base

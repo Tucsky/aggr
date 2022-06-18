@@ -18,6 +18,7 @@ $ease-elastic: cubic-bezier(0, 1.4, 1, 1);
 
 $font-base: 'Barlow', sans-serif;
 $font-monospace: 'Share Tech Mono', monospace;
+$font-condensed: 'Barlow Semi Condensed', sans-serif;
 $shadow: rgba(0, 0, 0, 0.2) 0px 18px 50px -10px;
 $accent: rgba(#708090, 0.5);
 $checkerboard: linear-gradient(45deg, $accent 25%, transparent 25%), linear-gradient(45deg, transparent 75%, $accent 75%),
@@ -34,7 +35,6 @@ $icon-euro: '\e905';
 $icon-volume-off: '\e906';
 $icon-monero: '\e907';
 $icon-pound: '\e908';
-$icon-sound-wave: '\e909';
 $icon-up: '\e90a';
 $icon-warning: '\e90b';
 $icon-yen: '\e90c';
@@ -54,18 +54,17 @@ $icon-balance: '\e919';
 $icon-magic: '\e91a';
 $icon-KRAKEN: '\e91b';
 $icon-OKEX: '\e91c';
-$icon-power-on: '\e91d';
+$icon-down-thin: '\e91d';
 $icon-skull: '\e91e';
 $icon-edit: '\e91f';
 $icon-plus: '\e920';
 $icon-POLONIEX: '\e921';
 $icon-visible: '\e922';
 $icon-hidden: '\e923';
-$icon-power-off: '\e924';
+$icon-up-thin: '\e924';
 $icon-volume-high: '\e925';
 $icon-COINEX: '\e926';
 $icon-BINANCE: '\e927';
-$icon-BINANCE_US: '\e927';
 $icon-BINANCE_FUTURES: '\e928';
 $icon-BITFINEX: '\e929';
 $icon-BITMEX: '\e92a';
@@ -88,7 +87,6 @@ $icon-dropper: '\e93a';
 $icon-COINBASE: '\e93b';
 $icon-DERIBIT: '\e93c';
 $icon-trash: '\e93d';
-$icon-black-and-white: '\e93e';
 $icon-BYBIT: '\e93f';
 $icon-BITSTAMP: '\e940';
 $icon-fill: '\e941';
@@ -118,6 +116,12 @@ $icon-move: '\e958';
 $icon-star: '\e959';
 $icon-star-filled: '\e95a';
 $icon-save: '\e95b';
+$icon-merge: '\e909';
+$icon-click: '\e93e';
+$icon-brightness: '\e95c';
+$icon-gauge: '\e95d';
+$icon-DYDX: '\e95e';
+$icon-BINANCE_US: '\e95f';
 
 $exchanges: (
   'BITMEX': $icon-BITMEX,
@@ -135,7 +139,8 @@ $exchanges: (
   'DERIBIT': $icon-DERIBIT,
   'BYBIT': $icon-BYBIT,
   'FTX': $icon-FTX,
-  'PHEMEX': $icon-PHEMEX
+  'PHEMEX': $icon-PHEMEX,
+  'DYDX': $icon-DYDX,
 );
 
 @function unicode($str) {
@@ -148,13 +153,12 @@ $exchanges: (
   --theme-background-150: #{lighten($dark, 30%)};
   --theme-background-200: #{lighten($dark, 50%)};
   --theme-background-300: #{lighten($dark, 75%)};
-  --theme-background-o75: #{rgba($dark, 0.75)};
-  --theme-background-o20: #{rgba($dark, 0.2)};
+  --theme-background-o75: #{rgba(lighten($dark, 10%), 0.75)};
+  --theme-background-o20: #{rgba(lighten($dark, 10%), 0.2)};
   --theme-color-base: #{$light};
   --theme-color-100: #{$light};
   --theme-color-200: #{$light};
   --theme-color-300: #{$light};
-  --theme-color-500: #{$light};
   --theme-color-o20: #{rgba($light, 0.2)};
   --theme-color-o50: #{rgba($light, 0.5)};
   --theme-color-o75: #{rgba($light, 0.75)};

@@ -2,7 +2,7 @@ import Exchange from '../exchange'
 
 export default class extends Exchange {
   id = 'BITFINEX'
-  private lastSubscriptionId = 0
+  protected maxConnectionsPerApi = 24
   private channels = {}
   private prices = {}
   protected endpoints = { PRODUCTS: 'https://api.bitfinex.com/v1/symbols' }
@@ -99,7 +99,6 @@ export default class extends Exchange {
     const json = JSON.parse(event.data)
 
     if (json.event === 'subscribed' && json.chanId) {
-      console.debug(`[${this.id}] register channel ${json.chanId} (${json.channel}:${json.pair})`)
       this.channels[json.chanId] = {
         name: json.channel,
         pair: json.pair
@@ -117,7 +116,6 @@ export default class extends Exchange {
     const channel = this.channels[json[0]]
 
     if (!channel.hasSentInitialMessage) {
-      console.debug(`[${this.id}] skip first payload ${channel.name}:${channel.pair}`)
       channel.hasSentInitialMessage = true
       return
     }
@@ -139,7 +137,9 @@ export default class extends Exchange {
       return this.emitLiquidations(
         api.id,
         json[1]
-          .filter(a => api._connected.indexOf(a[4].substring(1)) !== -1)
+          .filter(
+            liquidation => !liquidation[8] && !liquidation[10] && !liquidation[11] && api._connected.indexOf(liquidation[4].substring(1)) !== -1
+          )
           .map(a => {
             const pair = a[4].substring(1)
 

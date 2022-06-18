@@ -3,49 +3,56 @@
     <template v-slot:header>
       <div>
         <div class="title">
-          <div @dblclick="renamePreset" v-text="name"></div>
+          <div @dblclick="renamePreset" v-text="meta.name"></div>
         </div>
-        <div class="subtitle" v-text="preset.type"></div>
+        <div class="subtitle" v-text="meta.type"></div>
       </div>
     </template>
 
-    <form @submit.prevent="apply">
-      <div class="d-flex flex-middle">
-        <i class="icon-info mr16"></i>
-        <div class="mr16">
-          <small class="text-muted">Created at</small>
-          <div>{{ createdAt }} ago</div>
-        </div>
-        <div>
-          <small class="text-muted">Updated at</small>
-          <div>{{ updatedAt }} ago</div>
-        </div>
+    <div class="d-flex flex-middle">
+      <i class="icon-info mr16"></i>
+      <div class="mr16">
+        <small class="text-muted">Created at</small>
+        <div>{{ createdAt }} ago</div>
       </div>
+      <div>
+        <small class="text-muted">Updated at</small>
+        <div>{{ updatedAt }} ago</div>
+      </div>
+    </div>
 
-      <p>
-        What's included :
-        <button type="button" class="btn -text" v-text="showDetails ? 'hide' : 'show'" @click="showDetails = !showDetails"></button>
-      </p>
+    <p>
+      What's included :
+      <button type="button" class="btn -text" v-text="showDetails ? 'hide' : 'show'" @click="showDetails = !showDetails"></button>
+    </p>
 
-      <ul v-if="showDetails">
-        <li v-for="prop of dataProperties" :key="prop">
-          <code v-text="prop"></code>
-        </li>
-      </ul>
+    <ul v-if="showDetails">
+      <li v-for="prop of dataProperties" :key="prop">
+        <code v-text="prop"></code>
+      </li>
+    </ul>
 
-      <footer>
-        <button type="button" class="btn -text -red mrauto ml0" @click="deletePreset"><i class="icon-cross mr8"></i> Delete</button>
-        <button type="button" class="btn -text ml8" @click="downloadPreset"><i class="icon-download mr8"></i> Download</button>
-        <button type="submit" class="btn -green -large ml16"><i class="icon-check mr4"></i> Apply</button>
-      </footer>
-    </form>
+    <footer>
+      <dropdown class="-left -text-left mr16" :options="menu" selectionClass="-text -large mrauto" placeholder="Options">
+        <template v-slot:selection>
+          <i class="icon-cog mr4"></i>
+          <span>Manage</span>
+        </template>
+        <template v-slot:option="{ value }">
+          <i :class="[value.icon === 'trash' && 'text-danger', 'icon-' + value.icon]"> </i>
+          <span :class="value.icon === 'trash' ? 'text-danger' : ''">{{ value.label }}</span>
+        </template>
+      </dropdown>
+      <button type="button" class="btn -text -large mlauto" @click="copyPreset"><i class="icon-copy-paste mr4"></i> Copy</button>
+      <button type="button" class="btn -blue -large ml16" @click="replacePreset"><i class="icon-check mr4"></i> Set</button>
+    </footer>
   </Dialog>
 </template>
 
 <script>
 import DialogMixin from '@/mixins/dialogMixin'
 import workspacesService from '@/services/workspacesService'
-import { downloadJson, slugify, ago } from '@/utils/helpers'
+import { downloadAnything, slugify, ago, copyTextToClipboard } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 
 export default {
@@ -57,6 +64,23 @@ export default {
   },
   data() {
     return {
+      menu: [
+        {
+          icon: 'swap',
+          label: 'Override',
+          click: this.replacePreset
+        },
+        {
+          icon: 'external-link-square-alt',
+          label: 'Export',
+          click: this.downloadPreset
+        },
+        {
+          icon: 'trash',
+          label: 'Delete',
+          click: this.deletePreset
+        }
+      ],
       dataProperties: [],
       createdAt: 'N/A',
       updatedAt: 'N/A',
@@ -64,8 +88,14 @@ export default {
     }
   },
   computed: {
-    name() {
-      return this.preset.name.split(':').pop()
+    meta() {
+      const [, type, cat, name] = this.preset.name.match(/^([a-z-]+):?([a-z-]+)?:(.*)/)
+
+      return {
+        type,
+        cat,
+        name
+      }
     }
   },
   created() {
@@ -86,7 +116,7 @@ export default {
       this.close()
     },
     downloadPreset() {
-      downloadJson(this.preset, this.preset.type + '_' + slugify(this.name))
+      downloadAnything(this.preset, slugify(this.preset.name))
     },
     retrieveDataProperties(obj) {
       for (const prop in obj) {
@@ -97,8 +127,16 @@ export default {
         }
       }
     },
-    apply() {
-      this.close(true)
+    replacePreset() {
+      this.close('replace')
+    },
+    async copyPreset() {
+      await copyTextToClipboard(JSON.stringify(this.preset))
+
+      this.$store.dispatch('app/showNotice', {
+        id: 'preset-clipboard',
+        title: `Copied preset ${this.preset.name} to clipboard`
+      })
     },
     async renamePreset() {
       const name = await dialogService.prompt({
@@ -106,10 +144,10 @@ export default {
         input: this.name
       })
 
-      if (name && name !== this.name) {
+      if (name && name !== this.meta.name) {
         await workspacesService.removePreset(this.preset.name)
 
-        this.preset.name = this.preset.type + ':' + name
+        this.preset.name = this.meta.type + ':' + (this.meta.cat ? this.meta.cat + ':' : '') + name
 
         await workspacesService.savePreset(this.preset)
       }

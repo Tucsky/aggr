@@ -5,6 +5,7 @@ export default class extends Exchange {
   private xbtPrice = 48000
   private types: { [pair: string]: 'quanto' | 'inverse' | 'linear' }
   private multipliers: { [pair: string]: number }
+  private underlyingToPositionMultipliers: { [pair: string]: number }
   protected endpoints = { PRODUCTS: 'https://www.bitmex.com/api/v1/instrument/active' }
 
   getUrl() {
@@ -15,22 +16,29 @@ export default class extends Exchange {
     const products = []
     const types = {}
     const multipliers = {}
+    const underlyingToPositionMultipliers = {}
 
     for (const product of data) {
       types[product.symbol] = product.isInverse ? 'inverse' : product.isQuanto ? 'quanto' : 'linear'
       multipliers[product.symbol] = product.multiplier
+
+      if (types[product.symbol] === 'linear') {
+        underlyingToPositionMultipliers[product.symbol] = product.underlyingToPositionMultiplier
+      }
+
       products.push(product.symbol)
     }
 
     return {
       products,
       types,
-      multipliers
+      multipliers,
+      underlyingToPositionMultipliers
     }
   }
 
   validateProducts(data) {
-    if (!data || !data.multipliers || !data.types) {
+    if (!data || !data.multipliers || !data.underlyingToPositionMultipliers || !data.types) {
       return false
     }
 
@@ -69,7 +77,7 @@ export default class extends Exchange {
 
     api.send(
       JSON.stringify({
-        op: 'subscribe',
+        op: 'unsubscribe',
         args: ['trade:' + pair, 'liquidation:' + pair]
       })
     )
@@ -100,14 +108,14 @@ export default class extends Exchange {
               size = (this.multipliers[trade.symbol] / 100000000) * trade.leavesQty * this.xbtPrice
             } else if (this.types[trade.symbol] === 'inverse') {
               size = trade.leavesQty / trade.price
-            } else if (this.types[trade.symbol] === 'linear') {
-              size = 0.000001 * trade.leavesQty
+            } else {
+              size = (1 / this.underlyingToPositionMultipliers[trade.symbol]) * trade.leavesQty
             }
 
             return {
               exchange: this.id,
               pair: trade.symbol,
-              timestamp: +new Date(),
+              timestamp: Date.now(),
               price: trade.price,
               size: size,
               side: trade.side === 'Buy' ? 'buy' : 'sell',

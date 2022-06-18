@@ -1,4 +1,4 @@
-import { Bar, TimeRange } from './chartController'
+import { Bar, TimeRange } from './chart'
 
 export interface Chunk {
   from: number
@@ -25,15 +25,11 @@ export default class ChartCache {
    * @param{Chunk} chunk Chunk to add
    */
   saveChunk(chunk) {
-    // console.log(`[chartCache/saveChunk]`, formatTime(chunk.from), formatTime(chunk.to), chunk.bars.length, 'bars', chunk.active ? '[active chunk]' : '')
-
     let index
 
     if (!this.chunks.length || this.chunks[this.chunks.length - 1].to < chunk.from) {
-      // console.log(`\t-> push chunk at the end of this.chunks array (chunk contain latest data)`)
       index = this.chunks.push(chunk) - 1
     } else if (this.chunks[0].from > chunk.to) {
-      // console.log(`\t-> prepend chunk at the beginning of this.chunks array (chunk contain old data)`)
       this.chunks.unshift(chunk)
       index = 0
     } else {
@@ -42,21 +38,10 @@ export default class ChartCache {
     }
 
     if (index === 0) {
-      if (this.cacheRange.from) {
-        // console.log(`\t-> increase this.cacheRange (start) by ${getHms((this.cacheRange.from - chunk.from) * 1000)}`)
-      } else {
-        // console.log(`\t-> set this.cacheRange (start) = ${formatTime(chunk.from)}`)
-      }
       this.cacheRange.from = chunk.from
     }
 
     if (index === this.chunks.length - 1) {
-      if (this.cacheRange.to) {
-        // console.log(`\t-> increase this.cacheRange (end) by ${getHms((chunk.to - this.cacheRange.to) * 1000)}`)
-      } else {
-        // console.log(`\t-> set this.cacheRange (end) = ${formatTime(chunk.to)}`)
-      }
-
       this.cacheRange.to = chunk.to
     }
 
@@ -76,10 +61,17 @@ export default class ChartCache {
       return
     }
 
+    let reduced = false
+
     while (this.chunks[0] && this.chunks[0].to < end) {
+      console.debug(`[chart.cache] trim chunk (${this.chunks[0].bars.length} bars)`)
       this.chunks.splice(0, 1)
+
+      reduced = true
     }
 
     this.cacheRange.from = this.chunks[0].from
+
+    return reduced
   }
 }

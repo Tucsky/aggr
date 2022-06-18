@@ -2,8 +2,53 @@ import Vue from 'vue'
 import Tuna from 'tunajs'
 import store from '../store'
 import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
+import workspacesService from './workspacesService'
 
-export type AudioFunction = (audioService: AudioService, ratio: number, side: 'buy' | 'sell', level: number) => void
+export type AudioFunction = (audioService: AudioService, ratio: number) => void
+
+export const audioParametersDescriptions = {
+  frequency: 'Tone frequency of the note you want to play (Hz)',
+  gain: `Determine how loud it should be (0 to 1 to avoid saturation)`,
+  fadeOut: `Duration of the OUT transition (in seconds, default is 1)`,
+  delay: `Wait n seconds before play the note`,
+  fadeIn: `Duration of the IN transition (in seconds, default is 0)`,
+  holdDuration: `Hold the note for n seconds (default 0)`,
+  osc: `Type of wave used for the note (can be triangle, square, sawtooth, sin etc)`,
+  startGain: `Initial gain (before fadeIn)`,
+  endGain: `Final gain (after fadeOut)`,
+  url: `Direct link to song (.mp3, .wav, .ogg) or name of already imported file`,
+  startTime: `Offset the start of the song at second n (to play only a part of it)`
+}
+
+export const audioParametersDefinitions = {
+  play: ['frequency', 'gain', 'fadeOut', 'delay', 'fadeIn', 'holdDuration', 'osc', 'startGain', 'endGain'],
+  playurl: ['url', 'gain', 'holdDuration', 'delay', 'startTime', 'fadeIn', 'fadeOut', 'startGain', 'endGain']
+}
+
+export const audioDefaultParameters = {
+  play: {
+    frequency: 329.63,
+    gain: 1,
+    fadeOut: 1,
+    delay: 0,
+    fadeIn: 0,
+    holdDuration: 0,
+    osc: `'triangle'`,
+    startGain: 0.001,
+    endGain: 0.001
+  },
+  playurl: {
+    url: "'https://d7d3471nr939s.cloudfront.net/DeepHouseSessions_Noiz_SP/MP3/One+Shots/Bongo_08_73_SP.mp3?cb=6cfb91bb-f15f-432a-bfae-17ef22b22005'",
+    gain: 1,
+    holdDuration: 1,
+    delay: 0,
+    startTime: 0,
+    fadeIn: 0,
+    fadeOut: 0,
+    startGain: 0.00001,
+    endGain: 0.00001
+  }
+}
 
 class AudioService {
   static savedAudioBuffers = {}
@@ -34,8 +79,8 @@ class AudioService {
       bypass: 0
     },
     Delay: {
-      feedback: 0.3, //0 to 1+
-      delayTime: 160 //1 to 10000 milliseconds
+      feedback: 0.33, //0 to 1+
+      delayTime: 400 //1 to 10000 milliseconds
     },
     PingPongDelay: {
       wetLevel: 0.6, //0 to 1
@@ -58,6 +103,7 @@ class AudioService {
   output: any
   count = 0
   minTime = 0
+  gainNode: any
 
   connect() {
     console.log(`[sfx] connect`)
@@ -118,7 +164,7 @@ class AudioService {
             store.dispatch('app/showNotice', {
               id: 'audio',
               type: 'error',
-              title: 'Browser prevented audio from starting 😣<br>Click somewhere to retry.'
+              title: 'Browser prevented audio from playing\nClick somewhere to resume.'
             })
           }
 
@@ -168,6 +214,12 @@ class AudioService {
       effects.push(new this.tuna[name](this.filtersOptions[id]))
     }
 
+    this.gainNode = new this.tuna.Gain({
+      gain: store.state.settings.audioVolume
+    })
+
+    effects.push(this.gainNode)
+
     if (effects.length) {
       let source
 
@@ -190,29 +242,38 @@ class AudioService {
     }
   }
 
-  loadSoundBuffer(url) {
-    return new Promise((resolve, reject) => {
-      if (AudioService.savedAudioBuffers[url] === undefined || !(AudioService.savedAudioBuffers[url] instanceof AudioBuffer)) {
-        fetch(url)
-          .then(res => res.arrayBuffer())
-          .then(arrayBuffer => {
-            this.context
-              .decodeAudioData(arrayBuffer)
-              .then(audioBuffer => {
-                AudioService.savedAudioBuffers[url] = audioBuffer
-                resolve(audioBuffer)
-              })
-              .catch(error => {
-                reject(error)
-              })
-          })
-          .catch(error => {
-            reject(error)
-          })
-      } else {
-        resolve(AudioService.savedAudioBuffers[url])
-      }
+  setVolume(gain: number) {
+    this.gainNode.gain.value = gain
+  }
+
+  fetchArrayBuffer(url: string) {
+    return fetch(url).then(res => res.arrayBuffer())
+  }
+
+  async retrieveArrayBuffer(name: string) {
+    const blob = (await workspacesService.getSound(name)).data
+    const reader = new FileReader()
+
+    return new Promise<ArrayBuffer>(resolve => {
+      reader.onloadend = event => resolve(event.target.result as ArrayBuffer)
+      reader.readAsArrayBuffer(blob)
     })
+  }
+
+  async loadSoundBuffer(url) {
+    if (AudioService.savedAudioBuffers[url]) {
+      return AudioService.savedAudioBuffers[url]
+    }
+
+    let arrayBuffer: ArrayBuffer
+
+    if (url.indexOf('/') !== -1) {
+      arrayBuffer = await this.fetchArrayBuffer(url)
+    } else {
+      arrayBuffer = await this.retrieveArrayBuffer(url)
+    }
+
+    AudioService.savedAudioBuffers[url] = await this.context.decodeAudioData(arrayBuffer)
   }
 
   async playurl(
@@ -263,6 +324,10 @@ class AudioService {
     let time = this.getNextTime(delay)
 
     setTimeout(() => {
+      if (!this.context.currentTime) {
+        return
+      }
+
       time = this.context.currentTime
 
       const source = this.context.createOscillator()
@@ -368,7 +433,7 @@ class AudioService {
     let functionMatch = null
 
     if (gainMultiplier === null) {
-      gainMultiplier = store.state.settings.audioVolume
+      gainMultiplier = 1
     }
 
     try {
@@ -382,36 +447,10 @@ class AudioService {
           const functionArguments = parseFunctionArguments(originalParameters)
 
           if (!functionArguments) {
-            throw new Error('invalid argument(s) for ' + functionMatch[0] + ' function')
+            throw new Error('Invalid argument(s) for ' + functionMatch[0] + ' function')
           }
 
-          let defaultArguments
-
-          if (functionMatch[1] === 'play') {
-            defaultArguments = [
-              329.63, // frequency
-              1, // gain
-              1, // fadeOut
-              null, // delay
-              0, // fadeIn
-              0, // holdDuration
-              `'triangle'`, // osc
-              0.001, // startGain
-              0.001 // endGain
-            ]
-          } else {
-            defaultArguments = [
-              `'https://ia902807.us.archive.org/27/items/blackpinkepitunes01boombayah/01.%20DDU-DU%20DDU-DU%20%28BLACKPINK%20ARENA%20TOUR%202018%20_SPECIAL%20FINAL%20IN%20KYOCERA%20DOME%20OSAKA_%29.mp3'`, // url
-              1, // gain
-              1, // holdDuration
-              null, // delay
-              0, // startTime
-              0, // fadeIn
-              0, // fadeOut
-              0.00001, // startGain
-              0.00001 // endGain
-            ]
-          }
+          const defaultArguments = Object.values(audioDefaultParameters[functionMatch[1] as 'play' | 'playurl'])
 
           for (let i = 0; i < defaultArguments.length; i++) {
             let argumentValue = defaultArguments[i]
@@ -420,7 +459,7 @@ class AudioService {
                 functionArguments[i] = functionArguments[i].trim()
 
                 const stringProvided = /^('|").*('|")$/.test(functionArguments[i])
-                const defaultExpectedString = /^('|").*('|")$/.test(defaultArguments[i])
+                const defaultExpectedString = /^('|").*('|")$/.test(defaultArguments[i] as any)
 
                 if (stringProvided && !defaultExpectedString) {
                   functionArguments[i] = defaultArguments[i]
@@ -474,7 +513,7 @@ class AudioService {
       litteral = litteral.replaceAll('play(', "audioService['play'](")
       litteral = litteral.replaceAll('playurl(', "audioService['playurl'](")
 
-      return new Function('audioService', 'ratio', 'side', 'level', litteral) as AudioFunction
+      return new Function('audioService', 'ratio', litteral) as AudioFunction
     } catch (error) {
       console.warn('invalid audio script', litteral)
 
@@ -491,6 +530,12 @@ class AudioService {
         return new Function() as AudioFunction
       }
     }
+  }
+
+  async playOnce(url) {
+    await this.loadSoundBuffer(url)
+
+    this.playurl(url, 1, 1, 0, 0, 0, 0, 0.00001, 0.00001)
   }
 }
 

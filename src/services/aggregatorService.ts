@@ -1,14 +1,15 @@
 import store from '@/store'
 import { AggregatorPayload } from '@/types/test'
-import { parseMarket, randomString } from '@/utils/helpers'
+import { randomString } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import Worker from 'worker-loader!@/worker/aggregator'
-import { getProducts } from './productsService'
+import { countDecimals, marketDecimals, getStoredProductsOrFetch, parseMarket, formatStablecoin } from './productsService'
 import workspacesService from './workspacesService'
 
 class AggregatorService extends EventEmitter {
   public worker: Worker
+  private _normalizeDecimalsTimeout: number
 
   constructor() {
     super()
@@ -22,8 +23,66 @@ class AggregatorService extends EventEmitter {
     this.listenUtilityEvents()
   }
 
+  listenUtilityEvents() {
+    this.once('hello', async () => {
+      await workspacesService.initialize()
+
+      const workspace = await workspacesService.getCurrentWorkspace()
+
+      workspacesService.setCurrentWorkspace(workspace)
+    })
+
+    this.on('price', ({ market, price }: { market: string; price: number }) => {
+      marketDecimals[market] = countDecimals(price)
+
+      if (this._normalizeDecimalsTimeout) {
+        clearTimeout(this._normalizeDecimalsTimeout)
+      }
+
+      this._normalizeDecimalsTimeout = setTimeout(this.normalizeDecimals.bind(this), 1000)
+    })
+
+    this.on(
+      'getExchangeProducts',
+      async ({ exchangeId, endpoints, forceFetch }: { exchangeId: string; endpoints: string[]; forceFetch?: boolean }, trackingId: string) => {
+        console.debug(
+          `[${exchangeId}] aggregator requested ${exchangeId}'s products (${forceFetch ? 'force fetch products' : 'get stored or fetch'})`
+        )
+        const productsData = await getStoredProductsOrFetch(exchangeId, endpoints, forceFetch)
+
+        this.dispatch({
+          op: 'getExchangeProducts',
+          data: {
+            exchangeId,
+            data: productsData
+          },
+          trackingId
+        })
+      }
+    )
+  }
+
   dispatch(payload: AggregatorPayload) {
     this.worker.postMessage(payload)
+  }
+
+  dispatchAsync(payload: AggregatorPayload) {
+    const trackingId = randomString(8)
+
+    return new Promise(resolve => {
+      const listener = ({ data }: { data: AggregatorPayload }) => {
+        if (data.trackingId === payload.trackingId) {
+          this.worker.removeEventListener('message', listener)
+          resolve(data.data)
+        }
+      }
+
+      this.worker.addEventListener('message', listener)
+
+      payload.trackingId = trackingId
+
+      this.worker.postMessage(payload)
+    })
   }
 
   async connect(markets: string[]): Promise<any> {
@@ -32,7 +91,7 @@ class AggregatorService extends EventEmitter {
     }
 
     for (let i = 0; i < markets.length; i++) {
-      const [exchange, pair] = parseMarket(markets[i])
+      const [exchange] = parseMarket(markets[i])
 
       if (store.state.exchanges[exchange].disabled) {
         const panes = []
@@ -41,12 +100,6 @@ class AggregatorService extends EventEmitter {
             panes.push(paneId)
           }
         }
-
-        store.dispatch('app/showNotice', {
-          type: 'warning',
-          timeout: 10000,
-          title: `⚠️ Not connecting to ${exchange}:${pair} because ${exchange} is disabled<br><small>Found market in ${panes.join(', ')}.</small>`
-        })
 
         markets.splice(i, 1)
         i--
@@ -70,63 +123,41 @@ class AggregatorService extends EventEmitter {
     })
   }
 
-  dispatchAsync(payload: AggregatorPayload) {
-    const trackingId = randomString(8)
+  normalizeDecimals() {
+    this._normalizeDecimalsTimeout = null
+    const decimalsByLocalMarkets = {}
 
-    return new Promise(resolve => {
-      const listener = ({ data }: { data: AggregatorPayload }) => {
-        if (data.trackingId === payload.trackingId) {
-          this.worker.removeEventListener('message', listener)
-          resolve(data.data)
-        }
+    for (const marketKey in marketDecimals) {
+      if (!store.state.panes.marketsListeners[marketKey]) {
+        continue
       }
 
-      this.worker.addEventListener('message', listener)
+      const localPair = store.state.panes.marketsListeners[marketKey].local.replace('USDT', 'USD').replace('USDC', 'USD')
 
-      payload.trackingId = trackingId
-
-      this.worker.postMessage(payload)
-    })
-  }
-
-  listenUtilityEvents() {
-    this.once('hello', async () => {
-      await workspacesService.initialize()
-
-      const workspace = await workspacesService.getCurrentWorkspace()
-
-      workspacesService.setCurrentWorkspace(workspace)
-    })
-
-    this.on('connection', ({ exchangeId, pair }: { exchangeId: string; pair: string }) => {
-      store.commit('app/ADD_ACTIVE_MARKET', {
-        exchangeId,
-        pair
-      })
-    })
-
-    this.on('disconnection', ({ exchangeId, pair }: { exchangeId: string; pair: string }) => {
-      store.commit('app/REMOVE_ACTIVE_MARKET', {
-        exchangeId,
-        pair
-      })
-    })
-
-    this.on(
-      'getExchangeProducts',
-      async ({ exchangeId, endpoints, forceFetch }: { exchangeId: string; endpoints: string[]; forceFetch?: boolean }, trackingId: string) => {
-        const productsData = await getProducts(exchangeId, endpoints, forceFetch)
-
-        this.dispatch({
-          op: 'getExchangeProducts',
-          data: {
-            exchangeId,
-            data: productsData
-          },
-          trackingId
-        })
+      if (!decimalsByLocalMarkets[localPair]) {
+        decimalsByLocalMarkets[localPair] = []
       }
-    )
+
+      decimalsByLocalMarkets[localPair].push(marketDecimals[marketKey])
+    }
+
+    for (const marketKey in marketDecimals) {
+      if (!store.state.panes.marketsListeners[marketKey]) {
+        continue
+      }
+
+      const localPair = formatStablecoin(store.state.panes.marketsListeners[marketKey].local)
+
+      if (!decimalsByLocalMarkets[localPair]) {
+        continue
+      }
+
+      const averageDecimals = Math.round(decimalsByLocalMarkets[localPair].reduce((a, b) => a + b) / decimalsByLocalMarkets[localPair].length)
+
+      marketDecimals[marketKey] = marketDecimals[localPair] = averageDecimals
+    }
+
+    this.emit('decimals')
   }
 }
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="pane-header pane-overlay d-flex" :class="{ '-loading': loading }">
+  <div class="pane-header hide-scrollbar pane-overlay d-flex" :class="{ '-loading': loading }">
     <div class="pane-header__loader"></div>
     <span class="pane-header__name ml4 mrauto" data-hide-header @dblclick="renamePane">{{ name }}</span>
     <div class="toolbar flex-grow-1" @dblclick="maximizePane">
@@ -14,23 +14,21 @@
       <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)" selectionClass="-text">
         <template v-slot:option-zoom>
           <div class="column" @mousedown.prevent>
-            <div class="btn -green" @click="zoomOut">
+            <div class="btn -green" @click="changeZoom($event, -1)">
               <i class="icon-minus"></i>
             </div>
             <div class="btn -text text-monospace" @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 1 })" style="display: block">
-              × {{ zoom.toFixed(1) }}
+              × {{ zoom.toFixed(2) }}
             </div>
-            <div class="btn -green" @click="zoomIn">
+            <div class="btn -green" @click="changeZoom($event, 1)">
               <i class="icon-plus"></i>
             </div>
           </div>
         </template>
         <template v-slot:option="{ value }">
-          <div>
-            <i class="-lower" :class="'icon-' + value.icon"></i>
+          <i class="-lower" :class="'icon-' + value.icon"></i>
 
-            <span>{{ value.label }}</span>
-          </div>
+          <span>{{ value.label }}</span>
         </template>
         <template v-slot:selection>
           <i class="icon-more"></i>
@@ -45,14 +43,13 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 
 import dialogService from '@/services/dialogService'
-
-import CountersPaneDialog from '@/components/counters/CountersPaneDialog.vue'
-import TradesPaneDialog from '../trades/TradesPaneDialog.vue'
-import ChartPaneDialog from '../chart/ChartPaneDialog.vue'
-import StatsPaneDialog from '../stats/StatsPaneDialog.vue'
-import PricesPaneDialog from '../prices/PricesPaneDialog.vue'
-import { getSiblings, parseMarket } from '@/utils/helpers'
-import WebsitePaneDialog from '../website/WebsitePaneDialog.vue'
+import TradesDialog from '../trades/TradesDialog.vue'
+import CountersDialog from '@/components/counters/CountersDialog.vue'
+import ChartDialog from '../chart/ChartDialog.vue'
+import StatsDialog from '../stats/StatsDialog.vue'
+import PricesDialog from '../prices/PricesDialog.vue'
+import { getSiblings } from '@/utils/helpers'
+import WebsiteDialog from '../website/WebsiteDialog.vue'
 
 @Component({
   name: 'PaneHeader',
@@ -82,11 +79,6 @@ export default class extends Vue {
       label: 'Maximize',
       click: this.maximizePane
     },
-    /*{
-      icon: 'search',
-      label: 'Add markets',
-      click: this.openSearch
-    },*/
     {
       icon: 'copy-paste',
       label: 'Duplicate',
@@ -99,22 +91,6 @@ export default class extends Vue {
     }
   ]
 
-  get name() {
-    let name = this.$store.state.panes.panes[this.paneId].name
-    const markets = this.$store.state.panes.panes[this.paneId].markets
-
-    if (!name) {
-      if (markets.length) {
-        const [, pair] = parseMarket(markets[0])
-        return pair
-      } else {
-        name = this.paneId
-      }
-    }
-
-    return name
-  }
-
   get zoom() {
     return this.$store.state.panes.panes[this.paneId].zoom || 1
   }
@@ -123,31 +99,44 @@ export default class extends Vue {
     return this.$store.state.panes.panes[this.paneId].type
   }
 
+  get name() {
+    const name = this.$store.state.panes.panes[this.paneId].name
+    const market = this.$store.state.panes.marketsListeners[this.$store.state.panes.panes[this.paneId].markets[0]]
+
+    if (name) {
+      return name
+    } else if (market) {
+      return market.local
+    } else {
+      return this.type
+    }
+  }
+
   created() {
     if (this.controls && this.controls.length) {
       this.menu = this.menu.slice(0, 1).concat(this.controls, this.menu.slice(1))
     }
   }
 
-  openSettings() {
+  async openSettings() {
     switch (this.type) {
       case 'counters':
-        dialogService.open(CountersPaneDialog, { paneId: this.paneId })
+        dialogService.open(CountersDialog, { paneId: this.paneId })
         break
       case 'stats':
-        dialogService.open(StatsPaneDialog, { paneId: this.paneId })
+        dialogService.open(StatsDialog, { paneId: this.paneId })
         break
       case 'chart':
-        dialogService.open(ChartPaneDialog, { paneId: this.paneId })
+        dialogService.open(ChartDialog, { paneId: this.paneId })
         break
       case 'trades':
-        dialogService.open(TradesPaneDialog, { paneId: this.paneId })
+        dialogService.open(TradesDialog, { paneId: this.paneId })
         break
       case 'prices':
-        dialogService.open(PricesPaneDialog, { paneId: this.paneId })
+        dialogService.open(PricesDialog, { paneId: this.paneId })
         break
       case 'website':
-        dialogService.open(WebsitePaneDialog, { paneId: this.paneId })
+        dialogService.open(WebsiteDialog, { paneId: this.paneId })
         break
     }
   }
@@ -156,12 +145,9 @@ export default class extends Vue {
     this.$store.dispatch('app/showSearch', this.paneId)
   }
 
-  zoomIn() {
-    this.$store.dispatch('panes/changeZoom', { id: this.paneId, zoom: 0.1 })
-  }
-
-  zoomOut() {
-    this.$store.dispatch('panes/changeZoom', { id: this.paneId, zoom: -0.1 })
+  changeZoom(event, direction) {
+    const zoom = this.zoom + (event.shiftKey ? 0.0625 : 0.125) * direction
+    this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: zoom })
   }
 
   async removePane() {
@@ -179,7 +165,7 @@ export default class extends Vue {
   }
 
   maximizePane(event) {
-    if (event.currentTarget !== event.target && event.target.className !== 'toolbar__spacer') {
+    if (event.type === 'dblclick' && event.currentTarget !== event.target && event.target.className !== 'toolbar__spacer') {
       return
     }
 
