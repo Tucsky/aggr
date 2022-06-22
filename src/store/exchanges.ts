@@ -2,11 +2,9 @@ import aggregatorService from '@/services/aggregatorService'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
-import { getMarketProduct, indexedProducts, requestProducts } from '../services/productsService'
 
 export interface ExchangeSettings {
   disabled?: boolean
-  fetched?: boolean
 }
 
 export type ExchangesState = { [exchangeId: string]: ExchangeSettings } & { _id: string; _exchanges: string[] }
@@ -53,13 +51,7 @@ const actions = {
       }
 
       state._exchanges.push(id)
-      state[id].fetched = false
       rootState.app.activeExchanges[id] = !state[id].disabled
-    }
-  },
-  async requestExchangesProducts({ getters }) {
-    for (const id of getters.getExchanges) {
-      await requestProducts(id)
     }
   },
   async toggleExchange({ commit, state, dispatch }, id: string) {
@@ -88,15 +80,6 @@ const actions = {
     console.log(`[exchanges.${id}] manually connecting ${markets.join(', ')}`)
 
     await aggregatorService.connect(markets)
-  },
-  indexExchangeProducts(store, { exchangeId, symbols }: { exchangeId: string; symbols: string[] }) {
-    const products = []
-
-    for (let i = 0; i < symbols.length; i++) {
-      products.push(getMarketProduct(exchangeId, symbols[i]))
-    }
-
-    indexedProducts[exchangeId] = products
   }
 } as ActionTree<ExchangesState, ModulesState>
 
@@ -109,9 +92,6 @@ const mutations = {
     }
 
     Vue.set(state[id], 'disabled', disabled)
-  },
-  SET_FETCHED: (state, id: string) => {
-    Vue.set(state[id], 'fetched', true)
   }
 } as MutationTree<ExchangesState>
 

@@ -344,7 +344,7 @@ import DialogMixin from '@/mixins/dialogMixin'
 import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import { formatStablecoin, indexedProducts, indexProducts, requestProducts } from '@/services/productsService'
+import { stripStable, indexedProducts, indexProducts, getExchangeSymbols, ensureIndexedProducts } from '@/services/productsService'
 import Carousel from '@/components/framework/Carousel.vue'
 
 const RESULTS_PER_PAGE = 25
@@ -542,7 +542,7 @@ export default {
             let local = product.local
 
             if (this.searchTypes.mergeUsdt) {
-              local = formatStablecoin(local)
+              local = stripStable(local)
             }
 
             if (!groups[local]) {
@@ -579,7 +579,7 @@ export default {
         let localPair = indexedProduct ? indexedProduct.local : market
 
         if (this.searchTypes.mergeUsdt) {
-          localPair = formatStablecoin(localPair)
+          localPair = stripStable(localPair)
         }
 
         if (!groups[localPair]) {
@@ -604,7 +604,7 @@ export default {
     }
   },
   async created() {
-    await this.ensureProducts()
+    await ensureIndexedProducts()
 
     this.initSelection()
 
@@ -752,22 +752,6 @@ export default {
       this.$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', key)
     },
 
-    async ensureProducts() {
-      for (const exchangeId of this.$store.getters['exchanges/getExchanges']) {
-        if (this.$store.state.exchanges[exchangeId].disabled === true) {
-          continue
-        }
-
-        if (!this.$store.state.exchanges[exchangeId].fetched) {
-          await requestProducts(exchangeId)
-        }
-
-        if (this.$store.state.exchanges[exchangeId].fetched && !indexedProducts[exchangeId]) {
-          await indexProducts(exchangeId)
-        }
-      }
-    },
-
     clearSelection() {
       this.selection.splice(0, this.selection.length)
 
@@ -792,7 +776,6 @@ export default {
     },
 
     onPaste(event) {
-      debugger
       if (document.activeElement) {
         if (document.activeElement.tagName === 'INPUT') {
           return
@@ -910,8 +893,7 @@ export default {
         this.canRefreshProducts = true
       }, 3000)
 
-      await requestProducts(exchangeId, true)
-      await indexProducts(exchangeId)
+      await indexProducts(exchangeId, await getExchangeSymbols(exchangeId, true))
 
       await this.$store.dispatch('exchanges/disconnect', exchangeId)
       await this.$store.dispatch('exchanges/connect', exchangeId)

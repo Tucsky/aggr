@@ -1,6 +1,7 @@
 import store from '@/store'
 import { ProductsData, ProductsStorage } from '@/types/test'
 import { PRODUCTS_EXPIRES_AFTER } from '@/utils/constants'
+import { getApiUrl } from '../utils/helpers'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
@@ -14,7 +15,39 @@ export const indexedProducts = {}
 
 export const marketDecimals = {}
 
-export async function getProducts(exchangeId: string) {
+/**
+ * 1. app send products request to worker
+ * 2. worker send products request endpoints
+ * 3. app call getStoredProductsOrFetch with worker's endpoints
+ * 4. getStoredProductsOrFetch first try to retrieve from workspace storage
+ * 5. if not found or forceFetch is true, getStoredProductsOrFetch will fetch using worker's endpoints
+ * 6. aquired productsData are sent back to worker for assignation in the exchange class
+ * @param exchangeId
+ * @param {boolean} forceFetch
+ * @returns
+ */
+export function requestExchangeProductsData(exchangeId: string, forceFetch = false) {
+  if (promisesOfProducts[exchangeId]) {
+    console.debug(`[products.${exchangeId}] use promise of products`)
+    return promisesOfProducts[exchangeId]
+  }
+
+  promisesOfProducts[exchangeId] = aggregatorService
+    .dispatchAsync({
+      op: 'fetchExchangeProducts',
+      data: { exchangeId, forceFetch }
+    })
+    .then(data => {
+      delete promisesOfProducts[exchangeId]
+      return data
+    })
+
+  return promisesOfProducts[exchangeId]
+}
+
+async function getExchangeStoredProductsData(exchangeId: string) {
+  console.debug(`[products.${exchangeId}] reading stored products`)
+
   const storage = await workspacesService.getProducts(exchangeId)
 
   if (storage && Date.now() - storage.timestamp < PRODUCTS_EXPIRES_AFTER) {
@@ -24,48 +57,26 @@ export async function getProducts(exchangeId: string) {
   return null
 }
 
-export function saveProducts(storage: ProductsStorage) {
-  console.log(`[products.${storage.exchange}] saving products`)
-  storage.timestamp = Date.now()
+function saveExchangeProductsData(exchangeId: string, productsData: ProductsData) {
+  console.log(`[products.${exchangeId}] saving products`)
 
-  return workspacesService.saveProducts(storage)
-}
-
-export async function indexProducts(exchangeId: string, productsData: ProductsData, showNotice?: boolean) {
-  let products
-
-  if (!productsData) {
-    productsData = await getProducts(exchangeId)
-  }
-
-  if (productsData) {
-    if (Array.isArray(productsData)) {
-      products = productsData
-    } else {
-      products = productsData.products
-    }
-  }
-
-  if (!products) {
-    products = []
-  }
-
-  if (showNotice) {
-    store.dispatch('app/showNotice', {
-      title: `Fetched ${products.length} products on ${exchangeId}`,
-      type: 'success'
-    })
-  }
-
-  console.debug(`[products.${exchangeId}] indexed ${products.length} products`)
-
-  store.dispatch('exchanges/indexExchangeProducts', {
-    exchangeId,
-    symbols: products
+  return workspacesService.saveProducts({
+    exchange: exchangeId,
+    data: productsData,
+    timestamp: Date.now()
   })
 }
 
-export async function fetchProducts(exchangeId: string, endpoints: string[]): Promise<ProductsData> {
+/**
+ * 1. get raw symbols data from exchange API
+ * 2. send response(s) to worker for formatting
+ * 3. worker returns formatted products data (productsData)
+ * 4. return productsData
+ * @param {string} exchangeId exchange to fetch products for
+ * @param {string[]} endpoints list of URL to fetch
+ * @returns {Promise<ProductsData>}
+ */
+async function fetchExchangeProducts(exchangeId: string, endpoints: string[]): Promise<ProductsData> {
   if (!Array.isArray(endpoints)) {
     endpoints = [endpoints]
   }
@@ -118,12 +129,7 @@ export async function fetchProducts(exchangeId: string, endpoints: string[]): Pr
     })) as ProductsStorage
 
     if (productsData) {
-      //indexProducts(exchangeId, productsData, true)
-      saveProducts({
-        exchange: exchangeId,
-        data: productsData
-      })
-      return productsData
+      return saveExchangeProductsData(exchangeId, productsData).then(() => productsData)
     }
 
     return null
@@ -133,54 +139,45 @@ export async function fetchProducts(exchangeId: string, endpoints: string[]): Pr
 }
 
 export async function getStoredProductsOrFetch(exchangeId: string, endpoints: string[], forceFetch?: boolean): Promise<ProductsData> {
-  let productsData: ProductsData = await getProducts(exchangeId)
+  let productsData: ProductsData
 
-  console.debug(`[products.${exchangeId}] reading stored products`)
-
-  if (!productsData || forceFetch) {
+  if (forceFetch || !(productsData = await getExchangeStoredProductsData(exchangeId))) {
     console.debug(`[products.${exchangeId}] fetch products using provided endpoints`)
 
-    if (indexProducts[exchangeId]) {
-      delete indexProducts[exchangeId]
+    if (indexedProducts[exchangeId]) {
+      delete indexedProducts[exchangeId]
     }
 
-    productsData = await fetchProducts(exchangeId, endpoints)
+    productsData = await fetchExchangeProducts(exchangeId, endpoints)
   } else {
     console.debug(`[products.${exchangeId}] using products exchange storage`)
-  }
-
-  if (productsData) {
-    if (!store.state.exchanges[exchangeId].fetched) {
-      store.commit('exchanges/SET_FETCHED', exchangeId)
-    }
-
-    //indexProducts(exchangeId, productsData, forceFetch)
   }
 
   return productsData
 }
 
-export function formatStablecoin(pair) {
-  return pair.replace(/(\w{3})?b?(usd|ust|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?(PERP)?$/i, '$1$2$3')
+export function stripStable(pair) {
+  return pair.replace(/(\w{3})?(usd|ust|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?$/i, '$1$2')
 }
 
-export function requestProducts(exchangeId: string, forceFetch = false) {
-  if (promisesOfProducts[exchangeId]) {
-    console.debug(`[products.${exchangeId}] use promise of products`)
-    return promisesOfProducts[exchangeId]
+export async function getExchangeSymbols(exchangeId: string, forceFetch = false) {
+  let symbols
+
+  const data = await requestExchangeProductsData(exchangeId, forceFetch)
+
+  if (data) {
+    if (Array.isArray(data)) {
+      symbols = data
+    } else {
+      symbols = data.products
+    }
   }
 
-  promisesOfProducts[exchangeId] = aggregatorService
-    .dispatchAsync({
-      op: 'fetchExchangeProducts',
-      data: { exchangeId, forceFetch }
-    })
-    .then(data => {
-      delete promisesOfProducts[exchangeId]
-      return data
-    })
+  if (!symbols) {
+    symbols = []
+  }
 
-  return promisesOfProducts[exchangeId]
+  return symbols
 }
 
 export function parseMarket(market: string) {
@@ -282,14 +279,10 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     }
 
     if (noStable) {
-      localSymbolAlpha = formatStablecoin(base + quote)
+      localSymbolAlpha = stripStable(base + quote)
     } else {
       localSymbolAlpha = base + quote
     }
-  }
-
-  if (type === 'perp') {
-    localSymbolAlpha += 'PERP'
   }
 
   return {
@@ -301,6 +294,121 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     exchange: exchangeId,
     type
   }
+}
+
+export async function getApiSupportedMarkets() {
+  let products = process.env.VUE_APP_API_SUPPORTED_PAIRS
+
+  if (products && products.length) {
+    products = products.split(',').map(market => market.trim())
+  } else {
+    products = []
+  }
+
+  if (!process.env.VUE_APP_API_URL) {
+    return products
+  }
+
+  const now = Date.now()
+
+  try {
+    const cache = JSON.parse(localStorage.getItem('API_SUPPORTED_PAIRS'))
+
+    if (!cache || !cache.products) {
+      throw new Error('api supported pairs products cache is invalid')
+    }
+
+    if (!cache.products.length) {
+      throw new Error('api supported pairs need a refresh')
+    }
+
+    if (now - cache.timestamp > 1000 * 60 * 5) {
+      throw new Error('api supported pairs products cache has expired')
+    }
+
+    products = cache.products
+  } catch (error) {
+    await fetch(getApiUrl('products'))
+      .then(response => response.json())
+      .then(arr => {
+        products = arr
+      })
+      .catch(err => {
+        console.log(err)
+      })
+
+    localStorage.setItem('API_SUPPORTED_PAIRS', JSON.stringify({ products, timestamp: now }))
+  }
+
+  return products
+}
+
+export async function indexProducts(exchangeId: string, symbols: string[]) {
+  console.debug(`[products.${exchangeId}] indexed ${symbols.length} products`)
+
+  indexedProducts[exchangeId] = symbols.map(product => getMarketProduct(exchangeId, product))
+
+  return indexedProducts[exchangeId]
+}
+
+export async function ensureIndexedProducts() {
+  for (const exchangeId of store.getters['exchanges/getExchanges']) {
+    if (store.state.exchanges[exchangeId].disabled === true || indexedProducts[exchangeId]) {
+      continue
+    }
+
+    await indexProducts(exchangeId, await getExchangeSymbols(exchangeId))
+  }
+}
+
+export async function resolvePairs(pairs: string[]) {
+  const markets = []
+
+  const historicalMarkets = store.state.app.historicalMarkets
+  const searchPreference = store.state.settings.searchTypes
+  const historicalOnly = searchPreference.historical
+  const searchTypes = {
+    spot: searchPreference.spots,
+    perp: searchPreference.perpetuals,
+    future: searchPreference.futures
+  }
+  const allTypes = !(searchTypes.spot || searchTypes.perp || searchTypes.future)
+  const searchQuotes = store.state.settings.searchQuotes
+  const allQuotes = !Object.values(searchQuotes).find(filtered => !!filtered)
+
+  for (const exchangeId of store.getters['exchanges/getExchanges']) {
+    if (store.state.exchanges[exchangeId].disabled === true) {
+      continue
+    }
+
+    const symbols = await getExchangeSymbols(exchangeId)
+
+    for (const symbol of symbols) {
+      const product = getMarketProduct(exchangeId, symbol, true)
+
+      if (historicalOnly && historicalMarkets.indexOf(product.id) === -1) {
+        continue
+      }
+
+      if (!allTypes && !searchTypes[product.type]) {
+        continue
+      }
+
+      if (!allQuotes && !searchQuotes[product.quote]) {
+        continue
+      }
+
+      if (pairs.indexOf(product.local) !== -1) {
+        markets.push(product.id)
+      }
+    }
+  }
+
+  if (!markets.length) {
+    return null
+  }
+
+  return markets
 }
 
 export function formatAmount(amount, decimals?: number) {

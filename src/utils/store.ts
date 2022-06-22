@@ -106,7 +106,9 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
     await bootPane(id)
   }
 
-  syncState(module.state)
+  if (store.state.app.isBooted) {
+    syncState(module.state)
+  }
 }
 
 export function waitForStateMutation(getter): Promise<any> {

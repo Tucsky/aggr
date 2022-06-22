@@ -16,13 +16,11 @@ fs.readdirSync('./src/worker/exchanges/').forEach(file => {
 })
 
 process.env.VUE_APP_EXCHANGES = exchanges.join(',')
-process.env.VUE_APP_PROXY_URL = process.env.PROXY_URL
-process.env.VUE_APP_ALERT_URL = process.env.ALERT_URL
-process.env.VUE_APP_PUBLIC_VAPID_KEY = process.env.PUBLIC_VAPID_KEY
-process.env.VUE_APP_API_URL = process.env.API_URL
-process.env.VUE_APP_API_SUPPORTED_PAIRS = process.env.API_SUPPORTED_PAIRS
-process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES = process.env.API_SUPPORTED_TIMEFRAMES
-process.env.VUE_APP_API_SUPPORTED_PAIRS_URL = process.env.API_SUPPORTED_PAIRS_URL
+process.env.VUE_APP_PROXY_URL = typeof process.env.PROXY_URL !== 'undefined' ? process.env.PROXY_URL : ''
+process.env.VUE_APP_API_URL = typeof process.env.API_URL !== 'undefined' ? process.env.API_URL : ''
+process.env.VUE_APP_API_SUPPORTED_PAIRS = typeof process.env.API_SUPPORTED_PAIRS !== 'undefined' ? process.env.API_SUPPORTED_PAIRS : ''
+process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES = typeof process.env.API_SUPPORTED_TIMEFRAMES !== 'undefined' ? process.env.API_SUPPORTED_TIMEFRAMES : ''
+process.env.VUE_APP_PUBLIC_VAPID_KEY = typeof process.env.PUBLIC_VAPID_KEY !== 'undefined' ? process.env.PUBLIC_VAPID_KEY : ''
 
 const publicPath = process.env.PUBLIC_PATH || '/'
 

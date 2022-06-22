@@ -10,6 +10,7 @@ import { databaseUpgrades, workspaceUpgrades } from './migrations'
 import { PanesState } from '@/store/panes'
 import alertService from './alertService'
 import dialogService from './dialogService'
+import { stripStable } from './productsService'
 
 export interface AggrDB extends DBSchema {
   products: {
@@ -56,6 +57,7 @@ class WorkspacesService {
   latestAppVersion: any
   latestDatabaseVersion: any
   latestWorkspaceVersion: any
+  pairsFromURL: string[]
   defaultInserted = false
 
   constructor() {
@@ -80,6 +82,10 @@ class WorkspacesService {
     }
 
     alertService.syncTriggeredAlerts()
+
+    const workspace = await this.getCurrentWorkspace()
+
+    this.setCurrentWorkspace(workspace)
   }
 
   async createDatabase() {
@@ -228,23 +234,48 @@ class WorkspacesService {
     await tx.done
   }
 
+  /**
+   * Use url params or local storage to retrieve current workspace
+   * If markets are passed in the url, mutate the workspace with new markets before return
+   * @returns {Workspace} workspace ready to be set on
+   */
   async getCurrentWorkspace() {
-    let id
-
-    if (this.urlStrategy === 'hash') {
-      id = location.hash.substring(1)
-    } else {
-      id = location.pathname.substring(1)
-    }
-
-    if (!id.length || !/^[a-zA-Z0-9]{4}$/.test(id)) {
-      id = localStorage.getItem('workspace')
-    }
-
+    const lastWorkspaceId = localStorage.getItem('workspace')
+    let urlWorkspaceId: string
+    let urlPairs: string
     let workspace: Workspace
 
-    if (!id || !(workspace = await this.getWorkspace(id))) {
-      workspace = await this.createWorkspace()
+    if (this.urlStrategy === 'hash') {
+      urlWorkspaceId = location.hash.substring(1)
+    } else {
+      ;[, urlWorkspaceId, urlPairs] = decodeURIComponent(location.pathname).split('/')
+    }
+
+    if (urlWorkspaceId) {
+      // try get workspace from id in the url
+      workspace = await this.getWorkspace(urlWorkspaceId)
+    }
+
+    if (!workspace && lastWorkspaceId) {
+      // try get workspace from id in the localStorage
+      workspace = await this.getWorkspace(lastWorkspaceId)
+    }
+
+    if (!workspace) {
+      // create workspace, name it from url (or generate one)
+      workspace = await this.createWorkspace(urlWorkspaceId)
+
+      if (!urlPairs && urlWorkspaceId) {
+        // workspace is new and user passed an id in the url, maybe this id is a pair
+        urlPairs = urlWorkspaceId
+      }
+    } else if (!urlPairs && urlWorkspaceId && urlWorkspaceId !== workspace.id) {
+      // workspace existed but id in the url does not match with it, maybe that's a pair
+      urlPairs = urlWorkspaceId
+    }
+
+    if (urlPairs && urlPairs.trim().length > 4) {
+      this.pairsFromURL = urlPairs.split(/\+|,/).map(pair => stripStable(pair.toUpperCase()))
     }
 
     return workspace
@@ -277,7 +308,7 @@ class WorkspacesService {
 
     localStorage.setItem('workspace', this.workspace.id)
 
-    await boot(workspace)
+    await boot(workspace, this.pairsFromURL)
 
     return workspace
   }
@@ -381,7 +412,13 @@ class WorkspacesService {
     let id = workspace.id
 
     while (!id || ids.indexOf(id) !== -1) {
-      id = randomString(4)
+      if (!id) {
+        // random alphanum
+        id = randomString(4)
+      } else {
+        // id + 1 (myworkspace1 then myworkspace2 then myworkspace3 etc)
+        id = id.replace(/\d+$/, (+((id.match(/\d+$/) as string[]) || ['0'])[0] + 1).toString())
+      }
     }
 
     workspace.id = id
@@ -393,7 +430,7 @@ class WorkspacesService {
     return this.db.get('workspaces', id)
   }
 
-  async createWorkspace() {
+  async createWorkspace(name) {
     const timestamp = Date.now()
 
     const panes = JSON.parse(JSON.stringify(defaultPanes))
@@ -402,8 +439,8 @@ class WorkspacesService {
       version: this.latestWorkspaceVersion,
       createdAt: timestamp,
       updatedAt: null,
-      name: null,
-      id: null,
+      name: name,
+      id: name ? slugify(name) : null,
       states: {
         panes
       }

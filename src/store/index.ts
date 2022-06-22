@@ -7,6 +7,7 @@ import settings, { SettingsState } from './settings'
 import exchanges, { ExchangesState } from './exchanges'
 import panes, { PanesState } from './panes'
 import { Workspace } from '@/types/test'
+import { resolvePairs } from '../services/productsService'
 
 Vue.use(Vuex)
 
@@ -32,7 +33,7 @@ store.subscribe((mutation, state: any) => {
   }
 })
 
-export async function boot(workspace?: Workspace) {
+export async function boot(workspace?: Workspace, pairsFromURL?: string[]) {
   console.log(`[store] booting on workspace "${workspace.name}" (${workspace.id})`)
 
   console.info(`loading core module`)
@@ -62,9 +63,14 @@ export async function boot(workspace?: Workspace) {
 
   store.dispatch('app/setBooted')
 
-  await store.dispatch('panes/refreshMarketsListeners')
+  let marketsOverride
 
-  // await store.dispatch('exchanges/requestExchangesProducts')
+  if (pairsFromURL) {
+    marketsOverride = await resolvePairs(pairsFromURL)
+  }
+
+  await store.dispatch('panes/refreshMarketsListeners', { markets: marketsOverride })
+
   store.commit('app/SET_EXCHANGES_READY')
 }
 
