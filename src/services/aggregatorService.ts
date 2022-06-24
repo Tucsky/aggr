@@ -4,7 +4,7 @@ import { randomString } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import Worker from 'worker-loader!@/worker/aggregator'
-import { countDecimals, marketDecimals, getStoredProductsOrFetch, parseMarket, formatStablecoin } from './productsService'
+import { countDecimals, marketDecimals, getStoredProductsOrFetch, parseMarket, stripStable } from './productsService'
 import workspacesService from './workspacesService'
 
 class AggregatorService extends EventEmitter {
@@ -24,12 +24,8 @@ class AggregatorService extends EventEmitter {
   }
 
   listenUtilityEvents() {
-    this.once('hello', async () => {
-      await workspacesService.initialize()
-
-      const workspace = await workspacesService.getCurrentWorkspace()
-
-      workspacesService.setCurrentWorkspace(workspace)
+    this.once('hello', () => {
+      workspacesService.initialize()
     })
 
     this.on('price', ({ market, price }: { market: string; price: number }) => {
@@ -146,7 +142,7 @@ class AggregatorService extends EventEmitter {
         continue
       }
 
-      const localPair = formatStablecoin(store.state.panes.marketsListeners[marketKey].local)
+      const localPair = stripStable(store.state.panes.marketsListeners[marketKey].local)
 
       if (!decimalsByLocalMarkets[localPair]) {
         continue

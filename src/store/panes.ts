@@ -9,7 +9,7 @@ import panesSettings from './panesSettings'
 import defaultPanes from './defaultPanes.json'
 import { ListenedProduct } from './app'
 import { GRID_COLS } from '@/utils/constants'
-import { getMarketProduct, parseMarket, requestProducts } from '../services/productsService'
+import { getMarketProduct, parseMarket } from '../services/productsService'
 
 export type PaneType = 'trades' | 'chart' | 'stats' | 'counters' | 'prices' | 'website'
 export type MarketsListeners = { [market: string]: ListenedProduct }
@@ -142,7 +142,7 @@ const actions = {
       commit('REMOVE_GRID_ITEM', index)
     }
   },
-  async refreshMarketsListeners({ commit, state, rootState }, { markets, id } = {}) {
+  async refreshMarketsListeners({ commit, state }, { markets, id } = {}) {
     // cache original listeners (market: n listeners)
     const originalListeners: { [marketKey: string]: number } = Object.keys(state.marketsListeners).reduce((listenersByMarkets, marketKey) => {
       listenersByMarkets[marketKey] = state.marketsListeners[marketKey].listeners
@@ -178,12 +178,6 @@ const actions = {
             marketsListeners[marketKey].listeners = 0
           } else {
             const [exchange, pair] = parseMarket(marketKey)
-
-            if (!rootState.exchanges[exchange].fetched) {
-              console.warn(`[panes/refreshMarketsListeners] products not found for exchange`, exchange, '-> requesting now')
-              await requestProducts(exchange)
-              console.debug(`[panes/refreshMarketsListeners] ${exchange}'s products acquired`)
-            }
 
             marketsListeners[marketKey] = getMarketProduct(exchange, pair, true)
 

@@ -58,7 +58,7 @@
               ></td>
               <td class="table-input table-min">{{ ago(workspace.updatedAt) }} ago</td>
               <td class="table-action -hover">
-                <button class="btn -small" @click.stop="openWorkspace(workspace.id, true)">
+                <button class="btn -small -green" @click.stop="openWorkspace(workspace.id, true)">
                   <i class="icon-external-link-square-alt"></i>
                 </button>
               </td>
@@ -466,8 +466,12 @@ export default {
     },
 
     async createBlankWorkspace() {
+      const name = await dialogService.prompt({
+        action: 'Choose a name (optional)'
+      })
+
       await this.close()
-      const workspace = await workspacesService.createWorkspace()
+      const workspace = await workspacesService.createWorkspace(name)
 
       await workspacesService.setCurrentWorkspace(workspace)
     },

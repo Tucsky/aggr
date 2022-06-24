@@ -5,6 +5,7 @@ import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
 import SearchDialog from '../components/SearchDialog.vue'
 import TimeframeDialog from '../components/TimeframeDialog.vue'
+import { getApiSupportedMarkets } from '../services/productsService'
 
 export interface Notice {
   id?: string
@@ -53,12 +54,9 @@ export interface AppState {
   historicalMarkets: string[]
   apiSupportedTimeframes: number[]
   activeExchanges: { [exchangeId: string]: boolean }
-  proxyUrl: string
-  apiUrl: string
   version: string
   buildDate: number | string
   notices: Notice[]
-  optimalDecimal: number
   baseCurrency: string
   baseCurrencySymbol: string
   quoteCurrency: string
@@ -70,15 +68,11 @@ const state = {
   isBooted: false,
   isLoading: false,
   isExchangesReady: false,
-  optimalDecimal: null,
-  pairs: [],
   showSearch: false,
   activeExchanges: {},
   notices: [],
   historicalMarkets: [],
   apiSupportedTimeframes: [],
-  proxyUrl: null,
-  apiUrl: null,
   version: 'DEV',
   buildDate: 'now',
   baseCurrency: 'coin',
@@ -94,8 +88,6 @@ const actions = {
     commit('SET_API_SUPPORTED_TIMEFRAMES', process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES)
     commit('SET_VERSION', process.env.VUE_APP_VERSION)
     commit('SET_BUILD_DATE', process.env.VUE_APP_BUILD_DATE)
-    commit('SET_API_URL', process.env.VUE_APP_API_URL)
-    commit('SET_PROXY_URL', process.env.VUE_APP_PROXY_URL)
   },
   setBooted({ commit }, value = true) {
     commit('SET_BOOTED', value)
@@ -206,43 +198,8 @@ const actions = {
     commit('TOGGLE_SEARCH', false)
   },
   async getApiSupportedPairs({ commit }) {
-    let products = process.env.VUE_APP_API_SUPPORTED_PAIRS
-
-    if (products === 'undefined') {
-      products = []
-    }
-
-    if (process.env.VUE_APP_API_SUPPORTED_PAIRS_URL) {
-      const now = Date.now()
-
-      try {
-        const cache = JSON.parse(localStorage.getItem('API_SUPPORTED_PAIRS'))
-
-        if (!cache || !cache.products) {
-          throw new Error('api supported pairs products cache is invalid')
-        }
-
-        if (!cache.products.length) {
-          throw new Error('api supported pairs need a refresh')
-        }
-
-        if (now - cache.timestamp > 1000 * 60 * 5) {
-          throw new Error('api supported pairs products cache has expired')
-        }
-
-        products = cache.products
-      } catch (error) {
-        products = await fetch(process.env.VUE_APP_API_SUPPORTED_PAIRS_URL)
-          .then(response => response.json())
-          .catch(err => {
-            console.log(err)
-          })
-
-        localStorage.setItem('API_SUPPORTED_PAIRS', JSON.stringify({ products, timestamp: now }))
-      }
-    }
-
-    commit('SET_API_SUPPORTED_PAIRS', products)
+    const markets = await getApiSupportedMarkets()
+    commit('SET_HISTORICAL_MARKETS', markets)
   }
 } as ActionTree<AppState, ModulesState>
 
@@ -275,23 +232,8 @@ const mutations = {
   TOGGLE_SEARCH(state, value) {
     state.showSearch = typeof value === 'boolean' ? value : !state.showSearch
   },
-  SET_OPTIMAL_DECIMAL(state, value) {
-    state.optimalDecimal = value
-  },
-  SET_API_URL(state, value) {
-    state.apiUrl = value
-  },
-  SET_PROXY_URL(state, value) {
-    state.proxyUrl = value
-  },
-  SET_API_SUPPORTED_PAIRS(state, value) {
-    if (!value) {
-      state.historicalMarkets = []
-    } else if (typeof value === 'string') {
-      state.historicalMarkets = value.split(',').map(a => a.trim())
-    } else {
-      state.historicalMarkets = value
-    }
+  SET_HISTORICAL_MARKETS(state, value) {
+    state.historicalMarkets = value
   },
   SET_API_SUPPORTED_TIMEFRAMES(state, value) {
     if (value && value.trim()) {

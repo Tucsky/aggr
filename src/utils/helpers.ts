@@ -352,3 +352,13 @@ export function handleFetchError(err): void {
     }
   }
 }
+
+export function getApiUrl(path: string): string {
+  let base = process.env.VUE_APP_API_URL
+
+  if (!/\/$/.test(base)) {
+    base += '/'
+  }
+
+  return base + path
+}

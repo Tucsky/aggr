@@ -28,8 +28,6 @@ class Aggregator {
   private _connectionChangeNoticeTimeout: number
 
   constructor() {
-    console.info(`new worker instance`)
-
     this.bindExchanges()
     this.startPriceInterval()
 
@@ -679,10 +677,11 @@ class Aggregator {
   }
 
   async fetchExchangeProducts({ exchangeId, forceFetch }: { exchangeId: string; forceFetch?: boolean }, trackingId) {
-    await getExchangeById(exchangeId).getProducts(forceFetch)
+    const productsData = await getExchangeById(exchangeId).getProducts(forceFetch)
 
     ctx.postMessage({
       op: 'fetchExchangeProducts',
+      data: productsData,
       trackingId: trackingId
     })
   }

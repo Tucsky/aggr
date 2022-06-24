@@ -14,7 +14,7 @@ import { waitForStateMutation } from '../../utils/store'
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
 import { getEventOffset } from '@/utils/touchevent'
-import { formatPrice, formatStablecoin, marketDecimals } from '@/services/productsService'
+import { formatPrice, stripStable, marketDecimals } from '@/services/productsService'
 import audioService from '../../services/audioService'
 
 export interface Bar {
@@ -223,12 +223,12 @@ export default class ChartController {
       let localPair = marketKey
 
       if (market) {
-        localPair = formatStablecoin(market.local)
+        localPair = stripStable(market.local)
       }
 
       cachedMarkets[marketKey] = {
         active: store.state.exchanges[exchange] && !store.state.exchanges[exchange].disabled && !store.state[this.paneId].hiddenMarkets[marketKey],
-        index: localPair.replace(/PERP$/, ''),
+        index: localPair,
         historical: historicalMarkets.indexOf(marketKey) !== -1
       }
 
@@ -2130,8 +2130,6 @@ export default class ChartController {
       if (!market) {
         market = Object.values(this.markets)[0].index
       }
-
-      market = market.replace(/PERP$/, '')
     }
 
     if (!priceline) {

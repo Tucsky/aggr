@@ -426,7 +426,7 @@ class Exchange extends EventEmitter {
     return true
   }
 
-  async getProducts(forceFetch?: boolean): Promise<void> {
+  async getProducts(forceFetch?: boolean): Promise<any> {
     console.debug(`[${this.id}] request product ${forceFetch ? '(force fetching)' : ''}`)
 
     // ask client for exchange's products
@@ -445,7 +445,7 @@ class Exchange extends EventEmitter {
       return this.getProducts(true)
     }
 
-    // this.setProducts(storage.data)
+    return storage.data
   }
 
   /**

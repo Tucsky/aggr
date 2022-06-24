@@ -2,7 +2,7 @@
   "price": {
     "enabled": true,
     "name": "Price",
-    "script": "plotcandlestick(avg_ohlc(bar))",
+    "script": "plotcandlestick(options.useHeikinAshi ? avg_heikinashi(bar) : options.useGaps ? avg_ohlc_with_gaps(bar) : avg_ohlc(bar))",
     "options": {
       "priceScaleId": "right",
       "priceFormat": {
@@ -12,12 +12,14 @@
       "priceLineVisible": true,
       "lastValueVisible": true,
       "borderVisible": true,
-      "upColor": "rgba(100, 157, 102, 0)",
-      "downColor": "rgb(156,52,62)",
-      "borderUpColor": "rgb(59, 202, 109)",
+      "upColor": "rgb(59,202,109)",
+      "downColor": "rgb(214,40,40)",
+      "borderUpColor": "rgb(65,240,123)",
       "borderDownColor": "rgb(239,67,82)",
-      "wickUpColor": "rgb(59, 202, 109)",
-      "wickDownColor": "rgb(239,67,82)"
+      "wickUpColor": "rgb(223,211,144)",
+      "wickDownColor": "rgb(239,67,82)",
+      "useGaps": false,
+      "useHeikinAshi": false
     }
   },
   "smas": {

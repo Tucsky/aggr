@@ -1,16 +1,16 @@
-import { handleFetchError } from '@/utils/helpers'
+import { getApiUrl, handleFetchError } from '@/utils/helpers'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
 class AlertService {
-  private url = process.env.VUE_APP_ALERT_URL
   private publicVapidKey = process.env.VUE_APP_PUBLIC_VAPID_KEY
   private pushSubscription: PushSubscription
+  private url: string
 
   private _promiseOfSync: Promise<void>
 
-  get supported() {
-    return this.publicVapidKey && this.url
+  constructor() {
+    this.url = getApiUrl('alert')
   }
 
   urlBase64ToUint8Array(base64String) {
@@ -104,7 +104,7 @@ class AlertService {
   }
 
   async getPushSubscription() {
-    if (!this.supported) {
+    if (!this.publicVapidKey) {
       return
     }
 

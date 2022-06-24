@@ -1,5 +1,5 @@
 import { Bar } from '@/components/chart/chart'
-import { floorTimestampToTimeframe, handleFetchError, isOddTimeframe } from '@/utils/helpers'
+import { floorTimestampToTimeframe, getApiUrl, handleFetchError, isOddTimeframe } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import store from '../store'
@@ -12,21 +12,27 @@ export interface HistoricalResponse {
 }
 
 class HistoricalService extends EventEmitter {
+  url: string
   promisesOfData: { [keyword: string]: Promise<HistoricalResponse> } = {}
+
+  constructor() {
+    super()
+
+    this.url = getApiUrl('historical')
+  }
 
   filterOutUnavailableMarkets(markets: string[]) {
     return markets.filter(market => store.state.app.historicalMarkets.indexOf(market) !== -1)
   }
 
   getApiUrl(from, to, timeframe, markets) {
-    let url = store.state.app.apiUrl
+    const params = [from, to, (timeframe * 1000).toString()]
 
-    url = url.replace(/\{from\}/, from)
-    url = url.replace(/\{to\}/, to)
-    url = url.replace(/\{timeframe\}/, (timeframe * 1000).toString())
-    url = url.replace(/\{markets\}/, encodeURIComponent(markets.join('+')))
+    if (markets && markets.length) {
+      params.push(encodeURIComponent(markets.join('+')))
+    }
 
-    return url
+    return `${this.url}/${params.join('/')}`
   }
 
   fetch(from: number, to: number, timeframe: number, markets: string[]): Promise<HistoricalResponse> {
