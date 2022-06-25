@@ -171,7 +171,12 @@ export default class extends Vue {
               type: 'text/plain;charset=utf-8'
             })
             const file = new File([blob], 'import-workspace-from-url.json', { type: 'text/plain' })
-            await importService.importWorkspace(file)
+            const existingWorkspace = await workspacesService.getWorkspace(json.id)
+            if (existingWorkspace) {
+              await workspacesService.setCurrentWorkspace(existingWorkspace)
+            } else {
+              await importService.importWorkspace(file)
+            }
           })
       }
     }, 1000)
