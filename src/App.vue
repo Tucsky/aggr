@@ -152,6 +152,38 @@ export default class extends Vue {
 
     document.addEventListener('keydown', this.onDocumentKeyPress)
     window.addEventListener('blur', this.onBlur)
+
+    this.tryImportWorkspaceFromURL()
+  }
+
+  tryImportWorkspaceFromURL() {
+    const workspaceUrl = this.getParameterByName('workspace-url')
+
+    setTimeout(() => {
+      if (workspaceUrl !== '') {
+        const uri = decodeURIComponent(workspaceUrl)
+        fetch(uri)
+          .then(resp => resp.json())
+          .then(async json => {
+            const str = JSON.stringify(json)
+            const bytes = new TextEncoder().encode(str)
+            const blob = new Blob([bytes], {
+              type: 'text/plain;charset=utf-8'
+            })
+            const file = new File([blob], 'import-workspace-from-url.json', { type: 'text/plain' })
+            await importService.importWorkspace(file)
+          })
+      }
+    }, 1000)
+  }
+
+  getParameterByName(name: string) {
+    name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]')
+    const regexS = '[\\?&]' + name + '=([^&#]*)'
+    const regex = new RegExp(regexS)
+    const results = regex.exec(window.location.search)
+    if (results == null) return ''
+    else return decodeURIComponent(results[1].replace(/\+/g, ' '))
   }
 
   beforeDestroy() {
