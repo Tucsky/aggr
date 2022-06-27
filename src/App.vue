@@ -158,9 +158,8 @@ export default class extends Vue {
 
   tryImportWorkspaceFromURL() {
     const workspaceUrl = this.getParameterByName('workspace-url')
-
-    setTimeout(() => {
-      if (workspaceUrl !== '') {
+    if (workspaceUrl !== '') {
+      setTimeout(() => {
         const uri = decodeURIComponent(workspaceUrl)
         fetch(uri)
           .then(resp => resp.json())
@@ -178,8 +177,8 @@ export default class extends Vue {
               await importService.importWorkspace(file)
             }
           })
-      }
-    }, 1000)
+      }, 1000)
+    }
   }
 
   getParameterByName(name: string) {
