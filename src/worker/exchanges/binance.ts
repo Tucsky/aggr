@@ -4,7 +4,9 @@ export default class extends Exchange {
   id = 'BINANCE'
   private lastSubscriptionId = 0
   private subscriptions = {}
-  protected endpoints = { PRODUCTS: 'https://api.binance.com/api/v3/exchangeInfo' }
+  protected endpoints = {
+    PRODUCTS: 'https://api.binance.com/api/v3/exchangeInfo'
+  }
   protected maxConnectionsPerApi = 100
   protected delayBetweenMessages = 250
 
@@ -13,7 +15,9 @@ export default class extends Exchange {
   }
 
   formatProducts(data) {
-    return data.symbols.filter(product => product.status === 'TRADING').map(product => product.symbol.toLowerCase())
+    return data.symbols
+      .filter(product => product.status === 'TRADING')
+      .map(product => product.symbol.toLowerCase())
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Trade } from '@/types/test'
+import { Trade } from '@/types/types'
 import Exchange from '../exchange'
 
 export default class extends Exchange {

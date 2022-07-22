@@ -1,21 +1,37 @@
 <template>
-  <Dialog @clickOutside="close" class="pane-dialog -auto" @mousedown="clickOutsideClose = false" @mouseup="clickOutsideClose = true">
+  <Dialog
+    @clickOutside="close"
+    class="pane-dialog -auto"
+    @mousedown="clickOutsideClose = false"
+    @mouseup="clickOutsideClose = true"
+  >
     <template v-slot:header>
       <div>
         <div class="title">
           <div>Threshold</div>
         </div>
 
-        <div class="subtitle">{{ thresholdId }} {{ formatAmount(threshold.amount) }}</div>
+        <div class="subtitle">
+          {{ thresholdId }} {{ formatAmount(threshold.amount) }}
+        </div>
       </div>
     </template>
     <div class="form-group mb16">
       <label for> When buy </label>
-      <div class="live-annotation" v-if="liveAnnotation && focusedSide === 'buy'">
+      <div
+        class="live-annotation"
+        v-if="liveAnnotation && focusedSide === 'buy'"
+      >
         <div class="live-annotation__tooltip">{{ liveAnnotation }}</div>
       </div>
       <div class="d-flex">
-        <button v-if="buyAudio !== threshold.buyAudio" class="btn -green mr8" @click="testOriginal('buy', $event)" title="Original" v-tippy>
+        <button
+          v-if="buyAudio !== threshold.buyAudio"
+          class="btn -green mr8"
+          @click="testOriginal('buy', $event)"
+          title="Original"
+          v-tippy
+        >
           <i class="icon-volume-high"></i>
         </button>
         <prism-editor
@@ -45,20 +61,40 @@
       </div>
 
       <div v-if="focusedSide === 'buy'" class="mt8 d-flex">
-        <button class="btn -small -accent" @click="openSoundAssistant('play', 'buy')"><i class="icon-music-note mr8"></i> Synthetize sound</button>
-        <button class="btn -small -accent ml8 mr8" @click="openSoundAssistant('playurl', 'buy')"><i class="icon-upload mr8"></i> Import audio</button>
-        <button class="btn -small -red mlauto -text" @click="reset('buy')"><i class="icon-eraser mr8"></i> Reset</button>
+        <button class="btn -small" @click="openSoundAssistant('play', 'buy')">
+          <i class="icon-music-note mr8"></i> Synthetize sound
+        </button>
+        <button
+          class="btn -small ml8 mr8"
+          @click="openSoundAssistant('playurl', 'buy')"
+        >
+          <i class="icon-upload mr8"></i> Import audio
+        </button>
+        <button class="btn -small -red mlauto -text" @click="reset('buy')">
+          <i class="icon-eraser mr8"></i> Reset
+        </button>
       </div>
 
-      <p v-if="buyError" class="form-feedback"><i class="icon-warning mr4"></i> {{ buyError }}</p>
+      <p v-if="buyError" class="form-feedback">
+        <i class="icon-warning mr4"></i> {{ buyError }}
+      </p>
     </div>
     <div class="form-group mb16">
       <label for> When sell </label>
-      <div class="live-annotation" v-if="liveAnnotation && focusedSide === 'sell'">
+      <div
+        class="live-annotation"
+        v-if="liveAnnotation && focusedSide === 'sell'"
+      >
         <div class="live-annotation__tooltip">{{ liveAnnotation }}</div>
       </div>
       <div class="d-flex">
-        <button v-if="sellAudio !== threshold.sellAudio" class="btn -red mr8" @click="testOriginal('sell', $event)" title="Original" v-tippy>
+        <button
+          v-if="sellAudio !== threshold.sellAudio"
+          class="btn -red mr8"
+          @click="testOriginal('sell', $event)"
+          title="Original"
+          v-tippy
+        >
           <i class="icon-volume-high"></i>
         </button>
         <prism-editor
@@ -87,30 +123,55 @@
       </div>
 
       <div v-if="focusedSide === 'sell'" class="mt8 d-flex">
-        <button class="btn -small -accent" @click="openSoundAssistant('play', 'sell')"><i class="icon-music-note mr8"></i> Synthetize sound</button>
-        <button class="btn -small -accent ml8 mr8" @click="openSoundAssistant('playurl', 'sell')">
+        <button class="btn -small" @click="openSoundAssistant('play', 'sell')">
+          <i class="icon-music-note mr8"></i> Synthetize sound
+        </button>
+        <button
+          class="btn -small ml8 mr8"
+          @click="openSoundAssistant('playurl', 'sell')"
+        >
           <i class="icon-upload mr8"></i> Import audio
         </button>
-        <button class="btn -small -red mlauto -text" @click="reset('sell')"><i class="icon-eraser mr8"></i> Reset</button>
+        <button class="btn -small -red mlauto -text" @click="reset('sell')">
+          <i class="icon-eraser mr8"></i> Reset
+        </button>
       </div>
 
-      <p v-if="sellError" class="form-feedback"><i class="icon-warning mr4"></i> {{ sellError }}</p>
+      <p v-if="sellError" class="form-feedback">
+        <i class="icon-warning mr4"></i> {{ sellError }}
+      </p>
     </div>
     <footer>
-      <a href="javascript:void(0);" class="btn -text mrauto" @click="restartWebAudio()" v-tippy title="Restart audio service (clear ALL queue)">
+      <a
+        href="javascript:void(0);"
+        class="btn -text mrauto"
+        @click="restartWebAudio()"
+        v-tippy
+        title="Restart audio service (clear ALL queue)"
+      >
         <i class="icon-refresh mr8"></i> Restart audio
       </a>
-      <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
-      <button class="btn -large -green" @click="saveInputs()"><i class="icon-check mr4"></i> Save</button>
+      <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)"
+        >Cancel</a
+      >
+      <button class="btn -large -green" @click="saveInputs()">
+        <i class="icon-check mr4"></i> Save
+      </button>
     </footer>
   </Dialog>
 </template>
 
 <script lang="ts">
 import DialogMixin from '@/mixins/dialogMixin'
-import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
+import {
+  findClosingBracketMatchIndex,
+  parseFunctionArguments
+} from '@/utils/helpers'
 import { formatAmount } from '@/services/productsService'
-import audioService, { audioParametersDefinitions, audioParametersDescriptions } from '@/services/audioService'
+import audioService, {
+  audioParametersDefinitions,
+  audioParametersDescriptions
+} from '@/services/audioService'
 import dialogService from '@/services/dialogService'
 import AudioAssistantDialog from './AudioAssistantDialog.vue'
 import panesSettings from '@/store/panesSettings'
@@ -182,9 +243,6 @@ export default {
 
     this.buyAudio = this.threshold.buyAudio || ''
     this.sellAudio = this.threshold.sellAudio || ''
-  },
-  mounted() {
-    // this.$nextTick(() => this.initBehave())
   },
   beforeDestroy() {
     if (this._loopingTimeout) {
@@ -276,7 +334,6 @@ export default {
     },
     loopSide(side) {
       if (!this._loopingTimeout) {
-        // this[side + 'Audio'] = this.$refs[side + 'Behave'].value // fix behave / vue reactivity conflict
         this.loopingSide = side
       }
 
@@ -309,7 +366,12 @@ export default {
           this.$store.dispatch('app/showNotice', {
             id: 'testing-threshold-audio',
             type: side === 'buy' ? 'success' : 'error',
-            title: 'NOW PLAYING : ' + formatAmount(amount) + ' ' + side.toUpperCase() + ' trade',
+            title:
+              'NOW PLAYING : ' +
+              formatAmount(amount) +
+              ' ' +
+              side.toUpperCase() +
+              ' trade',
             timeout: 1000
           })
         }
@@ -322,7 +384,13 @@ export default {
     },
     async emulateAudioFunction(litteral, side, percent) {
       try {
-        const adapter = await audioService.buildAudioFunction(litteral, side, this.audioPitch, this.audioVolume, true)
+        const adapter = await audioService.buildAudioFunction(
+          litteral,
+          side,
+          this.audioPitch,
+          this.audioVolume,
+          true
+        )
 
         if (typeof percent !== 'undefined') {
           adapter(audioService, percent)
@@ -343,7 +411,9 @@ export default {
         error: this[side + 'Error']
       })
 
-      dialog.$on('test', ({ event, litteral }) => this.testCustom(side, event, litteral))
+      dialog.$on('test', ({ event, litteral }) =>
+        this.testCustom(side, event, litteral)
+      )
       dialog.$on('stop', this.restartWebAudio)
 
       dialog.$on('append', ({ litteral, uploadedSound }) => {
@@ -409,7 +479,10 @@ export default {
         clearTimeout(this._liveAnnotationTimeout)
       }
 
-      this._liveAnnotationTimeout = setTimeout(this.findCurrentParameter.bind(this, event.currentTarget, side), 200)
+      this._liveAnnotationTimeout = setTimeout(
+        this.findCurrentParameter.bind(this, event.currentTarget, side),
+        200
+      )
     },
     findCurrentParameter(input) {
       this._liveAnnotationTimeout = null
@@ -463,7 +536,11 @@ export default {
             continue
           }
 
-          const args = parseFunctionArguments(content.slice(start + type.length + 1, end), false, 5)
+          const args = parseFunctionArguments(
+            content.slice(start + type.length + 1, end),
+            false,
+            5
+          )
 
           let currentPosition = start + type.length + 1
           for (let i = 0; i < args.length; i++) {
@@ -491,16 +568,23 @@ export default {
       if (!prop) {
         annotation = `Too many parameters on ${type}() !`
       } else {
-        annotation = `${prop.toUpperCase()} : ${audioParametersDescriptions[prop]}`
+        annotation = `${prop.toUpperCase()} : ${
+          audioParametersDescriptions[prop]
+        }`
       }
 
       this.liveAnnotation = annotation // triggers reactivity check
     },
     reset(side) {
-      const defaultSettings = JSON.parse(JSON.stringify(panesSettings[this.$store.state.panes.panes[this.paneId].type].state))
+      const defaultSettings = JSON.parse(
+        JSON.stringify(
+          panesSettings[this.$store.state.panes.panes[this.paneId].type].state
+        )
+      )
 
       if (defaultSettings.thresholds[Math.min(this.index, 3)]) {
-        this[side + 'Audio'] = defaultSettings.thresholds[Math.min(this.index, 3)][side + 'Audio']
+        this[side + 'Audio'] =
+          defaultSettings.thresholds[Math.min(this.index, 3)][side + 'Audio']
       }
     }
   }

@@ -9,7 +9,7 @@
     .icon-info {
       margin-left: 2px;
       line-height: 0;
-      top: 2px;
+      top: 1px;
       position: relative;
       opacity: 0.5;
       transition: opacity 0.2s $ease-out-expo;
@@ -163,8 +163,6 @@
   }
 
   &.-sort input ~ div {
-    background-color: $green;
-
     &:before {
       content: unicode($icon-up);
     }
@@ -190,7 +188,6 @@
         font-family: inherit;
         position: relative;
         line-height: 1;
-        text-transform: uppercase;
       }
 
       i {
@@ -245,8 +242,8 @@
 
     &:checked {
       ~ div {
-        background-color: $green;
-        color: white;
+        background-color: var(--theme-buy-base);
+        color: var(--theme-buy-color);
         border-color: transparent;
 
         &:before,
@@ -279,13 +276,19 @@
     }
   }
 
+  &.-extra-small {
+    > div {
+      padding: 0.125em;
+    }
+  }
+
   > div {
     padding: 0.5rem;
-    border: 1px solid var(--theme-background-200);
+    border: 1px solid var(--theme-color-o10);
     width: 1em;
     height: 1em;
     border-radius: 3px;
-    background-color: var(--theme-background-200);
+    background-color: var(--theme-color-o10);
     transition: all 0.2s $ease-out-expo;
     position: relative;
     flex-shrink: 0;
@@ -418,7 +421,7 @@ input[type='range'] {
   font-size: 80%;
 
   .string {
-    color: lighten($green, 10%);
+    color: var(--theme-buy-100);
   }
   .number {
     color: $blue;
@@ -453,7 +456,7 @@ textarea.form-control {
   }
 
   &:focus {
-    border-color: $green;
+    border-color: var(--theme-buy-base);
   }
 }
 

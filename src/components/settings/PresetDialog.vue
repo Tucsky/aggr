@@ -9,21 +9,29 @@
       </div>
     </template>
 
-    <div class="d-flex flex-middle">
+    <div
+      class="d-flex flex-middle mb8"
+      v-if="this.preset.createdAt || this.preset.updatedAt"
+    >
       <i class="icon-info mr16"></i>
-      <div class="mr16">
+      <div class="mr16" v-if="this.preset.createdAt">
         <small class="text-muted">Created at</small>
         <div>{{ createdAt }} ago</div>
       </div>
-      <div>
+      <div v-if="this.preset.updatedAt">
         <small class="text-muted">Updated at</small>
         <div>{{ updatedAt }} ago</div>
       </div>
     </div>
 
-    <p>
+    <p class="mt0">
       What's included :
-      <button type="button" class="btn -text" v-text="showDetails ? 'hide' : 'show'" @click="showDetails = !showDetails"></button>
+      <button
+        type="button"
+        class="btn -text"
+        v-text="showDetails ? 'hide' : 'show'"
+        @click="showDetails = !showDetails"
+      ></button>
     </p>
 
     <ul v-if="showDetails">
@@ -33,18 +41,45 @@
     </ul>
 
     <footer>
-      <dropdown class="-left -text-left mr16" :options="menu" selectionClass="-text -large mrauto" placeholder="Options">
-        <template v-slot:selection>
-          <i class="icon-cog mr4"></i>
-          <span>Manage</span>
-        </template>
-        <template v-slot:option="{ value }">
-          <i :class="[value.icon === 'trash' && 'text-danger', 'icon-' + value.icon]"> </i>
-          <span :class="value.icon === 'trash' ? 'text-danger' : ''">{{ value.label }}</span>
-        </template>
+      <button
+        type="button"
+        class="btn -text -arrow"
+        @click="$refs.presetDropdown.toggle($event.currentTarget)"
+      >
+        <i class="icon-cog mr4"></i>
+        Manage
+      </button>
+      <dropdown ref="presetDropdown">
+        <button type="button" class="dropdown-item" @click="downloadPreset">
+          <i class="icon-download"></i>
+          <span>Download</span>
+        </button>
+        <button
+          type="button"
+          class="dropdown-item"
+          v-tippy
+          title="Replace with current settings"
+          @click="replacePreset"
+        >
+          <i class="icon-refresh"></i>
+          <span>Replace</span>
+        </button>
+        <div class="dropdown-divider"></div>
+        <button type="button" class="dropdown-item" @click="deletePreset">
+          <i class="icon-trash"></i>
+          <span>Delete</span>
+        </button>
       </dropdown>
-      <button type="button" class="btn -text -large mlauto" @click="copyPreset"><i class="icon-copy-paste mr4"></i> Copy</button>
-      <button type="button" class="btn -blue -large ml16" @click="replacePreset"><i class="icon-check mr4"></i> Set</button>
+      <button type="button" class="btn -text -large mlauto" @click="copyPreset">
+        <i class="icon-copy-paste mr4"></i> Copy
+      </button>
+      <button
+        type="button"
+        class="btn -blue -large ml16"
+        @click="replacePreset"
+      >
+        <i class="icon-check mr4"></i> Set
+      </button>
     </footer>
   </Dialog>
 </template>
@@ -52,7 +87,12 @@
 <script>
 import DialogMixin from '@/mixins/dialogMixin'
 import workspacesService from '@/services/workspacesService'
-import { downloadAnything, slugify, ago, copyTextToClipboard } from '@/utils/helpers'
+import {
+  downloadAnything,
+  slugify,
+  ago,
+  copyTextToClipboard
+} from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 
 export default {
@@ -89,7 +129,9 @@ export default {
   },
   computed: {
     meta() {
-      const [, type, cat, name] = this.preset.name.match(/^([a-z-]+):?([a-z-]+)?:(.*)/)
+      const [, type, cat, name] = this.preset.name.match(
+        /^([a-z-]+):?([a-z-]+)?:(.*)/
+      )
 
       return {
         type,
@@ -147,7 +189,11 @@ export default {
       if (name && name !== this.meta.name) {
         await workspacesService.removePreset(this.preset.name)
 
-        this.preset.name = this.meta.type + ':' + (this.meta.cat ? this.meta.cat + ':' : '') + name
+        this.preset.name =
+          this.meta.type +
+          ':' +
+          (this.meta.cat ? this.meta.cat + ':' : '') +
+          name
 
         await workspacesService.savePreset(this.preset)
       }

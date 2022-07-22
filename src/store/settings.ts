@@ -1,12 +1,24 @@
+import Vue from 'vue'
+
 import { ActionTree, Module, MutationTree } from 'vuex'
 
 import DEFAULTS_STATE from './defaultSettings.json'
-import { getColorLuminance, getLogShade, increaseBrightness, joinRgba, splitRgba } from '@/utils/colors'
+import {
+  getColorLuminance,
+  getLinearShare,
+  getLogShade,
+  getTextColor,
+  joinRgba,
+  splitColorCode
+} from '@/utils/colors'
 import { ModulesState } from '.'
-import { AggregationLength, PreviousSearchSelection, SlippageMode } from '@/types/test'
+import {
+  AggregationLength,
+  PreviousSearchSelection,
+  SlippageMode
+} from '@/types/types'
 import aggregatorService from '@/services/aggregatorService'
 import audioService from '@/services/audioService'
-import Vue from 'vue'
 import { getTimeframeForHuman } from '@/utils/helpers'
 import { isTouchSupported } from '@/utils/touchevent'
 import { getMarketProduct, parseMarket } from '../services/productsService'
@@ -19,17 +31,22 @@ export interface SettingsState {
   theme?: string
   backgroundColor?: string
   textColor?: string
+  buyColor?: string
+  sellColor?: string
   timezoneOffset?: number
   useAudio?: boolean
   audioVolume?: number
   audioFilters?: AudioFilters
   settings?: string[]
+  searchSections?: string[]
   disableAnimations?: boolean
   autoHideHeaders?: boolean
   searchTypes?: any
   searchQuotes?: any
   searchExchanges?: any
   previousSearchSelections?: PreviousSearchSelection[]
+  timeframes?: { label: string; value: string }[]
+  timeframeGroups?: string[]
   favoriteTimeframes?: { [timeframe: number]: string }
   normalizeWatermarks: boolean
   alerts: number | boolean
@@ -61,7 +78,10 @@ const actions = {
 
     aggregatorService.dispatch({
       op: 'configureAggregator',
-      data: { key: 'preferQuoteCurrencySize', value: state.preferQuoteCurrencySize }
+      data: {
+        key: 'preferQuoteCurrencySize',
+        value: state.preferQuoteCurrencySize
+      }
     })
 
     dispatch('updateCSS')
@@ -74,43 +94,65 @@ const actions = {
       }
     })
   },
-  setTextColor({ commit, dispatch }, rgb) {
-    commit('SET_CHART_COLOR', rgb)
+  async setColor(
+    { commit, dispatch },
+    { type, value }: { type: string; value: string }
+  ) {
+    const mutation = `SET_${type.toUpperCase()}_COLOR`
+
+    commit(mutation, value)
+
+    if (mutation === 'SET_BACKGROUND_COLOR') {
+      dispatch('refreshTheme')
+    }
 
     dispatch('updateCSS')
   },
-  setBackgroundColor({ commit, state, dispatch }, rgb) {
-    commit('SET_CHART_BACKGROUND_COLOR', rgb)
-
-    const backgroundLuminance = getColorLuminance(splitRgba(rgb))
-    const theme = backgroundLuminance > 144 ? 'light' : 'dark'
+  refreshTheme({ commit, state }) {
+    const backgroundRgb = splitColorCode(state.backgroundColor)
+    const backgroundLuminance = getColorLuminance(backgroundRgb)
+    const theme = backgroundLuminance > 0 ? 'light' : 'dark'
 
     if (theme !== state.theme) {
       commit('SET_CHART_THEME', theme)
     }
 
-    if (state.textColor.length) {
-      commit('SET_CHART_COLOR', '')
+    if (state.textColor) {
+      commit('SET_TEXT_COLOR', '')
     }
-
-    dispatch('updateCSS')
   },
   updateCSS({ state }) {
     const theme = state.theme
-    const variantMultiplier = theme === 'light' ? 0.5 : 1
-    const backgroundSide = theme === 'dark' ? 1 : -10
-    const colorSide = theme === 'dark' ? -1 : 1
-    const backgroundRgb = splitRgba(state.backgroundColor)
-    const background100 = getLogShade(backgroundRgb, variantMultiplier * 0.015 * backgroundSide)
-    const background100Rgb = splitRgba(background100)
+    const backgroundDirection = theme === 'dark' ? 1 : -1
+    const backgroundRgb = splitColorCode(state.backgroundColor)
+    const background100Rgb = getLinearShare(
+      backgroundRgb,
+      0.025 * backgroundDirection
+    )
+    const background100 = joinRgba(background100Rgb)
 
-    document.documentElement.style.setProperty('--theme-background-base', state.backgroundColor)
-    document.documentElement.style.setProperty('--theme-background-100', background100)
-    document.documentElement.style.setProperty('--theme-background-150', getLogShade(backgroundRgb, variantMultiplier * 0.05 * backgroundSide))
-    document.documentElement.style.setProperty('--theme-background-200', getLogShade(backgroundRgb, variantMultiplier * 0.075 * backgroundSide))
-    document.documentElement.style.setProperty('--theme-background-300', getLogShade(backgroundRgb, variantMultiplier * 0.1 * backgroundSide))
+    document.documentElement.style.setProperty(
+      '--theme-background-base',
+      state.backgroundColor
+    )
+    document.documentElement.style.setProperty(
+      '--theme-background-100',
+      background100
+    )
+    document.documentElement.style.setProperty(
+      '--theme-background-150',
+      joinRgba(getLinearShare(backgroundRgb, 0.05 * backgroundDirection))
+    )
+    document.documentElement.style.setProperty(
+      '--theme-background-200',
+      joinRgba(getLinearShare(backgroundRgb, 0.08 * backgroundDirection))
+    )
+    document.documentElement.style.setProperty(
+      '--theme-background-300',
+      joinRgba(getLinearShare(backgroundRgb, 0.125 * backgroundDirection))
+    )
 
-    // const background100 = splitRgba(document.documentElement.style.getPropertyValue('--theme-background-100'))
+    // const background100 = splitColorCode(document.documentElement.style.getPropertyValue('--theme-background-100'))
     document.documentElement.style.setProperty(
       '--theme-background-o75',
       `rgba(${background100Rgb[0]}, ${background100Rgb[1]},${background100Rgb[2]}, .75)`
@@ -120,26 +162,79 @@ const actions = {
       `rgba(${background100Rgb[0]}, ${background100Rgb[1]},${background100Rgb[2]}, .2)`
     )
 
-    const colorInverse = theme !== 'light' ? 'rgb(17,17,17)' : 'rgb(246,246,246)'
     let textColor = state.textColor
+    let textColorRgb
 
     if (!textColor) {
-      textColor = theme === 'light' ? 'rgb(17,17,17)' : 'rgb(246,246,246)'
+      textColorRgb = getTextColor(backgroundRgb, 1.25)
+      textColor = joinRgba(textColorRgb)
+    } else {
+      textColorRgb = splitColorCode(textColor)
     }
 
-    const textColorRgb = splitRgba(textColor)
-
     document.documentElement.style.setProperty('--theme-color-base', textColor)
-    document.documentElement.style.setProperty('--theme-color-100', getLogShade(textColorRgb, 0.1 * colorSide))
-    document.documentElement.style.setProperty('--theme-color-150', getLogShade(textColorRgb, 0.2 * colorSide))
-    document.documentElement.style.setProperty('--theme-color-200', getLogShade(textColorRgb, 0.5 * colorSide))
-    document.documentElement.style.setProperty('--theme-color-700', getLogShade(textColorRgb, 0.9 * colorSide))
-    document.documentElement.style.setProperty('--theme-color-accent', joinRgba(increaseBrightness(textColorRgb, 2)))
-    document.documentElement.style.setProperty('--theme-color-o75', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .75)`)
-    document.documentElement.style.setProperty('--theme-color-o50', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .5)`)
-    document.documentElement.style.setProperty('--theme-color-o20', `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .2)`)
+    document.documentElement.style.setProperty(
+      '--theme-color-100',
+      joinRgba(getTextColor(backgroundRgb, 1.2))
+    )
+    document.documentElement.style.setProperty(
+      '--theme-color-150',
+      joinRgba(getTextColor(backgroundRgb, 1.4))
+    )
+    document.documentElement.style.setProperty(
+      '--theme-color-200',
+      joinRgba(getTextColor(backgroundRgb, 1.7))
+    )
+    document.documentElement.style.setProperty(
+      '--theme-color-o75',
+      `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .75)`
+    )
+    document.documentElement.style.setProperty(
+      '--theme-color-o50',
+      `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .5)`
+    )
+    document.documentElement.style.setProperty(
+      '--theme-color-o20',
+      `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .2)`
+    )
+    document.documentElement.style.setProperty(
+      '--theme-color-o10',
+      `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .1)`
+    )
+    document.documentElement.style.setProperty(
+      '--theme-color-o05',
+      `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .05)`
+    )
 
-    document.documentElement.style.setProperty('--theme-color-inverse', colorInverse)
+    const buyRgb = splitColorCode(state.buyColor)
+
+    document.documentElement.style.setProperty(
+      '--theme-buy-base',
+      state.buyColor
+    )
+    document.documentElement.style.setProperty(
+      '--theme-buy-100',
+      getLogShade(buyRgb, 0.25)
+    )
+    document.documentElement.style.setProperty(
+      '--theme-buy-color',
+      joinRgba(getTextColor(buyRgb))
+    )
+
+    const sellRgb = splitColorCode(state.sellColor)
+
+    document.documentElement.style.setProperty(
+      '--theme-sell-base',
+      state.sellColor
+    )
+    document.documentElement.style.setProperty(
+      '--theme-sell-100',
+      getLogShade(sellRgb, 0.25)
+    )
+    document.documentElement.style.setProperty(
+      '--theme-sell-color',
+      joinRgba(getTextColor(sellRgb))
+    )
   },
   setAudioVolume({ commit, state }, volume: number) {
     commit('SET_AUDIO_VOLUME', volume)
@@ -200,7 +295,10 @@ const mutations = {
 
     aggregatorService.dispatch({
       op: 'configureAggregator',
-      data: { key: 'preferQuoteCurrencySize', value: state.preferQuoteCurrencySize }
+      data: {
+        key: 'preferQuoteCurrencySize',
+        value: state.preferQuoteCurrencySize
+      }
     })
   },
   TOGGLE_SLIPPAGE(state) {
@@ -242,6 +340,15 @@ const mutations = {
       state.settings.splice(index, 1)
     }
   },
+  TOGGLE_SEARCH_PANEL(state, value) {
+    const index = state.searchSections.indexOf(value)
+
+    if (index === -1) {
+      state.searchSections.push(value)
+    } else {
+      state.searchSections.splice(index, 1)
+    }
+  },
   TOGGLE_AUDIO(state, value) {
     state.useAudio = value ? true : false
 
@@ -258,14 +365,20 @@ const mutations = {
     state.audioFilters[id] = value
     audioService.reconnect()
   },
-  SET_CHART_BACKGROUND_COLOR(state, value) {
+  SET_BACKGROUND_COLOR(state, value) {
     state.backgroundColor = value
   },
   SET_CHART_THEME(state, value) {
     state.theme = value
   },
-  SET_CHART_COLOR(state, value) {
+  SET_TEXT_COLOR(state, value) {
     state.textColor = value
+  },
+  SET_BUY_COLOR(state, value) {
+    state.buyColor = value
+  },
+  SET_SELL_COLOR(state, value) {
+    state.sellColor = value
   },
   SET_TIMEZONE_OFFSET(state, value) {
     state.timezoneOffset = +value || 0
@@ -280,7 +393,13 @@ const mutations = {
     Vue.set(state.searchQuotes, key, value)
   },
   TOGGLE_SEARCH_EXCHANGE(state, key: string) {
-    Vue.set(state.searchExchanges, key, typeof state.searchExchanges[key] === 'boolean' ? !state.searchExchanges[key] : false)
+    Vue.set(
+      state.searchExchanges,
+      key,
+      typeof state.searchExchanges[key] === 'boolean'
+        ? !state.searchExchanges[key]
+        : false
+    )
   },
   CLEAR_SEARCH_FILTERS(state) {
     for (const key in state.searchTypes) {
@@ -324,26 +443,62 @@ const mutations = {
     state.alertSound = value
   },
   SAVE_SEARCH_SELECTION(state, value) {
-    const matchingSavedSearch = state.previousSearchSelections.find(a => a.label === value.label && a.count === value.count)
+    const matchingSavedSearch = state.previousSearchSelections.find(
+      a => a.label === value.label && a.count === value.count
+    )
 
     if (matchingSavedSearch) {
-      state.previousSearchSelections.splice(state.previousSearchSelections.indexOf(matchingSavedSearch), 1)
+      state.previousSearchSelections.splice(
+        state.previousSearchSelections.indexOf(matchingSavedSearch),
+        1
+      )
     }
-
     state.previousSearchSelections.unshift(value)
 
-    if (state.previousSearchSelections.length > 16) {
-      state.previousSearchSelections.splice(16, state.previousSearchSelections.length - 16)
+    if (state.previousSearchSelections.length > 32) {
+      state.previousSearchSelections.splice(
+        32,
+        state.previousSearchSelections.length - 32
+      )
     }
   },
   CLEAR_SEARCH_HISTORY(state) {
     state.previousSearchSelections = []
   },
   REMOVE_SEARCH_HISTORY(state, markets) {
-    const match = state.previousSearchSelections.find(a => a.markets === markets)
+    const match = state.previousSearchSelections.find(
+      a => a.markets === markets
+    )
 
     if (match) {
-      state.previousSearchSelections.splice(state.previousSearchSelections.indexOf(match), 1)
+      state.previousSearchSelections.splice(
+        state.previousSearchSelections.indexOf(match),
+        1
+      )
+    }
+  },
+  REMOVE_TIMEFRAME(state, value) {
+    const index = state.timeframes.indexOf(
+      state.timeframes.find(timeframe => timeframe.value === value)
+    )
+
+    if (index !== -1) {
+      state.timeframes.splice(index, 1)
+    }
+  },
+  ADD_TIMEFRAME(state, value) {
+    state.timeframes.push({
+      label: getTimeframeForHuman(value),
+      value
+    })
+  },
+  TOGGLE_TIMEFRAME_GROUP(state, value) {
+    const index = state.timeframeGroups.indexOf(value)
+
+    if (index === -1) {
+      state.timeframeGroups.push(value)
+    } else {
+      state.timeframeGroups.splice(index, 1)
     }
   }
 } as MutationTree<SettingsState>

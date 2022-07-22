@@ -1,6 +1,11 @@
 import store from '@/store'
 import { formatRgb, toRgb } from 'color-fns'
-import { ChartOptions, DeepPartial, LineType, LineWidth } from 'lightweight-charts'
+import {
+  ChartOptions,
+  DeepPartial,
+  LineType,
+  LineWidth
+} from 'lightweight-charts'
 
 export const defaultChartOptions = {
   crosshair: {
@@ -24,7 +29,7 @@ export const defaultChartOptions = {
   watermark: {
     color: 'rgba(255,255,255, 0.1)',
     visible: false,
-    text: 'Loading',
+    text: '',
     horzAlign: 'center',
     vertAlign: 'center'
   },
@@ -176,7 +181,10 @@ export function getChartCustomColorsOptions(color?: string) {
 
   const borderColor = formatRgb({ ...toRgb(textColor), alpha: 0.2 })
 
-  const crossHairColor = store.state.settings.theme === 'light' ? 'rgba(0, 0, 0, .25)' : 'rgba(255, 255, 255, .25)'
+  const crossHairColor =
+    store.state.settings.theme === 'light'
+      ? 'rgba(0, 0, 0, .25)'
+      : 'rgba(255, 255, 255, .25)'
 
   const customColorsOptions = {
     crosshair: {
@@ -202,7 +210,9 @@ export function getChartCustomColorsOptions(color?: string) {
   return customColorsOptions
 }
 
-export function getChartOptions(baseOptions: DeepPartial<ChartOptions>): DeepPartial<ChartOptions> {
+export function getChartOptions(
+  baseOptions: DeepPartial<ChartOptions>
+): DeepPartial<ChartOptions> {
   const chartOptions = Object.assign({}, baseOptions)
 
   const chartColorOptions = getChartCustomColorsOptions()
@@ -214,7 +224,10 @@ export function getChartOptions(baseOptions: DeepPartial<ChartOptions>): DeepPar
   return chartOptions
 }
 
-export function getDefaultIndicatorOptionValue(key: string, plotTypes: string[]) {
+export function getDefaultIndicatorOptionValue(
+  key: string,
+  plotTypes: string[]
+) {
   let value
 
   if (plotTypes) {
@@ -225,7 +238,10 @@ export function getDefaultIndicatorOptionValue(key: string, plotTypes: string[])
     }
   }
 
-  if (typeof value === 'undefined' && typeof defaultSerieOptions[key] !== 'undefined') {
+  if (
+    typeof value === 'undefined' &&
+    typeof defaultSerieOptions[key] !== 'undefined'
+  ) {
     return defaultSerieOptions[key]
   }
 
@@ -244,17 +260,30 @@ export function getDefaultIndicatorOptionValue(key: string, plotTypes: string[])
   return value
 }
 
-export function getIndicatorOptionValue(paneId: string, indicatorId: string, key: string, plotTypes?: string[]): any {
+export function getIndicatorOptionValue(
+  paneId: string,
+  indicatorId: string,
+  key: string,
+  plotTypes?: string[]
+): any {
   let preferedValue
 
-  if (typeof store.state[paneId].indicators[indicatorId].options[key] !== 'undefined') {
+  if (
+    typeof store.state[paneId].indicators[indicatorId].options[key] !==
+    'undefined'
+  ) {
     preferedValue = store.state[paneId].indicators[indicatorId].options[key]
   }
 
   const defaultValue = getDefaultIndicatorOptionValue(key, plotTypes)
 
   if (typeof preferedValue !== 'undefined') {
-    if (preferedValue && typeof preferedValue === 'object' && defaultValue && typeof defaultValue === 'object') {
+    if (
+      preferedValue &&
+      typeof preferedValue === 'object' &&
+      defaultValue &&
+      typeof defaultValue === 'object'
+    ) {
       return Object.assign({}, defaultValue, preferedValue)
     } else {
       return preferedValue

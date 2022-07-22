@@ -10,11 +10,20 @@
     </template>
     <form @submit.prevent="submit">
       <div class="text-center">
-        <timeframe-input :placeholder="placeholder" @timeframe="onTimeframe" @submit="submit" class="form-control w-100" />
+        <timeframe-input
+          :placeholder="placeholder"
+          @input="onTimeframe"
+          @submit="submit"
+          class="form-control w-100"
+        />
       </div>
 
       <div class="timeframe-for-human">
-        <code v-if="valid" class="text-muted" v-text="'= ' + timeframeForHuman"></code>
+        <code
+          v-if="valid"
+          class="text-muted"
+          v-text="'= ' + timeframeForHuman"
+        ></code>
         <code v-else class="form-feedback">Unknown timeframe</code>
       </div>
 
@@ -73,8 +82,8 @@ export default {
     hide() {
       this.$store.dispatch('app/hideSearch')
     },
-    onTimeframe(timeframeMs) {
-      this.newTimeframe = timeframeMs
+    onTimeframe({ value }) {
+      this.newTimeframe = value
     },
     submit() {
       if (!this.valid) {

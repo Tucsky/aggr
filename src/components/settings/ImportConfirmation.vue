@@ -34,13 +34,23 @@
     </div>
     <div v-if="panes.length" class="form-group mt16">
       <label>Markets</label>
-      <button v-for="(market, index) in markets" :key="index" type="button" disabled class="btn -accent -small mr4 mb4">
+      <button
+        v-for="(market, index) in markets"
+        :key="index"
+        type="button"
+        disabled
+        class="btn -small mr4 mb4"
+      >
         {{ market }}
       </button>
     </div>
     <footer>
-      <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
-      <button class="btn -large -green" @click="close(workspace)">IMPORT</button>
+      <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)"
+        >Cancel</a
+      >
+      <button class="btn -large -green" @click="close(workspace)">
+        IMPORT
+      </button>
     </footer>
   </Dialog>
 </template>
@@ -48,7 +58,7 @@
 <script lang="ts">
 import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
-import { Workspace } from '@/types/test'
+import { Workspace } from '@/types/types'
 import { ago } from '@/utils/helpers'
 
 export default {

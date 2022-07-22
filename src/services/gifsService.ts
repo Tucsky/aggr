@@ -23,7 +23,10 @@ class GifsService {
 
       const storedGifs = await workspacesService.getGifs(slug)
 
-      if (!storedGifs || now - storedGifs.timestamp >= 1000 * 60 * 60 * 24 * 7) {
+      if (
+        !storedGifs ||
+        now - storedGifs.timestamp >= 1000 * 60 * 60 * 24 * 7
+      ) {
         this.deleteGifs(keyword)
       }
     }
@@ -32,7 +35,12 @@ class GifsService {
   forgetGifs(keyword) {
     if (this.cache[keyword]) {
       store.dispatch('app/showNotice', {
-        title: 'Forgeting ' + this.cache[keyword].length + ' gifs about "' + keyword + '"',
+        title:
+          'Forgeting ' +
+          this.cache[keyword].length +
+          ' gifs about "' +
+          keyword +
+          '"',
         type: 'info'
       })
 
@@ -51,6 +59,10 @@ class GifsService {
   }
 
   async getGifs(keyword, showNotice?: boolean) {
+    if (!keyword) {
+      return
+    }
+
     if (this.cache[keyword]) {
       return this.cache[keyword]
     }
@@ -61,17 +73,22 @@ class GifsService {
 
     const slug = slugify(keyword)
 
-    this.promisesOfGifs[keyword] = workspacesService.getGifs(slug).then(storedGifs => {
-      delete this.promisesOfGifs[keyword]
+    this.promisesOfGifs[keyword] = workspacesService
+      .getGifs(slug)
+      .then(storedGifs => {
+        delete this.promisesOfGifs[keyword]
 
-      if (storedGifs && Date.now() - storedGifs.timestamp < 1000 * 60 * 60 * 24 * 7) {
-        this.cache[keyword] = storedGifs.data
+        if (
+          storedGifs &&
+          Date.now() - storedGifs.timestamp < 1000 * 60 * 60 * 24 * 7
+        ) {
+          this.cache[keyword] = storedGifs.data
 
-        return storedGifs.data
-      } else {
-        return this.fetchGifByKeyword(keyword, showNotice)
-      }
-    })
+          return storedGifs.data
+        } else {
+          return this.fetchGifByKeyword(keyword, showNotice)
+        }
+      })
 
     return this.promisesOfGifs[keyword]
   }
@@ -83,7 +100,11 @@ class GifsService {
 
     const slug = slugify(keyword)
 
-    return fetch('https://api.giphy.com/v1/gifs/search?q=' + keyword + '&rating=r&limit=100&api_key=b5Y5CZcpj9spa0xEfskQxGGnhChYt3hi')
+    return fetch(
+      'https://api.giphy.com/v1/gifs/search?q=' +
+        keyword +
+        '&rating=r&limit=100&api_key=b5Y5CZcpj9spa0xEfskQxGGnhChYt3hi'
+    )
       .then(res => res.json())
       .then(async res => {
         if (!res.data || !res.data.length) {
@@ -98,7 +119,8 @@ class GifsService {
 
         if (showNotice) {
           store.dispatch('app/showNotice', {
-            title: 'Fetched ' + this.cache[keyword].length + ' ' + keyword + ' gifs',
+            title:
+              'Fetched ' + this.cache[keyword].length + ' ' + keyword + ' gifs',
             type: 'success'
           })
         }

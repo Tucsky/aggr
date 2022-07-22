@@ -1,38 +1,87 @@
 <template>
-  <div class="pane-header hide-scrollbar pane-overlay d-flex" :class="{ '-loading': loading }">
+  <div
+    class="pane-header hide-scrollbar pane-overlay d-flex"
+    :class="{ '-loading': loading }"
+  >
     <div class="pane-header__loader"></div>
-    <span class="pane-header__name ml4 mrauto" data-hide-header @dblclick="renamePane">{{ name }}</span>
+    <span
+      class="pane-header__name ml4 mrauto"
+      data-hide-header
+      @dblclick="renamePane"
+      >{{ name }}</span
+    >
     <div class="toolbar flex-grow-1" @dblclick="maximizePane">
       <slot />
-      <button type="button" @click="openSearch">
+      <button type="button" @click="openSearch" class="toolbar__label min-768">
         <i class="icon-search"></i>
       </button>
-      <button type="button" @click="openSettings">
+      <button
+        v-if="settings"
+        type="button"
+        @click="openSettings"
+        class="toolbar__label min-768"
+      >
         <i class="icon-cog"></i>
       </button>
+      <button type="button" @click="toggleDropdown" class="toolbar__label">
+        <i class="icon-more"></i>
+      </button>
 
-      <dropdown :options="menu" class="-text-left" @open="highlightPane(true)" @close="highlightPane(false)" selectionClass="-text">
-        <template v-slot:option-zoom>
-          <div class="column" @mousedown.prevent>
-            <div class="btn -green" @click="changeZoom($event, -1)">
-              <i class="icon-minus"></i>
-            </div>
-            <div class="btn -text text-monospace" @click="$store.dispatch('panes/setZoom', { id: paneId, zoom: 1 })" style="display: block">
-              × {{ zoom.toFixed(2) }}
-            </div>
-            <div class="btn -green" @click="changeZoom($event, 1)">
-              <i class="icon-plus"></i>
-            </div>
-          </div>
-        </template>
-        <template v-slot:option="{ value }">
-          <i class="-lower" :class="'icon-' + value.icon"></i>
-
-          <span>{{ value.label }}</span>
-        </template>
-        <template v-slot:selection>
-          <i class="icon-more"></i>
-        </template>
+      <dropdown v-model="paneDropdownTrigger">
+        <div class="d-flex btn-group">
+          <button
+            type="button"
+            class="btn -green"
+            @click.stop="changeZoom($event, -1)"
+          >
+            <i class="icon-minus"></i>
+          </button>
+          <button
+            type="button"
+            class="btn -green text-monospace flex-grow-1 text-center"
+            @click.stop="resetZoom"
+          >
+            × {{ zoom.toFixed(2) }}
+          </button>
+          <button
+            type="button"
+            class="btn -green"
+            @click.stop="changeZoom($event, 1)"
+          >
+            <i class="icon-plus"></i>
+          </button>
+        </div>
+        <slot name="menu"></slot>
+        <button
+          v-if="settings !== null"
+          type="button"
+          class="dropdown-item"
+          @click="openSettings"
+        >
+          <i class="icon-cog"></i>
+          <span>Settings</span>
+        </button>
+        <button
+          type="button"
+          class="dropdown-item"
+          @click="$store.dispatch('app/showSearch', paneId)"
+        >
+          <i class="icon-search"></i>
+          <span>Sources</span>
+        </button>
+        <button type="button" class="dropdown-item" @click="maximizePane">
+          <i class="icon-enlarge"></i>
+          <span>Maximize</span>
+        </button>
+        <button type="button" class="dropdown-item" @click="duplicatePane">
+          <i class="icon-copy-paste"></i>
+          <span>Duplicate</span>
+        </button>
+        <div class="dropdown--divider"></div>
+        <button type="button" class="dropdown-item" @click="removePane">
+          <i class="icon-trash"></i>
+          <span>Remove</span>
+        </button>
       </dropdown>
     </div>
   </div>
@@ -42,14 +91,8 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 
-import dialogService from '@/services/dialogService'
-import TradesDialog from '../trades/TradesDialog.vue'
-import CountersDialog from '@/components/counters/CountersDialog.vue'
-import ChartDialog from '../chart/ChartDialog.vue'
-import StatsDialog from '../stats/StatsDialog.vue'
-import PricesDialog from '../prices/PricesDialog.vue'
 import { getSiblings } from '@/utils/helpers'
-import WebsiteDialog from '../website/WebsiteDialog.vue'
+import dialogService from '@/services/dialogService'
 
 @Component({
   name: 'PaneHeader',
@@ -57,39 +100,20 @@ import WebsiteDialog from '../website/WebsiteDialog.vue'
     paneId: {
       type: String
     },
+    settings: {
+      type: Function,
+      default: null
+    },
     loading: {
       type: Boolean,
       default: false
-    },
-    controls: {
-      required: false
     }
   }
 })
 export default class extends Vue {
-  controls: any[]
+  private settings?: () => Promise<any>
   paneId: string
-  menu = [
-    {
-      label: 'Zoom',
-      id: 'zoom'
-    },
-    {
-      icon: 'enlarge',
-      label: 'Maximize',
-      click: this.maximizePane
-    },
-    {
-      icon: 'copy-paste',
-      label: 'Duplicate',
-      click: this.duplicatePane
-    },
-    {
-      icon: 'trash',
-      label: 'Remove',
-      click: this.removePane
-    }
-  ]
+  paneDropdownTrigger = null
 
   get zoom() {
     return this.$store.state.panes.panes[this.paneId].zoom || 1
@@ -101,7 +125,9 @@ export default class extends Vue {
 
   get name() {
     const name = this.$store.state.panes.panes[this.paneId].name
-    const market = this.$store.state.panes.marketsListeners[this.$store.state.panes.panes[this.paneId].markets[0]]
+    const market = this.$store.state.panes.marketsListeners[
+      this.$store.state.panes.panes[this.paneId].markets[0]
+    ]
 
     if (name) {
       return name
@@ -112,35 +138,6 @@ export default class extends Vue {
     }
   }
 
-  created() {
-    if (this.controls && this.controls.length) {
-      this.menu = this.menu.slice(0, 1).concat(this.controls, this.menu.slice(1))
-    }
-  }
-
-  async openSettings() {
-    switch (this.type) {
-      case 'counters':
-        dialogService.open(CountersDialog, { paneId: this.paneId })
-        break
-      case 'stats':
-        dialogService.open(StatsDialog, { paneId: this.paneId })
-        break
-      case 'chart':
-        dialogService.open(ChartDialog, { paneId: this.paneId })
-        break
-      case 'trades':
-        dialogService.open(TradesDialog, { paneId: this.paneId })
-        break
-      case 'prices':
-        dialogService.open(PricesDialog, { paneId: this.paneId })
-        break
-      case 'website':
-        dialogService.open(WebsiteDialog, { paneId: this.paneId })
-        break
-    }
-  }
-
   openSearch() {
     this.$store.dispatch('app/showSearch', this.paneId)
   }
@@ -148,6 +145,14 @@ export default class extends Vue {
   changeZoom(event, direction) {
     const zoom = this.zoom + (event.shiftKey ? 0.0625 : 0.125) * direction
     this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: zoom })
+
+    this.$emit('zoom', zoom)
+  }
+
+  resetZoom() {
+    this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: 1 })
+
+    this.$emit('zoom', 1)
   }
 
   async removePane() {
@@ -161,11 +166,17 @@ export default class extends Vue {
   }
 
   highlightPane(value: boolean) {
-    this.$el.parentElement.parentElement.classList[value ? 'add' : 'remove']('-highlight')
+    this.$el.parentElement.parentElement.classList[value ? 'add' : 'remove'](
+      '-highlight'
+    )
   }
 
   maximizePane(event) {
-    if (event.type === 'dblclick' && event.currentTarget !== event.target && event.target.className !== 'toolbar__spacer') {
+    if (
+      event.type === 'dblclick' &&
+      event.currentTarget !== event.target &&
+      event.target.className !== 'toolbar__spacer'
+    ) {
       return
     }
 
@@ -196,6 +207,24 @@ export default class extends Vue {
     if (name !== this.name) {
       this.$store.commit('panes/SET_PANE_NAME', { id: this.paneId, name: name })
     }
+  }
+
+  toggleDropdown(event) {
+    if (this.paneDropdownTrigger) {
+      this.paneDropdownTrigger = null
+    } else {
+      this.paneDropdownTrigger = event.currentTarget
+    }
+  }
+
+  async openSettings() {
+    if (!this.settings) {
+      return
+    }
+
+    dialogService.open((await this.settings()).default, {
+      paneId: this.paneId
+    })
   }
 }
 </script>

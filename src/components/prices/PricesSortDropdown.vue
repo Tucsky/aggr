@@ -1,24 +1,26 @@
 <template>
-  <dropdown
-    :selected="sortType"
+  <dropdown-button
+    v-model="sortType"
     :options="['none', 'price', 'volume', 'delta', 'change']"
-    :selection-class="selectionClass"
-    return-value
-    @output="selectSortType($event)"
-  ></dropdown>
+    @input="selectSortType($event)"
+  ></dropdown-button>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import DropdownButton from '@/components/framework/DropdownButton.vue'
 
 @Component({
   name: 'PricesSortDropdown',
+  components: {
+    DropdownButton
+  },
   props: {
     paneId: {
       type: String,
       required: true
     },
-    selectionClass: {
+    buttonClass: {
       type: String,
       default: '-text -arrow'
     }

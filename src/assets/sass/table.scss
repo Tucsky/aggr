@@ -23,7 +23,7 @@
       left: 7px;
       top: 7px;
       line-height: 1.45;
-      color: lighten($green, 20%);
+      color: var(--theme-buy-100);
     }
 
     .checkbox-control > div {
@@ -86,6 +86,7 @@
       font-size: 12px;
       display: inline-block;
       padding: 0;
+      text-align: center;
     }
   }
 
@@ -94,7 +95,7 @@
       cursor: pointer;
 
       &:hover {
-        background-color: rgba(white, 0.1);
+        background-color: var(--theme-color-o10);
       }
     }
 
@@ -137,8 +138,4 @@
   tr:last-child > td {
     border-bottom: 0;
   }
-}
-
-#app.-light .table tr.-action:hover {
-  background-color: rgba(black, 0.1);
 }

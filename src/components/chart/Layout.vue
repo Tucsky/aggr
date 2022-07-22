@@ -8,7 +8,11 @@
     @dblclick="$store.commit(paneId + '/TOGGLE_LAYOUTING')"
   >
     <div class="chart-layout__controls">
-      <button class="btn -red -small" title="Close menu while reverting chart layout to it's original state" @click="cancel">
+      <button
+        class="btn -red -small"
+        title="Close menu while reverting chart layout to it's original state"
+        @click="cancel"
+      >
         Cancel <i class="icon-eraser ml4"></i>
       </button>
       <button
@@ -74,25 +78,36 @@ export default class extends Vue {
   }
 
   getActivePriceScales() {
-    const indicators = (this.$store.state[this.paneId] as ChartPaneState).indicators
+    const indicators = (this.$store.state[this.paneId] as ChartPaneState)
+      .indicators
 
-    this.activePriceScales = Object.keys(indicators).reduce((priceScales, indicatorId) => {
-      if (typeof this.layouting === 'string' && indicatorId !== this.layouting) {
+    this.activePriceScales = Object.keys(indicators).reduce(
+      (priceScales, indicatorId) => {
+        if (
+          typeof this.layouting === 'string' &&
+          indicatorId !== this.layouting
+        ) {
+          return priceScales
+        }
+        const priceScaleId = indicators[indicatorId].options.priceScaleId
+
+        if (!priceScales[priceScaleId]) {
+          priceScales[priceScaleId] = this.$store.state[
+            this.paneId
+          ].priceScales[priceScaleId]
+          priceScales[priceScaleId].indicators = []
+        }
+
+        priceScales[priceScaleId].indicators.push(indicators[indicatorId].name)
+
         return priceScales
-      }
-      const priceScaleId = indicators[indicatorId].options.priceScaleId
+      },
+      {}
+    )
 
-      if (!priceScales[priceScaleId]) {
-        priceScales[priceScaleId] = this.$store.state[this.paneId].priceScales[priceScaleId]
-        priceScales[priceScaleId].indicators = []
-      }
-
-      priceScales[priceScaleId].indicators.push(indicators[indicatorId].name)
-
-      return priceScales
-    }, {})
-
-    this._originalActivePriceScales = JSON.parse(JSON.stringify(this.activePriceScales))
+    this._originalActivePriceScales = JSON.parse(
+      JSON.stringify(this.activePriceScales)
+    )
   }
 
   updatePriceScaleScaleMargins(priceScaleId, event) {
@@ -111,7 +126,8 @@ export default class extends Vue {
   }
 
   syncMoveWithOthers(priceScaleId, side, scaleMargins): boolean {
-    const originalScaleMargins = this.activePriceScales[priceScaleId].scaleMargins
+    const originalScaleMargins = this.activePriceScales[priceScaleId]
+      .scaleMargins
 
     let hasSynced = false
 
@@ -122,7 +138,10 @@ export default class extends Vue {
 
       const otherScaleMargins = this.activePriceScales[otherId].scaleMargins
 
-      if (otherScaleMargins.top === originalScaleMargins.top && otherScaleMargins.bottom === originalScaleMargins.bottom) {
+      if (
+        otherScaleMargins.top === originalScaleMargins.top &&
+        otherScaleMargins.bottom === originalScaleMargins.bottom
+      ) {
         // sync overlapping
 
         Vue.set(this.activePriceScales[otherId], 'scaleMargins', scaleMargins)

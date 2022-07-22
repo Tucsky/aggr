@@ -1,15 +1,26 @@
 <template>
   <div class="slider" ref="wrapper" :class="{ '-disabled': disabled }">
     <div class="slider__track" ref="track">
-      <div class="slider__fill" ref="fill" @mousedown="select" @touchstart="select"></div>
-      <div v-if="showCompletion && handles[0]" class="slider__completion" :style="`width: ${handles[0].positionX}px`"></div>
+      <div
+        class="slider__fill"
+        ref="fill"
+        @mousedown="select"
+        @touchstart="select"
+      ></div>
+      <div
+        v-if="showCompletion && handles[0]"
+        class="slider__completion"
+        :style="`width: ${handles[0].positionX}px`"
+      ></div>
       <div
         class="slider__handle"
         v-for="(handle, index) in handles"
         :key="index"
         @mousedown="select"
         @touchstart="select"
-        :style="`transform: translate(${handle.positionX}px, ${handle.positionY}px); background-color: ${handle.color};`"
+        :style="
+          `transform: translate(${handle.positionX}px, ${handle.positionY}px); background-color: ${handle.color};`
+        "
       >
         <div class="slider__label" v-if="label">
           <slot name="tooltip" :value="handle.value">
@@ -23,7 +34,7 @@
 
 <script>
 import { mix } from 'color-fns'
-import { getClosestValue, debounce, getEventCords } from '../../../utils/picker'
+import { debounce, getClosestValue, getEventCords } from '@/utils/helpers'
 
 export default {
   name: 'VerteSlider',
@@ -37,7 +48,8 @@ export default {
     step: { type: Number, default: 1 },
     value: { type: Number, default: 0 },
     handlesValue: { type: Array, default: () => [0] },
-    showCompletion: { type: Boolean, default: true }
+    showCompletion: { type: Boolean, default: true },
+    log: { type: Boolean, default: false }
   },
   data: () => ({
     fill: {
@@ -195,19 +207,41 @@ export default {
     getStepValue(event) {
       const { x } = getEventCords(event)
 
-      const mouseValue = x - this.currentX
-      const stepCount = parseInt(mouseValue / this.stepWidth + 0.5, 10)
-      const stepValue = stepCount * this.step + this.min
+      let value
+
+      if (this.log) {
+        const minLog = Math.max(0, Math.log(this.min + 1) || 0)
+        const minLeft = (minLog / Math.log(this.max + 1)) * this.width
+
+        const logPosition = Math.max(
+          (this.width / 3) * -1,
+          Math.min(this.width * 1.5, x - this.left)
+        )
+
+        value = Math.max(
+          0,
+          Math.exp(
+            ((minLeft + (logPosition / this.width) * (this.width - minLeft)) /
+              this.width) *
+              Math.log(this.max + 1)
+          ) - 1
+        )
+      } else {
+        const mouseValue = x - this.left
+        const stepCount = parseInt(mouseValue / this.stepWidth + 0.5, 10)
+        value = stepCount * this.step + this.min
+      }
 
       if (!this.decimalsCount) {
-        return stepValue
+        return value
       }
-      return Number(stepValue.toFixed(this.decimalsCount))
+
+      return Number(value.toFixed(this.decimalsCount))
     },
     updateSize() {
       const trackRect = this.track.getBoundingClientRect()
 
-      this.currentX = trackRect.left
+      this.left = trackRect.left
 
       this.width = this.$el.clientWidth
 
@@ -228,7 +262,11 @@ export default {
      * @return {Number}
      */
     getPositionPercentage(value) {
-      return ((value - this.min) / (this.max - this.min)).toFixed(2)
+      if (this.log) {
+        return Math.log(value + 1) / Math.log(this.max + 1)
+      } else {
+        return (value - this.min) / (this.max - this.min)
+      }
     },
     normalizeValue(value) {
       if (isNaN(Number(value))) {
@@ -275,7 +313,8 @@ export default {
         // check the current zone
         if (region >= (i - 1) / colorCount && region <= i / colorCount) {
           // get the active color percentage
-          const colorPercentage = (region - (i - 1) / colorCount) / (1 / colorCount)
+          const colorPercentage =
+            (region - (i - 1) / colorCount) / (1 / colorCount)
           // return the mixed color based on the zone boundary colors
           return mix(this.gradient[i - 1], this.gradient[i], colorPercentage)
         }
@@ -310,7 +349,8 @@ export default {
         this.values[this.activeHandle] = normalized
         this.handles[this.activeHandle].value = normalized
 
-        this.handles[this.activeHandle].positionX = positionPercentage * this.width
+        this.handles[this.activeHandle].positionX =
+          positionPercentage * this.width
 
         this.currentValue = normalized
 
@@ -356,7 +396,6 @@ export default {
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  z-index: 2;
 
   &.-alpha {
     .slider__track {
@@ -490,7 +529,7 @@ export default {
   height: 100%;
 
   border-radius: 10px;
-  background-color: $green;
+  background-color: var(--theme-buy-base);
 
   pointer-events: none;
 }

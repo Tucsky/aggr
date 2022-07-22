@@ -75,7 +75,8 @@
   }
 
   &.-error .notice__wrapper {
-    background-color: $red;
+    background-color: var(--theme-sell-base);
+    color: var(--theme-sell-color);
   }
 
   &.-warning .notice__wrapper {
@@ -84,7 +85,8 @@
   }
 
   &.-success .notice__wrapper {
-    background-color: $green;
+    background-color: var(--theme-buy-base);
+    color: var(--theme-buy-color);
   }
 
   > div {

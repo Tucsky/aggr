@@ -1,4 +1,4 @@
-import { AggregatorPayload } from '@/types/test'
+import { AggregatorPayload } from '@/types/types'
 import { randomString } from './utils'
 
 export function dispatchAsync(payload: AggregatorPayload) {
