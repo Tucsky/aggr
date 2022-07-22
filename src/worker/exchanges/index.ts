@@ -16,6 +16,7 @@ import Deribit from './deribit'
 import Bybit from './bybit'
 import Ftx from './ftx'
 import Phemex from './phemex'
+import Serum from './serum'
 import Dydx from './dydx'
 
 export const exchanges = [
@@ -35,6 +36,7 @@ export const exchanges = [
   new Bybit(),
   new Ftx(),
   new Phemex(),
+  new Serum(),
   new Dydx()
 ] as Exchange[]
 
