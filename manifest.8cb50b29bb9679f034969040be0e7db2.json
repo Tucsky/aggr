@@ -1,0 +1,20 @@
+{
+  "icons": [
+    {
+      "src": "/aggr/icon_512x512.6ad268df1fa8264d75eb69c737484d2e.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/aggr/icon_192x192.9544157ba29c21be3697d93797155b3e.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "name": "SignificantTrades",
+  "short_name": "AGGR",
+  "display": "standalone",
+  "start_url": "/aggr/",
+  "theme_color": "#171b29",
+  "background_color": "#171b29"
+}
