@@ -65,6 +65,23 @@ function accumulatePointsAverage(fn: IndicatorFunction) {
   }
 }
 
+/**
+ * Adds current fn value to point array when candle close
+ * + store sum & count for easy access (& not having to loop through)
+ * @param fn
+ */
+function accumulateStoch(fn: IndicatorFunction) {
+  fn.state.lows.push(fn.state.low)
+  fn.state.highs.push(fn.state.high)
+  fn.state.count++
+
+  if (fn.state.count > fn.length - 1) {
+    fn.state.lows.shift()
+    fn.state.highs.shift()
+    fn.state.count--
+  }
+}
+
 // built-int functions are composed of the following
 // - a name (the keys)
 // - a update function (is called every time the chart is getting new data)
@@ -100,7 +117,10 @@ export default {
       }
 
       for (const identifier in renderer.sources) {
-        if (!renderer.sources[identifier].active || renderer.sources[identifier].open === null) {
+        if (
+          !renderer.sources[identifier].active ||
+          renderer.sources[identifier].open === null
+        ) {
           continue
         }
 
@@ -127,7 +147,13 @@ export default {
       state.low = Math.min(state.open, low / nbSources)
       state.close = close / nbSources
 
-      return { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }
+      return {
+        time: renderer.localTimestamp,
+        open: state.open,
+        high: state.high,
+        low: state.low,
+        close: state.close
+      }
     }
   },
   /**
@@ -153,7 +179,10 @@ export default {
       state.close = 0
 
       for (const identifier in renderer.sources) {
-        if (!renderer.sources[identifier].active || renderer.sources[identifier].open === null) {
+        if (
+          !renderer.sources[identifier].active ||
+          renderer.sources[identifier].open === null
+        ) {
           continue
         }
 
@@ -172,7 +201,8 @@ export default {
       state.high /= nbSources
       state.low /= nbSources
       state.open /= nbSources
-      state.close = (state.open + state.high + state.low + state.close / nbSources) / 4
+      state.close =
+        (state.open + state.high + state.low + state.close / nbSources) / 4
 
       if (typeof state.point !== 'undefined') {
         state.open = (state.point.open + state.point.close) / 2
@@ -183,7 +213,13 @@ export default {
       state.low = Math.min(state.open, state.low, state.close)
       state.high = Math.max(state.open, state.high, state.close)
 
-      return { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }
+      return {
+        time: renderer.localTimestamp,
+        open: state.open,
+        high: state.high,
+        low: state.low,
+        close: state.close
+      }
     }
   },
   /**
@@ -209,7 +245,10 @@ export default {
       let close = 0
 
       for (const identifier in renderer.sources) {
-        if (!renderer.sources[identifier].active || renderer.sources[identifier].open === null) {
+        if (
+          !renderer.sources[identifier].active ||
+          renderer.sources[identifier].open === null
+        ) {
           continue
         }
 
@@ -226,11 +265,23 @@ export default {
       }
 
       state.open = open / nbSources
-      state.high = Math.max(state.high === null ? -Infinity : state.high, high / nbSources)
-      state.low = Math.min(state.low === null ? Infinity : state.low, low / nbSources)
+      state.high = Math.max(
+        state.high === null ? -Infinity : state.high,
+        high / nbSources
+      )
+      state.low = Math.min(
+        state.low === null ? Infinity : state.low,
+        low / nbSources
+      )
       state.close = close / nbSources
 
-      return { time: renderer.localTimestamp, open: state.open, high: state.high, low: state.low, close: state.close }
+      return {
+        time: renderer.localTimestamp,
+        open: state.open,
+        high: state.high,
+        low: state.low,
+        close: state.close
+      }
     }
   },
   /**
@@ -283,7 +334,13 @@ export default {
       state.low = Math.min(state.low, value)
       state.close = value
 
-      return { time: time, open: state.open, high: state.high, low: state.low, close: state.close }
+      return {
+        time: time,
+        open: state.open,
+        high: state.high,
+        low: state.low,
+        close: state.close
+      }
     }
   },
   /**
@@ -315,7 +372,13 @@ export default {
       state.low = Math.min(state.low, value)
       state.close = value
 
-      return { time: time, open: state.open, high: state.high, low: state.low, close: state.close }
+      return {
+        time: time,
+        open: state.open,
+        high: state.high,
+        low: state.low,
+        close: state.close
+      }
     }
   },
   /**
@@ -446,7 +509,7 @@ export default {
     update(state, value, length) {
       state.output = value
 
-      if (state.count) {
+      if (state.count > 1) {
         return Math.max.apply(null, state.points)
       } else {
         return value
@@ -474,7 +537,7 @@ export default {
     update(state, value, length) {
       state.output = value
 
-      if (state.count) {
+      if (state.count > 1) {
         return Math.min.apply(null, state.points)
       } else {
         return value
@@ -517,7 +580,8 @@ export default {
         count++
       }
 
-      const slope = (count * sumXY - sumX * sumY) / (count * sumXSqr - sumX * sumX)
+      const slope =
+        (count * sumXY - sumX * sumY) / (count * sumXSqr - sumX * sumX)
       const average = sumY / count
       const intercept = average - (slope * sumX) / length + slope
 
@@ -701,6 +765,37 @@ export default {
 
         return acc
       }, [])
+    }
+  },
+  stoch: {
+    args: [
+      null,
+      null,
+      null,
+      {
+        length: true
+      }
+    ],
+    state: {
+      count: 0,
+      lows: [],
+      highs: []
+    },
+    next: accumulateStoch,
+    update(state, close, high, low) {
+      state.low = low
+      const lowest =
+        state.count > 0 ? Math.min(Math.min.apply(null, state.lows), low) : low
+
+      state.high = high
+      const highest =
+        state.count > 0
+          ? Math.max(Math.max.apply(null, state.highs), high)
+          : high
+
+      state.output = (100 * (close - lowest)) / (highest - lowest || 1)
+
+      return state.output
     }
   }
 }

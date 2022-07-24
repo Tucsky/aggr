@@ -1,10 +1,18 @@
 <template>
-  <div contenteditable class="w-100" ref="input" @input="onInput" @keydown="onKeydown" :placeholder="placeholder"></div>
+  <div
+    contenteditable
+    class="w-100"
+    ref="input"
+    @input="onInput"
+    @keydown="onKeydown"
+    :placeholder="placeholder"
+  ></div>
 </template>
 
 <script lang="ts">
 import { isTouchSupported } from '@/utils/touchevent'
 import { Component, Vue } from 'vue-property-decorator'
+import { getTimeframeForHuman } from '../../utils/helpers'
 
 @Component({
   name: 'TimeframeInput',
@@ -46,6 +54,8 @@ export default class extends Vue {
       event.preventDefault()
 
       this.$emit('submit', this.format(event.currentTarget.innerText))
+
+      this.$refs.input.innerText = ''
     }
   }
 
@@ -74,7 +84,22 @@ export default class extends Vue {
   }
 
   onInput(event) {
-    this.$emit('timeframe', this.format(event.currentTarget.innerText))
+    const value = this.format(event.currentTarget.innerText) || null
+    let label
+    if (value) {
+      label = getTimeframeForHuman(value)
+    } else {
+      label = event.currentTarget.innerText
+    }
+
+    if (!label || !label.length) {
+      return this.$emit('input', null)
+    }
+
+    this.$emit('input', {
+      value,
+      label
+    })
   }
 }
 </script>

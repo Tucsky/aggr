@@ -1,5 +1,11 @@
 <template>
-  <div class="carousel" :class="[canRight && 'carousel--can-right', canLeft && 'carousel--can-left']">
+  <div
+    class="carousel"
+    :class="[
+      canRight && 'carousel--can-right',
+      canLeft && 'carousel--can-left'
+    ]"
+  >
     <div class="carousel__wrapper" @scroll="onScroll" ref="scroller">
       <vnodes :vnodes="this.$slots.default" />
     </div>
@@ -70,7 +76,11 @@ export default {
   }
 
   &--can-left .carousel__wrapper {
-    mask-image: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 10%);
+    mask-image: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 1) 10%
+    );
   }
 
   &--can-right .carousel__wrapper {
@@ -78,7 +88,13 @@ export default {
   }
 
   &.carousel--can-left.carousel--can-right .carousel__wrapper {
-    mask-image: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, rgb(0, 0, 0) 5%, rgb(0, 0, 0) 95%, rgb(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0) 0%,
+      rgb(0, 0, 0) 5%,
+      rgb(0, 0, 0) 95%,
+      rgb(0, 0, 0, 0) 100%
+    );
   }
 
   &__wrapper {

@@ -103,6 +103,13 @@ $unit: 'px'; // Feel free to change the unit.
   white-space: nowrap;
 }
 
+.text-ellipsis {
+  overflow: hidden;
+  min-width: 1px;
+  flex-basis: 0;
+  text-overflow: ellipsis;
+}
+
 .condensed {
   font-family: $font-condensed;
 }
@@ -128,7 +135,7 @@ $unit: 'px'; // Feel free to change the unit.
 }
 
 .min-768 {
-  display: none;
+  display: none !important;
 }
 
 .d-block {
@@ -140,6 +147,10 @@ $unit: 'px'; // Feel free to change the unit.
 
   &.-column {
     flex-direction: column;
+  }
+
+  &.-wrap {
+    flex-wrap: wrap;
   }
 
   > .-fill {
@@ -170,22 +181,21 @@ $unit: 'px'; // Feel free to change the unit.
 
 @media screen and (min-width: 768px) {
   .min-768 {
-    display: inline-block;
-    display: revert;
+    display: revert !important;
   }
 
   .max-767 {
-    display: none;
+    display: none !important;
   }
 }
 
 .min-280 {
-  display: none;
+  display: none !important;
 }
 
 @media screen and (min-width: 280px) {
   .min-280 {
-    display: inline-block;
+    display: inline-block !important;
   }
 }
 
@@ -218,24 +228,6 @@ $unit: 'px'; // Feel free to change the unit.
   background-color: rgba(black, 0.25);
 }
 
-.light-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-  border: 0;
-}
-
-.light-scrollbar::-webkit-scrollbar-track {
-  background-color: transparent;
-}
-
-.light-scrollbar::-webkit-scrollbar-thumb {
-  background-color: transparent;
-}
-
-.light-scrollbar:hover::-webkit-scrollbar-thumb {
-  background-color: $green;
-}
-
 .icon-sm {
   font-size: 80%;
 }
@@ -245,11 +237,11 @@ $unit: 'px'; // Feel free to change the unit.
 }
 
 .text-danger {
-  color: lighten($red, 10%);
+  color: var(--theme-red);
+}
 
-  @at-root a#{&}:hover {
-    color: lighten($red, 15%);
-  }
+.text-success {
+  color: var(--theme-buy-100);
 }
 
 .text-info {
@@ -257,14 +249,6 @@ $unit: 'px'; // Feel free to change the unit.
 
   @at-root a#{&}:hover {
     color: lighten($blue, 5%);
-  }
-}
-
-.text-success {
-  color: lighten($green, 10%);
-
-  @at-root a#{&}:hover {
-    color: lighten($green, 15%);
   }
 }
 
@@ -292,6 +276,10 @@ $unit: 'px'; // Feel free to change the unit.
   position: relative;
 }
 
+.pointer-all {
+  pointer-events: all;
+}
+
 #app.-light .text-muted {
-  opacity: .75;
+  opacity: 0.75;
 }

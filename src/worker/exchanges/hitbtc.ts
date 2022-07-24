@@ -2,7 +2,9 @@ import Exchange from '../exchange'
 
 export default class extends Exchange {
   id = 'HITBTC'
-  protected endpoints = { PRODUCTS: 'https://api.hitbtc.com/api/2/public/symbol' }
+  protected endpoints = {
+    PRODUCTS: 'https://api.hitbtc.com/api/2/public/symbol'
+  }
 
   getUrl() {
     return 'wss://api.hitbtc.com/api/2/ws'
@@ -59,7 +61,13 @@ export default class extends Exchange {
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
-    if (!json || json.method !== 'updateTrades' || !json.params || !json.params.data || !json.params.data.length) {
+    if (
+      !json ||
+      json.method !== 'updateTrades' ||
+      !json.params ||
+      !json.params.data ||
+      !json.params.data.length
+    ) {
       return
     }
 

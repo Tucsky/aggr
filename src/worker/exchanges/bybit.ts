@@ -2,14 +2,21 @@ import Exchange from '../exchange'
 
 export default class extends Exchange {
   id = 'BYBIT'
-  protected endpoints = { PRODUCTS: ['https://api.bybit.com/spot/v1/symbols', 'https://api.bybit.com/v2/public/symbols'] }
+  protected endpoints = {
+    PRODUCTS: [
+      'https://api.bybit.com/spot/v1/symbols',
+      'https://api.bybit.com/v2/public/symbols'
+    ]
+  }
 
   getUrl(pair) {
     if (/-SPOT$/.test(pair)) {
       return 'wss://stream.bybit.com/spot/quote/ws/v2'
     }
 
-    return pair.indexOf('USDT') !== -1 ? 'wss://stream.bybit.com/realtime_public' : 'wss://stream.bybit.com/realtime'
+    return pair.indexOf('USDT') !== -1
+      ? 'wss://stream.bybit.com/realtime_public'
+      : 'wss://stream.bybit.com/realtime'
   }
 
   formatProducts(response) {
@@ -47,7 +54,13 @@ export default class extends Exchange {
     }
 
     if (/-SPOT$/.test(pair)) {
-      api.send(JSON.stringify({ topic: 'trade', event: 'sub', params: { binary: false, symbol: pair.replace(/-SPOT$/, '') } }))
+      api.send(
+        JSON.stringify({
+          topic: 'trade',
+          event: 'sub',
+          params: { binary: false, symbol: pair.replace(/-SPOT$/, '') }
+        })
+      )
     } else {
       api.send(
         JSON.stringify({
@@ -71,7 +84,13 @@ export default class extends Exchange {
     }
 
     if (/-SPOT$/.test(pair)) {
-      api.send(JSON.stringify({ topic: 'trade', event: 'cancel', params: { binary: false, symbol: pair.replace(/-SPOT$/, '') } }))
+      api.send(
+        JSON.stringify({
+          topic: 'trade',
+          event: 'cancel',
+          params: { binary: false, symbol: pair.replace(/-SPOT$/, '') }
+        })
+      )
     } else {
       api.send(
         JSON.stringify({
@@ -95,7 +114,9 @@ export default class extends Exchange {
       return this.emitTrades(
         api.id,
         json.data.map(trade => {
-          const size = /USDT$/.test(trade.symbol) ? trade.size : trade.size / trade.price
+          const size = /USDT$/.test(trade.symbol)
+            ? trade.size
+            : trade.size / trade.price
 
           return {
             exchange: this.id,
@@ -119,7 +140,9 @@ export default class extends Exchange {
         }
       ])
     } else {
-      const size = /USDT$/.test(json.data.symbol) ? +json.data.qty : json.data.qty / json.data.price
+      const size = /USDT$/.test(json.data.symbol)
+        ? +json.data.qty
+        : json.data.qty / json.data.price
 
       return this.emitLiquidations(api.id, [
         {

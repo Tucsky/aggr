@@ -1,5 +1,23 @@
 button {
   color: inherit;
+  font-family: inherit;
+  text-align: left;
+
+  &.-arrow {
+    &:after {
+      content: unicode($icon-down-thin);
+      font-family: 'icon';
+      position: relative;
+      line-height: 0;
+      transition: transform 0.2s cubic-bezier(0, 1.4, 1, 1);
+      margin-left: auto;
+      padding: 0 0.25em;
+    }
+
+    &.dropdown-trigger:after {
+      transform: rotateZ(180deg);
+    }
+  }
 }
 
 .btn {
@@ -10,33 +28,34 @@ button {
   font-family: $font-condensed;
   padding: 0.5em;
   border: 0;
-  border-radius: .25rem;
+  border-radius: 0.25rem;
   color: inherit;
   line-height: 1;
   flex-shrink: 0;
   cursor: pointer;
+  background-color: var(--theme-buy-base);
+  color: var(--theme-buy-color);
 
   .btn__suffix {
     position: relative;
     z-index: 1;
-    padding: .5rem;
-    margin: -.5rem -.5rem -.5rem 0.5rem;
-    border-radius: 0 .25rem .25rem 0;
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem 0.5rem;
+    border-radius: 0 0.25rem 0.25rem 0;
 
     &:hover {
-      background-color: rgba(white, .2);
+      background-color: rgba(white, 0.2);
     }
   }
 
   .lds-spinner {
     font-size: inherit;
-    margin-left: .5em;
+    margin-left: 0.5em;
   }
 
   &.-loading {
     pointer-events: none;
   }
-
 
   &:focus {
     box-shadow: 0 0 0 6px rgba($green, 0.1);
@@ -47,10 +66,13 @@ button {
     }
   }
 
-  background-color: $green;
-
   &:hover {
-    background-color: lighten($green, 10%);
+    background-color: var(--theme-buy-100);
+    color: var(--theme-buy-color);
+
+    &.-text {
+      color: var(--theme-color-base);
+    }
   }
 
   &:active {
@@ -71,6 +93,7 @@ button {
 
   &.-outline {
     background: 0;
+    color: var(--theme-color-base);
   }
 
   &[disabled] {
@@ -88,35 +111,31 @@ button {
   }
 
   &.-red {
-    background-color: $red;
-    border: 1px solid $red;
-    color: white;
+    background-color: var(--theme-sell-base);
+    border: 1px solid var(--theme-sell-base);
+    color: var(--theme-sell-color);
 
     &.-text {
-      color: lighten($red, 5%);
-
-      &:focus {
-        background-color: rgba($red, 0.2);
-      }
+      color: var(--theme-sell-100);
     }
 
     &.-outline {
-      color: $red;
+      color: var(--theme-sell-base);
       background: 0;
 
       &:hover {
-        color: white;
-        border-color: lighten($red, 10%);
+        color: var(--theme-sell-color);
+        border-color: var(--theme-sell-100);
       }
     }
 
     &:hover {
-      background-color: lighten($red, 5%);
-      border-color: lighten($red, 5%);
+      background-color: var(--theme-sell-100);
+      border-color: var(--theme-sell-100);
 
       &.-text {
         background: 0;
-        color: lighten($red, 10%);
+        color: var(--theme-sell-100);
         border-color: transparent;
       }
     }
@@ -157,78 +176,32 @@ button {
     }
   }
 
-  &.-accent {
-    background-color: var(--theme-background-100);
-    border-color: var(--theme-background-100);
-    border: 1px solid var(--theme-background-100);
-    color: var(--theme-color-base);
-
-    &.-text {
-      color: var(--theme-background-300);
-
-      &:focus {
-        background-color: var(--theme-background-100);
-      }
-    }
-
-    &.-outline {
-      color: var(--theme-background-300);
-      background: 0;
-
-      &:hover {
-        color: white;
-        border-color: var(--theme-background-150);
-      }
-    }
-
-    &:hover {
-      background-color: var(--theme-background-150);
-      border-color: var(--theme-background-150);
-
-      &.-text {
-        background: 0;
-        color: var(--theme-color-100);
-        border-color: transparent;
-      }
-    }
-  }
-
-  &.-accent-200 {
-    background-color: var(--theme-background-200);
-    border-color: var(--theme-background-200);
-    border: 1px solid var(--theme-background-200);
-  }
-
   &.-green {
-    background-color: $green;
-    border: 1px solid $green;
-    color: white;
+    background-color: var(--theme-buy-base);
+    border: 1px solid var(--theme-buy-base);
+    color: var(--theme-buy-color);
 
     &.-text {
-      color: $green;
-
-      &:focus {
-        background-color: rgba($green, 0.2);
-      }
+      color: var(--theme-buy-base);
     }
 
     &.-outline {
-      color: $green;
+      color: var(--theme-buy-base);
       background: 0;
 
       &:hover {
-        color: white;
-        border-color: lighten($green, 10%);
+        color: var(--theme-buy-color);
+        border-color: var(--theme-buy-100);
       }
     }
 
     &:hover {
-      background-color: lighten($green, 10%);
-      border-color: lighten($green, 10%);
+      background-color: var(--theme-buy-100);
+      border-color: var(--theme-buy-100);
 
       &.-text {
         background: 0;
-        color: lighten($green, 10%);
+        color: var(--theme-buy-100);
         border-color: transparent;
       }
     }
@@ -237,6 +210,7 @@ button {
   &.-text {
     background-color: transparent;
     border: transparent 1px solid;
+    color: var(--theme-color-base);
   }
 
   &.-file {
@@ -286,5 +260,22 @@ a {
 
   &.-text {
     text-decoration: none;
+  }
+}
+
+.btn-group {
+  .btn {
+    border-radius: 0;
+    margin: 0;
+  }
+
+  .btn:first-child {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+  }
+
+  .btn:last-child {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
   }
 }

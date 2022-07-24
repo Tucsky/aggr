@@ -1,9 +1,21 @@
 <template>
   <transition-height :name="transitionGroupName" tag="div" class="notices">
-    <div v-for="notice in notices" :key="notice.id" class="notice" :class="'-' + notice.type">
-      <div class="notice__wrapper" @click="$store.dispatch('app/hideNotice', notice.id)">
+    <div
+      v-for="notice in notices"
+      :key="notice.id"
+      class="notice"
+      :class="'-' + notice.type"
+    >
+      <div
+        class="notice__wrapper"
+        @click="$store.dispatch('app/hideNotice', notice.id)"
+      >
         <i v-if="notice.icon" class="notice__icon" :class="notice.icon"></i>
-        <div v-if="!notice.html" v-text="notice.title" class="notice__title"></div>
+        <div
+          v-if="!notice.html"
+          v-text="notice.title"
+          class="notice__title"
+        ></div>
         <div v-else v-html="notice.title" class="notice__title"></div>
       </div>
     </div>

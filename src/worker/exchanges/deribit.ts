@@ -1,4 +1,4 @@
-import { Trade } from '@/types/test'
+import { Trade } from '@/types/types'
 import Exchange from '../exchange'
 
 export default class extends Exchange {
@@ -92,7 +92,12 @@ export default class extends Exchange {
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
-    if (!json || !json.params || !json.params.data || !json.params.data.length) {
+    if (
+      !json ||
+      !json.params ||
+      !json.params.data ||
+      !json.params.data.length
+    ) {
       return
     }
 

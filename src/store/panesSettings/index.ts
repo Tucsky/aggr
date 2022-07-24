@@ -11,5 +11,6 @@ export default {
   trades,
   prices,
   counters,
-  website
+  website,
+  'trades-lite': trades
 }

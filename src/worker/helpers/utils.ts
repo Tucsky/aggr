@@ -1,4 +1,7 @@
-export function randomString(length = 16, characters = 'abcdefghijklmnopqrstuvwxyz0123456789') {
+export function randomString(
+  length = 16,
+  characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
+) {
   let output = ``
 
   const charactersLength = characters.length

@@ -51,10 +51,15 @@ export default class extends Exchange {
 
         switch (type) {
           case 'spot':
-            pair = (product['base-currency'] + product['quote-currency']).toLowerCase()
+            pair = (
+              product['base-currency'] + product['quote-currency']
+            ).toLowerCase()
             break
           case 'futures':
-            pair = product.symbol + '_' + this.contractTypesAliases[product.contract_type]
+            pair =
+              product.symbol +
+              '_' +
+              this.contractTypesAliases[product.contract_type]
             specs[pair] = product.contract_size
             break
           case 'swap':
@@ -65,7 +70,9 @@ export default class extends Exchange {
         }
 
         if (products.find(a => a.toLowerCase() === pair.toLowerCase())) {
-          throw new Error('Duplicate pair detected on huobi exchange (' + pair + ')')
+          throw new Error(
+            'Duplicate pair detected on huobi exchange (' + pair + ')'
+          )
         }
 
         types[pair] = type
@@ -149,7 +156,9 @@ export default class extends Exchange {
     let size = +trade.amount
 
     if (typeof this.specs[pair] === 'number') {
-      size = (size * this.specs[pair]) / (this.types[pair] === 'linear' ? 1 : trade.price)
+      size =
+        (size * this.specs[pair]) /
+        (this.types[pair] === 'linear' ? 1 : trade.price)
     }
 
     this.prices[pair] = +trade.price
@@ -180,9 +189,14 @@ export default class extends Exchange {
     if (
       api._marketDataApi &&
       api._marketDataApi.readyState === WebSocket.OPEN &&
-      (this.types[pair] === 'futures' || this.types[pair] === 'swap' || this.types[pair] === 'linear')
+      (this.types[pair] === 'futures' ||
+        this.types[pair] === 'swap' ||
+        this.types[pair] === 'linear')
     ) {
-      const symbol = this.types[pair] === 'futures' ? pair.replace(/\d+/, '').replace(/(-|_).*/, '') : pair
+      const symbol =
+        this.types[pair] === 'futures'
+          ? pair.replace(/\d+/, '').replace(/(-|_).*/, '')
+          : pair
 
       api._marketDataApi.send(
         JSON.stringify({
@@ -196,7 +210,9 @@ export default class extends Exchange {
   onApiRemoved(api) {
     if (api._marketDataApi) {
       if (api._marketDataApi.readyState === WebSocket.OPEN) {
-        console.debug(`[${this.id}] close market data api ${api._marketDataApi.url} (associated with ${api.id})`)
+        console.debug(
+          `[${this.id}] close market data api ${api._marketDataApi.url} (associated with ${api.id})`
+        )
         api._marketDataApi.close()
       }
     }
@@ -212,21 +228,28 @@ export default class extends Exchange {
     if (api.url === 'wss://api.hbdm.com/swap-ws') {
       api._marketDataApi = new WebSocket('wss://api.hbdm.com/swap-notification') // coin margined
     } else if (api.url === 'wss://api.hbdm.com/linear-swap-ws') {
-      api._marketDataApi = new WebSocket('wss://api.hbdm.com/linear-swap-notification') // usdt margined
+      api._marketDataApi = new WebSocket(
+        'wss://api.hbdm.com/linear-swap-notification'
+      ) // usdt margined
     }
 
     if (api._marketDataApi) {
       api._marketDataApi.binaryType = 'arraybuffer'
 
       // coin/linear swap & futures contracts
-      console.debug(`[${this.id}] opened market data api ${api._marketDataApi.url} (associated with ${this.id})`)
+      console.debug(
+        `[${this.id}] opened market data api ${api._marketDataApi.url} (associated with ${this.id})`
+      )
 
       api._marketDataApi.onmessage = event => {
         const json = JSON.parse(pako.inflate(event.data, { to: 'string' }))
         if (json.op === 'ping') {
           api._marketDataApi.send(JSON.stringify({ op: 'pong', ts: json.ts }))
         } else if (json.data) {
-          const pair = json.topic.replace(/public.(.*).liquidation_orders/, '$1')
+          const pair = json.topic.replace(
+            /public.(.*).liquidation_orders/,
+            '$1'
+          )
           this.emitTrades(
             api.id,
             json.data.map(trade => this.formatLiquidation(trade, pair))

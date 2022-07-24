@@ -7,14 +7,21 @@ export interface ExchangeSettings {
   disabled?: boolean
 }
 
-export type ExchangesState = { [exchangeId: string]: ExchangeSettings } & { _id: string; _exchanges: string[] }
+export type ExchangesState = { [exchangeId: string]: ExchangeSettings } & {
+  _id: string
+  _exchanges: string[]
+}
 
-const supportedExchanges = process.env.VUE_APP_EXCHANGES.split(',').map(id => id.toUpperCase())
+const supportedExchanges = process.env.VUE_APP_EXCHANGES.split(',').map(id =>
+  id.toUpperCase()
+)
 
 const state = supportedExchanges.reduce(
   (exchangesState: ExchangesState, id: string) => {
     exchangesState[id] = {
-      disabled: /HITBTC|PHEMEX|BINANCE_US|SERUM|OKEX|HUOBI|BITSTAMP|KRAKEN|POLONIEX/.test(id)
+      disabled: /HITBTC|PHEMEX|BINANCE_US|SERUM|OKEX|HUOBI|BITSTAMP|KRAKEN|POLONIEX/.test(
+        id
+      )
     }
 
     return exchangesState
@@ -27,7 +34,8 @@ const state = supportedExchanges.reduce(
 state._id = 'exchanges'
 
 const getters = {
-  getExchanges: state => Object.keys(state).filter(id => id !== 'INDEX' && !/^_/.test(id))
+  getExchanges: state =>
+    Object.keys(state).filter(id => id !== 'INDEX' && !/^_/.test(id))
 } as GetterTree<ExchangesState, ModulesState>
 
 const actions = {
@@ -67,15 +75,21 @@ const actions = {
   },
   async disconnect({ rootState }, id: string) {
     const exchangeRegex = new RegExp(`^${id}:`, 'i')
-    const markets = Object.keys(rootState.panes.marketsListeners).filter(p => exchangeRegex.test(p))
+    const markets = Object.keys(rootState.panes.marketsListeners).filter(p =>
+      exchangeRegex.test(p)
+    )
 
-    console.log(`[exchanges.${id}] manually disconnecting ${markets.join(', ')}`)
+    console.log(
+      `[exchanges.${id}] manually disconnecting ${markets.join(', ')}`
+    )
 
     await aggregatorService.disconnect(markets)
   },
   async connect({ rootState }, id: string) {
     const exchangeRegex = new RegExp(`^${id}:`, 'i')
-    const markets = Object.keys(rootState.panes.marketsListeners).filter(p => exchangeRegex.test(p))
+    const markets = Object.keys(rootState.panes.marketsListeners).filter(p =>
+      exchangeRegex.test(p)
+    )
 
     console.log(`[exchanges.${id}] manually connecting ${markets.join(', ')}`)
 

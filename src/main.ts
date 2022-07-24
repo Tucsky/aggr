@@ -4,7 +4,6 @@ import VueTippy, { TippyComponent } from 'vue-tippy'
 import './assets/sass/app.scss'
 import store from './store'
 
-import Verte from '@/components/framework/picker/Verte.vue'
 import Editable from '@/components/framework/Editable.vue'
 import Dropdown from '@/components/framework/Dropdown.vue'
 import Presets from '@/components/framework/Presets.vue'
@@ -25,8 +24,8 @@ Vue.use(VueTippy, {
   animateFill: false,
   theme: 'dark'
 })
+
 Vue.component('tippy', TippyComponent)
-Vue.component('verte', Verte)
 Vue.component('dropdown', Dropdown)
 Vue.component('editable', Editable)
 Vue.component('presets', Presets)
@@ -34,8 +33,6 @@ Vue.directive('autofocus', autofocus)
 
 new Vue({
   el: '#app',
-  // router,
   store,
-  render: h => h(App),
-  props: ['initialized']
+  render: h => h(App)
 })

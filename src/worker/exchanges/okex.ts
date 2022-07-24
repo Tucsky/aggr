@@ -113,7 +113,9 @@ export default class extends Exchange {
     let size
 
     if (typeof this.specs[trade.instId] !== 'undefined') {
-      size = (trade.sz * this.specs[trade.instId]) / (this.inversed[trade.instId] ? trade.px : 1)
+      size =
+        (trade.sz * this.specs[trade.instId]) /
+        (this.inversed[trade.instId] ? trade.px : 1)
     } else {
       size = trade.sz
     }
