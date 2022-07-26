@@ -7,60 +7,18 @@
     flex-grow: 1;
   }
 
-  > span,
-  > button > span,
-  .dropdown > .dropdown__selected > span {
-    padding: 0;
-    font-family: $font-condensed;
-    font-size: 0.64em;
-    align-self: center;
-    display: block;
-    line-height: 1;
-    padding: 0.15em 0.4em 0.25em;
-    text-transform: none;
-  }
-
-  .dropdown {
-    align-self: stretch;
-
-    &__options {
-      margin-top: 1rem;
-    }
-  }
-
-  button {
+  &__label {
     border: 0 !important;
     background: none !important;
     color: inherit;
     position: relative;
-    cursor: pointer;
-    padding: 0;
     display: inline-flex;
     align-items: center;
     line-height: 1;
-    font-size: inherit;
-  }
-
-  .dropdown__selected {
-    height: 100%;
-    display: inline-flex;
-    align-items: center;
-
-    &:after {
-      font-size: 0.64em;
-      padding: 0;
-      top: 0;
-    }
-  }
-
-  .dropdown__selected > i,
-  button > i {
-    font-size: 70%;
-    padding: 0 0.25em;
-    min-width: 1.5em;
-
-    + span {
-      padding-left: 0 !important;
-    }
+    font-family: $font-condensed;
+    font-size: 0.64em;
+    line-height: 1;
+    padding: 0.15em 0.4em 0.25em;
+    text-transform: none;
   }
 }

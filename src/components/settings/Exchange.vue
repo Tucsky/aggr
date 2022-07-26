@@ -12,8 +12,11 @@
         <span>{{ name }}</span>
       </div>
       <div class="settings-exchange__controls">
-        <button class="settings-exchange__more" @click.stop.prevent="expanded = !expanded">
-          <i class="icon-down"></i>
+        <button
+          class="settings-exchange__more"
+          @click.stop.prevent="expanded = !expanded"
+        >
+          <i class="icon-down-thin"></i>
         </button>
       </div>
     </div>
@@ -69,7 +72,9 @@ export default class extends Vue {
   }
 
   get markets() {
-    return (Object as any).values(this.$store.state.panes.marketsListeners).filter(a => a.exchange === this.id)
+    return (Object as any)
+      .values(this.$store.state.panes.marketsListeners)
+      .filter(a => a.exchange === this.id)
   }
 
   get active() {
@@ -110,8 +115,8 @@ export default class extends Vue {
   }
 
   &.-active {
-    background-color: $green;
-    color: white;
+    background-color: var(--theme-buy-base);
+    color: var(--theme-buy-color);
 
     .settings-exchange__visibility {
       display: flex;
@@ -233,12 +238,5 @@ export default class extends Vue {
 
 .settings-exchange__detail {
   padding: 10px;
-}
-
-#app.-light .settings-exchange {
-  &.-active {
-    background-color: white;
-    color: #111;
-  }
 }
 </style>

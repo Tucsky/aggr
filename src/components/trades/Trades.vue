@@ -1,51 +1,71 @@
 <template>
   <div class="pane-trades">
-    <pane-header :paneId="paneId" ref="paneHeader">
-      <tippy
-        :to="paneId"
-        :interactive="true"
-        :delay="[0, 400]"
-        :distance="16"
-        placement="bottom"
-        :theme="'transparent'"
-        append-to="parent"
-        trigger="click"
+    <pane-header
+      :paneId="paneId"
+      ref="paneHeader"
+      :settings="() => import('@/components/trades/TradesDialog.vue')"
+    >
+      <dropdown v-model="sliderDropdownTrigger" interactive no-scroll>
+        <slider
+          style="width: 100px"
+          :min="0"
+          :max="10"
+          :step="0.01"
+          label
+          :show-completion="false"
+          :gradient="gradient"
+          :value="thresholdsMultipler"
+          @input="
+            $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
+              value: $event,
+              market: market
+            })
+          "
+          @reset="
+            $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
+              value: 1,
+              market: market
+            })
+          "
+          log
+        >
+          <template v-slot:tooltip>
+            {{ +(thresholdsMultipler * 100).toFixed(2) }}%
+          </template>
+        </slider>
+      </dropdown>
+      <button
+        :name="paneId"
+        class="toolbar__label"
+        @click="
+          sliderDropdownTrigger = sliderDropdownTrigger
+            ? null
+            : $event.currentTarget
+        "
       >
-        <div class="mt4 mb4 text-nowrap -no-grab">
-          <slider
-            style="width: 100px"
-            :min="0"
-            :max="2"
-            :step="0.01"
-            label
-            :show-completion="false"
-            class="mt8"
-            :gradient="gradient"
-            :value="thresholdsMultipler"
-            @input="$store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', { value: $event, market: market })"
-            @reset="$store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', { value: 1, market: market })"
-          >
-            <template v-slot:tooltip> {{ +(thresholdsMultipler * 100).toFixed(2) }}% </template>
-          </slider>
-        </div>
-      </tippy>
-      <button :name="paneId">
         <i class="icon-gauge"></i>
       </button>
     </pane-header>
     <div
       ref="tradesContainer"
       class="trades-list"
-      :class="['hide-scrollbar', this.showLogos && '-logos', !this.monochromeLogos && '-logos-colors']"
+      :class="[
+        'hide-scrollbar',
+        this.showLogos && '-logos',
+        !this.monochromeLogos && '-logos-colors'
+      ]"
     ></div>
-    <trades-placeholder v-if="showPlaceholder" :paneId="paneId"></trades-placeholder>
+    <trades-placeholder
+      v-if="showPlaceholder"
+      :paneId="paneId"
+    ></trades-placeholder>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 
-import { Trade } from '@/types/test'
+import { Trade } from '@/types/types'
 
 import aggregatorService from '@/services/aggregatorService'
 import gifsService from '@/services/gifsService'
@@ -62,6 +82,7 @@ import Slider from '@/components/framework/picker/Slider.vue'
 })
 export default class extends Mixins(PaneMixin) {
   showPlaceholder = true
+  sliderDropdownTrigger = null
 
   private feed: TradesFeed
 
@@ -84,7 +105,9 @@ export default class extends Mixins(PaneMixin) {
   get gradient() {
     return [
       this.$store.state[this.paneId].thresholds[0].buyColor,
-      this.$store.state[this.paneId].thresholds[this.$store.state[this.paneId].thresholds.length - 1].buyColor
+      this.$store.state[this.paneId].thresholds[
+        this.$store.state[this.paneId].thresholds.length - 1
+      ].buyColor
     ]
   }
 
@@ -112,13 +135,17 @@ export default class extends Mixins(PaneMixin) {
           break
         case 'panes/SET_PANE_MARKETS':
         case this.paneId + '/SET_THRESHOLD_MULTIPLIER':
-          if (mutation.type !== 'panes/SET_PANE_MARKETS' || mutation.payload.id === this.paneId) {
+          if (
+            mutation.type !== 'panes/SET_PANE_MARKETS' ||
+            mutation.payload.id === this.paneId
+          ) {
             this.feed.cachePaneMarkets()
             this.refreshList()
           }
           break
         case this.paneId + '/SET_THRESHOLD_GIF':
           gifsService.getGifs(mutation.payload.value, true)
+          this.feed.prepareColors()
           this.refreshList()
           break
         case this.paneId + '/SET_THRESHOLD_AUDIO':
@@ -132,7 +159,7 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/TOGGLE_MUTED':
           this.feed.cacheAudio(false)
           break
-        case 'settings/SET_CHART_BACKGROUND_COLOR':
+        case 'settings/SET_BACKGROUND_COLOR':
         case this.paneId + '/SET_THRESHOLD_COLOR':
         case this.paneId + '/SET_THRESHOLD_AMOUNT':
         case this.paneId + '/SET_THRESHOLDS_MULTIPLER':
@@ -142,7 +169,10 @@ export default class extends Mixins(PaneMixin) {
           this.feed.prepareColors()
           this.refreshList()
 
-          if (mutation.type === this.paneId + '/DELETE_THRESHOLD' || this.paneId + '/ADD_THRESHOLD') {
+          if (
+            mutation.type === this.paneId + '/DELETE_THRESHOLD' ||
+            this.paneId + '/ADD_THRESHOLD'
+          ) {
             this.feed.cacheAudio()
           }
           break
@@ -151,7 +181,11 @@ export default class extends Mixins(PaneMixin) {
   }
 
   mounted() {
-    this.feed = new TradesFeed(this.paneId, this.$refs.tradesContainer, this.$store.state[this.paneId].maxRows)
+    this.feed = new TradesFeed(
+      this.paneId,
+      this.$refs.tradesContainer,
+      this.$store.state[this.paneId].maxRows
+    )
   }
 
   beforeDestroy() {
@@ -176,11 +210,23 @@ export default class extends Mixins(PaneMixin) {
     for (const element of elements) {
       const [exchange, pair] = parseMarket(element.getAttribute('title'))
 
-      const timestamp = element.querySelector('.trade__time').getAttribute('data-timestamp')
-      const price = parseFloat((element.querySelector('.trade__price') as HTMLElement)?.innerText) || 0
-      const size = parseFloat((element.querySelector('.trade__amount__base') as HTMLElement).innerText) || 0
-      const side: 'buy' | 'sell' = element.classList.contains('-buy') ? 'buy' : 'sell'
-      const amount = size * (this.$store.state.settings.preferQuoteCurrencySize ? price : 1)
+      const timestamp = element
+        .querySelector('.trade__time')
+        .getAttribute('data-timestamp')
+      const price =
+        parseFloat(
+          (element.querySelector('.trade__price') as HTMLElement)?.innerText
+        ) || 0
+      const size =
+        parseFloat(
+          (element.querySelector('.trade__amount__base') as HTMLElement)
+            .innerText
+        ) || 0
+      const side: 'buy' | 'sell' = element.classList.contains('-buy')
+        ? 'buy'
+        : 'sell'
+      const amount =
+        size * (this.$store.state.settings.preferQuoteCurrencySize ? price : 1)
       const trade: Trade = {
         timestamp: (timestamp as unknown) as number,
         exchange,
@@ -206,9 +252,11 @@ export default class extends Mixins(PaneMixin) {
 
 <style lang="scss">
 .pane-trades {
-  &.-small .trade {
+  &.-extra-small .trade {
+    padding: 0 1rem 0 1rem;
+
     &.-level-0 {
-      line-height: 1.5em !important;
+      line-height: 1.25em !important;
     }
     &.-level-1 {
       line-height: 1.66em !important;
@@ -310,15 +358,6 @@ export default class extends Mixins(PaneMixin) {
     background-color: white;
     animation: 1s $ease-out-expo highlight;
     pointer-events: none;
-  }
-
-  &.-empty {
-    justify-content: center;
-    padding: 1em;
-
-    &:after {
-      display: none;
-    }
   }
 
   &.-liquidation {

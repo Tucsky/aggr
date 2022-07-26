@@ -8,7 +8,12 @@ export default class extends Exchange {
   private dapi: { [pair: string]: string }
   protected maxConnectionsPerApi = 100
   protected delayBetweenMessages = 100
-  protected endpoints = { PRODUCTS: ['https://fapi.binance.com/fapi/v1/exchangeInfo', 'https://dapi.binance.com/dapi/v1/exchangeInfo'] }
+  protected endpoints = {
+    PRODUCTS: [
+      'https://fapi.binance.com/fapi/v1/exchangeInfo',
+      'https://dapi.binance.com/dapi/v1/exchangeInfo'
+    ]
+  }
 
   getUrl(pair: string) {
     if (this.dapi[pair]) {
@@ -27,7 +32,10 @@ export default class extends Exchange {
       const type = ['fapi', 'dapi'][response.indexOf(data)]
 
       for (const product of data.symbols) {
-        if ((product.contractStatus && product.contractStatus !== 'TRADING') || (product.status && product.status !== 'TRADING')) {
+        if (
+          (product.contractStatus && product.contractStatus !== 'TRADING') ||
+          (product.status && product.status !== 'TRADING')
+        ) {
           continue
         }
 

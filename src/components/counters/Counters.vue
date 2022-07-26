@@ -1,13 +1,31 @@
 <template>
   <div class="pane-counters">
-    <pane-header :paneId="paneId" />
+    <pane-header
+      :paneId="paneId"
+      :settings="() => import('@/components/counters/CountersDialog.vue')"
+    />
     <div class="counters hide-scrollbar">
-      <div v-for="(step, index) in activeSteps" :key="index" v-bind:duration="step.duration" class="counter">
-        <div class="counter__side -buy" v-bind:style="{ width: (step.buy / (step.buy + step.sell)) * 100 + '%' }">
+      <div
+        v-for="(step, index) in activeSteps"
+        :key="index"
+        v-bind:duration="step.duration"
+        class="counter"
+      >
+        <div
+          class="counter__side -buy"
+          v-bind:style="{
+            width: (step.buy / (step.buy + step.sell)) * 100 + '%'
+          }"
+        >
           <span v-if="!countersCount">{{ formatAmount(step.buy) }}</span>
           <span v-else>{{ step.buy }}</span>
         </div>
-        <div class="counter__side -sell" v-bind:style="{ width: (step.sell / (step.buy + step.sell)) * 100 + '%' }">
+        <div
+          class="counter__side -sell"
+          v-bind:style="{
+            width: (step.sell / (step.buy + step.sell)) * 100 + '%'
+          }"
+        >
           <span v-if="!countersCount">{{ formatAmount(step.sell) }}</span>
           <span v-else>{{ step.sell }}</span>
         </div>
@@ -95,7 +113,10 @@ export default class extends Mixins(PaneMixin) {
 
     this.createCounters()
 
-    this._populateCountersInterval = setInterval(this.populateCounters.bind(this), this.countersGranularity)
+    this._populateCountersInterval = setInterval(
+      this.populateCounters.bind(this),
+      this.countersGranularity
+    )
   }
 
   beforeDestroy() {
@@ -206,7 +227,10 @@ export default class extends Mixins(PaneMixin) {
 
     for (let i = 0; i < this._counters.length; i++) {
       if (chunksToDecrease.length) {
-        Array.prototype.push.apply(this._counters[i].chunks, chunksToDecrease.splice(0, chunksToDecrease.length))
+        Array.prototype.push.apply(
+          this._counters[i].chunks,
+          chunksToDecrease.splice(0, chunksToDecrease.length)
+        )
 
         if (!this.steps[i].hasData) {
           this.steps[i].hasData = true
@@ -221,7 +245,10 @@ export default class extends Mixins(PaneMixin) {
       for (let j = 0; j < this._counters[i].chunks.length; j++) {
         decreaseBuy += this._counters[i].chunks[j].buy
         decreaseSell += this._counters[i].chunks[j].sell
-        if (this._counters[i].chunks[j].timestamp >= now - this._counters[i].duration) {
+        if (
+          this._counters[i].chunks[j].timestamp >=
+          now - this._counters[i].duration
+        ) {
           to = j
           break
         }
@@ -255,6 +282,8 @@ export default class extends Mixins(PaneMixin) {
   height: 100%;
   overflow: auto;
   color: white;
+
+  font-family: $font-monospace;
 }
 
 .counter {
@@ -275,12 +304,14 @@ export default class extends Mixins(PaneMixin) {
     text-align: center;
     pointer-events: none;
     line-height: 1;
-    font-family: $font-monospace;
     opacity: 0.5;
+    padding-top: 0.33em;
   }
 
   &:hover:before {
     background-color: black;
+    opacity: 1;
+    font-size: 1em;
   }
 
   &__side {
@@ -295,27 +326,15 @@ export default class extends Mixins(PaneMixin) {
     }
 
     &.-buy {
-      background-color: $green;
+      background-color: var(--theme-buy-base);
+      color: var(--theme-buy-color);
     }
 
     &.-sell {
-      background-color: $red;
+      background-color: var(--theme-sell-base);
+      color: var(--theme-sell-color);
       justify-content: flex-end;
     }
   }
-}
-
-$num: 0;
-
-@while $num < 10 {
-  .counter:nth-child(#{$num}) .counter__side.-buy {
-    background-color: desaturate(darken($green, if($num % 2 == 0, 1 * $num, 0.5 * $num)), $num);
-  }
-
-  .counter:nth-child(#{$num}) .counter__side.-sell {
-    background-color: desaturate(darken($red, if($num % 2 == 0, 1 * $num, 0.5 * $num)), $num);
-  }
-
-  $num: $num + 1;
 }
 </style>

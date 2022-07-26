@@ -2,7 +2,14 @@
   <div class="settings-stats settings-section">
     <div class="column mb16">
       <div class="form-group -fill">
-        <label>Window <i class="icon-info" v-tippy title="Interval in which data is summed (ex: 1m)"></i></label>
+        <label
+          >Window
+          <i
+            class="icon-info"
+            v-tippy
+            title="Interval in which data is summed (ex: 1m)"
+          ></i
+        ></label>
         <input
           type="text"
           class="form-control"
@@ -13,12 +20,18 @@
       </div>
       <div class="form-group -tight">
         <label for="">Graph</label>
-        <label class="checkbox-control checkbox-control-input flex-right" v-tippy="{ placement: 'bottom' }" title="Enable graph">
+        <label
+          class="checkbox-control checkbox-control-input flex-right"
+          v-tippy="{ placement: 'bottom' }"
+          title="Enable graph"
+        >
           <input
             type="checkbox"
             class="form-control"
             :checked="enableChart"
-            @change="$store.commit(paneId + '/TOGGLE_CHART', $event.target.checked)"
+            @change="
+              $store.commit(paneId + '/TOGGLE_CHART', $event.target.checked)
+            "
           />
           <div></div>
         </label>
@@ -28,7 +41,13 @@
     <div class="column">
       <i class="icon-bucket -center mr4"></i>
       <span class="-fill">BUCKETS ({{ buckets.length }})</span>
-      <a href="javascript:void(0);" class="-nowrap -text" v-tippy title="Add a stat" @click="$store.dispatch(paneId + '/createBucket')">
+      <a
+        href="javascript:void(0);"
+        class="-nowrap -text"
+        v-tippy
+        title="Add a stat"
+        @click="$store.dispatch(paneId + '/createBucket')"
+      >
         Add
         <i class="icon-plus ml4 -lower"></i>
       </a>
@@ -36,12 +55,22 @@
 
     <div v-for="bucket in buckets" :key="bucket.id" class="column mt8">
       <div class="form-group -tight">
-        <label class="checkbox-control checkbox-control-input flex-right" v-tippy="{ placement: 'bottom' }" title="Enable bucket">
+        <label
+          class="checkbox-control checkbox-control-input flex-right"
+          v-tippy="{ placement: 'bottom' }"
+          title="Enable bucket"
+        >
           <input
             type="checkbox"
             class="form-control"
             :checked="bucket.enabled"
-            @change="$store.dispatch(paneId + '/updateBucket', { id: bucket.id, prop: 'enabled', value: $event.target.checked })"
+            @change="
+              $store.dispatch(paneId + '/updateBucket', {
+                id: bucket.id,
+                prop: 'enabled',
+                value: $event.target.checked
+              })
+            "
           />
           <div></div>
         </label>
@@ -50,7 +79,9 @@
         {{ bucket.name }}
       </div>
       <div class="form-group -tight">
-        <button class="btn -green" @click="openStat(bucket.id)"><i class="icon-edit"></i></button>
+        <button class="btn -green" @click="openStat(bucket.id)">
+          <i class="icon-edit"></i>
+        </button>
       </div>
     </div>
   </div>
@@ -79,7 +110,9 @@ export default class extends Vue {
   }
 
   get buckets() {
-    return Object.keys(this.$store.state[this.paneId].buckets).map(id => this.$store.state[this.paneId].buckets[id])
+    return Object.keys(this.$store.state[this.paneId].buckets).map(
+      id => this.$store.state[this.paneId].buckets[id]
+    )
   }
 
   get window() {

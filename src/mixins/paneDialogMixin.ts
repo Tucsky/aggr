@@ -26,7 +26,9 @@ export default class PaneDialogMixin extends Vue {
 
     if (!name) {
       if (!name && this.$store.state.panes.panes[this.paneId].markets.length) {
-        const [, pair] = parseMarket(this.$store.state.panes.panes[this.paneId].markets[0])
+        const [, pair] = parseMarket(
+          this.$store.state.panes.panes[this.paneId].markets[0]
+        )
         return pair + ' - ' + this.$store.state.panes.panes[this.paneId].type
       } else {
         return this.paneId
@@ -55,7 +57,11 @@ export default class PaneDialogMixin extends Vue {
     await (this as any).close()
 
     if (!data) {
-      data = JSON.parse(JSON.stringify(panesSettings[this.$store.state.panes.panes[this.paneId].type].state))
+      data = JSON.parse(
+        JSON.stringify(
+          panesSettings[this.$store.state.panes.panes[this.paneId].type].state
+        )
+      )
     }
 
     await this.$store.dispatch('panes/resetPane', { id: this.paneId, data })

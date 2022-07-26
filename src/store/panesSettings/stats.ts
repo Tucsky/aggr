@@ -32,9 +32,32 @@ const state = {
   window: 60000,
   enableChart: false,
   buckets: {
-    trades: { id: 'trades', name: 'TRADES', input: 'cbuy + csell', enabled: true, color: 'rgba(255, 255, 255, .25)', precision: 2, type: 'line' },
-    vold: { id: 'vold', name: 'VOLUME Δ', input: 'vbuy - vsell', enabled: true, color: '#40d745', type: 'area' },
-    tradesd: { id: 'tradesd', name: 'TRADES Δ', input: 'cbuy - csell', enabled: true, color: '#2196f3', precision: 2, type: 'line' },
+    trades: {
+      id: 'trades',
+      name: 'TRADES',
+      input: 'cbuy + csell',
+      enabled: true,
+      color: 'rgba(255, 255, 255, .25)',
+      precision: 2,
+      type: 'line'
+    },
+    vold: {
+      id: 'vold',
+      name: 'VOLUME Δ',
+      input: 'vbuy - vsell',
+      enabled: true,
+      color: '#40d745',
+      type: 'area'
+    },
+    tradesd: {
+      id: 'tradesd',
+      name: 'TRADES Δ',
+      input: 'cbuy - csell',
+      enabled: true,
+      color: '#2196f3',
+      precision: 2,
+      type: 'line'
+    },
     '1hliq': {
       id: '1hliq',
       name: '1H LIQUIDATIONS Δ',

@@ -1,5 +1,10 @@
 <template>
-  <Dialog @clickOutside="close" class="pane-dialog" @mousedown="clickOutsideClose = false" @mouseup="clickOutsideClose = true">
+  <Dialog
+    @clickOutside="close"
+    class="pane-dialog"
+    @mousedown="clickOutsideClose = false"
+    @mouseup="clickOutsideClose = true"
+  >
     <template v-slot:header>
       <div class="title -editable" @dblclick="renamePane" v-text="name"></div>
       <div class="column -center"></div>

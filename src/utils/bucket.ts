@@ -1,8 +1,8 @@
 import { defaultPlotsOptions } from '@/components/chart/options'
-import { Volumes } from '@/types/test'
+import { Volumes } from '@/types/types'
 import { IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts'
 import store from '../store'
-import { hexToRgb, splitRgba } from './colors'
+import { hexToRgb, splitColorCode } from './colors'
 import { getHms } from './helpers'
 
 export type BucketColor = string | ((value: number) => string)
@@ -42,10 +42,15 @@ export default class Bucket {
 
     this.adapter = this.getAdapter(input)
 
-    this.window = (!isNaN(options.window) ? +options.window : store.state[paneId].window) || 60000
+    this.window =
+      (!isNaN(options.window) ? +options.window : store.state[paneId].window) ||
+      60000
     this.precision = options.precision
     this.color = this.parseColor(options.color)
-    this.granularity = Math.max(store.state[paneId].granularity, this.window / 5000)
+    this.granularity = Math.max(
+      store.state[paneId].granularity,
+      this.window / 5000
+    )
     this.type = options.type || 'line'
 
     const windowLabel = getHms(this.window).replace(/^1(\w)$/, '$1')
@@ -62,8 +67,13 @@ export default class Bucket {
   }
 
   getAdapter(str: string) {
-    const litteral = str.replace(/([^.]|^)(vbuy|vsell|cbuy|csell|lbuy|lsell)/g, '$1stats.$2')
-    return new Function('stats', `'use strict'; return ${litteral};`) as (stats: Volumes) => number
+    const litteral = str.replace(
+      /([^.]|^)(vbuy|vsell|cbuy|csell|lbuy|lsell)/g,
+      '$1stats.$2'
+    )
+    return new Function('stats', `'use strict'; return ${litteral};`) as (
+      stats: Volumes
+    ) => number
   }
 
   clear() {
@@ -86,7 +96,10 @@ export default class Bucket {
   onStats(stats: Volumes) {
     const value = this.adapter(stats)
 
-    if (!this.stacks.length || stats.timestamp > this.timestamp + this.granularity) {
+    if (
+      !this.stacks.length ||
+      stats.timestamp > this.timestamp + this.granularity
+    ) {
       this.appendStack(stats.timestamp)
     } else if (this.filled && this.remaining) {
       const p = (stats.timestamp - this.timestamp) / this.granularity
@@ -149,7 +162,10 @@ export default class Bucket {
       return
     }
 
-    const apiMethodName = 'add' + (this.type.charAt(0).toUpperCase() + this.type.slice(1)) + 'Series'
+    const apiMethodName =
+      'add' +
+      (this.type.charAt(0).toUpperCase() + this.type.slice(1)) +
+      'Series'
     const options = Object.assign({}, defaultPlotsOptions[this.type], {
       priceScaleId: this.name,
       title: this.name,
@@ -168,7 +184,11 @@ export default class Bucket {
   updateSerie() {
     const value = this.getValue()
 
-    if (!this.serie || !this.timestamp || (this.type === 'histogram' && !value)) {
+    if (
+      !this.serie ||
+      !this.timestamp ||
+      (this.type === 'histogram' && !value)
+    ) {
       return
     }
 
@@ -197,7 +217,7 @@ export default class Bucket {
       if ((this.color as string).indexOf('#') === 0) {
         ;[r, g, b] = hexToRgb(this.color)
       } else {
-        ;[r, g, b] = splitRgba(this.color)
+        ;[r, g, b] = splitColorCode(this.color)
       }
 
       const topColor = `rgba(${r},${g},${b}, .4)`

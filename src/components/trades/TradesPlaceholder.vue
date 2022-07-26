@@ -5,9 +5,19 @@
     <template v-else>
       <pre v-if="showMore" v-text="paneMarketStringified"></pre>
       <div v-else class="pl16 pr16">
-        <button class="btn -accent mx4 -small" v-for="(pair, index) of pairs" :key="index" disabled>{{ pair }}</button>
+        <button
+          class="btn mx4 -small"
+          v-for="(pair, index) of pairs"
+          :key="index"
+          disabled
+        >
+          {{ pair }}
+        </button>
       </div>
-      <button class="mt8 btn -text trades-placeholder__dimmed -small" @click="toggleShowMore">
+      <button
+        class="mt8 btn -text trades-placeholder__dimmed -small"
+        @click="toggleShowMore"
+      >
         {{ showMore ? 'Show less' : 'Show more' }}
       </button>
     </template>
@@ -81,11 +91,15 @@ export default class extends Vue {
     const minimumLiquidationAmount = this.liquidationsThresholds[0].amount
 
     if (this.tradeType === 'both') {
-      return `Waiting for trades or liquidations > ${formatAmount(minimumTradeAmount)} / ${formatAmount(minimumLiquidationAmount)}`
+      return `Waiting for trades or liquidations > ${formatAmount(
+        minimumTradeAmount
+      )} / ${formatAmount(minimumLiquidationAmount)}`
     } else if (this.tradeType === 'trades') {
       return `Waiting for trades > ${formatAmount(minimumTradeAmount)}`
     } else {
-      return `Waiting for liquidations > ${formatAmount(minimumLiquidationAmount)}`
+      return `Waiting for liquidations > ${formatAmount(
+        minimumLiquidationAmount
+      )}`
     }
   }
 

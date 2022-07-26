@@ -1,10 +1,9 @@
-import { Preset } from '@/types/test'
+import { Preset } from '@/types/types'
 import dialogService from './dialogService'
 import workspacesService from './workspacesService'
 import SettingsImportConfirmation from '../components/settings/ImportConfirmation.vue'
-import IndicatorDialog from '../components/chart/IndicatorDialog.vue'
 import store from '@/store'
-import { slugify } from '../utils/helpers'
+import { slugify, uniqueName } from '../utils/helpers'
 import { IndicatorSettings } from '../store/panesSettings/chart'
 
 class ImportService {
@@ -93,7 +92,7 @@ class ImportService {
     if (
       (await workspacesService.getWorkspace(workspace.id)) &&
       !(await dialogService.confirm({
-        message: `Workspace ${workspace.id} already exists`,
+        message: `Workspace "${workspace.id}" already exists`,
         ok: 'Import anyway',
         cancel: 'Annuler'
       }))
@@ -119,10 +118,13 @@ class ImportService {
     return null
   }
 
-  importIndicator(json) {
+  async importIndicator(json) {
     let chartPaneId
 
-    if (store.state.app.focusedPaneId && store.state.panes.panes[store.state.app.focusedPaneId].type === 'chart') {
+    if (
+      store.state.app.focusedPaneId &&
+      store.state.panes.panes[store.state.app.focusedPaneId].type === 'chart'
+    ) {
       chartPaneId = store.state.app.focusedPaneId
     } else {
       for (const id in store.state.panes.panes) {
@@ -137,13 +139,16 @@ class ImportService {
       throw new Error('No chart found')
     }
 
+    const ids = await workspacesService.getIndicatorsIds()
     const name = json.name
       .split(':')
       .slice(1)
       .join(':')
 
+    const id = uniqueName(slugify(name), ids)
+
     const indicator: IndicatorSettings = {
-      id: slugify(name),
+      id: id,
       name: name,
       script: json.data.script || '',
       options: json.data.options || {},
@@ -153,7 +158,7 @@ class ImportService {
 
     store.dispatch(chartPaneId + '/addIndicator', indicator)
 
-    dialogService.open(IndicatorDialog, { paneId: chartPaneId, indicatorId: indicator.id }, 'indicator')
+    dialogService.openIndicator(chartPaneId, indicator.id)
   }
 
   async importAnything(file: File) {
@@ -212,7 +217,10 @@ class ImportService {
     setTimeout(() => {
       if (id) {
         localStorage.setItem('workspace', id)
-        window.location.href = window.location.href.replace(currentWorkspaceId, '')
+        window.location.href = window.location.href.replace(
+          currentWorkspaceId,
+          ''
+        )
       } else {
         window.location.reload()
       }

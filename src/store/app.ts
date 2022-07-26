@@ -85,7 +85,10 @@ const state = {
 const actions = {
   async boot({ commit, dispatch }) {
     await dispatch('getApiSupportedPairs')
-    commit('SET_API_SUPPORTED_TIMEFRAMES', process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES)
+    commit(
+      'SET_API_SUPPORTED_TIMEFRAMES',
+      process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES
+    )
     commit('SET_VERSION', process.env.VUE_APP_VERSION)
     commit('SET_BUILD_DATE', process.env.VUE_APP_BUILD_DATE)
   },
@@ -182,7 +185,11 @@ const actions = {
     dialogService.open(SearchDialog, { paneId })
   },
   showTimeframe({ commit, state, rootState }) {
-    if (state.showSearch || !state.focusedPaneId || !rootState[state.focusedPaneId]) {
+    if (
+      state.showSearch ||
+      !state.focusedPaneId ||
+      !rootState[state.focusedPaneId]
+    ) {
       return
     }
 
@@ -211,7 +218,11 @@ const mutations = {
     state.isExchangesReady = true
   },
   EXCHANGE_UPDATED(state, exchangeId: string) {
-    Vue.set(state.activeExchanges, exchangeId, !this.state.exchanges[exchangeId].disabled)
+    Vue.set(
+      state.activeExchanges,
+      exchangeId,
+      !this.state.exchanges[exchangeId].disabled
+    )
   },
   TOGGLE_LOADING(state, value) {
     state.isLoading = value ? true : false

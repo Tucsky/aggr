@@ -1,18 +1,32 @@
 <template>
   <div class="indicator" :class="{ '-error': !!error, '-disabled': !visible }">
-    <button type="button" class="indicator__name pane-overlay" @click="edit">{{ name }}</button>
+    <button type="button" class="indicator__name pane-overlay" @click="onClick">
+      {{ name }}
+    </button>
 
     <div class="indicator__controls">
-      <template v-if="!error">
-        <button class="btn -accent" @click="toggleVisibility" :title="visible ? 'Hide' : 'Show'">
-          <i :class="{ 'icon-visible': !visible, 'icon-hidden': visible }"></i>
-        </button>
-        <button class="btn -accent" @click="resize" title="Resize"><i class="icon-resize-height"></i></button>
-        <button class="btn -accent" @click="edit" title="Edit"><i class="icon-edit"></i></button>
-      </template>
-      <button class="btn -accent" @click="remove" title="Disable"><i class="icon-cross"></i></button>
+      <button
+        class="btn"
+        @click="toggleVisibility"
+        :title="visible ? 'Hide' : 'Show'"
+      >
+        <i :class="{ 'icon-visible': !visible, 'icon-hidden': visible }"></i>
+      </button>
+
+      <button
+        class="btn"
+        @click="
+          $emit('action', { indicatorId, actionName: 'menu', event: $event })
+        "
+        title="Menu"
+      >
+        <i class="icon-more"></i>
+      </button>
     </div>
-    <div class="indicator__legend pane-overlay" :id="paneId + indicator.id"></div>
+    <div
+      class="indicator__legend pane-overlay"
+      :id="paneId + indicator.id"
+    ></div>
     <div v-if="error">
       <i class="icon-warning ml4 mr8"></i>
       {{ error }}
@@ -20,55 +34,78 @@
   </div>
 </template>
 
-<script>
-import IndicatorDialog from './IndicatorDialog.vue'
-import dialogService from '../../services/dialogService'
+<script lang="ts">
+import Vue from 'vue'
+import Component from 'vue-class-component'
 
-export default {
-  props: ['paneId', 'indicatorId'],
-  computed: {
-    indicator: function() {
-      return this.$store.state[this.paneId].indicators[this.indicatorId]
+@Component({
+  name: 'IndicatorControl',
+  props: {
+    paneId: {
+      required: true
     },
-    showLegend: function() {
-      return this.$store.state[this.paneId].showLegend
-    },
-    name: function() {
-      if (this.indicator.displayName) {
-        return this.indicator.displayName
-      } else if (this.indicator.name) {
-        return this.indicator.name
-      } else {
-        return this.indicatorId
-      }
-    },
-    visible: function() {
-      return !this.indicator.options || typeof this.indicator.options.visible === 'undefined' ? true : this.indicator.options.visible
-    },
-    error: function() {
-      return this.$store.state[this.paneId].indicatorsErrors[this.indicatorId]
+    indicatorId: {
+      required: true
     }
-  },
-  methods: {
-    edit() {
-      dialogService.open(IndicatorDialog, { paneId: this.paneId, indicatorId: this.indicatorId }, 'indicator')
-    },
-    toggleVisibility() {
-      this.$nextTick(() => {
-        this.$store.dispatch(this.paneId + '/toggleSerieVisibility', this.indicatorId)
+  }
+})
+export default class extends Vue {
+  private paneId: string
+  private indicatorId: string
+
+  get indicator() {
+    return this.$store.state[this.paneId].indicators[this.indicatorId]
+  }
+  get showLegend() {
+    return this.$store.state[this.paneId].showLegend
+  }
+
+  get name() {
+    if (this.indicator.displayName) {
+      return this.indicator.displayName
+    } else if (this.indicator.name) {
+      return this.indicator.name
+    } else {
+      return this.indicatorId
+    }
+  }
+
+  get visible() {
+    return !this.indicator.options ||
+      typeof this.indicator.options.visible === 'undefined'
+      ? true
+      : this.indicator.options.visible
+  }
+
+  get error() {
+    return this.$store.state[this.paneId].indicatorsErrors[this.indicatorId]
+  }
+
+  onClick(event) {
+    if (event.shiftKey) {
+      this.$emit('action', {
+        actionName: 'resize',
+        indicatorId: this.indicatorId
       })
-    },
-    remove() {
-      this.$store.dispatch(this.paneId + '/removeIndicator', { id: this.indicatorId })
-    },
-    resize() {
-      this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING', this.indicatorId)
+
+      return
     }
+
+    this.$emit('action', { indicatorId: this.indicatorId })
+  }
+
+  toggleVisibility() {
+    this.$nextTick(() => {
+      this.$store.dispatch(
+        this.paneId + '/toggleSerieVisibility',
+        this.indicatorId
+      )
+    })
   }
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .indicator {
   display: flex;
   white-space: nowrap;
@@ -84,6 +121,10 @@ export default {
 
   &.-disabled {
     opacity: 0.5;
+
+    .indicator__legend {
+      display: none;
+    }
   }
 
   &__name {
@@ -96,15 +137,16 @@ export default {
   }
 
   &__legend {
-    color: lighten($green, 20%);
+    color: var(--theme-buy-100);
     font-family: $font-monospace;
     pointer-events: none;
     line-height: 1.75em;
     letter-spacing: 0px;
     position: absolute;
     font-size: 0.75em;
-    margin: 0.1em 0 0 1em;
+    margin: 0 0 0 1em;
     left: 100%;
+    padding: 0 0.5em;
   }
 
   &__controls {
@@ -119,7 +161,6 @@ export default {
     }
 
     > .btn {
-      color: white;
       border-radius: 0;
       padding: 0.2em 0.4em;
       font-size: 1em;
@@ -134,13 +175,6 @@ export default {
       display: inline-flex;
       pointer-events: all;
     }
-  }
-}
-
-#app.-light {
-  .indicator__legend {
-    color: darken($green, 10%);
-    text-shadow: none;
   }
 }
 </style>

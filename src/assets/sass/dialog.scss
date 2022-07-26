@@ -9,7 +9,7 @@
   justify-content: center;
   z-index: 10;
   pointer-events: none;
-  
+
   &.-internal-scroll .dialog-body {
     overflow: hidden;
   }
@@ -34,6 +34,7 @@
 
   &.-mask {
     pointer-events: all;
+    background-color: var(--theme-background-o20);
   }
 
   .dialog-content {
@@ -65,7 +66,7 @@
         span {
           display: none;
         }
-        
+
         @media screen and (min-width: 580px) {
           span {
             display: block;
@@ -185,10 +186,6 @@
     }
   }
 
-  .verte-control {
-    margin-left: auto;
-  }
-
   .dialog-controls {
     display: flex;
     align-items: flex-start;
@@ -205,11 +202,7 @@
       align-self: stretch;
 
       &:hover {
-        background-color: rgba(white, 0.02);
-      }
-
-      &:active {
-        background-color: rgba(black, 0.1);
+        background-color: var(--theme-color-o10);
       }
 
       > i {

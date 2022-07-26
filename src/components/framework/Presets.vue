@@ -1,49 +1,66 @@
 <template>
-  <dropdown
-    :options="presets"
-    @output="onSelect"
-    @open="bindPaste"
-    @close="unbindPaste"
-    :placeholder="label"
-    class="mrauto"
-    selectionClass="ml0 -green -arrow"
+  <button
+    type="button"
+    class="btn -green -arrow mrauto"
+    @click="toggleDropdown"
   >
-    <template v-slot:option-custom>
-      <div class="column" @mousedown.prevent>
-        <div class="btn -green" @click="savePreset()"><i class="icon-plus"></i></div>
-        <div class="btn -blue -file">
-          <i class="icon-upload"></i>
-          <input type="file" @change="handleFile" />
+    Presets
+    <dropdown
+      v-model="dropdownTrigger"
+      @input="$event ? bindPaste : unbindPaste"
+    >
+      <div class="d-flex btn-group" @click.stop>
+        <div class="btn -green" @click="savePreset()">
+          <i class="icon-plus mr8"></i>
+          <small>new</small>
         </div>
-        <div class="btn -red" @click="applyDefault"><i class="icon-eraser"></i><span class="ml8">Reset</span></div>
+        <div class="btn -blue -file">
+          <i class="icon-upload mr8"></i>
+          <small>import</small>
+          <input type="file" @change="handleFile" title="Browse" />
+        </div>
+        <div class="-fill"></div>
+        <div class="btn -red flex-grow-1 flex-right" @click="applyDefault">
+          <i class="icon-eraser mr8"></i>
+          <small>Reset</small>
+        </div>
       </div>
-    </template>
-    <template v-slot:option="{ value }">
-      <i v-if="value.icon" :class="'-lower icon-' + value.icon"></i>
+      <div
+        v-for="preset in presets"
+        :key="preset.id"
+        class="dropdown-item"
+        @click="selectPreset(preset.id)"
+      >
+        <span class="mr8">{{ preset.label }}</span>
 
-      <span class="mr4">{{ value.label }}</span>
-
-      <button type="button" class="dropdown-option__action btn -accent -small mlauto" @mousedown.prevent @click="openPreset(value.id, value.label)">
-        <i class="icon-edit"></i>
-      </button>
-      <button type="button" class="dropdown-option__action btn -accent -small" @mousedown.prevent @click="deletePreset(value)">
-        <i class="icon-trash"></i>
-      </button>
-    </template>
-  </dropdown>
+        <button
+          type="button"
+          class="dropdown-option__action btn -small mlauto -text"
+          @click.stop="openPreset(preset.id, preset.label)"
+        >
+          <i class="icon-edit"></i>
+        </button>
+        <button
+          type="button"
+          class="dropdown-option__action btn -small ml4 -text"
+          @click.stop="deletePreset(preset)"
+        >
+          <i class="icon-trash"></i>
+        </button>
+      </div>
+    </dropdown>
+  </button>
 </template>
 
 <script lang="ts">
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import importService from '@/services/importService'
-import { Preset, PresetType } from '@/types/test'
+import { Preset, PresetType } from '@/types/types'
 import { Component, Vue } from 'vue-property-decorator'
-import Dropdown from '@/components/framework/Dropdown.vue'
 import PresetDialog from '../settings/PresetDialog.vue'
 
 @Component({
-  components: { Dropdown },
   props: {
     type: {
       required: true
@@ -59,12 +76,8 @@ import PresetDialog from '../settings/PresetDialog.vue'
 export default class extends Vue {
   type: PresetType
   adapter: Function
-
-  presets = [
-    {
-      id: 'custom'
-    }
-  ] as any
+  dropdownTrigger = null
+  presets = []
 
   private _pasteHandler: (event: Event) => void
 
@@ -76,25 +89,29 @@ export default class extends Vue {
     this.unbindPaste()
   }
 
-  async getPresets() {
-    this.presets.splice(1, this.presets.length)
-
-    const keys = (await workspacesService.getPresetsKeysByType(this.type)) as string[]
-
-    for (let i = 0; i < keys.length; i++) {
-      this.presets.push({
-        id: keys[i],
-        label: keys[i].split(':').pop()
-      })
+  toggleDropdown(event) {
+    if (!this.dropdownTrigger) {
+      this.dropdownTrigger = event.currentTarget
+    } else {
+      this.dropdownTrigger = null
     }
   }
 
-  async onSelect(index) {
-    if (typeof this.presets[index].click === 'function') {
-      return
-    }
+  async getPresets() {
+    this.presets.splice(1, this.presets.length)
 
-    const preset = await workspacesService.getPreset(this.presets[index].id)
+    const keys = (await workspacesService.getPresetsKeysByType(
+      this.type
+    )) as string[]
+
+    this.presets = keys.map(key => ({
+      id: key,
+      label: key.split(':').pop()
+    }))
+  }
+
+  async selectPreset(key) {
+    const preset = await workspacesService.getPreset(key)
 
     this.applyPreset(preset)
   }
@@ -102,7 +119,9 @@ export default class extends Vue {
   async openPreset(id: string, name: string) {
     const preset = await workspacesService.getPreset(id)
 
-    const postClose = await dialogService.openAsPromise(PresetDialog, { preset })
+    const postClose = await dialogService.openAsPromise(PresetDialog, {
+      preset
+    })
 
     if (postClose === 'replace') {
       this.savePreset(name)
@@ -118,7 +137,11 @@ export default class extends Vue {
 
     if (!name || typeof name !== 'string') {
       name = await dialogService.prompt('Enter a name')
-    } else if (!(await dialogService.confirm(`Override preset ${name} with current settings ?`))) {
+    } else if (
+      !(await dialogService.confirm(
+        `Override preset ${name} with current settings ?`
+      ))
+    ) {
       return
     }
 
@@ -131,7 +154,9 @@ export default class extends Vue {
     if (!data) {
       this.$store.dispatch('app/showNotice', {
         type: 'error',
-        title: isOverride ? `Canceled preset override` : `Canceled preset creation`
+        title: isOverride
+          ? `Canceled preset override`
+          : `Canceled preset creation`
       })
 
       return
@@ -161,7 +186,11 @@ export default class extends Vue {
   }
 
   async applyDefault() {
-    if (await dialogService.confirm('Reset ' + this.type + ' to default settings ?')) {
+    if (
+      await dialogService.confirm(
+        'Reset ' + this.type + ' to default settings ?'
+      )
+    ) {
       this.$emit('apply')
     }
   }
@@ -190,7 +219,7 @@ export default class extends Vue {
   }
 
   async deletePreset(preset) {
-    if (await dialogService.confirm('Remove preset ' + preset.label + ' ?')) {
+    if (await dialogService.confirm('Remove preset "' + preset.label + '" ?')) {
       await workspacesService.removePreset(preset.id)
       await this.getPresets()
     }
@@ -216,7 +245,10 @@ export default class extends Vue {
 
   async onPaste(event) {
     if (document.activeElement) {
-      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+      if (
+        document.activeElement.tagName === 'INPUT' ||
+        document.activeElement.tagName === 'TEXTAREA'
+      ) {
         return
       }
     }

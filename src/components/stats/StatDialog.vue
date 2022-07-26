@@ -6,20 +6,17 @@
         <div class="subtitle">{{ name }}</div>
       </div>
 
-      <dropdown
-        class="form-control -left -center w-auto"
-        :selected="type"
-        label="Type"
+      <dropdown-button
+        v-model="type"
         :options="availableTypes"
-        placeholder="type"
-        @output="
+        @input="
           $store.dispatch(paneId + '/updateBucket', {
             id: bucketId,
             prop: 'type',
             value: $event
           })
         "
-      ></dropdown>
+      ></dropdown-button>
     </template>
     <div class="column mb8">
       <div class="form-group -fill">
@@ -36,11 +33,12 @@
           "
         />
       </div>
-      <div v-if="!conditionnalColor" class="form-group -end mtauto -tight" ref="colorContainer">
-        <verte
-          picker="square"
-          menuPosition="left"
-          model="rgb"
+      <div
+        v-if="!conditionnalColor"
+        class="form-group -end mtauto -tight"
+        ref="colorContainer"
+      >
+        <color-picker-control
           :value="color"
           @input="
             $store.dispatch(paneId + '/updateBucket', {
@@ -49,22 +47,35 @@
               value: $event
             })
           "
-        ></verte>
+        ></color-picker-control>
       </div>
       <div v-if="type === 'histogram'" class="form-group -tight -end mtauto">
-        <label class="checkbox-control checkbox-control-input -auto flex-right" v-tippy="{ placement: 'bottom' }" title="Enable onditionnal color">
+        <label
+          class="checkbox-control checkbox-control-input -auto flex-right"
+          v-tippy="{ placement: 'bottom' }"
+          title="Enable onditionnal color"
+        >
           <input
             type="checkbox"
             class="form-control"
             :checked="conditionnalColor"
-            @change="$store.commit(paneId + '/TOGGLE_BUCKET_COLOR_CONDITION', bucketId)"
+            @change="
+              $store.commit(paneId + '/TOGGLE_BUCKET_COLOR_CONDITION', bucketId)
+            "
           />
           <div on="dynamic" off="fixed"></div>
         </label>
       </div>
     </div>
     <div v-if="conditionnalColor" class="form-group mb8">
-      <label for>Color condition <span class="icon-info" title="ex: value > 0 ? 'red' : 'white'" v-tippy></span></label>
+      <label for
+        >Color condition
+        <span
+          class="icon-info"
+          title="ex: value > 0 ? 'red' : 'white'"
+          v-tippy
+        ></span
+      ></label>
       <textarea
         class="form-control"
         rows="2"
@@ -83,7 +94,11 @@
       <div class="form-group mb8">
         <label>
           Window (m)
-          <span class="icon-info" title="Sum over given interval (ex: 30s or 10m or 1h)" v-tippy></span>
+          <span
+            class="icon-info"
+            title="Sum over given interval (ex: 30s or 10m or 1h)"
+            v-tippy
+          ></span>
         </label>
         <input
           type="text"
@@ -107,8 +122,8 @@
         <editable
           class="form-control"
           placeholder="auto"
-          :content="precision"
-          @output="
+          :value="precision"
+          @input="
             $store.dispatch(paneId + '/updateBucket', {
               id: bucketId,
               prop: 'precision',
@@ -147,7 +162,12 @@
     <hr />
     <div class="column">
       <div class="form-group">
-        <label class="checkbox-control" v-tippy="{ placement: 'bottom' }" :title="enabled ? 'Disable' : 'Enable'" @change="disable(bucketId, $event)">
+        <label
+          class="checkbox-control"
+          v-tippy="{ placement: 'bottom' }"
+          :title="enabled ? 'Disable' : 'Enable'"
+          @change="disable(bucketId, $event)"
+        >
           <input type="checkbox" class="form-control" :checked="enabled" />
           <div></div>
           <span>
@@ -168,20 +188,31 @@ import { getHms } from '@/utils/helpers'
 
 import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
+import DropdownButton from '@/components/framework/DropdownButton.vue'
+import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
 
 export default {
   props: ['paneId', 'bucketId'],
   mixins: [DialogMixin],
   components: {
-    Dialog
+    Dialog,
+    DropdownButton,
+    ColorPickerControl
   },
   computed: {
     color: function() {
       return store.state[this.paneId].buckets[this.bucketId].color
     },
     conditionnalColor: function() {
-      if (typeof store.state[this.paneId].buckets[this.bucketId].conditionnalColor === 'undefined') {
-        this.$set(store.state[this.paneId].buckets[this.bucketId], 'conditionnalColor', false)
+      if (
+        typeof store.state[this.paneId].buckets[this.bucketId]
+          .conditionnalColor === 'undefined'
+      ) {
+        this.$set(
+          store.state[this.paneId].buckets[this.bucketId],
+          'conditionnalColor',
+          false
+        )
       }
 
       return store.state[this.paneId].buckets[this.bucketId].conditionnalColor
@@ -219,7 +250,11 @@ export default {
       return getHms(value)
     },
     disable(id, event) {
-      this.$store.dispatch(this.paneId + '/updateBucket', { id: id, prop: 'enabled', value: event.target.checked })
+      this.$store.dispatch(this.paneId + '/updateBucket', {
+        id: id,
+        prop: 'enabled',
+        value: event.target.checked
+      })
       this.close()
     },
     async remove() {

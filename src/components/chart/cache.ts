@@ -27,7 +27,10 @@ export default class ChartCache {
   saveChunk(chunk) {
     let index
 
-    if (!this.chunks.length || this.chunks[this.chunks.length - 1].to < chunk.from) {
+    if (
+      !this.chunks.length ||
+      this.chunks[this.chunks.length - 1].to < chunk.from
+    ) {
       index = this.chunks.push(chunk) - 1
     } else if (this.chunks[0].from > chunk.to) {
       this.chunks.unshift(chunk)
@@ -64,7 +67,9 @@ export default class ChartCache {
     let reduced = false
 
     while (this.chunks[0] && this.chunks[0].to < end) {
-      console.debug(`[chart.cache] trim chunk (${this.chunks[0].bars.length} bars)`)
+      console.debug(
+        `[chart.cache] trim chunk (${this.chunks[0].bars.length} bars)`
+      )
       this.chunks.splice(0, 1)
 
       reduced = true

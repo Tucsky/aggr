@@ -3,16 +3,26 @@ import store from '@/store'
 const DAY = 60 * 60 * 24
 
 export function ago(timestamp) {
+  if (!timestamp) {
+    return '0s'
+  }
+
   const seconds = Math.floor((Date.now() - timestamp) / 1000)
   let interval, output
 
-  if ((interval = Math.floor(seconds / 31536000)) > 1) output = interval + 'yr'
-  else if ((interval = Math.floor(seconds / 2592000)) >= 1) output = interval + 'mo'
-  else if ((interval = Math.floor(seconds / 86400)) >= 1) output = interval + 'd'
-  else if ((interval = Math.floor(seconds / 3600)) >= 1) output = interval + 'h'
-  else if ((interval = Math.floor(seconds / 60)) >= 1) output = interval + 'm'
-  else output = Math.ceil(seconds) + 's'
-
+  if ((interval = Math.floor(seconds / 31536000)) > 1) {
+    output = interval + 'yr'
+  } else if ((interval = Math.floor(seconds / 2592000)) >= 1) {
+    output = interval + 'mo'
+  } else if ((interval = Math.floor(seconds / 86400)) >= 1) {
+    output = interval + 'd'
+  } else if ((interval = Math.floor(seconds / 3600)) >= 1) {
+    output = interval + 'h'
+  } else if ((interval = Math.floor(seconds / 60)) >= 1) {
+    output = interval + 'm'
+  } else {
+    output = Math.ceil(seconds) + 's'
+  }
   return output
 }
 
@@ -31,13 +41,29 @@ export function getHms(timestamp, round = false) {
 
   let output = ''
 
-  output += (!round || !output.length) && d > 0 ? (output.length ? ', ' : '') + isNegPrefix + d + 'd' : ''
-  output += (!round || !output.length) && h > 0 ? (output.length ? ', ' : '') + isNegPrefix + h + 'h' : ''
-  output += (!round || !output.length) && m > 0 ? (output.length ? ', ' : '') + isNegPrefix + m + 'm' : ''
-  output += (!round || !output.length) && s > 0 ? (output.length ? ', ' : '') + isNegPrefix + s + 's' : ''
+  output +=
+    (!round || !output.length) && d > 0
+      ? (output.length ? ', ' : '') + isNegPrefix + d + 'd'
+      : ''
+  output +=
+    (!round || !output.length) && h > 0
+      ? (output.length ? ', ' : '') + isNegPrefix + h + 'h'
+      : ''
+  output +=
+    (!round || !output.length) && m > 0
+      ? (output.length ? ', ' : '') + isNegPrefix + m + 'm'
+      : ''
+  output +=
+    (!round || !output.length) && s > 0
+      ? (output.length ? ', ' : '') + isNegPrefix + s + 's'
+      : ''
 
-  if (!output.length || (!round && timestamp < 60 * 1000 && timestamp > s * 1000))
-    output += (output.length ? ', ' : '') + isNegPrefix + (timestamp - s * 1000) + 'ms'
+  if (
+    !output.length ||
+    (!round && timestamp < 60 * 1000 && timestamp > s * 1000)
+  )
+    output +=
+      (output.length ? ', ' : '') + isNegPrefix + (timestamp - s * 1000) + 'ms'
 
   return output.trim()
 }
@@ -56,7 +82,10 @@ export function getHmsFull(timestamp, round = false) {
   return output
 }
 
-export function randomString(length = 16, characters = 'abcdefghijklmnopqrstuvwxyz0123456789') {
+export function randomString(
+  length = 16,
+  characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
+) {
   let output = ``
 
   const charactersLength = characters.length
@@ -68,20 +97,11 @@ export function randomString(length = 16, characters = 'abcdefghijklmnopqrstuvwx
   return output
 }
 
-export function uniqueName(name, names) {
-  const base = name.substr()
-  let variante = 1
-
-  while (names.indexOf(name) !== -1) {
-    name = base + ++variante
-  }
-
-  return name
-}
-
 export const slugify = string => {
-  const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;'
-  const b = 'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz------'
+  const a =
+    'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;'
+  const b =
+    'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz------'
   const p = new RegExp(a.split('').join('|'), 'g')
 
   return string
@@ -108,7 +128,9 @@ export const downloadAnything = (data, filename) => {
   if (data instanceof Blob) {
     href = URL.createObjectURL(data)
   } else if (typeof data === 'object') {
-    href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data, null, 2))
+    href =
+      'data:text/json;charset=utf-8,' +
+      encodeURIComponent(JSON.stringify(data, null, 2))
   } else if (typeof data === 'string') {
     href = 'data:text/json;charset=utf-8,' + encodeURIComponent(data)
   }
@@ -118,6 +140,27 @@ export const downloadAnything = (data, filename) => {
   document.body.appendChild(downloadAnchorNode)
   downloadAnchorNode.click()
   downloadAnchorNode.remove()
+}
+
+export function uniqueName(name, names, slug?: boolean, suffix = ' copy 1') {
+  while (!name || names.indexOf(name) !== -1) {
+    if (!name) {
+      // random alphanum
+      name = randomString(4)
+    } else {
+      // id + 1 (myworkspace1 then myworkspace2 then myworkspace3 etc)
+      if (!/\d$/.test(name)) {
+        name = name + suffix
+      } else {
+        name = name.replace(
+          /\d+$/,
+          (+((name.match(/\d+$/) as string[]) || ['0'])[0] + 1).toString()
+        )
+      }
+    }
+  }
+
+  return slug ? slugify(name) : name
 }
 
 export function sleep(duration = 1000): Promise<void> {
@@ -147,7 +190,12 @@ export function openBase64InNewTab(data, mimeType) {
   window.open(fileURL)
 }
 
-export function findClosingBracketMatchIndex(str, pos, open = /\(/, close = /\)/) {
+export function findClosingBracketMatchIndex(
+  str,
+  pos,
+  open = /\(/,
+  close = /\)/
+) {
   if (!open.test(str[pos])) {
     throw new Error('No ' + open.toString() + ' at index ' + pos)
   }
@@ -166,16 +214,30 @@ export function findClosingBracketMatchIndex(str, pos, open = /\(/, close = /\)/
   return -1 // No matching closing parenthesis
 }
 
-export function parseFunctionArguments(str, trimArguments = true, maxIterations = 100) {
+export function parseFunctionArguments(
+  str,
+  trimArguments = true,
+  maxIterations = 100
+) {
   const PARANTHESIS_REGEX = /\(|{|\[/g
   let paranthesisMatch
   let iteration = 0
   do {
     if ((paranthesisMatch = PARANTHESIS_REGEX.exec(str))) {
       iteration++
-      const closingParenthesisIndex = findClosingBracketMatchIndex(str, paranthesisMatch.index, /\(|{|\[/, /\)|}|\]/)
-      const contentWithinParenthesis = str.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/,/g, '#COMMA#')
-      str = str.slice(0, paranthesisMatch.index + 1) + contentWithinParenthesis + str.slice(closingParenthesisIndex, str.length)
+      const closingParenthesisIndex = findClosingBracketMatchIndex(
+        str,
+        paranthesisMatch.index,
+        /\(|{|\[/,
+        /\)|}|\]/
+      )
+      const contentWithinParenthesis = str
+        .slice(paranthesisMatch.index + 1, closingParenthesisIndex)
+        .replace(/,/g, '#COMMA#')
+      str =
+        str.slice(0, paranthesisMatch.index + 1) +
+        contentWithinParenthesis +
+        str.slice(closingParenthesisIndex, str.length)
     }
   } while (paranthesisMatch && iteration < maxIterations)
 
@@ -259,6 +321,10 @@ export function copyTextToClipboard(text) {
 }
 
 export function getTimeframeForHuman(timeframe, full?: boolean) {
+  if (timeframe === null) {
+    return 'ERR'
+  }
+
   const normalized = timeframe.toString().trim()
 
   if (normalized[normalized.length - 1] === 't') {
@@ -290,7 +356,9 @@ export function getScrollParent(node) {
 }
 
 export function getSiblings(elem) {
-  return Array.prototype.filter.call(elem.parentNode.children, function(sibling) {
+  return Array.prototype.filter.call(elem.parentNode.children, function(
+    sibling
+  ) {
     return sibling !== elem
   })
 }
@@ -299,7 +367,11 @@ export function isOddTimeframe(timeframe) {
   return DAY % timeframe !== 0 && timeframe < DAY
 }
 
-export function floorTimestampToTimeframe(timestamp: number, timeframe: number, isOdd?: boolean) {
+export function floorTimestampToTimeframe(
+  timestamp: number,
+  timeframe: number,
+  isOdd?: boolean
+) {
   if (typeof isOdd === 'undefined') {
     isOdd = isOddTimeframe(timeframe)
   }
@@ -361,4 +433,44 @@ export function getApiUrl(path: string): string {
   }
 
   return base + path
+}
+
+export function getEventCords(event) {
+  if (event.type.match(/^touch/i)) {
+    const touch = event.touches[0]
+    return { x: touch.clientX, y: touch.clientY }
+  }
+  if (event.type.match(/^mouse/i)) {
+    return { x: event.clientX, y: event.clientY }
+  }
+  return { x: 0, y: 0 }
+}
+
+export function debounce(func, immediate = false) {
+  let timeout
+  return function(...args) {
+    const later = (...args) => {
+      timeout = null
+
+      if (!immediate) {
+        func(...args)
+      }
+    }
+
+    const callNow = immediate && !timeout
+
+    window.cancelAnimationFrame(timeout)
+
+    timeout = window.requestAnimationFrame(later)
+
+    if (callNow) {
+      func(...args)
+    }
+  }
+}
+
+export function getClosestValue(array, value) {
+  return array.reduce((prev, curr) => {
+    return Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+  })
 }

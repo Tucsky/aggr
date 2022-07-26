@@ -24,15 +24,23 @@ export default class extends Exchange {
     const riskLimits = data.data.riskLimits
     for (const product of data.data.products) {
       if (product.type === 'Perpetual') {
+        const quoteCurrency = currencies.find(
+          c => c.currency === product.quoteCurrency
+        )
+        const settleCurrency = currencies.find(
+          c => c.currency === product.settleCurrency
+        )
         specs[product.symbol] = {
           type: product.type,
           contractSize: product.contractSize,
           settleCurrency: product.settleCurrency,
           quoteCurrency: product.quoteCurrency,
-          valueScale: currencies.filter(c => c.currency === product.settleCurrency)[0].valueScale,
-          priceScale: currencies.filter(c => c.currency === product.quoteCurrency)[0].valueScale,
+          valueScale: settleCurrency ? settleCurrency.valueScale : 1,
+          priceScale: quoteCurrency ? quoteCurrency.valueScale : 1,
           ratioScale: data.data.ratioScale,
-          riskLimits: riskLimits.filter(rl => rl.symbol === product.symbol).map(rl => ({ steps: rl.steps, riskLimits: rl.riskLimits })),
+          riskLimits: riskLimits
+            .filter(rl => rl.symbol === product.symbol)
+            .map(rl => ({ steps: rl.steps, riskLimits: rl.riskLimits })),
           minPriceEp: product.minPricEp,
           maxPriceEp: product.maxPriceEp,
           lotSize: product.lotSize,
@@ -40,12 +48,18 @@ export default class extends Exchange {
           maxOrderQty: product.maxOrderQty
         }
       } else if (product.type === 'Spot') {
+        const quoteCurrency = currencies.find(
+          c => c.currency === product.quoteCurrency
+        )
+        const baseCurrency = currencies.find(
+          c => c.currency === product.baseCurrency
+        )
         specs[product.symbol] = {
           type: product.type,
           maxBaseOrderSizeEv: product.maxBaseOrderSizeEv,
           minOrderValueEv: product.minOrderValueEv,
-          valueScale: currencies.filter(c => c.currency === product.quoteCurrency)[0].valueScale,
-          priceScale: currencies.filter(c => c.currency === product.baseCurrency)[0].valueScale,
+          valueScale: quoteCurrency ? quoteCurrency.valueScale : 1,
+          priceScale: baseCurrency ? baseCurrency.valueScale : 1,
           ratioScale: data.data.ratioScale
         }
       }
@@ -118,14 +132,23 @@ export default class extends Exchange {
           size: 0
         }
         if (tradeType === 'Perpetual') {
-          trade.price = +(t[2] / Math.pow(10, this.specs[json.symbol].priceScale))
+          trade.price = +(
+            t[2] / Math.pow(10, this.specs[json.symbol].priceScale)
+          )
           trade.size = +(t[3] * this.specs[json.symbol].contractSize)
-          if (this.specs[json.symbol].settleCurrency !== this.specs[json.symbol].quoteCurrency) {
+          if (
+            this.specs[json.symbol].settleCurrency !==
+            this.specs[json.symbol].quoteCurrency
+          ) {
             trade.size /= trade.price
           }
         } else if (tradeType === 'Spot') {
-          ;(trade.price = +(t[2] / Math.pow(10, this.specs[json.symbol].priceScale))),
-            (trade.size = +(t[3] / Math.pow(10, this.specs[json.symbol].valueScale)))
+          ;(trade.price = +(
+            t[2] / Math.pow(10, this.specs[json.symbol].priceScale)
+          )),
+            (trade.size = +(
+              t[3] / Math.pow(10, this.specs[json.symbol].valueScale)
+            ))
         }
         return trade
       })
@@ -135,7 +158,11 @@ export default class extends Exchange {
     }
   }
   onApiCreated(api) {
-    this.startKeepAlive(api, { method: 'server.ping', id: 9000, params: [] }, 5000)
+    this.startKeepAlive(
+      api,
+      { method: 'server.ping', id: 9000, params: [] },
+      5000
+    )
   }
 
   onApiRemoved(api) {

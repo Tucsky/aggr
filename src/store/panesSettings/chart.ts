@@ -1,11 +1,17 @@
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import { sleep, slugify, uniqueName } from '@/utils/helpers'
+import { downloadAnything, sleep, slugify, uniqueName } from '@/utils/helpers'
 import { scheduleSync, syncState } from '@/utils/store'
-import { PriceScaleMargins, PriceScaleMode, SeriesOptions, SeriesType } from 'lightweight-charts'
+import {
+  PriceScaleMargins,
+  PriceScaleMode,
+  SeriesOptions,
+  SeriesType
+} from 'lightweight-charts'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '..'
+import merge from 'lodash.merge'
 
 export interface PriceScaleSettings {
   scaleMargins?: PriceScaleMargins
@@ -126,12 +132,64 @@ const actions = {
 
     return indicator.id
   },
+
+  duplicateIndicator({ state, dispatch }, id) {
+    const indicator = merge({}, state.indicators[id])
+
+    const indicators = Object.values(state.indicators)
+
+    indicator.name = uniqueName(
+      indicator.name,
+      indicators.map(indicator => indicator.name)
+    )
+
+    indicator.id = slugify(indicator.name)
+
+    delete indicator.updatedAt
+    delete indicator.createdAt
+    delete indicator.enabled
+
+    dispatch('addIndicator', indicator)
+  },
+
+  async downloadIndicator({ state }, indicatorId) {
+    const indicator = state.indicators[indicatorId]
+
+    const priceScale = state.priceScales[indicator.options.priceScaleId] || {}
+
+    const exportableIndicator = Object.assign(
+      {},
+      indicator.options,
+      priceScale
+        ? {
+            scaleMargins: priceScale.scaleMargins
+          }
+        : {}
+    )
+
+    await downloadAnything(
+      {
+        type: 'indicator',
+        name: 'indicator:' + indicator.name,
+        data: {
+          options: exportableIndicator,
+          description: indicator.description,
+          script: indicator.script
+        }
+      },
+      'indicator_' + indicatorId
+    )
+  },
+
   toggleSerieVisibility({ commit, state }, id) {
     commit('SET_INDICATOR_OPTION', {
       id,
       key: 'visible',
       value:
-        !state.indicators[id].options || typeof state.indicators[id].options.visible === 'undefined' ? false : !state.indicators[id].options.visible
+        !state.indicators[id].options ||
+        typeof state.indicators[id].options.visible === 'undefined'
+          ? false
+          : !state.indicators[id].options.visible
     })
   },
   setIndicatorOption({ commit, state }, { id, key, value, silent }) {
@@ -154,22 +212,39 @@ const actions = {
       commit('UPDATE_INDICATOR_DISPLAY_NAME', id)
     }
   },
-  async removeIndicator({ state, commit, dispatch }, { id, confirm = true }: { id: string; confirm?: boolean }) {
-    if (dialogService.mountedComponents.indicator && dialogService.mountedComponents.indicator.indicatorId === id) {
+  async removeIndicator(
+    { state, commit, dispatch },
+    { id, confirm = true }: { id: string; confirm?: boolean }
+  ) {
+    if (
+      dialogService.mountedComponents.indicator &&
+      dialogService.mountedComponents.indicator.indicatorId === id
+    ) {
       await dialogService.mountedComponents.indicator.close()
     }
 
-    if (
-      state.indicators[id].unsavedChanges &&
-      confirm &&
-      (await dialogService.confirm({
+    if (state.indicators[id].unsavedChanges && confirm) {
+      const output = await dialogService.confirm({
         title: 'Save changes ?',
-        message: `This indicator has unsaved changes.\nClick save to update ${id} across workspace`,
-        cancel: 'DISCARD',
-        ok: 'SAVE'
-      }))
-    ) {
-      await dispatch('saveIndicator', id)
+        message: `This indicator has <strong>unsaved changes <i class="icon-warning"></i></strong>`,
+        cancel: 'DISCARD CHANGES',
+        ok: 'SAVE',
+        actions: [
+          {
+            label: 'Cancel',
+            callback: () => 2
+          }
+        ],
+        html: true
+      })
+
+      if (output === null || output === 2) {
+        return
+      }
+
+      if (output) {
+        await dispatch('saveIndicator', id)
+      }
     }
 
     commit('REMOVE_INDICATOR', id)
@@ -193,20 +268,22 @@ const actions = {
     commit('ADD_INDICATOR', indicator)
 
     dispatch('removeIndicator', { id, confirm: false })
-
-    if (/{.*}/.test(state.indicators[newId].name)) {
-      commit('UPDATE_INDICATOR_DISPLAY_NAME', newId)
-    }
+    commit('UPDATE_INDICATOR_DISPLAY_NAME', newId)
 
     return newId
   },
   transferIndicator({ state, rootState }, indicator: IndicatorSettings) {
     for (const paneId in rootState.panes.panes) {
-      if (paneId === state._id || rootState.panes.panes[paneId].type !== 'chart') {
+      if (
+        paneId === state._id ||
+        rootState.panes.panes[paneId].type !== 'chart'
+      ) {
         continue
       }
 
-      const otherPaneIndicator = rootState[paneId].indicators[indicator.id] as IndicatorSettings
+      const otherPaneIndicator = rootState[paneId].indicators[
+        indicator.id
+      ] as IndicatorSettings
 
       if (!otherPaneIndicator.unsavedChanges) {
         otherPaneIndicator.options = indicator.options
@@ -215,7 +292,13 @@ const actions = {
       }
     }
   },
-  async setIndicatorNavigationState({ state }, { id, navigationState }: { id: string; navigationState: IndicatorNavigationState }) {
+  async setIndicatorNavigationState(
+    { state },
+    {
+      id,
+      navigationState
+    }: { id: string; navigationState: IndicatorNavigationState }
+  ) {
     state.indicators[id].navigationState = navigationState
     syncState(state)
   },
@@ -233,8 +316,14 @@ const actions = {
     state.indicators[indicatorId] = savedIndicator
     commit('SET_INDICATOR_SCRIPT', { id: indicatorId })
   },
-  toggleMarkets({ state, rootState, commit }, { type, id, inverse }: { type: string; id: string; inverse: boolean }) {
-    const containsHidden = typeof rootState.panes.panes[state._id].markets.find(market => state.hiddenMarkets[market] === true) !== 'undefined'
+  toggleMarkets(
+    { state, rootState, commit },
+    { type, id, inverse }: { type: string; id: string; inverse: boolean }
+  ) {
+    const containsHidden =
+      typeof rootState.panes.panes[state._id].markets.find(
+        market => state.hiddenMarkets[market] === true
+      ) !== 'undefined'
 
     for (const market of rootState.panes.panes[state._id].markets) {
       const isHidden = state.hiddenMarkets[market] === true
@@ -372,7 +461,10 @@ const mutations = {
     state.forceNormalizePrice = !state.forceNormalizePrice
   },
   UPDATE_INDICATOR_DISPLAY_NAME(state, id) {
-    const displayName = state.indicators[id].name.replace(/\{([\w\d_]+)\}/g, (match, key) => state.indicators[id].options[key] || '')
+    const displayName = state.indicators[id].name.replace(
+      /\{([\w\d_]+)\}/g,
+      (match, key) => state.indicators[id].options[key] || ''
+    )
     Vue.set(state.indicators[id], 'displayName', displayName)
   },
   TOGGLE_MARKET(state, marketId) {

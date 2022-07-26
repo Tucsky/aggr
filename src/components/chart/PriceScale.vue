@@ -1,21 +1,37 @@
 <template>
-  <div class="chart-pricescale" :style="{ top: roundedTop + '%', bottom: roundedBottom + '%' }" :class="{ '-active': !!currentSide }">
+  <div
+    class="chart-pricescale"
+    :style="{ top: roundedTop + '%', bottom: roundedBottom + '%' }"
+    :class="{ '-active': !!currentSide }"
+  >
     <div class="chart-pricescale__content">
-      <div class="chart-pricescale__title pane-overlay" @mousedown="handleMove" @touchstart="handleMove">
+      <div
+        class="chart-pricescale__title pane-overlay"
+        @mousedown="handleMove"
+        @touchstart="handleMove"
+      >
         <i class="icon-move mr8"></i> {{ priceScale.indicators.join(', ') }}
-        <span v-if="priceScaleId === 'right'" title="Main scale" v-tippy class="ml4">👑</span>
-
-        <dropdown
-          class="chart-pricescale__mode"
-          :options="modes"
-          :selected="priceScale.mode"
-          placeholder="linear"
-          @output="updateMode($event)"
-          selectionClass="-text -small ml8 text-bold -arrow"
+        <span
+          v-if="priceScaleId === 'right'"
+          title="Main scale"
+          v-tippy
+          class="ml4"
+          >👑</span
         >
-        </dropdown>
+
+        <dropdown-button
+          :options="modes"
+          v-model="priceScale.mode"
+          placeholder="linear"
+          @input="updateMode($event)"
+          class="chart-pricescale__mode -text -small ml8 text-bold -arrow"
+        >
+        </dropdown-button>
       </div>
-      <div class="chart-pricescale__size pane-overlay" v-text="100 - roundedTop - roundedBottom + '%'"></div>
+      <div
+        class="chart-pricescale__size pane-overlay"
+        v-text="100 - roundedTop - roundedBottom + '%'"
+      ></div>
     </div>
     <div
       class="chart-pricescale__boundary -top"
@@ -35,12 +51,15 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 
-import { getEventCords } from '@/utils/picker'
 import { PriceScaleSettings } from '@/store/panesSettings/chart'
-import { randomString } from '@/utils/helpers'
+import { getEventCords, randomString } from '@/utils/helpers'
+import DropdownButton from '@/components/framework/DropdownButton.vue'
 
 @Component({
   name: 'ChartPriceScale',
+  components: {
+    DropdownButton
+  },
   props: {
     paneId: {
       required: true
@@ -122,7 +141,8 @@ export default class extends Vue {
       return
     }
 
-    this[this.currentSide] += percentMove * (this.currentSide === 'top' ? 1 : -1)
+    this[this.currentSide] +=
+      percentMove * (this.currentSide === 'top' ? 1 : -1)
 
     this.updateScaleMargins(event)
   }
@@ -190,7 +210,10 @@ export default class extends Vue {
       bottom: this.roundedBottom / 100
     }
 
-    if (this.priceScale.scaleMargins.top === scaleMargins.top && this.priceScale.scaleMargins.bottom === scaleMargins.bottom) {
+    if (
+      this.priceScale.scaleMargins.top === scaleMargins.top &&
+      this.priceScale.scaleMargins.bottom === scaleMargins.bottom
+    ) {
       return
     }
 
@@ -220,7 +243,9 @@ export default class extends Vue {
   getPercentMove(event) {
     const currentPosition = getEventCords(event)
 
-    const percent = ((currentPosition.y - this.currentOrigin) / this.currentContainerHeight) * 100
+    const percent =
+      ((currentPosition.y - this.currentOrigin) / this.currentContainerHeight) *
+      100
 
     if (!percent) {
       return null

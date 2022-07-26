@@ -4,6 +4,7 @@ import { ModulesState } from '..'
 export interface WebsitePaneState {
   _id?: string
   url?: string
+  reloadTimer: number
   interactive?: boolean
   locked?: boolean
 }
@@ -11,8 +12,8 @@ export interface WebsitePaneState {
 const getters = {} as GetterTree<WebsitePaneState, ModulesState>
 
 const state = {
-  url:
-    'https://cryptopanic.com/widgets/news/?bg_color=FFFFFF&amp;font_family=sans&amp;header_bg_color=30343B&amp;header_text_color=FFFFFF&amp;link_color=0091C2&amp;news_feed=trending&amp;text_color=333333&amp;title=Latest%20News',
+  url: null,
+  reloadTimer: 0,
   interactive: false,
   locked: false
 } as WebsitePaneState
@@ -55,8 +56,14 @@ const actions = {
       // no previous url
     }
 
-    if (!rootState.panes.panes[state._id].name || rootState.panes.panes[state._id].name === previousHostname) {
-      this.commit('panes/SET_PANE_NAME', { id: state._id, name: currentHostname })
+    if (
+      !rootState.panes.panes[state._id].name ||
+      rootState.panes.panes[state._id].name === previousHostname
+    ) {
+      this.commit('panes/SET_PANE_NAME', {
+        id: state._id,
+        name: currentHostname
+      })
     }
   }
 } as ActionTree<WebsitePaneState, ModulesState>
@@ -70,6 +77,9 @@ const mutations = {
   },
   UNLOCK_URL(state) {
     state.locked = false
+  },
+  SET_RELOAD_TIMER(state, value) {
+    state.reloadTimer = value
   }
 } as MutationTree<WebsitePaneState>
 

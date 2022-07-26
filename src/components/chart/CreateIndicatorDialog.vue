@@ -9,8 +9,16 @@
         <div class="form-group">
           <label>Choose from existing indicator</label>
           <div class="d-flex mb8">
-            <input type="text" class="form-control" placeholder="search" v-model="query" />
-            <div v-text="indicators.length" class="-center text-muted ml16"></div>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="search"
+              v-model="query"
+            />
+            <div
+              v-text="indicators.length"
+              class="-center text-muted ml16"
+            ></div>
           </div>
           <table v-if="filteredIndicators.length" class="table">
             <thead>
@@ -21,13 +29,30 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="indicator of filteredIndicators" :key="indicator.id" @click="selectIndicator(indicator)" class="-action">
-                <td class="table-input">{{ (indicator.displayName || indicator.name).replace(/\{[\w_]+\}/g, '') }}</td>
+              <tr
+                v-for="indicator of filteredIndicators"
+                :key="indicator.id"
+                @click="selectIndicator(indicator)"
+                class="-action"
+              >
+                <td class="table-input">
+                  {{
+                    (indicator.displayName || indicator.name).replace(
+                      /\{[\w_]+\}/g,
+                      ''
+                    )
+                  }}
+                </td>
                 <td class="min-768 table-input">
                   <span class="text-muted">{{ indicator.description }}</span>
                 </td>
-                <td class="table-action -hover" @click.stop="removeIndicator(indicator)">
-                  <button class="btn -text -small"><i class="icon-trash text-danger"></i></button>
+                <td
+                  class="table-action -hover"
+                  @click.stop="toggleDropdown($event, indicator)"
+                >
+                  <button class="btn -text -small">
+                    <i class="icon-more"></i>
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -49,48 +74,75 @@
         </div>
         <div class="form-group mb16">
           <label>Scale with</label>
-          <dropdown
-            class="-left -center"
-            :selected="priceScaleId"
+          <dropdown-button
+            v-model="priceScaleId"
             :options="availableScales"
             placeholder="Default scale"
-            selectionClass="-outline form-control -arrow"
-            @output="priceScaleId = $event"
-          ></dropdown>
+            class="-outline form-control -arrow"
+            @input="setPriceScaleId($event)"
+          ></dropdown-button>
         </div>
         <div class="text-right">
-          <button class="btn -large -green ml16" @click="createIndicator()">Create <i class="icon-plus ml8"></i></button>
+          <button class="btn -large -green ml16" @click="createIndicator()">
+            Start coding <i class="icon-plus ml8"></i>
+          </button>
         </div>
       </div>
     </div>
+    <dropdown v-model="dropdownTrigger">
+      <button type="button" class="dropdown-item" @click="selectIndicator()">
+        <i class="icon-plus"></i>
+        <span>Add to chart</span>
+      </button>
+      <button
+        type="button"
+        class="dropdown-item"
+        @click="duplicateIndicator(selectedIndicator)"
+      >
+        <i class="icon-copy-paste"></i>
+        <span>Duplicate</span>
+      </button>
+      <div class="dropdown-divider"></div>
+      <button
+        type="button"
+        class="dropdown-item"
+        @click="removeIndicator(selectedIndicator)"
+      >
+        <i class="icon-trash"></i>
+        <span>Remove</span>
+      </button>
+    </dropdown>
   </Dialog>
 </template>
 
 <script>
-import { ago, slugify, uniqueName } from '@/utils/helpers'
+import { slugify, uniqueName } from '@/utils/helpers'
 import Dialog from '@/components/framework/Dialog.vue'
+import DropdownButton from '@/components/framework/DropdownButton.vue'
 import DialogMixin from '@/mixins/dialogMixin'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import IndicatorDialog from './IndicatorDialog.vue'
 import importService from '@/services/importService'
 
 export default {
   mixins: [DialogMixin],
+  components: {
+    Dialog,
+    DropdownButton
+  },
   props: {
     paneId: {
       type: String,
       required: true
     }
   },
-  components: {
-    Dialog
-  },
   data: () => ({
     name: '',
     priceScaleId: 'right',
     query: '',
-    indicators: []
+    indicators: [],
+    selectedIndicator: null,
+    dropdownTrigger: null
   }),
   computed: {
     indicatorId: function() {
@@ -103,7 +155,10 @@ export default {
       return new RegExp(this.query.replace(/\W/, '.*'), 'i')
     },
     filteredIndicators: function() {
-      return this.indicators.filter(a => this.queryFilter.test(a.name) || this.queryFilter.test(a.displayName))
+      return this.indicators.filter(
+        a =>
+          this.queryFilter.test(a.name) || this.queryFilter.test(a.displayName)
+      )
     },
     availableScales: function() {
       return this.indicators
@@ -134,7 +189,9 @@ export default {
   },
   methods: {
     async getIndicators() {
-      this.indicators = (await workspacesService.getIndicators()).sort((a, b) => (b.uses || 0) - (a.uses || 0))
+      this.indicators = (await workspacesService.getIndicators()).sort(
+        (a, b) => (b.uses || 0) - (a.uses || 0)
+      )
     },
     async handleFile(event) {
       try {
@@ -185,25 +242,45 @@ export default {
 
       this.$store.dispatch(this.paneId + '/addIndicator', indicator)
 
-      dialogService.open(IndicatorDialog, { paneId: this.paneId, indicatorId: this.indicatorId }, 'indicator')
+      dialogService.openIndicator(this.paneId, indicator.id)
 
       this.close(null)
     },
-    selectIndicator(indicator) {
+    selectIndicator(indicator = this.selectedIndicator) {
       workspacesService.incrementIndicatorUsage(indicator.id)
 
       this.$store.dispatch(this.paneId + '/addIndicator', indicator)
       this.close(null)
     },
-    async removeIndicator(indicator) {
-      if (await dialogService.confirm(`Delete indicator "${indicator.name}" ?`)) {
+    async removeIndicator(indicator = this.selectedIndicator) {
+      if (
+        await dialogService.confirm(`Delete indicator "${indicator.name}" ?`)
+      ) {
         workspacesService.deleteIndicator(indicator.id)
 
         this.indicators.splice(this.indicators.indexOf(indicator), 1)
       }
     },
-    ago(timestamp) {
-      return ago(timestamp)
+    async duplicateIndicator(indicator = this.selectedIndicator) {
+      this.$store.dispatch(this.paneId + '/duplicateIndicator', {
+        paneId: this.paneId,
+        indicatorId: indicator.id
+      })
+    },
+    toggleDropdown(event, indicator) {
+      if (
+        event &&
+        (!this.dropdownTrigger || this.selectedIndicator !== indicator)
+      ) {
+        this.dropdownTrigger = event.currentTarget
+        this.selectedIndicator = indicator
+      } else {
+        this.dropdownTrigger = null
+        this.selectedIndicator = null
+      }
+    },
+    setPriceScaleId(id) {
+      this.priceScaleId = id
     }
   }
 }

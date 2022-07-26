@@ -12,14 +12,18 @@
         v-if="header"
         @mousedown="handleDrag"
         @touchstart="handleDrag"
-        @dblclick="toggleFullscreen"
         :style="{ color: headerColor, background: headerBackground }"
       >
         <slot name="header"></slot>
         <div class="dialog-controls">
           <slot name="controls"></slot>
 
-          <a href="javascript:void(0);" class="dialog-controls__close -link -text -no-grab" @click="close" @touchend="close">
+          <a
+            href="javascript:void(0);"
+            class="dialog-controls__close -link -text -no-grab"
+            @click="close"
+            @touchend="close"
+          >
             <i class="icon-cross"></i>
           </a>
         </div>
@@ -33,9 +37,9 @@
 
 <script lang="ts">
 import dialogService from '@/services/dialogService'
-import { getColorLuminance, splitRgba } from '@/utils/colors'
+import { getColorLuminance, splitColorCode } from '@/utils/colors'
 import { Component, Vue } from 'vue-property-decorator'
-import { getEventCords } from '../../utils/picker'
+import { getEventCords } from '../../utils/helpers'
 
 @Component({
   name: 'Dialog',
@@ -81,8 +85,8 @@ export default class extends Vue {
 
   get headerColor() {
     if (this.headerBackground) {
-      const lum = getColorLuminance(splitRgba(this.headerBackground))
-      return lum > 150 ? 'black' : 'white'
+      const lum = getColorLuminance(splitColorCode(this.headerBackground))
+      return lum > 0 ? 'black' : 'white'
     }
 
     return null
@@ -107,7 +111,11 @@ export default class extends Vue {
   }
 
   handleDrag(event) {
-    if (event.button === 2 || event.target.classList.contains('-no-grab') || event.target.parentElement.classList.contains('-no-grab')) {
+    if (
+      event.button === 2 ||
+      event.target.classList.contains('-no-grab') ||
+      event.target.parentElement.classList.contains('-no-grab')
+    ) {
       return
     }
     event.preventDefault()
@@ -163,7 +171,9 @@ export default class extends Vue {
   animate() {
     this.delta.x = this.target.x
     this.delta.y = this.target.y
-    const distance = Math.abs(this.delta.x - this.target.x) + Math.abs(this.delta.y - this.target.y)
+    const distance =
+      Math.abs(this.delta.x - this.target.x) +
+      Math.abs(this.delta.y - this.target.y)
 
     if (distance > 10 && !this.animating) {
       this.animating = true
@@ -183,10 +193,6 @@ export default class extends Vue {
 
   close() {
     this.$emit('clickOutside')
-  }
-
-  toggleFullscreen() {
-    //
   }
 }
 </script>

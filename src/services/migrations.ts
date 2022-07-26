@@ -1,5 +1,5 @@
 import panesSettings from '@/store/panesSettings'
-import { MarketAlert, Workspace } from '@/types/test'
+import { MarketAlert, Workspace } from '@/types/types'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
 import { AggrDB } from './workspacesService'
 import defaultPanes from '@/store/defaultPanes.json'
@@ -106,8 +106,12 @@ export const workspaceUpgrades = {
 
     delete workspace.states.panes.layout
 
-    const normalTradesSettings = JSON.parse(JSON.stringify(panesSettings.trades.state))
-    const liquidationsTradesSettings = JSON.parse(JSON.stringify(defaultPanes.panes.liquidations.settings))
+    const normalTradesSettings = JSON.parse(
+      JSON.stringify(panesSettings.trades.state)
+    )
+    const liquidationsTradesSettings = JSON.parse(
+      JSON.stringify(defaultPanes.panes.liquidations.settings)
+    )
 
     const upgradeThreshold = (threshold, paneId) => {
       let buyAudio: string = null
@@ -124,7 +128,9 @@ export const workspaceUpgrades = {
         buyAudio = normalTradesSettings.liquidations.buyAudio
         sellAudio = normalTradesSettings.liquidations.sellAudio
       } else {
-        const defaultThreshold = settings.thresholds.find(t => t.id === threshold.id)
+        const defaultThreshold = settings.thresholds.find(
+          t => t.id === threshold.id
+        )
 
         if (defaultThreshold) {
           buyAudio = defaultThreshold.buyAudio
@@ -136,16 +142,23 @@ export const workspaceUpgrades = {
         threshold.buyAudio = buyAudio
         threshold.sellAudio = sellAudio
       } else {
-        console.log(`[idb/upgrade/workspace] couldn't find default threshold audio script for threshold ${threshold.id} of pane ${paneId}`)
+        console.log(
+          `[idb/upgrade/workspace] couldn't find default threshold audio script for threshold ${threshold.id} of pane ${paneId}`
+        )
       }
     }
 
     for (const paneId in workspace.states.panes.panes) {
-      if (workspace.states.panes.panes[paneId].type !== 'trades' || !workspace.states[paneId]) {
+      if (
+        workspace.states.panes.panes[paneId].type !== 'trades' ||
+        !workspace.states[paneId]
+      ) {
         continue
       }
 
-      console.log(`[idb/upgrade/workspace] set default audio scripts for pane ${paneId}`)
+      console.log(
+        `[idb/upgrade/workspace] set default audio scripts for pane ${paneId}`
+      )
 
       upgradeThreshold(workspace.states[paneId].liquidations, paneId)
 
@@ -219,7 +232,10 @@ export const workspaceUpgrades = {
     delete workspace.states.panes.layouts
 
     for (const paneId in workspace.states.panes.panes) {
-      if (workspace.states.panes.panes[paneId].type !== 'chart' || !workspace.states[paneId]) {
+      if (
+        workspace.states.panes.panes[paneId].type !== 'chart' ||
+        !workspace.states[paneId]
+      ) {
         continue
       }
 
@@ -229,16 +245,21 @@ export const workspaceUpgrades = {
       }
 
       if (workspace.states[paneId].indicators) {
-        const rightIndicatorId = Object.keys(workspace.states[paneId].indicators).find(id => {
+        const rightIndicatorId = Object.keys(
+          workspace.states[paneId].indicators
+        ).find(id => {
           return (
             workspace.states[paneId].indicators[id].options &&
             workspace.states[paneId].indicators[id].options.scaleMargins &&
-            workspace.states[paneId].indicators[id].options.priceScaleId === 'right'
+            workspace.states[paneId].indicators[id].options.priceScaleId ===
+              'right'
           )
         }) as string
 
         if (rightIndicatorId) {
-          scaleMargins = workspace.states[paneId].indicators[rightIndicatorId].options.scaleMargins
+          scaleMargins =
+            workspace.states[paneId].indicators[rightIndicatorId].options
+              .scaleMargins
         }
       }
 
@@ -252,7 +273,10 @@ export const workspaceUpgrades = {
   },
   4: (workspace: Workspace) => {
     for (const paneId in workspace.states.panes.panes) {
-      if (workspace.states.panes.panes[paneId].type !== 'trades' || !workspace.states[paneId]) {
+      if (
+        workspace.states.panes.panes[paneId].type !== 'trades' ||
+        !workspace.states[paneId]
+      ) {
         continue
       }
 
@@ -263,17 +287,23 @@ export const workspaceUpgrades = {
         amount: 10000,
         buyColor: 'rgba(236,64,122,0.5)',
         sellColor: 'rgba(255,152,0,0.5)',
-        buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*2,0,,,'sine')\nplay(329.63, srqtR, srqtR*4,0.08,,,'sine')",
-        sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*2,0,,,'sine')\nplay(440, srqtR, srqtR*4,0.08,,,'sine')"
+        buyAudio:
+          "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*2,0,,,'sine')\nplay(329.63, srqtR, srqtR*4,0.08,,,'sine')",
+        sellAudio:
+          "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*2,0,,,'sine')\nplay(440, srqtR, srqtR*4,0.08,,,'sine')"
       }
 
-      if (workspace.states[paneId].liquidation && workspace.states[paneId].liquidation.amount < 25000) {
+      if (
+        workspace.states[paneId].liquidation &&
+        workspace.states[paneId].liquidation.amount < 25000
+      ) {
         liquidationThreshold = workspace.states[paneId].liquidation
         liquidationThreshold.id = 'liquidation_threshold'
 
         if (workspace.states[paneId].liquidation.gif) {
           liquidationThreshold.buyGif = workspace.states[paneId].liquidation.gif
-          liquidationThreshold.sellGif = workspace.states[paneId].liquidation.gif
+          liquidationThreshold.sellGif =
+            workspace.states[paneId].liquidation.gif
           delete (liquidationThreshold as any).gif
         }
       }
@@ -285,8 +315,10 @@ export const workspaceUpgrades = {
           amount: 25000,
           buyColor: 'rgba(236,64,122,0.6)',
           sellColor: 'rgba(255,152,0,0.7)',
-          buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*6,0.08,,,'sine')",
-          sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*6,0.08,,,'sine')"
+          buyAudio:
+            "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*6,0.08,,,'sine')",
+          sellAudio:
+            "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*6,0.08,,,'sine')"
         },
         {
           id: 'liquidation_huge',
@@ -295,8 +327,10 @@ export const workspaceUpgrades = {
           sellGif: 'rekt',
           buyColor: 'rgba(236,64,122,0.7)',
           sellColor: 'rgba(255,152,0,0.8)',
-          buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*8,0.08,,,'sine')",
-          sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*8,0.08,,,'sine')"
+          buyAudio:
+            "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*8,0.08,,,'sine')",
+          sellAudio:
+            "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*8,0.08,,,'sine')"
         },
         {
           id: 'liquidation_rare',
@@ -305,8 +339,10 @@ export const workspaceUpgrades = {
           sellGif: 'explosion',
           buyColor: 'rgb(156,39,176)',
           sellColor: 'rgb(255,235,59)',
-          buyAudio: "var srqtR = Math.min(1, gain / 10)\nplay(329.63, srqtR, 1,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",
-          sellAudio: "var srqtR = Math.min(1, gain / 10)\nplay(440, srqtR, 1,0,,,'sine')\nplay(440, srqtR, srqtR*10,0.08,,,'sine')"
+          buyAudio:
+            "var srqtR = Math.min(1, gain / 10)\nplay(329.63, srqtR, 1,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",
+          sellAudio:
+            "var srqtR = Math.min(1, gain / 10)\nplay(440, srqtR, 1,0,,,'sine')\nplay(440, srqtR, srqtR*10,0.08,,,'sine')"
         }
       ]
 

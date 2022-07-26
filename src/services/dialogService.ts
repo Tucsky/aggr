@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import store from '@/store'
 
-import VerteDialog from '@/components/framework/picker/VerteDialog.vue'
 import ConfirmDialog from '@/components/framework/ConfirmDialog.vue'
 import PromptDialog from '@/components/framework/PromptDialog.vue'
 
@@ -11,7 +10,12 @@ class DialogService {
   hasDialogOpened = false
   pickerInstance: any
 
-  createComponent(component, props: any = {}, resolve = null, dialogId?: string): Vue {
+  createComponent(
+    component,
+    props: any = {},
+    resolve = null,
+    dialogId?: string
+  ): Vue {
     const Factory = Vue.extend(Object.assign({ store }, component))
 
     const cmp: any = new Factory(
@@ -24,7 +28,8 @@ class DialogService {
             if (dialogId && this.mountedComponents[dialogId]) {
               delete this.mountedComponents[dialogId]
 
-              this.hasDialogOpened = Object.keys(this.mountedComponents).length > 0
+              this.hasDialogOpened =
+                Object.keys(this.mountedComponents).length > 0
             }
 
             if (this.pickerInstance === cmp) {
@@ -83,21 +88,26 @@ class DialogService {
     return !!this.mountedComponents[name]
   }
 
-  openPicker(initialColor, cb, title?: string, onClose?: Function) {
+  async openPicker(
+    initialColor,
+    cb,
+    label?: string,
+    onClose?: Function,
+    allowNull?: boolean
+  ) {
     if (this.pickerInstance) {
-      this.pickerInstance.selectColor(initialColor, true)
-
-      if (typeof title !== 'undefined') {
-        this.pickerInstance.title = title
-      }
-
       this.pickerInstance.$off('input')
+      this.pickerInstance.setColorFromProp(initialColor)
+
+      this.pickerInstance.label = typeof label !== 'undefined' ? label : null
     } else {
       this.pickerInstance = this.open(
-        VerteDialog,
+        (await import('@/components/framework/picker/ColorPickerDialog.vue'))
+          .default,
         {
           value: initialColor,
-          title
+          label,
+          allowNull
         },
         null,
         onClose
@@ -109,6 +119,17 @@ class DialogService {
     }
 
     return this.pickerInstance
+  }
+
+  async openIndicator(paneId: string, indicatorId: string) {
+    return this.open(
+      (await import('@/components/chart/IndicatorDialog.vue')).default,
+      {
+        paneId,
+        indicatorId
+      },
+      'indicator'
+    )
   }
 
   async confirm(options: any) {

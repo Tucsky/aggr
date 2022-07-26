@@ -4,37 +4,50 @@
       {{ label }}
     </label>
 
-    <dropdown
+    <dropdown-button
       v-if="name === 'lineType'"
-      class="-left -center"
-      :selected="value"
+      v-model="value"
       :options="{ 0: 'Simple', 1: 'with steps' }"
-      selectionClass="-outline form-control -arrow"
+      class="-outline form-control -arrow"
       placeholder="lineType"
-      @output="setValue($event)"
-    ></dropdown>
-    <dropdown
+      @input="setValue($event)"
+    ></dropdown-button>
+    <dropdown-button
       v-else-if="/linestyle$/i.test(name)"
-      class="-left -center"
-      :selected="value"
-      :options="{ 0: 'Solid', 1: 'Dotted', 2: 'Dashed', 3: 'LargeDashed', 4: 'SparseDotted' }"
-      selectionClass="-outline form-control -arrow"
+      v-model="value"
+      :options="{
+        0: 'Solid',
+        1: 'Dotted',
+        2: 'Dashed',
+        3: 'LargeDashed',
+        4: 'SparseDotted'
+      }"
+      class="-outline form-control -arrow"
       placeholder="lineStyle"
-      @output="setValue($event)"
-    ></dropdown>
-    <verte
+      @input="setValue($event)"
+    ></dropdown-button>
+    <color-picker-control
       v-else-if="type === 'color'"
-      picker="square"
-      menuPosition="left"
       :label="label"
       model="rgb"
+      allow-null
       :value="value"
       @input="setValue($event)"
       @close="reloadIndicator"
-    ></verte>
-    <editable v-else-if="type === 'string' || type === 'number'" class="form-control" :content="value" @output="setValue($event)"></editable>
+    ></color-picker-control>
+    <editable
+      v-else-if="type === 'string' || type === 'number'"
+      class="form-control"
+      :value="value"
+      @input="setValue($event)"
+    ></editable>
     <label v-else-if="type === 'boolean'" class="checkbox-control">
-      <input type="checkbox" class="form-control" :checked="value" @change="setValue($event.target.checked)" />
+      <input
+        type="checkbox"
+        class="form-control"
+        :checked="value"
+        @change="setValue($event.target.checked)"
+      />
       <span>{{ label }}</span>
       <div></div>
     </label>
@@ -44,8 +57,15 @@
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import { getDefaultIndicatorOptionValue } from './options'
 
+import DropdownButton from '@/components/framework/DropdownButton.vue'
+import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
+
 @Component({
   name: 'IndicatorOption',
+  components: {
+    DropdownButton,
+    ColorPickerControl
+  },
   props: {
     indicatorId: {
       type: String,
@@ -73,7 +93,9 @@ export default class extends Vue {
   value = null
 
   get currentIndicatorValue() {
-    return this.$store.state[this.paneId].indicators[this.indicatorId].options[this.name]
+    return this.$store.state[this.paneId].indicators[this.indicatorId].options[
+      this.name
+    ]
   }
 
   get label() {
@@ -92,9 +114,16 @@ export default class extends Vue {
       // empty
     }
 
-    if (typeof typedValue === 'boolean' || /^(show|toggle|set|use)[A-Z]/.test(this.name)) {
+    if (
+      typeof typedValue === 'boolean' ||
+      /^(show|toggle|set|use)[A-Z]/.test(this.name)
+    ) {
       type = 'boolean'
-    } else if (/color/i.test(this.name) || /^rgba?/.test(typedValue) || /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(typedValue)) {
+    } else if (
+      /color/i.test(this.name) ||
+      /^rgba?/.test(typedValue) ||
+      /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(typedValue)
+    ) {
       type = 'color'
     } else if (typeof typedValue === 'number') {
       type = 'number'
@@ -107,7 +136,10 @@ export default class extends Vue {
   onIndicatorValueChange() {
     const value = this.getValue()
 
-    if (+this.value !== +value || (isNaN(+this.value) && value !== this.value)) {
+    if (
+      +this.value !== +value ||
+      (isNaN(+this.value) && value !== this.value)
+    ) {
       this.value = value
     }
   }
@@ -123,10 +155,18 @@ export default class extends Vue {
       preferedValue = this.currentIndicatorValue
     }
 
-    const defaultValue = getDefaultIndicatorOptionValue(this.name, this.plotTypes)
+    const defaultValue = getDefaultIndicatorOptionValue(
+      this.name,
+      this.plotTypes
+    )
 
     if (typeof preferedValue !== 'undefined') {
-      if (preferedValue && typeof preferedValue === 'object' && defaultValue && typeof defaultValue === 'object') {
+      if (
+        preferedValue &&
+        typeof preferedValue === 'object' &&
+        defaultValue &&
+        typeof defaultValue === 'object'
+      ) {
         return Object.assign({}, defaultValue, preferedValue)
       } else {
         return preferedValue

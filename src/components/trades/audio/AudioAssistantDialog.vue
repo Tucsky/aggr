@@ -1,12 +1,18 @@
 <template>
-  <Dialog @clickOutside="close" class="pane-dialog -auto" @mousedown="clickOutsideClose = false" @mouseup="clickOutsideClose = true">
+  <Dialog
+    @clickOutside="close"
+    class="pane-dialog -auto"
+    @mousedown="clickOutsideClose = false"
+    @mouseup="clickOutsideClose = true"
+  >
     <template v-slot:header>
       <div class="title">{{ title }}</div>
     </template>
 
     <div v-if="type === 'play'" class="form-group mb16">
       <label for="audio-assistant-source">
-        <i class="icon-music-note mr8"></i> Frequency <i class="icon-info" v-tippy :title="descriptions.frequency"></i
+        <i class="icon-music-note mr8"></i> Frequency
+        <i class="icon-info" v-tippy :title="descriptions.frequency"></i
       ></label>
       <div class="column">
         <slider
@@ -14,18 +20,24 @@
           :min="0"
           :max="8902"
           :step="1"
-          :editable="false"
           :label="true"
           :show-completion="true"
           :value="frequency"
           @input="frequency = $event"
           @reset="reset('frequency')"
         ></slider>
-        <editable class="-center text-nowrap ml8" style="line-height: 1" :content="frequency" @output="frequency = $event"></editable>
+        <editable
+          class="-center text-nowrap ml8"
+          style="line-height: 1"
+          :value="frequency"
+          @input="frequency = $event"
+        ></editable>
       </div>
     </div>
     <div v-else class="form-group mb16">
-      <label for="audio-assistant-source"> <i class="icon-music-note mr8"></i> Source </label>
+      <label for="audio-assistant-source">
+        <i class="icon-music-note mr8"></i> Source
+      </label>
       <button class="btn -file -blue -large -cases w-100" @change="handleFile">
         <i class="icon-upload mr8"></i> Browse
         <input type="file" accept="audio/*" />
@@ -33,21 +45,26 @@
     </div>
 
     <div class="form-group mb16">
-      <label>Gain <i class="icon-info" v-tippy :title="descriptions.gain"></i></label>
+      <label
+        >Gain <i class="icon-info" v-tippy :title="descriptions.gain"></i
+      ></label>
 
       <div class="column">
         <slider
           :min="0"
           :max="2"
           :step="0.01"
-          :editable="false"
           :label="true"
           :show-completion="true"
           :value="gain"
           @input="gain = $event"
           @reset="reset('gain')"
         ></slider>
-        <label class="checkbox-control checkbox-control-input" title="Dynamic" v-tippy>
+        <label
+          class="checkbox-control checkbox-control-input"
+          title="Dynamic"
+          v-tippy
+        >
           <input type="checkbox" class="form-control" v-model="dynamicGain" />
           <div></div>
         </label>
@@ -55,21 +72,27 @@
     </div>
 
     <div class="form-group mb16">
-      <label>Duration <i class="icon-info" v-tippy :title="descriptions.holdDuration"></i></label>
+      <label
+        >Duration
+        <i class="icon-info" v-tippy :title="descriptions.holdDuration"></i
+      ></label>
 
       <div class="column">
         <slider
           :min="0"
           :max="10"
           :step="0.1"
-          :editable="false"
           :label="true"
           :show-completion="true"
           :value="holdDuration"
           @input="holdDuration = $event"
           @reset="reset('holdDuration')"
         ></slider>
-        <label class="checkbox-control checkbox-control-input" title="Dynamic" v-tippy>
+        <label
+          class="checkbox-control checkbox-control-input"
+          title="Dynamic"
+          v-tippy
+        >
           <input type="checkbox" class="form-control" v-model="dynamicLength" />
           <div></div>
         </label>
@@ -79,14 +102,17 @@
     <section class="section">
       <div v-if="showAdvanced">
         <div class="form-group mb16" v-if="type === 'play'">
-          <label>Wave type (<a href="https://developer.mozilla.org/en-US/docs/Web/API/OscillatorNode/type">learn more</a>)</label>
-          <dropdown
-            class="-left"
-            :selected="osc"
+          <label
+            >Wave type (<a
+              href="https://developer.mozilla.org/en-US/docs/Web/API/OscillatorNode/type"
+              >learn more</a
+            >)</label
+          >
+          <dropdown-button
+            v-model="osc"
             :options="[`'triangle'`, `'square'`, `'sine'`, `'sawtooth'`]"
-            selectionClass="-outline form-control -arrow"
-            return-value
-            @output="osc = $event"
+            class="-outline form-control -arrow"
+            @input="osc = $event"
           >
             <template v-slot:selection>
               {{ osc.replace(/'/g, '') }}
@@ -94,18 +120,20 @@
             <template v-slot:option="{ value }">
               {{ value.replace(/'/g, '') }}
             </template>
-          </dropdown>
+          </dropdown-button>
         </div>
 
         <div class="column mb16">
           <div class="form-group -fill">
-            <label>Fade In <i class="icon-info" v-tippy :title="descriptions.fadeIn"></i></label>
+            <label
+              >Fade In
+              <i class="icon-info" v-tippy :title="descriptions.fadeIn"></i
+            ></label>
 
             <slider
               :min="0"
               :max="10"
               :step="0.1"
-              :editable="false"
               :label="true"
               :show-completion="true"
               class="mt8"
@@ -116,13 +144,15 @@
           </div>
 
           <div class="ml8 form-group -fill">
-            <label>Fade Out <i class="icon-info" v-tippy :title="descriptions.fadeOut"></i></label>
+            <label
+              >Fade Out
+              <i class="icon-info" v-tippy :title="descriptions.fadeOut"></i
+            ></label>
 
             <slider
               :min="0"
               :max="10"
               :step="0.1"
-              :editable="false"
               :label="true"
               :show-completion="true"
               class="mt8"
@@ -135,13 +165,15 @@
 
         <div class="column mb16">
           <div class="form-group -fill">
-            <label>Start Gain <i class="icon-info" v-tippy :title="descriptions.startGain"></i></label>
+            <label
+              >Start Gain
+              <i class="icon-info" v-tippy :title="descriptions.startGain"></i
+            ></label>
 
             <slider
               :min="0.0001"
               :max="1"
               :step="0.001"
-              :editable="false"
               :label="true"
               :show-completion="true"
               class="mt8"
@@ -152,13 +184,15 @@
           </div>
 
           <div class="ml8 form-group -fill">
-            <label>End Gain <i class="icon-info" v-tippy :title="descriptions.endGain"></i></label>
+            <label
+              >End Gain
+              <i class="icon-info" v-tippy :title="descriptions.endGain"></i
+            ></label>
 
             <slider
               :min="0.0001"
               :max="1"
               :step="0.001"
-              :editable="false"
               :label="true"
               :show-completion="true"
               class="mt8"
@@ -170,13 +204,14 @@
         </div>
 
         <div class="form-group mb16">
-          <label>Delay <i class="icon-info" v-tippy :title="descriptions.delay"></i></label>
+          <label
+            >Delay <i class="icon-info" v-tippy :title="descriptions.delay"></i
+          ></label>
 
           <slider
             :min="0"
             :max="10"
             :step="0.1"
-            :editable="false"
             :label="true"
             :show-completion="true"
             class="mt8"
@@ -206,19 +241,34 @@
           spellcheck="false"
           readonly
         ></textarea>
-        <button class="btn -red ml8" @click="$emit('test', { event: $event, litteral: litteral })">
+        <button
+          class="btn -red ml8"
+          @click="$emit('test', { event: $event, litteral: litteral })"
+        >
           <i class="icon-volume-high"></i>
         </button>
       </div>
 
-      <p v-if="error" class="form-feedback"><i class="icon-warning mr4"></i> {{ error }}</p>
+      <p v-if="error" class="form-feedback">
+        <i class="icon-warning mr4"></i> {{ error }}
+      </p>
     </div>
     <footer>
-      <a href="javascript:void(0);" class="btn -text mrauto" @click="$emit('stop')" v-tippy title="Restart audio service (clear ALL queue)">
+      <a
+        href="javascript:void(0);"
+        class="btn -text mrauto"
+        @click="$emit('stop')"
+        v-tippy
+        title="Restart audio service (clear ALL queue)"
+      >
         <i class="icon-refresh mr8"></i> Restart audio
       </a>
-      <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
-      <button class="btn -large" @click="submit"><i class="icon-check mr4"></i> Ok</button>
+      <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)"
+        >Cancel</a
+      >
+      <button class="btn -large" @click="submit">
+        <i class="icon-check mr4"></i> Ok
+      </button>
     </footer>
   </Dialog>
 </template>
@@ -228,14 +278,20 @@ import DialogMixin from '@/mixins/dialogMixin'
 import Slider from '@/components/framework/picker/Slider.vue'
 import importService from '@/services/importService'
 import workspacesService from '@/services/workspacesService'
-import { audioDefaultParameters, audioParametersDescriptions } from '@/services/audioService'
+import {
+  audioDefaultParameters,
+  audioParametersDescriptions
+} from '@/services/audioService'
 
 const DYNAMIC_GAIN_PROPERTIES = ['gain']
 const DYNAMIC_LENGTH_PROPERTIES = ['holdDuration', 'fadeIn', 'fadeOut']
 
+import DropdownButton from '@/components/framework/DropdownButton.vue'
+
 export default {
   components: {
-    Slider
+    Slider,
+    DropdownButton
   },
   props: {
     type: {
@@ -294,7 +350,11 @@ export default {
           (this.dynamicGain && DYNAMIC_GAIN_PROPERTIES.indexOf(key) !== -1) ||
           (this.dynamicLength && DYNAMIC_LENGTH_PROPERTIES.indexOf(key) !== -1)
         ) {
-          return this[key] ? 'gain*' + this[key] : 0 != defaultAudioAttributes[key] ? 0 : null
+          return this[key]
+            ? 'gain*' + this[key]
+            : 0 != defaultAudioAttributes[key]
+            ? 0
+            : null
         } else {
           return this[key] != defaultAudioAttributes[key] ? this[key] : null
         }
@@ -333,7 +393,20 @@ export default {
       }
     },
     noteToFrequency(note) {
-      const notes = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
+      const notes = [
+        'A',
+        'A#',
+        'B',
+        'C',
+        'C#',
+        'D',
+        'D#',
+        'E',
+        'F',
+        'F#',
+        'G',
+        'G#'
+      ]
       let octave
       let keyNumber
 
@@ -387,7 +460,10 @@ export default {
       this[prop] = defaultValue
     },
     submit() {
-      this.$emit('append', { litteral: this.litteral, uploadedSound: this.uploadedSound })
+      this.$emit('append', {
+        litteral: this.litteral,
+        uploadedSound: this.uploadedSound
+      })
 
       this.uploadedSound = null
 

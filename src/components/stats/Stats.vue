@@ -1,8 +1,16 @@
 <template>
   <div class="pane-stats">
-    <pane-header :paneId="paneId" />
+    <pane-header
+      :paneId="paneId"
+      :settings="() => import('@/components/stats/StatsDialog.vue')"
+    />
     <ul class="stats-buckets">
-      <li v-for="(bucket, id) in data" :key="id" class="stat-bucket" @click="editStat(id)">
+      <li
+        v-for="(bucket, id) in data"
+        :key="id"
+        class="stat-bucket"
+        @click="editStat(id)"
+      >
         <div class="stat-bucket__name">{{ bucket.name }}</div>
         <div class="stat-bucket__value">{{ bucket.value }}</div>
       </li>
@@ -16,7 +24,11 @@ import { Component, Mixins } from 'vue-property-decorator'
 import * as TV from 'lightweight-charts'
 import aggregatorService from '@/services/aggregatorService'
 import Bucket from '../../utils/bucket'
-import { defaultStatsChartOptions, getChartOptions, getChartCustomColorsOptions } from '../chart/options'
+import {
+  defaultStatsChartOptions,
+  getChartOptions,
+  getChartCustomColorsOptions
+} from '../chart/options'
 
 import StatDialog from './StatDialog.vue'
 import dialogService from '@/services/dialogService'
@@ -53,9 +65,11 @@ export default class extends Mixins(PaneMixin) {
   created() {
     this._onStoreMutation = this.$store.subscribe(mutation => {
       switch (mutation.type) {
-        case 'settings/SET_CHART_COLOR':
+        case 'settings/SET_TEXT_COLOR':
           if (this._chart && mutation.payload) {
-            this._chart.applyOptions(getChartCustomColorsOptions(mutation.payload))
+            this._chart.applyOptions(
+              getChartCustomColorsOptions(mutation.payload)
+            )
           }
           break
         case 'settings/SET_CHART_THEME':
@@ -180,7 +194,8 @@ export default class extends Mixins(PaneMixin) {
     clearTimeout(this._refreshChartDimensionsTimeout)
 
     this._refreshChartDimensionsTimeout = setTimeout(() => {
-      this._chart && this._chart.resize(this.$el.clientWidth, this.$el.clientHeight)
+      this._chart &&
+        this._chart.resize(this.$el.clientWidth, this.$el.clientHeight)
     }, debounceTime)
   }
   prepareBuckets() {
@@ -211,7 +226,11 @@ export default class extends Mixins(PaneMixin) {
       if (this._buckets[id].stacks.length) {
         const value = this._buckets[id].getValue()
 
-        this.$set(this.data[id], 'value', formatAmount(value, this._buckets[id].precision))
+        this.$set(
+          this.data[id],
+          'value',
+          formatAmount(value, this._buckets[id].precision)
+        )
       }
 
       if (this._chart) {

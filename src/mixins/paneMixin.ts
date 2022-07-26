@@ -27,7 +27,7 @@ export default class PaneMixin extends Vue {
       const width = this.$el.clientWidth
 
       if (typeof this.onResize === 'function') {
-        this.onResize(width, this.$el.clientHeight)
+        this.onResize(width, this.$el.clientHeight, true)
       }
     })
 
@@ -50,5 +50,5 @@ export default class PaneMixin extends Vue {
     this.$store.commit('app/SET_FOCUSED_PANE', this.paneId)
   }
 
-  onResize?(newWidth: number, newHeight: number)
+  onResize?(newWidth: number, newHeight: number, isMounting?: boolean)
 }

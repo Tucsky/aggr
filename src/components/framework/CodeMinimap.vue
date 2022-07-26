@@ -12,8 +12,8 @@
 </template>
 
 <script lang="ts">
-import { getEventCords } from '@/utils/picker'
 import { Component, Vue } from 'vue-property-decorator'
+import { getEventCords } from '../../utils/helpers'
 
 @Component({
   name: 'CodeMinimap'
@@ -33,7 +33,11 @@ export default class extends Vue {
   }
 
   get bottom() {
-    return ((this.totalHeight - (this.offsetTop + this.visibleHeight)) / this.totalHeight) * 100
+    return (
+      ((this.totalHeight - (this.offsetTop + this.visibleHeight)) /
+        this.totalHeight) *
+      100
+    )
   }
 
   mounted() {
@@ -87,7 +91,9 @@ export default class extends Vue {
     const canvas = this.$refs.canvas as HTMLCanvasElement
     const ctx = canvas.getContext('2d')
 
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--theme-color-200')
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(
+      '--theme-color-200'
+    )
     ctx.font = `monospace`
 
     const x = 4
@@ -96,7 +102,13 @@ export default class extends Vue {
     const lineheight = canvas.height / this.content.length
 
     for (let i = 0; i < this.content.length; i++) {
-      ctx.fillText(this.content[i].replace(/\b\w+\b/g, String.fromCharCode(8210)).replace(/[^\u2012\s]/g, ''), x, y + i * lineheight)
+      ctx.fillText(
+        this.content[i]
+          .replace(/\b\w+\b/g, String.fromCharCode(8210))
+          .replace(/[^\u2012\s]/g, ''),
+        x,
+        y + i * lineheight
+      )
     }
   }
 
@@ -114,7 +126,8 @@ export default class extends Vue {
     const y = getEventCords(event).y
 
     const offset = this.y - getEventCords(event).y
-    const percentOffset = offset / (this.$refs.canvas as HTMLCanvasElement).height
+    const percentOffset =
+      offset / (this.$refs.canvas as HTMLCanvasElement).height
     this.editorElement.scrollTop -= percentOffset * this.totalHeight
     this.y = y
   }

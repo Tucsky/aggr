@@ -25,7 +25,12 @@
   </div>
   <div id="app" v-else>
     <div class="app-loader d-flex -column">
-      <div v-if="showStuck" class="px8 py8">💡 Stuck here ? <button class="btn -text" @click="resetAndReload">reset everything</button></div>
+      <div v-if="showStuck" class="px8 py8">
+        💡 Stuck here ?
+        <button class="btn -text" @click="resetAndReload">
+          reset everything
+        </button>
+      </div>
       <div class="lds-spinner -center">
         <div></div>
         <div></div>
@@ -72,7 +77,10 @@ import importService from '@/services/importService'
     Panes
   },
   watch: {
-    '$store.state.panes.marketsListeners': function(newMarkets, previousMarkets) {
+    '$store.state.panes.marketsListeners': function(
+      newMarkets,
+      previousMarkets
+    ) {
       if (newMarkets !== previousMarkets) {
         this.refreshMainMarkets(newMarkets)
       }
@@ -80,7 +88,7 @@ import importService from '@/services/importService'
   }
 })
 export default class extends Vue {
-  price: number = null
+  price: string = null
   showStuck = false
 
   private _mainMarkets: string[]
@@ -164,7 +172,10 @@ export default class extends Vue {
     let count = 0
 
     for (const marketKey of this._mainMarkets) {
-      if (!marketsPrices[marketKey] || marketsPrices[marketKey].price === null) {
+      if (
+        !marketsPrices[marketKey] ||
+        marketsPrices[marketKey].price === null
+      ) {
         continue
       }
       price += marketsPrices[marketKey].price
@@ -257,7 +268,9 @@ export default class extends Vue {
       title: 'Reset app',
       message: 'Are you sure ?',
       ok: 'Reset settings',
-      cancel: workspacesService.workspace ? 'Download workspace ' + workspacesService.workspace.id : 'Cancel'
+      cancel: workspacesService.workspace
+        ? 'Download workspace ' + workspacesService.workspace.id
+        : 'Cancel'
     })
 
     if (response === true) {
@@ -311,7 +324,9 @@ export default class extends Vue {
       marketsByNormalizedPair[pair] += markets[id].listeners
     }
 
-    this._mainPair = Object.keys(marketsByNormalizedPair).sort((a, b) => marketsByNormalizedPair[b] - marketsByNormalizedPair[a])[0]
+    this._mainPair = Object.keys(marketsByNormalizedPair).sort(
+      (a, b) => marketsByNormalizedPair[b] - marketsByNormalizedPair[a]
+    )[0]
 
     this._mainMarkets = Object.keys(markets)
       .filter(id => markets[id].local === this._mainPair)

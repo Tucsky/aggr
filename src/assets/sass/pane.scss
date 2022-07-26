@@ -150,16 +150,16 @@
 }
 
 .pane-header {
-  display: flex;
   position: relative;
+  display: flex;
+  align-items: stretch;
   z-index: 4;
-  top: 0;
   font-size: calc(11px + 0.8em);
   height: 1.5em;
-  min-width: 100%;
   background-color: rgba(black, 0.5);
-  align-items: stretch;
   flex-shrink: 0;
+  width: 100%;
+  overflow-x: auto;
   cursor: move;
 
   .toolbar {
@@ -178,7 +178,7 @@
   &__divider {
     width: 1px;
     background-color: var(--theme-color-o75);
-    margin: .4em .4em;
+    margin: 0.4em 0.4em;
   }
 
   &__loader {
@@ -203,63 +203,61 @@
       transition: background-color 0.4s $ease-out-expo;
     }
   }
+}
 
-  &.-loading {
-    .pane-header__loader {
-      display: block;
+.chart-overlay {
+  display: none;
+  position: absolute;
+  z-index: 3;
+  top: 3em;
+  pointer-events: none;
 
-      &:before,
-      &:after {
-        display: block;
-      }
-      &:before {
-        background-color: var(--theme-background-o20);
-        animation: indeterminate-loading-bar-slow 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
-      }
+  left: 1em;
+  bottom: 0;
+  flex-direction: column;
+  justify-content: flex-start;
 
-      &:after {
-        background-color: var(--theme-background-o75);
-        animation: indeterminate-loading-bar-fast 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
-        animation-delay: 1.15s;
-      }
-    }
+  > div {
+    flex-shrink: 0;
+    flex-basis: 0;
+  }
 
-    + div {
-      cursor: wait;
+  &__panel {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    align-items: flex-start;
+
+    > div {
+      pointer-events: all;
+      position: relative;
     }
   }
 
-  @keyframes indeterminate-loading-bar-slow {
-    0% {
-      left: -35%;
-      right: 100%;
-    }
-
-    60% {
-      left: 100%;
-      right: -90%;
-    }
-
-    100% {
-      left: 100%;
-      right: -90%;
-    }
+  &__content {
+    padding: 0;
+    margin: 0;
   }
 
-  @keyframes indeterminate-loading-bar-fast {
-    0% {
-      left: -200%;
-      right: 100%;
+  &__title {
+    cursor: pointer;
+    user-select: none;
+    place-self: flex-start;
+    padding: 0.25em;
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+    line-height: 1;
+
+    &:hover {
+      color: var(--theme-color-base);
     }
 
-    60% {
-      left: 107%;
-      right: -8%;
-    }
-
-    100% {
-      left: 107%;
-      right: -8%;
+    &:first-child {
+      .icon-up-thin {
+        display: inline-block;
+        transform: rotateZ(180deg);
+      }
     }
   }
 }

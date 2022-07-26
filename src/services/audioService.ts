@@ -1,7 +1,10 @@
 import Vue from 'vue'
 import Tuna from 'tunajs'
 import store from '../store'
-import { findClosingBracketMatchIndex, parseFunctionArguments } from '@/utils/helpers'
+import {
+  findClosingBracketMatchIndex,
+  parseFunctionArguments
+} from '@/utils/helpers'
 import workspacesService from './workspacesService'
 
 export type AudioFunction = (audioService: AudioService, ratio: number) => void
@@ -21,8 +24,28 @@ export const audioParametersDescriptions = {
 }
 
 export const audioParametersDefinitions = {
-  play: ['frequency', 'gain', 'fadeOut', 'delay', 'fadeIn', 'holdDuration', 'osc', 'startGain', 'endGain'],
-  playurl: ['url', 'gain', 'holdDuration', 'delay', 'startTime', 'fadeIn', 'fadeOut', 'startGain', 'endGain']
+  play: [
+    'frequency',
+    'gain',
+    'fadeOut',
+    'delay',
+    'fadeIn',
+    'holdDuration',
+    'osc',
+    'startGain',
+    'endGain'
+  ],
+  playurl: [
+    'url',
+    'gain',
+    'holdDuration',
+    'delay',
+    'startTime',
+    'fadeIn',
+    'fadeOut',
+    'startGain',
+    'endGain'
+  ]
 }
 
 export const audioDefaultParameters = {
@@ -38,7 +61,8 @@ export const audioDefaultParameters = {
     endGain: 0.001
   },
   playurl: {
-    url: "'https://d7d3471nr939s.cloudfront.net/DeepHouseSessions_Noiz_SP/MP3/One+Shots/Bongo_08_73_SP.mp3?cb=6cfb91bb-f15f-432a-bfae-17ef22b22005'",
+    url:
+      "'https://d7d3471nr939s.cloudfront.net/DeepHouseSessions_Noiz_SP/MP3/One+Shots/Bongo_08_73_SP.mp3?cb=6cfb91bb-f15f-432a-bfae-17ef22b22005'",
     gain: 1,
     holdDuration: 1,
     delay: 0,
@@ -123,7 +147,8 @@ class AudioService {
 
   bindContext() {
     // this.context = new AudioContext()
-    this.context = new ((window as any).AudioContext || (window as any).webkitAudioContext)()
+    this.context = new ((window as any).AudioContext ||
+      (window as any).webkitAudioContext)()
 
     let checkInProgress = false
 
@@ -148,7 +173,10 @@ class AudioService {
         }
 
         setTimeout(() => {
-          if (!store.state.settings.useAudio || this.context.state !== 'suspended') {
+          if (
+            !store.state.settings.useAudio ||
+            this.context.state !== 'suspended'
+          ) {
             if (store.state.settings.useAudio) {
               store.dispatch('app/showNotice', {
                 id: 'audio',
@@ -164,7 +192,8 @@ class AudioService {
             store.dispatch('app/showNotice', {
               id: 'audio',
               type: 'error',
-              title: 'Browser prevented audio from playing\nClick somewhere to resume.'
+              title:
+                'Browser prevented audio from playing\nClick somewhere to resume.'
             })
           }
 
@@ -243,6 +272,10 @@ class AudioService {
   }
 
   setVolume(gain: number) {
+    if (!this.gainNode) {
+      return
+    }
+
     this.gainNode.gain.value = gain
   }
 
@@ -273,7 +306,9 @@ class AudioService {
       arrayBuffer = await this.retrieveArrayBuffer(url)
     }
 
-    AudioService.savedAudioBuffers[url] = await this.context.decodeAudioData(arrayBuffer)
+    AudioService.savedAudioBuffers[url] = await this.context.decodeAudioData(
+      arrayBuffer
+    )
   }
 
   async playurl(
@@ -287,7 +322,10 @@ class AudioService {
     startGain?: number,
     endGain?: number
   ) {
-    if (this.context.state !== 'running' || !AudioService.savedAudioBuffers[url]) {
+    if (
+      this.context.state !== 'running' ||
+      !AudioService.savedAudioBuffers[url]
+    ) {
       return
     }
 
@@ -302,7 +340,18 @@ class AudioService {
       source.connect(gainNode)
       gainNode.connect(this.output)
 
-      this.fade(source, gainNode, time, gain, startGain, fadeIn, holdDuration, fadeOut, endGain, startTime)
+      this.fade(
+        source,
+        gainNode,
+        time,
+        gain,
+        startGain,
+        fadeIn,
+        holdDuration,
+        fadeOut,
+        endGain,
+        startTime
+      )
     }, (time - this.context.currentTime) * 1000)
   }
 
@@ -324,7 +373,7 @@ class AudioService {
     let time = this.getNextTime(delay)
 
     setTimeout(() => {
-      if (!this.context.currentTime) {
+      if (!this.context) {
         return
       }
 
@@ -338,11 +387,32 @@ class AudioService {
       gainNode.connect(this.output)
       source.connect(gainNode)
 
-      this.fade(source, gainNode, time, gain, startGain, fadeIn, holdDuration, fadeOut, endGain)
+      this.fade(
+        source,
+        gainNode,
+        time,
+        gain,
+        startGain,
+        fadeIn,
+        holdDuration,
+        fadeOut,
+        endGain
+      )
     }, (time - this.context.currentTime) * 1000)
   }
 
-  fade(source: OscillatorNode | AudioBufferSourceNode, gainNode, time, gain, startGain, fadeIn, holdDuration, fadeOut, endGain, startTime?) {
+  fade(
+    source: OscillatorNode | AudioBufferSourceNode,
+    gainNode,
+    time,
+    gain,
+    startGain,
+    fadeIn,
+    holdDuration,
+    fadeOut,
+    endGain,
+    startTime?
+  ) {
     source.onended = () => {
       gainNode.disconnect()
       this.count--
@@ -357,14 +427,20 @@ class AudioService {
         gainNode.gain.setValueAtTime(gain, time + fadeIn + holdDuration)
 
         setTimeout(() => {
-          gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
+          gainNode.gain.exponentialRampToValueAtTime(
+            endGain,
+            time + fadeIn + holdDuration + fadeOut
+          )
         }, (fadeIn + holdDuration) * 1000)
       }
     } else {
       gainNode.gain.setValueAtTime(gain, time)
 
       if (fadeOut) {
-        gainNode.gain.exponentialRampToValueAtTime(endGain, time + fadeIn + holdDuration + fadeOut)
+        gainNode.gain.exponentialRampToValueAtTime(
+          endGain,
+          time + fadeIn + holdDuration + fadeOut
+        )
       }
     }
 
@@ -385,7 +461,14 @@ class AudioService {
     } else {
       this.minTime = Math.max(this.minTime, this.context.currentTime)
       if (!delay && this.count) {
-        cueTime = this.count > 10 ? (this.count > 20 ? (this.count > 100 ? 0.01 : 0.02) : 0.04) : 0.08
+        cueTime =
+          this.count > 10
+            ? this.count > 20
+              ? this.count > 100
+                ? 0.01
+                : 0.02
+              : 0.04
+            : 0.08
       }
     }
 
@@ -424,7 +507,13 @@ class AudioService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async buildAudioFunction(litteral, side, frequencyMultiplier: number = null, gainMultiplier: number = null, test = false) {
+  async buildAudioFunction(
+    litteral,
+    side,
+    frequencyMultiplier: number = null,
+    gainMultiplier: number = null,
+    test = false
+  ) {
     litteral = `'use strict'; 
     var gain = Math.sqrt(ratio);
     ${litteral}`
@@ -441,16 +530,23 @@ class AudioService {
         if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(litteral))) {
           const originalParameters = litteral.slice(
             functionMatch.index + functionMatch[0].length,
-            findClosingBracketMatchIndex(litteral, functionMatch.index + functionMatch[0].length - 1)
+            findClosingBracketMatchIndex(
+              litteral,
+              functionMatch.index + functionMatch[0].length - 1
+            )
           )
 
           const functionArguments = parseFunctionArguments(originalParameters)
 
           if (!functionArguments) {
-            throw new Error('Invalid argument(s) for ' + functionMatch[0] + ' function')
+            throw new Error(
+              'Invalid argument(s) for ' + functionMatch[0] + ' function'
+            )
           }
 
-          const defaultArguments = Object.values(audioDefaultParameters[functionMatch[1] as 'play' | 'playurl'])
+          const defaultArguments = Object.values(
+            audioDefaultParameters[functionMatch[1] as 'play' | 'playurl']
+          )
 
           for (let i = 0; i < defaultArguments.length; i++) {
             let argumentValue = defaultArguments[i]
@@ -458,8 +554,12 @@ class AudioService {
               if (typeof functionArguments[i] === 'string') {
                 functionArguments[i] = functionArguments[i].trim()
 
-                const stringProvided = /^('|").*('|")$/.test(functionArguments[i])
-                const defaultExpectedString = /^('|").*('|")$/.test(defaultArguments[i] as any)
+                const stringProvided = /^('|").*('|")$/.test(
+                  functionArguments[i]
+                )
+                const defaultExpectedString = /^('|").*('|")$/.test(
+                  defaultArguments[i] as any
+                )
 
                 if (stringProvided && !defaultExpectedString) {
                   functionArguments[i] = defaultArguments[i]
@@ -487,11 +587,17 @@ class AudioService {
           }
 
           if (functionMatch[1] === 'play') {
-            if (+functionArguments[0] && frequencyMultiplier && frequencyMultiplier !== 1) {
+            if (
+              +functionArguments[0] &&
+              frequencyMultiplier &&
+              frequencyMultiplier !== 1
+            ) {
               functionArguments[0] *= frequencyMultiplier
             }
           } else {
-            await this.loadSoundBuffer(functionArguments[0].slice(1, functionArguments[0].length - 1))
+            await this.loadSoundBuffer(
+              functionArguments[0].slice(1, functionArguments[0].length - 1)
+            )
           }
 
           if (gainMultiplier && gainMultiplier !== 1) {
@@ -499,14 +605,18 @@ class AudioService {
               if (+functionArguments[1]) {
                 functionArguments[1] *= gainMultiplier
               } else {
-                functionArguments[1] = gainMultiplier + '*(' + functionArguments[1] + ')'
+                functionArguments[1] =
+                  gainMultiplier + '*(' + functionArguments[1] + ')'
               }
             }
           }
 
           const finalParameters = functionArguments.join(', ')
 
-          litteral = litteral.replace('(' + originalParameters + ')', '(' + finalParameters + ')')
+          litteral = litteral.replace(
+            '(' + originalParameters + ')',
+            '(' + finalParameters + ')'
+          )
         }
       } while (functionMatch)
 
@@ -523,7 +633,9 @@ class AudioService {
         store.dispatch('app/showNotice', {
           id: 'audio-script-error',
           type: 'error',
-          title: `Please check that ${side} audio script is syntactically correct.` + (error.message ? `<br>${error.message}` : ''),
+          title:
+            `Please check that ${side} audio script is syntactically correct.` +
+            (error.message ? `<br>${error.message}` : ''),
           timeout: 60000
         })
 

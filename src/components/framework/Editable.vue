@@ -6,7 +6,6 @@
     @input="changed = true"
     @focus="onFocus"
     @blur="onBlur"
-    @click="onClick"
     @wheel="onWheel"
   ></div>
 </template>
@@ -17,29 +16,29 @@ import { countDecimals } from '@/services/productsService'
 
 @Component({
   name: 'Editable',
-  props: ['content', 'step', 'min', 'max', 'editable', 'disabled']
+  props: ['value', 'step', 'min', 'max', 'editable', 'disabled']
 })
 export default class extends Vue {
-  private content: string
+  private value: string
   private min: number
   private max: number
   private disabled: boolean
-  private clickAt: number
   private changed = false
   private position: number
+
   private _incrementSelectionTimeout: number
   private _emitTimeout: number
 
   mounted() {
     const el = this.$el as HTMLElement
 
-    el.innerText = this.content
+    el.innerText = this.value
   }
 
-  @Watch('content')
-  onContentChange() {
-    if ((this.$el as HTMLElement).innerText !== this.content) {
-      ;(this.$el as HTMLElement).innerText = this.content
+  @Watch('value')
+  onValueChange() {
+    if ((this.$el as HTMLElement).innerText !== this.value) {
+      ;(this.$el as HTMLElement).innerText = this.value
     }
   }
 
@@ -61,25 +60,6 @@ export default class extends Vue {
     return caretPos
   }
 
-  selectAll() {
-    window.setTimeout(() => {
-      let sel: Selection
-      let range: Range
-
-      if (window.getSelection && document.createRange) {
-        range = document.createRange()
-        range.selectNodeContents(this.$el)
-        sel = window.getSelection()
-        sel.removeAllRanges()
-        sel.addRange(range)
-      } else if ((document.body as any).createTextRange) {
-        range = (document.body as any).createTextRange()
-        ;(range as any).moveToElementText(this.$el)
-        ;(range as any).select()
-      }
-    }, 1)
-  }
-
   onBlur(event) {
     if (event.which === 13 && !isNaN(event.target.innerText)) {
       event.preventDefault()
@@ -88,7 +68,7 @@ export default class extends Vue {
 
     if (this.changed) {
       event.target.innerHTML = event.target.innerText
-      this.$emit('output', event.target.innerText)
+      this.$emit('input', event.target.innerText)
     }
 
     if (window.getSelection) {
@@ -103,7 +83,7 @@ export default class extends Vue {
       event.preventDefault()
       ;(this.$el as HTMLInputElement).blur()
 
-      event.target.innerText = this.content
+      event.target.innerText = this.value
 
       return
     }
@@ -115,16 +95,6 @@ export default class extends Vue {
 
   onFocus() {
     this.changed = false
-  }
-
-  onClick() {
-    const now = Date.now()
-
-    if (this.clickAt && now - this.clickAt < 150) {
-      this.selectAll()
-    }
-
-    this.clickAt = now
   }
 
   increment(direction: number) {
@@ -203,7 +173,7 @@ export default class extends Vue {
     }
     this._emitTimeout = setTimeout(() => {
       this._emitTimeout = null
-      this.$emit('output', text)
+      this.$emit('input', text)
     }, 50)
   }
 

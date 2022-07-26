@@ -3,6 +3,8 @@ import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import Vue from 'vue'
 import { randomString } from '@/utils/helpers'
 import { formatMarketPrice } from '@/services/productsService'
+import { ModulesState } from '..'
+import { getLogShade, joinRgba, splitColorCode } from '../../utils/colors'
 
 export interface Threshold {
   id: string
@@ -30,9 +32,9 @@ export interface TradesPaneState {
   audioVolume: number
   maxRows: number
   showLogos: boolean
+  multipliers: { [identifier: string]: number }
   monochromeLogos: boolean
   showTradesPairs: boolean
-  multipliers: { [identifier: string]: number }
   thresholdsMultipler: number
   showTimeAgo: boolean
   showPrice: boolean
@@ -52,7 +54,7 @@ const getters = {
       }
     }
   }
-} as GetterTree<TradesPaneState, TradesPaneState>
+} as GetterTree<TradesPaneState, ModulesState>
 
 const state = {
   liquidations: [
@@ -61,16 +63,20 @@ const state = {
       amount: 50000,
       buyColor: 'rgba(236,64,122,0.5)',
       sellColor: 'rgba(255,152,0,0.5)',
-      buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*2,0,,,'sine')\nplay(329.63, srqtR, srqtR*4,0.08,,,'sine')",
-      sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*2,0,,,'sine')\nplay(440, srqtR, srqtR*4,0.08,,,'sine')"
+      buyAudio:
+        "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*2,0,,,'sine')\nplay(329.63, srqtR, srqtR*4,0.08,,,'sine')",
+      sellAudio:
+        "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*2,0,,,'sine')\nplay(440, srqtR, srqtR*4,0.08,,,'sine')"
     },
     {
       id: 'liquidation_significant',
       amount: 100000,
       buyColor: 'rgba(236,64,122,0.6)',
       sellColor: 'rgba(255,152,0,0.7)',
-      buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*6,0.08,,,'sine')",
-      sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*6,0.08,,,'sine')"
+      buyAudio:
+        "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*6,0.08,,,'sine')",
+      sellAudio:
+        "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*6,0.08,,,'sine')"
     },
     {
       id: 'liquidation_huge',
@@ -79,8 +85,10 @@ const state = {
       sellGif: 'flying money',
       buyColor: 'rgba(236,64,122,0.7)',
       sellColor: 'rgba(255,152,0,0.8)',
-      buyAudio: "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*8,0.08,,,'sine')",
-      sellAudio: "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*8,0.08,,,'sine')"
+      buyAudio:
+        "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*8,0.08,,,'sine')",
+      sellAudio:
+        "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*8,0.08,,,'sine')"
     },
     {
       id: 'liquidation_rare',
@@ -89,8 +97,10 @@ const state = {
       sellGif: 'explosion',
       buyColor: 'rgb(156,39,176)',
       sellColor: 'rgb(255,235,59)',
-      buyAudio: "var srqtR = Math.min(1, gain / 10)\nplay(329.63, srqtR, 1,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",
-      sellAudio: "var srqtR = Math.min(1, gain / 10)\nplay(440, srqtR, 1,0,,,'sine')\nplay(440, srqtR, srqtR*10,0.08,,,'sine')"
+      buyAudio:
+        "var srqtR = Math.min(1, gain / 10)\nplay(329.63, srqtR, 1,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",
+      sellAudio:
+        "var srqtR = Math.min(1, gain / 10)\nplay(440, srqtR, 1,0,,,'sine')\nplay(440, srqtR, srqtR*10,0.08,,,'sine')"
     }
   ],
   thresholds: [
@@ -162,7 +172,18 @@ play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.13, 0.24,,0)`
 } as TradesPaneState
 
 const actions = {
-  updateThreshold({ state, commit }, { index, prop, value }: { index: number; prop: string; value: any }) {
+  boot({ rootState, dispatch }, firstTime?: boolean) {
+    if (firstTime) {
+      dispatch('generateSwatch', {
+        buyColor: rootState.settings.buyColor,
+        sellColor: rootState.settings.sellColor
+      })
+    }
+  },
+  updateThreshold(
+    { state, commit },
+    { index, prop, value }: { index: number; prop: string; value: any }
+  ) {
     const threshold = state.thresholds[index]
 
     if (!threshold) {
@@ -180,8 +201,13 @@ const actions = {
     }
 
     commit('SET_THRESHOLD_' + prop, payload)
+
+    state.thresholds = JSON.parse(JSON.stringify(state.thresholds))
   },
-  updateLiquidations({ state, commit }, { prop, value }: { prop: string; value: any }) {
+  updateLiquidations(
+    { state, commit },
+    { prop, value }: { prop: string; value: any }
+  ) {
     const threshold = state.liquidations
 
     if (!threshold) {
@@ -189,8 +215,40 @@ const actions = {
     }
 
     commit('SET_LIQUIDATIONS_' + prop, value)
+  },
+  generateSwatch(
+    { state },
+    {
+      buyColor,
+      sellColor,
+      baseVariance = 0.15
+    }: { buyColor: string; sellColor: string; baseVariance: number }
+  ) {
+    const count = state.thresholds.length
+    const baseMultipler = (count / 2) * -baseVariance
+    const buyRgb = splitColorCode(buyColor)
+    const sellRgb = splitColorCode(sellColor)
+
+    for (let i = 0; i < count; i++) {
+      let buyScaled = getLogShade(buyRgb, baseMultipler + baseVariance * i)
+      if (!i) {
+        buyScaled = joinRgba([...splitColorCode(buyScaled), 0.33])
+      }
+      state.thresholds[i].buyColor = buyScaled
+
+      let sellScaled = getLogShade(sellRgb, baseMultipler + baseVariance * i)
+      if (!i) {
+        sellScaled = joinRgba([...splitColorCode(sellScaled), 0.33])
+      }
+      state.thresholds[i].sellColor = sellScaled
+    }
+
+    this.dispatch('app/showNotice', {
+      title: `Generating swatches for ${count} thresholds with ${baseVariance} variance`,
+      type: 'info'
+    })
   }
-} as ActionTree<TradesPaneState, TradesPaneState>
+} as ActionTree<TradesPaneState, ModulesState>
 
 const mutations = {
   TOGGLE_TRADES_PAIRS(state) {
@@ -284,10 +342,13 @@ const mutations = {
     const threshold = this.getters[state._id + '/getThreshold'](id)
 
     if (threshold) {
-      threshold.max = !threshold.max
+      Vue.set(threshold, 'max', !threshold.max)
     }
   },
-  SET_THRESHOLD_MULTIPLIER(state, { identifier, multiplier }: { identifier: string; multiplier: number }) {
+  SET_THRESHOLD_MULTIPLIER(
+    state,
+    { identifier, multiplier }: { identifier: string; multiplier: number }
+  ) {
     if (multiplier === null || isNaN(multiplier) || multiplier < 0) {
       Vue.delete(state.multipliers, identifier)
       return
@@ -351,7 +412,9 @@ const mutations = {
     })
   },
   DELETE_THRESHOLD(state, id: string) {
-    const tradesIndex = state.thresholds.indexOf(state.thresholds.find(t => t.id === id))
+    const tradesIndex = state.thresholds.indexOf(
+      state.thresholds.find(t => t.id === id)
+    )
 
     if (tradesIndex !== -1) {
       state.thresholds.splice(tradesIndex, 1)
@@ -359,7 +422,9 @@ const mutations = {
       return
     }
 
-    const liquidationsIndex = state.liquidations.indexOf(state.liquidations.find(t => t.id === id))
+    const liquidationsIndex = state.liquidations.indexOf(
+      state.liquidations.find(t => t.id === id)
+    )
 
     if (liquidationsIndex !== -1) {
       state.liquidations.splice(liquidationsIndex, 1)
@@ -370,18 +435,28 @@ const mutations = {
   SET_AUDIO_THRESHOLD(state, amount: number) {
     state.audioThreshold = amount
   },
-  SET_THRESHOLDS_MULTIPLER(state, { value, market }: { value: number; market: string }) {
+  SET_THRESHOLDS_MULTIPLER(
+    state,
+    { value, market }: { value: number; market: string }
+  ) {
     value = Math.max(value, 0.01)
-    const change = (value - state.thresholdsMultipler) / state.thresholdsMultipler
+    const change =
+      (value - state.thresholdsMultipler) / state.thresholdsMultipler
 
     state.thresholdsMultipler = value
 
     for (const threshold of state.thresholds) {
-      threshold.amount = +formatMarketPrice(threshold.amount + threshold.amount * change, market)
+      threshold.amount = +formatMarketPrice(
+        threshold.amount + threshold.amount * change,
+        market
+      )
     }
 
     for (const threshold of state.liquidations) {
-      threshold.amount = +formatMarketPrice(threshold.amount + threshold.amount * change, market)
+      threshold.amount = +formatMarketPrice(
+        threshold.amount + threshold.amount * change,
+        market
+      )
     }
   }
 } as MutationTree<TradesPaneState>
@@ -392,4 +467,4 @@ export default {
   getters,
   actions,
   mutations
-} as Module<TradesPaneState, TradesPaneState>
+} as Module<TradesPaneState, ModulesState>

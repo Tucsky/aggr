@@ -11,7 +11,13 @@ import { ListenedProduct } from './app'
 import { GRID_COLS } from '@/utils/constants'
 import { getMarketProduct, parseMarket } from '../services/productsService'
 
-export type PaneType = 'trades' | 'chart' | 'stats' | 'counters' | 'prices' | 'website'
+export type PaneType =
+  | 'trades'
+  | 'chart'
+  | 'stats'
+  | 'counters'
+  | 'prices'
+  | 'website'
 export type MarketsListeners = { [market: string]: ListenedProduct }
 export interface GridItem {
   x?: number
@@ -67,7 +73,10 @@ const actions = {
       }
     }
   },
-  async addPane({ commit, dispatch, state }, options: Pane & { settings?: any; originalGridItem?: any }) {
+  async addPane(
+    { commit, dispatch, state },
+    options: Pane & { settings?: any; originalGridItem?: any }
+  ) {
     if (!panesSettings[options.type]) {
       this.dispatch('app/showNotice', {
         title: 'Unrecognized pane type "' + options.type + '"',
@@ -77,7 +86,10 @@ const actions = {
     }
 
     const name = options.name || ''
-    const id = uniqueName(slugify(name || options.type), Object.keys(state.panes))
+    const id = uniqueName(
+      slugify(name || options.type),
+      Object.keys(state.panes)
+    )
 
     const pane: Pane = {
       id,
@@ -91,7 +103,11 @@ const actions = {
     await registerModule(id, {}, true, pane)
 
     commit('ADD_PANE', pane)
-    dispatch('appendPaneGridItem', { id: pane.id, type: pane.type, originalGridItem: options.originalGridItem })
+    dispatch('appendPaneGridItem', {
+      id: pane.id,
+      type: pane.type,
+      originalGridItem: options.originalGridItem
+    })
     dispatch('refreshMarketsListeners')
 
     Vue.nextTick(() => {
@@ -121,7 +137,14 @@ const actions = {
       localStorage.removeItem(id)
     })
   },
-  appendPaneGridItem({ commit }, { id, type, originalGridItem }: { id: string; type: PaneType; originalGridItem?: GridItem }) {
+  appendPaneGridItem(
+    { commit },
+    {
+      id,
+      type,
+      originalGridItem
+    }: { id: string; type: PaneType; originalGridItem?: GridItem }
+  ) {
     const item: GridItem = {
       i: id,
       type
@@ -144,8 +167,11 @@ const actions = {
   },
   async refreshMarketsListeners({ commit, state }, { markets, id } = {}) {
     // cache original listeners (market: n listeners)
-    const originalListeners: { [marketKey: string]: number } = Object.keys(state.marketsListeners).reduce((listenersByMarkets, marketKey) => {
-      listenersByMarkets[marketKey] = state.marketsListeners[marketKey].listeners
+    const originalListeners: { [marketKey: string]: number } = Object.keys(
+      state.marketsListeners
+    ).reduce((listenersByMarkets, marketKey) => {
+      listenersByMarkets[marketKey] =
+        state.marketsListeners[marketKey].listeners
 
       return listenersByMarkets
     }, {})
@@ -162,7 +188,10 @@ const actions = {
         paneMarkets = markets
       }
 
-      if (state.panes[paneId].type === 'counters' || state.panes[paneId].type === 'stats') {
+      if (
+        state.panes[paneId].type === 'counters' ||
+        state.panes[paneId].type === 'stats'
+      ) {
         // market used in a bucket
         const bucketId = getBucketId(paneMarkets)
 
@@ -200,7 +229,8 @@ const actions = {
 
     for (const market of allUniqueMarkets) {
       const previousListeners = originalListeners[market]
-      const currentListeners = marketsListeners[market] && marketsListeners[market].listeners
+      const currentListeners =
+        marketsListeners[market] && marketsListeners[market].listeners
 
       if (!previousListeners && currentListeners) {
         toConnect.push(market)
@@ -214,7 +244,10 @@ const actions = {
       }
     }
 
-    await Promise.all([aggregatorService.connect(toConnect), aggregatorService.disconnect(toDisconnect)])
+    await Promise.all([
+      aggregatorService.connect(toConnect),
+      aggregatorService.disconnect(toDisconnect)
+    ])
 
     aggregatorService.dispatch({
       op: 'updateBuckets',
@@ -234,7 +267,10 @@ const actions = {
   setMarketsForAll({ dispatch }, markets: string[]) {
     return dispatch('refreshMarketsListeners', { markets })
   },
-  setMarketsForPane({ dispatch }, { id, markets }: { id: string; markets: string[] }) {
+  setMarketsForPane(
+    { dispatch },
+    { id, markets }: { id: string; markets: string[] }
+  ) {
     return dispatch('refreshMarketsListeners', { id, markets })
   },
   duplicatePane({ state, rootState, dispatch }, id: string) {
@@ -256,7 +292,10 @@ const actions = {
       title: `Duplicated pane ${id}`
     })
   },
-  async resetPane({ state, rootState }, { id, data }: { id: string; data?: any }) {
+  async resetPane(
+    { state, rootState },
+    { id, data }: { id: string; data?: any }
+  ) {
     const pane = JSON.parse(JSON.stringify(state.panes[id]))
 
     let currentPaneState
@@ -296,17 +335,18 @@ const actions = {
       const parent = el.parentElement
 
       parent.style.fontSize = zoom ? zoom + 'rem' : ''
+      el.classList.remove('-large', '-extra-large', '-small', '-extra-small')
 
-      if (zoom >= 1) {
+      if (zoom > 1) {
         el.classList.add('-large')
+        if (zoom >= 2) {
+          el.classList.add('-extra-large')
+        }
       } else {
-        el.classList.remove('-large')
-      }
-
-      if (zoom < 1) {
         el.classList.add('-small')
-      } else {
-        el.classList.remove('-small')
+        if (zoom < 0.87) {
+          el.classList.add('-extra-small')
+        }
       }
     }
   },
@@ -352,11 +392,14 @@ const mutations = {
   ADD_GRID_ITEM: (state, item) => {
     if (typeof item.x === 'undefined') {
       const cols = GRID_COLS
-      const size = window.innerWidth <= 500 ? 16 : window.innerWidth < 768 ? 8 : 4
+      const size =
+        window.innerWidth <= 500 ? 16 : window.innerWidth < 768 ? 8 : 4
       const width = item.w || size
       const height = item.h || size
 
-      const items = state.layout.slice().sort((a, b) => a.x + a.y * 2 - (b.x + b.y * 2))
+      const items = state.layout
+        .slice()
+        .sort((a, b) => a.x + a.y * 2 - (b.x + b.y * 2))
 
       const columns = []
 
@@ -406,7 +449,10 @@ const mutations = {
   SET_MARKETS_LISTENERS: (state, marketsListeners: MarketsListeners) => {
     state.marketsListeners = marketsListeners
   },
-  SET_PANE_MARKETS: (state, { id, markets }: { id: string; markets: string[] }) => {
+  SET_PANE_MARKETS: (
+    state,
+    { id, markets }: { id: string; markets: string[] }
+  ) => {
     state.panes[id].markets = markets
   },
   SET_PANE_NAME: (state, { id, name }: { id: string; name: string }) => {

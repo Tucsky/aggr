@@ -3,76 +3,149 @@
     <template v-slot:header
       ><div>
         <div class="title">Settings</div>
-        <div class="subtitle" v-if="hits"><i class="icon-bolt"></i> <code v-text="hits"></code> messages /s</div>
+        <div class="subtitle" v-if="hits">
+          <i class="icon-bolt"></i> <code v-text="hits"></code> messages /s
+        </div>
       </div>
       <div class="column -center"></div>
     </template>
-    <section class="section" v-if="workspace">
+    <section class="section" v-if="currentWorkspace">
       <div v-if="settings.indexOf('workspaces') > -1">
         <div class="column">
-          <dropdown :options="activeWorkspaceMenu" selectionClass="-blue -large -cases w-100 column" class="w-100">
-            <template v-slot:selection>
-              <i class="icon-dashboard -center mr16"></i>
+          <button
+            type="button"
+            class="btn -blue -large -cases flex-grow-1 column text-ellipsis"
+            @click="toggleWorkspaceDropdown($event, currentWorkspace.id)"
+          >
+            <i class="icon-dashboard -center mr16"></i>
 
-              <div class="-fill text-left">
-                <div class="column">
-                  <div class="-center">{{ workspace.name }}</div>
-                  <small class="-center">
-                    <code>{{ workspace.id }}</code>
-                  </small>
-                  <div class="-fill"></div>
-                </div>
-                <small class="text-muted">created {{ workspace.createdAt }} ago</small>
+            <div class="-fill text-left text-ellipsis">
+              <div class="text-ellipsis">
+                {{ currentWorkspace.name }}
               </div>
-              <i class="icon-cog"></i>
-            </template>
-            <template v-slot:option="{ value }">
-              <i :class="'icon-' + value.icon"></i>
-              <span>{{ value.label }}</span>
-            </template>
+              <small class="text-muted">
+                created {{ currentWorkspace.createdAt }} ago
+              </small>
+            </div>
+            <i class="icon-cog"></i>
+          </button>
+          <dropdown v-model="workspaceDropdownTrigger">
+            <button
+              type="button"
+              class="dropdown-item"
+              @click="openWorkspace(workspaceDropdownId, true)"
+            >
+              <i class="icon-external-link-square-alt"></i>
+              <span>Open in a new tab</span>
+            </button>
+            <button
+              type="button"
+              class="dropdown-item"
+              @click="renameWorkspace(workspaceDropdownId)"
+            >
+              <i class="icon-edit"></i>
+              <span>Rename</span>
+            </button>
+            <button
+              type="button"
+              class="dropdown-item"
+              @click="duplicateWorkspace(workspaceDropdownId)"
+            >
+              <i class="icon-copy-paste"></i>
+              <span>Duplicate</span>
+            </button>
+            <button
+              type="button"
+              class="dropdown-item"
+              @click="exportWorkspace(workspaceDropdownId)"
+            >
+              <i class="icon-download"></i>
+              <span>Download</span>
+            </button>
+            <div class="dropdown-divider"></div>
+            <button
+              type="button"
+              class="dropdown-item"
+              @click="removeWorkspace(workspaceDropdownId)"
+            >
+              <i class="icon-cross"></i>
+              <span>Remove workspace</span>
+            </button>
           </dropdown>
-          <dropdown :options="workspacesToolsMenu" selectionClass="-text">
-            <template v-slot:selection>
-              <i class="icon-plus" title="New template" v-tippy></i>
-            </template>
-            <template v-slot:option="{ value }">
-              <i :class="'icon-' + value.icon"></i>
-              <span>{{ value.label }}</span>
-            </template>
+          <button
+            type="button"
+            class="btn -text -large  -cases ml8"
+            @click="$refs.createWorkspaceDropdown.toggle($event.currentTarget)"
+          >
+            <i class="icon-plus mr4"></i>
+            <span>New</span>
+          </button>
+
+          <dropdown ref="createWorkspaceDropdown">
+            <button
+              type="button"
+              class="dropdown-item"
+              @click="uploadWorkspace"
+            >
+              <i class="icon-upload"></i>
+              <span>Upload template file</span>
+            </button>
+            <button
+              type="button"
+              class="dropdown-item"
+              @click="createBlankWorkspace"
+            >
+              <i class="icon-plus"></i>
+              <span>Create blank template</span>
+            </button>
           </dropdown>
         </div>
-        <table v-if="workspaces.length" class="table">
+        <table v-if="workspaces.length" class="table mt8">
           <thead>
             <tr>
               <th>Name</th>
-              <th>Use</th>
+              <th class="text-nowrap">Updated at</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="workspace of workspaces" :key="workspace.id" class="option -action" @click="openWorkspace(workspace.id)">
+            <tr
+              v-for="workspace of workspaces"
+              :key="workspace.id"
+              class="option -action"
+              @click="openWorkspace(workspace.id)"
+            >
               <td
                 class="table-input table-ellipsis text-nowrap"
+                :class="[workspace.id === currentWorkspace.id && 'text-bold']"
                 v-text="workspace.name"
-                :title="workspace.name"
-                v-tippy="{ placement: 'right' }"
+                :title="
+                  `${workspace.name}, created ${ago(workspace.createdAt)} ago`
+                "
+                v-tippy="{ boundary: 'window', placement: 'left' }"
               ></td>
-              <td class="table-input table-min">{{ ago(workspace.updatedAt) }} ago</td>
-              <td class="table-action -hover">
-                <button class="btn -small -green" @click.stop="openWorkspace(workspace.id, true)">
-                  <i class="icon-external-link-square-alt"></i>
-                </button>
+              <td class="table-input table-min">
+                {{ ago(workspace.updatedAt) }} ago
               </td>
               <td class="table-action -hover">
-                <button class="btn -red -small" @click.stop="removeWorkspace(workspace.id)"><i class="icon-trash"></i></button>
+                <button
+                  class="btn -text -small"
+                  @click.stop="toggleWorkspaceDropdown($event, workspace.id)"
+                >
+                  <i class="icon-more"></i>
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'workspaces')">
+      <div
+        class="section__title"
+        @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'workspaces')"
+      >
         Workspaces
-        <small>your templates</small>
+        <small>templates</small>
         <i class="icon-up-thin"></i>
       </div>
     </section>
@@ -81,9 +154,16 @@
       <div v-if="settings.indexOf('list') > -1" class="settings-trades">
         <div class="form-group column mb8">
           <label class="checkbox-control -aggr -auto flex-grow-1">
-            <input type="checkbox" class="form-control" :checked="true" @click.prevent="$store.commit('settings/TOGGLE_AGGREGATION')" />
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="true"
+              @click.prevent="$store.commit('settings/TOGGLE_AGGREGATION')"
+            />
             <div :on="aggregationLength + 'ms'" off="No aggregation"></div>
-            <span v-if="aggregationLength">{{ aggregationLength }}ms aggregation</span>
+            <span v-if="aggregationLength"
+              >{{ aggregationLength }}ms aggregation</span
+            >
             <span v-else>No aggregation</span>
           </label>
         </div>
@@ -100,29 +180,55 @@
             "
             v-tippy="{ placement: 'left' }"
           >
-            <input type="checkbox" class="form-control" :checked="calculateSlippage" @change="$store.commit('settings/TOGGLE_SLIPPAGE')" />
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="calculateSlippage"
+              @change="$store.commit('settings/TOGGLE_SLIPPAGE')"
+            />
             <div></div>
-            <span v-if="calculateSlippage === 'price'"> Calculate slippage in price change (<i class="icon-dollar"></i>) </span>
-            <span v-if="calculateSlippage === 'bps'"> Calculate slippage in bps <i class="icon-bps"></i> </span>
+            <span v-if="calculateSlippage === 'price'">
+              Calculate slippage in price change (<i class="icon-dollar"></i>)
+            </span>
+            <span v-if="calculateSlippage === 'bps'">
+              Calculate slippage in bps <i class="icon-bps"></i>
+            </span>
             <span v-if="!calculateSlippage">Do not show slippage</span>
           </label>
         </div>
 
         <div class="form-group">
-          <label class="checkbox-control checkbox-control-input -auto" v-tippy="{ placement: 'left' }" title="Size display preference">
+          <label
+            class="checkbox-control checkbox-control-input -auto"
+            v-tippy="{ placement: 'left' }"
+            title="Size display preference"
+          >
             <input
               type="checkbox"
               class="form-control"
               :checked="preferQuoteCurrencySize"
-              @change="$store.commit('settings/SET_QUOTE_AS_PREFERED_CURRENCY', $event.target.checked)"
+              @change="
+                $store.commit(
+                  'settings/SET_QUOTE_AS_PREFERED_CURRENCY',
+                  $event.target.checked
+                )
+              "
             />
             <span>Size in</span>
             <div on="quote currency" off="base currency"></div>
-            <span>(<i :class="preferQuoteCurrencySize ? 'icon-quote' : 'icon-base'"></i>)</span>
+            <span
+              >(<i
+                :class="preferQuoteCurrencySize ? 'icon-quote' : 'icon-base'"
+              ></i
+              >)</span
+            >
           </label>
         </div>
       </div>
-      <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'list')">
+      <div
+        class="section__title"
+        @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'list')"
+      >
         Trades
         <small>aggregation, slippage, currency</small>
         <i class="icon-up-thin"></i>
@@ -131,7 +237,10 @@
 
     <section class="section">
       <audio-settings v-if="settings.indexOf('audio') > -1"></audio-settings>
-      <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'audio')">
+      <div
+        class="section__title"
+        @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'audio')"
+      >
         Audio
         <small>main volume</small>
         <i class="icon-up-thin"></i>
@@ -139,39 +248,81 @@
     </section>
 
     <section class="section">
-      <div v-if="settings.indexOf('chart') > -1" class="settings-chart">
-        <div class="form-group mb16">
-          <label class="checkbox-control flex-left">
-            <input
-              type="checkbox"
-              class="form-control"
-              :checked="!!timezoneOffset"
-              @change="$store.commit('settings/SET_TIMEZONE_OFFSET', !timezoneOffset ? new Date().getTimezoneOffset() * 60000 * -1 : 0)"
-            />
-            <div></div>
-            <span>Show local time</span>
-          </label>
-        </div>
+      <div v-if="settings.indexOf('colors') > -1" class="settings-chart">
         <div class="form-group column mb8">
-          <verte :value="backgroundColor" @input="$event !== backgroundColor && $store.dispatch('settings/setBackgroundColor', $event)"></verte>
+          <color-picker-control
+            :value="backgroundColor"
+            label="Background color"
+            @input="
+              $store.dispatch('settings/setColor', {
+                type: 'BACKGROUND',
+                value: $event
+              })
+            "
+          ></color-picker-control>
           <label class="-fill -center ml8">Background color</label>
         </div>
         <div class="form-group column mb8">
-          <verte
-            picker="square"
-            menuPosition="left"
-            model="rgb"
+          <color-picker-control
             :value="textColor"
-            @input="$event !== textColor && $store.dispatch('settings/setTextColor', $event)"
-          ></verte>
+            label="App text color"
+            @input="
+              $store.dispatch('settings/setColor', {
+                type: 'TEXT',
+                value: $event
+              })
+            "
+          ></color-picker-control>
           <label for="" class="-fill -center ml8"
-            >Text color <a><i class="icon-cross text-small" v-if="textColor" @click="$store.commit('settings/SET_CHART_COLOR', null)"></i></a
+            >Text color
+            <a
+              ><i
+                class="icon-cross text-small"
+                v-if="textColor"
+                @click="
+                  $store.dispatch('settings/setColor', {
+                    type: 'TEXT',
+                    value: null
+                  })
+                "
+              ></i></a
           ></label>
         </div>
+        <div class="form-group column mb8">
+          <color-picker-control
+            :value="buyColor"
+            label="Buy color"
+            @close="regenerateSwatch"
+            @input="
+              $store.dispatch('settings/setColor', {
+                type: 'BUY',
+                value: $event
+              })
+            "
+          ></color-picker-control>
+          <label class="-fill -center ml8">Buy color</label>
+        </div>
+        <div class="form-group column mb8">
+          <color-picker-control
+            :value="sellColor"
+            label="Sell color"
+            @close="regenerateSwatch"
+            @input="
+              $store.dispatch('settings/setColor', {
+                type: 'SELL',
+                value: $event
+              })
+            "
+          ></color-picker-control>
+          <label class="-fill -center ml8">Sell color</label>
+        </div>
       </div>
-      <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'chart')">
-        Chart
-        <small>background color, timezone</small>
+      <div
+        class="section__title"
+        @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'colors')"
+      >
+        Colors
+        <small>background, buy/sell color</small>
         <i class="icon-up-thin"></i>
       </div>
     </section>
@@ -179,10 +330,17 @@
     <section class="section">
       <div class="form-group" v-if="settings.indexOf('exchanges') > -1">
         <div class="settings-exchanges">
-          <Exchange v-for="exchangeId of exchanges" :key="exchangeId" :id="exchangeId" />
+          <Exchange
+            v-for="exchangeId of exchanges"
+            :key="exchangeId"
+            :id="exchangeId"
+          />
         </div>
       </div>
-      <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'exchanges')">
+      <div
+        class="section__title"
+        @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'exchanges')"
+      >
         Exchanges
         <small>enable/disable exchange globally</small>
         <i class="icon-up-thin"></i>
@@ -191,7 +349,10 @@
 
     <section class="section">
       <other-settings v-if="settings.indexOf('other') > -1"></other-settings>
-      <div class="section__title" @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'other')">
+      <div
+        class="section__title"
+        @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'other')"
+      >
         Other
         <i class="icon-up-thin"></i>
       </div>
@@ -205,19 +366,38 @@
               v{{ version }} <sup class="version-date">{{ buildDate }}</sup>
             </button>
           </div>
-          <a class="btn -text" href="https://github.com/Tucsky/aggr" target="_blank">github</a>
+          <a
+            class="btn -text"
+            href="https://github.com/Tucsky/aggr"
+            target="_blank"
+            >github</a
+          >
           <i class="pipe -center">|</i>
           <span>
             <dono-dropdown class="-top -text-left" />
           </span>
           <i class="pipe -center">|</i>
           <span>
-            <dropdown :options="databaseMenu" placeholder="Reset" selectionClass="-text -arrow">
-              <template v-slot:option="{ value }">
-                <i :class="'icon-' + value.icon" class="-fill"></i>
-
-                <span class="ml4">{{ value.label }}</span>
-              </template>
+            <button
+              type="button"
+              class="btn -text -arrow"
+              @click="$refs.databaseDropdown.toggle($event.currentTarget)"
+            >
+              Reset
+            </button>
+            <dropdown ref="databaseDropdown">
+              <button type="button" class="dropdown-item" @click="reset">
+                <i class="icon-warning"></i>
+                <span>Reset to default</span>
+              </button>
+              <button
+                type="button"
+                class="dropdown-item"
+                @click="exportDatabase"
+              >
+                <i class="icon-upload"></i>
+                <span>Export database</span>
+              </button>
             </dropdown>
           </span>
         </div>
@@ -229,20 +409,20 @@
 <script>
 import { ago, browseFile } from '../../utils/helpers'
 
+import Dialog from '@/components/framework/Dialog.vue'
 import Exchange from './Exchange.vue'
 import DonoDropdown from './DonoDropdown.vue'
-
 import dialogService from '../../services/dialogService'
 import AudioSettings from './AudioSettings.vue'
 import OtherSettings from './OtherSettings.vue'
+import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
+
+import importService from '@/services/importService'
 import workspacesService from '@/services/workspacesService'
-import Dropdown from '../framework/Dropdown.vue'
 import aggregatorService from '@/services/aggregatorService'
 import { APPLICATION_START_TIME } from '@/utils/constants'
 
-import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
-import importService from '@/services/importService'
 
 export default {
   mixins: [DialogMixin],
@@ -252,13 +432,15 @@ export default {
     AudioSettings,
     OtherSettings,
     DonoDropdown,
-    Dropdown
+    ColorPickerControl
   },
   data() {
     return {
-      workspace: null,
+      currentWorkspace: null,
       workspaces: [],
-      hits: null
+      hits: null,
+      workspaceDropdownId: null,
+      workspaceDropdownTrigger: null
     }
   },
   computed: {
@@ -278,16 +460,20 @@ export default {
       return this.$store.state.settings.settings
     },
 
-    timezoneOffset() {
-      return this.$store.state.settings.timezoneOffset
-    },
-
     backgroundColor() {
       return this.$store.state.settings.backgroundColor
     },
 
     textColor() {
       return this.$store.state.settings.textColor
+    },
+
+    buyColor() {
+      return this.$store.state.settings.buyColor
+    },
+
+    sellColor() {
+      return this.$store.state.settings.sellColor
     },
 
     aggregationLength() {
@@ -304,7 +490,6 @@ export default {
   },
 
   async created() {
-    this.createMenus()
     await this.getWorkspaces()
 
     if (process.env.NODE_ENV !== 'production') {
@@ -319,58 +504,6 @@ export default {
   },
 
   methods: {
-    createMenus() {
-      this.databaseMenu = [
-        {
-          icon: 'warning',
-          color: 'danger',
-          label: 'Reset to default',
-          click: this.reset
-        },
-        {
-          icon: 'upload',
-          label: 'Export database',
-          click: this.exportDatabase
-        }
-      ]
-
-      this.activeWorkspaceMenu = [
-        {
-          icon: 'trash',
-          label: 'Remove',
-          click: this.removeWorkspace
-        },
-        {
-          icon: 'edit',
-          label: 'Rename',
-          click: this.renameWorkspace
-        },
-        {
-          icon: 'download',
-          label: 'Download',
-          click: this.exportWorkspace
-        },
-        {
-          icon: 'copy-paste',
-          label: 'Duplicate',
-          click: this.duplicateWorkspace
-        }
-      ]
-
-      this.workspacesToolsMenu = [
-        {
-          icon: 'upload',
-          label: 'Upload template',
-          click: this.uploadWorkspace
-        },
-        {
-          icon: 'plus',
-          label: 'New workspace',
-          click: this.createBlankWorkspace
-        }
-      ]
-    },
-
     getHits() {
       if (this.hits === null) {
         this.hits = '...'
@@ -386,13 +519,11 @@ export default {
     },
 
     async getWorkspaces() {
-      const workspaces = (await workspacesService.getWorkspaces()).filter(workspace => workspace.id !== workspacesService.workspace.id)
-
+      const workspaces = await workspacesService.getWorkspaces()
       this.workspaces = workspaces
-
       const workspace = workspacesService.workspace
 
-      this.workspace = {
+      this.currentWorkspace = {
         name: workspace.name,
         id: workspace.id,
         updatedAt: ago(workspace.updatedAt),
@@ -401,18 +532,8 @@ export default {
       }
     },
 
-    async loadWorkspace(id) {
-      await this.close()
-
-      const workspace = await workspacesService.getWorkspace(id)
-
-      await workspacesService.setCurrentWorkspace(workspace)
-
-      this.getWorkspaces()
-    },
-
     openWorkspace(id, newWindow = false) {
-      const url = window.location.href.replace(this.workspace.id, id)
+      const url = window.location.href.replace(this.currentWorkspace.id, id)
 
       if (newWindow) {
         window.open(url)
@@ -421,22 +542,23 @@ export default {
       }
     },
 
-    async removeWorkspace(id) {
-      let workspace
+    async removeWorkspace(id = this.workspaceDropdownId) {
+      const workspace = await workspacesService.getWorkspace(id)
 
-      if (typeof id === 'string') {
-        workspace = await workspacesService.getWorkspace(id)
-      } else {
-        workspace = this.workspace
-      }
-
-      const isCurrent = this.workspace && this.workspace.id === workspace.id
+      const isCurrent =
+        this.currentWorkspace && this.currentWorkspace.id === workspace.id
 
       if (isCurrent) {
         await this.close()
       }
 
-      if (!(await dialogService.confirm(`Delete workspace ${workspace.name} ?`))) {
+      if (
+        !(await dialogService.confirm(
+          `Delete ${isCurrent ? 'current workspace' : 'workspace'} ${
+            workspace.name
+          } ?`
+        ))
+      ) {
         return
       }
 
@@ -457,18 +579,34 @@ export default {
       }
     },
 
-    async exportWorkspace() {
-      workspacesService.downloadWorkspace()
+    async exportWorkspace(id = this.workspaceDropdownId) {
+      workspacesService.downloadWorkspace(id)
     },
 
-    async duplicateWorkspace() {
-      workspacesService.duplicateWorkspace()
+    async duplicateWorkspace(id = this.workspaceDropdownId) {
+      workspacesService.duplicateWorkspace(id)
     },
 
     async createBlankWorkspace() {
+      const randomName = await fetch(
+        'https://random-word-api.herokuapp.com/word?number=2'
+      )
+        .then(response => response.json())
+        .then(words =>
+          words.map(word => word[0].toUpperCase() + word.slice(1)).join('')
+        )
+
       const name = await dialogService.prompt({
-        action: 'Choose a name (optional)'
+        label: 'Name',
+        input: randomName,
+        action: 'Name the template',
+        placeholder: 'Name (or leave empty)',
+        submitLabel: 'Create'
       })
+
+      if (typeof name !== 'string') {
+        return
+      }
 
       await this.close()
       const workspace = await workspacesService.createWorkspace(name)
@@ -494,17 +632,19 @@ export default {
       }
     },
 
-    async renameWorkspace() {
+    async renameWorkspace(id = this.workspaceDropdownId) {
+      const workspace = await workspacesService.getWorkspace(id)
+
       const name = await dialogService.prompt({
         action: 'Rename',
-        input: this.workspace.name
+        input: workspace.name
       })
 
       if (name) {
-        await workspacesService.renameWorkspace(name)
-      }
+        await workspacesService.renameWorkspace(workspace, name)
 
-      this.getWorkspaces()
+        await this.getWorkspaces()
+      }
     },
 
     async exportDatabase() {
@@ -547,7 +687,12 @@ export default {
           message: `Everything will be removed${
             content.length
               ? ' including : \n\t - ' +
-                content.map(([thing, count]) => count + ' ' + thing + (count > 1 ? 's' : '')).join('\n\t - ') +
+                content
+                  .map(
+                    ([thing, count]) =>
+                      count + ' ' + thing + (count > 1 ? 's' : '')
+                  )
+                  .join('\n\t - ') +
                 '\n\n...and everything else!'
               : '.'
           }`
@@ -561,6 +706,45 @@ export default {
 
     ago(timestamp) {
       return ago(timestamp)
+    },
+
+    toggleWorkspaceDropdown(event, workspaceId) {
+      if (this.workspaceDropdownTrigger) {
+        this.workspaceDropdownTrigger = null
+      } else {
+        this.workspaceDropdownTrigger = event.currentTarget
+        this.workspaceDropdownId = workspaceId
+      }
+    },
+
+    async regenerateSwatch(colorDidChanged) {
+      if (!colorDidChanged) {
+        return
+      }
+
+      if (await dialogService.confirm(`Generate thresholds colors ?`)) {
+        const buyColor = this.$store.state.settings.buyColor
+        const sellColor = this.$store.state.settings.sellColor
+
+        for (const paneId in this.$store.state.panes.panes) {
+          if (/^trades/.test(this.$store.state.panes.panes[paneId].type)) {
+            this.$store.dispatch(`${paneId}/generateSwatch`, {
+              buyColor,
+              sellColor,
+              baseVariance: 0.25
+            })
+
+            this.$store.state[paneId].thresholds = JSON.parse(
+              JSON.stringify(this.$store.state[paneId].thresholds)
+            )
+          }
+        }
+
+        this.$store.commit(
+          `settings/SET_BACKGROUND_COLOR`,
+          this.$store.state.settings.backgroundColor
+        )
+      }
     }
   }
 }

@@ -11,7 +11,9 @@
             type="checkbox"
             class="form-control"
             :checked="countersCount"
-            @change="$store.commit(paneId + '/TOGGLE_COUNT', $event.target.checked)"
+            @change="
+              $store.commit(paneId + '/TOGGLE_COUNT', $event.target.checked)
+            "
           />
           <div on="count" off="volume"></div>
         </label>
@@ -32,11 +34,20 @@
     <div class="form-group mt8">
       <label
         class="checkbox-control -rip checkbox-control-input"
-        @change="$store.commit(paneId + '/TOGGLE_LIQUIDATIONS_ONLY', $event.target.checked)"
+        @change="
+          $store.commit(
+            paneId + '/TOGGLE_LIQUIDATIONS_ONLY',
+            $event.target.checked
+          )
+        "
       >
-        <input type="checkbox" class="form-control" :checked="liquidationsOnly" />
+        <input
+          type="checkbox"
+          class="form-control"
+          :checked="liquidationsOnly"
+        />
         <div></div>
-        <span>Only show liquidations</span>
+        <span>Only count liquidations</span>
       </label>
     </div>
   </div>

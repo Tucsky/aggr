@@ -2,36 +2,75 @@
   <div>
     <div class="form-group mb8">
       <label class="checkbox-control">
-        <input type="checkbox" class="form-control" :checked="autoHideHeaders" @change="$store.commit('settings/TOGGLE_AUTO_HIDE_HEADERS')" />
+        <input
+          type="checkbox"
+          class="form-control"
+          :checked="autoHideHeaders"
+          @change="$store.commit('settings/TOGGLE_AUTO_HIDE_HEADERS')"
+        />
         <div></div>
         <span>Auto hide headers</span>
       </label>
     </div>
     <div class="form-group mb8">
       <label class="checkbox-control -animations">
-        <input type="checkbox" class="form-control" :checked="animationsEnabled" @change="$store.commit('settings/TOGGLE_ANIMATIONS')" />
+        <input
+          type="checkbox"
+          class="form-control"
+          :checked="animationsEnabled"
+          @change="$store.commit('settings/TOGGLE_ANIMATIONS')"
+        />
         <div></div>
         <span>
-          <small class="d-block text-muted" v-text="animationsEnabled ? 'UI animations are enabled ✨' : 'UI animations are disabled 🚀'"></small>
-          <span class="d-block mt4" v-text="animationsEnabled ? 'Disable animations' : 'Enable animations'"></span>
+          {{
+            animationsEnabled
+              ? 'UI animations are enabled ✨'
+              : 'UI animations are disabled 🚀'
+          }}
         </span>
       </label>
     </div>
     <div class="form-group mb8">
       <label class="checkbox-control -animations">
-        <input type="checkbox" class="form-control" :checked="locked" @change="$store.commit('panes/TOGGLE_LAYOUT')" />
+        <input
+          type="checkbox"
+          class="form-control"
+          :checked="locked"
+          @change="$store.commit('panes/TOGGLE_LAYOUT')"
+        />
         <div></div>
         <span>
-          <small class="d-block text-muted" v-text="locked ? 'Workspace grid is locked' : 'Workspace grid is unlocked'"></small>
-          <span class="d-block mt4" v-text="locked ? 'Unlock layout' : 'Lock layout'"></span>
+          {{ locked ? 'Layout is locked 🔒' : 'Layout is unlocked' }}
         </span>
       </label>
     </div>
     <div class="form-group mb8">
       <label class="checkbox-control -animations">
-        <input type="checkbox" class="form-control" :checked="normalizeWatermarks" @change="$store.commit('settings/TOGGLE_NORMAMIZE_WATERMARKS')" />
+        <input
+          type="checkbox"
+          class="form-control"
+          :checked="normalizeWatermarks"
+          @change="$store.commit('settings/TOGGLE_NORMAMIZE_WATERMARKS')"
+        />
         <div></div>
         <span>Simple watermarks</span>
+      </label>
+    </div>
+    <div class="form-group mb8">
+      <label class="checkbox-control flex-left">
+        <input
+          type="checkbox"
+          class="form-control"
+          :checked="!!timezoneOffset"
+          @change="
+            $store.commit(
+              'settings/SET_TIMEZONE_OFFSET',
+              !timezoneOffset ? new Date().getTimezoneOffset() * 60000 * -1 : 0
+            )
+          "
+        />
+        <div></div>
+        <span>Use local time for charts</span>
       </label>
     </div>
   </div>
@@ -60,6 +99,10 @@ export default class extends Vue {
 
   get normalizeWatermarks() {
     return this.$store.state.settings.normalizeWatermarks
+  }
+
+  get timezoneOffset() {
+    return this.$store.state.settings.timezoneOffset
   }
 }
 </script>

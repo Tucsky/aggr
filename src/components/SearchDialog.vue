@@ -1,5 +1,9 @@
 <template>
-  <Dialog @clickOutside="hide" class="-sticky-footer -mobile-fs -internal-scroll -auto" :class="[loading && '-loading']">
+  <Dialog
+    @clickOutside="hide"
+    class="-sticky-footer -mobile-fs -internal-scroll -auto"
+    :class="[loading && '-loading']"
+  >
     <template v-slot:header>
       <div v-if="paneId">
         <div class="title">ADD/REMOVE SOURCES</div>
@@ -7,7 +11,13 @@
           to
           <span class="text-success" v-text="paneName"></span>
           pane
-          <button type="button" class="btn -small ml4 -text" v-tippy title="Target all instead" @click="detargetPane">
+          <button
+            type="button"
+            class="btn -small ml4 -text"
+            v-tippy
+            title="Target all instead"
+            @click="detargetPane"
+          >
             <i class="icon-cross"></i>
           </button>
         </div>
@@ -19,15 +29,20 @@
       <div class="column -center"></div>
     </template>
     <div class="search">
-      <div class="search__side hide-scrollbar" :class="{ '-show': mobileShowFilters }">
-        <div class="search-filters mb16">
-          <div class="search-filters__content" v-if="showExtraFilters">
+      <div
+        class="search__side hide-scrollbar"
+        :class="{ '-show': mobileShowFilters }"
+      >
+        <section class="section">
+          <div v-if="sections.indexOf('extras') > -1" class="section__content">
             <label class="checkbox-control -small mb4">
               <input
                 type="checkbox"
                 class="form-control"
                 :checked="searchTypes.normalize"
-                @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')"
+                @change="
+                  $store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')
+                "
               />
               <div></div>
               <span>Group by pair</span>
@@ -37,7 +52,9 @@
                 type="checkbox"
                 class="form-control"
                 :checked="searchTypes.mergeUsdt"
-                @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'mergeUsdt')"
+                @change="
+                  $store.commit('settings/TOGGLE_SEARCH_TYPE', 'mergeUsdt')
+                "
               />
               <div></div>
               <span>Merge stablecoins</span>
@@ -47,49 +64,98 @@
                 type="checkbox"
                 class="form-control"
                 :checked="searchTypes.historical"
-                @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'historical')"
+                @change="
+                  $store.commit('settings/TOGGLE_SEARCH_TYPE', 'historical')
+                "
               />
               <div></div>
               <span>With historical data</span>
             </label>
             <label class="checkbox-control -small mb4">
-              <input type="checkbox" class="form-control" :checked="onlyConnected" @change="onlyConnected = !onlyConnected" />
-              <div></div>
-              <span>Already connected</span>
-            </label>
-          </div>
-          <div class="search-filters__title text-muted mb8" @click="showExtraFilters = !showExtraFilters">
-            Extra
-            <i class="icon-up-thin"></i>
-          </div>
-        </div>
-
-        <div class="search-filters mb16">
-          <div class="search-filters__content" v-if="showQuoteFilters">
-            <label class="checkbox-control -small mb4" v-for="quote of quoteCurrencies" :key="quote">
               <input
                 type="checkbox"
                 class="form-control"
-                :checked="searchQuotes[quote] === true || searchQuotes[quote] === undefined"
-                @change="
-                  $store.commit('settings/TOGGLE_SEARCH_QUOTE', {
-                    key: quote,
-                    value: $event.target.checked
-                  })
-                "
+                :checked="searchTypes.recent"
+                @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'recent')"
               />
               <div></div>
-              <span>{{ quote }}</span>
+              <span>Show recents</span>
             </label>
           </div>
-          <div class="search-filters__title text-muted mb8" @click="showQuoteFilters = !showQuoteFilters">
-            Quote currency
+          <div
+            class="section__title"
+            @click="$store.commit('settings/TOGGLE_SEARCH_PANEL', 'extras')"
+          >
+            Extras <i class="icon-up-thin"></i>
+          </div>
+        </section>
+
+        <section class="section">
+          <div
+            class="section__content"
+            v-if="sections.indexOf('exchanges') > -1"
+          >
+            <label
+              class="section__controls checkbox-control -small mb4 flex-right"
+            >
+              <input
+                type="checkbox"
+                class="form-control"
+                :checked="allExchangesEnabled"
+                @change="toggleAll"
+              />
+              <div></div>
+            </label>
+            <template v-for="id of exchanges">
+              <label
+                class="checkbox-control -small mb4 -custom hide-scrollbar"
+                :key="id"
+                v-if="!$store.state.exchanges[id].disabled"
+              >
+                <input
+                  type="checkbox"
+                  class="form-control"
+                  :checked="searchExchanges[id] !== false"
+                  @change="$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', id)"
+                />
+                <div :class="'icon-' + id"></div>
+                <span>
+                  <span v-text="id"></span>
+                  <a
+                    v-if="canRefreshProducts"
+                    href="javascript:void(0);"
+                    class="-text"
+                    @click.stop="refreshExchangeProducts(id)"
+                    :title="`Refresh ${id}'s products`"
+                    v-tippy="{ boundary: 'window', placement: 'left' }"
+                  >
+                    <i class="icon-refresh ml8 mr8"></i>
+                  </a>
+                </span>
+              </label>
+            </template>
+          </div>
+          <div
+            class="section__title text-muted mb8"
+            @click="$store.commit('settings/TOGGLE_SEARCH_PANEL', 'exchanges')"
+          >
+            Exchanges
+            <a
+              v-if="canRefreshProducts"
+              href="javascript:void(0);"
+              class="refresh-all -text"
+              @click.stop="refreshExchangeProducts()"
+              title="Refresh all exchange's products"
+              v-tippy
+            >
+              <i class="icon-refresh ml8 mr8"></i>
+            </a>
             <i class="icon-up-thin"></i>
           </div>
-        </div>
+        </section>
 
-        <div class="search-filters mb16">
-          <div class="search-filters__content" v-if="showTypeFilters">
+        <section class="section mb16">
+          <div class="section__content" v-if="sections.indexOf('types') > -1">
             <label class="checkbox-control -small mb4">
               <input
                 type="checkbox"
@@ -105,7 +171,9 @@
                 type="checkbox"
                 class="form-control"
                 :checked="searchTypes.perpetuals"
-                @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'perpetuals')"
+                @change="
+                  $store.commit('settings/TOGGLE_SEARCH_TYPE', 'perpetuals')
+                "
               />
               <div></div>
               <span>Perpetuals</span>
@@ -115,72 +183,76 @@
                 type="checkbox"
                 class="form-control"
                 :checked="searchTypes.futures"
-                @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'futures')"
+                @change="
+                  $store.commit('settings/TOGGLE_SEARCH_TYPE', 'futures')
+                "
               />
               <div></div>
               <span>Futures</span>
             </label>
           </div>
-          <div class="search-filters__title text-muted mb8" @click="showTypeFilters = !showTypeFilters">
+          <div
+            class="section__title text-muted mb8"
+            @click="$store.commit('settings/TOGGLE_SEARCH_PANEL', 'types')"
+          >
             Type
             <i class="icon-up-thin"></i>
           </div>
-        </div>
-
-        <div class="search-filters">
-          <div class="search-filters__content" v-if="showExchanges">
-            <label class="search-filters__controls checkbox-control -small mb4 flex-right">
-              <input type="checkbox" class="form-control" :checked="allExchangesEnabled" @change="toggleAll" />
-              <div></div>
-            </label>
-            <template v-for="id of exchanges">
-              <label class="checkbox-control -small mb4 -custom" :key="id" v-if="!$store.state.exchanges[id].disabled">
-                <input
-                  type="checkbox"
-                  class="form-control"
-                  :checked="searchExchanges[id] !== false"
-                  @change="$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', id)"
-                />
-                <div :class="'icon-' + id"></div>
-                <span>
-                  <span v-text="id"></span>
-                  <a
-                    v-if="canRefreshProducts"
-                    href="javascript:void(0);"
-                    class="-text"
-                    @click="refreshExchangeProducts(id)"
-                    :title="`Refresh ${id}'s products`"
-                    v-tippy
-                  >
-                    <i class="icon-refresh ml8"></i>
-                  </a>
-                </span>
-              </label>
-            </template>
-          </div>
-          <div class="search-filters__title text-muted mb8" @click="showExchanges = !showExchanges">
-            Exchanges
-            <a
-              v-if="canRefreshProducts"
-              href="javascript:void(0);"
-              class="search-filters__refresh-all -text"
-              @click="refreshExchangeProducts()"
-              title="Refresh ALL exchange's products (might take a while)"
-              v-tippy
+        </section>
+        <section class="section">
+          <div class="section__content" v-if="sections.indexOf('quotes') > -1">
+            <label
+              class="checkbox-control -small mb4"
+              v-for="quote of quoteCurrencies"
+              :key="quote"
             >
-              <i class="icon-refresh ml8"></i>
-            </a>
+              <input
+                type="checkbox"
+                class="form-control"
+                :checked="
+                  searchQuotes[quote] === true ||
+                    searchQuotes[quote] === undefined
+                "
+                @change="
+                  $store.commit('settings/TOGGLE_SEARCH_QUOTE', {
+                    key: quote,
+                    value: $event.target.checked
+                  })
+                "
+              />
+              <div></div>
+              <span>{{ quote }}</span>
+            </label>
+          </div>
+          <div
+            class="section__title text-muted mb8"
+            @click="$store.commit('settings/TOGGLE_SEARCH_PANEL', 'quotes')"
+          >
+            Quote currency
             <i class="icon-up-thin"></i>
           </div>
-        </div>
+        </section>
       </div>
       <div class="search__wrapper hide-scrollbar" ref="wrapper">
-        <div class="search-selection search__tags form-control" :class="groupsCount < 10 && '-sticky'">
+        <div
+          class="search-selection search__tags form-control"
+          :class="groupsCount < 10 && '-sticky'"
+        >
           <div v-if="selection.length" class="search-selection__controls">
-            <button class="btn -text" @click="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')" v-tippy title="Toggle grouping">
+            <button
+              class="btn -text"
+              @click="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')"
+              title="Toggle grouping"
+              v-tippy="{ boundary: 'window', placement: 'bottom' }"
+            >
               <i class="icon-merge"></i>
             </button>
-            <button class="btn -text" @click="clearSelection" title="Clear" v-tippy>
+            <button
+              class="btn -text"
+              @click="clearSelection"
+              title="Clear"
+              v-tippy="{ boundary: 'window', placement: 'bottom' }"
+            >
               <i class="icon-eraser"></i>
             </button>
           </div>
@@ -188,11 +260,15 @@
             <button
               v-for="(markets, localPair) of groupedSelection"
               :key="localPair"
-              class="btn -accent -accent-200 -pill"
+              class="btn -pill"
               :title="'Click to remove ' + markets.join(', ')"
               @click.stop.prevent="deselectWhileRetainingScroll(markets)"
             >
-              <span v-if="markets.length > 1" class="badge -compact ml8" v-text="markets.length"></span>
+              <span
+                v-if="markets.length > 1"
+                class="badge -compact ml8"
+                v-text="markets.length"
+              ></span>
               <span v-text="localPair"></span>
             </button>
           </template>
@@ -200,7 +276,7 @@
             <button
               v-for="market of selection"
               :key="market"
-              class="btn -accent -accent-200"
+              class="btn"
               :class="{ '-green': activeMarkets.indexOf(market) !== -1 }"
               title="Click to remove"
               @click.stop.prevent="deselectWhileRetainingScroll(market)"
@@ -212,41 +288,49 @@
             type="text"
             placeholder="Search"
             :value="query"
-            @focus="toggleHistory(true)"
-            @blur="toggleHistory(false)"
             @input=";(page = 0), (query = $event.target.value)"
           />
         </div>
         <div class="search__results">
-          <div v-if="previousSearchSelections.length" class="search-history">
+          <div
+            v-if="searchTypes.recent && previousSearchSelections.length"
+            class="search-recent-searches"
+          >
             <carousel class="search__tags">
               <button
                 v-for="savedSelection of previousSearchSelections"
                 :key="savedSelection.label"
-                class="btn -accent -accent-200 -pill -small"
+                class="btn -pill -small"
                 :title="savedSelection.markets.join(', ')"
                 @click="selectMarkets(savedSelection.markets, $event.shiftKey)"
               >
-                <span v-if="savedSelection.count > 1" class="badge -invert ml8" v-text="savedSelection.markets.length"></span>
+                <span
+                  v-if="savedSelection.count > 1"
+                  class="badge -invert ml8"
+                  v-text="savedSelection.markets.length"
+                ></span>
                 <span>{{ savedSelection.label }}</span>
               </button>
             </carousel>
-            <button class="btn -outline search-history__clear" v-tippy title="Clear recent searches<br><i>💡 SHIFT+CLIC to delete 1 item</i>">
-              <i class="icon-trash -small" @click="$store.commit('settings/CLEAR_SEARCH_HISTORY')"></i>
+            <button
+              class="btn -outline search-history__clear"
+              v-tippy
+              title="Clear recent searches<br><i>💡 SHIFT+CLIC to delete 1 item</i>"
+            >
+              <i
+                class="icon-trash -small"
+                @click="$store.commit('settings/CLEAR_SEARCH_HISTORY')"
+              ></i>
             </button>
           </div>
           <template v-if="results.length">
             <div v-if="page > 0" class="d-flex mt8">
-              <button class="btn -text mlauto switch-page" @click="showLess">... go page {{ page }}</button>
+              <button class="btn -text mlauto switch-page" @click="showLess">
+                ... go page {{ page }}
+              </button>
             </div>
 
-            <table class="table" v-if="searchTypes.normalize">
-              <thead>
-                <tr>
-                  <th>pair</th>
-                  <th>markets</th>
-                </tr>
-              </thead>
+            <table class="table mt8" v-if="searchTypes.normalize">
               <tbody>
                 <tr
                   v-for="(group, index) in results"
@@ -262,15 +346,7 @@
                 </tr>
               </tbody>
             </table>
-            <table v-else class="table">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>exchange</th>
-                  <th>pair</th>
-                  <th>type</th>
-                </tr>
-              </thead>
+            <table v-else class="table mt8">
               <tbody>
                 <tr
                   v-for="(market, index) of results"
@@ -279,29 +355,46 @@
                   :class="{ active: activeIndex === index }"
                   class="-action"
                 >
-                  <td class="icon search__exchange text-center" :class="'icon-' + market.exchange"></td>
+                  <td
+                    class="icon search__exchange text-center"
+                    :class="'icon-' + market.exchange"
+                  ></td>
                   <td v-text="market.exchange"></td>
                   <td v-text="market.pair"></td>
                   <td v-text="market.type"></td>
                   <td class="text-center">
-                    <i v-if="historicalMarkets.indexOf(market.id) !== -1" class="icon-candlestick icon-lower"></i>
+                    <i
+                      v-if="historicalMarkets.indexOf(market.id) !== -1"
+                      class="icon-candlestick"
+                      title="historical data available for this market"
+                    ></i>
                   </td>
                 </tr>
               </tbody>
             </table>
 
             <div class="mt8 d-flex">
-              <button class="btn -text" @click="addAll"><i class="icon-plus mr8"></i> add all of the above</button>
-              <button class="btn -text mlauto switch-page" @click="showMore" v-if="results.length === resultsPerPage">
+              <button class="btn -text" @click="addAll">
+                <i class="icon-plus mr8"></i> add all of the above
+              </button>
+              <button
+                class="btn -text mlauto switch-page"
+                @click="showMore"
+                v-if="results.length === resultsPerPage"
+              >
                 go page {{ page + 2 }} ...
               </button>
             </div>
           </template>
           <p class="mb0 pb0" v-else-if="query.length">
-            <span>No results found for "{{ query }}".</span>
+            <span class="text-muted">No results found for "{{ query }}".</span>
             <br />
 
-            <button v-if="hasFilters || !allExchangesEnabled" class="btn -outline -cases" @click="clearFilters">
+            <button
+              v-if="hasFilters || !allExchangesEnabled"
+              class="btn -cases -text"
+              @click="clearFilters"
+            >
               <i class="icon-refresh"></i> Retry without filters
             </button>
           </p>
@@ -312,12 +405,16 @@
     <footer>
       <a
         href="javascript:void(0);"
-        class="btn -text mrauto search-filters__toggle"
+        class="btn -text mrauto search__side-toggle"
         @click="mobileShowFilters = !mobileShowFilters"
         v-text="mobileShowFilters ? 'Hide filters' : 'Show filters'"
       ></a>
       <a href="javascript:void(0);" class="btn -text" @click="hide">Cancel</a>
-      <button class="btn -large ml8 -green" @click="submit" :class="loading && '-loading'">
+      <button
+        class="btn -large ml8 -green"
+        @click="submit"
+        :class="loading && '-loading'"
+      >
         {{ submitLabel }}
         <div v-if="loading" class="lds-spinner -center">
           <div></div>
@@ -344,7 +441,13 @@ import DialogMixin from '@/mixins/dialogMixin'
 import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import { stripStable, indexedProducts, indexProducts, getExchangeSymbols, ensureIndexedProducts } from '@/services/productsService'
+import {
+  stripStable,
+  indexedProducts,
+  indexProducts,
+  getExchangeSymbols,
+  ensureIndexedProducts
+} from '@/services/productsService'
 import Carousel from '@/components/framework/Carousel.vue'
 
 const RESULTS_PER_PAGE = 25
@@ -363,23 +466,33 @@ export default {
   data: () => ({
     page: 0,
     query: '',
-    showHistory: true,
     markets: [],
     loading: false,
     selection: [],
     originalSelection: [],
     activeIndex: null,
     mobileShowFilters: false,
-    showExchanges: true,
-    showExtraFilters: true,
-    showQuoteFilters: false,
-    showTypeFilters: true,
-    onlyConnected: false,
     canRefreshProducts: true,
     flattenedProducts: [],
-    quoteCurrencies: ['USD', 'USDT', 'UST', 'USDC', 'BUSD', 'ETH', 'BTC', 'BNB', 'EUR', 'AUD', 'GBP', 'OTHERS']
+    quoteCurrencies: [
+      'USD',
+      'USDT',
+      'UST',
+      'USDC',
+      'BUSD',
+      'ETH',
+      'BTC',
+      'BNB',
+      'EUR',
+      'AUD',
+      'GBP',
+      'OTHERS'
+    ]
   }),
   computed: {
+    sections() {
+      return this.$store.state.settings.searchSections
+    },
     previousSearchSelections() {
       return this.$store.state.settings.previousSearchSelections
     },
@@ -410,13 +523,17 @@ export default {
     },
     toConnect() {
       if (this.paneId) {
-        return this.selection.filter(a => this.paneMarkets.indexOf(a) === -1).length
+        return this.selection.filter(a => this.paneMarkets.indexOf(a) === -1)
+          .length
       } else {
-        return this.selection.filter(a => this.activeMarkets.indexOf(a) === -1).length
+        return this.selection.filter(a => this.activeMarkets.indexOf(a) === -1)
+          .length
       }
     },
     toDisconnect() {
-      return this.originalSelection.filter(a => this.selection.indexOf(a) === -1).length
+      return this.originalSelection.filter(
+        a => this.selection.indexOf(a) === -1
+      ).length
     },
     submitLabel() {
       const toConnect = +this.toConnect
@@ -428,7 +545,9 @@ export default {
       }
 
       if (toDisconnect) {
-        label += `${toConnect ? ' and ' : ''}disconnect${this.loading ? 'ing' : ''} ${toDisconnect}`
+        label += `${toConnect ? ' and ' : ''}disconnect${
+          this.loading ? 'ing' : ''
+        } ${toDisconnect}`
       }
 
       return label ? label : 'REFRESH'
@@ -440,7 +559,10 @@ export default {
       const searchQuotesPreferences = this.$store.state.settings.searchQuotes
 
       return this.quoteCurrencies.reduce((acc, quote) => {
-        acc[quote] = typeof searchQuotesPreferences[quote] === 'undefined' ? false : searchQuotesPreferences[quote]
+        acc[quote] =
+          typeof searchQuotesPreferences[quote] === 'undefined'
+            ? false
+            : searchQuotesPreferences[quote]
 
         return acc
       }, {})
@@ -459,13 +581,19 @@ export default {
           return output
         }
 
-        output[id] = typeof searchExchanges[id] === 'undefined' ? true : searchExchanges[id]
+        output[id] =
+          typeof searchExchanges[id] === 'undefined'
+            ? true
+            : searchExchanges[id]
 
         return output
       }, {})
     },
     allExchangesEnabled() {
-      return typeof Object.values(this.searchExchanges).find(a => a === false) === 'undefined'
+      return (
+        typeof Object.values(this.searchExchanges).find(a => a === false) ===
+        'undefined'
+      )
     },
     hasFilters() {
       const hasHistorical = this.searchTypes.historical
@@ -473,13 +601,21 @@ export default {
       const hasPerpetuals = this.searchTypes.perpetuals
       const hasFutures = this.searchTypes.futures
       const isMergeStables = this.searchTypes.mergeUsdt
-      return isMergeStables || hasHistorical || hasSpot || hasPerpetuals || hasFutures || this.onlyConnected
+      return (
+        isMergeStables ||
+        hasHistorical ||
+        hasSpot ||
+        hasPerpetuals ||
+        hasFutures
+      )
     },
     historicalMarkets() {
       return this.$store.state.app.historicalMarkets
     },
     queryFilter: function() {
-      const multiQuery = this.query.replace(/[ ,]/g, '|').replace(/(^|\w|\s)\*(\w|\s|$)/g, '$1.*$2')
+      const multiQuery = this.query
+        .replace(/[ ,]/g, '|')
+        .replace(/(^|\w|\s)\*(\w|\s|$)/g, '$1.*$2')
 
       if (this.searchTypes.normalize) {
         return new RegExp('^' + multiQuery, 'i')
@@ -494,8 +630,6 @@ export default {
       const hasFutures = this.searchTypes.futures
 
       const exchanges = this.searchExchanges
-      const isConnected = this.onlyConnected
-      const activeMarkets = this.activeMarkets
       const hasTypeFilters = hasSpot || hasPerpetuals || hasFutures
 
       const searchQuotes = this.searchQuotes
@@ -511,13 +645,11 @@ export default {
 
         if (
           !allQuotes &&
-          ((typeof searchQuotes[a.quote] === 'boolean' && searchQuotes[a.quote] === false) ||
-            (typeof searchQuotes[a.quote] !== 'boolean' && !searchQuotes.OTHERS))
+          ((typeof searchQuotes[a.quote] === 'boolean' &&
+            searchQuotes[a.quote] === false) ||
+            (typeof searchQuotes[a.quote] !== 'boolean' &&
+              !searchQuotes.OTHERS))
         ) {
-          return false
-        }
-
-        if (isConnected && activeMarkets.indexOf(a.id) === -1) {
           return false
         }
 
@@ -525,7 +657,12 @@ export default {
           return false
         }
 
-        if (hasTypeFilters && ((!hasFutures && a.type === 'future') || (!hasPerpetuals && a.type === 'perp') || (!hasSpot && a.type === 'spot'))) {
+        if (
+          hasTypeFilters &&
+          ((!hasFutures && a.type === 'future') ||
+            (!hasPerpetuals && a.type === 'perp') ||
+            (!hasSpot && a.type === 'spot'))
+        ) {
           return false
         }
 
@@ -537,7 +674,11 @@ export default {
 
       if (this.searchTypes.normalize) {
         const marketsByPair = this.filteredProducts
-          .filter(product => this.selection.indexOf(product.id) === -1 && this.queryFilter.test(product.local))
+          .filter(
+            product =>
+              this.selection.indexOf(product.id) === -1 &&
+              this.queryFilter.test(product.local)
+          )
           .reduce((groups, product) => {
             let local = product.local
 
@@ -562,7 +703,11 @@ export default {
           }))
       } else {
         return this.filteredProducts
-          .filter(product => this.selection.indexOf(product.id) === -1 && this.queryFilter.test(product.id))
+          .filter(
+            product =>
+              this.selection.indexOf(product.id) === -1 &&
+              this.queryFilter.test(product.id)
+          )
           .slice(offset, offset + RESULTS_PER_PAGE)
       }
     },
@@ -574,7 +719,9 @@ export default {
           return groups
         }
 
-        const indexedProduct = indexedProducts[exchange].find(product => product.id === market)
+        const indexedProduct = indexedProducts[exchange].find(
+          product => product.id === market
+        )
 
         let localPair = indexedProduct ? indexedProduct.local : market
 
@@ -638,7 +785,9 @@ export default {
     },
     initSelection() {
       if (this.paneId) {
-        this.selection = this.$store.state.panes.panes[this.paneId].markets.slice()
+        this.selection = this.$store.state.panes.panes[
+          this.paneId
+        ].markets.slice()
       } else {
         this.selection = this.activeMarkets.slice()
       }
@@ -673,12 +822,16 @@ export default {
         return
       }
 
-      const marketsToAdd = markets.filter(market => this.selection.indexOf(market) === -1)
+      const marketsToAdd = markets.filter(
+        market => this.selection.indexOf(market) === -1
+      )
 
       if (!marketsToAdd.length) {
         this.$store.dispatch('app/showNotice', {
           id: 'select-market-already-added',
-          title: `You already selected ${markets.length > 1 ? 'these markets' : markets[0]} !`,
+          title: `You already selected ${
+            markets.length > 1 ? 'these markets' : markets[0]
+          } !`,
           type: 'error'
         })
         return
@@ -717,7 +870,9 @@ export default {
       if (!this.paneId) {
         if (
           this.containMultipleMarketsConfigurations() &&
-          !(await dialogService.confirm('Are you sure ? Some of the panes are watching specific markets.'))
+          !(await dialogService.confirm(
+            'Are you sure ? Some of the panes are watching specific markets.'
+          ))
         ) {
           return
         }
@@ -772,7 +927,6 @@ export default {
     clearFilters() {
       this.$store.commit('settings/CLEAR_SEARCH_FILTERS')
       this.toggleAll(true)
-      this.onlyConnected = false
     },
 
     onPaste(event) {
@@ -814,7 +968,10 @@ export default {
               if (this.activeIndex === null) {
                 this.activeIndex = 0
               } else {
-                this.activeIndex = Math.min(this.results.length - 1, this.activeIndex + 1)
+                this.activeIndex = Math.min(
+                  this.results.length - 1,
+                  this.activeIndex + 1
+                )
               }
             }
           }
@@ -826,7 +983,10 @@ export default {
           break
 
         case 'c':
-          if ((event.ctrlKey || event.metaKey) && !window.getSelection().toString().length) {
+          if (
+            (event.ctrlKey || event.metaKey) &&
+            !window.getSelection().toString().length
+          ) {
             this.copySelection()
           }
           break
@@ -878,25 +1038,51 @@ export default {
 
     async refreshExchangeProducts(exchangeId) {
       if (!exchangeId) {
-        for (const exchange of this.exchanges) {
-          await this.refreshExchangeProducts(exchange)
+        if (
+          await dialogService.confirm(
+            `Download all exchange's products ?\n\nThis might take a while.`
+          )
+        ) {
+          for (const exchange of this.exchanges) {
+            await this.refreshExchangeProducts(exchange)
+          }
         }
 
         return
       }
 
+      if (this._refreshProductsTimeout) {
+        clearTimeout(this._refreshProductsTimeout)
+      }
+
       this.canRefreshProducts = false
+
+      this.$store.dispatch('app/showNotice', {
+        id: exchangeId,
+        title: `Refreshing ${exchangeId}'s products...`
+      })
 
       await workspacesService.deleteProducts(exchangeId)
 
-      setTimeout(() => {
-        this.canRefreshProducts = true
-      }, 3000)
+      const count = (
+        await indexProducts(
+          exchangeId,
+          await getExchangeSymbols(exchangeId, true)
+        )
+      ).length
 
-      await indexProducts(exchangeId, await getExchangeSymbols(exchangeId, true))
+      this.$store.dispatch('app/showNotice', {
+        id: exchangeId,
+        title: `Saved ${count} ${exchangeId}'s products`
+      })
 
       await this.$store.dispatch('exchanges/disconnect', exchangeId)
       await this.$store.dispatch('exchanges/connect', exchangeId)
+
+      this._refreshProductsTimeout = setTimeout(() => {
+        this._refreshProductsTimeout = null
+        this.canRefreshProducts = true
+      }, 10000)
 
       this.cacheProducts()
     },
@@ -910,24 +1096,9 @@ export default {
     },
 
     cacheProducts() {
-      this.flattenedProducts = Array.prototype.concat(...Object.values(indexedProducts))
-    },
-
-    toggleHistory(show) {
-      if (this._hideHistoryTimeout) {
-        clearTimeout(this._hideHistoryTimeout)
-        this._hideHistoryTimeout = null
-      }
-
-      if (show) {
-        this.showHistory = true
-        return
-      }
-
-      this._hideHistoryTimeout = setTimeout(() => {
-        this._hideHistoryTimeout = null
-        this.showHistory = false
-      }, 1000)
+      this.flattenedProducts = Array.prototype.concat(
+        ...Object.values(indexedProducts)
+      )
     }
   }
 }
@@ -940,10 +1111,17 @@ export default {
   overflow: hidden;
 
   &__side {
-    width: 11rem;
-    min-width: 11rem;
-    padding: 1rem 0 1rem 1rem;
+    width: 12.5rem;
+    min-width: 12.5rem;
     overflow: auto;
+
+    .section {
+      background: 0;
+
+      &__title:first-child {
+        padding-bottom: 0;
+      }
+    }
 
     @media screen and (max-width: 550px) {
       display: none;
@@ -952,14 +1130,24 @@ export default {
         display: block;
       }
     }
+
+    &-toggle {
+      @media screen and (min-width: 550px) {
+        display: none;
+      }
+    }
   }
 
   &__wrapper {
     flex-grow: 1;
     width: 650px;
     max-width: 650px;
-    padding: 1rem;
+    padding: 0 1rem 1rem;
     overflow: auto;
+
+    @media screen and (min-width: 551px) {
+      padding-left: 0;
+    }
   }
 
   &__results {
@@ -973,18 +1161,8 @@ export default {
       background-color: rgba(black, 0.2) !important;
     }
 
-    td:first-child,
-    th:first-child {
-      padding-left: 1rem;
-    }
-
-    td:last-child,
-    th:last-child {
-      padding-right: 1rem;
-    }
-
     td {
-      padding: 0.35em 0.5em 0.6em;
+      padding: 0.5em;
     }
   }
 
@@ -1006,20 +1184,25 @@ export default {
       font-family: inherit;
       padding: 0 4px;
       flex-grow: 1;
+      font-size: 1em;
     }
   }
 
   &-selection {
     position: relative;
     min-width: 19rem;
+    border: 0;
+    max-height: 10rem;
+    overflow: auto;
 
     &.-sticky {
       @media screen and (min-width: 550px) {
-        backdrop-filter: blur(1rem);
-        background-color: var(--theme-background-o75);
+        backdrop-filter: blur(0.25rem);
+        background-color: var(--theme-background-o20);
         position: sticky;
         top: 0;
         z-index: 2;
+        border-radius: 0;
       }
     }
 
@@ -1027,14 +1210,16 @@ export default {
       position: absolute;
       top: 0;
       right: 0;
-      margin: 6px !important;
+      margin: 6px 0 6px 6px;
     }
   }
 
-  &-history {
+  &-recent-searches {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background-color: var(--theme-color-o10);
+    margin-top: 0.5rem;
 
     small {
       text-transform: uppercase;
@@ -1042,7 +1227,7 @@ export default {
 
     &__clear {
       padding: 0;
-      margin: 0.5rem;
+      margin: 0.25rem 1rem;
     }
 
     .search__tags {
@@ -1050,6 +1235,7 @@ export default {
       max-width: 100%;
       overflow: hidden;
       flex-grow: 1;
+      padding: 0.25rem 0.5rem;
 
       button,
       button:hover {
@@ -1059,58 +1245,26 @@ export default {
       }
     }
   }
-
-  &-filters {
-    display: flex;
-    flex-direction: column-reverse;
-    position: relative;
-
-    &__toggle {
-      @media screen and (min-width: 550px) {
-        display: none;
-      }
-    }
-
-    &__refresh-all > .icon-refresh {
-      vertical-align: middle;
-    }
-
+  .section {
     &__controls {
-      position: absolute;
-      right: 0;
-      top: 0;
+      top: 0.75rem;
+      right: 0.75rem;
       font-size: 0.875em;
       z-index: 1;
     }
 
-    &__title {
-      cursor: pointer;
-      user-select: none;
-      display: flex;
-      align-items: center;
+    label {
+      overflow-y: auto;
+    }
+  }
 
-      .icon-up-thin {
-        transition: transform 0.2s $ease-out-expo;
-        line-height: inherit;
-        margin-left: auto;
-      }
-
-      &:first-child {
-        .icon-up-thin {
-          display: inline-block;
-          transform: rotateZ(180deg);
-        }
-      }
+  .checkbox-control {
+    a {
+      visibility: hidden;
     }
 
-    .checkbox-control {
-      a {
-        visibility: hidden;
-      }
-
-      &:hover a {
-        visibility: visible;
-      }
+    &:hover a {
+      visibility: visible;
     }
   }
 }

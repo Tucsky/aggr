@@ -1,7 +1,12 @@
 <template>
   <div class="form-group toggable-group">
     <label class="checkbox-control">
-      <input type="checkbox" class="form-control" :checked="value" @change="$emit('change', $event)" />
+      <input
+        type="checkbox"
+        class="form-control"
+        :checked="value"
+        @change="$emit('change', $event)"
+      />
       <div class="mr8"></div>
       <span>{{ label }}</span>
     </label>

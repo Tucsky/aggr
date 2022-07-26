@@ -6,7 +6,9 @@ export default class extends Exchange {
   private types: { [pair: string]: 'quanto' | 'inverse' | 'linear' }
   private multipliers: { [pair: string]: number }
   private underlyingToPositionMultipliers: { [pair: string]: number }
-  protected endpoints = { PRODUCTS: 'https://www.bitmex.com/api/v1/instrument/active' }
+  protected endpoints = {
+    PRODUCTS: 'https://www.bitmex.com/api/v1/instrument/active'
+  }
 
   getUrl() {
     return `wss://www.bitmex.com/realtime`
@@ -19,11 +21,16 @@ export default class extends Exchange {
     const underlyingToPositionMultipliers = {}
 
     for (const product of data) {
-      types[product.symbol] = product.isInverse ? 'inverse' : product.isQuanto ? 'quanto' : 'linear'
+      types[product.symbol] = product.isInverse
+        ? 'inverse'
+        : product.isQuanto
+        ? 'quanto'
+        : 'linear'
       multipliers[product.symbol] = product.multiplier
 
       if (types[product.symbol] === 'linear') {
-        underlyingToPositionMultipliers[product.symbol] = product.underlyingToPositionMultiplier
+        underlyingToPositionMultipliers[product.symbol] =
+          product.underlyingToPositionMultiplier
       }
 
       products.push(product.symbol)
@@ -38,7 +45,12 @@ export default class extends Exchange {
   }
 
   validateProducts(data) {
-    if (!data || !data.multipliers || !data.underlyingToPositionMultipliers || !data.types) {
+    if (
+      !data ||
+      !data.multipliers ||
+      !data.underlyingToPositionMultipliers ||
+      !data.types
+    ) {
       return false
     }
 
@@ -105,11 +117,16 @@ export default class extends Exchange {
             let size
 
             if (this.types[trade.symbol] === 'quanto') {
-              size = (this.multipliers[trade.symbol] / 100000000) * trade.leavesQty * this.xbtPrice
+              size =
+                (this.multipliers[trade.symbol] / 100000000) *
+                trade.leavesQty *
+                this.xbtPrice
             } else if (this.types[trade.symbol] === 'inverse') {
               size = trade.leavesQty / trade.price
             } else {
-              size = (1 / this.underlyingToPositionMultipliers[trade.symbol]) * trade.leavesQty
+              size =
+                (1 / this.underlyingToPositionMultipliers[trade.symbol]) *
+                trade.leavesQty
             }
 
             return {

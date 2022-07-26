@@ -9,7 +9,10 @@
         :href="useUrlFragment ? tab.hash : null"
         class="tabs__item tab btn"
         role="tab"
-        :class="[tab.isActive && 'tab--active', tab.isDisabled && 'tab--disabled']"
+        :class="[
+          tab.isActive && 'tab--active',
+          tab.isDisabled && 'tab--disabled'
+        ]"
         @click="selectTab(tab.hash, $event)"
         :aria-controls="tab.hash"
         :aria-selected="tab.isActive"
@@ -44,7 +47,10 @@ export default class extends Vue {
   private hashChangeHandler: () => void
 
   @Watch('value')
-  onTabChange(newTabId: string | number, previousTabId: string | number = null) {
+  onTabChange(
+    newTabId: string | number,
+    previousTabId: string | number = null
+  ) {
     if (newTabId !== null) {
       const newTab = this.findTab(newTabId)
 

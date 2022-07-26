@@ -5,14 +5,18 @@ export default class extends Exchange {
   id = 'BINANCE_US'
   private lastSubscriptionId = 0
   private subscriptions = {}
-  protected endpoints = { PRODUCTS: 'https://api.binance.us/api/v3/exchangeInfo' }
+  protected endpoints = {
+    PRODUCTS: 'https://api.binance.us/api/v3/exchangeInfo'
+  }
 
   getUrl() {
     return `wss://stream.binance.us:9443/ws`
   }
 
   formatProducts(data) {
-    return data.symbols.filter(product => product.status === 'TRADING').map(product => product.symbol.toLowerCase())
+    return data.symbols
+      .filter(product => product.status === 'TRADING')
+      .map(product => product.symbol.toLowerCase())
   }
 
   /**

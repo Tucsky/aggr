@@ -8,14 +8,22 @@
         <label>Choose type</label>
 
         <label class="checkbox-control mt8">
-          <input type="checkbox" class="form-control" v-model="includeThresholds" />
+          <input
+            type="checkbox"
+            class="form-control"
+            v-model="includeThresholds"
+          />
           <div></div>
           <span>Trades</span>
         </label>
       </div>
       <div class="form-group mb8">
         <label class="checkbox-control">
-          <input type="checkbox" class="form-control" v-model="includeLiquidations" />
+          <input
+            type="checkbox"
+            class="form-control"
+            v-model="includeLiquidations"
+          />
           <div></div>
           <span>Liquidations</span>
         </label>
@@ -24,7 +32,11 @@
         <label>Choose what to include in preset</label>
 
         <label class="checkbox-control mt8">
-          <input type="checkbox" class="form-control" v-model="includeAmounts" />
+          <input
+            type="checkbox"
+            class="form-control"
+            v-model="includeAmounts"
+          />
           <div></div>
           <span>Amounts</span>
         </label>
@@ -45,8 +57,15 @@
       </div>
 
       <footer>
-        <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)">Cancel</a>
-        <button type="submit" class="btn -large -green"><i class="icon-check mr4"></i> Submit</button>
+        <a
+          href="javascript:void(0);"
+          class="btn -text mr8"
+          @click="close(false)"
+          >Cancel</a
+        >
+        <button type="submit" class="btn -large -green">
+          <i class="icon-check mr4"></i> Submit
+        </button>
       </footer>
     </form>
   </Dialog>

@@ -27,7 +27,13 @@
       @container-resized="onContainerResized"
       @resized="onItemResized"
     >
-      <component v-if="layoutReady" class="pane" ref="panes" :is="gridItem.type" :paneId="gridItem.i"></component>
+      <component
+        v-if="layoutReady"
+        class="pane"
+        ref="panes"
+        :is="gridItem.type"
+        :paneId="gridItem.i"
+      ></component>
     </grid-item>
   </grid-layout>
 </template>
@@ -39,17 +45,21 @@ import Component from 'vue-class-component'
 import VueGridLayout from 'vue-grid-layout'
 import PaneMixin from '@/mixins/paneMixin'
 
-import Chart from '../chart/Chart.vue'
-import Trades from '../trades/Trades.vue'
-import Stats from '../stats/Stats.vue'
-import Counters from '../counters/Counters.vue'
-import Prices from '../prices/Prices.vue'
-import Website from '../website/Website.vue'
 import { GRID_COLS } from '@/utils/constants'
 import { GridItem } from '@/store/panes'
 
 @Component({
-  components: { GridLayout: VueGridLayout.GridLayout, GridItem: VueGridLayout.GridItem, Chart, Trades, Stats, Counters, Prices, Website }
+  components: {
+    GridLayout: VueGridLayout.GridLayout,
+    GridItem: VueGridLayout.GridItem,
+    Chart: () => import('@/components/chart/Chart.vue'),
+    Trades: () => import('@/components/trades/Trades.vue'),
+    Stats: () => import('@/components/stats/Stats.vue'),
+    Counters: () => import('@/components/counters/Counters.vue'),
+    Prices: () => import('@/components/prices/Prices.vue'),
+    Website: () => import('@/components/website/Website.vue'),
+    TradesLite: () => import('@/components/trades/TradesLite.vue')
+  }
 })
 export default class extends Vue {
   draggable = true
@@ -97,9 +107,12 @@ export default class extends Vue {
     let maximizedItem: HTMLElement
 
     if (!this._maximizedPaneId) {
-      maximizedItem = document.getElementsByClassName('-maximized')[0] as HTMLElement
+      maximizedItem = document.getElementsByClassName(
+        '-maximized'
+      )[0] as HTMLElement
     } else {
-      maximizedItem = document.getElementById(this._maximizedPaneId).parentElement
+      maximizedItem = document.getElementById(this._maximizedPaneId)
+        .parentElement
     }
 
     this.$nextTick(() => {
@@ -168,7 +181,10 @@ export default class extends Vue {
     }
 
     if (event) {
-      this._resizeTimeout = window.setTimeout(this.updateRowHeight.bind(this), 200)
+      this._resizeTimeout = window.setTimeout(
+        this.updateRowHeight.bind(this),
+        200
+      )
     } else {
       this._resizeTimeout = null
 

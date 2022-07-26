@@ -1,0 +1,976 @@
+<template>
+  <div class="pane-trades" @mouseenter="bindScroll">
+    <pane-header
+      :paneId="paneId"
+      ref="paneHeader"
+      :settings="() => import('@/components/trades/TradesDialog.vue')"
+      @zoom="resize"
+    >
+      <dropdown
+        v-if="market"
+        v-model="sliderDropdownTrigger"
+        interactive
+        no-scroll
+      >
+        <slider
+          style="width: 100px"
+          :min="0"
+          :max="10"
+          :step="0.01"
+          label
+          :show-completion="false"
+          :gradient="gradient"
+          :value="thresholdsMultipler"
+          @input="
+            $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
+              value: $event,
+              market: market
+            })
+          "
+          @reset="
+            $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
+              value: 1,
+              market: market
+            })
+          "
+          log
+        >
+          <template v-slot:tooltip>
+            {{ +(thresholdsMultipler * 100).toFixed(2) }}%
+          </template>
+        </slider>
+      </dropdown>
+      <button
+        :name="paneId"
+        class="toolbar__label"
+        @click="
+          sliderDropdownTrigger = sliderDropdownTrigger
+            ? null
+            : $event.currentTarget
+        "
+      >
+        <i class="icon-gauge"></i>
+      </button>
+    </pane-header>
+    <canvas ref="canvas" @dblclick="reset" />
+  </div>
+</template>
+
+<script lang="ts">
+import { Component, Mixins } from 'vue-property-decorator'
+import PaneMixin from '../../mixins/paneMixin'
+import aggregatorService from '../../services/aggregatorService'
+import { formatAmount, formatMarketPrice } from '../../services/productsService'
+import { Threshold, TradesPaneState } from '../../store/panesSettings/trades'
+import {
+  getAppBackgroundColor,
+  getColorByWeight,
+  getTextColor,
+  joinRgba,
+  rgbaToRgb,
+  splitColorCode
+} from '../../utils/colors'
+import Slider from '@/components/framework/picker/Slider.vue'
+
+import PaneHeader from '@/components/panes/PaneHeader.vue'
+import dialogService from '../../services/dialogService'
+import audioService, { AudioFunction } from '../../services/audioService'
+import logos from '@/assets/exchanges'
+import { Trade } from '../../types/types'
+
+const DEBUG = false
+const GRADIENT_DETAIL = 5
+const LOGOS = {}
+
+@Component({
+  name: 'TradesLite',
+  components: {
+    PaneHeader,
+    Slider
+  }
+})
+export default class extends Mixins(PaneMixin) {
+  private ctx: CanvasRenderingContext2D
+  private width: number
+  private height: number
+  private lineHeight: number
+  private fontSize: number
+  private padding: number
+  private logoWidth: number
+  private pxRatio: number
+  private maxLines: number
+  private maxHistory: number
+  private buyColorBase: string
+  private buyColor100: string
+  private sellColorBase: string
+  private sellColor100: string
+
+  // prepared thresholds by type (trade or liquidation)
+  private minAmount: number
+  private minAudio: number
+  private colors: {
+    [type: string]: {
+      lastRangeIndex: number
+      minAmount: number
+      maxAmount: number
+      significantAmount: number
+      ranges: {
+        from: number
+        to: number
+        buy: {
+          background: string
+          color: string
+          step: number
+        }[]
+        sell: {
+          background: string
+          color: string
+          step: number
+        }[]
+        max?: boolean
+      }[]
+    }
+  }
+  private sounds: {
+    [type: string]: { buy: AudioFunction; sell: AudioFunction }[]
+  }
+
+  private filters: { trade: boolean; liquidation: boolean }
+  private rendering: boolean
+  private tradesRendering: any[]
+  private tradesHistory: any[]
+  private paneMarkets: { [market: string]: boolean }
+  private volumeBySide: { buy: number; sell: number }
+  private insignificantVolumeBySide: { buy: number; sell: number }
+  private addedVolumeBySide: { buy: number; sell: number }
+  private offset: number
+  private maxCount: number
+  private limit: number
+
+  sliderDropdownTrigger = null
+  value = null
+  currentColor = null
+  paused = false
+
+  $refs!: {
+    canvas: HTMLCanvasElement
+  }
+  private scrollHandler: (event) => void
+  private blurHandler: (event) => void
+
+  get market() {
+    return this.pane.markets[0]
+  }
+
+  get thresholdsMultipler() {
+    return this.$store.state[this.paneId].thresholdsMultipler
+  }
+
+  get gradient() {
+    return [
+      this.$store.state[this.paneId].thresholds[0].buyColor,
+      this.$store.state[this.paneId].thresholds[
+        this.$store.state[this.paneId].thresholds.length - 1
+      ].buyColor
+    ]
+  }
+
+  created() {
+    this._onStoreMutation = this.$store.subscribe(mutation => {
+      switch (mutation.type) {
+        case this.paneId + '/SET_MAX_ROWS':
+          this.maxHistory = +mutation.payload
+          break
+        case 'panes/SET_PANE_MARKETS':
+          if (mutation.payload.id === this.paneId) {
+            this.clear()
+            this.prepareMarkets()
+            this.renderHistory()
+          }
+          break
+        case 'app/EXCHANGE_UPDATED':
+        case this.paneId + '/TOGGLE_TRADE_TYPE':
+          this.prepareTypeFilter(true)
+          this.renderHistory()
+          break
+        case this.paneId + '/SET_THRESHOLD_AUDIO':
+        case this.paneId + '/SET_AUDIO_VOLUME':
+        case this.paneId + '/SET_AUDIO_PITCH':
+        case this.paneId + '/TOGGLE_MUTED':
+        case 'settings/SET_AUDIO_VOLUME':
+        case 'settings/TOGGLE_AUDIO':
+          this.prepareAudio()
+          break
+        case this.paneId + '/SET_AUDIO_THRESHOLD':
+          this.prepareAudio(false)
+          break
+        case 'settings/SET_BACKGROUND_COLOR':
+        case this.paneId + '/SET_THRESHOLD_COLOR':
+        case this.paneId + '/SET_THRESHOLD_AMOUNT':
+        case this.paneId + '/SET_THRESHOLDS_MULTIPLER':
+        case this.paneId + '/TOGGLE_THRESHOLD_MAX':
+        case this.paneId + '/DELETE_THRESHOLD':
+        case this.paneId + '/ADD_THRESHOLD':
+          this.prepareColors()
+          this.renderHistory()
+
+          if (
+            mutation.type === this.paneId + '/DELETE_THRESHOLD' ||
+            mutation.type === this.paneId + '/ADD_THRESHOLD'
+          ) {
+            this.prepareAudio()
+          }
+          break
+      }
+    })
+  }
+
+  mounted() {
+    this.ctx = this.$refs.canvas.getContext('2d', { alpha: false })
+
+    this.$nextTick(this.prepareEverything)
+
+    aggregatorService.on('trades', this.onTrades)
+  }
+
+  async prepareEverything() {
+    this.reset()
+
+    this.prepareTypeFilter()
+    this.prepareMarkets()
+    this.prepareColors()
+    await this.prepareAudio()
+
+    this.renderHistory()
+  }
+
+  beforeDestroy() {
+    aggregatorService.off('trades', this.onTrades)
+
+    this._onStoreMutation()
+
+    if (this.blurHandler) {
+      this.onBlur()
+    }
+  }
+
+  onTrades(trades: Trade[]) {
+    let date = null
+    let side = null
+
+    for (let i = 0; i < trades.length; i++) {
+      const marketKey = trades[i].exchange + ':' + trades[i].pair
+      const type = trades[i].liquidation ? 'liquidation' : 'trade'
+
+      if (!this.filters[type] || !this.paneMarkets[marketKey]) {
+        continue
+      }
+
+      if (
+        trades[i].amount < this.colors[type].minAmount ||
+        trades[i].amount > this.colors[type].maxAmount
+      ) {
+        if (trades[i].amount > this.minAudio) {
+          this.sounds[type][0][trades[i].side](
+            audioService,
+            trades[i].amount / this.colors[type].significantAmount
+          )
+        }
+
+        this.insignificantVolumeBySide[trades[i].side] += trades[i].amount
+        continue
+      }
+
+      this.volumeBySide[trades[i].side] += trades[i].amount
+
+      if (side === null) {
+        side = trades[i].side
+      }
+
+      const { background, color, step } = this.getColors(
+        trades[i].amount,
+        trades[i].side,
+        type
+      )
+
+      this.maxCount = Math.max(this.maxCount, trades[i].count)
+
+      const trade = {
+        type,
+        background,
+        color,
+        step,
+        exchange: trades[i].exchange,
+        amount: trades[i].amount,
+        count: trades[i].count,
+        price: trades[i].price,
+        side: trades[i].side,
+        time: null
+      }
+
+      if (!date) {
+        date = new Date(+trades[i].timestamp)
+
+        trade.time = `${date
+          .getHours()
+          .toString()
+          .padStart(2, '0')}:${date
+          .getMinutes()
+          .toString()
+          .padStart(2, '0')}`
+      }
+
+      if (trade.amount > this.minAudio) {
+        this.sounds[type][Math.floor(trade.step / GRADIENT_DETAIL)][trade.side](
+          audioService,
+          trade.amount / this.colors[type].significantAmount
+        )
+      }
+
+      this.tradesRendering.push(trade)
+    }
+
+    if (date && !this.rendering) {
+      this.volumeBySide[side] += this.insignificantVolumeBySide[side]
+      this.addedVolumeBySide[side] += this.insignificantVolumeBySide[side]
+      this.insignificantVolumeBySide[side] = 0
+      this.renderTradesBatch()
+    }
+
+    this.renderVolumeBySide()
+  }
+
+  getThresholdsByType(type: string): Threshold[] {
+    const paneSettings = this.$store.state[this.paneId] as TradesPaneState
+
+    if (type === 'liquidation') {
+      return paneSettings.liquidations
+    }
+
+    return paneSettings.thresholds
+  }
+
+  async openSettings() {
+    dialogService.open(
+      (await import('@/components/trades/TradesDialog.vue')).default,
+      {
+        paneId: this.paneId
+      }
+    )
+  }
+
+  async prepareTypeFilter(checkRequirements?: boolean) {
+    const tradeType = this.$store.state[this.paneId].tradeType
+
+    this.filters = {
+      trade: tradeType === 'both' || tradeType === 'trades',
+      liquidation: tradeType === 'both' || tradeType === 'liquidations'
+    }
+
+    if (checkRequirements) {
+      // check for unused or missing colors / audio
+
+      for (const type in this.filters) {
+        if (!this.filters[type] && typeof this.colors[type] !== 'undefined') {
+          // clear unused colors
+          delete this.colors[type]
+        } else if (
+          this.filters[type] &&
+          typeof this.colors[type] === 'undefined'
+        ) {
+          // generate required colors
+          this.prepareThresholds(type, this.getThresholdsByType(type))
+        }
+
+        if (!this.filters[type] && typeof this.sounds[type] !== 'undefined') {
+          // clear unused sounds
+          delete this.sounds[type]
+        } else if (
+          this.filters[type] &&
+          typeof this.sounds[type] === 'undefined' &&
+          this.minAudio > 0
+        ) {
+          // generate required sounds
+          await this.prepareSounds(type, this.getThresholdsByType(type))
+        }
+      }
+    }
+
+    for (let i = 0; i < this.tradesHistory.length; i++) {
+      if (!this.filters[(this.tradesHistory as any).type]) {
+        this.tradesHistory.splice(i, 1)
+        i--
+      }
+    }
+  }
+
+  prepareMarkets() {
+    this.paneMarkets = this.$store.state.panes.panes[
+      this.paneId
+    ].markets.reduce((output, marketKey) => {
+      const [exchange] = marketKey.split(':')
+
+      if (!this.$store.state.app.activeExchanges[exchange]) {
+        output[marketKey] = false
+        return output
+      }
+
+      output[marketKey] = true
+      return output
+    }, {})
+  }
+
+  async prepareAudio(prepareSounds = true) {
+    const audioThreshold = this.$store.state[this.paneId].audioThreshold
+
+    if (
+      !this.$store.state.settings.useAudio ||
+      this.$store.state[this.paneId].muted ||
+      this.$store.state[this.paneId].audioVolume === 0
+    ) {
+      this.minAudio = Infinity
+      this.sounds = {}
+      return
+    }
+
+    if (audioThreshold) {
+      if (
+        typeof audioThreshold === 'string' &&
+        /\d\s*%$/.test(audioThreshold)
+      ) {
+        this.minAudio = this.minAmount * (parseFloat(audioThreshold) / 100)
+      } else {
+        this.minAudio = +audioThreshold
+      }
+    } else {
+      this.minAudio = this.minAmount * 0.1
+    }
+
+    if (prepareSounds) {
+      for (const type in this.filters) {
+        if (this.filters[type]) {
+          await this.prepareSounds(type, this.getThresholdsByType(type))
+        }
+      }
+    }
+  }
+
+  async prepareSounds(type: string, thresholds: Threshold[]) {
+    const sounds = []
+    const audioPitch = this.$store.state[this.paneId].audioPitch
+
+    for (let i = 0; i < thresholds.length; i++) {
+      sounds.push({
+        buy: await audioService.buildAudioFunction(
+          thresholds[i].buyAudio,
+          'buy',
+          audioPitch
+        ),
+        sell: await audioService.buildAudioFunction(
+          thresholds[i].sellAudio,
+          'sell',
+          audioPitch
+        )
+      })
+    }
+
+    this.sounds[type] = sounds
+  }
+
+  prepareColors() {
+    // cache color counters
+    const style = getComputedStyle(document.documentElement)
+    this.buyColorBase = style.getPropertyValue('--theme-buy-base')
+    this.buyColor100 = style.getPropertyValue('--theme-buy-100')
+    this.sellColorBase = style.getPropertyValue('--theme-sell-base')
+    this.sellColor100 = style.getPropertyValue('--theme-sell-100')
+
+    for (const type in this.filters) {
+      if (this.filters[type]) {
+        this.prepareThresholds(type, this.getThresholdsByType(type))
+      }
+    }
+
+    // recalculate trades respective colors
+    for (let i = 0; i < this.tradesHistory.length; i++) {
+      if (this.tradesHistory[i].amount !== this.minAmount) {
+        this.tradesHistory.splice(i, 1)
+        i--
+        continue
+      }
+
+      const color = this.getColors(
+        this.tradesHistory[i].amount,
+        this.tradesHistory[i].side,
+        this.tradesHistory[i].type
+      )
+
+      Object.assign(this.tradesHistory[i], color)
+    }
+  }
+
+  prepareThresholds(type: string, thresholds: Threshold[]) {
+    // app background color for computed threshold color
+    const appBackgroundColor = getAppBackgroundColor()
+
+    const ranges = []
+    let significantAmount
+
+    // loop through thresholds
+    // thresholds [0, 1, 2, 3]
+    // ranges [0-1, 1-2, 2-3]
+    for (let i = 0; i < thresholds.length - 1; i++) {
+      const from = thresholds[i].amount
+      const to = thresholds[i + 1].amount
+
+      if (i === 0) {
+        significantAmount = to
+      }
+
+      const buyColorRange = [
+        splitColorCode(thresholds[i].buyColor, appBackgroundColor),
+        splitColorCode(thresholds[i + 1].buyColor, appBackgroundColor)
+      ]
+      const sellColorRange = [
+        splitColorCode(thresholds[i].sellColor, appBackgroundColor),
+        splitColorCode(thresholds[i + 1].sellColor, appBackgroundColor)
+      ]
+
+      const buyAlphaRange: [number, number] = [
+        typeof buyColorRange[0][3] === 'undefined' ? 1 : buyColorRange[0][3],
+        typeof buyColorRange[1][3] === 'undefined' ? 1 : buyColorRange[1][3]
+      ]
+
+      const sellAlphaRange: [number, number] = [
+        typeof sellColorRange[0][3] === 'undefined' ? 1 : sellColorRange[0][3],
+        typeof sellColorRange[1][3] === 'undefined' ? 1 : sellColorRange[1][3]
+      ]
+
+      if (typeof buyColorRange[0][3] !== 'undefined') {
+        buyColorRange[0] = rgbaToRgb(buyColorRange[0], appBackgroundColor)
+      }
+
+      if (typeof buyColorRange[1][3] !== 'undefined') {
+        buyColorRange[1] = rgbaToRgb(buyColorRange[1], appBackgroundColor)
+      }
+
+      if (typeof sellColorRange[0][3] !== 'undefined') {
+        buyColorRange[0] = rgbaToRgb(sellColorRange[0], appBackgroundColor)
+      }
+
+      if (typeof sellColorRange[1][3] !== 'undefined') {
+        buyColorRange[1] = rgbaToRgb(sellColorRange[1], appBackgroundColor)
+      }
+
+      const buy = []
+      const sell = []
+
+      // for every range, slice the range into n colors
+      for (let j = 0; j < GRADIENT_DETAIL; j++) {
+        const position = j / (GRADIENT_DETAIL - 1) // 0 to 1
+
+        // get a color between buyColorRange[0] and buyColorRange[1]
+        // get a optimal text color
+        const buyBackground = getColorByWeight(
+          buyColorRange[0],
+          buyColorRange[1],
+          position
+        )
+        const buyText = getTextColor(buyBackground, 0.3)
+
+        buy.push({
+          background: joinRgba(buyBackground),
+          color: joinRgba(buyText),
+          step: i * GRADIENT_DETAIL + j,
+          alpha: `${buyAlphaRange[0].toFixed(1)} to ${buyAlphaRange[1].toFixed(
+            1
+          )} at ${position.toFixed(1)} = ${(
+            buyAlphaRange[0] +
+            (buyAlphaRange[1] - buyAlphaRange[0]) * position
+          ).toFixed(1)}`
+        })
+
+        // same for the sells
+        const sellBackground = getColorByWeight(
+          sellColorRange[0],
+          sellColorRange[1],
+          position
+        )
+        const sellText = getTextColor(sellBackground, 0.3)
+
+        sell.push({
+          background: joinRgba(sellBackground),
+          color: joinRgba(sellText),
+          step: i * GRADIENT_DETAIL + j,
+          alpha: `${sellAlphaRange[0].toFixed(
+            1
+          )} to ${sellAlphaRange[1].toFixed(1)} at ${position.toFixed(1)} = ${(
+            sellAlphaRange[0] +
+            (sellAlphaRange[1] - sellAlphaRange[0]) * position
+          ).toFixed(1)}`
+        })
+      }
+
+      ranges.push({
+        from,
+        to,
+        buy,
+        sell
+      })
+
+      if (thresholds[i + 1].max) {
+        // next threshold as the max checkbox ticked -> last range pushed will be the last
+        ranges[ranges.length - 1].max = true
+        break
+      }
+    }
+
+    // cache min / max
+    const lastRangeIndex = ranges.length - 1
+    const minAmount = ranges[0].from
+
+    let maxAmount
+
+    if (!ranges[ranges.length - 1].max) {
+      maxAmount = Infinity
+    } else {
+      maxAmount = ranges[ranges.length - 1].to
+    }
+
+    this.colors[type] = {
+      lastRangeIndex,
+      minAmount,
+      maxAmount,
+      significantAmount,
+      ranges
+    }
+
+    if (type === 'trade' || !this.filters.trade) {
+      this.minAmount = minAmount
+    }
+  }
+
+  onResize(width, height, isMounting) {
+    this.resize()
+
+    if (!isMounting) {
+      this.renderHistory()
+    }
+  }
+
+  resize() {
+    const canvas = this.$refs.canvas
+
+    let headerHeight = 0
+
+    if (!this.$store.state.settings.autoHideHeaders) {
+      headerHeight =
+        (this.$store.state.panes.panes[this.paneId].zoom || 1) * 2 * 16
+    }
+
+    this.pxRatio = window.devicePixelRatio || 1
+    const zoom = this.$store.state.panes.panes[this.paneId].zoom || 1
+
+    this.logoWidth = window.devicePixelRatio * 16
+    this.width = canvas.width = this.$el.clientWidth * this.pxRatio
+    this.height = canvas.height =
+      (this.$el.clientHeight - headerHeight) * this.pxRatio
+    this.fontSize = Math.round(12 * zoom * this.pxRatio)
+    this.padding = Math.round(
+      (zoom < 1 ? 1 : zoom < 1.5 ? 2 : 4) * zoom * this.pxRatio
+    )
+    this.lineHeight = Math.round(this.fontSize + this.padding)
+    this.maxLines = Math.ceil(this.height / this.lineHeight)
+
+    this.limit = this.offset + this.maxLines
+
+    this.ctx.font = `${this.fontSize}px Share Tech Mono`
+    this.ctx.textBaseline = 'middle'
+  }
+
+  getColors(amount, side, type) {
+    const colors = this.colors[type]
+
+    for (let i = 0; i < colors.ranges.length; i++) {
+      if (i === colors.lastRangeIndex || amount < colors.ranges[i].to) {
+        let innerStep = GRADIENT_DETAIL - 1
+
+        if (amount < colors.ranges[i].to) {
+          innerStep = Math.floor(
+            ((amount - colors.ranges[i].from) /
+              (colors.ranges[i].to - colors.ranges[i].from)) *
+              GRADIENT_DETAIL
+          )
+        }
+
+        return colors.ranges[i][side][innerStep]
+      }
+    }
+  }
+
+  clear() {
+    this.ctx.resetTransform()
+    this.ctx.clearRect(0, 0, this.width, this.height)
+  }
+
+  reset() {
+    if (this.ctx) {
+      this.clear()
+    }
+
+    this.tradesRendering = []
+    this.tradesHistory = []
+    this.volumeBySide = { buy: 0, sell: 0 }
+    this.insignificantVolumeBySide = { buy: 0, sell: 0 }
+    this.addedVolumeBySide = { buy: 0, sell: 0 }
+    this.colors = {}
+    this.sounds = {}
+    this.offset = 0
+    this.limit = 0
+    this.maxCount = 100
+    this.maxHistory = this.$store.state[this.paneId].maxRows
+
+    if (DEBUG) {
+      this.renderDebug()
+    }
+  }
+
+  renderTradesBatch() {
+    if (this.paused) {
+      this.rendering = false
+      return
+    }
+
+    let count = Math.ceil(this.tradesRendering.length * 0.1)
+
+    while (count--) {
+      const trade = this.tradesRendering.shift()
+      this.renderTrade(trade)
+
+      this.tradesHistory.unshift(trade)
+
+      if (this.offset >= 1) {
+        this.offset++
+      }
+
+      if (this.tradesHistory.length > this.maxHistory) {
+        const trade = this.tradesHistory.pop()
+
+        if (this.addedVolumeBySide[trade.side]) {
+          trade.amount += this.addedVolumeBySide[trade.side]
+          this.addedVolumeBySide[trade.side] = 0
+        }
+
+        this.volumeBySide[trade.side] -= trade.amount
+      }
+    }
+
+    this.rendering = this.tradesRendering.length > 0
+
+    if (this.rendering) {
+      return requestAnimationFrame(this.renderTradesBatch)
+    }
+  }
+
+  renderTrade(trade) {
+    const market = trade.exchange + ':' + trade.pair
+
+    const paddingTop =
+      this.padding + Math.round((trade.step / 2) * this.pxRatio)
+    const height = this.lineHeight + paddingTop * 2
+
+    this.ctx.drawImage(this.ctx.canvas, 0, height)
+    this.ctx.fillStyle = trade.background
+    this.ctx.fillRect(0, this.lineHeight, this.width, height)
+
+    this.ctx.fillStyle = 'rgba(255,255,255,0.1)'
+    this.ctx.fillRect(
+      0,
+      0,
+      Math.min(1, trade.count / 100) * this.width,
+      this.lineHeight + height
+    )
+
+    this.ctx.fillStyle = trade.color
+
+    this.drawLogo(
+      trade.exchange,
+      this.padding * 2,
+      this.lineHeight + height / 2 - this.logoWidth / 2
+    )
+
+    this.ctx.textAlign = 'left'
+    this.ctx.fillText(
+      formatMarketPrice(trade.price, market),
+      this.padding + this.logoWidth * 1.5,
+      this.lineHeight + height / 2
+    )
+
+    this.ctx.textAlign = 'right'
+    this.ctx.fillText(
+      formatAmount(trade.amount),
+      this.width / 1.5,
+      this.lineHeight + height / 2
+    )
+
+    if (trade.time) {
+      this.ctx.fillText(
+        trade.time,
+        this.width - this.padding,
+        this.lineHeight + height / 2
+      )
+    }
+  }
+
+  renderHistory() {
+    this.clear()
+
+    if (DEBUG) {
+      this.renderDebug()
+    }
+
+    const offset = Math.round(this.offset)
+    const limit = Math.round(this.limit)
+
+    if (limit - offset <= 0) {
+      this.ctx.fillText('waiting for trades', 8, 8)
+      return
+    }
+
+    for (let i = limit - 1; i > offset; i--) {
+      if (!this.tradesHistory[i]) {
+        continue
+      }
+
+      this.renderTrade(this.tradesHistory[i])
+    }
+  }
+
+  renderVolumeBySide() {
+    const insignificantVolume =
+      this.insignificantVolumeBySide.buy + this.insignificantVolumeBySide.sell
+    const volume = this.volumeBySide.buy + this.volumeBySide.sell
+    const total = insignificantVolume + volume
+    const buyWidth = this.width * (this.volumeBySide.buy / total)
+    const buyWidthFast =
+      this.width * (this.insignificantVolumeBySide.buy / total)
+    const sellWidthFast =
+      this.width * (this.insignificantVolumeBySide.sell / total)
+    const sellWidth = this.width * (this.volumeBySide.sell / total)
+
+    this.ctx.fillStyle = this.buyColorBase
+    this.ctx.fillRect(0, 0, buyWidth, this.lineHeight)
+    this.ctx.fillStyle = this.buyColor100
+    this.ctx.fillRect(buyWidth, 0, buyWidthFast, this.lineHeight)
+    this.ctx.fillStyle = this.sellColor100
+    this.ctx.fillRect(
+      buyWidth + buyWidthFast,
+      0,
+      sellWidthFast,
+      this.lineHeight
+    )
+    this.ctx.fillStyle = this.sellColorBase
+    this.ctx.fillRect(this.width - sellWidth, 0, sellWidth, this.lineHeight)
+  }
+
+  renderDebug() {
+    for (const type in this.filters) {
+      if (this.filters[type]) {
+        for (const range of this.colors[type].ranges) {
+          for (let i = 0; i < range.buy.length; i++) {
+            this.ctx.translate(0, this.lineHeight)
+            const buy = range.buy[i]
+            this.ctx.fillStyle = buy.background
+            this.ctx.fillRect(0, 0, this.width / 2, this.lineHeight)
+            this.ctx.fillStyle = buy.color
+            this.ctx.fillText(buy.color, 0, this.lineHeight / 2)
+
+            const sell = range.sell[i]
+            this.ctx.fillStyle = sell.background
+            this.ctx.fillRect(
+              this.width / 2,
+              0,
+              this.width / 2,
+              this.lineHeight
+            )
+            this.ctx.fillStyle = sell.color
+            this.ctx.fillText(sell.color, this.width / 2, this.lineHeight / 2)
+          }
+        }
+      }
+    }
+
+    this.ctx.resetTransform()
+  }
+
+  onBlur() {
+    this.$el.removeEventListener('mouseleave', this.blurHandler)
+    this.$el.removeEventListener('wheel', this.scrollHandler)
+    delete this.scrollHandler
+    delete this.blurHandler
+    this.paused = false
+  }
+
+  onScroll(event) {
+    const direction = Math.sign(event.deltaY) * (event.shiftKey ? 2 : 1)
+
+    const offset = Math.max(
+      0,
+      Math.min(this.tradesHistory.length, this.offset + direction)
+    )
+    const limit = Math.min(
+      this.tradesHistory.length,
+      Math.max(offset + this.maxLines, this.limit + direction)
+    )
+
+    const redraw = Math.round(offset) !== Math.round(this.offset)
+
+    this.paused = offset > 0
+    this.offset = offset
+    this.limit = limit
+
+    if (redraw) {
+      this.renderHistory()
+    }
+  }
+
+  bindScroll() {
+    if (this.scrollHandler) {
+      this.onBlur()
+      return
+    }
+
+    this.paused = true
+
+    this.blurHandler = this.onBlur.bind(this)
+    this.scrollHandler = this.onScroll.bind(this)
+    this.$el.addEventListener('wheel', this.scrollHandler)
+    this.$el.addEventListener('mouseleave', this.blurHandler)
+  }
+
+  drawLogo(exchange, x, y) {
+    if (!LOGOS[exchange]) {
+      const canvas = document.createElement('canvas')
+      canvas.width = this.logoWidth
+      canvas.height = this.logoWidth
+
+      const image = new Image()
+      image.onload = () => {
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(image, 0, 0, this.logoWidth, this.logoWidth)
+      }
+      image.src = logos[exchange]
+
+      LOGOS[exchange] = canvas
+    } else {
+      this.ctx.drawImage(LOGOS[exchange], x, y)
+    }
+  }
+}
+</script>
+<style lang="scss" scoped>
+canvas {
+  width: 100%;
+  height: 100%;
+}
+</style>

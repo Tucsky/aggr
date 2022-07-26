@@ -1,7 +1,14 @@
 <template>
-  <div class="pane-prices" @mouseenter="pauseSort = true" @mouseleave="pauseSort = false">
-    <pane-header :paneId="paneId">
-      <prices-sort-dropdown :pane-id="paneId" />
+  <div
+    class="pane-prices"
+    @mouseenter="pauseSort = true"
+    @mouseleave="pauseSort = false"
+  >
+    <pane-header
+      :paneId="paneId"
+      :settings="() => import('@/components/prices/PricesDialog.vue')"
+    >
+      <prices-sort-dropdown :pane-id="paneId" class="toolbar__label -arrow" />
     </pane-header>
     <div class="markets-bar__wrapper hide-scrollbar">
       <component
@@ -11,13 +18,25 @@
         class="markets-bar hide-scrollbar pane"
         :class="[mode === 'horizontal' && '-horizontal']"
       >
-        <div v-for="market in markets" :key="market.id" class="market" :class="market.status" :title="market.id">
+        <div
+          v-for="market in markets"
+          :key="market.id"
+          class="market"
+          :class="market.status"
+          :title="market.id"
+        >
           <div class="market__exchange" :class="market.exchange"></div>
           <div v-if="showPairs" class="market__pair">{{ market.local }}</div>
           <div class="market__price" v-if="showPrice">{{ market.price }}</div>
-          <div class="market__change" v-if="showChange">{{ (market.change >= 0 ? '+' : '') + market.change.toFixed(2) }}%</div>
-          <div v-if="showVolume" class="market__volume">{{ formatAmount(market.volume, 2) }}</div>
-          <div v-if="showVolumeDelta" class="market__volume">{{ formatAmount(market.volumeDelta, 2) }}</div>
+          <div class="market__change" v-if="showChange">
+            {{ (market.change >= 0 ? '+' : '') + market.change.toFixed(2) }}%
+          </div>
+          <div v-if="showVolume" class="market__volume">
+            {{ formatAmount(market.volume, 2) }}
+          </div>
+          <div v-if="showVolumeDelta" class="market__volume">
+            {{ formatAmount(market.volumeDelta, 2) }}
+          </div>
         </div>
       </component>
     </div>
@@ -31,13 +50,18 @@ import PricesSortDropdown from '@/components/prices/PricesSortDropdown.vue'
 import aggregatorService from '@/services/aggregatorService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
-import { Market } from '@/types/test'
-import { formatAmount, formatMarketPrice, parseMarket, getMarketProduct } from '@/services/productsService'
+import { Market } from '@/types/types'
+import {
+  formatAmount,
+  formatMarketPrice,
+  parseMarket,
+  getMarketProduct
+} from '@/services/productsService'
 
 type MarketsBarMarketStatus = '-pending' | '-up' | '-down' | '-neutral'
 type MarketStats = Market & {
   local: string
-  price: number
+  price: string
   change: number
   volume: number
   volumeDelta: number
@@ -148,7 +172,10 @@ export default class extends Mixins(PaneMixin) {
 
   created() {
     this._initialValues = {}
-    this._onStoreMutation = this.$store.watch(state => [state[this.paneId].sortType, state[this.paneId].sortOrder], this.cacheSortFunction)
+    this._onStoreMutation = this.$store.watch(
+      state => [state[this.paneId].sortType, state[this.paneId].sortOrder],
+      this.cacheSortFunction
+    )
 
     this.cacheSortFunction()
 
@@ -192,10 +219,14 @@ export default class extends Mixins(PaneMixin) {
       }
 
       market.volume = marketStats.volume - this._initialValues[market.id].volume
-      market.volumeDelta = marketStats.volumeDelta - this._initialValues[market.id].volumeDelta
+      market.volumeDelta =
+        marketStats.volumeDelta - this._initialValues[market.id].volumeDelta
 
       if (showChange && marketStats.price) {
-        const change = marketStats.price - marketStats.initialPrice - this._initialValues[market.id].change
+        const change =
+          marketStats.price -
+          marketStats.initialPrice -
+          this._initialValues[market.id].change
 
         market.change = (change / marketStats.price) * 100
         market.status = change > 0 ? '-up' : '-down'
@@ -229,7 +260,9 @@ export default class extends Mixins(PaneMixin) {
     if (index !== -1) {
       this.markets.splice(index, 1)
     } else {
-      console.warn(`[prices] unable to remove market from list after panes.markets change: market doesn't exists in list (${market})`)
+      console.warn(
+        `[prices] unable to remove market from list after panes.markets change: market doesn't exists in list (${market})`
+      )
     }
   }
 
@@ -254,7 +287,12 @@ export default class extends Mixins(PaneMixin) {
   }
 
   cacheSortFunction() {
-    const order = this.mode === 'horizontal' ? (this.sortOrder > 0 ? -1 : 1) : this.sortOrder
+    const order =
+      this.mode === 'horizontal'
+        ? this.sortOrder > 0
+          ? -1
+          : 1
+        : this.sortOrder
     const by = this.sortType
 
     if (!by || by === 'none') {
@@ -264,9 +302,9 @@ export default class extends Mixins(PaneMixin) {
 
     if (by === 'price') {
       if (order === 1) {
-        this._sortFunction = (a, b) => a.price - b.price
+        this._sortFunction = (a, b) => (a as any).price - (b as any).price
       } else {
-        this._sortFunction = (a, b) => b.price - a.price
+        this._sortFunction = (a, b) => (b as any).price - (a as any).price
       }
     } else if (by === 'change') {
       if (order === 1) {
@@ -312,7 +350,10 @@ export default class extends Mixins(PaneMixin) {
       clearTimeout(this._resetTimeout)
     }
 
-    this._resetTimeout = setTimeout(this.periodReset.bind(this), this.getTimeToNextReset())
+    this._resetTimeout = setTimeout(
+      this.periodReset.bind(this),
+      this.getTimeToNextReset()
+    )
   }
 
   periodReset() {
@@ -322,9 +363,11 @@ export default class extends Mixins(PaneMixin) {
           continue
         }
 
-        this._initialValues[market.id].change = marketsStats[market.id].price - marketsStats[market.id].initialPrice
+        this._initialValues[market.id].change =
+          marketsStats[market.id].price - marketsStats[market.id].initialPrice
         this._initialValues[market.id].volume = marketsStats[market.id].volume
-        this._initialValues[market.id].volumeDelta = marketsStats[market.id].volumeDelta
+        this._initialValues[market.id].volumeDelta =
+          marketsStats[market.id].volumeDelta
       }
 
       this.updateMarkets(marketsStats)
@@ -337,7 +380,9 @@ export default class extends Mixins(PaneMixin) {
 
   clearPeriodReset() {
     for (const market in this._initialValues) {
-      this._initialValues[market].change = this._initialValues[market].volume = this._initialValues[market].volumeDelta = 0
+      this._initialValues[market].change = this._initialValues[
+        market
+      ].volume = this._initialValues[market].volumeDelta = 0
     }
 
     if (this._resetTimeout) {
@@ -415,7 +460,7 @@ export default class extends Mixins(PaneMixin) {
 
     &.-up {
       background-color: transparent;
-      color: lighten($green, 10%);
+      color: var(--theme-buy-100);
     }
 
     &.-down {
@@ -428,7 +473,7 @@ export default class extends Mixins(PaneMixin) {
     }
 
     &.-pending {
-      background-color: rgba(var(--theme-color-base), 0.2);
+      background-color: var(--theme-color-base);
       opacity: 0.5;
     }
 
@@ -444,6 +489,7 @@ export default class extends Mixins(PaneMixin) {
       align-self: stretch;
       flex-shrink: 0;
       background-position: center;
+      min-width: 1em;
     }
 
     &__pair {

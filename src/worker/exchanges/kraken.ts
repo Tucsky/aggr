@@ -5,7 +5,10 @@ export default class extends Exchange {
   private specs: { [pair: string]: number }
 
   protected endpoints = {
-    PRODUCTS: ['https://api.kraken.com/0/public/AssetPairs', 'https://futures.kraken.com/derivatives/api/v3/instruments']
+    PRODUCTS: [
+      'https://api.kraken.com/0/public/AssetPairs',
+      'https://futures.kraken.com/derivatives/api/v3/instruments'
+    ]
   }
 
   getUrl(pair: string) {

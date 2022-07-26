@@ -1,5 +1,10 @@
 import { Bar } from '@/components/chart/chart'
-import { floorTimestampToTimeframe, getApiUrl, handleFetchError, isOddTimeframe } from '@/utils/helpers'
+import {
+  floorTimestampToTimeframe,
+  getApiUrl,
+  handleFetchError,
+  isOddTimeframe
+} from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import store from '../store'
@@ -22,7 +27,9 @@ class HistoricalService extends EventEmitter {
   }
 
   filterOutUnavailableMarkets(markets: string[]) {
-    return markets.filter(market => store.state.app.historicalMarkets.indexOf(market) !== -1)
+    return markets.filter(
+      market => store.state.app.historicalMarkets.indexOf(market) !== -1
+    )
   }
 
   getApiUrl(from, to, timeframe, markets) {
@@ -35,7 +42,12 @@ class HistoricalService extends EventEmitter {
     return `${this.url}/${params.join('/')}`
   }
 
-  fetch(from: number, to: number, timeframe: number, markets: string[]): Promise<HistoricalResponse> {
+  fetch(
+    from: number,
+    to: number,
+    timeframe: number,
+    markets: string[]
+  ): Promise<HistoricalResponse> {
     const url = this.getApiUrl(from, to, timeframe, markets)
 
     if (this.promisesOfData[url]) {
@@ -64,7 +76,12 @@ class HistoricalService extends EventEmitter {
           throw new Error('Bad data')
         }
 
-        return this.normalizePoints(json.results, json.columns, timeframe, markets)
+        return this.normalizePoints(
+          json.results,
+          json.columns,
+          timeframe,
+          markets
+        )
       })
       .catch(err => {
         handleFetchError(err)
@@ -108,18 +125,52 @@ class HistoricalService extends EventEmitter {
       if (!data[i].time && data[i][0]) {
         // new format is array, transform into objet
         data[i] = {
-          time: typeof columns['time'] !== 'undefined' ? data[i][columns['time']] : 0,
-          cbuy: typeof columns['cbuy'] !== 'undefined' ? data[i][columns['cbuy']] : 0,
-          close: typeof columns['close'] !== 'undefined' ? data[i][columns['close']] : 0,
-          csell: typeof columns['csell'] !== 'undefined' ? data[i][columns['csell']] : 0,
-          high: typeof columns['high'] !== 'undefined' ? data[i][columns['high']] : 0,
-          lbuy: typeof columns['lbuy'] !== 'undefined' ? data[i][columns['lbuy']] : 0,
-          low: typeof columns['low'] !== 'undefined' ? data[i][columns['low']] : 0,
-          lsell: typeof columns['lsell'] !== 'undefined' ? data[i][columns['lsell']] : 0,
-          market: typeof columns['market'] !== 'undefined' ? data[i][columns['market']] : 0,
-          open: typeof columns['open'] !== 'undefined' ? data[i][columns['open']] : 0,
-          vbuy: typeof columns['vbuy'] !== 'undefined' ? data[i][columns['vbuy']] : 0,
-          vsell: typeof columns['vsell'] !== 'undefined' ? data[i][columns['vsell']] : 0
+          time:
+            typeof columns['time'] !== 'undefined'
+              ? data[i][columns['time']]
+              : 0,
+          cbuy:
+            typeof columns['cbuy'] !== 'undefined'
+              ? data[i][columns['cbuy']]
+              : 0,
+          close:
+            typeof columns['close'] !== 'undefined'
+              ? data[i][columns['close']]
+              : 0,
+          csell:
+            typeof columns['csell'] !== 'undefined'
+              ? data[i][columns['csell']]
+              : 0,
+          high:
+            typeof columns['high'] !== 'undefined'
+              ? data[i][columns['high']]
+              : 0,
+          lbuy:
+            typeof columns['lbuy'] !== 'undefined'
+              ? data[i][columns['lbuy']]
+              : 0,
+          low:
+            typeof columns['low'] !== 'undefined' ? data[i][columns['low']] : 0,
+          lsell:
+            typeof columns['lsell'] !== 'undefined'
+              ? data[i][columns['lsell']]
+              : 0,
+          market:
+            typeof columns['market'] !== 'undefined'
+              ? data[i][columns['market']]
+              : 0,
+          open:
+            typeof columns['open'] !== 'undefined'
+              ? data[i][columns['open']]
+              : 0,
+          vbuy:
+            typeof columns['vbuy'] !== 'undefined'
+              ? data[i][columns['vbuy']]
+              : 0,
+          vsell:
+            typeof columns['vsell'] !== 'undefined'
+              ? data[i][columns['vsell']]
+              : 0
         }
         data[i].timestamp = data[i].time
       } else {
@@ -135,9 +186,16 @@ class HistoricalService extends EventEmitter {
         }
 
         // format pending bar time floored to timeframe
-        data[i].timestamp = floorTimestampToTimeframe(data[i].time / 1000, timeframe, isOdd)
+        data[i].timestamp = floorTimestampToTimeframe(
+          data[i].time / 1000,
+          timeframe,
+          isOdd
+        )
 
-        if (!lastClosedBars[data[i].market] || lastClosedBars[data[i].market].timestamp < data[i].timestamp) {
+        if (
+          !lastClosedBars[data[i].market] ||
+          lastClosedBars[data[i].market].timestamp < data[i].timestamp
+        ) {
           // store reference bar for this market (either because it didn't exist or because reference bar time is < than pending bar time)
           lastClosedBars[data[i].market] = data[i]
         } else if (lastClosedBars[data[i].market] !== data[i]) {
@@ -147,8 +205,14 @@ class HistoricalService extends EventEmitter {
           lastClosedBars[data[i].market].csell += data[i].csell
           lastClosedBars[data[i].market].lbuy += data[i].lbuy
           lastClosedBars[data[i].market].lsell += data[i].lsell
-          lastClosedBars[data[i].market].high = Math.max(data[i].high, lastClosedBars[data[i].market].high)
-          lastClosedBars[data[i].market].low = Math.min(data[i].low, lastClosedBars[data[i].market].low)
+          lastClosedBars[data[i].market].high = Math.max(
+            data[i].high,
+            lastClosedBars[data[i].market].high
+          )
+          lastClosedBars[data[i].market].low = Math.min(
+            data[i].low,
+            lastClosedBars[data[i].market].low
+          )
           lastClosedBars[data[i].market].close = data[i].close
 
           data.splice(i, 1)

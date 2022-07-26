@@ -6,7 +6,6 @@ export default {
   },
   data: function() {
     return {
-      preventClickOutside: false,
       output: null
     }
   },
@@ -37,7 +36,10 @@ export default {
       try {
         this.$el.parentNode.removeChild(this.$el)
       } catch (error) {
-        console.warn('failed to remove dialog element: was the dialog already destroyed?', error)
+        console.warn(
+          'failed to remove dialog element: was the dialog already destroyed?',
+          error
+        )
       }
 
       return Promise.resolve()

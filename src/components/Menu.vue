@@ -1,56 +1,173 @@
 <template>
   <div id="menu" class="menu" :class="{ '-open': open }">
-    <button class="menu__button btn" @click="toggleMenu">
+    <button
+      class="menu__button btn"
+      @click="$refs.menuDropdown.toggle($event.currentTarget)"
+    >
       <i class="icon-menu"></i>
     </button>
-    <div class="menu__actions" v-if="open" @click="onClickItem">
-      <button class="menu-action btn" type="button" @click="showSettings">
-        <span class="mr4">Settings</span>
-        <i class="icon-cog"></i>
-      </button>
-      <button class="menu-action btn" type="button" @click="toggleFullscreen">
-        <span class="mr4" v-text="isFullscreen ? 'exit' : 'fullscreen'"></span>
-        <i class="icon-enlarge"></i>
-      </button>
-      <tippy to="MenuVolume" :interactive="true" :delay="[0, 400]" :distance="20" placement="left" :theme="'transparent'">
-        <div class="mt4 mb4 text-nowrap">
-          <slider
-            style="width: 100px"
-            :min="0"
-            :max="10"
-            :step="0.1"
-            :label="true"
-            :editable="false"
-            :value="audioVolume"
-            @input="$store.dispatch('settings/setAudioVolume', $event)"
-            @reset="$store.dispatch('settings/setAudioVolume', 1)"
-          ></slider>
-        </div>
-      </tippy>
-      <button type="button" class="menu-action btn -volume" @click="toggleAudio" name="MenuVolume">
-        <span class="mr4">Audio</span>
-        <i v-if="!useAudio" class="icon-volume-off"></i>
-        <i v-else class="icon-volume-medium" :class="{ 'icon-volume-high': audioVolume > 1 }"></i>
-      </button>
-      <dropdown class="menu-action" :options="paneTypes" placeholder="tf." @output="addPane" selectionClass="-green" @click.stop>
-        <template v-slot:selection>
-          <i class="icon-dashboard -center mr16"></i>
-          <span class="mr4">Pane</span>
-          <i class="icon-plus"></i>
-        </template>
-        <template v-slot:option="{ value }">
-          <span>
-            <div class="dropdown-option__title">{{ value.title }}</div>
-            <div class="dropdown-option__description">{{ value.description }}</div>
-          </span>
-          <i class="icon-plus mr4"></i>
-        </template>
-      </dropdown>
-      <button class="menu-action btn" type="button" @click="$store.dispatch('app/showSearch', null)">
+    <dropdown ref="menuDropdown">
+      <button
+        type="button"
+        class="dropdown-item dropdown-item--space-between"
+        @click="$store.dispatch('app/showSearch', null)"
+      >
         <span class="mr4">Search</span>
         <i class="icon-search"></i>
       </button>
-    </div>
+      <button
+        type="button"
+        class="dropdown-item"
+        @click.stop="$refs.panesDropdown.toggle($event.currentTarget)"
+      >
+        <i class="icon-dashboard -center mr8"></i>
+        <span class="mr4">Pane</span>
+        <i class="icon-plus mlauto"></i>
+      </button>
+      <dropdown
+        ref="panesDropdown"
+        @mousedown.native.stop
+        @touchstart.native.stop
+      >
+        <button
+          class="dropdown-item dropdown-item--space-between"
+          @click="addPane('chart')"
+        >
+          <div>
+            <div>Chart</div>
+            <div class="dropdown-item__subtitle">Live Chart</div>
+          </div>
+          <i class="icon-plus" />
+        </button>
+        <button
+          class="dropdown-item dropdown-item--space-between"
+          @click="addPane('trades')"
+        >
+          <div>
+            <div>Trades</div>
+            <div class="dropdown-item__subtitle">Legacy trades feed</div>
+          </div>
+          <i class="icon-plus" />
+        </button>
+        <button
+          class="dropdown-item dropdown-item--space-between"
+          @click="addPane('trades-lite')"
+        >
+          <div>
+            <div>Trades <span>LITE ⚡️</span></div>
+            <div class="dropdown-item__subtitle">
+              Minimal but faster
+            </div>
+          </div>
+          <i class="icon-plus" />
+        </button>
+        <button
+          class="dropdown-item dropdown-item--space-between"
+          @click="addPane('prices')"
+        >
+          <div>
+            <div>Markets</div>
+            <div class="dropdown-item__subtitle">Price change & volume</div>
+          </div>
+          <i class="icon-plus" />
+        </button>
+        <button
+          class="dropdown-item dropdown-item--space-between"
+          @click="addPane('website')"
+        >
+          <div>
+            <div>Website</div>
+            <div class="dropdown-item__subtitle">Embed website</div>
+          </div>
+          <i class="icon-plus" />
+        </button>
+        <button
+          class="dropdown-item dropdown-item--space-between"
+          @click="addPane('stats')"
+        >
+          <div>
+            <div>Stats</div>
+            <div class="dropdown-item__subtitle">Custom rolling metrics</div>
+          </div>
+          <i class="icon-plus" />
+        </button>
+        <button
+          class="dropdown-item dropdown-item--space-between"
+          @click="addPane('counters')"
+        >
+          <div>
+            <div>Counters</div>
+            <div class="dropdown-item__subtitle">Buys/sells by intervals</div>
+          </div>
+          <i class="icon-plus" />
+        </button>
+      </dropdown>
+
+      <dropdown
+        v-model="volumeSliderOpened"
+        v-on="volumeSliderEvents"
+        @mousedown.native.stop
+        @touchstart.native.stop
+        @mouseleave.native="volumeSliderTriggerEvents.mouseleave"
+        ref="volumeSlider"
+        class="volume-slider"
+        interactive
+        no-scroll
+        transparent
+        on-sides
+      >
+        <slider
+          style="width: 100px"
+          :min="0"
+          :max="3"
+          :step="0.01"
+          :label="true"
+          :value="audioVolume"
+          @input="$store.dispatch('settings/setAudioVolume', $event)"
+          @reset="$store.dispatch('settings/setAudioVolume', 1)"
+          log
+        >
+          <template v-slot:tooltip>
+            {{ +(audioVolume * 100).toFixed(2) }}%
+          </template>
+        </slider>
+      </dropdown>
+
+      <button
+        type="button"
+        class="dropdown-item dropdown-item--space-between"
+        ref="volumeSliderTrigger"
+        v-on="volumeSliderTriggerEvents"
+        @click="toggleAudio"
+      >
+        <span class="mr4">Audio</span>
+        <i v-if="!useAudio" class="icon-volume-off"></i>
+        <i
+          v-else
+          class="icon-volume-medium"
+          :class="{ 'icon-volume-high': audioVolume > 1 }"
+        ></i>
+      </button>
+      <button
+        type="button"
+        class="dropdown-item dropdown-item--space-between"
+        @click="toggleFullscreen"
+      >
+        <span
+          class="mr4"
+          v-text="isFullscreen ? 'Exit' : 'Go Fullscreen'"
+        ></span>
+        <i class="icon-enlarge"></i>
+      </button>
+      <button
+        type="button"
+        class="dropdown-item dropdown-item--space-between"
+        @click="showSettings"
+      >
+        <span class="mr4">Settings</span>
+        <i class="icon-cog"></i>
+      </button>
+    </dropdown>
   </div>
 </template>
 
@@ -58,43 +175,24 @@
 import dialogService from '@/services/dialogService'
 import { PaneType } from '@/store/panes'
 import { Component, Vue } from 'vue-property-decorator'
+import { isTouchSupported } from '../utils/touchevent'
 import Slider from './framework/picker/Slider.vue'
 import SettingsDialog from './settings/SettingsDialog.vue'
 
 @Component({
-  name: 'Header',
+  name: 'Menu',
   components: {
     Slider
   }
 })
 export default class extends Vue {
+  volumeSliderOpened = false
   isFullscreen = false
   open = false
-  paneTypes = {
-    chart: {
-      title: 'Chart',
-      description: 'Live chart'
-    },
-    trades: {
-      title: 'Trades',
-      description: 'Trades feed'
-    },
-    stats: {
-      title: 'Stats',
-      description: 'Custom rolling metrics'
-    },
-    counters: {
-      title: 'Counters',
-      description: 'Buys/sells by intervals'
-    },
-    prices: {
-      title: 'Markets',
-      description: 'Price change & volume'
-    },
-    website: {
-      title: 'Website',
-      description: 'Embed website'
-    }
+
+  $refs!: {
+    volumeSlider: any
+    volumeSliderTrigger: HTMLElement
   }
 
   get useAudio() {
@@ -103,6 +201,51 @@ export default class extends Vue {
 
   get audioVolume() {
     return this.$store.state.settings.audioVolume
+  }
+
+  get volumeSliderEvents() {
+    if (!this.volumeSliderOpened) {
+      return null
+    }
+
+    return {
+      [isTouchSupported() ? 'touchstart' : 'mousedown']: event => {
+        event.stopPropagation()
+      },
+      mouseleave: event => {
+        if (
+          event.toElement === this.$refs.volumeSliderTrigger ||
+          this.$refs.volumeSliderTrigger.contains(event.toElement)
+        ) {
+          return
+        }
+
+        this.volumeSliderOpened = null
+      }
+    }
+  }
+
+  get volumeSliderTriggerEvents() {
+    if (this.volumeSliderOpened) {
+      return {
+        mouseleave: event => {
+          if (
+            event.toElement === this.$refs.volumeSlider.$el ||
+            this.$refs.volumeSlider.$el.contains(event.toElement)
+          ) {
+            return
+          }
+
+          this.volumeSliderOpened = null
+        }
+      }
+    } else {
+      return {
+        mouseenter: event => {
+          this.volumeSliderOpened = event.currentTarget
+        }
+      }
+    }
   }
 
   showSettings() {
@@ -131,29 +274,28 @@ export default class extends Vue {
         return false
       }
 
-    this.isFullscreen ? (document as any).cancelFullScreen() : (element as any).requestFullScreen()
+    if (this.isFullscreen) {
+      ;(document as any).cancelFullScreen()
+      this.isFullscreen = false
+    } else {
+      ;(element as any).requestFullScreen()
+      this.isFullscreen = true
+    }
   }
 
   toggleMenu() {
     this.open = !this.open
 
     if (this.open) {
-      this.isFullscreen = (document as any).webkitIsFullScreen || (document as any).mozFullScreen ? true : false
+      this.isFullscreen =
+        (document as any).webkitIsFullScreen || (document as any).mozFullScreen
+          ? true
+          : false
     }
   }
 
   addPane(type: PaneType) {
     this.$store.dispatch('panes/addPane', { type })
-
-    this.toggleMenu()
-  }
-
-  onClickItem(event) {
-    if (event.target.classList.contains('dropdown__selected') || event.target.parentElement.classList.contains('dropdown__selected')) {
-      return
-    }
-
-    this.toggleMenu()
   }
 
   toggleAudio() {
@@ -164,6 +306,7 @@ export default class extends Vue {
 
 <style lang="scss">
 .menu {
+  $self: &;
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
@@ -175,53 +318,25 @@ export default class extends Vue {
     border-radius: 50%;
     justify-content: center;
     background-color: var(--theme-background-100);
+    color: var(--theme-color-base);
     z-index: 1;
     position: relative;
 
     &:hover {
-      color: white;
-    }
-  }
-
-  .menu__actions {
-    position: absolute;
-    bottom: 100%;
-    right: 0;
-    display: flex;
-    flex-direction: column-reverse;
-    align-items: flex-end;
-    width: 0;
-    filter: drop-shadow(-1em -1em 3em var(--theme-background-base));
-  }
-
-  .menu-action {
-    margin-bottom: 0.625rem;
-    text-decoration: none;
-    white-space: nowrap;
-
-    &.btn {
-      background-color: var(--theme-background-100);
-
-      &:hover {
-        background-color: $green;
-        color: white;
-      }
+      background-color: var(--theme-buy-base);
+      color: var(--theme-buy-color);
     }
   }
 
   &.-open {
-    .menu__button {
-      background-color: $green;
-      color: white;
+    #{$self}__button {
+      background-color: var(--theme-buy-base);
+      color: var(--theme-buy-color);
     }
   }
+}
 
-  .dropdown__options {
-    right: 100%;
-    left: auto;
-    top: auto;
-    bottom: 0;
-    margin-right: 0.5rem;
-  }
+.volume-slider {
+  padding: 1rem;
 }
 </style>

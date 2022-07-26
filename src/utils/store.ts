@@ -50,7 +50,10 @@ export async function mergeStoredState(state: any) {
       return Object.assign({}, state, storedState)
     }
   } catch (error) {
-    console.error(`[store] error retrieving stored state for module ${state._id}`, error)
+    console.error(
+      `[store] error retrieving stored state for module ${state._id}`,
+      error
+    )
     workspacesService.removeState(state._id)
   }
 
@@ -62,23 +65,31 @@ export async function mergeStoredState(state: any) {
  * Not all panes type have a boot method
  * @param paneId
  */
-export async function bootPane(paneId) {
+export async function bootPane(paneId, firstTime = false) {
   console.info(`booting pane ${paneId}`)
   if ((store as any)._actions[paneId + '/boot']) {
     try {
-      await store.dispatch(paneId + '/boot')
+      await store.dispatch(paneId + '/boot', firstTime)
     } catch (error) {
       console.error(error)
     }
   }
 }
 
-export async function registerModule(id, module: Module<any, any>, boot?: boolean, pane?: Pane) {
+export async function registerModule(
+  id,
+  module: Module<any, any>,
+  boot?: boolean,
+  pane?: Pane
+) {
   console.debug(`[store] registering module ${id}`)
 
   if (pane) {
     // module is a pane
-    module = { ...panesSettings[pane.type], state: JSON.parse(JSON.stringify(panesSettings[pane.type].state)) }
+    module = {
+      ...panesSettings[pane.type],
+      state: JSON.parse(JSON.stringify(panesSettings[pane.type].state))
+    }
 
     module.state._id = id
 
@@ -103,7 +114,7 @@ export async function registerModule(id, module: Module<any, any>, boot?: boolea
   store.registerModule(id, module)
 
   if (boot && pane) {
-    await bootPane(id)
+    await bootPane(id, true)
   }
 
   if (store.state.app.isBooted) {

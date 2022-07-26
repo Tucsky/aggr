@@ -11,7 +11,12 @@ import {
   IndicatorMarkets
 } from './chart'
 import store from '@/store'
-import { findClosingBracketMatchIndex, parseFunctionArguments, randomString, uniqueName } from '@/utils/helpers'
+import {
+  findClosingBracketMatchIndex,
+  parseFunctionArguments,
+  randomString,
+  uniqueName
+} from '@/utils/helpers'
 import { plotTypesMap } from './options'
 const SERIE_UPDATE_REGEX = /series\[[a-zA-Z0-9+\-$ ]+\]\.update\(/
 const VARIABLES_VAR_NAME = 'vars'
@@ -41,7 +46,11 @@ export default class SerieBuilder {
    * @param paneId paneId that trigged the build
    * @returns {IndicatorTranspilationResult} build result
    */
-  build(indicator: LoadedIndicator, serieIndicatorsMap: { [serieId: string]: IndicatorReference }, paneId: string) {
+  build(
+    indicator: LoadedIndicator,
+    serieIndicatorsMap: { [serieId: string]: IndicatorReference },
+    paneId: string
+  ) {
     this.paneId = paneId
     this.indicatorId = indicator.id
     this.serieIndicatorsMap = serieIndicatorsMap
@@ -84,10 +93,19 @@ export default class SerieBuilder {
    * @returns
    */
   normalizeInput(input, strings) {
-    input = input.replace(/([^.])?\b(indicatorId)\b/gi, `$1'${this.indicatorId}'`)
+    input = input.replace(
+      /([^.])?\b(indicatorId)\b/gi,
+      `$1'${this.indicatorId}'`
+    )
     input = input.replace(/([^.])?\b(bar)\b/gi, '$1renderer')
-    input = input.replace(/([^.]|^)\b(vbuy|vsell|cbuy|csell|lbuy|lsell)\b/gi, '$1renderer.bar.$2')
-    input = input.replace(/([^.]|^)\b(time)\b([^:])/gi, '$1renderer.localTimestamp$3')
+    input = input.replace(
+      /([^.]|^)\b(vbuy|vsell|cbuy|csell|lbuy|lsell)\b/gi,
+      '$1renderer.bar.$2'
+    )
+    input = input.replace(
+      /([^.]|^)\b(time)\b([^:])/gi,
+      '$1renderer.localTimestamp$3'
+    )
     input = input.replace(/(\n|^)\s*?\/\/.*/g, '')
 
     const STRING_REGEX = /'([^']*)'|"([^"]*)"/
@@ -101,7 +119,12 @@ export default class SerieBuilder {
         if (refIndex === -1) {
           refIndex = strings.push(stringMatch[0]) - 1
         }
-        input = input.slice(0, stringMatch.index) + '#STRING_' + refIndex + '#' + input.slice(stringMatch.index + stringMatch[0].length)
+        input =
+          input.slice(0, stringMatch.index) +
+          '#STRING_' +
+          refIndex +
+          '#' +
+          input.slice(stringMatch.index + stringMatch[0].length)
       }
     } while (stringMatch && ++iterations < 1000)
 
@@ -113,10 +136,17 @@ export default class SerieBuilder {
 
     do {
       if ((paranthesisMatch = PARANTHESIS_REGEX.exec(input))) {
-        const closingParenthesisIndex = findClosingBracketMatchIndex(input, paranthesisMatch.index, /\(|{|\[/, /\)|}|\]/)
+        const closingParenthesisIndex = findClosingBracketMatchIndex(
+          input,
+          paranthesisMatch.index,
+          /\(|{|\[/,
+          /\)|}|\]/
+        )
 
         if (closingParenthesisIndex !== -1) {
-          const contentWithinParenthesis = input.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/\n/g, ' ')
+          const contentWithinParenthesis = input
+            .slice(paranthesisMatch.index + 1, closingParenthesisIndex)
+            .replace(/\n/g, ' ')
 
           input =
             input.slice(0, paranthesisMatch.index) +
@@ -140,12 +170,17 @@ export default class SerieBuilder {
    * @returns void
    */
   determineFunctionState(instruction: IndicatorFunction) {
-    if (typeof seriesUtils[instruction.name] && typeof seriesUtils[instruction.name].state === 'object') {
+    if (
+      typeof seriesUtils[instruction.name] &&
+      typeof seriesUtils[instruction.name].state === 'object'
+    ) {
       instruction.state = {}
 
       for (const prop in seriesUtils[instruction.name].state) {
         try {
-          instruction.state[prop] = JSON.parse(JSON.stringify(seriesUtils[instruction.name].state[prop]))
+          instruction.state[prop] = JSON.parse(
+            JSON.stringify(seriesUtils[instruction.name].state[prop])
+          )
         } catch (error) {
           instruction.state[prop] = seriesUtils[instruction.name].state[prop]
         }
@@ -178,9 +213,20 @@ export default class SerieBuilder {
 
     do {
       if ((instructionMatch = SERIE_UPDATE_REGEX.exec(silentOutput))) {
-        const openingParenthesisIndex = instructionMatch.index + instructionMatch[0].length - 1
-        const closingParenthesisIndex = findClosingBracketMatchIndex(silentOutput, openingParenthesisIndex)
-        silentOutput = silentOutput.replace(instructionMatch[0] + silentOutput.slice(openingParenthesisIndex + 1, closingParenthesisIndex + 1), 1)
+        const openingParenthesisIndex =
+          instructionMatch.index + instructionMatch[0].length - 1
+        const closingParenthesisIndex = findClosingBracketMatchIndex(
+          silentOutput,
+          openingParenthesisIndex
+        )
+        silentOutput = silentOutput.replace(
+          instructionMatch[0] +
+            silentOutput.slice(
+              openingParenthesisIndex + 1,
+              closingParenthesisIndex + 1
+            ),
+          1
+        )
       }
     } while (instructionMatch && ++iterations < 1000)
 
@@ -207,7 +253,10 @@ export default class SerieBuilder {
     output = this.parseMarkets(output, markets)
 
     for (let i = 0; i < strings.length; i++) {
-      output = output.replace(new RegExp('#STRING_' + i + '#', 'g'), strings[i].replace(/\$/g, '$$$'))
+      output = output.replace(
+        new RegExp('#STRING_' + i + '#', 'g'),
+        strings[i].replace(/\$/g, '$$$')
+      )
     }
 
     output = this.parseFunctions(output, functions, plots)
@@ -238,8 +287,15 @@ export default class SerieBuilder {
       if ((paranthesisMatch = PARANTHESIS_REGEX.exec(input))) {
         const lineBreakIt = paranthesisMatch[0] === '('
 
-        const closingParenthesisIndex = findClosingBracketMatchIndex(input, paranthesisMatch.index, /\(|{|\[/, /\)|}|\]/)
-        const contentWithinParenthesis = input.slice(paranthesisMatch.index + 1, closingParenthesisIndex).replace(/\n/g, ' ')
+        const closingParenthesisIndex = findClosingBracketMatchIndex(
+          input,
+          paranthesisMatch.index,
+          /\(|{|\[/,
+          /\)|}|\]/
+        )
+        const contentWithinParenthesis = input
+          .slice(paranthesisMatch.index + 1, closingParenthesisIndex)
+          .replace(/\n/g, ' ')
 
         if (/if|for|else/.test(input.slice(paranthesisMatch.index - 2, 2))) {
           input =
@@ -258,7 +314,9 @@ export default class SerieBuilder {
     const lines = input.trim().split(/\n/)
 
     for (let i = 0; i < lines.length; i++) {
-      const sourcesMatches = lines[i].match(/renderer.sources\['[\w/:_-]+']\.\w+/g)
+      const sourcesMatches = lines[i].match(
+        /renderer.sources\['[\w/:_-]+']\.\w+/g
+      )
 
       if (sourcesMatches && sourcesMatches.length === 1) {
         lines[i] = `if (${sourcesMatches[0]}) {
@@ -282,28 +340,50 @@ export default class SerieBuilder {
         let variableName = variableMatch[1]
         const isNonPersistent = /^var/.test(variableName)
 
-        if (nonPersistentVariables.indexOf(variableName) !== -1 || isNonPersistent) {
+        if (
+          nonPersistentVariables.indexOf(variableName) !== -1 ||
+          isNonPersistent
+        ) {
           if (isNonPersistent) {
             variableName = variableName.replace(/var\s*/, '')
-            output = output.replace(variableMatch[0], '\nvar ' + variableName + '=' + variableMatch[3])
+            output = output.replace(
+              variableMatch[0],
+              '\nvar ' + variableName + '=' + variableMatch[3]
+            )
             nonPersistentVariables.push(variableName)
           }
 
           // eslint-disable-next-line no-useless-escape
-          output = output.replace(new RegExp('([^.$]|^)\\b(' + variableName + ')\\b(?!:)(?!\\()(?!\\$)', 'ig'), `$1${variableName}$`)
+          output = output.replace(
+            new RegExp(
+              '([^.$]|^)\\b(' + variableName + ')\\b(?!:)(?!\\()(?!\\$)',
+              'ig'
+            ),
+            `$1${variableName}$`
+          )
           continue
         }
 
         const variableLength = +variableMatch[2] || 1
 
-        output = output.replace(new RegExp('([^.]|^)\\b(' + variableName + ')\\b(?!:)', 'ig'), `$1${VARIABLES_VAR_NAME}[${variables.length}]`)
+        output = output.replace(
+          new RegExp('([^.]|^)\\b(' + variableName + ')\\b(?!:)', 'ig'),
+          `$1${VARIABLES_VAR_NAME}[${variables.length}]`
+        )
 
         const variable: IndicatorVariable = {
           length: variableLength
         }
 
         variables.push(variable)
-        output = output.replace(new RegExp(`(${VARIABLES_VAR_NAME}\\[${variables.length - 1}\\])\\(${variable.length}\\)\\s*=\\s*`), '$1=')
+        output = output.replace(
+          new RegExp(
+            `(${VARIABLES_VAR_NAME}\\[${variables.length - 1}\\])\\(${
+              variable.length
+            }\\)\\s*=\\s*`
+          ),
+          '$1='
+        )
       }
     } while (variableMatch && ++iterations < 1000)
 
@@ -317,8 +397,14 @@ export default class SerieBuilder {
     const serieType = match[1].replace(/^plot/, '')
 
     // serie arguments eg. sma($price.close,options.smaLength),color=red
-    const closingBracketIndex = findClosingBracketMatchIndex(output, match.index + match[1].length)
-    const rawFunctionArguments = output.slice(match.index + match[1].length + 1, closingBracketIndex)
+    const closingBracketIndex = findClosingBracketMatchIndex(
+      output,
+      match.index + match[1].length
+    )
+    const rawFunctionArguments = output.slice(
+      match.index + match[1].length + 1,
+      closingBracketIndex
+    )
 
     // full function call eg. plotline(sma($price.close,options.smaLength),color=red)
     const rawFunctionInstruction = match[1] + '(' + rawFunctionArguments + ')'
@@ -365,7 +451,12 @@ export default class SerieBuilder {
     }
 
     // tranform input into valid lightweight-charts data point
-    if (serieType !== 'line' && args.length === 1 && ((/{/.test(args[0]) && /}/.test(args[0])) || /^[\w_]+\$/.test(args[0]))) {
+    const argIsObject = /{/.test(args[0]) && /}/.test(args[0])
+    const argContainSpecialChars = /^[\w_$]+\$/.test(args[0])
+    if (
+      args.length === 1 &&
+      (argIsObject || (serieType !== 'line' && argContainSpecialChars))
+    ) {
       seriePoint += args[0]
     } else if (expectedInput === 'ohlc') {
       if (args.length === 4) {
@@ -377,19 +468,25 @@ export default class SerieBuilder {
           seriePoint += args[0]
         }
       } else {
-        throw new Error(`Invalid input for function ${match[1]}, expected a ohlc object or 4 number`)
+        throw new Error(
+          `Invalid input for function ${match[1]}, expected a ohlc object or 4 number`
+        )
       }
     } else if (expectedInput === 'range') {
       if (args.length === 2) {
         seriePoint += `{ time: ${timeProperty}, lowerValue: ${args[0]}, higherValue: ${args[1]} }`
       } else {
-        throw new Error(`Invalid input for function ${match[1]}, expected 2 arguments (lowerValue and higherValue)`)
+        throw new Error(
+          `Invalid input for function ${match[1]}, expected 2 arguments (lowerValue and higherValue)`
+        )
       }
     } else if (expectedInput === 'number') {
       if (args.length === 1) {
         seriePoint += `{ time: ${timeProperty}, value: ${args[0]} }`
       } else {
-        throw new Error(`Invalid input for function ${match[1]}, expected 1 value (number)`)
+        throw new Error(
+          `Invalid input for function ${match[1]}, expected 1 value (number)`
+        )
       }
     }
 
@@ -426,7 +523,9 @@ export default class SerieBuilder {
       id = randomString(8)
     }
 
-    const names = Object.keys(this.serieIndicatorsMap).concat(plots.map(plot => plot.id))
+    const names = Object.keys(this.serieIndicatorsMap).concat(
+      plots.map(plot => plot.id)
+    )
 
     // register plot
     plots.push({
@@ -439,7 +538,11 @@ export default class SerieBuilder {
     return output
   }
 
-  parseFunctions(output: string, instructions: IndicatorFunction[], plots: IndicatorPlot[]): string {
+  parseFunctions(
+    output: string,
+    instructions: IndicatorFunction[],
+    plots: IndicatorPlot[]
+  ): string {
     const FUNCTION_LOOKUP_REGEX = new RegExp(`([a-zA-Z0_9_]+)\\(`, 'g')
 
     let functionMatch = null
@@ -449,12 +552,16 @@ export default class SerieBuilder {
       if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(output))) {
         const functionName = functionMatch[1]
 
-        const isMathFunction = Object.prototype.hasOwnProperty.call(Math, functionName)
+        const isMathFunction = Object.prototype.hasOwnProperty.call(
+          Math,
+          functionName
+        )
         const isSerieFunction = SERIE_TYPES[functionName.replace(/^plot/, '')]
         const isMethod = output[functionMatch.index - 1] === '.'
 
         if (isMathFunction || isSerieFunction || isMethod) {
-          FUNCTION_LOOKUP_REGEX.lastIndex = functionMatch.index + functionMatch[0].length
+          FUNCTION_LOOKUP_REGEX.lastIndex =
+            functionMatch.index + functionMatch[0].length
 
           if (typeof isSerieFunction === 'string') {
             output = this.parseSerie(output, functionMatch, plots)
@@ -466,7 +573,8 @@ export default class SerieBuilder {
 
         if (!targetFunction) {
           if (/for|if|rgba/i.test(functionName)) {
-            FUNCTION_LOOKUP_REGEX.lastIndex = functionMatch.index + functionMatch[0].length
+            FUNCTION_LOOKUP_REGEX.lastIndex =
+              functionMatch.index + functionMatch[0].length
             continue
           } else {
             throw new Error(`Function ${functionName} doesn't exists`)
@@ -481,12 +589,25 @@ export default class SerieBuilder {
         let injectedArgCount = 0
 
         const customArgsStartIndex = functionMatch.index
-        const customArgsEndIndex = findClosingBracketMatchIndex(output, customArgsStartIndex + functionMatch[1].length)
-        const customArgs = parseFunctionArguments(output.slice(customArgsStartIndex + functionMatch[1].length + 1, customArgsEndIndex))
-        let totalArgsCount = (targetFunction.args ? targetFunction.args.length : 0) + customArgs.length
+        const customArgsEndIndex = findClosingBracketMatchIndex(
+          output,
+          customArgsStartIndex + functionMatch[1].length
+        )
+        const customArgs = parseFunctionArguments(
+          output.slice(
+            customArgsStartIndex + functionMatch[1].length + 1,
+            customArgsEndIndex
+          )
+        )
+        let totalArgsCount =
+          (targetFunction.args ? targetFunction.args.length : 0) +
+          customArgs.length
 
         for (let i = 0; i < totalArgsCount; i++) {
-          const argDefinition = targetFunction.args && targetFunction.args[i] ? targetFunction.args[i] : {}
+          const argDefinition =
+            targetFunction.args && targetFunction.args[i]
+              ? targetFunction.args[i]
+              : {}
 
           const arg = {
             ...argDefinition
@@ -511,9 +632,14 @@ export default class SerieBuilder {
           instruction.args.push(arg)
         }
 
-        output = `${output.slice(0, customArgsStartIndex)}utils.${functionName}.update(${FUNCTIONS_VAR_NAME}[${
+        output = `${output.slice(
+          0,
+          customArgsStartIndex
+        )}utils.${functionName}.update(${FUNCTIONS_VAR_NAME}[${
           instructions.length
-        }].state,${instruction.args.map(a => a.instruction).join(',')})${output.slice(customArgsEndIndex + 1, output.length)}`
+        }].state,${instruction.args
+          .map(a => a.instruction)
+          .join(',')})${output.slice(customArgsEndIndex + 1, output.length)}`
 
         instructions.push(instruction)
       }
@@ -530,7 +656,8 @@ export default class SerieBuilder {
 
     do {
       if ((marketMatch = EXCHANGE_REGEX.exec(output))) {
-        const marketName = marketMatch[1] + (marketMatch[2] ? marketMatch[2] : '')
+        const marketName =
+          marketMatch[1] + (marketMatch[2] ? marketMatch[2] : '')
         const marketDataKey = marketMatch[3]
 
         if (!markets[marketName]) {
@@ -543,17 +670,26 @@ export default class SerieBuilder {
           }
         }
 
-        const replacement = `renderer.sources['${marketName}']${marketDataKey ? '.' + marketDataKey : ''}`
+        const replacement = `renderer.sources['${marketName}']${
+          marketDataKey ? '.' + marketDataKey : ''
+        }`
 
         EXCHANGE_REGEX.lastIndex = marketMatch.index + replacement.length
 
-        output = output.slice(0, marketMatch.index) + replacement + output.slice(marketMatch.index + marketMatch[0].length)
+        output =
+          output.slice(0, marketMatch.index) +
+          replacement +
+          output.slice(marketMatch.index + marketMatch[0].length)
       }
     } while (marketMatch && ++iterations < 1000)
 
     return output
   }
-  parseReferences(output: string, references: IndicatorReference[], plots: IndicatorPlot[]): string {
+  parseReferences(
+    output: string,
+    references: IndicatorReference[],
+    plots: IndicatorPlot[]
+  ): string {
     const REFERENCE_REGEX = new RegExp('\\$(\\w+[a-z_\\-0-9]+)\\b')
 
     let referenceMatch = null
@@ -566,7 +702,13 @@ export default class SerieBuilder {
         try {
           const [indicatorId, plotIndex] = this.getSeriePath(serieId, plots)
 
-          if (!references.find(reference => reference.indicatorId === indicatorId && reference.plotIndex === plotIndex)) {
+          if (
+            !references.find(
+              reference =>
+                reference.indicatorId === indicatorId &&
+                reference.plotIndex === plotIndex
+            )
+          ) {
             references.push({
               indicatorId,
               serieId,
@@ -574,7 +716,10 @@ export default class SerieBuilder {
             })
           }
 
-          output = output.replace(new RegExp('\\$(' + serieId + ')\\b', 'ig'), `renderer.indicators['${indicatorId}'].series[${plotIndex}]`)
+          output = output.replace(
+            new RegExp('\\$(' + serieId + ')\\b', 'ig'),
+            `renderer.indicators['${indicatorId}'].series[${plotIndex}]`
+          )
         } catch (error) {
           throw {
             message: `The serie "${serieId}" was not found in the current indicators`,
@@ -593,7 +738,11 @@ export default class SerieBuilder {
     let plotIndex: number
 
     // see if we can find the serie in the plots that are already processed
-    const reference = plots.find(plot => plot.id === serieId || plot.id.replace(/\W/g, '') === serieId.replace(/\W/g, ''))
+    const reference = plots.find(
+      plot =>
+        plot.id === serieId ||
+        plot.id.replace(/\W/g, '') === serieId.replace(/\W/g, '')
+    )
 
     if (reference) {
       indicatorId = this.indicatorId
@@ -624,7 +773,10 @@ export default class SerieBuilder {
   determineVariablesType(output, variables: IndicatorVariable[]) {
     for (const variable of variables) {
       const index = variables.indexOf(variable)
-      const VARIABLE_LENGTH_REGEX = new RegExp(`${VARIABLES_VAR_NAME}\\[${index}\\](?:\\[(\\d+)\\])?`, 'g')
+      const VARIABLE_LENGTH_REGEX = new RegExp(
+        `${VARIABLES_VAR_NAME}\\[${index}\\](?:\\[(\\d+)\\])?`,
+        'g'
+      )
 
       let lengthMatch = null
       let iterations = 0
@@ -636,17 +788,27 @@ export default class SerieBuilder {
 
           if (typeof variableLength === 'undefined') {
             const hasSpecifiedIndex = output[position] === '['
-            output = output.substring(0, position) + '.state' + (!hasSpecifiedIndex ? '[0]' : '') + output.substring(position)
+            output =
+              output.substring(0, position) +
+              '.state' +
+              (!hasSpecifiedIndex ? '[0]' : '') +
+              output.substring(position)
           } else {
             const beforeVariable = output.substring(0, lengthMatch.index)
             const variableReplacement = `${VARIABLES_VAR_NAME}[${index}].state[Math.min(${VARIABLES_VAR_NAME}[${index}].state.length-1,${variableLength})]`
-            const afterVariable = output.substring(lengthMatch.index + lengthMatch[0].length)
+            const afterVariable = output.substring(
+              lengthMatch.index + lengthMatch[0].length
+            )
             output = `${beforeVariable}${variableReplacement}${afterVariable}`
 
-            VARIABLE_LENGTH_REGEX.lastIndex = beforeVariable.length + variableReplacement.length
+            VARIABLE_LENGTH_REGEX.lastIndex =
+              beforeVariable.length + variableReplacement.length
           }
 
-          variable.length = Math.max(variable.length, (+variableLength || 0) + 1)
+          variable.length = Math.max(
+            variable.length,
+            (+variableLength || 0) + 1
+          )
         }
       } while (lengthMatch && ++iterations < 1000)
 
@@ -655,10 +817,22 @@ export default class SerieBuilder {
       }
 
       if (variable.length === 1) {
-        output = output.replace(new RegExp(`${VARIABLES_VAR_NAME}\\[${index}\\]\\.state\\[\\d+\\]`, 'g'), `${VARIABLES_VAR_NAME}[${index}].state`)
+        output = output.replace(
+          new RegExp(
+            `${VARIABLES_VAR_NAME}\\[${index}\\]\\.state\\[\\d+\\]`,
+            'g'
+          ),
+          `${VARIABLES_VAR_NAME}[${index}].state`
+        )
       }
 
-      output = output.replace(new RegExp(`#${VARIABLES_VAR_NAME}\\[${index}\\]\\.state\\[\\d+\\]`, 'g'), `${VARIABLES_VAR_NAME}[${index}].state`)
+      output = output.replace(
+        new RegExp(
+          `#${VARIABLES_VAR_NAME}\\[${index}\\]\\.state\\[\\d+\\]`,
+          'g'
+        ),
+        `${VARIABLES_VAR_NAME}[${index}].state`
+      )
     }
 
     return output
@@ -667,7 +841,15 @@ export default class SerieBuilder {
   getAdapter(output) {
     return (function() {
       'use strict'
-      return new Function('renderer', FUNCTIONS_VAR_NAME, VARIABLES_VAR_NAME, 'series', 'options', 'utils', '"use strict"; ' + output)
+      return new Function(
+        'renderer',
+        FUNCTIONS_VAR_NAME,
+        VARIABLES_VAR_NAME,
+        'series',
+        'options',
+        'utils',
+        '"use strict"; ' + output
+      )
     })() as IndicatorRealtimeAdapter
   }
 
@@ -676,7 +858,9 @@ export default class SerieBuilder {
    * @param indicator
    */
   getRendererIndicatorData(indicator: LoadedIndicator) {
-    const { functions, variables, plots } = JSON.parse(JSON.stringify(indicator.model)) as IndicatorTranspilationResult
+    const { functions, variables, plots } = JSON.parse(
+      JSON.stringify(indicator.model)
+    ) as IndicatorTranspilationResult
 
     indicator.options.minLength = 0
 
@@ -685,14 +869,23 @@ export default class SerieBuilder {
       instruction.length = 0
 
       for (let i = 0; i < instruction.args.length; i++) {
-        if (typeof instruction.args[i].instruction === 'undefined' || instruction.args[i].instruction === '') {
+        if (
+          typeof instruction.args[i].instruction === 'undefined' ||
+          instruction.args[i].instruction === ''
+        ) {
           continue
         }
 
         try {
-          instruction.args[i].instruction = new Function('options', `'use strict'; return ${instruction.args[i].instruction}`)(indicator.options)
+          instruction.args[i].instruction = new Function(
+            'options',
+            `'use strict'; return ${instruction.args[i].instruction}`
+          )(indicator.options)
 
-          if (instruction.state.points && instruction.args[i].length && !isNaN(instruction.args[i].instruction)) {
+          if (
+            instruction.args[i].length &&
+            !isNaN(instruction.args[i].instruction)
+          ) {
             instruction.length += instruction.args[i].instruction
           }
         } catch (error) {
@@ -700,11 +893,10 @@ export default class SerieBuilder {
         }
       }
 
-      if (!instruction.state.points) {
-        continue
-      }
-
-      indicator.options.minLength = Math.max(indicator.options.minLength, instruction.length)
+      indicator.options.minLength = Math.max(
+        indicator.options.minLength,
+        instruction.length
+      )
     }
 
     const plotsOptions = []
@@ -731,7 +923,10 @@ export default class SerieBuilder {
 
     for (const prop in plot.options) {
       try {
-        options[prop] = new Function('options', `'use strict'; return ${plot.options[prop]}`)(indicator.options)
+        options[prop] = new Function(
+          'options',
+          `'use strict'; return ${plot.options[prop]}`
+        )(indicator.options)
       } catch (error) {
         options[prop] = plot.options[prop]
       }

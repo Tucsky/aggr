@@ -2,7 +2,11 @@
   <div>
     <section class="section">
       <div v-if="sections.indexOf('display') > -1">
-        <div class="form-group column mb8" title="Number of trades rendered" v-tippy="{ boundary: 'window', placement: 'left' }">
+        <div
+          class="form-group column mb8"
+          title="Number of trades rendered"
+          v-tippy="{ boundary: 'window', placement: 'left' }"
+        >
           <label class="-fill -center">Max trades to render</label>
           <input
             id="trades-limit"
@@ -12,51 +16,110 @@
             step="1"
             class="form-control"
             :value="maxRows"
-            @change="$store.commit(paneId + '/SET_MAX_ROWS', $event.target.value)"
+            @change="
+              $store.commit(paneId + '/SET_MAX_ROWS', $event.target.value)
+            "
           />
         </div>
 
-        <div class="form-group column mb8" @click.stop="$store.commit(paneId + '/TOGGLE_TRADE_TYPE')">
-          <label class="-fill -center">Type of feed</label>
-          <div class="checkbox-control -auto checkbox-control-input -unshrinkable" title="Filter trade / liquidation" v-tippy>
-            <input type="checkbox" class="form-control" :checked="tradeType !== 'both'" />
-            <div :on="tradeType === 'liquidations' ? 'Liq. only' : 'Trades only'" off="All"></div>
+        <div
+          class="form-group column mb8"
+          @click.stop="$store.commit(paneId + '/TOGGLE_TRADE_TYPE')"
+        >
+          <label class="-fill -center">Filter by type</label>
+          <div
+            class="checkbox-control -auto checkbox-control-input -unshrinkable"
+            title="Filter trade / liquidation"
+            v-tippy
+          >
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="tradeType !== 'both'"
+            />
+            <div
+              :on="
+                tradeType === 'liquidations'
+                  ? 'Liquidations only'
+                  : 'Trades only'
+              "
+              off="Both trades & liquidations"
+            ></div>
           </div>
         </div>
 
-        <div class="form-group column mb8" @click.stop="$store.commit(paneId + '/TOGGLE_TRADES_PAIRS')">
-          <label class="-fill -center">Show trade's symbols</label>
-          <div class="checkbox-control -auto checkbox-control-input -unshrinkable" title="Show symbol's names (ex: BTC-USD)" v-tippy>
-            <input type="checkbox" class="form-control" :checked="showTradesPairs" />
-            <div on="Visible" off="Hidden"></div>
-          </div>
-        </div>
-
-        <div class="form-group column mb8" @click.stop="$store.commit(paneId + '/TOGGLE_LOGOS')">
+        <div
+          class="form-group column mb8"
+          @click.stop="$store.commit(paneId + '/TOGGLE_LOGOS')"
+        >
           <label class="-fill -center">Show exchange's logos</label>
-          <div class="checkbox-control -auto checkbox-control-input -unshrinkable" title="Show exchange's logo when available" v-tippy>
+          <div
+            class="checkbox-control -auto checkbox-control-input -unshrinkable"
+            title="Exchange's logos + style"
+            v-tippy
+          >
             <input type="checkbox" class="form-control" :checked="showLogos" />
-            <div :on="monochromeLogos ? 'Monochrome ' : 'Color'" off="No logo"></div>
+            <div
+              :on="
+                monochromeLogos ? 'Logo visible (B&W)' : 'Logo visible (Color)'
+              "
+              off="No logo"
+            ></div>
           </div>
         </div>
 
-        <div class="form-group column mb8" @click.stop="$store.commit(paneId + '/TOGGLE_PRICE')">
-          <label class="-fill -center">Show price</label>
-          <div class="checkbox-control checkbox-control-input -unshrinkable">
+        <div
+          class="form-group column mb8"
+          @click.stop="$store.commit(paneId + '/TOGGLE_PRICE')"
+        >
+          <label class="-fill -center">Columns</label>
+          <div
+            class="checkbox-control -auto checkbox-control-input -unshrinkable"
+            title="Show symbol's names (ex: BTC-USD)"
+            v-tippy
+            @click.stop
+          >
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="showTradesPairs"
+            />
+            <div
+              on="Symbol visible"
+              off="Symbol hidden"
+              @click="$store.commit(paneId + '/TOGGLE_TRADES_PAIRS')"
+            ></div>
+          </div>
+          <div
+            class="checkbox-control -auto checkbox-control-input -unshrinkable"
+          >
             <input type="checkbox" class="form-control" :checked="showPrice" />
-            <div />
+            <div on="Price visible" off="Price hidden" />
           </div>
         </div>
 
-        <div class="form-group column" @click.stop="$store.commit(paneId + '/TOGGLE_TIME_AGO')">
+        <div
+          class="form-group column"
+          @click.stop="$store.commit(paneId + '/TOGGLE_TIME_AGO')"
+        >
           <label class="-fill -center">Time format</label>
-          <div class="checkbox-control -auto checkbox-control-input -unshrinkable" title="Time format preference" v-tippy>
-            <input type="checkbox" class="form-control" :checked="showTimeAgo" />
-            <div on="Time since" off="HH:MM"></div>
+          <div
+            class="checkbox-control -auto checkbox-control-input -unshrinkable"
+            title="Time format preference"
+            v-tippy
+          >
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="showTimeAgo"
+            />
+            <div :on="secondsAgoExample" off="use HH:MM"></div>
           </div>
         </div>
       </div>
-      <div class="section__title" @click="toggleSection('display')">DISPLAY <i class="icon-up-thin"></i></div>
+      <div class="section__title" @click="toggleSection('display')">
+        DISPLAY <i class="icon-up-thin"></i>
+      </div>
     </section>
 
     <section class="section">
@@ -66,38 +129,70 @@
             type="button"
             v-tippy
             title="Switch thresholds display"
-            class="btn -text -nowrap mr4"
-            @click="$store.commit(paneId + '/TOGGLE_THRESHOLDS_TABLE', !showThresholdsAsTable)"
+            class="btn -text -nowrap mr4 -cases"
+            @click="
+              $store.commit(
+                paneId + '/TOGGLE_THRESHOLDS_TABLE',
+                !showThresholdsAsTable
+              )
+            "
           >
-            {{ showThresholdsAsTable ? 'table' : 'slider' }}
+            <i class="icon-switch mr4 -lower"></i>
+            {{ showThresholdsAsTable ? 'slider view' : 'table view' }}
           </button>
-          <presets type="threshold" :adapter="getAudioPreset" @apply="applyAudioPreset($event)" label="Presets" />
+          <presets
+            type="threshold"
+            :adapter="getAudioPreset"
+            @apply="applyAudioPreset($event)"
+            label="Presets"
+          />
         </div>
         <div class="form-group mb16">
           <div class="column">
-            <div class="text-nowrap">← Faster</div>
+            <div class="text-nowrap">← Many</div>
             <slider
-              :min="0"
-              :max="2"
+              :min="0.01"
+              :max="10"
               :step="0.01"
               label
               :show-completion="false"
               class="mt4 -fill"
               :value="thresholdsMultipler"
-              @input="$store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', { value: $event, market: markets[0] })"
-              @reset="$store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', { value: 1, market: markets[0] })"
+              @input="
+                $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
+                  value: $event,
+                  market: markets[0]
+                })
+              "
+              @reset="
+                $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
+                  value: 1,
+                  market: markets[0]
+                })
+              "
+              log
             >
               <template v-slot:tooltip>
-                {{ formatAmount(thresholds[0].amount) }} ➜ {{ formatAmount(thresholds[1].amount) }} ({{ +(thresholdsMultipler * 100).toFixed(2) }}%)
+                {{ formatAmount(thresholds[0].amount) }} ➜
+                {{ formatAmount(thresholds[1].amount) }} ({{
+                  +(thresholdsMultipler * 100).toFixed(2)
+                }}%)
               </template>
             </slider>
-            <div class="text-right text-nowrap mlauto">Slower →</div>
+            <div class="text-right text-nowrap mlauto">Few →</div>
           </div>
         </div>
 
-        <div class="form-group" v-if="tradeType !== 'liquidations'" key="liquidations">
-          <label class="mb8">Trades</label>
-          <thresholds :paneId="paneId" :thresholds="thresholds" />
+        <div
+          class="form-group"
+          v-if="tradeType !== 'liquidations'"
+          key="liquidations"
+        >
+          <thresholds
+            :paneId="paneId"
+            :thresholds="thresholds"
+            label="Trades"
+          />
 
           <div class="text-right mt8 mb8">
             <a
@@ -113,8 +208,11 @@
           </div>
         </div>
         <div class="form-group mt16" v-if="tradeType !== 'trades'" key="trades">
-          <label class="mb8">Liquidations</label>
-          <thresholds :paneId="paneId" :thresholds="liquidations" />
+          <thresholds
+            :paneId="paneId"
+            :thresholds="liquidations"
+            label="Liquidations"
+          />
 
           <div class="text-right mt8 mb8">
             <a
@@ -133,11 +231,17 @@
         <div v-if="displayGifWarning" class="d-flex help-text">
           <p class="mt0 mb0 text-danger">
             <i class="icon-info mr8"></i>
-            <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_ANIMATIONS')">Enable animations to show gifs</a>
+            <a
+              href="javascript:void(0);"
+              @click="$store.commit('settings/TOGGLE_ANIMATIONS')"
+              >Enable animations to show gifs</a
+            >
           </p>
         </div>
       </div>
-      <div class="section__title" @click="toggleSection('thresholds')">THRESHOLDS ({{ thresholds.length }}) <i class="icon-up-thin"></i></div>
+      <div class="section__title" @click="toggleSection('thresholds')">
+        THRESHOLDS ({{ thresholds.length }}) <i class="icon-up-thin"></i>
+      </div>
     </section>
 
     <section class="section">
@@ -146,7 +250,13 @@
         <div class="column mb16">
           <div class="form-group text-nowrap">
             <label class="checkbox-control">
-              <input type="checkbox" class="form-control" :disabled="!useAudio" :checked="muted" @change="$store.commit(paneId + '/TOGGLE_MUTED')" />
+              <input
+                type="checkbox"
+                class="form-control"
+                :disabled="!useAudio"
+                :checked="muted"
+                @change="$store.commit(paneId + '/TOGGLE_MUTED')"
+              />
               <div></div>
               <span>Mute this pane</span>
             </label>
@@ -157,21 +267,30 @@
               <slider
                 class="mrauto -fill mt8 mb8"
                 :min="0"
-                :max="10"
-                :step="0.1"
+                :max="400"
+                :step="1"
                 :label="true"
                 :disabled="muted"
-                :value="audioVolume"
-                @input="$store.commit(paneId + '/SET_AUDIO_VOLUME', $event)"
+                :value="audioVolume * 100"
+                @input="
+                  $store.commit(
+                    paneId + '/SET_AUDIO_VOLUME',
+                    +($event / 100).toFixed(2)
+                  )
+                "
                 @reset="$store.commit(paneId + '/SET_AUDIO_VOLUME', null)"
+                log
               >
-                <template v-slot:tooltip>× {{ audioVolume }}</template>
+                <template v-slot:tooltip>
+                  {{ audioVolume > 1 ? '+' : '' }}
+                  {{ +(audioVolume * 100).toFixed(2) }}%
+                </template>
               </slider>
               <editable
                 class="-center text-nowrap ml8"
                 style="line-height: 1"
-                :content="'× ' + audioVolume"
-                @output="$store.commit(paneId + '/SET_AUDIO_VOLUME', $event)"
+                :value="'× ' + audioVolume"
+                @input="$store.commit(paneId + '/SET_AUDIO_VOLUME', $event)"
               ></editable>
             </div>
             <label class="mt16 d-block">Pitch</label>
@@ -192,38 +311,55 @@
               <editable
                 class="-center text-nowrap ml8"
                 style="line-height: 1"
-                :content="'× ' + audioPitch"
-                @output="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
+                :value="'× ' + audioPitch"
+                @input="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
               ></editable>
             </div>
           </div>
         </div>
         <div class="form-group" v-if="useAudio && !muted">
-          <label> Minimum for a trade to trigger a sound </label>
-          <input
+          <label>
+            Minimum for a trade to trigger a sound
+            <i
+              class="icon-info mr8"
+              v-tippy
+              title="Enter the absolute amount<br>or % of significant amount"
+            ></i>
+          </label>
+          <editable
             class="form-control"
             :value="audioThreshold"
             :placeholder="audioThresholdPlaceholder"
-            @change="$store.commit(paneId + '/SET_AUDIO_THRESHOLD', $event.target.value)"
+            @input="$store.commit(paneId + '/SET_AUDIO_THRESHOLD', $event)"
           />
         </div>
 
         <div v-if="!useAudio" class="d-flex help-text">
           <p class="mt0 mb0 text-danger">
             <i class="icon-info mr8"></i>
-            <a href="javascript:void(0);" @click="$store.commit('settings/TOGGLE_AUDIO', true)">Enable audio to use this feature</a>
+            <a
+              href="javascript:void(0);"
+              @click="$store.commit('settings/TOGGLE_AUDIO', true)"
+              >Enable audio to use this feature</a
+            >
           </p>
         </div>
       </div>
-      <div class="section__title" @click="toggleSection('audio')">Audio <i class="icon-up-thin"></i></div>
+      <div class="section__title" @click="toggleSection('audio')">
+        Audio <i class="icon-up-thin"></i>
+      </div>
     </section>
 
-    <section class="section">
+    <section v-if="isLegacy" class="section">
       <div class="form-group" v-if="sections.indexOf('multipliers') > -1">
         <label>
           <div class="d-flex">
-            <div>← Decrease threshold<br /><small>← Increase visibility</small></div>
-            <div class="text-right mlauto">Increase threshold →<br /><small>Decrease visibility →</small></div>
+            <div>
+              ← Decrease threshold<br /><small>← Increase visibility</small>
+            </div>
+            <div class="text-right mlauto">
+              Increase threshold →<br /><small>Decrease visibility →</small>
+            </div>
           </div>
         </label>
         <div class="multipliers" v-if="multipliers.length">
@@ -235,7 +371,12 @@
           >
             <div
               class="multipliers-market__id"
-              @dblclick="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: null })"
+              @dblclick="
+                $store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', {
+                  identifier: market.identifier,
+                  multiplier: null
+                })
+              "
             >
               <div class="text-nowrap market-exchange">
                 <small>{{ market.exchange }}</small>
@@ -254,8 +395,18 @@
                 :showCompletion="false"
                 :value="market.multiplier"
                 :editable="false"
-                @input="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: $event })"
-                @reset="$store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', { identifier: market.identifier, multiplier: 1 })"
+                @input="
+                  $store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', {
+                    identifier: market.identifier,
+                    multiplier: $event
+                  })
+                "
+                @reset="
+                  $store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', {
+                    identifier: market.identifier,
+                    multiplier: 1
+                  })
+                "
               >
                 <template v-slot:tooltip="{ value }">
                   {{ thresholds[0].amount * value }}
@@ -264,7 +415,13 @@
             </div>
           </div>
         </div>
-        <a v-else href="javascript:void(0);" @click="$store.dispatch('app/showSearch', paneId)"> Add markets to pane </a>
+        <a
+          v-else
+          href="javascript:void(0);"
+          @click="$store.dispatch('app/showSearch', paneId)"
+        >
+          Add markets to pane
+        </a>
       </div>
 
       <div class="section__title" @click="toggleSection('multipliers')">
@@ -279,7 +436,7 @@
 import dialogService from '@/services/dialogService'
 import panesSettings from '@/store/panesSettings'
 import { TradesPaneState } from '@/store/panesSettings/trades'
-import { randomString } from '@/utils/helpers'
+import { ago, randomString } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '../framework/picker/Slider.vue'
 import Thresholds from '../settings/Thresholds.vue'
@@ -300,6 +457,9 @@ import { formatAmount, parseMarket } from '@/services/productsService'
 export default class extends Vue {
   paneId: string
   sections = ['thresholds']
+  secondsAgoExample = '0s ago'
+
+  private _secondsAgoExampleTimeout: number
 
   get useAudio() {
     return this.$store.state.settings.useAudio
@@ -346,11 +506,15 @@ export default class extends Vue {
   }
 
   get showThresholdsAsTable() {
-    return (this.$store.state[this.paneId] as TradesPaneState).showThresholdsAsTable
+    return (this.$store.state[this.paneId] as TradesPaneState)
+      .showThresholdsAsTable
   }
 
   get audioThresholdPlaceholder() {
-    return '10% of minimum threshold (' + +(this.thresholds[0].amount * 0.1).toFixed(2) + ')'
+    return (
+      +(this.thresholds[0].amount * 0.1).toFixed(2) +
+      ' (10% of minimum threshold)'
+    )
   }
 
   get audioThreshold() {
@@ -366,7 +530,8 @@ export default class extends Vue {
   }
 
   get audioVolume() {
-    const volume = (this.$store.state[this.paneId] as TradesPaneState).audioVolume
+    const volume = (this.$store.state[this.paneId] as TradesPaneState)
+      .audioVolume
 
     if (volume === null) {
       return this.$store.state.settings.audioVolume
@@ -374,11 +539,34 @@ export default class extends Vue {
     return volume
   }
 
+  get thresholdsMultipler() {
+    return (this.$store.state[this.paneId] as TradesPaneState)
+      .thresholdsMultipler
+  }
+
+  get disableAnimations() {
+    return this.$store.state.settings.disableAnimations
+  }
+
+  get isLegacy() {
+    return this.$store.state.panes.panes[this.paneId].type === 'trades'
+  }
+
+  get displayGifWarning() {
+    return (
+      this.isLegacy &&
+      this.disableAnimations &&
+      (this.thresholds.filter(t => !!t.buyGif && !!t.sellGif).length ||
+        this.liquidations.filter(t => !!t.buyGif && !!t.sellGif).length)
+    )
+  }
+
   get multipliers() {
     return this.markets.map(marketKey => {
       const [exchange, pair] = parseMarket(marketKey)
 
-      const multiplier = (this.$store.state[this.paneId] as TradesPaneState).multipliers[marketKey]
+      const multiplier = (this.$store.state[this.paneId] as TradesPaneState)
+        .multipliers[marketKey]
 
       return {
         exchange,
@@ -393,19 +581,18 @@ export default class extends Vue {
     return this.multipliers.filter(market => market.multiplier !== 1).length
   }
 
-  get thresholdsMultipler() {
-    return (this.$store.state[this.paneId] as TradesPaneState).thresholdsMultipler
+  mounted() {
+    const time = Date.now()
+
+    this._secondsAgoExampleTimeout = setInterval(() => {
+      this.secondsAgoExample = `${ago(time)} ago`
+    }, 1000)
   }
 
-  get disableAnimations() {
-    return this.$store.state.settings.disableAnimations
-  }
-
-  get displayGifWarning() {
-    return (
-      this.disableAnimations &&
-      (this.thresholds.filter(t => !!t.buyGif && !!t.sellGif).length || this.liquidations.filter(t => !!t.buyGif && !!t.sellGif).length)
-    )
+  beforeDestroy() {
+    if (this._secondsAgoExampleTimeout) {
+      clearTimeout(this._secondsAgoExampleTimeout)
+    }
   }
 
   formatAmount(amount) {
@@ -426,7 +613,13 @@ export default class extends Vue {
     const payload = await dialogService.openAsPromise(ThresholdPresetDialog)
 
     if (payload) {
-      if (!payload.thresholds && !payload.liquidations && !payload.amounts && !payload.audios && !payload.colors) {
+      if (
+        !payload.thresholds &&
+        !payload.liquidations &&
+        !payload.amounts &&
+        !payload.audios &&
+        !payload.colors
+      ) {
         this.$store.dispatch('app/showNotice', {
           title: 'You did not select anything to save in the preset !',
           type: 'error'
@@ -470,7 +663,11 @@ export default class extends Vue {
 
   applyAudioPreset(presetData?) {
     const defaultSettings = JSON.parse(
-      JSON.stringify(panesSettings[this.$store.state.panes.panes[this.paneId].type as 'trades'].state)
+      JSON.stringify(
+        panesSettings[
+          this.$store.state.panes.panes[this.paneId].type as 'trades'
+        ].state
+      )
     ) as TradesPaneState
 
     let updateThresholdsColors = null
@@ -496,11 +693,17 @@ export default class extends Vue {
           continue
         }
 
-        updateThresholdsAmounts = typeof presetData[type][0].amount !== 'undefined'
-        updateThresholdsColors = typeof presetData[type][0].buyColor !== 'undefined'
-        updateThresholdsAudios = typeof presetData[type][0].buyAudio !== 'undefined'
+        updateThresholdsAmounts =
+          typeof presetData[type][0].amount !== 'undefined'
+        updateThresholdsColors =
+          typeof presetData[type][0].buyColor !== 'undefined'
+        updateThresholdsAudios =
+          typeof presetData[type][0].buyAudio !== 'undefined'
 
-        const replaceAll = updateThresholdsAmounts && updateThresholdsColors && updateThresholdsAudios
+        const replaceAll =
+          updateThresholdsAmounts &&
+          updateThresholdsColors &&
+          updateThresholdsAudios
         const defaultMaxIndex = defaultSettings[type].length
 
         if (replaceAll) {
@@ -510,7 +713,10 @@ export default class extends Vue {
 
         let previousAmount = this.$store.state[this.paneId][type][0].amount
 
-        this.$store.state[this.paneId][type] = merge(this.$store.state[this.paneId][type], presetData[type]).map((threshold, index) => {
+        this.$store.state[this.paneId][type] = merge(
+          this.$store.state[this.paneId][type],
+          presetData[type]
+        ).map((threshold, index) => {
           if (!threshold.id) {
             threshold.id = randomString()
           }
@@ -518,12 +724,16 @@ export default class extends Vue {
             threshold.amount = previousAmount
           }
           if (typeof threshold.buyColor === 'undefined') {
-            threshold.buyColor = defaultSettings[type][Math.min(index, defaultMaxIndex)].buyColor
-            threshold.sellColor = defaultSettings[type][Math.min(index, defaultMaxIndex)].sellColor
+            threshold.buyColor =
+              defaultSettings[type][Math.min(index, defaultMaxIndex)].buyColor
+            threshold.sellColor =
+              defaultSettings[type][Math.min(index, defaultMaxIndex)].sellColor
           }
           if (typeof threshold.buyAudio === 'undefined') {
-            threshold.buyAudio = defaultSettings[type][Math.min(index, defaultMaxIndex)].buyAudio
-            threshold.sellAudio = defaultSettings[type][Math.min(index, defaultMaxIndex)].sellAudio
+            threshold.buyAudio =
+              defaultSettings[type][Math.min(index, defaultMaxIndex)].buyAudio
+            threshold.sellAudio =
+              defaultSettings[type][Math.min(index, defaultMaxIndex)].sellAudio
           }
 
           previousAmount = threshold.amount
@@ -535,11 +745,17 @@ export default class extends Vue {
       updateThresholdsAmounts = updateThresholdsColors = updateThresholdsAudios = true
 
       if (this.$store.state[this.paneId].thresholds) {
-        this.$store.state[this.paneId].thresholds.splice(0, this.$store.state[this.paneId].thresholds.length)
+        this.$store.state[this.paneId].thresholds.splice(
+          0,
+          this.$store.state[this.paneId].thresholds.length
+        )
       }
 
       if (this.$store.state[this.paneId].liquidations) {
-        this.$store.state[this.paneId].liquidations.splice(0, this.$store.state[this.paneId].liquidations.length)
+        this.$store.state[this.paneId].liquidations.splice(
+          0,
+          this.$store.state[this.paneId].liquidations.length
+        )
       }
 
       merge(this.$store.state[this.paneId], {

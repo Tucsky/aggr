@@ -1,88 +1,61 @@
 <template>
   <div class="pane-chart">
-    <pane-header :paneId="paneId" :controls="paneControls">
+    <pane-header
+      :paneId="paneId"
+      :settings="() => import('@/components/chart/ChartDialog.vue')"
+    >
+      <template v-slot:menu>
+        <button type="button" class="dropdown-item" @click="toggleLayout">
+          <i class="icon-resize-height"></i>
+          <span>Arrange</span>
+        </button>
+        <button type="button" class="dropdown-item" @click="resetChart">
+          <i class="icon-refresh"></i>
+          <span>Restart</span>
+        </button>
+        <button type="button" class="dropdown-item" @click="takeScreenshot">
+          <i class="icon-add-photo"></i>
+          <span>Snapshot</span>
+        </button>
+        <div class="dropdown-divider"></div>
+      </template>
       <button
         v-for="(timeframeLabel, timeframe) of favoriteTimeframes"
         :key="timeframe"
         @click="changeTimeframe(timeframe)"
         title="Maintain shift key to change timeframe on all panes"
-        class="timeframe"
+        class="toolbar__label timeframe"
       >
-        <span v-text="timeframeLabel"></span>
+        <span>{{ timeframeLabel }}</span>
       </button>
-      <dropdown
-        :options="orderedTimeframes"
-        :selected="timeframe"
-        placeholder="tf."
-        @output="$event.value && changeTimeframe($event.value)"
-        selectionClass="-text -arrow"
-        class="dropdown--squished"
-        return-value
-      >
-        <template v-slot:option-custom>
-          <div @mousedown.stop class="w-100">
-            <timeframe-input @submit="$store.commit(paneId + '/SET_TIMEFRAME', $event)" placeholder="enter tf." class="text-center" />
-            <span></span>
-          </div>
-        </template>
-        <template v-slot:selection>
-          <span>{{ timeframeForHuman }}</span>
-        </template>
-        <template v-slot:option="{ value }">
-          <div v-if="value.title" class="timeframe__title">
-            {{ value.title }}
-          </div>
-          <template v-else>
-            <i
-              class="-fill icon-star mr8 timeframe__favorite"
-              @mousedown.prevent
-              :class="{ 'icon-star-filled': favoriteTimeframes[value.value] }"
-              @click="toggleFavoriteTimeframe(value.value)"
-            ></i>
+      <button @click="toggleTimeframeDropdown" class="-arrow toolbar__label">
+        {{ timeframeForHuman }}
+      </button>
 
-            <span class="mlauto">{{ value.label }}</span>
-          </template>
-        </template>
+      <dropdown v-model="timeframeDropdownTrigger">
+        <timeframe-dropdown
+          class="timeframe-dropdown"
+          :pane-id="paneId"
+          @timeframe="changeTimeframe($event)"
+        />
       </dropdown>
     </pane-header>
-    <div class="chart-overlay -left hide-scrollbar">
-      <div class="chart-overlay__panel">
-        <div class="chart-overlay__content chart__indicators" v-if="showIndicatorsOverlay">
-          <IndicatorControl v-for="(indicator, id) in indicators" :key="id" :indicatorId="id" :paneId="paneId" />
-
-          <a href="javascript:void(0);" @click="addIndicator" class="btn mt8 mb8 -text"> Add <i class="icon-plus ml8"></i> </a>
-        </div>
-        <div class="chart-overlay__title pane-overlay" @click="toggleIndicatorOverlay">Indicators <i class="icon-up-thin"></i></div>
-      </div>
-
-      <div class="chart-overlay__panel chart__markets">
-        <div class="chart-overlay__content pane-overlay" v-if="showMarketsOverlay">
-          <div class="column">
-            <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('perp')">perp</a>
-            <i class="pipe -center">|</i>
-            <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('spot')">spot</a>
-            <i class="pipe -center">|</i>
-            <a href="javascript:void(0)" class="btn -text" @click="toggleMarkets('all')">all</a>
-          </div>
-          <div v-for="market of markets" :key="market" @click="toggleMarket($event, market)">
-            <label class="checkbox-control -small mb4">
-              <input type="checkbox" class="form-control" :checked="!hiddenMarkets[market]" @click.stop.prevent />
-              <div></div>
-              <span>{{ market }}</span>
-            </label>
-          </div>
-        </div>
-        <div class="chart-overlay__title pane-overlay" @click="showMarketsOverlay = !showMarketsOverlay">
-          Markets
-          <button type="button" class="btn badge -outline" @click="toggleMarketOverlay">
-            {{ markets.length ? visibleMarkets : 'Search markets' }}
-          </button>
-          <i class="icon-up-thin"></i>
-        </div>
-      </div>
+    <div class="chart-overlay hide-scrollbar">
+      <indicators-overlay
+        v-model="showIndicatorsOverlay"
+        :pane-id="paneId"
+        @input="$event ? bindLegend() : unbindLegend()"
+      />
+      <markets-overlay :pane-id="paneId" />
     </div>
+
     <div class="chart__container" ref="chartContainer">
-      <chart-layout v-if="layouting" :pane-id="paneId" :layouting="layouting" :axis="axis"></chart-layout>
+      <chart-layout
+        v-if="layouting"
+        :pane-id="paneId"
+        :layouting="layouting"
+        :axis="axis"
+      ></chart-layout>
     </div>
   </div>
 </template>
@@ -92,91 +65,50 @@ import { Component, Mixins } from 'vue-property-decorator'
 
 import ChartController, { TimeRange } from './chart'
 
-import { formatBytes, openBase64InNewTab, getTimeframeForHuman, floorTimestampToTimeframe } from '@/utils/helpers'
+import {
+  formatBytes,
+  openBase64InNewTab,
+  getTimeframeForHuman,
+  floorTimestampToTimeframe
+} from '@/utils/helpers'
 import { formatPrice, formatAmount } from '@/services/productsService'
 import { defaultChartOptions, getChartCustomColorsOptions } from './options'
-
-import aggregatorService from '@/services/aggregatorService'
-import historicalService, { HistoricalResponse } from '@/services/historicalService'
-import dialogService from '@/services/dialogService'
-
-import PaneMixin from '@/mixins/paneMixin'
-import PaneHeader from '../panes/PaneHeader.vue'
-import IndicatorControl from './IndicatorControl.vue'
-import ChartLayout from './Layout.vue'
-import CreateIndicatorDialog from './CreateIndicatorDialog.vue'
 import { ChartPaneState } from '@/store/panesSettings/chart'
-import { getColorLuminance, joinRgba, splitRgba } from '@/utils/colors'
+import { getColorLuminance, joinRgba, splitColorCode } from '@/utils/colors'
 import { Chunk } from './cache'
 import { isTouchSupported, getEventOffset } from '@/utils/touchevent'
+import { MarketAlert, Trade } from '@/types/types'
+
+import aggregatorService from '@/services/aggregatorService'
+import historicalService, {
+  HistoricalResponse
+} from '@/services/historicalService'
+import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import alertService from '@/services/alertService'
-import { MarketAlert, Trade } from '@/types/test'
-import TimeframeInput from '@/components/chart/TimeframeInput.vue'
+
+import PaneMixin from '@/mixins/paneMixin'
+import PaneHeader from '@/components/panes/PaneHeader.vue'
+import ChartLayout from '@/components/chart/Layout.vue'
+import TimeframeDropdown from '@/components/chart/TimeframeDropdown.vue'
+import IndicatorsOverlay from '@/components/chart/IndicatorsOverlay.vue'
+import MarketsOverlay from '@/components/chart/MarketsOverlay.vue'
 
 @Component({
   name: 'Chart',
   components: {
-    IndicatorControl,
     ChartLayout,
     PaneHeader,
-    TimeframeInput
+    TimeframeDropdown,
+    IndicatorsOverlay,
+    MarketsOverlay
   }
 })
 export default class extends Mixins(PaneMixin) {
   axis = [null, null]
 
-  timeframes = [
-    { id: 'custom' },
-    { label: '1s', value: '1' },
-    { label: '3s', value: '3' },
-    { label: '5s', value: '5' },
-    { label: '10s', value: '10' },
-    { label: '15s', value: '15' },
-    { label: '30s', value: '30' },
-    { label: '1m', value: '60' },
-    { label: '3m', value: '180' },
-    { label: '5m', value: '300' },
-    { label: '15m', value: '900' },
-    { label: '21m', value: '1260' },
-    { label: '30m', value: '1800' },
-    { label: '1h', value: '3600' },
-    { label: '2h', value: '7200' },
-    { label: '4h', value: '14400' },
-    { label: '6h', value: '21600' },
-    { label: '8h', value: '28800' },
-    { label: '12h', value: '43200' },
-    { label: '1d', value: '86400' },
-    { label: '21 ticks', value: '21t' },
-    { label: '50 ticks', value: '50t' },
-    { label: '89 ticks', value: '89t' },
-    { label: '100 ticks', value: '100t' },
-    { label: '200 ticks', value: '200t' },
-    { label: '610 ticks', value: '610t' },
-    { label: '1000 ticks', value: '1000t' },
-    { label: '1597 ticks', value: '1597t' }
-  ]
-
-  showMarketsOverlay = false
   showIndicatorsOverlay = false
-
-  paneControls = [
-    {
-      icon: 'resize-height',
-      label: 'Arrange',
-      click: this.toggleLayout
-    },
-    {
-      icon: 'refresh',
-      label: 'Restart',
-      click: this.resetChart
-    },
-    {
-      icon: 'add-photo',
-      label: 'Snapshot',
-      click: this.takeScreenshot
-    }
-  ]
+  timeframeDropdownTrigger = null
 
   private _timeToRecycle: number
   private _recycleTimeout: number
@@ -188,10 +120,6 @@ export default class extends Mixins(PaneMixin) {
   private _loading: boolean
   private _levelDragMoveHandler: any
   private _levelDragEndHandler: any
-
-  get indicators() {
-    return (this.$store.state[this.paneId] as ChartPaneState).indicators
-  }
 
   get layouting() {
     this.updateChartAxis()
@@ -211,71 +139,15 @@ export default class extends Mixins(PaneMixin) {
   }
 
   get timeframeForHuman() {
+    if (!this.timeframe) {
+      return 'ERR'
+    }
+
     return getTimeframeForHuman(this.timeframe)
-  }
-
-  get markets() {
-    return this.$store.state.panes.panes[this.paneId].markets
-  }
-
-  get hiddenMarkets() {
-    return this.$store.state[this.paneId].hiddenMarkets
-  }
-
-  get visibleMarkets() {
-    return this.markets.filter(a => !this.hiddenMarkets[a]).length
   }
 
   get alerts() {
     return this.$store.state[this.paneId].alerts
-  }
-
-  get orderedTimeframes() {
-    const units = ['seconds', 'minutes', 'hours', 'ticks']
-    let unit = -1
-    const minute = 60
-    const hour = minute * 60
-    const day = hour * 24
-
-    return this.timeframes
-      .sort((a, b) => {
-        const x = a.value && a.value[a.value.length - 1] === 't'
-        const y = b.value && b.value[b.value.length - 1] === 't'
-        let order = x === y ? 0 : x ? 100000 : -100000
-
-        order += parseFloat(a.value) - parseFloat(b.value)
-        return order
-      })
-      .reduce((acc, timeframe) => {
-        if (timeframe.id) {
-          acc.push(timeframe)
-
-          return acc
-        }
-
-        let currentUnit
-        if (+timeframe.value < minute) {
-          currentUnit = 0
-        } else if (+timeframe.value < hour) {
-          currentUnit = 1
-        } else if (+timeframe.value <= day) {
-          currentUnit = 2
-        } else {
-          currentUnit = 3
-        }
-
-        if (currentUnit > unit) {
-          acc.push({
-            title: units[currentUnit]
-          })
-
-          unit = currentUnit
-        }
-
-        acc.push(timeframe)
-
-        return acc
-      }, [])
   }
 
   $refs!: {
@@ -289,25 +161,31 @@ export default class extends Mixins(PaneMixin) {
 
     this._onStoreMutation = this.$store.subscribe(mutation => {
       switch (mutation.type) {
-        case 'settings/SET_CHART_COLOR':
-          if (mutation.payload) {
-            this._chartController.chartInstance.applyOptions(getChartCustomColorsOptions(mutation.payload))
-          }
+        case 'settings/SET_TEXT_COLOR':
+          this._chartController.chartInstance.applyOptions(
+            getChartCustomColorsOptions(mutation.payload)
+          )
           break
         case 'settings/SET_CHART_THEME':
-          this._chartController.chartInstance.applyOptions(getChartCustomColorsOptions())
+          this._chartController.chartInstance.applyOptions(
+            getChartCustomColorsOptions()
+          )
           break
         case 'settings/TOGGLE_NORMAMIZE_WATERMARKS':
           this._chartController.refreshMarkets()
           break
         case 'settings/SET_TIMEZONE_OFFSET':
-          this._chartController.setTimezoneOffset(this.$store.state.settings.timezoneOffset)
+          this._chartController.setTimezoneOffset(
+            this.$store.state.settings.timezoneOffset
+          )
           this._chartController.clearChart()
           this._chartController.renderAll()
           break
         case 'panes/SET_PANE_MARKETS':
           if (mutation.payload.id === this.paneId) {
-            ;(this.$store.state[this.paneId] as ChartPaneState).hiddenMarkets = {}
+            ;(this.$store.state[
+              this.paneId
+            ] as ChartPaneState).hiddenMarkets = {}
             this._chartController.refreshMarkets()
 
             this.clear()
@@ -349,7 +227,12 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.updateWatermark()
           break
         case this.paneId + '/SET_INDICATOR_OPTION':
-          this._chartController.setIndicatorOption(mutation.payload.id, mutation.payload.key, mutation.payload.value, mutation.payload.silent)
+          this._chartController.setIndicatorOption(
+            mutation.payload.id,
+            mutation.payload.key,
+            mutation.payload.value,
+            mutation.payload.silent
+          )
           break
         case this.paneId + '/SET_PRICE_SCALE':
           if (mutation.payload.priceScale) {
@@ -374,7 +257,9 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.toggleFillGapsWithEmpty()
           break
         case this.paneId + '/TOGGLE_FORCE_NORMALIZE_PRICE':
-          this._chartController.propagateInitialPrices = (this.$store.state[this.paneId] as ChartPaneState).forceNormalizePrice
+          this._chartController.propagateInitialPrices = (this.$store.state[
+            this.paneId
+          ] as ChartPaneState).forceNormalizePrice
           this.clear()
           this.fetch()
           break
@@ -426,25 +311,35 @@ export default class extends Mixins(PaneMixin) {
     if (!range) {
       this._reachedEnd = false
     }
-    const alreadyHasData = this._chartController.chartCache.cacheRange && this._chartController.chartCache.cacheRange.from
+    const alreadyHasData =
+      this._chartController.chartCache.cacheRange &&
+      this._chartController.chartCache.cacheRange.from
 
-    const historicalMarkets = historicalService.filterOutUnavailableMarkets(this.$store.state.panes.panes[this.paneId].markets)
+    const historicalMarkets = historicalService.filterOutUnavailableMarkets(
+      this.$store.state.panes.panes[this.paneId].markets
+    )
 
     if (!historicalMarkets.length) {
       return
     }
 
-    if (this.$store.state.app.apiSupportedTimeframes.indexOf(this.timeframe.toString()) === -1) {
+    const timeframe = +(this.$store.state[this.paneId] as ChartPaneState)
+      .timeframe
+
+    if (!timeframe) {
+      this._reachedEnd = true
+      return
+    }
+
+    if (
+      this.$store.state.app.apiSupportedTimeframes.indexOf(
+        this.timeframe.toString()
+      ) === -1
+    ) {
       return
     }
 
     const visibleRange = this._chartController.getVisibleRange() as TimeRange
-    const timeframe = +(this.$store.state[this.paneId] as ChartPaneState).timeframe
-
-    if (isNaN(timeframe)) {
-      this._reachedEnd = true
-      return
-    }
 
     let rangeToFetch
 
@@ -454,7 +349,8 @@ export default class extends Mixins(PaneMixin) {
       if (alreadyHasData) {
         rightTime = this._chartController.chartCache.cacheRange.from
       } else if (visibleRange && visibleRange.from) {
-        rightTime = visibleRange.from + this.$store.state.settings.timezoneOffset / 1000
+        rightTime =
+          visibleRange.from + this.$store.state.settings.timezoneOffset / 1000
       } else {
         rightTime = Date.now() / 1000
       }
@@ -467,28 +363,49 @@ export default class extends Mixins(PaneMixin) {
       rangeToFetch = range
     }
 
-    rangeToFetch.from = floorTimestampToTimeframe(Math.round(rangeToFetch.from), timeframe)
-    rangeToFetch.to = floorTimestampToTimeframe(Math.round(rangeToFetch.to), timeframe) + timeframe
+    rangeToFetch.from = floorTimestampToTimeframe(
+      Math.round(rangeToFetch.from),
+      timeframe
+    )
+    rangeToFetch.to =
+      floorTimestampToTimeframe(Math.round(rangeToFetch.to), timeframe) +
+      timeframe
 
     if (this._chartController.chartCache.cacheRange.from) {
-      rangeToFetch.to = Math.min(floorTimestampToTimeframe(this._chartController.chartCache.cacheRange.from, timeframe), rangeToFetch.to)
+      rangeToFetch.to = Math.min(
+        floorTimestampToTimeframe(
+          this._chartController.chartCache.cacheRange.from,
+          timeframe
+        ),
+        rangeToFetch.to
+      )
     }
 
-    const barsCount = Math.floor((rangeToFetch.to - rangeToFetch.from) / timeframe)
+    const barsCount = Math.floor(
+      (rangeToFetch.to - rangeToFetch.from) / timeframe
+    )
     const bytesPerBar = 112
-    const estimatedSize = formatBytes(barsCount * historicalMarkets.length * bytesPerBar)
+    const estimatedSize = formatBytes(
+      barsCount * historicalMarkets.length * bytesPerBar
+    )
 
     this.$store.dispatch('app/showNotice', {
       id: 'fetching-' + this.paneId,
       timeout: 15000,
-      title: `Fetching ${barsCount * historicalMarkets.length} bars (~${estimatedSize})`,
+      title: `Fetching ${barsCount *
+        historicalMarkets.length} bars (~${estimatedSize})`,
       type: 'info'
     })
 
     this._loading = true
 
     return historicalService
-      .fetch(rangeToFetch.from * 1000, rangeToFetch.to * 1000, timeframe, historicalMarkets)
+      .fetch(
+        rangeToFetch.from * 1000,
+        rangeToFetch.to * 1000,
+        timeframe,
+        historicalMarkets
+      )
       .then(results => this.onHistorical(results))
       .catch(err => {
         console.error(err)
@@ -501,7 +418,11 @@ export default class extends Mixins(PaneMixin) {
         setTimeout(() => {
           this._loading = false
 
-          this.fetchMore(this._chartController.chartInstance.timeScale().getVisibleLogicalRange())
+          this.fetchMore(
+            this._chartController.chartInstance
+              .timeScale()
+              .getVisibleLogicalRange()
+          )
         }, 200)
       })
   }
@@ -513,7 +434,12 @@ export default class extends Mixins(PaneMixin) {
   onCrosshair(param) {
     let x
 
-    if (param && param.time && param.point.x > 0 && param.point.x < this.$refs.chartContainer.clientWidth) {
+    if (
+      param &&
+      param.time &&
+      param.point.x > 0 &&
+      param.point.x < this.$refs.chartContainer.clientWidth
+    ) {
       x = param.point.x
     }
 
@@ -537,7 +463,6 @@ export default class extends Mixins(PaneMixin) {
       }
 
       if (!x) {
-        this._legendElements[id].textContent = ''
         continue
       }
 
@@ -561,12 +486,19 @@ export default class extends Mixins(PaneMixin) {
           continue
         }
 
-        const formatFunction = indicator.options.priceFormat && indicator.options.priceFormat.type === 'volume' ? formatAmount : formatPrice
+        const formatFunction =
+          indicator.options.priceFormat &&
+          indicator.options.priceFormat.type === 'volume'
+            ? formatAmount
+            : formatPrice
 
         if (typeof data === 'number') {
           text += formatFunction(data, api.precision)
         } else if (data.close) {
-          text += `O: ${formatFunction(data.open, api.precision)} H: ${formatFunction(data.high, api.precision)} L: ${formatFunction(
+          text += `O: ${formatFunction(
+            data.open,
+            api.precision
+          )} H: ${formatFunction(data.high, api.precision)} L: ${formatFunction(
             data.low,
             api.precision
           )} C: ${formatFunction(data.close, api.precision)}`
@@ -591,7 +523,9 @@ export default class extends Mixins(PaneMixin) {
 
     this._chartController.chartCache.saveChunk(chunk)
 
-    if (!(this.$store.state[this.paneId] as ChartPaneState).forceNormalizePrice) {
+    if (
+      !(this.$store.state[this.paneId] as ChartPaneState).forceNormalizePrice
+    ) {
       this._chartController.propagateInitialPrices = false
     }
 
@@ -615,15 +549,24 @@ export default class extends Mixins(PaneMixin) {
       let headerHeight = 0
 
       if (!this.$store.state.settings.autoHideHeaders) {
-        headerHeight = (this.$store.state.panes.panes[this.paneId].zoom || 1) * 2 * 16
+        headerHeight =
+          (this.$store.state.panes.panes[this.paneId].zoom || 1) * 2 * 16
       }
 
-      this._chartController.chartInstance.resize(this.$el.clientWidth, this.$el.clientHeight - headerHeight)
+      this._chartController.chartInstance.resize(
+        this.$el.clientWidth,
+        this.$el.clientHeight - headerHeight
+      )
     })
   }
 
   onPan(visibleLogicalRange) {
-    if (!visibleLogicalRange || this._chartController.panPrevented || this._loading || /t$/.test(this.timeframe)) {
+    if (
+      !visibleLogicalRange ||
+      this._chartController.panPrevented ||
+      this._loading ||
+      /t$/.test(this.timeframe)
+    ) {
       return
     }
 
@@ -640,7 +583,9 @@ export default class extends Mixins(PaneMixin) {
       }
 
       // get latest visible logical range
-      visibleLogicalRange = this._chartController.chartInstance.timeScale().getVisibleLogicalRange()
+      visibleLogicalRange = this._chartController.chartInstance
+        .timeScale()
+        .getVisibleLogicalRange()
 
       this.savePosition(visibleLogicalRange)
 
@@ -656,11 +601,18 @@ export default class extends Mixins(PaneMixin) {
       this.bindLegend()
     }
 
-    this._chartController.chartInstance.timeScale().subscribeVisibleLogicalRangeChange(this.onPan)
+    this._chartController.chartInstance
+      .timeScale()
+      .subscribeVisibleLogicalRangeChange(this.onPan)
 
     if (process.env.VUE_APP_PUBLIC_VAPID_KEY) {
-      const canvas = this._chartController.chartElement.querySelector('canvas:nth-child(2)')
-      canvas.addEventListener(isTouchSupported() ? 'touchstart' : 'mousedown', this.onLevelDragStart)
+      const canvas = this._chartController.chartElement.querySelector(
+        'canvas:nth-child(2)'
+      )
+      canvas.addEventListener(
+        isTouchSupported() ? 'touchstart' : 'mousedown',
+        this.onLevelDragStart
+      )
     }
   }
 
@@ -670,42 +622,75 @@ export default class extends Mixins(PaneMixin) {
 
     this.unbindLegend()
 
-    this._chartController.chartInstance.timeScale().unsubscribeVisibleLogicalRangeChange(this.onPan)
+    this._chartController.chartInstance
+      .timeScale()
+      .unsubscribeVisibleLogicalRangeChange(this.onPan)
 
     if (process.env.VUE_APP_PUBLIC_VAPID_KEY) {
-      const canvas = this._chartController.chartElement.querySelector('canvas:nth-child(2)')
-      canvas.removeEventListener(isTouchSupported() ? 'touchstart' : 'mousedown', this.onLevelDragStart)
+      const canvas = this._chartController.chartElement.querySelector(
+        'canvas:nth-child(2)'
+      )
+      canvas.removeEventListener(
+        isTouchSupported() ? 'touchstart' : 'mousedown',
+        this.onLevelDragStart
+      )
     }
   }
 
   onLevelDragStart(event) {
-    if (this._levelDragEndHandler || !this.$store.state.settings.alerts || event.button || dialogService.hasDialogOpened) {
+    if (
+      this._levelDragEndHandler ||
+      !this.$store.state.settings.alerts ||
+      event.button ||
+      dialogService.hasDialogOpened
+    ) {
       return
     }
 
     const dataAtPoint = this._chartController.getPricelineAtPoint(event)
 
-    if (!dataAtPoint.api) {
+    if (!dataAtPoint || !dataAtPoint.api) {
       return
     }
 
-    const canvas = this._chartController.chartElement.querySelector('canvas:nth-child(2)')
+    const canvas = this._chartController.chartElement.querySelector(
+      'canvas:nth-child(2)'
+    )
 
     if ((dataAtPoint as any).priceline) {
       this._chartController.disableCrosshair()
     }
 
-    this._levelDragMoveHandler = this.onLevelDragMove.bind(this, dataAtPoint, Date.now())
-    canvas.addEventListener(/touch/.test(event.type) ? 'touchmove' : 'mousemove', this._levelDragMoveHandler)
+    this._levelDragMoveHandler = this.onLevelDragMove.bind(
+      this,
+      dataAtPoint,
+      Date.now()
+    )
+    canvas.addEventListener(
+      /touch/.test(event.type) ? 'touchmove' : 'mousemove',
+      this._levelDragMoveHandler
+    )
 
-    this._levelDragEndHandler = this.onLevelDragEnd.bind(this, dataAtPoint, Date.now())
-    canvas.addEventListener(/touch/.test(event.type) ? 'touchend' : 'mouseup', this._levelDragEndHandler)
+    this._levelDragEndHandler = this.onLevelDragEnd.bind(
+      this,
+      dataAtPoint,
+      Date.now()
+    )
+    canvas.addEventListener(
+      /touch/.test(event.type) ? 'touchend' : 'mouseup',
+      this._levelDragEndHandler
+    )
   }
 
-  onLevelDragMove({ api, priceline, originalOffset, offset }, startedAt, event) {
+  onLevelDragMove(
+    { api, priceline, originalOffset, offset },
+    startedAt,
+    event
+  ) {
     const { x, y } = getEventOffset(event)
 
-    const canMove = Math.abs(originalOffset.y - y) > 5 || Date.now() - startedAt > 100
+    const canMove =
+      Math.abs(originalOffset.y - y) > 5 || Date.now() - startedAt > 100
 
     offset.x = x
     offset.y = y
@@ -717,7 +702,10 @@ export default class extends Mixins(PaneMixin) {
         return
       }
 
-      const price = +formatPrice(api.coordinateToPrice(y) as number, api.options().priceFormat.precision)
+      const price = +formatPrice(
+        api.coordinateToPrice(y) as number,
+        api.options().priceFormat.precision
+      )
 
       priceline.applyOptions({
         price
@@ -725,10 +713,17 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  async onLevelDragEnd({ api, priceline, price, market, canCreate, originalOffset, offset }, startedAt, event) {
-    const canvas = this._chartController.chartElement.querySelector('canvas:nth-child(2)')
+  async onLevelDragEnd(
+    { api, priceline, price, market, canCreate, originalOffset, offset },
+    startedAt,
+    event
+  ) {
+    const canvas = this._chartController.chartElement.querySelector(
+      'canvas:nth-child(2)'
+    )
 
-    const canMove = Math.abs(originalOffset.y - offset.y) > 5 || Date.now() - startedAt > 200
+    const canMove =
+      Math.abs(originalOffset.y - offset.y) > 5 || Date.now() - startedAt > 200
     canCreate = !priceline && canCreate && !canMove
 
     if (priceline || canCreate) {
@@ -736,12 +731,18 @@ export default class extends Mixins(PaneMixin) {
     }
 
     // unbind up
-    canvas.removeEventListener(/touch/.test(event.type) ? 'touchend' : 'mouseup', this._levelDragEndHandler)
+    canvas.removeEventListener(
+      /touch/.test(event.type) ? 'touchend' : 'mouseup',
+      this._levelDragEndHandler
+    )
     this._levelDragEndHandler = null
 
     if (this._levelDragMoveHandler) {
       // unbind move
-      canvas.removeEventListener(/touch/.test(event.type) ? 'touchmove' : 'mousemove', this._levelDragMoveHandler)
+      canvas.removeEventListener(
+        /touch/.test(event.type) ? 'touchmove' : 'mousemove',
+        this._levelDragMoveHandler
+      )
       this._levelDragMoveHandler = null
     }
 
@@ -751,7 +752,9 @@ export default class extends Mixins(PaneMixin) {
 
     if (priceline) {
       this._chartController.enableCrosshair()
-      const alert = this._chartController.alerts[market].find(a => a.price === price)
+      const alert = this._chartController.alerts[market].find(
+        a => a.price === price
+      )
       const newPrice = priceline.options().price
 
       if (price !== newPrice && canMove) {
@@ -763,7 +766,9 @@ export default class extends Mixins(PaneMixin) {
 
         await workspacesService.saveAlerts({
           market,
-          alerts: this._chartController.alerts[market].filter(a => a.market === alert.market)
+          alerts: this._chartController.alerts[market].filter(
+            a => a.market === alert.market
+          )
         })
 
         priceline.applyOptions({
@@ -794,19 +799,23 @@ export default class extends Mixins(PaneMixin) {
 
         await workspacesService.saveAlerts({
           market,
-          alerts: this._chartController.alerts[market].filter(a => a.price !== price)
+          alerts: this._chartController.alerts[market].filter(
+            a => a.price !== price
+          )
         })
       }
     } else if (canCreate) {
       // draw line first with 50% opacity
-      const color = splitRgba(this.$store.state.settings.alertsColor)
+      const color = splitColorCode(this.$store.state.settings.alertsColor)
       const alpha = color[3] || 1
       color[3] = alpha * 0.5
 
       let timestamp
 
       if (!(event.ctrlKey || event.metaKey)) {
-        timestamp = this._chartController.chartInstance.timeScale().coordinateToTime(offset.x)
+        timestamp = this._chartController.chartInstance
+          .timeScale()
+          .coordinateToTime(offset.x)
       }
 
       const priceline = this._chartController.renderAlert(
@@ -873,11 +882,18 @@ export default class extends Mixins(PaneMixin) {
     }
 
     const canvasWidth = this.$refs.chartContainer.querySelector('canvas').width
-    return canvasWidth / (visibleLogicalRange.to - visibleLogicalRange.from) / window.devicePixelRatio
+    return (
+      canvasWidth /
+      (visibleLogicalRange.to - visibleLogicalRange.from) /
+      window.devicePixelRatio
+    )
   }
 
   savePosition(visibleLogicalRange) {
-    this.$store.commit(this.paneId + '/SET_BAR_SPACING', this.getBarSpacing(visibleLogicalRange))
+    this.$store.commit(
+      this.paneId + '/SET_BAR_SPACING',
+      this.getBarSpacing(visibleLogicalRange)
+    )
   }
 
   setupRecycle() {
@@ -892,7 +908,7 @@ export default class extends Mixins(PaneMixin) {
       let end
 
       if (visibleRange) {
-        end = visibleRange.from - (visibleRange.to - visibleRange.from)
+        end = visibleRange.from - (visibleRange.to - visibleRange.from) * 2
       }
 
       if (this._chartController.chartCache.trim(end)) {
@@ -902,23 +918,32 @@ export default class extends Mixins(PaneMixin) {
       this.setTimeToRecycle()
     }
 
-    const fastRefreshRate = (this.$store.state[this.paneId] as ChartPaneState).refreshRate < 1000
+    const fastRefreshRate =
+      (this.$store.state[this.paneId] as ChartPaneState).refreshRate < 1000
 
     if (fastRefreshRate) {
       this.fixFastRefreshRate()
     }
 
-    this._recycleTimeout = setTimeout(this.trimChart, 1000 * 60 * (fastRefreshRate ? 3 : 15))
+    this._recycleTimeout = setTimeout(
+      this.trimChart,
+      1000 * 60 * (fastRefreshRate ? 3 : 15)
+    )
   }
 
   fixFastRefreshRate() {
-    const fontSize = this._chartController.chartInstance.options().layout.fontSize
+    const fontSize = this._chartController.chartInstance.options().layout
+      .fontSize
 
     this._chartController.preventPan()
-    this._chartController.chartInstance.applyOptions({ layout: { fontSize: fontSize + 1 } })
+    this._chartController.chartInstance.applyOptions({
+      layout: { fontSize: fontSize + 1 }
+    })
 
     setTimeout(() => {
-      this._chartController.chartInstance.applyOptions({ layout: { fontSize: fontSize } })
+      this._chartController.chartInstance.applyOptions({
+        layout: { fontSize: fontSize }
+      })
     }, 50)
   }
 
@@ -933,41 +958,46 @@ export default class extends Mixins(PaneMixin) {
     })
   }
 
-  addIndicator() {
-    dialogService.open(CreateIndicatorDialog, { paneId: this.paneId })
-  }
-
-  toggleMarketOverlay(event) {
-    if (!this.markets.length) {
-      this.$store.dispatch('app/showSearch', this.paneId)
-      event.stopPropagation()
-    }
-  }
-
   async fetchMore(visibleLogicalRange) {
-    if (this._loading || this._reachedEnd || !visibleLogicalRange || visibleLogicalRange.from > 0 || !this.visibleMarkets) {
+    if (
+      this._loading ||
+      this._reachedEnd ||
+      !visibleLogicalRange ||
+      visibleLogicalRange.from > 0
+    ) {
       return
     }
 
     let indicatorLength = 0
 
     if (this._chartController.activeRenderer) {
-      for (const indicatorId in this._chartController.activeRenderer.indicators) {
-        if (!this._chartController.activeRenderer.indicators[indicatorId].minLength) {
+      for (const indicatorId in this._chartController.activeRenderer
+        .indicators) {
+        if (
+          !this._chartController.activeRenderer.indicators[indicatorId]
+            .minLength
+        ) {
           continue
         }
-        indicatorLength = Math.max(indicatorLength, this._chartController.activeRenderer.indicators[indicatorId].minLength)
+        indicatorLength = Math.max(
+          indicatorLength,
+          this._chartController.activeRenderer.indicators[indicatorId].minLength
+        )
       }
     }
 
-    const barsToLoad = Math.round(Math.min(Math.abs(visibleLogicalRange.from) + indicatorLength, 500))
+    const barsToLoad = Math.round(
+      Math.min(Math.abs(visibleLogicalRange.from) + indicatorLength, 500)
+    )
 
     if (!barsToLoad) {
       return
     }
 
     const rangeToFetch = {
-      from: this._chartController.chartCache.cacheRange.from - barsToLoad * this.$store.state[this.paneId].timeframe,
+      from:
+        this._chartController.chartCache.cacheRange.from -
+        barsToLoad * this.$store.state[this.paneId].timeframe,
       to: this._chartController.chartCache.cacheRange.from - 1
     }
 
@@ -988,7 +1018,10 @@ export default class extends Mixins(PaneMixin) {
     if ((window.event as any).shiftKey) {
       for (const id in this.$store.state.panes.panes) {
         const type = this.$store.state.panes.panes[id].type
-        if (type === 'chart' && this.$store.state[id].timeframe !== newTimeframe) {
+        if (
+          type === 'chart' &&
+          this.$store.state[id].timeframe !== newTimeframe
+        ) {
           this.$store.commit(id + '/SET_TIMEFRAME', newTimeframe)
         }
       }
@@ -1001,22 +1034,18 @@ export default class extends Mixins(PaneMixin) {
     const timeframe = parseInt(newTimeframe)
     const type = newTimeframe[newTimeframe.length - 1] === 't' ? 'tick' : 'time'
 
-    if (!this.timeframes.find(a => a.value === newTimeframe)) {
-      this.timeframes.push({
-        label: getTimeframeForHuman(newTimeframe),
-        value: newTimeframe
-      })
-    }
-
     if (
       type === this._chartController.type &&
       type === 'time' &&
       this._chartController.timeframe < timeframe &&
-      this.$store.state.app.apiSupportedTimeframes.indexOf(newTimeframe) === -1 &&
+      this.$store.state.app.apiSupportedTimeframes.indexOf(newTimeframe) ===
+        -1 &&
       Number.isInteger(timeframe / this._chartController.timeframe)
     ) {
       this._chartController.resample(newTimeframe)
-      this.fetchMore(this._chartController.chartInstance.timeScale().getVisibleLogicalRange())
+      this.fetchMore(
+        this._chartController.chartInstance.timeScale().getVisibleLogicalRange()
+      )
     } else {
       this._chartController.clear()
       this.fetch()
@@ -1031,11 +1060,14 @@ export default class extends Mixins(PaneMixin) {
     }
 
     if (!indicatorId) {
-      for (const id in this.indicators) {
+      for (const id in (this.$store.state[this.paneId] as ChartPaneState)
+        .indicators) {
         this.bindLegend(id)
       }
 
-      this._chartController.chartInstance.subscribeCrosshairMove(this.onCrosshair)
+      this._chartController.chartInstance.subscribeCrosshairMove(
+        this.onCrosshair
+      )
       return
     }
 
@@ -1056,11 +1088,14 @@ export default class extends Mixins(PaneMixin) {
 
   unbindLegend(indicatorId?: string) {
     if (!indicatorId) {
-      for (const id in this.indicators) {
+      for (const id in (this.$store.state[this.paneId] as ChartPaneState)
+        .indicators) {
         this.unbindLegend(id)
       }
 
-      this._chartController.chartInstance.unsubscribeCrosshairMove(this.onCrosshair)
+      this._chartController.chartInstance.unsubscribeCrosshairMove(
+        this.onCrosshair
+      )
       return
     }
 
@@ -1068,6 +1103,7 @@ export default class extends Mixins(PaneMixin) {
 
     for (const bindedLegendId in this._legendElements) {
       if (legendId === bindedLegendId) {
+        this._legendElements[bindedLegendId].innerText = ''
         delete this._legendElements[bindedLegendId]
         return
       }
@@ -1114,7 +1150,9 @@ export default class extends Mixins(PaneMixin) {
     }
 
     this.axis = [
-      this.$refs.chartContainer.querySelector('td:last-child canvas:nth-child(2)').clientWidth,
+      this.$refs.chartContainer.querySelector(
+        'td:last-child canvas:nth-child(2)'
+      ).clientWidth,
       this.$refs.chartContainer.querySelector('tr:last-child').clientHeight
     ]
   }
@@ -1137,21 +1175,33 @@ export default class extends Mixins(PaneMixin) {
     const lines = []
     const dateString = new Date().toUTCString()
 
+    const visibleMarkets = this.$store.state.panes.panes[
+      this.paneId
+    ].markets.filter(a => !this.$store.state[this.paneId].hiddenMarkets[a])
+      .length
+
     lines.push(dateString + ' | ' + this.timeframeForHuman)
     lines.push(
       this._chartController.watermark +
-        (this.visibleMarkets > 1 && this.$store.state.settings.normalizeWatermarks ? ' (' + this.visibleMarkets + ' markets)' : '')
+        (visibleMarkets > 1 && this.$store.state.settings.normalizeWatermarks
+          ? ' (' + visibleMarkets + ' markets)'
+          : '')
     )
 
     const lineHeight = Math.round(textFontsize)
     canvas.height = chartCanvas.height
 
     const backgroundColor = this.$store.state.settings.backgroundColor
-    const color100 = getComputedStyle(document.documentElement).getPropertyValue('--theme-color-100')
+    const color100 = getComputedStyle(
+      document.documentElement
+    ).getPropertyValue('--theme-color-100')
 
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = this.$store.state.settings.theme === 'light' ? 'rgba(255,255,255,.2)' : 'rgba(0,0,0,.2)'
+    ctx.fillStyle =
+      this.$store.state.settings.theme === 'light'
+        ? 'rgba(255,255,255,.2)'
+        : 'rgba(0,0,0,.2)'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.drawImage(chartCanvas, 0, 0)
 
@@ -1168,13 +1218,15 @@ export default class extends Mixins(PaneMixin) {
       offsetY += lineHeight * (i + 1)
     }
 
-    const luminance = getColorLuminance(splitRgba(backgroundColor))
-    const textColor = luminance < 170 ? '#ffffff' : '#000000'
+    const luminance = getColorLuminance(splitColorCode(backgroundColor))
+    const textColor = luminance < 0 ? '#ffffff' : '#000000'
 
     if (this.showIndicatorsOverlay) {
       offsetY += textPadding * 2
 
-      Object.values(this.indicators).forEach(indicator => {
+      Object.values(
+        (this.$store.state[this.paneId] as ChartPaneState).indicators
+      ).forEach(indicator => {
         const options = indicator.options as any
 
         if (options.visible === false) {
@@ -1184,7 +1236,7 @@ export default class extends Mixins(PaneMixin) {
         let color = options.color || options.upColor || textColor
 
         try {
-          color = splitRgba(color)
+          color = splitColorCode(color)
 
           if (typeof color[3] !== 'undefined') {
             color[3] = 1
@@ -1214,14 +1266,6 @@ export default class extends Mixins(PaneMixin) {
     openBase64InNewTab(b64, 'image/png')
   }
 
-  toggleMarket(event, id) {
-    this.$store.dispatch(this.paneId + '/toggleMarkets', { id, inverse: event.shiftKey })
-  }
-
-  toggleMarkets(type) {
-    this.$store.dispatch(this.paneId + '/toggleMarkets', { type })
-  }
-
   toggleIndicatorOverlay() {
     if (this.showIndicatorsOverlay) {
       this.unbindLegend()
@@ -1236,10 +1280,6 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  toggleFavoriteTimeframe(timeframe) {
-    this.$store.commit('settings/TOGGLE_FAVORITE_TIMEFRAME', timeframe)
-  }
-
   toggleLayout() {
     this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING')
   }
@@ -1249,11 +1289,26 @@ export default class extends Mixins(PaneMixin) {
 
     if (this._chartController.type === 'time') {
       const chartWidth = this.$refs.chartContainer.querySelector('canvas').width
-      const barSpacing = this.getBarSpacing(this._chartController.chartInstance.timeScale().getVisibleLogicalRange())
-      this._timeToRecycle = now + Math.min(1000 * 60 * 60 * 24, (parseInt(this.timeframe) * 1000 * (chartWidth / barSpacing)) / 2)
+      const barSpacing = this.getBarSpacing(
+        this._chartController.chartInstance.timeScale().getVisibleLogicalRange()
+      )
+      this._timeToRecycle =
+        now +
+        Math.min(
+          1000 * 60 * 60 * 24,
+          (parseInt(this.timeframe) * 1000 * (chartWidth / barSpacing)) / 2
+        )
     }
 
     this._timeToRecycle = now + 900000
+  }
+
+  toggleTimeframeDropdown(event) {
+    if (this.timeframeDropdownTrigger) {
+      this.timeframeDropdownTrigger = null
+    } else {
+      this.timeframeDropdownTrigger = event.currentTarget
+    }
   }
 }
 </script>
@@ -1282,105 +1337,6 @@ export default class extends Mixins(PaneMixin) {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-}
-
-.chart__markets {
-  flex-grow: 1;
-  overflow: hidden;
-
-  .chart-overlay__content {
-    overflow: auto;
-  }
-
-  .checkbox-control {
-    span {
-      text-decoration: line-through;
-      opacity: 0.5;
-    }
-    input:checked ~ span {
-      text-decoration: none;
-      opacity: 1;
-    }
-  }
-
-  li {
-    cursor: pointer;
-    &.-hidden {
-      opacity: 0.5;
-      text-decoration: line-through;
-    }
-  }
-}
-
-.chart__layout {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 3;
-}
-
-.chart-overlay {
-  display: none;
-  position: absolute;
-  z-index: 3;
-  top: 3em;
-  pointer-events: none;
-
-  &.-left {
-    left: 1em;
-    bottom: 0;
-    flex-direction: column;
-    justify-content: flex-start;
-
-    > div {
-      flex-shrink: 0;
-      flex-basis: 0;
-    }
-  }
-
-  &.-right {
-    right: 1em;
-    pointer-events: all;
-  }
-
-  &__panel {
-    display: flex;
-    flex-direction: column-reverse;
-    justify-content: flex-end;
-
-    > div {
-      pointer-events: all;
-    }
-  }
-
-  &__content {
-    padding: 0;
-    margin: 0;
-  }
-
-  &__title {
-    cursor: pointer;
-    user-select: none;
-    place-self: flex-start;
-    padding: 0.25em;
-    display: flex;
-    align-items: center;
-    gap: 0.25em;
-    line-height: 1;
-
-    &:hover {
-      color: var(--theme-color-base);
-    }
-
-    &:first-child {
-      .icon-up-thin {
-        display: inline-block;
-        transform: rotateZ(180deg);
-      }
-    }
-  }
 }
 
 .timeframe {
