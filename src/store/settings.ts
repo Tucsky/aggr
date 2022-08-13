@@ -95,18 +95,20 @@ const actions = {
     })
   },
   async setColor(
-    { commit, dispatch },
+    { commit, dispatch, state },
     { type, value }: { type: string; value: string }
   ) {
-    const mutation = `SET_${type.toUpperCase()}_COLOR`
+    state[type.toLowerCase() + 'Color'] = value
 
-    commit(mutation, value)
+    const mutation = `SET_${type.toUpperCase()}_COLOR`
 
     if (mutation === 'SET_BACKGROUND_COLOR') {
       dispatch('refreshTheme')
     }
 
     dispatch('updateCSS')
+
+    commit(mutation, value)
   },
   refreshTheme({ commit, state }) {
     const backgroundRgb = splitColorCode(state.backgroundColor)

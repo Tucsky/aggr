@@ -4,7 +4,7 @@
       :paneId="paneId"
       ref="paneHeader"
       :settings="() => import('@/components/trades/TradesDialog.vue')"
-      @zoom="resize"
+      @zoom="onResize"
     >
       <dropdown
         v-if="market"
@@ -137,7 +137,19 @@ export default class extends Mixins(PaneMixin) {
 
   private filters: { trade: boolean; liquidation: boolean }
   private rendering: boolean
-  private tradesRendering: any[]
+  private tradesRendering: {
+    type: string
+    background: number[]
+    color: number[]
+    step: number
+    exchange: string
+    amount: number
+    count: number
+    price: number
+    side: string
+    time: string
+  }[]
+
   private tradesHistory: any[]
   private paneMarkets: { [market: string]: boolean }
   private volumeBySide: { buy: number; sell: number }
@@ -671,7 +683,7 @@ export default class extends Mixins(PaneMixin) {
     this.pxRatio = window.devicePixelRatio || 1
     const zoom = this.$store.state.panes.panes[this.paneId].zoom || 1
 
-    this.logoWidth = window.devicePixelRatio * 16
+    this.logoWidth = window.devicePixelRatio * 14
     this.width = canvas.width = this.$el.clientWidth * this.pxRatio
     this.height = canvas.height =
       (this.$el.clientHeight - headerHeight) * this.pxRatio
@@ -710,7 +722,8 @@ export default class extends Mixins(PaneMixin) {
 
   clear() {
     this.ctx.resetTransform()
-    this.ctx.clearRect(0, 0, this.width, this.height)
+    this.ctx.fillStyle = joinRgba(getAppBackgroundColor())
+    this.ctx.fillRect(0, 0, this.width, this.height)
   }
 
   reset() {
@@ -799,19 +812,31 @@ export default class extends Mixins(PaneMixin) {
       this.lineHeight + height / 2 - this.logoWidth / 2
     )
 
-    this.ctx.textAlign = 'left'
-    this.ctx.fillText(
-      formatMarketPrice(trade.price, market),
-      this.padding + this.logoWidth * 1.5,
-      this.lineHeight + height / 2
-    )
+    if (trade.type === 'trade') {
+      this.ctx.textAlign = 'left'
+      this.ctx.fillText(
+        formatMarketPrice(trade.price, market),
+        this.padding + this.logoWidth * 1.5,
+        this.lineHeight + height / 2
+      )
 
-    this.ctx.textAlign = 'right'
-    this.ctx.fillText(
-      formatAmount(trade.amount),
-      this.width / 1.5,
-      this.lineHeight + height / 2
-    )
+      this.ctx.textAlign = 'right'
+      this.ctx.fillText(
+        formatAmount(trade.amount),
+        this.width / 1.5,
+        this.lineHeight + height / 2
+      )
+    } else {
+      this.ctx.textAlign = 'center'
+      this.ctx.fillText(
+        `${formatAmount(trade.amount)} liquidated ${
+          trade.side === 'buy' ? 'SHORT' : 'LONG'
+        } at ${formatMarketPrice(trade.price, market)}`,
+        this.width / 2,
+        this.lineHeight + height / 2
+      )
+      this.ctx.textAlign = 'right'
+    }
 
     if (trade.time) {
       this.ctx.fillText(
@@ -883,7 +908,8 @@ export default class extends Mixins(PaneMixin) {
             this.ctx.fillStyle = buy.background
             this.ctx.fillRect(0, 0, this.width / 2, this.lineHeight)
             this.ctx.fillStyle = buy.color
-            this.ctx.fillText(buy.color, 0, this.lineHeight / 2)
+            this.ctx.textAlign = 'left'
+            this.ctx.fillText('B:' + buy.color, 0, this.lineHeight / 2)
 
             const sell = range.sell[i]
             this.ctx.fillStyle = sell.background
@@ -894,7 +920,12 @@ export default class extends Mixins(PaneMixin) {
               this.lineHeight
             )
             this.ctx.fillStyle = sell.color
-            this.ctx.fillText(sell.color, this.width / 2, this.lineHeight / 2)
+            this.ctx.textAlign = 'left'
+            this.ctx.fillText(
+              'S: ' + sell.color,
+              this.width / 2,
+              this.lineHeight / 2
+            )
           }
         }
       }
@@ -972,5 +1003,6 @@ export default class extends Mixins(PaneMixin) {
 canvas {
   width: 100%;
   height: 100%;
+  background-color: var(--theme-background-base);
 }
 </style>

@@ -233,10 +233,12 @@
           </div>
         </section>
       </div>
-      <div class="search__wrapper hide-scrollbar" ref="wrapper">
+      <div class="search__wrapper hide-scrollbar">
         <div
           class="search-selection search__tags form-control"
           :class="groupsCount < 10 && '-sticky'"
+          @click="$refs.input.focus()"
+          ref="selection"
         >
           <div v-if="selection.length" class="search-selection__controls">
             <button
@@ -840,7 +842,7 @@ export default {
       this.selection = this.selection.concat(marketsToAdd)
     },
     async deselectWhileRetainingScroll(markets) {
-      const scrollTop = this.$refs.wrapper.scrollTop
+      const scrollTop = this.$refs.selection.scrollTop
 
       if (Array.isArray(markets)) {
         this.deselectMarkets(markets)
@@ -852,7 +854,7 @@ export default {
 
       this.$refs.input.focus()
 
-      this.$refs.wrapper.scrollTop = scrollTop
+      this.$refs.selection.scrollTop = scrollTop
     },
     deselectMarket(market) {
       this.selection.splice(this.selection.indexOf(market), 1)
@@ -1192,7 +1194,7 @@ export default {
     position: relative;
     min-width: 19rem;
     border: 0;
-    max-height: 10rem;
+    max-height: 50%;
     overflow: auto;
 
     &.-sticky {

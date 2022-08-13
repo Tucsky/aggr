@@ -7,7 +7,9 @@
           title="Number of trades rendered"
           v-tippy="{ boundary: 'window', placement: 'left' }"
         >
-          <label class="-fill -center">Max trades to render</label>
+          <label class="-fill -center">{{
+            isLegacy ? 'Max trades to render' : 'Memory length'
+          }}</label>
           <input
             id="trades-limit"
             type="number"
@@ -49,6 +51,7 @@
         </div>
 
         <div
+          v-if="isLegacy"
           class="form-group column mb8"
           @click.stop="$store.commit(paneId + '/TOGGLE_LOGOS')"
         >
@@ -69,6 +72,7 @@
         </div>
 
         <div
+          v-if="isLegacy"
           class="form-group column mb8"
           @click.stop="$store.commit(paneId + '/TOGGLE_PRICE')"
         >
@@ -99,6 +103,7 @@
         </div>
 
         <div
+          v-if="isLegacy"
           class="form-group column"
           @click.stop="$store.commit(paneId + '/TOGGLE_TIME_AGO')"
         >

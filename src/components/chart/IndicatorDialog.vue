@@ -287,16 +287,19 @@
               v-if="sections.indexOf('format') > -1"
               class="section__content"
             >
+              <div class="d-flex mb4">
+                <small class="mrauto">Format</small>
+                <small>Precision</small>
+              </div>
               <div class="d-flex">
                 <dropdown-button
                   :value="priceFormat"
                   :options="['price', 'volume']"
                   class="mr8 -outline form-control -arrow"
                   @input="setPriceFormat($event, precision)"
+                  v-tippy
+                  title="Volume uses abbreviation for Million and Thousand"
                 ></dropdown-button>
-                <small class="-center -fill text-center"
-                  >format / precision</small
-                >
                 <editable
                   class="form-control mlauto"
                   :value="precision"
