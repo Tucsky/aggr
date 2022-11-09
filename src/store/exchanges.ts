@@ -19,7 +19,7 @@ const supportedExchanges = process.env.VUE_APP_EXCHANGES.split(',').map(id =>
 const state = supportedExchanges.reduce(
   (exchangesState: ExchangesState, id: string) => {
     exchangesState[id] = {
-      disabled: /HITBTC|PHEMEX|BINANCE_US|SERUM|OKEX|HUOBI|BITSTAMP|KRAKEN|POLONIEX/.test(
+      disabled: /AGGR|HITBTC|PHEMEX|BINANCE_US|SERUM|OKEX|HUOBI|BITSTAMP|KRAKEN|POLONIEX/.test(
         id
       )
     }

@@ -5,7 +5,7 @@
     </slot>
     <dropdown
       v-model="dropdownTrigger"
-      @click.native="selectFromElementRecursive($event.target)"
+      @mousedown.native="selectFromElementRecursive($event.target)"
     >
       <button
         type="button"

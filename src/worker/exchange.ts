@@ -475,6 +475,10 @@ class Exchange extends EventEmitter {
       `[${this.id}] request product ${forceFetch ? '(force fetching)' : ''}`
     )
 
+    if (!this.endpoints.PRODUCTS) {
+      return this.products
+    }
+
     // ask client for exchange's products
     // will either retrieve stored or fetch new
     // fetched product will be sent back to worker for formatting then back to client

@@ -226,8 +226,8 @@ const actions = {
     if (state.indicators[id].unsavedChanges && confirm) {
       const output = await dialogService.confirm({
         title: 'Save changes ?',
-        message: `This indicator has <strong>unsaved changes <i class="icon-warning"></i></strong>`,
-        cancel: 'DISCARD CHANGES',
+        message: `This indicator has unsaved changes <i class="icon-warning"></i>`,
+        cancel: 'DISCARD',
         ok: 'SAVE',
         actions: [
           {

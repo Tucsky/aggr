@@ -988,7 +988,7 @@ export default class extends Mixins(PaneMixin) {
 
     const barsToLoad = Math.round(
       Math.min(Math.abs(visibleLogicalRange.from) + indicatorLength, 500)
-    )
+    ) + 1
 
     if (!barsToLoad) {
       return

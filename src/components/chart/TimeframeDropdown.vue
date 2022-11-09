@@ -89,16 +89,7 @@ export default class extends Vue {
     return this.$store.state.settings.timeframeGroups
   }
 
-  created() {
-    console.log('create timeframe dropdown')
-  }
-
-  mounted() {
-    console.log('mount timeframe dropdown')
-  }
-
   get groups() {
-    console.log('get timeframe sections')
     const units = ['seconds', 'minutes', 'hours', 'ticks']
     let unit = -1
     const minute = 60

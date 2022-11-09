@@ -172,7 +172,6 @@ class HistoricalService extends EventEmitter {
               ? data[i][columns['vsell']]
               : 0
         }
-        data[i].timestamp = data[i].time
       } else {
         // pending bar was sent
         if (!lastClosedBars[data[i].market]) {
@@ -186,7 +185,7 @@ class HistoricalService extends EventEmitter {
         }
 
         // format pending bar time floored to timeframe
-        data[i].timestamp = floorTimestampToTimeframe(
+        data[i].time = floorTimestampToTimeframe(
           data[i].time / 1000,
           timeframe,
           isOdd
@@ -194,7 +193,7 @@ class HistoricalService extends EventEmitter {
 
         if (
           !lastClosedBars[data[i].market] ||
-          lastClosedBars[data[i].market].timestamp < data[i].timestamp
+          lastClosedBars[data[i].market].time < data[i].time
         ) {
           // store reference bar for this market (either because it didn't exist or because reference bar time is < than pending bar time)
           lastClosedBars[data[i].market] = data[i]
@@ -225,7 +224,7 @@ class HistoricalService extends EventEmitter {
         refs[data[i].market] = data[i].open
       }
 
-      if (data[i].timestamp === firstBarTimestamp) {
+      if (data[i].time === firstBarTimestamp) {
         const marketIndex = markets.indexOf(data[i].market)
 
         markets.splice(marketIndex, 1)
@@ -234,14 +233,13 @@ class HistoricalService extends EventEmitter {
       const [exchange, pair] = parseMarket(data[i].market)
       data[i].exchange = exchange
       data[i].pair = pair
-      delete data[i].time
     }
 
     return {
       data,
       markets,
-      from: data[0].timestamp,
-      to: data[data.length - 1].timestamp
+      from: data[0].time,
+      to: data[data.length - 1].time
     }
   }
 }

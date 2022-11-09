@@ -1,5 +1,6 @@
 import Exchange from '../exchange'
 
+import Aggr from './aggr'
 import Bitmex from './bitmex'
 import BinanceFutures from './binance_futures'
 import BinanceUs from './binance_us'
@@ -19,6 +20,7 @@ import Phemex from './phemex'
 import Dydx from './dydx'
 
 export const exchanges = [
+  new Aggr(),
   new Bitmex(),
   new BinanceFutures(),
   new BinanceUs(),

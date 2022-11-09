@@ -267,7 +267,7 @@
                   <i class="icon-info" v-tippy :title="helps.priceScaleId"></i
                 ></label>
                 <dropdown-button
-                  v-model="indicator.options.priceScaleId"
+                  :value="indicator.options.priceScaleId"
                   :options="availableScales"
                   placeholder="Default scale"
                   class="-outline form-control -arrow w-100"
@@ -1023,7 +1023,7 @@ export default {
   &__prism {
     width: 100%;
     height: auto;
-    padding: 1rem 2.5rem 1rem 1rem;
+    padding: 1rem 0 1rem 1rem;
     font-size: 0.825em;
   }
 

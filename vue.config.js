@@ -43,7 +43,7 @@ process.env.VUE_APP_PUBLIC_VAPID_KEY =
 process.env.VUE_APP_PUBLIC_PATH = process.env.PUBLIC_PATH || '/'
 
 module.exports = {
-  productionSourceMap: true,
+  productionSourceMap: false,
   publicPath: process.env.VUE_APP_PUBLIC_PATH,
   configureWebpack: {
     plugins: [

@@ -1,3 +1,4 @@
+import { Trade } from '../../types/types'
 import Exchange from '../exchange'
 
 export default class extends Exchange {
@@ -55,7 +56,7 @@ export default class extends Exchange {
     return true
   }
 
-  formatTrade(trade, pair) {
+  formatTrade(trade, pair): Trade {
     return {
       exchange: this.id,
       pair: pair,
@@ -74,10 +75,30 @@ export default class extends Exchange {
         return
       }
 
-      return this.emitTrades(
-        api.id,
-        json.contents.trades.map(trade => this.formatTrade(trade, json.id))
-      )
+      const trades = []
+      const liquidations = []
+
+      for (let i = 0; i < json.contents.trades.length; i++) {
+        const trade = this.formatTrade(json.contents.trades[i], json.id)
+
+        if (json.contents.trades[i].liquidation) {
+          trade.liquidation = true
+
+          liquidations.push(trade)
+        } else {
+          trades.push(trade)
+        }
+      }
+
+      if (trades.length) {
+        this.emitTrades(api.id, trades)
+      }
+
+      if (liquidations.length) {
+        this.emitLiquidations(api.id, liquidations)
+      }
+
+      return true
     }
   }
 }

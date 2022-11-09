@@ -41,7 +41,7 @@ export interface Bar {
   lsell?: number
   exchange?: string
   pair?: string
-  timestamp?: number
+  time?: number
   open?: number
   high?: number
   low?: number
@@ -218,7 +218,7 @@ export default class ChartController {
       // we need to call this again once fully loaded
       if (!this._promiseOfMarkets) {
         this._promiseOfMarkets = waitForStateMutation(
-          state => state.app.isExchangesReady
+          (state) => state.app.isExchangesReady
         ).then(this.refreshMarkets.bind(this))
       } else {
         return this._promiseOfMarkets
@@ -445,7 +445,8 @@ export default class ChartController {
    * @returns
    */
   optionRequiresRedraw(key: string) {
-    const redrawOptions = /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor|compositeOperation/i
+    const redrawOptions =
+      /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor|compositeOperation/i
 
     if (redrawOptions.test(key)) {
       return true
@@ -480,7 +481,7 @@ export default class ChartController {
   getReferencedIndicators(indicator: LoadedIndicator) {
     return indicator.model.references
       .slice()
-      .map(a => a.indicatorId)
+      .map((a) => a.indicatorId)
       .filter((t, index, self) => self.indexOf(t) === index)
   }
 
@@ -572,11 +573,11 @@ export default class ChartController {
      */
     this.chartInstance.applyOptions({
       watermark: {
-        text: `\u00A0\u00A0\u00A0\u00A0${this.watermark +
+        text: `\u00A0\u00A0\u00A0\u00A0${
+          this.watermark +
           ' | ' +
-          getTimeframeForHuman(
-            store.state[this.paneId].timeframe
-          )}\u00A0\u00A0\u00A0\u00A0`,
+          getTimeframeForHuman(store.state[this.paneId].timeframe)
+        }\u00A0\u00A0\u00A0\u00A0`,
         visible: store.state[this.paneId].showWatermark,
         color: store.state[this.paneId].watermarkColor
       }
@@ -686,9 +687,7 @@ export default class ChartController {
         // add missing indicator (otherIndicatorId) that seems to contain the missing serie (missingSerieId)
         /*if (indicators[otherIndicatorId].options.visible === false) {
           this.setIndicatorOption(otherIndicatorId, 'visible', true, true)
-        } else*/ if (
-          this.addIndicator(otherIndicatorId, dependencyDepth + 1)
-        ) {
+        } else*/ if (this.addIndicator(otherIndicatorId, dependencyDepth + 1)) {
           if (dependencyDepth === 0) {
             // finaly add original indicator
             this.addIndicator(originalIndicatorId, dependencyDepth + 1)
@@ -773,9 +772,8 @@ export default class ChartController {
       return
     }
 
-    renderer.indicators[
-      indicator.id
-    ] = this.serieBuilder.getRendererIndicatorData(indicator)
+    renderer.indicators[indicator.id] =
+      this.serieBuilder.getRendererIndicatorData(indicator)
 
     if (!this.activeRenderer || renderer === this.activeRenderer) {
       // update indicator series with plotoptions
@@ -790,10 +788,16 @@ export default class ChartController {
       }
 
       // create function ready to calculate (& render) everything for this indicator
-      indicator.adapter = this.serieBuilder.getAdapter(indicator.model.output)
-      indicator.silentAdapter = this.serieBuilder.getAdapter(
-        indicator.model.silentOutput
-      )
+      try {
+        indicator.adapter = this.serieBuilder.getAdapter(indicator.model.output)
+        indicator.silentAdapter = this.serieBuilder.getAdapter(
+          indicator.model.silentOutput
+        )
+      } catch (error) {
+        this.unbindIndicator(indicator, renderer)
+
+        throw error
+      }
     }
 
     this.prepareRendererForIndicators(indicator, renderer)
@@ -985,13 +989,20 @@ export default class ChartController {
 
     const newBar = (source, destination, timestamp) => {
       if (typeof source.close === 'number') {
-        destination.open = destination.high = destination.low = destination.close =
-          source.close
+        destination.open =
+          destination.high =
+          destination.low =
+          destination.close =
+            source.close
       } else if (
         typeof destination.close === 'undefined' ||
         destination.close === null
       ) {
-        destination.open = destination.high = destination.low = destination.close = null
+        destination.open =
+          destination.high =
+          destination.low =
+          destination.close =
+            null
 
         destination.vbuy = 0
         destination.vsell = 0
@@ -1001,7 +1012,7 @@ export default class ChartController {
         destination.lsell = 0
       }
 
-      destination.timestamp = timestamp
+      destination.time = timestamp
 
       return destination
     }
@@ -1015,12 +1026,12 @@ export default class ChartController {
         const market = bar.exchange + ':' + bar.pair
 
         const barTimestamp = floorTimestampToTimeframe(
-          bar.timestamp,
+          bar.time,
           this.timeframe,
           this.isOddTimeframe
         )
 
-        if (!markets[market] || markets[market].timestamp < barTimestamp) {
+        if (!markets[market] || markets[market].time < barTimestamp) {
           if (markets[market]) {
             markets[market] = newBar(markets[market], bar, barTimestamp)
           } else {
@@ -1088,9 +1099,8 @@ export default class ChartController {
       !this.activeChunk &&
       this.chartCache.cacheRange.to === this.activeRenderer.timestamp
     ) {
-      this.activeChunk = this.chartCache.chunks[
-        this.chartCache.chunks.length - 1
-      ]
+      this.activeChunk =
+        this.chartCache.chunks[this.chartCache.chunks.length - 1]
       this.activeChunk.active = true
     } else {
       if (this.activeChunk) {
@@ -1272,7 +1282,8 @@ export default class ChartController {
             }
           }
 
-          this.activeChunk.to = this.chartCache.cacheRange.to = this.activeRenderer.timestamp
+          this.activeChunk.to = this.chartCache.cacheRange.to =
+            this.activeRenderer.timestamp
 
           if (this.renderedRange.to < this.activeRenderer.timestamp) {
             this.renderedRange.to = this.activeRenderer.timestamp
@@ -1329,13 +1340,10 @@ export default class ChartController {
       this.activeRenderer.sources[identifier].close = +trade.price
 
       if (this.activeRenderer.sources[identifier].empty) {
-        this.activeRenderer.sources[
-          identifier
-        ].open = this.activeRenderer.sources[
-          identifier
-        ].high = this.activeRenderer.sources[
-          identifier
-        ].low = this.activeRenderer.sources[identifier].close
+        this.activeRenderer.sources[identifier].open =
+          this.activeRenderer.sources[identifier].high =
+          this.activeRenderer.sources[identifier].low =
+            this.activeRenderer.sources[identifier].close
       } else {
         this.activeRenderer.sources[identifier].high = Math.max(
           this.activeRenderer.sources[identifier].high,
@@ -1378,14 +1386,14 @@ export default class ChartController {
   /**
    * create a new object from an existing bar
    * to avoid reference when storing finished bar data to cache
-   * @param {Bar} bar do copy
+   * @param {Bar} sourceBar do copy
    * @param {number} [timestamp] apply timestamp to returned bar
    */
-  cloneSourceBar(sourceBar, timestamp?: number): Bar {
+  cloneSourceBar(sourceBar: Bar, timestamp?: number): Bar {
     return {
       pair: sourceBar.pair,
       exchange: sourceBar.exchange,
-      timestamp: timestamp || sourceBar.timestamp,
+      time: timestamp || sourceBar.time,
       open: sourceBar.open,
       high: sourceBar.high,
       low: sourceBar.low,
@@ -1405,12 +1413,13 @@ export default class ChartController {
    * if no indicatorsIds is specified, all indicators on chart are rendered from start to finish
    * then merge indicator's states from temporary renderer used to render all thoses bars into activeRenderer
    *
-   * @param {Bar[]} bars bars to render
-   * @param {string[]} indicatorsId id of indicators to render
+   * @param {Bar[]} bars
+   * @param {string[]} indicatorsId
    * @param {boolean} refreshInitialPrices
+   * @param {boolean} triggerPan
    */
   renderBars(
-    bars,
+    bars: Bar[],
     indicatorsIds,
     refreshInitialPrices?: boolean,
     triggerPan?: boolean
@@ -1435,7 +1444,7 @@ export default class ChartController {
         !this.activeRenderer.bar.empty
       ) {
         bars = Object.values(this.activeRenderer.sources).filter(
-          bar => bar.empty === false
+          (bar) => bar.empty === false
         )
       }
 
@@ -1444,21 +1453,21 @@ export default class ChartController {
       }
     } else if (
       this.activeRenderer &&
-      this.activeRenderer.timestamp > bars[bars.length - 1].timestamp
+      this.activeRenderer.timestamp > bars[bars.length - 1].time
     ) {
       const activeBars = Object.values(this.activeRenderer.sources).filter(
-        bar => bar.empty === false
+        (bar) => bar.empty === false
       )
 
       for (let i = 0; i < activeBars.length; i++) {
         const activeBar = activeBars[i]
 
-        activeBar.timestamp = this.activeRenderer.timestamp
+        activeBar.time = this.activeRenderer.timestamp
 
         for (let j = bars.length - 1; j >= 0; j--) {
           const cachedBar = bars[j]
 
-          if (cachedBar.timestamp < this.activeRenderer.timestamp) {
+          if (cachedBar.time < this.activeRenderer.timestamp) {
             bars.splice(j + 1, 0, activeBar)
             activeBars.splice(i, 1)
             i--
@@ -1494,11 +1503,11 @@ export default class ChartController {
       if (
         !bar ||
         !temporaryRenderer ||
-        bar.timestamp > temporaryRenderer.timestamp
+        bar.time > temporaryRenderer.timestamp
       ) {
         if (temporaryRenderer) {
           if (temporaryRenderer.bar.empty && !this.fillGapsWithEmpty && bar) {
-            this.nextBar(bar.timestamp, temporaryRenderer)
+            this.nextBar(bar.time, temporaryRenderer)
             continue
           }
 
@@ -1528,7 +1537,7 @@ export default class ChartController {
         if (temporaryRenderer) {
           if (this.fillGapsWithEmpty && temporaryRenderer.type === 'time') {
             const missingBars =
-              (bar.timestamp -
+              (bar.time -
                 temporaryRenderer.timeframe -
                 temporaryRenderer.timestamp) /
               temporaryRenderer.timeframe
@@ -1549,10 +1558,10 @@ export default class ChartController {
               }
             }
           }
-          this.nextBar(bar.timestamp, temporaryRenderer)
+          this.nextBar(bar.time, temporaryRenderer)
         } else {
           temporaryRenderer = this.createRenderer(
-            bar.timestamp || this.activeRenderer.timestamp,
+            bar.time || this.activeRenderer.timestamp,
             indicatorsIds
           )
         }
@@ -1588,13 +1597,8 @@ export default class ChartController {
       this.activeRenderer = temporaryRenderer
     }
 
-    let scrollPosition: number
-
     if (!indicatorsIds || !indicatorsIds.length) {
       this.activeRenderer.length = barCount
-      // whole chart was rendered from start to finish
-
-      scrollPosition = this.chartInstance.timeScale().scrollPosition()
       if (!bars.length) {
         this.renderedRange.from = this.renderedRange.to = null
       } else {
@@ -1602,24 +1606,21 @@ export default class ChartController {
         this.renderedRange.to = to
       }
     }
-    this.replaceData(computedSeries, triggerPan)
 
-    if (scrollPosition) {
-      this.chartInstance.timeScale().scrollToPosition(scrollPosition, false)
-    }
+    this.replaceData(computedSeries, triggerPan)
 
     this.renderAlerts()
   }
 
   prependInitialPrices(bars: Bar[], refreshInitialPrices: boolean) {
     const remainingInitialMarkets = Object.keys(this.markets).filter(
-      name => this.markets[name].historical
+      (name) => this.markets[name].historical
     )
 
     const maxLookback = 100 * remainingInitialMarkets.length
 
     if (this.propagateInitialPrices) {
-      const initialTimestamp = bars[0].timestamp
+      const initialTimestamp = bars[0].time
 
       if (refreshInitialPrices) {
         for (let i = 0; i < bars.length; i++) {
@@ -1627,7 +1628,7 @@ export default class ChartController {
           let index
 
           if (refreshInitialPrices) {
-            if (bars[i].timestamp <= initialTimestamp) {
+            if (bars[i].time <= initialTimestamp) {
               if ((index = remainingInitialMarkets.indexOf(market)) !== -1) {
                 remainingInitialMarkets.splice(index, 1)
               }
@@ -1653,7 +1654,7 @@ export default class ChartController {
         const exchange = this.chartCache.initialPrices[market].exchange
         const pair = this.chartCache.initialPrices[market].pair
         const bar = this.resetBar({
-          timestamp: initialTimestamp,
+          time: initialTimestamp,
           exchange: exchange,
           pair: pair,
           open: price,
@@ -1679,7 +1680,7 @@ export default class ChartController {
 
     const isPriceScaleDead =
       typeof this.loadedIndicators.find(
-        i =>
+        (i) =>
           i.id !== indicator.id &&
           i.options.visible !== false &&
           i.options.priceScaleId === indicator.options.priceScaleId
@@ -1797,6 +1798,7 @@ export default class ChartController {
       return this._promiseOfMarketsRender
     }
 
+    const scrollPosition = this.chartInstance.timeScale().scrollPosition()
     this.clearChart(triggerPan)
 
     this.renderBars(
@@ -1810,6 +1812,10 @@ export default class ChartController {
       refreshInitialPrices,
       triggerPan
     )
+
+    if (scrollPosition) {
+      this.chartInstance.timeScale().scrollToPosition(scrollPosition, false)
+    }
   }
 
   async retrieveAlerts() {
@@ -1834,7 +1840,7 @@ export default class ChartController {
 
       this.alerts[index] = []
 
-      await workspacesService.getAlerts(index).then(alerts => {
+      await workspacesService.getAlerts(index).then((alerts) => {
         for (let i = 0; i < alerts.length; i++) {
           this.alerts[index].push(alerts[i])
         }
@@ -1867,7 +1873,7 @@ export default class ChartController {
       return
     }
 
-    const alert = this.alerts[market].find(a => a.price === price)
+    const alert = this.alerts[market].find((a) => a.price === price)
 
     if (alert) {
       if (store.state.settings.alertSound) {
@@ -2299,7 +2305,7 @@ export default class ChartController {
   refreshAutoDecimals(indicatorId?: string) {
     const chartMarkets = Object.keys(this.markets)
     const pricedMarket = Object.keys(marketDecimals).find(
-      market => chartMarkets.indexOf(market) !== -1
+      (market) => chartMarkets.indexOf(market) !== -1
     )
 
     if (pricedMarket) {

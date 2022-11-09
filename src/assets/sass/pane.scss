@@ -13,6 +13,10 @@
       > div {
         pointer-events: none;
       }
+
+      iframe {
+        pointer-events: none !important;
+      }
     }
 
     > .vue-resizable-handle {

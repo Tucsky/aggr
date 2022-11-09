@@ -65,7 +65,7 @@ import PaneHeader from '../panes/PaneHeader.vue'
 
 @Component({
   components: { PaneHeader },
-  name: 'Website'
+  name: 'Website',
 })
 export default class extends Mixins(PaneMixin) {
   customId = ''
@@ -81,7 +81,10 @@ export default class extends Mixins(PaneMixin) {
   }
 
   get url() {
-    return this.$store.state[this.paneId].url || 'https://chat.aggr.trade'
+    return (
+      this.$store.state[this.paneId].url ||
+      'https://alternative.me/crypto/fear-and-greed-index.png'
+    )
   }
 
   get interactive() {
@@ -103,7 +106,7 @@ export default class extends Mixins(PaneMixin) {
       transform: `scale(${this.zoom})`,
       width: size + '%',
       height: size + '%',
-      pointerEvents: this.interactive ? 'all' : 'none'
+      pointerEvents: this.interactive ? 'all' : 'none',
     }
   }
 

@@ -490,3 +490,8 @@ $iconpath: '../fonts';
     content: $icon-switch;
   }
 }
+.icon-AGGR {
+  &:before {
+    content: $icon-lab;
+  }
+}

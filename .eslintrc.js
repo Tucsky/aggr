@@ -14,12 +14,6 @@ module.exports = {
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/no-var-requires': 0,
     camelcase: 'off',
-    'prettier/prettier': [
-      'error',
-      {
-        endOfLine: 'auto',
-        printWidth: 80
-      }
-    ]
+    'prettier/prettier': 'warn'
   }
 }

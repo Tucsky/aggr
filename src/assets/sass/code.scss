@@ -59,7 +59,7 @@
     -webkit-text-fill-color: transparent;
 
     &:focus {
-      -webkit-text-fill-color: white;
+      -webkit-text-fill-color: var(--theme-color-base);
 
       + pre {
         visibility: hidden;
