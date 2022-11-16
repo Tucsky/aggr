@@ -13,16 +13,19 @@
         "BYBIT:BTCUSD",
         "COINBASE:BTC-USD",
         "DERIBIT:BTC-PERPETUAL",
-        "FTX:BTC-PERP",
-        "FTX:BTC/USD",
         "BINANCE:btcusdt",
         "BINANCE_FUTURES:btcusdt",
+        "BINANCE:btcbusd",
+        "BINANCE_FUTURES:btcbusd",
         "BITFINEX:BTCUST",
         "BITFINEX:BTCF0:USTF0",
         "BITMEX:XBTUSDT",
         "BYBIT:BTCUSDT",
         "COINBASE:BTC-USDT",
-        "FTX:BTC/USDT"
+        "BITSTAMP:btcusd",
+        "KRAKEN:PI_XBTUSD",
+        "OKEX:BTC-USD-SWAP",
+        "OKEX:BTC-USDT-SWAP"
       ]
     },
     "trades": {
@@ -36,16 +39,19 @@
         "BYBIT:BTCUSD",
         "COINBASE:BTC-USD",
         "DERIBIT:BTC-PERPETUAL",
-        "FTX:BTC-PERP",
-        "FTX:BTC/USD",
         "BINANCE:btcusdt",
         "BINANCE_FUTURES:btcusdt",
+        "BINANCE:btcbusd",
+        "BINANCE_FUTURES:btcbusd",
         "BITFINEX:BTCUST",
         "BITFINEX:BTCF0:USTF0",
         "BITMEX:XBTUSDT",
         "BYBIT:BTCUSDT",
         "COINBASE:BTC-USDT",
-        "FTX:BTC/USDT"
+        "BITSTAMP:btcusd",
+        "KRAKEN:PI_XBTUSD",
+        "OKEX:BTC-USD-SWAP",
+        "OKEX:BTC-USDT-SWAP"
       ],
       "settings": {
         "tradeType": "trades",
@@ -69,13 +75,14 @@
         "BITMEX:XBTUSDT",
         "BITFINEX:BTCF0:USTF0",
         "BINANCE_FUTURES:btcusdt",
+        "BINANCE_FUTURES:btcbusd",
         "BINANCE_FUTURES:btcusd_perp",
         "DERIBIT:BTC-PERPETUAL",
-        "FTX:BTC-PERP",
-        "FTX:BTC/USD",
-        "FTX:BTC/USDT",
         "BYBIT:BTCUSD",
-        "BYBIT:BTCUSDT"
+        "BYBIT:BTCUSDT",
+        "KRAKEN:PI_XBTUSD",
+        "OKEX:BTC-USD-SWAP",
+        "OKEX:BTC-USDT-SWAP"
       ],
       "settings": {
         "tradeType": "liquidations"

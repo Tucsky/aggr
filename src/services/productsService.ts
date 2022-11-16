@@ -187,10 +187,9 @@ export async function getStoredProductsOrFetch(
 }
 
 export function stripStable(pair) {
-  return pair.replace(
-    /(\w{3})?(usd|ust|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?$/i,
-    '$1$2'
-  )
+  return pair
+    .replace(/(\w{3,})BUSD$/i, '$1USD')
+    .replace(/(\w{3})?(usd|ust|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?$/i, '$1$2')
 }
 
 export async function getExchangeSymbols(

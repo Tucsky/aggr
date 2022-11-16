@@ -24,7 +24,13 @@
       >
         <div class="live-annotation__tooltip">{{ liveAnnotation }}</div>
       </div>
-      <div class="d-flex">
+      <div
+        class="d-flex"
+        @drop="handleDrop($event, 'buy')"
+        @dragover="handleDrop($event, 'buy')"
+        @dragenter="handleDropEnter('buy')"
+        @dragleave="handleDropLeave"
+      >
         <button
           v-if="buyAudio !== threshold.buyAudio"
           class="btn -green mr8"
@@ -42,10 +48,6 @@
           ref="editor"
           @blur="liveAnnotation = null"
           @focus="scheduleLiveAnnotation($event, 'buy')"
-          @drop="handleDrop($event, 'buy')"
-          @dragover="handleDrop($event, 'buy')"
-          @dragenter="handleDropEnter('buy')"
-          @dragleave="dropping = null"
           @keyup="scheduleLiveAnnotation($event, 'buy')"
           @click="scheduleLiveAnnotation($event, 'buy')"
         ></prism-editor>
@@ -87,7 +89,13 @@
       >
         <div class="live-annotation__tooltip">{{ liveAnnotation }}</div>
       </div>
-      <div class="d-flex">
+      <div 
+        class="d-flex"
+        @drop="handleDrop($event, 'sell')"
+        @dragover="handleDrop($event, 'sell')"
+        @dragenter="handleDropEnter('sell')"
+        @dragleave="handleDropLeave"
+      >
         <button
           v-if="sellAudio !== threshold.sellAudio"
           class="btn -red mr8"
@@ -105,10 +113,6 @@
           ref="editor"
           @blur="liveAnnotation = null"
           @focus="scheduleLiveAnnotation($event, 'sell')"
-          @drop="handleDrop($event, 'sell')"
-          @dragover="handleDrop($event, 'sell')"
-          @dragenter="handleDropEnter('sell')"
-          @dragleave="dropping = null"
           @keyup="scheduleLiveAnnotation($event, 'sell')"
           @click="scheduleLiveAnnotation($event, 'sell')"
         ></prism-editor>
@@ -431,6 +435,11 @@ export default {
     handleDropEnter(side) {
       this.dropping = side
     },
+    handleDropLeave(event) {
+      if (event.target === event.currentTarget) {
+        this.dropping = null
+      }
+    },
     async handleDrop(event, side) {
       if (!event.dataTransfer.files || !event.dataTransfer.files.length) {
         return
@@ -592,9 +601,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-textarea.-dropping {
+div.-dropping {
   box-shadow: 0 0 0 2px #fdd835;
   border-color: transparent !important;
+  pointer-events: none;
 }
 
 .live-annotation {
