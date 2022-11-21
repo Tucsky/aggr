@@ -11,13 +11,22 @@ interface Api extends WebSocket {
   _reconnecting: boolean
 }
 
+type ExchangeEndpoint =
+  | string
+  | {
+      url: string
+      method: string
+      data: string
+      proxy?: boolean
+    }
+
 class Exchange extends EventEmitter {
   public id: string
   public pairs: string[] = []
   public products: string[] = null
   protected delayBetweenMessages: number
   protected maxConnectionsPerApi: number
-  protected endpoints: { [id: string]: string | string[] }
+  protected endpoints: { [id: string]: ExchangeEndpoint | ExchangeEndpoint[] }
 
   /**
    * ping timers
@@ -121,7 +130,9 @@ class Exchange extends EventEmitter {
   }
 
   resolveApi(pair) {
-    let api = this.getActiveApiByUrl(this.getUrl(pair))
+    const url = this.getUrl(pair)
+
+    let api = this.getActiveApiByUrl(url)
 
     if (!api) {
       api = this.createWs(pair)

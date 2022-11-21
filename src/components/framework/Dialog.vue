@@ -104,6 +104,10 @@ export default class extends Vue {
     }
   }
 
+  mounted() {
+    this.$emit('mounted')
+  }
+
   beforeDestroy() {
     if (this._handleRelease) {
       this._handleRelease()

@@ -272,9 +272,7 @@
           v-if="notificationsPermissionState === 'denied'"
           class="text-danger help-text mt0 mb0"
           v-tippy
-          :title="
-            `${helps['notifications-disabled']} ${helps['notifications-grant']}`
-          "
+          :title="`${helps['notifications-disabled']} ${helps['notifications-grant']}`"
         >
           <i class="icon-warning mr4"></i> Notifications are blocked.
         </label>
@@ -282,9 +280,7 @@
           v-else-if="notificationsPermissionState !== 'granted'"
           class="text-info help-text mt0 mb0"
           v-tippy
-          :title="
-            `${helps['notifications-disabled']} ${helps['notifications-grant']}`
-          "
+          :title="`${helps['notifications-disabled']} ${helps['notifications-grant']}`"
         >
           <i class="icon-info mr4"></i> Awaiting browser persmission.
         </p>

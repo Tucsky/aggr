@@ -61,8 +61,7 @@ export const audioDefaultParameters = {
     endGain: 0.001
   },
   playurl: {
-    url:
-      "'https://d7d3471nr939s.cloudfront.net/DeepHouseSessions_Noiz_SP/MP3/One+Shots/Bongo_08_73_SP.mp3?cb=6cfb91bb-f15f-432a-bfae-17ef22b22005'",
+    url: "'https://d7d3471nr939s.cloudfront.net/DeepHouseSessions_Noiz_SP/MP3/One+Shots/Bongo_08_73_SP.mp3?cb=6cfb91bb-f15f-432a-bfae-17ef22b22005'",
     gain: 1,
     holdDuration: 1,
     delay: 0,

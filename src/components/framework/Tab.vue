@@ -6,7 +6,7 @@
 
 <script lang="ts">
 import { slugify } from '@/utils/helpers'
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Watch } from 'vue-property-decorator'
 
 @Component({
   props: {
@@ -32,6 +32,13 @@ export default class extends Vue {
   private name: string
   private isDisabled: boolean
   isActive = false
+
+  @Watch('isActive')
+  onActiveChange(isActive) {
+    if (isActive) {
+      this.$emit('active')
+    }
+  }
 
   get hash() {
     if (this.isDisabled) {

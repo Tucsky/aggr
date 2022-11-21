@@ -97,6 +97,7 @@ export default class extends Mixins(PaneMixin) {
   private fontSize: number
   private padding: number
   private logoWidth: number
+  private abbr: boolean
   private pxRatio: number
   private maxLines: number
   private maxHistory: number
@@ -158,6 +159,7 @@ export default class extends Mixins(PaneMixin) {
   private offset: number
   private maxCount: number
   private limit: number
+  private batchSize = 1
 
   sliderDropdownTrigger = null
   value = null
@@ -323,10 +325,7 @@ export default class extends Mixins(PaneMixin) {
       if (!date) {
         date = new Date(+trades[i].timestamp)
 
-        trade.time = `${date
-          .getHours()
-          .toString()
-          .padStart(2, '0')}:${date
+        trade.time = `${date.getHours().toString().padStart(2, '0')}:${date
           .getMinutes()
           .toString()
           .padStart(2, '0')}`
@@ -684,6 +683,7 @@ export default class extends Mixins(PaneMixin) {
     const zoom = this.$store.state.panes.panes[this.paneId].zoom || 1
 
     this.logoWidth = window.devicePixelRatio * 14
+    this.abbr = this.$el.clientWidth < 200
     this.width = canvas.width = this.$el.clientWidth * this.pxRatio
     this.height = canvas.height =
       (this.$el.clientHeight - headerHeight) * this.pxRatio
@@ -755,8 +755,8 @@ export default class extends Mixins(PaneMixin) {
     }
 
     let count = Math.ceil(this.tradesRendering.length * 0.1)
-
-    while (count--) {
+    let i = 0
+    while (count-- && ++i < this.batchSize) {
       const trade = this.tradesRendering.shift()
       this.renderTrade(trade)
 
@@ -777,6 +777,9 @@ export default class extends Mixins(PaneMixin) {
         this.volumeBySide[trade.side] -= trade.amount
       }
     }
+
+    const rate = Math.ceil(this.tradesRendering.length / 10)
+    this.batchSize = rate
 
     this.rendering = this.tradesRendering.length > 0
 
@@ -829,9 +832,9 @@ export default class extends Mixins(PaneMixin) {
     } else {
       this.ctx.textAlign = 'center'
       this.ctx.fillText(
-        `${formatAmount(trade.amount)} liquidated ${
+        `${formatAmount(trade.amount)} ${this.abbr ? 'liqd.' : 'liquidated'} ${
           trade.side === 'buy' ? 'SHORT' : 'LONG'
-        } at ${formatMarketPrice(trade.price, market)}`,
+        } @${formatMarketPrice(trade.price, market)}`,
         this.width / 2,
         this.lineHeight + height / 2
       )

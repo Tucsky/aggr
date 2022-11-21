@@ -42,10 +42,7 @@ export type AlphaChannelProp = 'show' | 'hide'
  * @returns {string}
  */
 export function round(value, decimalPrecision = 2) {
-  return value
-    .toFixed(decimalPrecision)
-    .replace(/0+$/, '')
-    .replace(/\.$/, '')
+  return value.toFixed(decimalPrecision).replace(/0+$/, '').replace(/\.$/, '')
 }
 
 /**
@@ -75,9 +72,10 @@ export function convertHexToRgb(hex) {
   }
 
   // Okay, TypeScript, let’s agree that we got four elements in that array, alright?
-  const rgbChannels = /** @type {[number, number, number, number]} */ channels.map(
-    channel => parseInt(channel, 16) / 255
-  )
+  const rgbChannels =
+    /** @type {[number, number, number, number]} */ channels.map(
+      channel => parseInt(channel, 16) / 255
+    )
 
   return {
     r: rgbChannels[0],
@@ -750,9 +748,8 @@ export function parsePropsColor(propsColor) {
   }
 
   // Split a color string like `rgba(255 255 128 / .5)` into `rgba` and `255 255 128 / .5)`.
-  const [cssFormat, rest] = /** @type {[string, string]} */ propsColor.split(
-    '('
-  )
+  const [cssFormat, rest] =
+    /** @type {[string, string]} */ propsColor.split('(')
   const format = /** @type {ColorFormat} */ cssFormat.substring(0, 3)
   const parameters = rest
     // Replace all characters that aren’t needed any more, leaving a string like `255 255 128 .5`.
@@ -768,12 +765,13 @@ export function parsePropsColor(propsColor) {
   }
 
   const channels = format.split('').concat('a')
-  const color = /** @type {ColorHsl | ColorHsv | ColorHwb | ColorRgb} */ Object.fromEntries(
-    channels.map((channel, index) => [
-      channel,
-      colorChannels[format][channel].from(parameters[index])
-    ])
-  )
+  const color =
+    /** @type {ColorHsl | ColorHsv | ColorHwb | ColorRgb} */ Object.fromEntries(
+      channels.map((channel, index) => [
+        channel,
+        colorChannels[format][channel].from(parameters[index])
+      ])
+    )
 
   return { format, color }
 }

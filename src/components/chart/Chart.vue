@@ -183,9 +183,8 @@ export default class extends Mixins(PaneMixin) {
           break
         case 'panes/SET_PANE_MARKETS':
           if (mutation.payload.id === this.paneId) {
-            ;(this.$store.state[
-              this.paneId
-            ] as ChartPaneState).hiddenMarkets = {}
+            ;(this.$store.state[this.paneId] as ChartPaneState).hiddenMarkets =
+              {}
             this._chartController.refreshMarkets()
 
             this.clear()
@@ -257,9 +256,9 @@ export default class extends Mixins(PaneMixin) {
           this._chartController.toggleFillGapsWithEmpty()
           break
         case this.paneId + '/TOGGLE_FORCE_NORMALIZE_PRICE':
-          this._chartController.propagateInitialPrices = (this.$store.state[
-            this.paneId
-          ] as ChartPaneState).forceNormalizePrice
+          this._chartController.propagateInitialPrices = (
+            this.$store.state[this.paneId] as ChartPaneState
+          ).forceNormalizePrice
           this.clear()
           this.fetch()
           break
@@ -392,8 +391,9 @@ export default class extends Mixins(PaneMixin) {
     this.$store.dispatch('app/showNotice', {
       id: 'fetching-' + this.paneId,
       timeout: 15000,
-      title: `Fetching ${barsCount *
-        historicalMarkets.length} bars (~${estimatedSize})`,
+      title: `Fetching ${
+        barsCount * historicalMarkets.length
+      } bars (~${estimatedSize})`,
       type: 'info'
     })
 
@@ -932,8 +932,8 @@ export default class extends Mixins(PaneMixin) {
   }
 
   fixFastRefreshRate() {
-    const fontSize = this._chartController.chartInstance.options().layout
-      .fontSize
+    const fontSize =
+      this._chartController.chartInstance.options().layout.fontSize
 
     this._chartController.preventPan()
     this._chartController.chartInstance.applyOptions({
@@ -986,9 +986,10 @@ export default class extends Mixins(PaneMixin) {
       }
     }
 
-    const barsToLoad = Math.round(
-      Math.min(Math.abs(visibleLogicalRange.from) + indicatorLength, 500)
-    ) + 1
+    const barsToLoad =
+      Math.round(
+        Math.min(Math.abs(visibleLogicalRange.from) + indicatorLength, 500)
+      ) + 1
 
     if (!barsToLoad) {
       return
@@ -1038,8 +1039,6 @@ export default class extends Mixins(PaneMixin) {
       type === this._chartController.type &&
       type === 'time' &&
       this._chartController.timeframe < timeframe &&
-      this.$store.state.app.apiSupportedTimeframes.indexOf(newTimeframe) ===
-        -1 &&
       Number.isInteger(timeframe / this._chartController.timeframe)
     ) {
       this._chartController.resample(newTimeframe)
@@ -1177,8 +1176,9 @@ export default class extends Mixins(PaneMixin) {
 
     const visibleMarkets = this.$store.state.panes.panes[
       this.paneId
-    ].markets.filter(a => !this.$store.state[this.paneId].hiddenMarkets[a])
-      .length
+    ].markets.filter(
+      a => !this.$store.state[this.paneId].hiddenMarkets[a]
+    ).length
 
     lines.push(dateString + ' | ' + this.timeframeForHuman)
     lines.push(

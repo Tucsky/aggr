@@ -14,6 +14,18 @@ module.exports = {
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/no-var-requires': 0,
     camelcase: 'off',
-    'prettier/prettier': 'warn'
+    'prettier/prettier': [
+      'warn',
+      {
+        semi: false,
+        singleQuote: true,
+        printWidth: 80,
+        tabWidth: 2,
+        useTabs: false,
+        endOfLine: 'auto',
+        trailingComma: 'none',
+        arrowParens: 'avoid'
+      }
+    ]
   }
 }

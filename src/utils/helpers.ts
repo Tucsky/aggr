@@ -172,7 +172,7 @@ export function sleep(duration = 1000): Promise<void> {
 export function getBucketId(markets: string[]) {
   return markets
     .map(m => m.replace(/[^a-zA-Z]+/gi, ''))
-    .sort(function(mA, mB) {
+    .sort(function (mA, mB) {
       return mA.localeCompare(mB)
     })
     .join('')
@@ -255,7 +255,7 @@ export function parseFunctionArguments(
 }
 
 export function camelize(str) {
-  return str.replace(/-([a-z])/g, function(g) {
+  return str.replace(/-([a-z])/g, function (g) {
     return g[1].toUpperCase()
   })
 }
@@ -356,11 +356,12 @@ export function getScrollParent(node) {
 }
 
 export function getSiblings(elem) {
-  return Array.prototype.filter.call(elem.parentNode.children, function(
-    sibling
-  ) {
-    return sibling !== elem
-  })
+  return Array.prototype.filter.call(
+    elem.parentNode.children,
+    function (sibling) {
+      return sibling !== elem
+    }
+  )
 }
 
 export function isOddTimeframe(timeframe) {
@@ -443,12 +444,12 @@ export function getEventCords(event) {
   if (event.type.match(/^mouse/i)) {
     return { x: event.clientX, y: event.clientY }
   }
-  return { x: 0, y: 0 }
+  return { x: event.offsetX, y: event.offsetY }
 }
 
 export function debounce(func, immediate = false) {
   let timeout
-  return function(...args) {
+  return function (...args) {
     const later = (...args) => {
       timeout = null
 

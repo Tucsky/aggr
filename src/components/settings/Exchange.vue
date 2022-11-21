@@ -9,7 +9,8 @@
   >
     <div class="settings-exchange__header" @click="toggleExchange">
       <div class="settings-exchange__name">
-        <span>{{ name }}</span>
+        <i :class="'icon-' + name"></i>
+        <span class="ml4">{{ name }}</span>
       </div>
       <div class="settings-exchange__controls">
         <button
@@ -22,10 +23,9 @@
     </div>
     <div class="settings-exchange__detail" v-if="expanded">
       <div class="form-group" v-if="markets.length">
-        <small class="mb4 d-block">Connections</small>
         <div>
           <div v-for="market in markets" :key="market.id" class="d-flex">
-            <div class="-fill -center">{{ market.id }}</div>
+            <div class="-fill -center">{{ market.pair }}</div>
           </div>
         </div>
       </div>
@@ -148,9 +148,8 @@ export default class extends Vue {
 .settings-exchange__name {
   position: relative;
   display: flex;
-  flex-direction: column;
   height: 40px;
-  justify-content: center;
+  align-items: center;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;

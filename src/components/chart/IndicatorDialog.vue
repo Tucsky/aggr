@@ -58,24 +58,18 @@
     </p>
     <div class="d-flex indicator-dialog__wrapper" ref="containerElement">
       <tabs class="indicator-tabs" v-model="tab" ref="tabsComponent">
-        <tab
-          name="Script"
-          class="d-flex p-relative editor"
-          :style="{ fontSize: fontSize + 'em' }"
-        >
-          <prism-editor
-            class="editor__prism hide-scrollbar"
-            :value="code"
-            :highlight="highlighter"
+        <tab name="Script" class="d-flex p-relative editor">
+          <editor
             ref="editor"
-            @blur="updateScript($event.target.value)"
-          ></prism-editor>
-          <code-minimap ref="editorMinimap" class="editor__minimap" />
+            v-model="code"
+            :font-size="editorFontSize"
+            @blur="updateScript(code)"
+          />
           <div class="editor__zoom">
-            <div class="btn -text -small" @click="scaleEditor(1.1)">
+            <div class="btn -text -small" @click="updateEditorFontSize(1)">
               <i class="icon-plus"></i>
             </div>
-            <div class="btn -text -small" @click="scaleEditor(0.9)">
+            <div class="btn -text -small" @click="updateEditorFontSize(-1)">
               <i class="icon-minus"></i>
             </div>
           </div>
@@ -362,7 +356,6 @@
 </template>
 
 <script lang="ts">
-import { PrismEditor } from 'vue-prism-editor'
 import DialogMixin from '../../mixins/dialogMixin'
 import Tabs from '@/components/framework/Tabs.vue'
 import Tab from '@/components/framework/Tab.vue'
@@ -376,7 +369,6 @@ import dialogService from '../../services/dialogService'
 import merge from 'lodash.merge'
 import IndicatorPresetDialog from './IndicatorPresetDialog.vue'
 import { copyTextToClipboard, getEventCords } from '@/utils/helpers'
-import CodeMinimap from '../framework/CodeMinimap.vue'
 
 const ignoredOptionsKeys = [
   'crosshairMarkerVisible',
@@ -386,30 +378,26 @@ const ignoredOptionsKeys = [
   'priceFormat'
 ]
 
-import { highlight, languages } from 'prismjs/components/prism-core'
-import 'prismjs/components/prism-clike'
-import 'prismjs/components/prism-javascript'
 import IndicatorOption from '@/components/chart/IndicatorOption.vue'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
-
+import Editor from '@/components/framework/Editor.vue'
 export default {
   components: {
-    CodeMinimap,
-    PrismEditor,
     IndicatorOption,
     Tabs,
     Tab,
-    DropdownButton
+    DropdownButton,
+    Editor
   },
   props: ['paneId', 'indicatorId'],
   mixins: [DialogMixin],
   data: () => ({
     code: '',
+    editorFontSize: 12,
     plotTypes: [],
     sections: ['position', 'colors'],
     optionsQuery: '',
-    fontSize: 1,
     tab: 0,
     defaultOptionsKeys: [],
     scriptOptionsKeys: [],
@@ -520,6 +508,10 @@ export default {
   },
   beforeDestroy() {
     this.saveNavigationState()
+
+    if (this._editor) {
+      this._editor.destroy()
+    }
   },
   methods: {
     restoreNavigationState() {
@@ -527,7 +519,7 @@ export default {
         this.sections = this.indicator.navigationState.sections.slice()
         this.tab = this.indicator.navigationState.tab
         this.optionsQuery = this.indicator.navigationState.optionsQuery
-        this.fontSize = this.indicator.navigationState.fontSize
+        this.editorFontSize = this.indicator.navigationState.fontSizePx || 12
       }
     },
     saveNavigationState() {
@@ -537,7 +529,7 @@ export default {
           sections: this.sections,
           tab: this.tab,
           optionsQuery: this.optionsQuery,
-          fontSize: this.fontSize
+          fontSizePx: this.editorFontSize
         }
       })
     },
@@ -657,8 +649,6 @@ export default {
       }
 
       this.$store.dispatch(this.paneId + '/undoIndicator', this.indicatorId)
-
-      this.$refs.editorMinimap.updateSize()
     },
     toggleSection(id, event: Event) {
       const index = this.sections.indexOf(id)
@@ -784,9 +774,8 @@ export default {
       )
     },
     applyIndicatorPreset(presetData) {
-      const indicator = this.$store.state[this.paneId].indicators[
-        this.indicatorId
-      ]
+      const indicator =
+        this.$store.state[this.paneId].indicators[this.indicatorId]
 
       if (presetData) {
         merge(indicator, presetData)
@@ -838,9 +827,6 @@ export default {
 
       return this.saveIndicator()
     },
-    highlighter(code) {
-      return highlight(code, languages.js, 'js') // languages.<insert language> to return html with markup
-    },
     handleResize(event) {
       this._resizeOrigin = getEventCords(event)
 
@@ -878,22 +864,12 @@ export default {
 
       document.body.classList.remove('-unselectable')
 
-      this.$refs.editor.setLineNumbersHeight()
-
-      setTimeout(() => {
-        this.$refs.editorMinimap.updateSize()
-      })
-    },
-    scaleEditor(change) {
-      if (isNaN(this.fontSize)) {
-        this.fontSize = 1
+      if (this.$refs.editor) {
+        this.$refs.editor.editorInstance.resize()
       }
-
-      this.fontSize *= change
-
-      setTimeout(() => {
-        this.$refs.editorMinimap.updateSize()
-      })
+    },
+    updateEditorFontSize(change) {
+      this.editorFontSize += change
     },
     setPriceFormat(type, precisionInput) {
       let auto = false
@@ -1020,29 +996,6 @@ export default {
   flex-grow: 1;
   min-height: 0;
 
-  &__prism {
-    width: 100%;
-    height: auto;
-    padding: 1rem 0 1rem 1rem;
-    font-size: 0.825em;
-  }
-
-  &__minimap {
-    flex-basis: 60px;
-    max-width: 60px;
-    flex-shrink: 0;
-
-    @media screen and (min-width: 1280px) {
-      flex-basis: 80px;
-      max-width: 80px;
-    }
-
-    @media screen and (min-width: 1440px) {
-      flex-basis: 100px;
-      max-width: 100px;
-    }
-  }
-
   &__zoom,
   &__resize {
     position: absolute;
@@ -1050,6 +1003,7 @@ export default {
     padding: 0.5em;
     right: 0;
     top: 0;
+    z-index: 6;
   }
 
   &__zoom .btn {

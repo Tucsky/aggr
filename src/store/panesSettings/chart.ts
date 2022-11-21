@@ -22,7 +22,7 @@ export interface IndicatorNavigationState {
   sections: string[]
   tab: string
   optionsQuery: string
-  fontSize: number
+  fontSizePx: number
 }
 
 export interface IndicatorSettings {
@@ -256,7 +256,7 @@ const actions = {
 
     workspacesService.saveIndicator(state.indicators[id])
 
-    await dispatch('transferIndicator', state.indicators[id])
+    await dispatch('syncIndicator', state.indicators[id])
   },
   async renameIndicator({ commit, state, dispatch }, { id, name }) {
     const newId = uniqueName(slugify(name), Object.keys(state.indicators))
@@ -272,7 +272,7 @@ const actions = {
 
     return newId
   },
-  transferIndicator({ state, rootState }, indicator: IndicatorSettings) {
+  syncIndicator({ state, rootState }, indicator: IndicatorSettings) {
     for (const paneId in rootState.panes.panes) {
       if (
         paneId === state._id ||
@@ -284,8 +284,7 @@ const actions = {
       const otherPaneIndicator = rootState[paneId].indicators[
         indicator.id
       ] as IndicatorSettings
-
-      if (!otherPaneIndicator.unsavedChanges) {
+      if (otherPaneIndicator && !otherPaneIndicator.unsavedChanges) {
         otherPaneIndicator.options = indicator.options
 
         this.commit(paneId + '/SET_INDICATOR_SCRIPT', { id: indicator.id })

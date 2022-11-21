@@ -218,7 +218,7 @@ export default class ChartController {
       // we need to call this again once fully loaded
       if (!this._promiseOfMarkets) {
         this._promiseOfMarkets = waitForStateMutation(
-          (state) => state.app.isExchangesReady
+          state => state.app.isExchangesReady
         ).then(this.refreshMarkets.bind(this))
       } else {
         return this._promiseOfMarkets
@@ -481,7 +481,7 @@ export default class ChartController {
   getReferencedIndicators(indicator: LoadedIndicator) {
     return indicator.model.references
       .slice()
-      .map((a) => a.indicatorId)
+      .map(a => a.indicatorId)
       .filter((t, index, self) => self.indexOf(t) === index)
   }
 
@@ -1444,7 +1444,7 @@ export default class ChartController {
         !this.activeRenderer.bar.empty
       ) {
         bars = Object.values(this.activeRenderer.sources).filter(
-          (bar) => bar.empty === false
+          bar => bar.empty === false
         )
       }
 
@@ -1456,7 +1456,7 @@ export default class ChartController {
       this.activeRenderer.timestamp > bars[bars.length - 1].time
     ) {
       const activeBars = Object.values(this.activeRenderer.sources).filter(
-        (bar) => bar.empty === false
+        bar => bar.empty === false
       )
 
       for (let i = 0; i < activeBars.length; i++) {
@@ -1614,7 +1614,7 @@ export default class ChartController {
 
   prependInitialPrices(bars: Bar[], refreshInitialPrices: boolean) {
     const remainingInitialMarkets = Object.keys(this.markets).filter(
-      (name) => this.markets[name].historical
+      name => this.markets[name].historical
     )
 
     const maxLookback = 100 * remainingInitialMarkets.length
@@ -1680,7 +1680,7 @@ export default class ChartController {
 
     const isPriceScaleDead =
       typeof this.loadedIndicators.find(
-        (i) =>
+        i =>
           i.id !== indicator.id &&
           i.options.visible !== false &&
           i.options.priceScaleId === indicator.options.priceScaleId
@@ -1840,7 +1840,7 @@ export default class ChartController {
 
       this.alerts[index] = []
 
-      await workspacesService.getAlerts(index).then((alerts) => {
+      await workspacesService.getAlerts(index).then(alerts => {
         for (let i = 0; i < alerts.length; i++) {
           this.alerts[index].push(alerts[i])
         }
@@ -1873,7 +1873,7 @@ export default class ChartController {
       return
     }
 
-    const alert = this.alerts[market].find((a) => a.price === price)
+    const alert = this.alerts[market].find(a => a.price === price)
 
     if (alert) {
       if (store.state.settings.alertSound) {
@@ -2305,7 +2305,7 @@ export default class ChartController {
   refreshAutoDecimals(indicatorId?: string) {
     const chartMarkets = Object.keys(this.markets)
     const pricedMarket = Object.keys(marketDecimals).find(
-      (market) => chartMarkets.indexOf(market) !== -1
+      market => chartMarkets.indexOf(market) !== -1
     )
 
     if (pricedMarket) {

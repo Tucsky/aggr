@@ -120,6 +120,7 @@ $icon-BINANCE_US: "\e95f";
 $icon-flip: "\e919";
 $icon-switch: "\e91a";
 $icon-lab: "\e941";
+$icon-UNISWAP: "\e944";
 
 $exchanges: (
   'BITMEX': $icon-BITMEX,
@@ -138,7 +139,8 @@ $exchanges: (
   'BYBIT': $icon-BYBIT,
   'FTX': $icon-FTX,
   'PHEMEX': $icon-PHEMEX,
-  'DYDX': $icon-DYDX
+  'DYDX': $icon-DYDX,
+  'UNISWAP': $icon-UNISWAP,
 );
 
 @function unicode($str) {

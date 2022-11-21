@@ -15,6 +15,7 @@ import PHEMEX from './PHEMEX.svg'
 import BITFINEX from './BITFINEX.svg'
 import DYDX from './DYDX.svg'
 import KRAKEN from './KRAKEN.svg'
+import UNISWAP from './UNISWAP.svg'
 
 export default {
   BINANCE,
@@ -33,5 +34,6 @@ export default {
   PHEMEX,
   BITFINEX,
   DYDX,
-  KRAKEN
+  KRAKEN,
+  UNISWAP
 }

@@ -40,17 +40,15 @@
         >
           <i class="icon-volume-high"></i>
         </button>
-        <prism-editor
-          class="editor__prism hide-scrollbar form-control"
+        <textarea
+          class="hide-scrollbar form-control"
           v-model="buyAudio"
-          :highlight="highlighter"
           :class="[dropping === 'buy' && '-dropping']"
-          ref="editor"
           @blur="liveAnnotation = null"
           @focus="scheduleLiveAnnotation($event, 'buy')"
           @keyup="scheduleLiveAnnotation($event, 'buy')"
           @click="scheduleLiveAnnotation($event, 'buy')"
-        ></prism-editor>
+        ></textarea>
         <button
           class="btn -green ml8"
           :class="[loopingSide === 'buy' && 'shake-hard']"
@@ -89,7 +87,7 @@
       >
         <div class="live-annotation__tooltip">{{ liveAnnotation }}</div>
       </div>
-      <div 
+      <div
         class="d-flex"
         @drop="handleDrop($event, 'sell')"
         @dragover="handleDrop($event, 'sell')"
@@ -105,17 +103,15 @@
         >
           <i class="icon-volume-high"></i>
         </button>
-        <prism-editor
-          class="editor__prism hide-scrollbar form-control"
+        <textarea
+          class="hide-scrollbar form-control"
           v-model="sellAudio"
-          :highlight="highlighter"
           :class="[dropping === 'sell' && '-dropping']"
-          ref="editor"
           @blur="liveAnnotation = null"
           @focus="scheduleLiveAnnotation($event, 'sell')"
           @keyup="scheduleLiveAnnotation($event, 'sell')"
           @click="scheduleLiveAnnotation($event, 'sell')"
-        ></prism-editor>
+        ></textarea>
         <button
           class="btn -red ml8"
           :class="[loopingSide === 'sell' && 'shake-hard']"
@@ -182,15 +178,7 @@ import panesSettings from '@/store/panesSettings'
 import workspacesService from '@/services/workspacesService'
 import importService from '@/services/importService'
 
-import { PrismEditor } from 'vue-prism-editor'
-import { highlight, languages } from 'prismjs/components/prism-core'
-import 'prismjs/components/prism-clike'
-import 'prismjs/components/prism-javascript'
-
 export default {
-  components: {
-    PrismEditor
-  },
   props: {
     paneId: {
       required: true,
@@ -218,25 +206,25 @@ export default {
     uploadedSounds: []
   }),
   computed: {
-    threshold: function() {
+    threshold: function () {
       return this.thresholds.find(t => t.id === this.thresholdId)
     },
-    amounts: function() {
+    amounts: function () {
       return this.thresholds.map(t => t.amount)
     },
-    audioPitch: function() {
+    audioPitch: function () {
       return this.$store.state[this.paneId].audioPitch
     },
-    audioVolume: function() {
+    audioVolume: function () {
       return this.$store.state[this.paneId].audioVolume
     },
-    index: function() {
+    index: function () {
       return this.amounts.indexOf(this.threshold.amount)
     },
-    min: function() {
+    min: function () {
       return this.threshold.amount
     },
-    max: function() {
+    max: function () {
       return this.amounts[this.index + 1] || this.amounts[this.index] * 2
     }
   },
@@ -264,9 +252,6 @@ export default {
     }
   },
   methods: {
-    highlighter(code) {
-      return highlight(code, languages.js, 'js') // languages.<insert language> to return html with markup
-    },
     setInput(input, side) {
       this[side + 'Audio'] = input
       this.liveAnnotation = null
@@ -624,5 +609,9 @@ div.-dropping {
     padding: 0.5rem;
     z-index: 1;
   }
+}
+
+.editor {
+  min-width: 200px;
 }
 </style>

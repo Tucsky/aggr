@@ -18,6 +18,7 @@ import Bybit from './bybit'
 import Ftx from './ftx'
 import Phemex from './phemex'
 import Dydx from './dydx'
+import Uniswap from './uniswap'
 
 export const exchanges = [
   new Aggr(),
@@ -37,7 +38,8 @@ export const exchanges = [
   new Bybit(),
   new Ftx(),
   new Phemex(),
-  new Dydx()
+  new Dydx(),
+  new Uniswap()
 ] as Exchange[]
 
 export function getExchangeById(id: string) {

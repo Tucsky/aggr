@@ -36,7 +36,9 @@
     "UST": true
   },
   "previousSearchSelections": [],
-  "searchExchanges": {},
+  "searchExchanges": {
+    "UNISWAP": false
+  },
   "timeframes": [
     { "label": "1s", "value": "1" },
     { "label": "3s", "value": "3" },

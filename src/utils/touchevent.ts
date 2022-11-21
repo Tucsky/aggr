@@ -1,6 +1,6 @@
 export function isTouchSupported() {
   const prefixes = ' -webkit- -moz- -o- -ms- '.split(' ')
-  const mq = function(query) {
+  const mq = function (query) {
     return window.matchMedia(query).matches
   }
 

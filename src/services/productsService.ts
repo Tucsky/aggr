@@ -55,8 +55,8 @@ async function getExchangeStoredProductsData(exchangeId: string) {
 
   const storage = await workspacesService.getProducts(exchangeId)
 
-  if (storage && Date.now() - storage.timestamp < PRODUCTS_EXPIRES_AFTER) {
-    return storage.data
+  if (storage) {
+    return storage
   }
 
   return null
@@ -100,22 +100,34 @@ async function fetchExchangeProducts(
   let data = []
 
   for (const instruction of endpoints) {
-    let [url, method] = instruction.split('|')
+    let endpoint: {
+      url: string
+      method: string
+      data?: string
+      proxy?: boolean
+    }
 
-    if (!method) {
-      method = 'GET'
+    if (typeof instruction === 'string') {
+      endpoint = {
+        url: instruction,
+        method: 'GET'
+      }
+    } else {
+      endpoint = instruction
     }
 
     if (
+      endpoint.proxy !== false &&
       process.env.VUE_APP_PROXY_URL &&
-      !/^https:\/\/raw.githubusercontent.com\//.test(url)
+      !/^https:\/\/raw.githubusercontent.com\//.test(endpoint.url)
     ) {
-      url = process.env.VUE_APP_PROXY_URL + url
+      endpoint.url = process.env.VUE_APP_PROXY_URL + endpoint.url
     }
 
     try {
-      const json = await fetch(url, {
-        method
+      const json = await fetch(endpoint.url, {
+        method: endpoint.method,
+        body: endpoint.data
       }).then(response => response.json())
 
       data[endpoints.indexOf(instruction)] = json
@@ -164,11 +176,13 @@ export async function getStoredProductsOrFetch(
   endpoints: string[],
   forceFetch?: boolean
 ): Promise<ProductsData> {
+  let productsStorage: ProductsStorage
   let productsData: ProductsData
 
   if (
     forceFetch ||
-    !(productsData = await getExchangeStoredProductsData(exchangeId))
+    !(productsStorage = await getExchangeStoredProductsData(exchangeId)) ||
+    Date.now() - productsStorage.timestamp > PRODUCTS_EXPIRES_AFTER
   ) {
     console.debug(
       `[products.${exchangeId}] fetch products using provided endpoints`
@@ -181,6 +195,7 @@ export async function getStoredProductsOrFetch(
     productsData = await fetchExchangeProducts(exchangeId, endpoints)
   } else {
     console.debug(`[products.${exchangeId}] using products exchange storage`)
+    productsData = productsStorage.data
   }
 
   return productsData
@@ -399,9 +414,14 @@ export async function indexProducts(exchangeId: string, symbols: string[]) {
   return indexedProducts[exchangeId]
 }
 
-export async function ensureIndexedProducts() {
+export async function ensureIndexedProducts(filter?: {
+  [id: string]: boolean
+}) {
+  let indexChanged = false
+
   for (const exchangeId of store.getters['exchanges/getExchanges']) {
     if (
+      (filter && !filter[exchangeId]) ||
       store.state.exchanges[exchangeId].disabled === true ||
       indexedProducts[exchangeId]
     ) {
@@ -409,7 +429,11 @@ export async function ensureIndexedProducts() {
     }
 
     await indexProducts(exchangeId, await getExchangeSymbols(exchangeId))
+
+    indexChanged = true
   }
+
+  return indexChanged
 }
 
 export async function resolvePairs(pairs: string[]) {

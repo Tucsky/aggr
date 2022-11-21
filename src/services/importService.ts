@@ -62,6 +62,11 @@ class ImportService {
 
     await workspacesService.savePreset(preset, presetType)
 
+    store.dispatch('panes/addPane', {
+      type: preset.type,
+      settings: preset.data
+    })
+
     store.dispatch('app/showNotice', {
       title: `Successfully imported preset ${preset.name}`,
       type: 'info'
@@ -140,10 +145,7 @@ class ImportService {
     }
 
     const ids = await workspacesService.getIndicatorsIds()
-    const name = json.name
-      .split(':')
-      .slice(1)
-      .join(':')
+    const name = json.name.split(':').slice(1).join(':')
 
     const id = uniqueName(slugify(name), ids)
 

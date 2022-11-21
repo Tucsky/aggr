@@ -203,7 +203,7 @@ class Aggregator {
     const now = Date.now()
 
     for (let i = 0; i < trades.length; i++) {
-      const trade = (trades[i] as unknown) as AggregatedTrade
+      const trade = trades[i] as unknown as AggregatedTrade
       const marketKey = trade.exchange + ':' + trade.pair
 
       if (!this.connections[marketKey]) {
@@ -257,7 +257,7 @@ class Aggregator {
     const now = Date.now()
 
     for (let i = 0; i < trades.length; i++) {
-      const trade = (trades[i] as unknown) as AggregatedTrade
+      const trade = trades[i] as unknown as AggregatedTrade
       const marketKey = trade.exchange + ':' + trade.pair
       const tradeKey = 'liq_' + marketKey
 
@@ -548,7 +548,13 @@ class Aggregator {
   }
 
   clearBucket(bucket: Volumes) {
-    bucket.cbuy = bucket.csell = bucket.vbuy = bucket.vsell = bucket.lbuy = bucket.lsell = 0
+    bucket.cbuy =
+      bucket.csell =
+      bucket.vbuy =
+      bucket.vsell =
+      bucket.lbuy =
+      bucket.lsell =
+        0
   }
 
   onError(exchangeId, reason) {
@@ -610,9 +616,10 @@ class Aggregator {
           await exchange.getProducts()
         }
 
-        const estimatedTimeToConnectThemAll = exchange.getEstimatedTimeToConnect(
-          marketsByExchange[exchangeId].length
-        )
+        const estimatedTimeToConnectThemAll =
+          exchange.getEstimatedTimeToConnect(
+            marketsByExchange[exchangeId].length
+          )
 
         if (estimatedTimeToConnectThemAll > 1000 * 20) {
           ctx.postMessage({

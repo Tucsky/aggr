@@ -211,7 +211,7 @@
                 class="form-control"
                 :checked="
                   searchQuotes[quote] === true ||
-                    searchQuotes[quote] === undefined
+                  searchQuotes[quote] === undefined
                 "
                 @change="
                   $store.commit('settings/TOGGLE_SEARCH_QUOTE', {
@@ -614,7 +614,7 @@ export default {
     historicalMarkets() {
       return this.$store.state.app.historicalMarkets
     },
-    queryFilter: function() {
+    queryFilter: function () {
       const multiQuery = this.query
         .replace(/[ ,]/g, '|')
         .replace(/(^|\w|\s)\*(\w|\s|$)/g, '$1.*$2')
@@ -671,7 +671,7 @@ export default {
         return true
       })
     },
-    results: function() {
+    results: function () {
       const offset = this.page * RESULTS_PER_PAGE
 
       if (this.searchTypes.normalize) {
@@ -713,7 +713,7 @@ export default {
           .slice(offset, offset + RESULTS_PER_PAGE)
       }
     },
-    groupedSelection: function() {
+    groupedSelection: function () {
       return this.selection.reduce((groups, market) => {
         const [exchange] = market.split(':')
 
@@ -746,14 +746,19 @@ export default {
   },
 
   watch: {
-    '$store.state.app.showSearch': function(value) {
+    '$store.state.app.showSearch': function (value) {
       if (!value) {
         this.close(false)
+      }
+    },
+    async searchExchanges() {
+      if (await ensureIndexedProducts(this.searchExchanges)) {
+        this.cacheProducts()
       }
     }
   },
   async created() {
-    await ensureIndexedProducts()
+    await ensureIndexedProducts(this.searchExchanges)
 
     this.initSelection()
 
@@ -787,9 +792,8 @@ export default {
     },
     initSelection() {
       if (this.paneId) {
-        this.selection = this.$store.state.panes.panes[
-          this.paneId
-        ].markets.slice()
+        this.selection =
+          this.$store.state.panes.panes[this.paneId].markets.slice()
       } else {
         this.selection = this.activeMarkets.slice()
       }
