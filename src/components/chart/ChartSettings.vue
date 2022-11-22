@@ -181,9 +181,19 @@
 
     <toggable-group
       :value="alerts"
-      label="Alerts"
+      label="Price alerts"
       @change="toggleAlerts($event)"
     >
+      <p class="mt0">
+        <strong>Warning:</strong> triggers using the
+        <strong
+          v-tippy
+          title="ex: BTCUSD alerts will use average price of 26 markets for across 13 exchanges"
+        >
+          average price
+        </strong>
+        of a coin. Regardless of your selection on the UI.
+      </p>
       <div class="column">
         <div class="form-group">
           <label>Line style</label>
@@ -223,48 +233,44 @@
         </div>
       </div>
 
-      <div class="form-group mb16 mt16">
-        <label><i class="icon-click mr8"></i> Control</label>
-        <label
-          class="checkbox-control -click -small d-flex -wrap"
-          @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
-          title="1 click only (instead of shift + click)"
-          v-tippy="{ placement: 'left', distance: 24, boundary: 'window' }"
-        >
-          <input type="checkbox" class="form-control" :checked="alertsClick" />
-          <div class="mr0"></div>
-          <span v-if="alertsClick" class="mr4"><code>CLICK</code></span>
-          <span v-else class="mr4"
-            ><code>SHIFT</code> + <code>CLICK</code></span
+      <div class="column">
+        <div class="form-group mb16 mt16">
+          <label><i class="icon-click mr8"></i> Control</label>
+          <label
+            class="checkbox-control -click -small d-flex -wrap"
+            @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
+            title="1 click only (instead of shift + click)"
+            v-tippy="{ placement: 'left', distance: 24, boundary: 'window' }"
           >
-          on the chart to
-          <span
-            class="ml4 mr4"
-            title="- sent within 0-15s<br />- active 24h for alts<br />- active 7d for btc/eth<br>- use at own risk"
-            v-tippy="{ theme: 'left' }"
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="alertsClick"
+            />
+            <div class="mr0"></div>
+            <span v-if="alertsClick" class="mr4"><code>CLICK</code></span>
+            <span v-else class="mr4"
+              ><code>SHIFT</code> + <code>CLICK</code></span
+            >
+          </label>
+        </div>
+        <div class="form-group mb16">
+          <label for="audio-assistant-source"
+            ><i class="icon-music-note mr8"></i> Alert sound</label
           >
-            create an alert
-          </span>
-          at that price.
-        </label>
-      </div>
-
-      <div class="form-group mb16">
-        <label for="audio-assistant-source"
-          ><i class="icon-music-note mr8"></i> Alert sound</label
-        >
-        <button
-          class="btn -file -blue -large -cases"
-          @change="handleAlertSoundFile"
-        >
-          <i class="icon-upload mr8"></i> {{ alertSound || 'Browse' }}
-          <i
-            v-if="alertSound"
-            class="icon-cross mr8 btn__suffix"
-            @click.stop.prevent="removeAlertSound"
-          ></i>
-          <input type="file" accept="audio/*" />
-        </button>
+          <button
+            class="btn -file -blue -large -cases"
+            @change="handleAlertSoundFile"
+          >
+            <i class="icon-upload mr8"></i> {{ alertSound || 'Browse' }}
+            <i
+              v-if="alertSound"
+              class="icon-cross mr8 btn__suffix"
+              @click.stop.prevent="removeAlertSound"
+            ></i>
+            <input type="file" accept="audio/*" />
+          </button>
+        </div>
       </div>
 
       <template #off>

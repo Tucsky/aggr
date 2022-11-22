@@ -36,10 +36,12 @@
       <slider
         class="color-picker-sliders__alpha -alpha"
         :gradient="[
-          `rgba(${colors.rgb.r * 255}, ${colors.rgb.g * 255}, ${colors.rgb.b *
-            255}, 0)`,
-          `rgba(${colors.rgb.r * 255}, ${colors.rgb.g * 255}, ${colors.rgb.b *
-            255}, 1)`
+          `rgba(${colors.rgb.r * 255}, ${colors.rgb.g * 255}, ${
+            colors.rgb.b * 255
+          }, 0)`,
+          `rgba(${colors.rgb.r * 255}, ${colors.rgb.g * 255}, ${
+            colors.rgb.b * 255
+          }, 1)`
         ]"
         :min="0"
         :max="1"
@@ -104,7 +106,7 @@
           v-for="clr in recentColors"
           :key="clr"
           :style="`color: ${clr}`"
-          @click.prevent="setColorFromProp(clr)"
+          @click.prevent="selectRecentColor($event, clr)"
         >
         </a>
       </div>
@@ -199,7 +201,9 @@ export default {
   },
   created() {
     workspacesService.getColors().then(colors => {
-      Array.prototype.push.apply(this.recentColors, colors)
+      for (const color of colors) {
+        this.recentColors.push(color)
+      }
     })
 
     if (this.value && typeof this.value === 'string') {
@@ -437,6 +441,19 @@ export default {
     },
     setNull() {
       this.setColorFromProp('rgba(0,0,0,0)')
+    },
+    selectRecentColor(event, color) {
+      if (event.shiftKey) {
+        const index = this.recentColors.indexOf(color)
+
+        if (index !== -1) {
+          workspacesService.removeColor(this.recentColors.splice(index, 1)[0])
+        }
+
+        return
+      }
+
+      setColorFromProp(color)
     }
   }
 }

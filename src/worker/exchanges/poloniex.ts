@@ -4,17 +4,15 @@ export default class extends Exchange {
   id = 'POLONIEX'
 
   protected endpoints = {
-    PRODUCTS: 'https://www.poloniex.com/public?command=returnTicker'
+    PRODUCTS: 'https://api.poloniex.com/markets'
   }
 
-  private channels: { [id: string]: string } = {}
-
-  getUrl() {
-    return 'wss://api2.poloniex.com/'
+  async getUrl() {
+    return 'wss://ws.poloniex.com/ws/public'
   }
 
   formatProducts(data) {
-    return Object.keys(data)
+    return data.map(product => product.symbol)
   }
 
   /**
@@ -29,8 +27,9 @@ export default class extends Exchange {
 
     api.send(
       JSON.stringify({
-        command: 'subscribe',
-        channel: pair
+        event: 'subscribe',
+        channel: ['trades'],
+        symbols: [pair]
       })
     )
 
@@ -49,39 +48,36 @@ export default class extends Exchange {
 
     api.send(
       JSON.stringify({
-        command: 'unsubscribe',
-        channel: pair
+        event: 'unsubscribe',
+        channel: ['trades'],
+        symbols: [pair]
       })
     )
 
     return true
   }
 
+  formatTrade(trade) {
+    return {
+      exchange: this.id,
+      pair: trade.symbol,
+      timestamp: trade.createTime,
+      price: +trade.price,
+      size: trade.amount / trade.price,
+      side: trade.takerSide
+    }
+  }
+
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
-    if (!json || json.length !== 3) {
+    if (!json || !json.data) {
       return
     }
 
-    if (json[2] && json[2].length) {
-      if (json[2][0][0] === 'i') {
-        this.channels[json[0]] = json[2][0][1].currencyPair
-      } else {
-        return this.emitTrades(
-          api.id,
-          json[2]
-            .filter(result => result[0] === 't')
-            .map(trade => ({
-              exchange: this.id,
-              pair: this.channels[json[0]],
-              timestamp: +new Date(trade[5] * 1000),
-              price: +trade[3],
-              size: +trade[4],
-              side: trade[2] ? 'buy' : 'sell'
-            }))
-        )
-      }
-    }
+    return this.emitTrades(
+      api.id,
+      json.data.map(trade => this.formatTrade(trade))
+    )
   }
 }

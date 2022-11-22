@@ -15,7 +15,7 @@ export default class extends Exchange {
     ]
   }
 
-  getUrl(pair: string) {
+  async getUrl(pair: string) {
     if (this.dapi[pair]) {
       return 'wss://dstream.binance.com/ws'
     } else {

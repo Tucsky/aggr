@@ -10,7 +10,7 @@ export default class extends Exchange {
   protected maxConnectionsPerApi = 100
   protected delayBetweenMessages = 250
 
-  getUrl() {
+  async getUrl() {
     return `wss://stream.binance.com:9443/ws`
   }
 

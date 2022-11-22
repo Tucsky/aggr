@@ -14,7 +14,7 @@ export default class extends Exchange {
     ]
   }
 
-  getUrl() {
+  async getUrl() {
     return `wss://www.deribit.com/ws/api/v2`
   }
 

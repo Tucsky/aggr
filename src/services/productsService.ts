@@ -6,10 +6,9 @@ import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
 const baseQuoteLookupKnown = new RegExp(
-  `^([A-Z0-9]{3,})[-/:]?(USDT|USDC|TUSD|BUSD)$|^([A-Z0-9]{2,})[-/:]?(UST|EUR|USD)$`
+  `^([A-Z0-9]{3,})[-/:_]?(USDT|USDC|TUSD|BUSD)$|^([A-Z0-9]{2,})[-/:]?(UST|EUR|USD)$`
 )
-const baseQuoteLookupOthers = new RegExp(`^([A-Z0-9]{2,})[-/]?([A-Z0-9]{3,})$`)
-const baseQuoteLookupPoloniex = new RegExp(`^(.*)_(.*)$`)
+const baseQuoteLookupOthers = new RegExp(`^([A-Z0-9]{2,})[-/_]?([A-Z0-9]{3,})$`)
 
 const promisesOfProducts = {}
 
@@ -294,23 +293,13 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   let localSymbolAlpha = localSymbol.replace(/[-_/:]/, '')
 
   let match
+  if (exchangeId === 'POLONIEX' && symbol === 'BTC_USDT') {
+    debugger
+  }
+  match = localSymbol.match(baseQuoteLookupKnown)
 
-  if (exchangeId === 'POLONIEX') {
-    match = symbol.match(baseQuoteLookupPoloniex)
-
-    if (match) {
-      match[0] = match[2]
-      match[2] = match[1]
-      match[1] = match[0]
-
-      localSymbolAlpha = match[1] + match[2]
-    }
-  } else {
-    match = localSymbol.match(baseQuoteLookupKnown)
-
-    if (!match) {
-      match = localSymbolAlpha.match(baseQuoteLookupOthers)
-    }
+  if (!match) {
+    match = localSymbolAlpha.match(baseQuoteLookupOthers)
   }
 
   if (

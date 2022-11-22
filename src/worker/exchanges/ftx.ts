@@ -5,7 +5,7 @@ export default class extends Exchange {
   id = 'FTX'
   protected endpoints = { PRODUCTS: 'https://ftx.com/api/markets' }
 
-  getUrl() {
+  async getUrl() {
     return `wss://ftx.com/ws/`
   }
 

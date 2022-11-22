@@ -6,7 +6,7 @@ export default class extends Exchange {
   protected endpoints = {}
   products = ['SENTIMENT']
 
-  getUrl() {
+  async getUrl() {
     return `wss://sentiment.aggr.trade`
   }
 
@@ -23,7 +23,7 @@ export default class extends Exchange {
     api.send(
       JSON.stringify({
         op: 'SUBSCRIBE',
-        channel: pair,
+        channel: pair
       })
     )
 
@@ -43,7 +43,7 @@ export default class extends Exchange {
     api.send(
       JSON.stringify({
         op: 'UNSUBSCRIBE',
-        channel: pair,
+        channel: pair
       })
     )
 

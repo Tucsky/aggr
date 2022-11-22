@@ -108,7 +108,7 @@ class Exchange extends EventEmitter {
    * Get exchange ws url
    */
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  getUrl(pair: string): string {
+  getUrl(pair: string): Promise<string> {
     throw new Error('Not implemented')
   }
 
@@ -129,13 +129,13 @@ class Exchange extends EventEmitter {
     this.resolveApi(pair)
   }
 
-  resolveApi(pair) {
-    const url = this.getUrl(pair)
+  async resolveApi(pair) {
+    const url = await this.getUrl(pair)
 
     let api = this.getActiveApiByUrl(url)
 
     if (!api) {
-      api = this.createWs(pair)
+      api = this.createWs(url, pair)
     }
 
     if (api._pending.indexOf(pair) !== -1) {
@@ -167,9 +167,7 @@ class Exchange extends EventEmitter {
     return api
   }
 
-  createWs(pair) {
-    const url = this.getUrl(pair)
-
+  createWs(url, pair) {
     const api = new WebSocket(url) as Api
     api._id = randomString()
 
@@ -667,6 +665,7 @@ class Exchange extends EventEmitter {
   startKeepAlive(
     api,
     payload: {
+      type?: string
       event?: string
       op?: string
       method?: string

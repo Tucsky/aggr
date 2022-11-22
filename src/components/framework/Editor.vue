@@ -47,6 +47,7 @@ export default class extends Vue {
       showFoldWidgets: true,
       showGutter: true,
       showLineNumbers: true,
+      showPrintMargin: false,
       tabSize: 2
     }
 
@@ -64,23 +65,23 @@ export default class extends Vue {
     this.editorInstance.setOption('fontSize', this.fontSize)
   }
 
+  @Watch('value')
+  onValueChange(value) {
+    this.editorInstance.setValue(value)
+  }
+
   mounted() {
     this.editorInstance = ace.edit(this.$el, this.options)
 
     this.editorInstance.setKeyboardHandler('ace/keyboard/vscode')
 
     this.editorInstance.on('blur', () => {
-      this.$emit('blur')
+      this.$emit('blur', this.editorInstance.getValue())
     })
 
     this.editorInstance.on('change', () => {
       this.$emit('input', this.editorInstance.getValue())
     })
-
-    this.editorInstance.session.on('changeMode', () => {
-      this.editorInstance.session.setOption('useWorker', false)
-    })
-    ;(window as any).editorI = this.editorInstance
   }
 
   beforeDestroy() {
@@ -94,11 +95,28 @@ export default class extends Vue {
 </script>
 
 <style lang="scss">
+#app.-light .editor {
+  .ace_content {
+    background: 0;
+  }
+
+  .ace_marker-layer .ace_active-line,
+  .ace_gutter-active-line {
+    background-color: rgba(black, 0.1);
+  }
+
+  .ace_gutter {
+    background-color: var(--theme-background-200);
+    color: var(--theme-color-o50);
+  }
+}
+
 .editor {
   width: 100%;
   height: 100%;
   min-height: 50px;
   background: 0;
+  color: var(--theme-color-300);
 
   .ace_scrollbar::-webkit-scrollbar-track {
     background: 0;
@@ -120,6 +138,15 @@ export default class extends Vue {
 
   .ace_content {
     background-color: rgba(black, 0.1);
+  }
+
+  .ace_marker-layer .ace_active-line,
+  .ace_gutter-active-line {
+    background-color: rgba(black, 0.1);
+  }
+
+  .ace_marker-layer .ace_selection {
+    background-color: var(--theme-background-200);
   }
 }
 </style>

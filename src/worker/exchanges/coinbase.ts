@@ -5,7 +5,7 @@ export default class extends Exchange {
 
   protected endpoints = { PRODUCTS: 'https://api.pro.coinbase.com/products' }
 
-  getUrl() {
+  async getUrl() {
     return 'wss://ws-feed.pro.coinbase.com/'
   }
 

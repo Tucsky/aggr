@@ -9,7 +9,7 @@ export default class extends Exchange {
     PRODUCTS: 'https://api.binance.us/api/v3/exchangeInfo'
   }
 
-  getUrl() {
+  async getUrl() {
     return `wss://stream.binance.us:9443/ws`
   }
 

@@ -16,6 +16,7 @@ import BITFINEX from './BITFINEX.svg'
 import DYDX from './DYDX.svg'
 import KRAKEN from './KRAKEN.svg'
 import UNISWAP from './UNISWAP.svg'
+import KUCOIN from './KUCOIN.svg'
 
 export default {
   BINANCE,
@@ -35,5 +36,6 @@ export default {
   BITFINEX,
   DYDX,
   KRAKEN,
-  UNISWAP
+  UNISWAP,
+  KUCOIN
 }

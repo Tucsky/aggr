@@ -6,7 +6,7 @@ export default class extends Exchange {
     PRODUCTS: 'https://api.hitbtc.com/api/2/public/symbol'
   }
 
-  getUrl() {
+  async getUrl() {
     return 'wss://api.hitbtc.com/api/2/ws'
   }
 

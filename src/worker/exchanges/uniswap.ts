@@ -43,7 +43,7 @@ export default class extends Exchange {
   private refreshingPools = false
   private refreshIndex = 0
 
-  getUrl() {
+  async getUrl() {
     return null
   }
 

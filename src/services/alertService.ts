@@ -50,7 +50,9 @@ class AlertService {
       // recover recent triggers
       navigator.serviceWorker.ready.then(async registration => {
         await this.markAlertsAsTriggered(
-          (await registration.getNotifications()).map(notification => ({
+          (
+            await registration.getNotifications()
+          ).map(notification => ({
             price: notification.data.price,
             market: notification.data.market
           }))

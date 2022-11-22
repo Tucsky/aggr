@@ -9,7 +9,7 @@ export default class extends Exchange {
     ]
   }
 
-  getUrl(pair) {
+  async getUrl(pair) {
     if (/-SPOT$/.test(pair)) {
       return 'wss://stream.bybit.com/spot/quote/ws/v2'
     }

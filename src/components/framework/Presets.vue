@@ -10,17 +10,21 @@
       @input="$event ? bindPaste : unbindPaste"
     >
       <div class="d-flex btn-group" @click.stop>
-        <div class="btn -green" @click="savePreset()">
+        <div class="btn -text" @click="savePreset()">
           <i class="icon-plus mr8"></i>
           <small>new</small>
         </div>
-        <div class="btn -blue -file">
-          <i class="icon-upload mr8"></i>
+        <div class="btn -text -file">
+          <i class="icon-download mr8"></i>
           <small>import</small>
           <input type="file" @change="handleFile" title="Browse" />
         </div>
         <div class="-fill"></div>
-        <div class="btn -red flex-grow-1 flex-right" @click="applyDefault">
+        <div
+          class="btn -red flex-grow-1 flex-right"
+          @click="applyDefault"
+          v-if="showReset"
+        >
           <i class="icon-eraser mr8"></i>
           <small>Reset</small>
         </div>
@@ -70,6 +74,10 @@ import PresetDialog from '../settings/PresetDialog.vue'
     },
     label: {
       default: 'Presets'
+    },
+    showReset: {
+      type: Boolean,
+      default: true
     }
   }
 })
@@ -136,7 +144,11 @@ export default class extends Vue {
     const isOverride = !!name
 
     if (!name || typeof name !== 'string') {
-      name = await dialogService.prompt('Enter a name')
+      name = await dialogService.prompt({
+        action: 'Enter a name',
+        question: 'Create a preset with current settings',
+        submitLabel: 'Create'
+      })
     } else if (
       !(await dialogService.confirm(
         `Override preset ${name} with current settings ?`

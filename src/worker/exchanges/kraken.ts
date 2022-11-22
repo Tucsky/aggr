@@ -11,7 +11,7 @@ export default class extends Exchange {
     ]
   }
 
-  getUrl(pair: string) {
+  async getUrl(pair: string) {
     if (typeof this.specs[pair] !== 'undefined') {
       return 'wss://futures.kraken.com/ws/v1'
     } else {

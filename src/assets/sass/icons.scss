@@ -38,6 +38,10 @@ $iconpath: '../fonts';
   &.-small {
     font-size: 0.75em;
   }
+
+  &.-inline {
+    line-height: 1.4;
+  }
 }
 
 .icon-bitcoin {
@@ -498,5 +502,10 @@ $iconpath: '../fonts';
 .icon-UNISWAP {
   &:before {
     content: $icon-UNISWAP;
+  }
+}
+.icon-KUCOIN {
+  &:before {
+    content: $icon-KUCOIN;
   }
 }

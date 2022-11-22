@@ -60,6 +60,7 @@ class Aggregator {
   bindTradesEvent() {
     for (const exchange of exchanges) {
       exchange.off('trades')
+      exchange.off('liquidations')
 
       if (this.settings.aggregationLength > 0) {
         exchange.on('trades', this.aggregateTrades.bind(this))
@@ -282,7 +283,7 @@ class Aggregator {
       }
 
       trade.count = 1
-      this.aggregationTimeouts[tradeKey] = now + 50
+      this.aggregationTimeouts[tradeKey] = now + this.baseAggregationTimeout
       this.onGoingAggregations[tradeKey] = trade
     }
   }
@@ -795,7 +796,7 @@ class Aggregator {
     this.settings[key] = value
 
     if (key === 'aggregationLength') {
-      this.baseAggregationTimeout = Math.max(50, value)
+      this.baseAggregationTimeout = value
       // update trades event handler (if 0 mean simple trade emit else group inc trades)
       this.bindTradesEvent()
     }

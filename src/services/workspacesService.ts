@@ -753,7 +753,11 @@ class WorkspacesService {
     const db = await new Dexie('aggr').open()
     const blob = await exportDB(db, {
       filter: tableName => {
-        if (tableName === 'products' || tableName === 'gifs') {
+        if (
+          tableName === 'products' ||
+          tableName === 'gifs' ||
+          tableName === 'sounds'
+        ) {
           return false
         }
 

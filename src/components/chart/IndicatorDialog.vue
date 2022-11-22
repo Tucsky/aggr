@@ -61,9 +61,9 @@
         <tab name="Script" class="d-flex p-relative editor">
           <editor
             ref="editor"
-            v-model="code"
+            :value="code"
             :font-size="editorFontSize"
-            @blur="updateScript(code)"
+            @blur="updateScript"
           />
           <div class="editor__zoom">
             <div class="btn -text -small" @click="updateEditorFontSize(1)">
@@ -159,10 +159,11 @@
               <input
                 type="text"
                 class="form-control"
-                placeholder="search..."
+                placeholder="search option..."
                 v-model="optionsQuery"
               />
               <button
+                v-if="optionsQuery"
                 type="button"
                 class="btn -text -small"
                 @click="optionsQuery = ''"
@@ -320,6 +321,7 @@
         :adapter="getIndicatorPreset"
         @apply="applyIndicatorPreset($event)"
         label="Presets"
+        :show-reset="false"
       />
       <button class="btn -text -arrow" @click="toggleIndicatorDropdown">
         Options
@@ -493,6 +495,7 @@ export default {
   watch: {
     script: {
       handler(value) {
+        console.log('script change, set code')
         this.code = value
       },
       immediate: true
@@ -541,6 +544,7 @@ export default {
       })
     },
     updateScript(script) {
+      console.log('update script')
       script = script.trim()
 
       this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', {

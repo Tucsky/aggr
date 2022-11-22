@@ -682,8 +682,8 @@ export default class extends Mixins(PaneMixin) {
     this.pxRatio = window.devicePixelRatio || 1
     const zoom = this.$store.state.panes.panes[this.paneId].zoom || 1
 
-    this.logoWidth = window.devicePixelRatio * 14
-    this.abbr = this.$el.clientWidth < 200
+    this.logoWidth = this.pxRatio * 14 * zoom
+    this.abbr = this.$el.clientWidth / zoom < 250
     this.width = canvas.width = this.$el.clientWidth * this.pxRatio
     this.height = canvas.height =
       (this.$el.clientHeight - headerHeight) * this.pxRatio
@@ -756,7 +756,7 @@ export default class extends Mixins(PaneMixin) {
 
     let count = Math.ceil(this.tradesRendering.length * 0.1)
     let i = 0
-    while (count-- && ++i < this.batchSize) {
+    while (count-- && ++i <= this.batchSize) {
       const trade = this.tradesRendering.shift()
       this.renderTrade(trade)
 
@@ -834,7 +834,7 @@ export default class extends Mixins(PaneMixin) {
       this.ctx.fillText(
         `${formatAmount(trade.amount)} ${this.abbr ? 'liqd.' : 'liquidated'} ${
           trade.side === 'buy' ? 'SHORT' : 'LONG'
-        } @${formatMarketPrice(trade.price, market)}`,
+        } @ ${formatMarketPrice(trade.price, market)}`,
         this.width / 2,
         this.lineHeight + height / 2
       )
@@ -997,7 +997,7 @@ export default class extends Mixins(PaneMixin) {
 
       LOGOS[exchange] = canvas
     } else {
-      this.ctx.drawImage(LOGOS[exchange], x, y)
+      this.ctx.drawImage(LOGOS[exchange], x, y, this.logoWidth, this.logoWidth)
     }
   }
 }

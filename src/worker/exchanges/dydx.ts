@@ -6,7 +6,7 @@ export default class extends Exchange {
 
   protected endpoints = { PRODUCTS: 'https://api.dydx.exchange/v3/markets' }
 
-  getUrl() {
+  async getUrl() {
     return `wss://api.dydx.exchange/v3/ws`
   }
 

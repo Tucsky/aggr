@@ -116,7 +116,7 @@
                   type="checkbox"
                   class="form-control"
                   :checked="searchExchanges[id] !== false"
-                  @change="$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', id)"
+                  @click="toggleExchange($event, id)"
                 />
                 <div :class="'icon-' + id"></div>
                 <span>
@@ -909,8 +909,16 @@ export default {
     toggleType(key) {
       this.$store.commit('settings/TOGGLE_SEARCH_TYPE', key)
     },
-    toggleExchange(key) {
-      this.$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', key)
+    toggleExchange(event, id) {
+      if (event.shiftKey) {
+        this.toggleAll(false)
+
+        if (!event.target.checked) {
+          event.target.checked = true
+        }
+      }
+
+      this.$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', id)
     },
 
     clearSelection() {
@@ -1124,7 +1132,7 @@ export default {
     .section {
       background: 0;
 
-      &__title:first-child {
+      &:not(:last-child) .section__title:first-child {
         padding-bottom: 0;
       }
     }

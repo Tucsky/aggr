@@ -10,7 +10,7 @@ export default class extends Exchange {
     PRODUCTS: 'https://www.bitmex.com/api/v1/instrument/active'
   }
 
-  getUrl() {
+  async getUrl() {
     return `wss://www.bitmex.com/realtime`
   }
 

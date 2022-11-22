@@ -7,7 +7,7 @@ export default class extends Exchange {
   private prices = {}
   protected endpoints = { PRODUCTS: 'https://api.bitfinex.com/v1/symbols' }
 
-  getUrl() {
+  async getUrl() {
     return 'wss://api-pub.bitfinex.com/ws/2/'
   }
 

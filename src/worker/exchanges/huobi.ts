@@ -26,7 +26,7 @@ export default class extends Exchange {
   private specs: { [pair: string]: number } = {}
   private prices: { [pair: string]: number } = {}
 
-  getUrl(pair: string) {
+  async getUrl(pair: string) {
     if (this.types[pair] === 'futures') {
       return 'wss://www.hbdm.com/ws'
     } else if (this.types[pair] === 'swap') {

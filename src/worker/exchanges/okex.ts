@@ -13,7 +13,7 @@ export default class extends Exchange {
     ]
   }
 
-  getUrl() {
+  async getUrl() {
     return 'wss://ws.okex.com:8443/ws/v5/public'
   }
 

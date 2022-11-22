@@ -3,7 +3,7 @@
     <template v-slot:header>
       <div class="title">{{ action }}</div>
     </template>
-    <p class="mx0" v-if="question">{{ question }}</p>
+    <p class="mt0 mb8" v-if="question">{{ question }}</p>
     <form @submit.prevent="submit">
       <div class="form-group">
         <label v-if="label">{{ label }}</label>
