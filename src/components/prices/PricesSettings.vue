@@ -1,88 +1,121 @@
 <template>
   <div>
-    <div class="form-group mb8">
-      <label
-        class="checkbox-control"
-        v-tippy="{ placement: 'left' }"
-        title="ex: BTC-USD"
-      >
-        <input
-          type="checkbox"
-          class="form-control"
-          :checked="showPairs"
-          @change="$store.commit(paneId + '/TOGGLE_PAIRS')"
-        />
-        <div></div>
-        <span>Symbols</span>
-      </label>
-    </div>
+    <section class="section">
+      <div v-if="sections.indexOf('display') > -1">
+        <div class="form-group mb8">
+          <label class="checkbox-control">
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="showExchange"
+              @change="$store.commit(paneId + '/TOGGLE_EXCHANGE')"
+            />
+            <div></div>
+            <span>Logos</span>
+          </label>
+        </div>
 
-    <div class="form-group mb8">
-      <label class="checkbox-control">
-        <input
-          type="checkbox"
-          class="form-control"
-          :checked="showVolume"
-          @change="$store.commit(paneId + '/TOGGLE_VOLUME')"
-        />
-        <div></div>
-        <span>Volume</span>
-      </label>
-    </div>
+        <div class="form-group mb8">
+          <label
+            class="checkbox-control"
+            v-tippy="{ placement: 'left' }"
+            title="ex: BTC-USD"
+          >
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="showPairs"
+              @change="$store.commit(paneId + '/TOGGLE_PAIRS')"
+            />
+            <div></div>
+            <span>Symbols</span>
+          </label>
+        </div>
 
-    <div class="form-group mb8">
-      <label class="checkbox-control">
-        <input
-          type="checkbox"
-          class="form-control"
-          :checked="showVolumeDelta"
-          @change="$store.commit(paneId + '/TOGGLE_VOLUME_DELTA')"
-        />
-        <div></div>
-        <span>Volume Δ</span>
-      </label>
-    </div>
+        <div class="form-group mb8">
+          <label class="checkbox-control">
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="showVolume"
+              @change="$store.commit(paneId + '/TOGGLE_VOLUME')"
+            />
+            <div></div>
+            <span>Volume</span>
+          </label>
+        </div>
 
-    <div class="form-group mb8">
-      <label class="checkbox-control">
-        <input
-          type="checkbox"
-          class="form-control"
-          :checked="showPrice"
-          @change="$store.commit(paneId + '/TOGGLE_PRICE')"
-        />
-        <div></div>
-        <span>Price</span>
-      </label>
-    </div>
+        <div class="form-group mb8">
+          <label class="checkbox-control">
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="showVolumeDelta"
+              @change="$store.commit(paneId + '/TOGGLE_VOLUME_DELTA')"
+            />
+            <div></div>
+            <span>Volume Δ</span>
+          </label>
+        </div>
 
-    <div class="form-group mb8">
-      <label class="checkbox-control">
-        <input
-          type="checkbox"
-          class="form-control"
-          :checked="showChange"
-          @change="$store.commit(paneId + '/TOGGLE_CHANGE')"
-        />
-        <div></div>
-        <span>Change %</span>
-      </label>
-    </div>
+        <div class="form-group mb8">
+          <label class="checkbox-control">
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="showPrice"
+              @change="$store.commit(paneId + '/TOGGLE_PRICE')"
+            />
+            <div></div>
+            <span>Price</span>
+          </label>
+        </div>
 
-    <div class="form-group mb8">
-      <label class="checkbox-control">
-        <input
-          type="checkbox"
-          class="form-control"
-          :checked="animateSort"
-          @change="$store.commit(paneId + '/TOGGLE_SORT_ANIMATION')"
-        />
-        <div></div>
-        <span>Animation</span>
-      </label>
-    </div>
+        <div class="form-group mb8">
+          <label class="checkbox-control">
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="showChange"
+              @change="$store.commit(paneId + '/TOGGLE_CHANGE')"
+            />
+            <div></div>
+            <span>Change %</span>
+          </label>
+        </div>
 
-    <div class="form-group mb8">
+        <div class="form-group mb8">
+          <label class="checkbox-control">
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="animateSort"
+              @change="$store.commit(paneId + '/TOGGLE_SORT_ANIMATION')"
+            />
+            <div></div>
+            <span>Animation</span>
+          </label>
+        </div>
+
+        <div class="form-group mb8">
+          <label class="checkbox-control">
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="animateSort"
+              @change="$store.commit(paneId + '/TOGGLE_SORT_ANIMATION')"
+            />
+            <div></div>
+            <span>Animation</span>
+          </label>
+        </div>
+      </div>
+      <div class="section__title" @click="toggleSection('display')">
+        Columns <i class="icon-up-thin"></i>
+      </div>
+    </section>
+
+    <div class="form-group mb16 mt16">
       <label
         >Period
         <span
@@ -107,7 +140,7 @@
       ></dropdown-button>
     </div>
 
-    <div class="form-group mb8">
+    <div class="form-group mb16">
       <label>Sort by</label>
       <div class="column">
         <prices-sort-dropdown
@@ -152,6 +185,11 @@ import DropdownButton from '@/components/framework/DropdownButton.vue'
 })
 export default class extends Vue {
   paneId: string
+  sections = []
+
+  get showExchange() {
+    return this.$store.state[this.paneId].showExchange
+  }
 
   get showPairs() {
     return this.$store.state[this.paneId].showPairs
@@ -189,12 +227,26 @@ export default class extends Vue {
     return this.$store.state[this.paneId].sortOrder
   }
 
+  get volumeFilter() {
+    return this.$store.state[this.paneId].volumeFilter
+  }
+
   selectSortType(option) {
     if (option === this.sortType) {
       this.$store.commit(this.paneId + '/TOGGLE_SORT_ORDER')
     }
 
     this.$store.commit(this.paneId + '/SET_SORT_TYPE', option)
+  }
+
+  toggleSection(id) {
+    const index = this.sections.indexOf(id)
+
+    if (index === -1) {
+      this.sections.push(id)
+    } else {
+      this.sections.splice(index, 1)
+    }
   }
 }
 </script>

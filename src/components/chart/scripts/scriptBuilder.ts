@@ -1,23 +1,22 @@
-import seriesUtils from './serieUtils'
-
-import {
-  IndicatorRealtimeAdapter,
-  IndicatorTranspilationResult,
-  IndicatorPlot,
-  IndicatorVariable,
-  IndicatorFunction,
-  LoadedIndicator,
-  IndicatorReference,
-  IndicatorMarkets
-} from './chart'
-import store from '@/store'
 import {
   findClosingBracketMatchIndex,
   parseFunctionArguments,
   randomString,
   uniqueName
 } from '@/utils/helpers'
-import { plotTypesMap } from './options'
+import { IndicatorSettings } from '../../../store/panesSettings/chart'
+import { plotTypesMap } from '../chartOptions'
+import {
+  BuildedIndicator,
+  IndicatorFunction,
+  IndicatorMarkets,
+  IndicatorMetadata,
+  IndicatorPlot,
+  IndicatorRealtimeAdapter,
+  IndicatorVariable,
+  RendererIndicatorData
+} from '../controller/types'
+import scriptUtils from './scriptUtils'
 const SERIE_UPDATE_REGEX = /series\[[a-zA-Z0-9+\-$ ]+\]\.update\(/
 const VARIABLES_VAR_NAME = 'vars'
 const FUNCTIONS_VAR_NAME = 'fns'
@@ -31,38 +30,21 @@ const SERIE_TYPES = {
   brokenarea: 'range',
   baseline: 'number'
 }
-export default class SerieBuilder {
-  private paneId: string
-  private markets: string[]
-  private indicatorId: string
-  private serieIndicatorsMap: { [serieId: string]: IndicatorReference }
-
+class SerieBuilder {
   /**
-   * build indicator
+   * build indicator by id - need to pass all indicators of same chart
    * parse variable, functions referenced sources and indicator used in it
    * prepare dedicated state for each variables and functions
-   * @param indicator indicator to build
-   * @param serieIndicatorsMap serieId => { indicatorId, plotIndex } of activated indicators for dependency matching
-   * @param paneId paneId that trigged the build
+   * @param indicators indicators of the chart including the one to build
+   * @param indicatorId id of indicator to build
    * @returns {IndicatorTranspilationResult} build result
    */
-  build(
-    indicator: LoadedIndicator,
-    serieIndicatorsMap: { [serieId: string]: IndicatorReference },
-    paneId: string
-  ) {
-    this.paneId = paneId
-    this.indicatorId = indicator.id
-    this.serieIndicatorsMap = serieIndicatorsMap
-
-    this.markets = []
-    for (const market of store.state.panes.panes[this.paneId].markets) {
-      if (this.markets.indexOf(market) === -1) {
-        this.markets.push(market)
-      }
-    }
-
-    const result = this.parse(indicator.script)
+  build(indicator: IndicatorSettings, otherIndicatorsSeriesIds: string[]) {
+    const result = this.parse(
+      indicator.script,
+      indicator.id,
+      otherIndicatorsSeriesIds
+    )
 
     // guess the initial state of each function/variable in the code
     for (const instruction of result.functions) {
@@ -80,7 +62,8 @@ export default class SerieBuilder {
       variables: result.variables,
       references: result.references,
       markets: result.markets,
-      plots: result.plots
+      plots: result.plots,
+      props: result.props
     }
   }
 
@@ -89,18 +72,24 @@ export default class SerieBuilder {
    * replace 'bar' with renderer.bar
    * replace all data (vbuy, vsell etc) from bar with renderer.bar.*
    * remove spaces (keep new lines)
-   * @param input
+   * @param {string} input
+   * @param {string[]} strings raw texts extracted from indicator script
+   * @param {string[]} props account which reserved data keyword is used (vbuy,vsell etc)
+   * @param {string} indicatorId
    * @returns
    */
-  normalizeInput(input, strings) {
-    input = input.replace(
-      /([^.])?\b(indicatorId)\b/gi,
-      `$1'${this.indicatorId}'`
-    )
+  normalizeInput(input, strings, props, indicatorId: string) {
+    input = input.replace(/([^.])?\b(indicatorId)\b/gi, `$1'${indicatorId}'`)
     input = input.replace(/([^.])?\b(bar)\b/gi, '$1renderer')
     input = input.replace(
       /([^.]|^)\b(vbuy|vsell|cbuy|csell|lbuy|lsell)\b/gi,
-      '$1renderer.bar.$2'
+      (match, $1, $2) => {
+        if (props.indexOf($2) === -1) {
+          props.push($2)
+        }
+
+        return $1 + 'renderer.bar.' + $2
+      }
     )
     input = input.replace(
       /([^.]|^)\b(time)\b([^:])/gi,
@@ -165,24 +154,24 @@ export default class SerieBuilder {
   }
 
   /**
-   * use default state instruction defined in seriesUtils for each functions
+   * use default state instruction defined in scriptUtils for each functions
    * @param instruction
    * @returns void
    */
   determineFunctionState(instruction: IndicatorFunction) {
     if (
-      typeof seriesUtils[instruction.name] &&
-      typeof seriesUtils[instruction.name].state === 'object'
+      typeof scriptUtils[instruction.name] &&
+      typeof scriptUtils[instruction.name].state === 'object'
     ) {
       instruction.state = {}
 
-      for (const prop in seriesUtils[instruction.name].state) {
+      for (const prop in scriptUtils[instruction.name].state) {
         try {
           instruction.state[prop] = JSON.parse(
-            JSON.stringify(seriesUtils[instruction.name].state[prop])
+            JSON.stringify(scriptUtils[instruction.name].state[prop])
           )
         } catch (error) {
-          instruction.state[prop] = seriesUtils[instruction.name].state[prop]
+          instruction.state[prop] = scriptUtils[instruction.name].state[prop]
         }
       }
 
@@ -238,15 +227,20 @@ export default class SerieBuilder {
    * @param input
    * @returns
    */
-  parse(input): IndicatorTranspilationResult {
+  parse(
+    input,
+    indicatorId: string,
+    otherIndicatorsSeriesIds: string[]
+  ): IndicatorMetadata {
     const functions: IndicatorFunction[] = []
     const variables: IndicatorVariable[] = []
-    const plots: IndicatorPlot[] = []
+    const plots: { [id: string]: IndicatorPlot } = {}
     const markets: IndicatorMarkets = {}
-    const references: IndicatorReference[] = []
+    const references: string[] = []
+    const props: string[] = []
     const strings = []
 
-    let output = this.normalizeInput(input, strings)
+    let output = this.normalizeInput(input, strings, props, indicatorId)
 
     output = this.parseVariables(output, variables)
 
@@ -259,8 +253,14 @@ export default class SerieBuilder {
       )
     }
 
-    output = this.parseFunctions(output, functions, plots)
-    output = this.parseReferences(output, references, plots)
+    output = this.parseFunctions(
+      output,
+      functions,
+      plots,
+      indicatorId,
+      otherIndicatorsSeriesIds
+    )
+    output = this.parseReferences(output, references)
 
     output = this.formatOutput(output)
 
@@ -273,7 +273,8 @@ export default class SerieBuilder {
       variables,
       plots,
       markets,
-      references
+      references,
+      props
     }
   }
 
@@ -329,7 +330,8 @@ export default class SerieBuilder {
   }
 
   parseVariables(output, variables): string {
-    const VARIABLE_REGEX = /(?:^|\n)\s*((?:var )?[a-zA-Z0-9_]+)\(?(\d*)\)?\s*=\s*([^\n;,]*)?/
+    const VARIABLE_REGEX =
+      /(?:^|\n)\s*((?:var )?[a-zA-Z0-9_]+)\(?(\d*)\)?\s*=\s*([^\n;,]*)?/
     let variableMatch = null
     let iterations = 0
 
@@ -392,7 +394,13 @@ export default class SerieBuilder {
     return output
   }
 
-  parseSerie(output: string, match: RegExpExecArray, plots: IndicatorPlot[]) {
+  parseSerie(
+    output: string,
+    match: RegExpExecArray,
+    plots: { [plotId: string]: IndicatorPlot },
+    indicatorId: string,
+    otherIndicatorsSeriesIds: string[]
+  ) {
     // absolute serie type eg. plotline -> line)
     const serieType = match[1].replace(/^plot/, '')
 
@@ -439,11 +447,30 @@ export default class SerieBuilder {
       }
     }
 
+    const currentIndicatorSeriesIds = Object.keys(plots)
+
+    let id: string
+
+    if (typeof serieOptions.id === 'string' && serieOptions.id.length) {
+      id = serieOptions.id
+
+      delete serieOptions.id
+    } else if (currentIndicatorSeriesIds.length === 0) {
+      id = indicatorId
+    } else {
+      id = randomString(8)
+    }
+
+    id = uniqueName(
+      id,
+      otherIndicatorsSeriesIds.concat(currentIndicatorSeriesIds)
+    )
+
     // prepare final input that goes in plotline (store it for reference)
-    const pointVariable = `renderer.indicators['${this.indicatorId}'].series[${plots.length}]`
+    const pointVariable = `renderer.series['${id}']`
     let seriePoint = `${pointVariable} = `
 
-    const expectedInput = SERIE_TYPES[serieType]
+    const expectedInput: string = SERIE_TYPES[serieType]
     let timeProperty = `renderer.localTimestamp`
 
     if (serieOptions.offset) {
@@ -491,7 +518,7 @@ export default class SerieBuilder {
     }
 
     // this line will paint the point
-    const serieUpdate = `series[${plots.length}].update(renderer.indicators['${this.indicatorId}'].series[${plots.length}])`
+    const serieUpdate = `series['${id}'].update(renderer.series['${id}'])`
 
     // put everything together
     let finalInstruction = seriePoint + ','
@@ -511,29 +538,13 @@ export default class SerieBuilder {
 
     output = output.replace(rawFunctionInstruction, finalInstruction)
 
-    let id: string
-
-    if (typeof serieOptions.id === 'string' && serieOptions.id.length) {
-      id = serieOptions.id
-
-      delete serieOptions.id
-    } else if (plots.length === 0) {
-      id = this.indicatorId
-    } else {
-      id = randomString(8)
-    }
-
-    const names = Object.keys(this.serieIndicatorsMap).concat(
-      plots.map(plot => plot.id)
-    )
-
     // register plot
-    plots.push({
-      id: uniqueName(id, names),
+    plots[id] = {
+      id,
       type: plotTypesMap[serieType] || serieType,
-      expectedInput: expectedInput,
-      options: serieOptions
-    })
+      options: serieOptions,
+      expectedInput,
+    }
 
     return output
   }
@@ -541,7 +552,9 @@ export default class SerieBuilder {
   parseFunctions(
     output: string,
     instructions: IndicatorFunction[],
-    plots: IndicatorPlot[]
+    plots: { [plotId: string]: IndicatorPlot },
+    indicatorId: string,
+    otherIndicatorsSeriesIds: string[]
   ): string {
     const FUNCTION_LOOKUP_REGEX = new RegExp(`([a-zA-Z0_9_]+)\\(`, 'g')
 
@@ -564,12 +577,18 @@ export default class SerieBuilder {
             functionMatch.index + functionMatch[0].length
 
           if (typeof isSerieFunction === 'string') {
-            output = this.parseSerie(output, functionMatch, plots)
+            output = this.parseSerie(
+              output,
+              functionMatch,
+              plots,
+              indicatorId,
+              otherIndicatorsSeriesIds
+            )
           }
           continue
         }
 
-        const targetFunction = seriesUtils[functionName]
+        const targetFunction = scriptUtils[functionName]
 
         if (!targetFunction) {
           if (/for|if|rgba/i.test(functionName)) {
@@ -649,7 +668,8 @@ export default class SerieBuilder {
   }
 
   parseMarkets(output: string, markets: IndicatorMarkets): string {
-    const EXCHANGE_REGEX = /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{5,})(:[\w]{4,})?\.?([a-z]{3,})?\b/g
+    const EXCHANGE_REGEX =
+      /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{5,})(:[\w]{4,})?\.?([a-z]{3,})?\b/g
 
     let marketMatch = null
     let iterations = 0
@@ -685,11 +705,7 @@ export default class SerieBuilder {
 
     return output
   }
-  parseReferences(
-    output: string,
-    references: IndicatorReference[],
-    plots: IndicatorPlot[]
-  ): string {
+  parseReferences(output: string, references: string[]): string {
     const REFERENCE_REGEX = new RegExp('\\$(\\w+[a-z_\\-0-9]+)\\b')
 
     let referenceMatch = null
@@ -699,75 +715,16 @@ export default class SerieBuilder {
       if ((referenceMatch = REFERENCE_REGEX.exec(output))) {
         const serieId = referenceMatch[1]
 
-        try {
-          const [indicatorId, plotIndex] = this.getSeriePath(serieId, plots)
+        references.push(serieId)
 
-          if (
-            !references.find(
-              reference =>
-                reference.indicatorId === indicatorId &&
-                reference.plotIndex === plotIndex
-            )
-          ) {
-            references.push({
-              indicatorId,
-              serieId,
-              plotIndex
-            })
-          }
-
-          output = output.replace(
-            new RegExp('\\$(' + serieId + ')\\b', 'ig'),
-            `renderer.indicators['${indicatorId}'].series[${plotIndex}]`
-          )
-        } catch (error) {
-          throw {
-            message: `The serie "${serieId}" was not found in the current indicators`,
-            status: 'indicator-required',
-            serieId: serieId
-          }
-        }
+        output = output.replace(
+          new RegExp('\\$(' + serieId + ')\\b', 'ig'),
+          `renderer.series[${serieId}]`
+        )
       }
     } while (referenceMatch && ++iterations < 1000)
 
     return output
-  }
-
-  getSeriePath(serieId: string, plots: IndicatorPlot[]): [string, number] {
-    let indicatorId: string
-    let plotIndex: number
-
-    // see if we can find the serie in the plots that are already processed
-    const reference = plots.find(
-      plot =>
-        plot.id === serieId ||
-        plot.id.replace(/\W/g, '') === serieId.replace(/\W/g, '')
-    )
-
-    if (reference) {
-      indicatorId = this.indicatorId
-      plotIndex = plots.indexOf(reference)
-    }
-
-    // or in the others indicator that are already in
-    if (!indicatorId && this.serieIndicatorsMap[serieId]) {
-      ;({ indicatorId, plotIndex } = this.serieIndicatorsMap[serieId])
-    }
-
-    // or match with indicatorId, taking first serie as result
-    if (
-      !indicatorId &&
-      Object.values(this.serieIndicatorsMap)
-        .map(a => a.indicatorId)
-        .indexOf(serieId) !== -1
-    ) {
-      indicatorId = serieId
-      plotIndex = 0
-    }
-
-    if (indicatorId) {
-      return [indicatorId, plotIndex]
-    }
   }
 
   determineVariablesType(output, variables: IndicatorVariable[]) {
@@ -839,14 +796,14 @@ export default class SerieBuilder {
   }
 
   getAdapter(output) {
-    return (function() {
+    return (function () {
       'use strict'
       return new Function(
         'renderer',
         FUNCTIONS_VAR_NAME,
         VARIABLES_VAR_NAME,
-        'series',
         'options',
+        'series',
         'utils',
         '"use strict"; ' + output
       )
@@ -857,10 +814,10 @@ export default class SerieBuilder {
    * get fresh state of indicator for the renderer
    * @param indicator
    */
-  getRendererIndicatorData(indicator: LoadedIndicator) {
+  getRendererIndicatorData(indicator: BuildedIndicator): RendererIndicatorData {
     const { functions, variables, plots } = JSON.parse(
-      JSON.stringify(indicator.model)
-    ) as IndicatorTranspilationResult
+      JSON.stringify(indicator.meta)
+    ) as IndicatorMetadata
 
     indicator.options.minLength = 0
 
@@ -899,16 +856,16 @@ export default class SerieBuilder {
       )
     }
 
-    const plotsOptions = []
+    const plotsOptions = {}
 
     // update plot options from script input
-    for (const plot of plots) {
-      plotsOptions.push(this.getCustomPlotOptions(indicator, plot))
+    for (const plotId in plots) {
+      plotsOptions[plotId] = this.getCustomPlotOptions(indicator, plots[plotId])
     }
 
     return {
-      canRender: indicator.options.minLength <= 1,
       series: [],
+      canRender: indicator.options.minLength <= 1,
       functions,
       variables,
       plotsOptions,
@@ -934,4 +891,18 @@ export default class SerieBuilder {
 
     return options
   }
+
+  buildSequence(indicators) {
+    // clean
+    for (const indicatorId in indicators) {
+      delete indicators[indicatorId].meta
+    }
+
+    // build
+    for (const indicatorId in indicators) {
+      this.build(indicators, indicatorId)
+    }
+  }
 }
+
+export default new SerieBuilder()

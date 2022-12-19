@@ -294,43 +294,60 @@
           />
         </div>
         <div class="search__results">
-          <div
-            v-if="searchTypes.recent && previousSearchSelections.length"
-            class="search-recent-searches"
-          >
-            <carousel class="search__tags">
-              <button
-                v-for="savedSelection of previousSearchSelections"
-                :key="savedSelection.label"
-                class="btn -pill -small"
-                :title="savedSelection.markets.join(', ')"
-                @click="selectMarkets(savedSelection.markets, $event.shiftKey)"
-              >
-                <span
-                  v-if="savedSelection.count > 1"
-                  class="badge -invert ml8"
-                  v-text="savedSelection.markets.length"
-                ></span>
-                <span>{{ savedSelection.label }}</span>
-              </button>
-            </carousel>
-            <button
-              class="btn -outline search-history__clear"
-              v-tippy
-              title="Clear recent searches<br><i>💡 SHIFT+CLIC to delete 1 item</i>"
-            >
-              <i
-                class="icon-trash -small"
-                @click="$store.commit('settings/CLEAR_SEARCH_HISTORY')"
-              ></i>
-            </button>
-          </div>
           <template v-if="results.length">
             <div v-if="page > 0" class="d-flex mt8">
               <button class="btn -text mlauto switch-page" @click="showLess">
                 ... go page {{ page }}
               </button>
             </div>
+
+            <table
+              class="table mt8 search-recents"
+              v-if="
+                searchTypes.recent &&
+                previousSearchSelections.length &&
+                !query.length
+              "
+            >
+              <thead>
+                <tr>
+                  <th colspan="100%">
+                    Recent search
+                    <button
+                      class="btn -small -text"
+                      @click="toggleType('recent')"
+                    >
+                      <i class="icon-cross"></i>
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="savedSelection of previousSearchSelections"
+                  :key="savedSelection.label"
+                  class="-action"
+                  :title="savedSelection.markets.join(', ')"
+                  @click="
+                    selectMarkets(savedSelection.markets, $event.shiftKey)
+                  "
+                >
+                  <td class="search-recents__label">
+                    {{ savedSelection.label }}
+                    <span
+                      v-if="savedSelection.count > 1"
+                      class="badge -invert ml8"
+                      v-text="savedSelection.markets.length"
+                    ></span>
+                  </td>
+                  <td
+                    class="search-recents__markets table-ellipsis text-nowrap"
+                  >
+                    <small>{{ savedSelection.markets.join(', ') }}</small>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
             <table class="table mt8" v-if="searchTypes.normalize">
               <tbody>
@@ -440,7 +457,7 @@
 <script>
 import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
-import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
+import { copyTextToClipboard } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import {
@@ -450,15 +467,13 @@ import {
   getExchangeSymbols,
   ensureIndexedProducts
 } from '@/services/productsService'
-import Carousel from '@/components/framework/Carousel.vue'
 
 const RESULTS_PER_PAGE = 25
 
 export default {
   mixins: [DialogMixin],
   components: {
-    Dialog,
-    Carousel
+    Dialog
   },
   props: {
     paneId: {
@@ -514,7 +529,7 @@ export default {
       }
     },
     activeMarkets() {
-      return Object.keys(this.$store.state.panes.marketsListeners)
+      return Object.keys(this.$store.state.panes.products)
     },
     paneMarkets() {
       if (!this.paneId) {
@@ -800,13 +815,6 @@ export default {
 
       this.originalSelection = this.selection.slice()
     },
-    containMultipleMarketsConfigurations() {
-      return (
-        Object.keys(this.$store.state.panes.panes)
-          .map(id => getBucketId(this.$store.state.panes.panes[id].markets))
-          .filter((v, i, a) => a.indexOf(v) === i).length > 1
-      )
-    },
     selectPaneMarkets(paneId) {
       const pane = this.otherPanes[paneId]
 
@@ -873,31 +881,16 @@ export default {
         this.$store.dispatch('settings/saveSearchSelection', this.selection)
       }
 
-      if (!this.paneId) {
-        if (
-          this.containMultipleMarketsConfigurations() &&
-          !(await dialogService.confirm(
-            'Are you sure ? Some of the panes are watching specific markets.'
-          ))
-        ) {
-          return
-        }
+      this.loading = true
 
-        this.loading = true
-
-        if (!Object.keys(this.$store.state.panes.panes).length) {
-          await this.$store.dispatch('panes/addPane', { type: 'trades' })
-        }
-
-        await this.$store.dispatch('panes/setMarketsForAll', this.selection)
-      } else {
-        this.loading = true
-
-        await this.$store.dispatch('panes/setMarketsForPane', {
-          id: this.paneId,
-          markets: this.selection
-        })
+      if (!this.paneId && !Object.keys(this.$store.state.panes.panes).length) {
+        await this.$store.dispatch('panes/addPane', { type: 'trades' })
       }
+
+      await this.$store.dispatch('panes/setPanesMarkets', {
+        id: this.paneId,
+        markets: this.selection
+      })
 
       this.loading = false
 
@@ -1090,9 +1083,6 @@ export default {
         title: `Saved ${count} ${exchangeId}'s products`
       })
 
-      await this.$store.dispatch('exchanges/disconnect', exchangeId)
-      await this.$store.dispatch('exchanges/connect', exchangeId)
-
       this._refreshProductsTimeout = setTimeout(() => {
         this._refreshProductsTimeout = null
         this.canRefreshProducts = true
@@ -1202,6 +1192,22 @@ export default {
     }
   }
 
+  &-recents {
+    &__label {
+      min-width: 0;
+      width: 0;
+      white-space: nowrap;
+    }
+
+    &__markets {
+      display: none;
+
+      @media screen and (min-width: 550px) {
+        display: table-cell;
+      }
+    }
+  }
+
   &-selection {
     position: relative;
     min-width: 19rem;
@@ -1228,37 +1234,6 @@ export default {
     }
   }
 
-  &-recent-searches {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: var(--theme-color-o10);
-    margin-top: 0.5rem;
-
-    small {
-      text-transform: uppercase;
-    }
-
-    &__clear {
-      padding: 0;
-      margin: 0.25rem 1rem;
-    }
-
-    .search__tags {
-      padding: 0;
-      max-width: 100%;
-      overflow: hidden;
-      flex-grow: 1;
-      padding: 0.25rem 0.5rem;
-
-      button,
-      button:hover {
-        background: none;
-        border: 1px dashed currentColor;
-        height: 24px;
-      }
-    }
-  }
   .section {
     &__controls {
       top: 0.75rem;

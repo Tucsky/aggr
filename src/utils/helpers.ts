@@ -327,32 +327,13 @@ export function getTimeframeForHuman(timeframe, full?: boolean) {
 
   const normalized = timeframe.toString().trim()
 
-  if (normalized[normalized.length - 1] === 't') {
+  if (/t$/i.test(normalized)) {
     return parseInt(normalized) + ' ticks'
   } else if (!isNaN(normalized) && normalized > 0) {
     return full ? getHmsFull(normalized * 1000) : getHms(normalized * 1000)
   }
 
   return null
-}
-
-export function getScrollParent(node) {
-  if (node == null) {
-    return null
-  }
-
-  if (node.id === 'app') {
-    return node
-  }
-
-  const overflowY = window.getComputedStyle(node).overflowY
-  const isScrollable = overflowY !== 'visible' && overflowY !== 'hidden'
-
-  if (isScrollable && node.scrollHeight > node.clientHeight) {
-    return node
-  } else {
-    return getScrollParent(node.parentNode)
-  }
 }
 
 export function getSiblings(elem) {
@@ -426,7 +407,7 @@ export function handleFetchError(err): void {
   }
 }
 
-export function getApiUrl(path: string): string {
+export function getApiUrl(path = ''): string {
   let base = process.env.VUE_APP_API_URL
 
   if (!/\/$/.test(base)) {

@@ -46,13 +46,16 @@
       class="chart-overlay__title pane-overlay"
       @click="showOverlay = !showOverlay"
     >
-      <div>Sources</div>
-      <button type="button" class="btn badge -outline" @click="searchMarkets">
-        <span class="mr4">&nbsp;{{ visibleMarkets }} </span>|
-        <span>&nbsp;Add</span>
-        <i class="icon-plus -small ml4"></i>
-      </button>
+      <i class="icon-bank"></i>
+      <small class="mr4">&nbsp;{{ visibleMarkets }}</small>
       <i class="icon-up-thin"></i>
+      <button
+        type="button"
+        class="btn badge -outline chart-overlay__add"
+        @click="searchMarkets"
+      >
+        <span>Add</span>
+      </button>
     </div>
   </div>
 </template>

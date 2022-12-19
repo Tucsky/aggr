@@ -28,7 +28,6 @@ $checkerboard: linear-gradient(45deg, $accent 25%, transparent 25%),
 $border-radius-base: 6px;
 $border-radius-small: 3px;
 
-
 $icon-bitcoin: "\e900";
 $icon-btc: "\e901";
 $icon-dollar: "\e902";
@@ -51,15 +50,17 @@ $icon-info: "\e912";
 $icon-resize: "\e913";
 $icon-download: "\e914";
 $icon-external-link-square-alt: "\e915";
+$icon-minus-1: "\e916";
 $icon-upload: "\e917";
 $icon-cross: "\e918";
+$icon-flip: "\e919";
+$icon-switch: "\e91a";
 $icon-KRAKEN: "\e91b";
 $icon-OKEX: "\e91c";
 $icon-down-thin: "\e91d";
 $icon-skull: "\e91e";
 $icon-edit: "\e91f";
 $icon-plus: "\e920";
-$icon-minus: "\e916";
 $icon-POLONIEX: "\e921";
 $icon-visible: "\e922";
 $icon-hidden: "\e923";
@@ -92,6 +93,7 @@ $icon-trash: "\e93d";
 $icon-click: "\e93e";
 $icon-BYBIT: "\e93f";
 $icon-BITSTAMP: "\e940";
+$icon-lab: "\e941";
 $icon-FTX: "\e942";
 $icon-menu: "\e943";
 $icon-stamp: "\e945";
@@ -117,11 +119,10 @@ $icon-save: "\e95b";
 $icon-gauge: "\e95d";
 $icon-DYDX: "\e95e";
 $icon-BINANCE_US: "\e95f";
-$icon-flip: "\e919";
-$icon-switch: "\e91a";
-$icon-lab: "\e941";
 $icon-UNISWAP: "\e944";
 $icon-KUCOIN: "\e946";
+$icon-bank: "\e950";
+$icon-code: "\e952";
 
 $exchanges: (
   'BITMEX': $icon-BITMEX,

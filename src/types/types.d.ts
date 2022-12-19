@@ -1,7 +1,6 @@
-import { PaneType } from '@/store/panes'
-
 export type SlippageMode = false | 'price' | 'bps'
 export type AggregationLength = 0 | 1 | 10 | 100 | 1000
+export type FeedType = 'trades' | 'ticker'
 
 declare module 'test.worker' {
   // You need to change `Worker`, if you specified a different value for the `workerType` option
@@ -28,7 +27,6 @@ export interface AggregatorSettings {
   aggregationLength: AggregationLength
   calculateSlippage?: SlippageMode
   preferQuoteCurrencySize?: boolean
-  buckets?: { [bucketId: string]: string[] }
 }
 
 export interface Market {
@@ -37,7 +35,23 @@ export interface Market {
   pair: string
 }
 
+export interface Ticker {
+  market: string
+  exchange: string
+  pair: string
+  timestamp: number
+  price: number
+  vol?: number
+  vbuy?: number
+  vsell?: number
+  cbuy?: number
+  csell?: number
+  lbuy?: number
+  lsell?: number
+}
+
 export interface Trade {
+  market?: string
   exchange: string
   pair: string
   timestamp: number
@@ -70,7 +84,7 @@ export interface Connection {
   pair: string
   hit: number
   timestamp: number
-  bucket?: Volumes
+  feeds: string[]
 }
 
 export interface ProductsStorage {
@@ -94,11 +108,9 @@ export interface Workspace {
   states: { [id: string]: any }
 }
 
-export type PresetType = ('audio' | 'colors' | 'indicator') | PaneType
-
 export interface Preset {
   name: string
-  type: PresetType
+  type: string
   data: any
   createdAt: number
   updatedAt: number

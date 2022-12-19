@@ -75,9 +75,9 @@ import importService from '@/services/importService'
     Menu,
     Notices,
     Panes
-  },
-  watch: {
-    '$store.state.panes.marketsListeners': function(
+  }
+  /*watch: {
+    '$store.state.panes.subscriptions': function (
       newMarkets,
       previousMarkets
     ) {
@@ -85,7 +85,7 @@ import importService from '@/services/importService'
         this.refreshMainMarkets(newMarkets)
       }
     }
-  }
+  }*/
 })
 export default class extends Vue {
   price: string = null
@@ -156,7 +156,7 @@ export default class extends Vue {
     aggregatorService.on('notice', (notice: Notice) => {
       this.$store.dispatch('app/showNotice', notice)
     })
-    aggregatorService.on('prices', this.updatePrice)
+    aggregatorService.on('ticker', this.updatePrice)
 
     document.addEventListener('keydown', this.onDocumentKeyPress)
     window.addEventListener('blur', this.onBlur)
@@ -205,7 +205,7 @@ export default class extends Vue {
   }
 
   stopUpdatingPrice() {
-    aggregatorService.off('prices', this.updatePrice)
+    aggregatorService.off('ticker', this.updatePrice)
     this.price = null
   }
 
@@ -254,7 +254,7 @@ export default class extends Vue {
 
     if (/^[a-z]$/i.test(event.key)) {
       this.$store.dispatch('app/showSearch')
-    } else if (/^[0-9]$/i.test(event.key)) {
+    } else if (/^[1-9]$/i.test(event.key)) {
       this.$store.dispatch('app/showTimeframe')
     }
   }

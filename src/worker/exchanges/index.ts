@@ -24,12 +24,13 @@ import Kucoin from './kucoin'
 export const exchanges = [
   new Aggr(),
   new Bitmex(),
+  new Binance(),
   new BinanceFutures(),
   new BinanceUs(),
-  new Kraken(),
+  new Bitfinex()
+  /*new Kraken(),
   new Huobi(),
-  new Binance(),
-  new Bitfinex(),
+  new Bitmex(),
   new Bitstamp(),
   new Coinbase(),
   new Hitbtc(),
@@ -41,7 +42,7 @@ export const exchanges = [
   new Phemex(),
   new Dydx(),
   new Uniswap(),
-  new Kucoin()
+  new Kucoin()*/
 ] as Exchange[]
 
 export function getExchangeById(id: string) {

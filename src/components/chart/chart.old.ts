@@ -1,3 +1,5 @@
+/* eslint-disable */
+/* tslint:disable */
 import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
 import {
   getHms,
@@ -12,11 +14,11 @@ import {
   defaultSerieOptions,
   getChartCustomColorsOptions,
   getChartOptions
-} from './options'
+} from './chartOptions'
 import store from '../../store'
 import seriesUtils from './serieUtils'
 import * as TV from 'lightweight-charts'
-import ChartCache, { Chunk } from './cache'
+import ChartCache, { Chunk } from './cache/chartCache'
 import SerieBuilder from './serieBuilder'
 import { MarketAlert, Trade } from '@/types/types'
 import dialogService from '@/services/dialogService'

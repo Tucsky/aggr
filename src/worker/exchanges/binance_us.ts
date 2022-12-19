@@ -19,25 +19,32 @@ export default class extends Exchange {
       .map(product => product.symbol.toLowerCase())
   }
 
+  getChannelPayload(pair: string, name: string) {
+    if (name === 'ticker') {
+      return [pair + '@miniTicker']
+    }
+
+    return [pair + '@trade']
+  }
+
   /**
    * Sub
    * @param {WebSocket} api
-   * @param {string} pair
+   * @param {string} channel
    */
-  async subscribe(api, pair) {
-    if (!(await super.subscribe(api, pair))) {
+  async subscribe(api, channel) {
+    if (!(await super.subscribe(api, channel))) {
       return
     }
 
-    this.subscriptions[pair] = ++this.lastSubscriptionId
+    const [pair, name] = this.parseChannel(channel)
 
-    const params = [pair + '@trade']
+    this.subscriptions[pair] = ++this.lastSubscriptionId
 
     api.send(
       JSON.stringify({
         method: 'SUBSCRIBE',
-        params,
-        id: this.subscriptions[pair]
+        ...this.getChannelPayload(pair, name)
       })
     )
 
@@ -48,22 +55,21 @@ export default class extends Exchange {
   }
 
   /**
-   * Sub
+   * Unsub
    * @param {WebSocket} api
-   * @param {string} pair
+   * @param {string} channel
    */
-  async unsubscribe(api, pair) {
-    if (!(await super.unsubscribe(api, pair))) {
+  async unsubscribe(api, channel) {
+    if (!(await super.unsubscribe(api, channel))) {
       return
     }
 
-    const params = [pair + '@trade']
+    const [pair, name] = this.parseChannel(channel)
 
     api.send(
       JSON.stringify({
         method: 'UNSUBSCRIBE',
-        params,
-        id: this.subscriptions[pair]
+        ...this.getChannelPayload(pair, name)
       })
     )
 
@@ -73,7 +79,7 @@ export default class extends Exchange {
     return new Promise<boolean>(resolve => setTimeout(resolve, 250))
   }
 
-  onMessage(event, api) {
+  onMessage(api, event) {
     const json = JSON.parse(event.data)
 
     if (json.E) {

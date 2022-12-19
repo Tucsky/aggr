@@ -7,7 +7,6 @@
     <div class="d-flex mobile-dir-col-desktop-dir-row">
       <template v-if="indicators.length">
         <div class="form-group">
-          <label>Choose from existing indicator</label>
           <div class="d-flex mb8">
             <input
               type="text"
@@ -15,10 +14,6 @@
               placeholder="search"
               v-model="query"
             />
-            <div
-              v-text="indicators.length"
-              class="-center text-muted ml16"
-            ></div>
           </div>
           <table v-if="filteredIndicators.length" class="table">
             <thead>
@@ -145,22 +140,22 @@ export default {
     dropdownTrigger: null
   }),
   computed: {
-    indicatorId: function() {
+    indicatorId: function () {
       return uniqueName(
         slugify(this.name),
         this.indicators.map(i => i.id)
       )
     },
-    queryFilter: function() {
+    queryFilter: function () {
       return new RegExp(this.query.replace(/\W/, '.*'), 'i')
     },
-    filteredIndicators: function() {
+    filteredIndicators: function () {
       return this.indicators.filter(
         a =>
           this.queryFilter.test(a.name) || this.queryFilter.test(a.displayName)
       )
     },
-    availableScales: function() {
+    availableScales: function () {
       return this.indicators
         .map(s => s.options && s.options.priceScaleId)
         .reduce(
@@ -206,10 +201,7 @@ export default {
         }
 
         this.createIndicator({
-          name: preset.name
-            .split(':')
-            .slice(1)
-            .join(':'),
+          name: preset.name.split(':').slice(1).join(':'),
           script: preset.data.script || '',
           options: preset.data.options || {}
         })

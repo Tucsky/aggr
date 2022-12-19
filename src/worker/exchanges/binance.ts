@@ -2,13 +2,14 @@ import Exchange from '../exchange'
 
 export default class extends Exchange {
   id = 'BINANCE'
-  private lastSubscriptionId = 0
-  private subscriptions = {}
   protected endpoints = {
     PRODUCTS: 'https://api.binance.com/api/v3/exchangeInfo'
   }
   protected maxConnectionsPerApi = 100
   protected delayBetweenMessages = 250
+  private lastSubscriptionId = 0
+  private subscriptions = {}
+  private tickersVolumes: { [pair: string]: number } = {}
 
   async getUrl() {
     return `wss://stream.binance.com:9443/ws`
@@ -20,25 +21,35 @@ export default class extends Exchange {
       .map(product => product.symbol.toLowerCase())
   }
 
+  getChannelPayload(pair: string, name: string) {
+    if (name === 'ticker') {
+      return [pair + '@ticker_1d']
+    } else if (name === 'ticks') {
+      return [pair + '@trade']
+    }
+
+    return [pair + '@aggTrade']
+  }
+
   /**
    * Sub
    * @param {WebSocket} api
-   * @param {string} pair
+   * @param {string} channel
    */
-  async subscribe(api, pair) {
-    if (!(await super.subscribe(api, pair))) {
+  async subscribe(api, channel) {
+    if (!(await super.subscribe(api, channel))) {
       return
     }
 
-    this.subscriptions[pair] = ++this.lastSubscriptionId
+    const [pair, name] = this.parseChannel(channel)
 
-    const params = [pair + '@aggTrade']
+    this.subscriptions[channel] = ++this.lastSubscriptionId
 
     api.send(
       JSON.stringify({
         method: 'SUBSCRIBE',
-        params,
-        id: this.subscriptions[pair]
+        id: this.subscriptions[channel],
+        params: this.getChannelPayload(pair, name)
       })
     )
 
@@ -46,35 +57,55 @@ export default class extends Exchange {
   }
 
   /**
-   * Sub
+   * Unsub
    * @param {WebSocket} api
-   * @param {string} pair
+   * @param {string} channel
    */
-  async unsubscribe(api, pair) {
-    if (!(await super.unsubscribe(api, pair))) {
+  async unsubscribe(api, channel) {
+    if (!(await super.unsubscribe(api, channel))) {
       return
     }
 
-    const params = [pair + '@aggTrade']
+    const [pair, name] = this.parseChannel(channel)
 
     api.send(
       JSON.stringify({
         method: 'UNSUBSCRIBE',
-        params,
-        id: this.subscriptions[pair]
+        id: this.subscriptions[channel],
+        params: this.getChannelPayload(pair, name)
       })
     )
 
-    delete this.subscriptions[pair]
+    delete this.subscriptions[channel]
 
     // BINANCE: WebSocket connections have a limit of 5 incoming messages per second.
     return new Promise<boolean>(resolve => setTimeout(resolve, 250))
   }
 
-  onMessage(event, api) {
+  formatTicker(json) {
+    const output = {
+      exchange: this.id,
+      pair: json.s.toLowerCase(),
+      timestamp: json.E,
+      vol: 0,
+      price: +json.c
+    }
+
+    if (this.tickersVolumes[json.s]) {
+      output.vol = Math.max(0, json.q - this.tickersVolumes[json.s])
+    }
+
+    this.tickersVolumes[json.s] = json.q
+
+    return output
+  }
+
+  onMessage(api, event) {
     const json = JSON.parse(event.data)
 
-    if (json.E) {
+    if (json.e === '1dTicker') {
+      this.emit('ticker', this.formatTicker(json))
+    } else if (json.e === 'aggTrade') {
       return this.emitTrades(api.id, [
         {
           exchange: this.id,
@@ -83,6 +114,17 @@ export default class extends Exchange {
           price: +json.p,
           size: +json.q,
           count: json.l - json.f + 1,
+          side: json.m ? 'sell' : 'buy'
+        }
+      ])
+    } else if (json.e === 'trade') {
+      return this.emitTrades(api.id, [
+        {
+          exchange: this.id,
+          pair: json.s.toLowerCase(),
+          timestamp: json.T,
+          price: +json.p,
+          size: +json.q,
           side: json.m ? 'sell' : 'buy'
         }
       ])

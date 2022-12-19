@@ -74,7 +74,7 @@
           </dropdown>
           <button
             type="button"
-            class="btn -text -large  -cases ml8"
+            class="btn -text -large -cases ml8"
             @click="$refs.createWorkspaceDropdown.toggle($event.currentTarget)"
           >
             <i class="icon-plus mr4"></i>
@@ -119,9 +119,9 @@
                 class="table-input table-ellipsis text-nowrap"
                 :class="[workspace.id === currentWorkspace.id && 'text-bold']"
                 v-text="workspace.name"
-                :title="
-                  `${workspace.name}, created ${ago(workspace.createdAt)} ago`
-                "
+                :title="`${workspace.name}, created ${ago(
+                  workspace.createdAt
+                )} ago`"
                 v-tippy="{ boundary: 'window', placement: 'left' }"
               ></td>
               <td class="table-input table-min">
@@ -610,7 +610,6 @@ export default {
 
       await this.close()
       const workspace = await workspacesService.createWorkspace(name)
-
       await workspacesService.setCurrentWorkspace(workspace)
     },
 

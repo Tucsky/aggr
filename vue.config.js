@@ -4,11 +4,7 @@ const ServiceWorkerWebpackPlugin = require('serviceworker-webpack-plugin')
 const WebpackPwaManifest = require('webpack-pwa-manifest')
 const gitprocess = require('child_process')
 
-const date = new Date(
-  gitprocess
-    .execSync('git log -1 --date=format:"%Y/%m/%d %T" --format="%ad"')
-    .toString()
-)
+const date = new Date()
 process.env.VUE_APP_VERSION = require('./package.json').version
 process.env.VUE_APP_BUILD_DATE =
   date.getDate() +
@@ -22,7 +18,12 @@ fs.readdirSync('./src/worker/exchanges/').forEach(file => {
   }
 })
 
-process.env.VUE_APP_EXCHANGES = exchanges.join(',')
+process.env.VUE_APP_EXCHANGES = [
+  'BINANCE_FUTURES',
+  'BINANCE_US',
+  'BINANCE',
+  'BITFINEX'
+]
 process.env.VUE_APP_PROXY_URL =
   typeof process.env.PROXY_URL !== 'undefined' ? process.env.PROXY_URL : ''
 process.env.VUE_APP_API_URL =

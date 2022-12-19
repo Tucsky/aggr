@@ -4,6 +4,7 @@ export interface PricesPaneState {
   _id?: string
   animateSort?: boolean
   showPairs?: boolean
+  showExchange?: boolean
   showVolume?: boolean
   showVolumeDelta?: boolean
   period?: number
@@ -19,6 +20,7 @@ const getters = {} as GetterTree<PricesPaneState, PricesPaneState>
 
 const state = {
   animateSort: true,
+  showExchange: true,
   showPairs: true,
   showVolume: true,
   showVolumeDelta: true,
@@ -34,6 +36,9 @@ const actions = {} as ActionTree<PricesPaneState, PricesPaneState>
 const mutations = {
   TOGGLE_SORT_ANIMATION(state) {
     state.animateSort = !state.animateSort
+  },
+  TOGGLE_EXCHANGE(state) {
+    state.showExchange = !state.showExchange
   },
   TOGGLE_PAIRS(state) {
     state.showPairs = !state.showPairs

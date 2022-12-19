@@ -58,7 +58,7 @@ export default class extends Vue {
     const mergeUsdt = this.$store.state.settings.searchTypes.mergeUsdt
 
     return this.paneMarkets.reduce((pairs, marketKey) => {
-      const market = this.$store.state.panes.marketsListeners[marketKey]
+      const market = this.$store.state.panes.products[marketKey]
 
       let localPair = market ? market.local : marketKey
 

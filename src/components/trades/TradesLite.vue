@@ -65,6 +65,7 @@ import { Threshold, TradesPaneState } from '../../store/panesSettings/trades'
 import {
   getAppBackgroundColor,
   getColorByWeight,
+  getLinearShade,
   getTextColor,
   joinRgba,
   rgbaToRgb,
@@ -301,7 +302,7 @@ export default class extends Mixins(PaneMixin) {
         side = trades[i].side
       }
 
-      const { background, color, step } = this.getColors(
+      const { background, overlay, color, step } = this.getColors(
         trades[i].amount,
         trades[i].side,
         type
@@ -312,6 +313,7 @@ export default class extends Mixins(PaneMixin) {
       const trade = {
         type,
         background,
+        overlay,
         color,
         step,
         exchange: trades[i].exchange,
@@ -591,6 +593,7 @@ export default class extends Mixins(PaneMixin) {
 
         buy.push({
           background: joinRgba(buyBackground),
+          overlay: joinRgba(getLinearShade(buyBackground, 0.005)),
           color: joinRgba(buyText),
           step: i * GRADIENT_DETAIL + j,
           alpha: `${buyAlphaRange[0].toFixed(1)} to ${buyAlphaRange[1].toFixed(
@@ -611,6 +614,7 @@ export default class extends Mixins(PaneMixin) {
 
         sell.push({
           background: joinRgba(sellBackground),
+          overlay: joinRgba(getLinearShade(sellBackground, 0.005)),
           color: joinRgba(sellText),
           step: i * GRADIENT_DETAIL + j,
           alpha: `${sellAlphaRange[0].toFixed(
@@ -799,11 +803,11 @@ export default class extends Mixins(PaneMixin) {
     this.ctx.fillStyle = trade.background
     this.ctx.fillRect(0, this.lineHeight, this.width, height)
 
-    this.ctx.fillStyle = 'rgba(255,255,255,0.1)'
+    this.ctx.fillStyle = trade.overlay
     this.ctx.fillRect(
       0,
       0,
-      Math.min(1, trade.count / 100) * this.width,
+      Math.min(1, trade.count / this.maxCount) * this.width,
       this.lineHeight + height
     )
 

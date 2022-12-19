@@ -2,6 +2,7 @@
   <dropdown-button
     v-model="sortType"
     :options="['none', 'price', 'volume', 'delta', 'change']"
+    :button-class="buttonClass"
     @input="selectSortType($event)"
   ></dropdown-button>
 </template>
@@ -39,7 +40,7 @@ export default class extends Vue {
 
   selectSortType(option) {
     if (option === this.sortType) {
-      this.$store.commit(this.paneId + '/TOGGLE_SORT_ASC')
+      this.$store.commit(this.paneId + '/TOGGLE_SORT_ORDER')
     }
 
     this.$store.commit(this.paneId + '/SET_SORT_TYPE', option)

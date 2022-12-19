@@ -243,6 +243,10 @@
     margin: 0;
   }
 
+  &__add {
+    padding: 0.125em 0.25em;
+  }
+
   &__title {
     cursor: pointer;
     user-select: none;
@@ -261,6 +265,10 @@
       .icon-up-thin {
         display: inline-block;
         transform: rotateZ(180deg);
+
+        + button {
+          display: none;
+        }
       }
     }
   }

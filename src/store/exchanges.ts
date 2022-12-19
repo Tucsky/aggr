@@ -1,4 +1,3 @@
-import aggregatorService from '@/services/aggregatorService'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
@@ -62,38 +61,10 @@ const actions = {
       rootState.app.activeExchanges[id] = !state[id].disabled
     }
   },
-  async toggleExchange({ commit, state, dispatch }, id: string) {
+  async toggleExchange({ commit }, id: string) {
     commit('TOGGLE_EXCHANGE', id)
-
-    if (state[id].disabled) {
-      await dispatch('disconnect', id)
-    } else {
-      await dispatch('connect', id)
-    }
-
+    await this.dispatch('panes/reviewPanesMarkets')
     this.commit('app/EXCHANGE_UPDATED', id)
-  },
-  async disconnect({ rootState }, id: string) {
-    const exchangeRegex = new RegExp(`^${id}:`, 'i')
-    const markets = Object.keys(rootState.panes.marketsListeners).filter(p =>
-      exchangeRegex.test(p)
-    )
-
-    console.log(
-      `[exchanges.${id}] manually disconnecting ${markets.join(', ')}`
-    )
-
-    await aggregatorService.disconnect(markets)
-  },
-  async connect({ rootState }, id: string) {
-    const exchangeRegex = new RegExp(`^${id}:`, 'i')
-    const markets = Object.keys(rootState.panes.marketsListeners).filter(p =>
-      exchangeRegex.test(p)
-    )
-
-    console.log(`[exchanges.${id}] manually connecting ${markets.join(', ')}`)
-
-    await aggregatorService.connect(markets)
   }
 } as ActionTree<ExchangesState, ModulesState>
 

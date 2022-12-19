@@ -14,7 +14,7 @@ export function randomString(
 }
 
 export function parseMarket(market: string) {
-  return market.match(/([^:]*):(.*)/).slice(1, 3)
+  return market.match(/([^:]*):(.*)\.?(.*)/).slice(1, 4)
 }
 
 export function sleep(duration = 1000): Promise<void> {

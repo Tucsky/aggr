@@ -53,16 +53,16 @@
       />
     </div>
     <div class="chart-overlay__title pane-overlay" @click="toggleOverlay">
-      <span>Indicators</span>
+      <i class="icon-code"></i>
+      <small class="mr4">&nbsp;{{ indicatorCount }}</small>
+      <i class="icon-up-thin"></i>
       <button
         type="button"
-        class="btn badge -outline"
+        class="btn badge -outline chart-overlay__add ml4"
         @click.stop="addIndicator"
       >
-        Add
-        <i class="icon-plus -small ml4"></i>
+        <span>Add</span>
       </button>
-      <i class="icon-up-thin"></i>
     </div>
   </div>
 </template>
@@ -102,6 +102,10 @@ export default class extends Vue {
 
   get indicators() {
     return (this.$store.state[this.paneId] as ChartPaneState).indicators
+  }
+
+  get indicatorCount() {
+    return Object.keys(this.indicators).length
   }
 
   get ids() {

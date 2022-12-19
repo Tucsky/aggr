@@ -114,50 +114,53 @@ class Exchange extends EventEmitter {
 
   /**
    * Link exchange to a pair
-   * @param {*} pair
+   * @param {string} channel aka pair as it is name on the exchange + feed (ex: 'btcusd_perp.ticker')
    * @returns {Promise<WebSocket>}
    */
-  async link(pair) {
-    pair = pair.replace(/[^:]*:/, '')
+  async link(channel: string) {
+    // strip exchange name
+    channel = channel.replace(/[^:]*:/, '')
+
+    // only pair
+    const pair = channel.replace(/\..*/, '')
+    const url = this.getUrl(pair)
 
     if (!this.isMatching(pair)) {
-      return Promise.reject(`${this.id} couldn't match with ${pair}`)
+      return Promise.reject(`${this.id} couldn't match with ${name}`)
     }
 
-    console.debug(`[${this.id}.link] linking ${pair}`)
+    console.debug(`[${this.id}.link] linking ${name}`)
 
-    this.resolveApi(pair)
+    this.resolveApi(channel, url)
   }
 
-  async resolveApi(pair) {
-    const url = await this.getUrl(pair)
-
+  resolveApi(channel, url) {
     let api = this.getActiveApiByUrl(url)
 
     if (!api) {
-      api = this.createWs(url, pair)
+      api = this.createWs(channel, url)
     }
 
-    if (api._pending.indexOf(pair) !== -1) {
+    if (api._pending[channel]) {
       console.warn(
-        `[${this.id}.resolveApi] ${pair}'s api is already connecting to ${pair}`
+        `[${this.id}.resolveApi] ${channel}'s api is already connecting to ${channel}`
       )
       return
     }
 
-    if (api._connected.indexOf(pair) !== -1) {
+    if (api._connected[channel]) {
       console.warn(
-        `[${this.id}.resolveApi] ${pair}'s api is already connected to ${pair}`
+        `[${this.id}.resolveApi] ${channel}'s api is already connected to ${channel}`
       )
       return
     }
 
-    api._pending.push(pair)
+    api._pending.push(channel)
 
     if (api.readyState === WebSocket.OPEN) {
       this.schedule(
         () => {
-          this.subscribePendingPairs(api)
+          this.subscribePendingChannels(api)
         },
         'subscribe-' + api.url,
         1000
@@ -167,12 +170,17 @@ class Exchange extends EventEmitter {
     return api
   }
 
-  createWs(url, pair) {
+  createWs(channel, url) {
     const api = new WebSocket(url) as Api
+    ;(api as any)._send = api.send
+    api.send = payload => {
+      console.log('send', payload, 'to', api.url)
+      ;(api as any)._send(payload)
+    }
     api._id = randomString()
 
     console.debug(
-      `[${this.id}] initiate new ws connection ${url} (${api._id}) for pair ${pair}`
+      `[${this.id}] initiate new ws connection ${url} (${api._id}) for pair ${channel}`
     )
 
     api.binaryType = 'arraybuffer'
@@ -182,13 +190,7 @@ class Exchange extends EventEmitter {
 
     this.apis.push(api)
 
-    api.onmessage = event => {
-      this.count++
-
-      if (this.onMessage(event, api) === true) {
-        api._timestamp = Date.now()
-      }
-    }
+    api.onmessage = this.onMessage.bind(this, api)
 
     api.onopen = event => {
       if (typeof this.scheduledOperationsDelays[url] !== 'undefined') {
@@ -205,7 +207,7 @@ class Exchange extends EventEmitter {
 
       this.markLoadingAsCompleted(this.connecting, api._id, true)
 
-      this.subscribePendingPairs(api)
+      this.subscribePendingChannels(api)
 
       this.onOpen(event, api._connected)
     }
@@ -222,9 +224,9 @@ class Exchange extends EventEmitter {
       // resolve disconnecting (as success)
       this.markLoadingAsCompleted(this.disconnecting, api._id, true)
 
-      const pairsToReconnect = [...api._pending, ...api._connected]
+      const channelsToReconnect = [...api._pending, ...api._connected]
 
-      if (pairsToReconnect.length) {
+      if (channelsToReconnect.length) {
         const pairsToDisconnect = api._connected.slice()
 
         if (pairsToDisconnect.length) {
@@ -236,7 +238,7 @@ class Exchange extends EventEmitter {
         console.error(
           `[${
             this.id
-          }] connection closed unexpectedly, schedule reconnection (${pairsToReconnect.join(
+          }] connection closed unexpectedly, schedule reconnection (${channelsToReconnect.join(
             ','
           )})`
         )
@@ -245,7 +247,7 @@ class Exchange extends EventEmitter {
 
         this.scheduledOperationsDelays[api.url] = this.schedule(
           () => {
-            this.reconnectPairs(pairsToReconnect)
+            this.reconnectChannels(channelsToReconnect)
           },
           api.url,
           500,
@@ -276,48 +278,49 @@ class Exchange extends EventEmitter {
     return api
   }
 
-  async subscribePendingPairs(api) {
+  async subscribePendingChannels(api) {
     console.debug(
-      `[${this.id}.subscribePendingPairs] subscribe to ${
+      `[${this.id}.subscribePendingChannels] subscribe to ${
         api._pending.length
       } pairs of api ${api.url} (${api._pending.join(', ')})`
     )
 
-    const pairsToConnect = api._pending.slice()
+    const channelsToConnect = api._pending.slice()
 
-    for (const pair of pairsToConnect) {
-      await this.subscribe(api, pair)
+    for (const channel of channelsToConnect) {
+      await this.subscribe(api, channel)
     }
   }
 
   /**
    * Unlink a pair
-   * @param {string} pair
+   * @param {string} pair as it is name on the exchange + feed (ex: 'btcusd_perp.ticker')
    * @returns {Promise<void>}
    */
-  async unlink(pair) {
-    pair = pair.replace(/[^:]*:/, '')
+  async unlink(channel: string) {
+    // strip exchange name
+    channel = channel.replace(/[^:]*:/, '')
 
-    const api = this.getActiveApiByPair(pair)
+    const api = this.getActiveApiByChannel(channel)
 
     if (!api) {
       return
     }
 
-    if (api._connected.indexOf(pair) === -1) {
+    if (api._connected.indexOf(channel) === -1) {
       console.debug(
-        `[${this.id}.unlink] "${pair}" does not exist on exchange ${this.id} (resolved immediately)`
+        `[${this.id}.unlink] "${channel}" does not exist on exchange ${this.id} (resolved immediately)`
       )
       return
     }
 
-    console.debug(`[${this.id}.unlink] unlinking ${pair}`)
+    console.debug(`[${this.id}.unlink] unlinking ${channel}`)
 
-    await this.unsubscribe(api, pair)
+    await this.unsubscribe(api, channel)
 
-    if (!api._connected.length) {
+    if (!api._connected.length && !api._pending.length) {
       console.debug(
-        `[${this.id}.unlink] ${pair}'s api is now empty (trigger close api)`
+        `[${this.id}.unlink] ${channel}'s api is now empty (trigger close api)`
       )
       return this.removeWs(api)
     } else {
@@ -326,13 +329,13 @@ class Exchange extends EventEmitter {
   }
 
   /**
-   * Get active websocket api by pair
-   * @param {string} pair
+   * Get active websocket api by channel
+   * @param {string} channel
    * @returns {WebSocket}
    */
-  getActiveApiByPair(pair) {
+  getActiveApiByChannel(channel) {
     for (let i = 0; i < this.apis.length; i++) {
-      if (this.apis[i]._connected.indexOf(pair) !== -1) {
+      if (this.apis[i]._connected.indexOf(channel) !== -1) {
         return this.apis[i]
       }
     }
@@ -346,6 +349,7 @@ class Exchange extends EventEmitter {
   getActiveApiByUrl(url) {
     for (let i = 0; i < this.apis.length; i++) {
       if (
+        this.apis[i].readyState < 2 &&
         this.apis[i].url === url &&
         (!this.maxConnectionsPerApi ||
           this.apis[i]._connected.length + this.apis[i]._pending.length <
@@ -366,7 +370,9 @@ class Exchange extends EventEmitter {
 
     if (api.readyState !== WebSocket.CLOSED) {
       if (api._connected.length) {
-        throw new Error(`Cannot unbind api that still has pairs linked to it`)
+        throw new Error(
+          `Cannot unbind api that still has channel(s) linked to it`
+        )
       }
 
       console.debug(`[${this.id}.removeWs] close api ${api.url}`)
@@ -409,39 +415,43 @@ class Exchange extends EventEmitter {
       )}, _pending: ${api._connected.join(', ')})`
     )
 
-    const pairsToReconnect = [...api._pending, ...api._connected]
+    const channelsToReconnect = [...api._pending, ...api._connected]
 
-    this.reconnectPairs(pairsToReconnect)
+    this.reconnectChannels(channelsToReconnect)
   }
 
   /**
-   * Reconnect pairs
-   * @param {string[]} pairs (local)
+   * Reconnect channels
+   * @param {string[]} channels
    * @returns {Promise<any>}
    */
-  async reconnectPairs(pairs) {
-    const pairsToReconnect = pairs.slice(0, pairs.length)
+  async reconnectChannels(channels) {
+    const channelsToReconnect = channels.slice(0, channels.length)
 
     console.info(
-      `[${this.id}.reconnectPairs] reconnect pairs ${pairsToReconnect.join(
-        ','
-      )}`
+      `[${
+        this.id
+      }.reconnectChannels] reconnect pairs ${channelsToReconnect.join(',')}`
     )
 
-    for (const pair of pairsToReconnect) {
+    for (const channel of channelsToReconnect) {
       console.debug(
-        `[${this.id}.reconnectPairs] unlinking market ${this.id + ':' + pair}`
+        `[${this.id}.reconnectChannels] unlinking market ${
+          this.id + ':' + channel
+        }`
       )
-      await this.unlink(this.id + ':' + pair)
+      await this.unlink(channel)
     }
 
     await new Promise(resolve => setTimeout(resolve, 500))
 
-    for (const pair of pairsToReconnect) {
+    for (const channel of channelsToReconnect) {
       console.debug(
-        `[${this.id}.reconnectPairs] linking market ${this.id + ':' + pair}`
+        `[${this.id}.reconnectChannels] linking market ${
+          this.id + ':' + channel
+        }`
       )
-      await this.link(this.id + ':' + pair)
+      await this.link(this.id + ':' + channel)
     }
   }
 
@@ -507,15 +517,15 @@ class Exchange extends EventEmitter {
     return storage.data
   }
 
-  /**
-   * Fire when a new websocket connection opened
-   * @param {Event} event
-   * @param {string[]} pairs pairs attached to ws at opening
-   */
-  onOpen(event, pairs) {
-    console.debug(`[${this.id}.onOpen] ${pairs.join(',')}'s api connected`)
+  parseChannel(channel: string): string[] {
+    return channel.split('.')
+  }
 
-    this.emit('open', event)
+  getChannelPayload(pair: string, name: string): any {
+    return {
+      channel: name,
+      pair
+    }
   }
 
   /**
@@ -535,22 +545,33 @@ class Exchange extends EventEmitter {
   }
 
   /**
+   * Fire when a new websocket connection opened
+   * @param {Event} event
+   * @param {string[]} channels attached to ws at opening
+   */
+  onOpen(event, channels) {
+    console.debug(`[${this.id}.onOpen] ${channels.join(',')}'s api connected`)
+
+    this.emit('open', event)
+  }
+
+  /**
    * Fire when a new websocket connection received something
    * @param {Event} event
    * @param {WebSocket} api WebSocket instance
    */
-  onMessage(event, api): boolean {
+  onMessage(api, event): boolean {
     throw new Error('Not implemented')
   }
 
   /**
    * Fire when a new websocket connection reported an error
    * @param {Event} event
-   * @param {string[]} pairs
+   * @param {string[]} channels
    */
-  onError(event, pairs) {
+  onError(event, channels) {
     console.debug(
-      `[${this.id}.onError] ${pairs.join(',')}'s api errored`,
+      `[${this.id}.onError] ${channels.join(',')}'s api errored`,
       event
     )
     this.emit('error', event)
@@ -559,10 +580,10 @@ class Exchange extends EventEmitter {
   /**
    * Fire when a new websocket connection closed
    * @param {Event} event
-   * @param {string[]} pairs
+   * @param {string[]} channels
    */
-  onClose(event, pairs) {
-    console.debug(`[${this.id}] ${pairs.join(',')}'s api closed`)
+  onClose(event, channels) {
+    console.debug(`[${this.id}] ${channels.join(',')}'s api closed`)
     this.emit('close', event)
   }
 
@@ -585,18 +606,17 @@ class Exchange extends EventEmitter {
   /**
    * Sub
    * @param {WebSocket} api
-   * @param {string} pair
+   * @param {string} channel
    */
-  async subscribe(api, pair) {
-    if (!this.markPairAsConnected(api, pair)) {
-      // pair is already attached
+  async subscribe(api, channel) {
+    if (!this.markChannelAsConnected(api, channel)) {
+      // channel is already attached
       return false
     }
 
-    this.emit('subscribed', pair, api._reconnecting)
+    this.emit('subscribed', channel, api._reconnecting)
 
     if (api.readyState !== WebSocket.OPEN) {
-      // webSocket is in CLOSING or CLOSED state
       return false
     }
 
@@ -608,17 +628,17 @@ class Exchange extends EventEmitter {
   }
 
   /**
-   * Unsub
+   * UnUnsub
    * @param {WebSocket} api
-   * @param {string} pair
+   * @param {string} channel
    */
-  async unsubscribe(api, pair) {
-    if (!this.markPairAsDisconnected(api, pair)) {
+  async unsubscribe(api, channel) {
+    if (!this.markChannelAsDisconnected(api, channel)) {
       // pair is already detached
       return false
     }
 
-    this.emit('unsubscribed', pair, api._id)
+    this.emit('unsubscribed', channel, api._id)
 
     if (api.readyState !== WebSocket.OPEN) {
       // webSocket is in CLOSING or CLOSED state
@@ -633,7 +653,7 @@ class Exchange extends EventEmitter {
   }
 
   /**
-   * Emit trade to server
+   * Emit trade to aggregator
    * @param {string} source api id
    * @param {Trade[]} trades
    */
@@ -747,41 +767,41 @@ class Exchange extends EventEmitter {
     return currentDelay
   }
 
-  markPairAsConnected(api, pair) {
-    const pendingIndex = api._pending.indexOf(pair)
+  markChannelAsConnected(api, channel) {
+    const pendingIndex = api._pending.indexOf(channel)
 
     if (pendingIndex !== -1) {
       api._pending.splice(pendingIndex, 1)
     } else {
       console.warn(
-        `[${this.id}.markPairAsConnected] ${pair} appears to be NOT connecting anymore (prevent undesired subscription)`
+        `[${this.id}.markChannelAsConnected] ${channel} appears to be NOT connecting anymore (prevent undesired subscription)`
       )
       return false
     }
 
-    const connectedIndex = api._connected.indexOf(pair)
+    const connectedIndex = api._connected.indexOf(channel)
 
     if (connectedIndex !== -1) {
       console.debug(
-        `[${this.id}.markPairAsConnected] ${pair} is already in the _connected list (prevent double subscription)`
+        `[${this.id}.markChannelAsConnected] ${channel} is already in the _connected list (prevent double subscription)`
       )
       return false
     }
 
-    api._connected.push(pair)
+    api._connected.push(channel)
 
     return true
   }
 
-  markPairAsDisconnected(api, pair) {
-    const pendingIndex = api._pending.indexOf(pair)
+  markChannelAsDisconnected(api, channel) {
+    const pendingIndex = api._pending.indexOf(channel)
 
     if (pendingIndex !== -1) {
       // this shouldn't happen most of the time
-      // but unlink(pair) can be called before during a ws.open which is the case we handle here
+      // but unlink(channel) can be called before during a ws.open which is the case we handle here
 
       console.debug(
-        `[${this.id}.markPairAsDisconnected] ${pair} was NOT yet connected to api (prevent unsubscription of non connected pair)`
+        `[${this.id}.markChannelAsDisconnected] ${channel} was NOT yet connected to api (prevent unsubscription of non connected pair)`
       )
 
       api._pending.splice(pendingIndex, 1)
@@ -789,11 +809,11 @@ class Exchange extends EventEmitter {
       return false
     }
 
-    const connectedIndex = api._connected.indexOf(pair)
+    const connectedIndex = api._connected.indexOf(channel)
 
     if (connectedIndex === -1) {
       console.debug(
-        `[${this.id}.markPairAsDisconnected] ${pair} was NOT found in in the _connected list (prevent double unsubscription)`
+        `[${this.id}.markChannelAsDisconnected] ${channel} was NOT found in in the _connected list (prevent double unsubscription)`
       )
       return false
     }

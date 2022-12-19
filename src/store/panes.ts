@@ -1,24 +1,19 @@
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
-import { getBucketId, slugify, uniqueName } from '@/utils/helpers'
+import { slugify, uniqueName } from '@/utils/helpers'
 import { registerModule } from '@/utils/store'
 import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '.'
-import panesSettings from './panesSettings'
+import panesSettings, { PaneType } from './panesSettings'
 import defaultPanes from './defaultPanes.json'
-import { ListenedProduct } from './app'
 import { GRID_COLS } from '@/utils/constants'
-import { getMarketProduct, parseMarket } from '../services/productsService'
+import {
+  getMarketProduct,
+  parseMarket,
+  Product
+} from '../services/productsService'
 
-export type PaneType =
-  | 'trades'
-  | 'chart'
-  | 'stats'
-  | 'counters'
-  | 'prices'
-  | 'website'
-export type MarketsListeners = { [market: string]: ListenedProduct }
 export interface GridItem {
   x?: number
   y?: number
@@ -34,6 +29,7 @@ export interface Pane {
   name: string
   zoom?: number
   markets?: string[]
+  subscriptions?: string[]
   settings?: any
 }
 
@@ -41,7 +37,8 @@ export interface PanesState {
   locked?: boolean
   layout: GridItem[]
   panes: { [paneId: string]: Pane }
-  marketsListeners: MarketsListeners
+  products: { [market: string]: Product }
+  subscriptions: string[]
 }
 
 const layoutDesktop = [
@@ -65,13 +62,7 @@ const actions = {
       dispatch('setupLayout')
     }
 
-    for (const market in state.marketsListeners) {
-      if (typeof state.marketsListeners[market] === 'number') {
-        delete state.marketsListeners[market]
-      } else {
-        state.marketsListeners[market].listeners = 0
-      }
-    }
+    state.subscriptions = []
   },
   async addPane(
     { commit, dispatch, state },
@@ -96,11 +87,15 @@ const actions = {
       name,
       type: options.type,
       zoom: options.zoom,
-      settings: options.settings,
-      markets: options.markets || Object.keys(state.marketsListeners)
+      settings: options.settings
     }
 
     await registerModule(id, {}, true, pane)
+
+    pane.subscriptions = await this.dispatch(
+      `${id}/toSubscriptions`,
+      options.markets || Object.keys(state.products)
+    )
 
     commit('ADD_PANE', pane)
     dispatch('appendPaneGridItem', {
@@ -108,7 +103,7 @@ const actions = {
       type: pane.type,
       originalGridItem: options.originalGridItem
     })
-    dispatch('refreshMarketsListeners')
+    dispatch('refreshSubscriptions')
 
     Vue.nextTick(() => {
       window.scrollTo(0, document.body.scrollHeight)
@@ -123,7 +118,7 @@ const actions = {
 
     dispatch('removePaneGridItems', id)
     commit('REMOVE_PANE', id)
-    dispatch('refreshMarketsListeners')
+    dispatch('refreshSubscriptions')
 
     if (rootState.app.focusedPaneId === id) {
       this.commit('app/SET_FOCUSED_PANE', null)
@@ -165,113 +160,127 @@ const actions = {
       commit('REMOVE_GRID_ITEM', index)
     }
   },
-  async refreshMarketsListeners({ commit, state }, { markets, id } = {}) {
-    // cache original listeners (market: n listeners)
-    const originalListeners: { [marketKey: string]: number } = Object.keys(
-      state.marketsListeners
-    ).reduce((listenersByMarkets, marketKey) => {
-      listenersByMarkets[marketKey] =
-        state.marketsListeners[marketKey].listeners
-
-      return listenersByMarkets
-    }, {})
-
-    // new listeners stored here
-    const marketsListeners: MarketsListeners = {}
-
-    // bucketed markets stored here
-    const buckets = {}
+  async reviewPanesMarkets({ rootState, state, commit, dispatch }) {
+    let refreshSubscriptionsUponReview = false
 
     for (const paneId in state.panes) {
-      let paneMarkets = state.panes[paneId].markets
-      if (markets && (!id || paneId === id)) {
-        paneMarkets = markets
+      const enabledMarkets = state.panes[paneId].markets.reduce(
+        (acc, market) => {
+          const [exchange] = parseMarket(market)
+
+          if (
+            rootState.exchanges[exchange] &&
+            !rootState.exchanges[exchange].disabled
+          ) {
+            acc.push(market)
+          }
+
+          return acc
+        },
+        []
+      )
+
+      if (enabledMarkets.length !== state.panes[paneId].markets.length) {
+        commit('SET_PANE_MARKETS', { id: paneId, markets: enabledMarkets })
+        commit('SET_PANE_SUBSCRIPTIONS', {
+          id: paneId,
+          subscriptions: await this.dispatch(
+            `${paneId}/toSubscriptions`,
+            enabledMarkets
+          )
+        })
+
+        refreshSubscriptionsUponReview = true
       }
+    }
 
-      if (
-        state.panes[paneId].type === 'counters' ||
-        state.panes[paneId].type === 'stats'
-      ) {
-        // market used in a bucket
-        const bucketId = getBucketId(paneMarkets)
+    if (refreshSubscriptionsUponReview) {
+      dispatch('refreshSubscriptions')
+    }
+  },
+  async refreshSubscriptions({ commit, state }) {
+    /**
+     * chart with price, volume
+        -> BINANCE:btcusdt.ticker
 
-        if (!buckets[bucketId]) {
-          buckets[bucketId] = paneMarkets
-        }
-      }
+       chart with price, volume delta
+        -> BINANCE:btcusdt.trades
 
-      for (const marketKey of paneMarkets) {
-        if (typeof marketsListeners[marketKey] === 'undefined') {
-          if (state.marketsListeners[marketKey]) {
-            marketsListeners[marketKey] = state.marketsListeners[marketKey]
-            marketsListeners[marketKey].listeners = 0
+      chart subscribe to internal event BINANCE:btcusdt.ticker
+      unless it's tick chart -> BINANCE:btcusdt.trades which receive raw data
+     */
+    const products: { [market: string]: Product } = {}
+    const channelsToSubscribe: string[] = []
+    const channelsToUnsubscribe: string[] = state.subscriptions.slice()
+    const channelsToRemainSubscribed: string[] = []
+
+    for (const paneId in state.panes) {
+      const paneSubscriptions = state.panes[paneId].subscriptions
+
+      for (const paneSubscription of paneSubscriptions) {
+        const [market] = paneSubscription.split('.')
+        const [exchange, pair] = parseMarket(market)
+
+        if (!products[market]) {
+          if (state.products[market]) {
+            products[market] = state.products[market]
           } else {
-            const [exchange, pair] = parseMarket(marketKey)
-
-            marketsListeners[marketKey] = getMarketProduct(exchange, pair, true)
-
-            marketsListeners[marketKey].listeners = 0
+            products[market] = getMarketProduct(exchange, pair, true)
           }
         }
 
-        if (typeof marketsListeners[marketKey] !== 'undefined') {
-          marketsListeners[marketKey].listeners++
+        if (channelsToUnsubscribe.indexOf(paneSubscription) !== -1) {
+          channelsToRemainSubscribed.push(
+            channelsToUnsubscribe.splice(
+              channelsToUnsubscribe.indexOf(paneSubscription),
+              1
+            )[0]
+          )
+        } else if (
+          channelsToRemainSubscribed.indexOf(paneSubscription) === -1 &&
+          channelsToSubscribe.indexOf(paneSubscription) === -1
+        ) {
+          channelsToSubscribe.push(paneSubscription)
         }
       }
     }
 
-    const allUniqueMarkets = Object.keys(marketsListeners)
-      .concat(Object.keys(state.marketsListeners))
-      .filter((v, i, a) => a.indexOf(v) === i)
+    console.log('agg.subscribe', channelsToSubscribe)
+    await aggregatorService.subscribe(channelsToSubscribe)
+    console.log('agg.unsubscribe', channelsToUnsubscribe)
+    await aggregatorService.unsubscribe(channelsToUnsubscribe)
 
-    const toConnect = []
-    const toDisconnect = []
-
-    for (const market of allUniqueMarkets) {
-      const previousListeners = originalListeners[market]
-      const currentListeners =
-        marketsListeners[market] && marketsListeners[market].listeners
-
-      if (!previousListeners && currentListeners) {
-        toConnect.push(market)
-      } else if (previousListeners && !currentListeners) {
-        toDisconnect.push(market)
-
-        if (state.marketsListeners[market]) {
-          // dlete market from store
-          delete state.marketsListeners[market]
-        }
-      }
-    }
-
-    await Promise.all([
-      aggregatorService.connect(toConnect),
-      aggregatorService.disconnect(toDisconnect)
-    ])
-
-    aggregatorService.dispatch({
-      op: 'updateBuckets',
-      data: buckets
-    })
-
-    commit('SET_MARKETS_LISTENERS', marketsListeners)
-
-    if (markets) {
-      for (const paneId in state.panes) {
-        if (!id || paneId === id) {
-          commit('SET_PANE_MARKETS', { id: paneId, markets })
-        }
-      }
-    }
+    commit(
+      'SET_SUBSCRIPTIONS',
+      channelsToRemainSubscribed.concat(channelsToSubscribe)
+    )
   },
-  setMarketsForAll({ dispatch }, markets: string[]) {
-    return dispatch('refreshMarketsListeners', { markets })
-  },
-  setMarketsForPane(
-    { dispatch },
+  async setPanesMarkets(
+    { state, dispatch, commit },
     { id, markets }: { id: string; markets: string[] }
   ) {
-    return dispatch('refreshMarketsListeners', { id, markets })
+    for (const paneId in state.panes) {
+      if (id && paneId !== id) {
+        continue
+      }
+
+      commit('SET_PANE_MARKETS', { id: paneId, markets })
+      commit('SET_PANE_SUBSCRIPTIONS', {
+        id: paneId,
+        subscriptions: await this.dispatch(`${paneId}/toSubscriptions`, markets)
+      })
+    }
+    return dispatch('refreshSubscriptions')
+  },
+  async refreshPaneSubscriptions({ dispatch, commit, state }, id: string) {
+    commit('SET_PANE_SUBSCRIPTIONS', {
+      id,
+      subscriptions: await this.dispatch(
+        `${id}/toSubscriptions`,
+        state.panes[id].markets
+      )
+    })
+    return dispatch('refreshSubscriptions')
   },
   duplicatePane({ state, rootState, dispatch }, id: string) {
     if (!state.panes[id] || !rootState[id]) {
@@ -446,14 +455,20 @@ const mutations = {
   TOGGLE_LAYOUT: state => {
     state.locked = !state.locked
   },
-  SET_MARKETS_LISTENERS: (state, marketsListeners: MarketsListeners) => {
-    state.marketsListeners = marketsListeners
+  SET_SUBSCRIPTIONS: (state, subscriptions: string[]) => {
+    state.subscriptions = subscriptions
   },
   SET_PANE_MARKETS: (
     state,
     { id, markets }: { id: string; markets: string[] }
   ) => {
     state.panes[id].markets = markets
+  },
+  SET_PANE_SUBSCRIPTIONS: (
+    state,
+    { id, subscriptions }: { id: string; subscriptions: string[] }
+  ) => {
+    state.panes[id].subscriptions = subscriptions
   },
   SET_PANE_NAME: (state, { id, name }: { id: string; name: string }) => {
     state.panes[id].name = name

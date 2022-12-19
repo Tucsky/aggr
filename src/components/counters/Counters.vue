@@ -37,7 +37,7 @@
 <script lang="ts">
 import { Component, Mixins } from 'vue-property-decorator'
 
-import { getBucketId, getHms } from '@/utils/helpers'
+import { getHms } from '@/utils/helpers'
 import { formatAmount } from '@/services/productsService'
 
 import aggregatorService from '@/services/aggregatorService'
@@ -72,7 +72,6 @@ export default class extends Mixins(PaneMixin) {
   private _populateCountersInterval: number
   private _activeChunk: CounterChunk
   private _counters: Counter[]
-  private _feed: string = null
 
   get liquidationsOnly() {
     return this.$store.state[this.paneId].liquidationsOnly
@@ -95,6 +94,8 @@ export default class extends Mixins(PaneMixin) {
   }
 
   created() {
+    aggregatorService.on('ticker', this.onTicker)
+
     this._onStoreMutation = this.$store.subscribe(mutation => {
       switch (mutation.type) {
         case 'panes/SET_PANE_MARKETS':
@@ -120,14 +121,40 @@ export default class extends Mixins(PaneMixin) {
   }
 
   beforeDestroy() {
-    if (this._feed) {
-      aggregatorService.off(this._feed, this.onVolume)
-    }
+    aggregatorService.off('ticker', this.onTicker)
 
     clearInterval(this._populateCountersInterval)
   }
 
-  onVolume(sums) {
+  onTicker(marketsTickers) {
+    const paneMarkets = this.pane.markets
+
+    const sums = Object.keys(marketsTickers).reduce(
+      (acc, market) => {
+        if (paneMarkets.indexOf(market) === -1) {
+          return acc
+        }
+
+        acc.vbuy += marketsTickers[market].vbuy
+        acc.vsell += marketsTickers[market].vsell
+        acc.cbuy += marketsTickers[market].cbuy
+        acc.csell += marketsTickers[market].csell
+        acc.lbuy += marketsTickers[market].lbuy
+        acc.lsell += marketsTickers[market].lsell
+
+        return acc
+      },
+      {
+        timestamp: Date.now(),
+        vbuy: 0,
+        vsell: 0,
+        cbuy: 0,
+        csell: 0,
+        lbuy: 0,
+        lsell: 0
+      }
+    )
+
     const volume = {
       buy: sums.vbuy,
       sell: sums.vsell
@@ -156,11 +183,6 @@ export default class extends Mixins(PaneMixin) {
     }
   }
   clearCounters() {
-    if (this._feed) {
-      console.log(`[counters/${this.paneId}] unsubscribe from feed`, this._feed)
-      aggregatorService.off(this._feed, this.onVolume)
-    }
-
     if (this._counters) {
       this._counters.splice(0, this._counters.length)
       this._activeChunk.timestamp = null
@@ -195,15 +217,6 @@ export default class extends Mixins(PaneMixin) {
         sell: 0,
         hasData: first
       })
-    }
-
-    this._feed = 'bucket-' + getBucketId(this.pane.markets)
-    console.log(`[counters/${this.paneId}] subscribe to feed`, this._feed)
-
-    if (this._feed.length) {
-      aggregatorService.on(this._feed, this.onVolume)
-    } else {
-      console.log(`[counters/${this.paneId}] error feed empty...`)
     }
   }
   populateCounters() {

@@ -61,7 +61,7 @@ export default class extends Exchange {
     }
   }
 
-  onMessage(event, api) {
+  onMessage(api, event) {
     const json = JSON.parse(event.data)
 
     return this.emitTrades(api.id, [this.formatTrade(json.data, json.channel)])

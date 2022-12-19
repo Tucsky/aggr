@@ -124,18 +124,7 @@ export default class extends Vue {
   }
 
   get name() {
-    const name = this.$store.state.panes.panes[this.paneId].name
-    const market = this.$store.state.panes.marketsListeners[
-      this.$store.state.panes.panes[this.paneId].markets[0]
-    ]
-
-    if (name) {
-      return name
-    } else if (market) {
-      return market.local
-    } else {
-      return this.type
-    }
+    return this.$store.state.panes.panes[this.paneId].name
   }
 
   openSearch() {

@@ -5,7 +5,7 @@ import { ActionTree, Module, MutationTree } from 'vuex'
 import DEFAULTS_STATE from './defaultSettings.json'
 import {
   getColorLuminance,
-  getLinearShare,
+  getLinearShade,
   getLogShade,
   getTextColor,
   joinRgba,
@@ -127,7 +127,7 @@ const actions = {
     const theme = state.theme
     const backgroundDirection = theme === 'dark' ? 1 : -1
     const backgroundRgb = splitColorCode(state.backgroundColor)
-    const background100Rgb = getLinearShare(
+    const background100Rgb = getLinearShade(
       backgroundRgb,
       0.025 * backgroundDirection
     )
@@ -143,15 +143,15 @@ const actions = {
     )
     document.documentElement.style.setProperty(
       '--theme-background-150',
-      joinRgba(getLinearShare(backgroundRgb, 0.05 * backgroundDirection))
+      joinRgba(getLinearShade(backgroundRgb, 0.05 * backgroundDirection))
     )
     document.documentElement.style.setProperty(
       '--theme-background-200',
-      joinRgba(getLinearShare(backgroundRgb, 0.08 * backgroundDirection))
+      joinRgba(getLinearShade(backgroundRgb, 0.08 * backgroundDirection))
     )
     document.documentElement.style.setProperty(
       '--theme-background-300',
-      joinRgba(getLinearShare(backgroundRgb, 0.125 * backgroundDirection))
+      joinRgba(getLinearShade(backgroundRgb, 0.125 * backgroundDirection))
     )
 
     // const background100 = splitColorCode(document.documentElement.style.getPropertyValue('--theme-background-100'))

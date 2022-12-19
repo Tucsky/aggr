@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { IndicatorFunction } from './chart'
+import { IndicatorFunction } from './controller'
 
 /**
  * Close ohlc bar (all props to close value for smooth transition, but also fake opens)
@@ -117,10 +117,7 @@ export default {
       }
 
       for (const identifier in renderer.sources) {
-        if (
-          !renderer.sources[identifier].active ||
-          renderer.sources[identifier].open === null
-        ) {
+        if (!renderer.sources[identifier].active) {
           continue
         }
 
@@ -179,10 +176,7 @@ export default {
       state.close = 0
 
       for (const identifier in renderer.sources) {
-        if (
-          !renderer.sources[identifier].active ||
-          renderer.sources[identifier].open === null
-        ) {
+        if (!renderer.sources[identifier].active) {
           continue
         }
 
@@ -245,10 +239,7 @@ export default {
       let close = 0
 
       for (const identifier in renderer.sources) {
-        if (
-          !renderer.sources[identifier].active ||
-          renderer.sources[identifier].open === null
-        ) {
+        if (!renderer.sources[identifier].active) {
           continue
         }
 
@@ -297,7 +288,7 @@ export default {
       state.close = 0
 
       for (const identifier in renderer.sources) {
-        if (renderer.sources[identifier].open === null) {
+        if (!renderer.sources[identifier].active) {
           continue
         }
 

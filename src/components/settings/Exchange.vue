@@ -36,7 +36,6 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '@/components/framework/picker/Slider.vue'
-import aggregatorService from '@/services/aggregatorService'
 import { formatAmount } from '@/services/productsService'
 
 @Component({
@@ -49,19 +48,6 @@ import { formatAmount } from '@/services/productsService'
 export default class extends Vue {
   id: string
   expanded = false
-  prices: { [identifier: string]: number } = {}
-
-  mounted() {
-    aggregatorService.on('prices', this.updateMarketsPrices)
-  }
-
-  beforeDestroy() {
-    aggregatorService.off('prices', this.updateMarketsPrices)
-  }
-
-  updateMarketsPrices(prices) {
-    this.prices = prices
-  }
 
   get name() {
     return this.id.replace(/[\W_]+/g, ' ')
@@ -73,7 +59,7 @@ export default class extends Vue {
 
   get markets() {
     return (Object as any)
-      .values(this.$store.state.panes.marketsListeners)
+      .values(this.$store.state.panes.products)
       .filter(a => a.exchange === this.id)
   }
 
@@ -175,10 +161,6 @@ export default class extends Vue {
       width: calc(100% + 8px);
     }
   }
-}
-
-.settings-exchange__price {
-  opacity: 0.8;
 }
 
 .settings-exchange__threshold {

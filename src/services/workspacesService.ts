@@ -8,7 +8,6 @@ import {
   ImportedSound,
   MarketAlerts,
   Preset,
-  PresetType,
   ProductsStorage,
   Workspace
 } from '@/types/types'
@@ -403,7 +402,7 @@ class WorkspacesService {
     }
 
     if (workspace.states.panes) {
-      delete (workspace.states.panes as PanesState).marketsListeners
+      delete (workspace.states.panes as PanesState).subscriptions
     }
 
     downloadAnything(workspace, workspace.id + '_' + slugify(workspace.name))
@@ -606,6 +605,8 @@ class WorkspacesService {
       indicator.createdAt = now
     }
 
+    delete indicator.model
+
     store.dispatch('app/showNotice', {
       type: 'info',
       title: `Saved indicator ${indicator.id}`
@@ -650,7 +651,7 @@ class WorkspacesService {
     if (type) {
       // ex indicator:price
 
-      const inputType = preset.type.split(':')[0] as PresetType
+      const inputType = preset.type.split(':')[0]
       const targetType = type.split(':')[0]
 
       if (targetType !== inputType) {
@@ -680,14 +681,14 @@ class WorkspacesService {
     return this.db.get('presets', id)
   }
 
-  getPresetsKeysByType(type: PresetType) {
+  getPresetsKeysByType(type: string) {
     return this.db.getAllKeys(
       'presets',
       IDBKeyRange.bound(type, type + '|', true, true)
     )
   }
 
-  removePreset(id) {
+  removePreset(id: string) {
     return this.db.delete('presets', id)
   }
 

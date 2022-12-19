@@ -55,9 +55,7 @@
         >
           <div>
             <div>Trades <span>LITE ⚡️</span></div>
-            <div class="dropdown-item__subtitle">
-              Minimal but faster
-            </div>
+            <div class="dropdown-item__subtitle">Minimal but faster</div>
           </div>
           <i class="icon-plus" />
         </button>
@@ -173,8 +171,8 @@
 
 <script lang="ts">
 import dialogService from '@/services/dialogService'
-import { PaneType } from '@/store/panes'
 import { Component, Vue } from 'vue-property-decorator'
+import { PaneType } from '../store/panesSettings'
 import { isTouchSupported } from '../utils/touchevent'
 import Slider from './framework/picker/Slider.vue'
 import SettingsDialog from './settings/SettingsDialog.vue'
@@ -263,14 +261,14 @@ export default class extends Vue {
       (element as any).requestFullScreen ||
       (element as any).webkitRequestFullScreen ||
       (element as any).mozRequestFullScreen ||
-      function() {
+      function () {
         return false
       }
     ;(document as any).cancelFullScreen =
       (document as any).cancelFullScreen ||
       (document as any).webkitCancelFullScreen ||
       (document as any).mozCancelFullScreen ||
-      function() {
+      function () {
         return false
       }
 

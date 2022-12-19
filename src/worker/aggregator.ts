@@ -4,7 +4,7 @@ import {
   AggregatorSettings,
   Connection,
   Trade,
-  Volumes
+  Ticker
 } from '@/types/types'
 import { exchanges, getExchangeById } from './exchanges'
 import { parseMarket } from './helpers/utils'
@@ -15,34 +15,42 @@ class Aggregator {
   settings: AggregatorSettings = {
     calculateSlippage: null,
     aggregationLength: null,
-    preferQuoteCurrencySize: null,
-    buckets: {}
+    preferQuoteCurrencySize: null
   }
   connections: { [name: string]: Connection } = {}
 
-  activeBuckets: string[] = []
-  buckets: { [id: string]: Volumes } = {}
   connectionsCount = 0
   connectionChange = 0
 
-  private baseAggregationTimeout = 50
-  private onGoingAggregations: { [identifier: string]: AggregatedTrade } = {}
-  private aggregationTimeouts: { [identifier: string]: number } = {}
-  private pendingTrades: Trade[] = []
-  private marketsStats: {
+  private onGoingAggregations: { [marketKey: string]: AggregatedTrade } = {}
+  private pendingTrades: { [marketKey: string]: Trade[] } = {}
+  private marketsTickers: {
     [marketId: string]: {
-      initialPrice?: number
-      decimals?: number
+      market: string
+      exchange: string
+      pair: string
+      type?: string
+      empty: boolean
+      timestamp?: number
+      initialPrice: number
       price: number
-      volume?: number
-      volumeDelta?: number
+      vol?: number
+      high?: number
+      low?: number
+      vbuy?: number
+      vsell?: number
+      lbuy?: number
+      lsell?: number
+      cbuy?: number
+      csell?: number
     }
   } = {}
   private _connectionChangeNoticeTimeout: number
 
   constructor() {
     this.bindExchanges()
-    this.startPriceInterval()
+    this.startTickerInterval()
+    this.startAggrInterval()
 
     ctx.postMessage({
       op: 'hello'
@@ -54,244 +62,19 @@ class Aggregator {
       exchange.on('subscribed', this.onSubscribed.bind(this, exchange.id))
       exchange.on('unsubscribed', this.onUnsubscribed.bind(this, exchange.id))
       exchange.on('error', this.onError.bind(this, exchange.id))
-    }
-  }
-
-  bindTradesEvent() {
-    for (const exchange of exchanges) {
-      exchange.off('trades')
-      exchange.off('liquidations')
-
-      if (this.settings.aggregationLength > 0) {
-        exchange.on('trades', this.aggregateTrades.bind(this))
-        exchange.on('liquidations', this.aggregateLiquidations.bind(this))
-      } else {
-        exchange.on('trades', this.emitTrades.bind(this))
-        exchange.on('liquidations', this.emitLiquidations.bind(this))
-      }
-    }
-
-    if (this.settings.aggregationLength > 0) {
-      this.startAggrInterval()
-      console.debug(`[worker] bind trades: aggregation`)
-    } else {
-      this.clearInterval('aggr')
-
-      // clear pending aggregations
-      this.timeoutExpiredAggregations()
-      this.emitPendingTrades()
-
-      console.debug(`[worker] bind trades: simple`)
-    }
-  }
-
-  updateBuckets(bucketsDefinition: { [bucketId: string]: string[] }) {
-    const activeBuckets = [] // array of buckets IDs
-    const bucketEnabledMarkets = [] // array of markets IDs
-
-    if (bucketsDefinition.length) {
-      console.log('[worker] update buckets using :', bucketsDefinition)
-      console.debug(
-        '[worker] previous buckets :',
-        { ...this.buckets },
-        this.activeBuckets
-      )
-    }
-
-    for (const bucketId in bucketsDefinition) {
-      if (activeBuckets.indexOf(bucketId) === -1) {
-        activeBuckets.push(bucketId)
-      }
-
-      if (!this.buckets[bucketId]) {
-        console.debug('[worker] create bucket', bucketId)
-        this.buckets[bucketId] = this.createBucket()
-      }
-
-      for (const market of bucketsDefinition[bucketId]) {
-        if (bucketEnabledMarkets.indexOf(market) === -1) {
-          bucketEnabledMarkets.push(market)
-        }
-
-        if (!this.connections[market]) {
-          // connection referenced in bucket doesn't exists
-          console.warn(
-            'attempted to activate bucket on inexistant connection',
-            market
-          )
-          continue
-        }
-
-        if (this.connections[market].bucket) {
-          // bucket already running
-          continue
-        }
-
-        // create empty bucket for this market
-        console.debug('[worker] create market bucket', market)
-        this.connections[market].bucket = this.createBucket()
-      }
-    }
-
-    for (const market in this.connections) {
-      if (
-        this.connections[market].bucket &&
-        bucketEnabledMarkets.indexOf(market) === -1
-      ) {
-        // destroy market's bucket (not referenced any buckets anymore)
-        console.log('[worker] remove market bucket', market)
-        this.connections[market].bucket = null
-      }
-    }
-
-    for (const oldBucketId in this.buckets) {
-      if (activeBuckets.indexOf(oldBucketId) === -1) {
-        // destroy bucket (does not exists in settings or was modified by user)
-        console.log('[worker] remove bucket', oldBucketId)
-        delete this.buckets[oldBucketId]
-      }
-    }
-
-    if (activeBuckets.length) {
-      console.log(
-        '[worker] finished updating buckets (active buckets: ',
-        activeBuckets,
-        ')'
-      )
-    }
-
-    if (activeBuckets.length && !this.activeBuckets.length) {
-      this.startStatsInterval()
-    } else if (
-      this.activeBuckets.length &&
-      !activeBuckets.length &&
-      this['_statsInterval']
-    ) {
-      this.clearInterval('stats')
-      this['_statsInterval'] = null
-      console.debug(`[worker] stopped statsInterval timer`)
-    }
-
-    this.activeBuckets = activeBuckets
-    this.settings.buckets = bucketsDefinition
-  }
-
-  emitTrades(trades: Trade[]) {
-    for (let i = 0; i < trades.length; i++) {
-      const trade = trades[i]
-      const marketKey = trade.exchange + ':' + trade.pair
-
-      if (!this.connections[marketKey]) {
-        continue
-      }
-
-      if (this.settings.calculateSlippage) {
-        trade.originalPrice = this.marketsStats[marketKey].price || trade.price
-      }
-
-      trade.count = trade.count || 1
-
-      this.processTrade(trade)
-    }
-
-    ctx.postMessage({
-      op: 'trades',
-      data: trades
-    })
-  }
-
-  aggregateTrades(trades: Trade[]) {
-    const now = Date.now()
-
-    for (let i = 0; i < trades.length; i++) {
-      const trade = trades[i] as unknown as AggregatedTrade
-      const marketKey = trade.exchange + ':' + trade.pair
-
-      if (!this.connections[marketKey]) {
-        continue
-      }
-
-      if (this.onGoingAggregations[marketKey]) {
-        const aggTrade = this.onGoingAggregations[marketKey]
-
-        if (
-          aggTrade.timestamp + this.settings.aggregationLength >
-            trade.timestamp &&
-          aggTrade.side === trade.side
-        ) {
-          aggTrade.size += trade.size
-          aggTrade.price = trade.price
-          aggTrade.count += trade.count || 1
-          continue
-        } else {
-          this.pendingTrades.push(this.processTrade(aggTrade))
-        }
-      }
-
-      trade.originalPrice = this.marketsStats[marketKey].price || trade.price
-
-      trade.count = trade.count || 1
-      this.aggregationTimeouts[marketKey] = now + this.baseAggregationTimeout
-      this.onGoingAggregations[marketKey] = trade
-    }
-  }
-
-  emitLiquidations(trades: Trade[]) {
-    for (let i = 0; i < trades.length; i++) {
-      const trade = trades[i]
-      const marketKey = trade.exchange + ':' + trade.pair
-
-      if (!this.connections[marketKey]) {
-        continue
-      }
-
-      this.processLiquidation(trade)
-    }
-
-    ctx.postMessage({
-      op: 'trades',
-      data: trades
-    })
-  }
-
-  aggregateLiquidations(trades: Trade[]) {
-    const now = Date.now()
-
-    for (let i = 0; i < trades.length; i++) {
-      const trade = trades[i] as unknown as AggregatedTrade
-      const marketKey = trade.exchange + ':' + trade.pair
-      const tradeKey = 'liq_' + marketKey
-
-      if (!this.connections[marketKey]) {
-        continue
-      }
-
-      if (this.onGoingAggregations[tradeKey]) {
-        const aggTrade = this.onGoingAggregations[tradeKey]
-
-        if (
-          aggTrade.timestamp + this.settings.aggregationLength >
-            trade.timestamp &&
-          aggTrade.side === trade.side
-        ) {
-          aggTrade.size += trade.size
-          aggTrade.count++
-          continue
-        } else {
-          this.pendingTrades.push(this.processLiquidation(aggTrade))
-        }
-      }
-
-      trade.count = 1
-      this.aggregationTimeouts[tradeKey] = now + this.baseAggregationTimeout
-      this.onGoingAggregations[tradeKey] = trade
+      exchange.on('trades', this.emitTrades.bind(this))
+      exchange.on('ticker', this.processTicker.bind(this))
+      exchange.on('liquidations', this.emitLiquidations.bind(this))
     }
   }
 
   processTrade(trade: Trade): Trade {
-    const marketKey = trade.exchange + ':' + trade.pair
+    trade.count = trade.count || 1
 
     if (this.settings.calculateSlippage) {
+      trade.originalPrice =
+        this.marketsTickers[trade.market].price || trade.price
+
       if (this.settings.calculateSlippage === 'price') {
         trade.slippage =
           Math.round(
@@ -316,63 +99,83 @@ class Aggregator {
     trade.amount =
       (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
 
-    this.marketsStats[marketKey].volume += trade.amount
-    this.marketsStats[marketKey].volumeDelta +=
-      trade.amount * (trade.side === 'buy' ? 1 : -1)
+    if (this.marketsTickers[trade.market].empty) {
+      this.marketsTickers[trade.market].empty = false
+      this.marketsTickers[trade.market].timestamp = trade.timestamp
 
-    this.marketsStats[marketKey].price = trade.price
-
-    if (this.marketsStats[marketKey].initialPrice === null) {
-      this.emitInitialPrice(marketKey, trade.price)
+      if (this.marketsTickers[trade.market].initialPrice === null) {
+        this.emitInitialPrice(trade.market, trade.price)
+      }
     }
 
-    if (this.settings.aggregationLength > 0) {
-      trade.price = Math.max(trade.price, trade.originalPrice)
-    }
-
-    if (this.connections[marketKey].bucket) {
-      this.connections[marketKey].bucket['c' + trade.side] += trade.count
-      this.connections[marketKey].bucket['v' + trade.side] += trade.amount
-    }
+    this.marketsTickers[trade.market]['v' + trade.side] += trade.amount
+    this.marketsTickers[trade.market]['c' + trade.side] += trade.count
+    this.marketsTickers[trade.market].price = trade.price
+    this.marketsTickers[trade.market].high = Math.max(
+      this.marketsTickers[trade.market].high,
+      trade.price
+    )
+    this.marketsTickers[trade.market].low = Math.min(
+      this.marketsTickers[trade.market].low,
+      trade.price
+    )
 
     return trade
   }
 
   processLiquidation(trade: Trade): Trade {
-    const marketKey = trade.exchange + ':' + trade.pair
-
+    trade.count = trade.count || 1
     trade.amount =
       (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
 
-    if (this.connections[marketKey].bucket) {
-      this.connections[marketKey].bucket['l' + trade.side] += trade.amount
+    if (this.marketsTickers[trade.market].empty) {
+      this.marketsTickers[trade.market].empty = false
+      this.marketsTickers[trade.market].timestamp = trade.timestamp
     }
+    this.marketsTickers[trade.market]['l' + trade.side] += trade.amount
 
     return trade
   }
 
-  timeoutExpiredAggregations() {
-    const now = Date.now()
+  processTicker(ticker: Ticker) {
+    const marketKey = ticker.exchange + ':' + ticker.pair
+    this.marketsTickers[marketKey].vol += ticker.vol
+    this.marketsTickers[marketKey].price = ticker.price
+    this.marketsTickers[marketKey].empty = false
 
-    const tradeKeys = Object.keys(this.onGoingAggregations)
+    if (this.marketsTickers[marketKey].initialPrice === null) {
+      this.emitInitialPrice(marketKey, ticker.price)
+    }
+  }
 
-    for (let i = 0; i < tradeKeys.length; i++) {
-      const aggTrade = this.onGoingAggregations[tradeKeys[i]]
+  emitTrades(trades: Trade[]) {
+    for (let i = 0; i < trades.length; i++) {
+      trades[i].market = trades[i].exchange + ':' + trades[i].pair
 
-      if (now > this.aggregationTimeouts[tradeKeys[i]]) {
-        if (aggTrade.liquidation) {
-          this.pendingTrades.push(this.processLiquidation(aggTrade))
-        } else {
-          this.pendingTrades.push(this.processTrade(aggTrade))
-        }
-
-        delete this.onGoingAggregations[tradeKeys[i]]
+      if (!this.connections[trades[i].market]) {
+        continue
       }
+
+      this.pendingTrades[trades[i].market].push(this.processTrade(trades[i]))
+    }
+  }
+
+  emitLiquidations(trades: Trade[]) {
+    for (let i = 0; i < trades.length; i++) {
+      trades[i].market = trades[i].exchange + ':' + trades[i].pair
+
+      if (!this.connections[trades[i].market]) {
+        continue
+      }
+
+      this.pendingTrades[trades[i].market].push(
+        this.processLiquidation(trades[i])
+      )
     }
   }
 
   emitInitialPrice(marketKey: string, price: number) {
-    this.marketsStats[marketKey].initialPrice = price
+    this.marketsTickers[marketKey].initialPrice = price
 
     ctx.postMessage({
       op: 'price',
@@ -384,91 +187,94 @@ class Aggregator {
   }
 
   emitPendingTrades() {
-    if (this.settings.aggregationLength > 0) {
-      this.timeoutExpiredAggregations()
-    }
-
-    if (this.pendingTrades.length) {
-      ctx.postMessage({ op: 'trades', data: this.pendingTrades })
-
-      this.pendingTrades.splice(0, this.pendingTrades.length)
+    for (const market in this.pendingTrades) {
+      if (this.pendingTrades[market].length) {
+        ctx.postMessage({
+          op: market + '.trades',
+          data: this.pendingTrades[market]
+        })
+        this.pendingTrades[market].splice(0, this.pendingTrades[market].length)
+      }
     }
   }
 
-  emitStats() {
-    const timestamp = Date.now()
-
-    for (const bucketId in this.settings.buckets) {
-      for (const market of this.settings.buckets[bucketId]) {
-        if (!this.connections[market]) {
-          continue
-        }
-
-        this.buckets[bucketId].vbuy += this.connections[market].bucket.vbuy
-        this.buckets[bucketId].vsell += this.connections[market].bucket.vsell
-        this.buckets[bucketId].cbuy += this.connections[market].bucket.cbuy
-        this.buckets[bucketId].csell += this.connections[market].bucket.csell
-        this.buckets[bucketId].lbuy += this.connections[market].bucket.lbuy
-        this.buckets[bucketId].lsell += this.connections[market].bucket.lsell
-      }
-
-      this.buckets[bucketId].timestamp = timestamp
-
-      ctx.postMessage({
-        op: 'bucket-' + bucketId,
-        data: this.buckets[bucketId]
-      })
-
-      this.clearBucket(this.buckets[bucketId])
-    }
-
-    for (const market in this.connections) {
-      if (!this.connections[market].bucket) {
-        continue
-      }
-
-      this.clearBucket(this.connections[market].bucket)
-    }
-  }
-
-  emitPrices() {
+  emitTickers() {
     if (!this.connectionsCount) {
       return
     }
 
-    ctx.postMessage({ op: 'prices', data: this.marketsStats })
+    for (const market in this.marketsTickers) {
+      if (this.marketsTickers[market].empty) {
+        continue
+      }
+
+      ctx.postMessage({
+        op: market + '.ticker',
+        data: this.marketsTickers[market]
+      })
+
+      if (this.marketsTickers[market].type === 'ticker') {
+        this.marketsTickers[market].vol = 0
+      } else if (this.marketsTickers[market].type === 'trades') {
+        this.marketsTickers[market].vbuy = 0
+        this.marketsTickers[market].vsell = 0
+        this.marketsTickers[market].lbuy = 0
+        this.marketsTickers[market].lsell = 0
+        this.marketsTickers[market].cbuy = 0
+        this.marketsTickers[market].csell = 0
+        this.marketsTickers[market].high = this.marketsTickers[market].low =
+          this.marketsTickers[market].price
+      }
+
+      this.marketsTickers[market].empty = true
+    }
   }
 
-  onSubscribed(exchangeId, pair) {
+  onSubscribed(exchangeId, channel) {
+    const [pair, feed] = channel.split('.')
     const marketKey = exchangeId + ':' + pair
 
-    if (this.connections[marketKey]) {
-      return
-    }
-
-    this.connections[marketKey] = {
-      exchange: exchangeId,
-      pair: pair,
-      hit: 0,
-      timestamp: null
-    }
-
-    this.marketsStats[marketKey] = {
-      volume: 0,
-      volumeDelta: 0,
-      initialPrice: null,
-      price: null
-    }
-
-    this.connectionsCount = Object.keys(this.connections).length
-
-    for (const bucketId in this.settings.buckets) {
-      if (this.settings.buckets[bucketId].indexOf(marketKey) !== -1) {
-        console.debug(`[worker] create bucket for new connection ${marketKey}`)
-        this.connections[marketKey].bucket = this.createBucket()
-        break
+    if (!this.connections[marketKey]) {
+      this.connections[marketKey] = {
+        exchange: exchangeId,
+        pair: pair,
+        hit: 0,
+        timestamp: null,
+        feeds: []
       }
     }
+
+    this.connections[marketKey].feeds.push(feed)
+
+    if (!this.marketsTickers[marketKey]) {
+      this.marketsTickers[marketKey] = {
+        market: marketKey,
+        exchange: exchangeId,
+        pair: pair,
+        initialPrice: null,
+        empty: true,
+        price: null
+      }
+    }
+
+    this.marketsTickers[marketKey].type = feed
+
+    if (this.marketsTickers[marketKey].type === 'ticker') {
+      this.marketsTickers[marketKey].vol = 0
+    } else {
+      this.marketsTickers[marketKey].vbuy = 0
+      this.marketsTickers[marketKey].vsell = 0
+      this.marketsTickers[marketKey].lbuy = 0
+      this.marketsTickers[marketKey].lsell = 0
+      this.marketsTickers[marketKey].cbuy = 0
+      this.marketsTickers[marketKey].csell = 0
+      this.marketsTickers[marketKey].high = -Infinity
+      this.marketsTickers[marketKey].low = Infinity
+    }
+
+    this.pendingTrades[marketKey] = []
+
+    this.connectionsCount = Object.keys(this.connections).length
 
     ctx.postMessage({
       op: 'connection',
@@ -482,15 +288,16 @@ class Aggregator {
   }
 
   onUnsubscribed(exchangeId, pair) {
-    const identifier = exchangeId + ':' + pair
+    const marketKey = exchangeId + ':' + pair
 
-    if (this.onGoingAggregations[identifier]) {
-      delete this.onGoingAggregations[identifier]
+    if (this.onGoingAggregations[marketKey]) {
+      delete this.onGoingAggregations[marketKey]
     }
 
-    if (this.connections[identifier]) {
-      delete this.connections[identifier]
-      delete this.marketsStats[identifier]
+    if (this.connections[marketKey]) {
+      delete this.connections[marketKey]
+      delete this.marketsTickers[marketKey]
+      delete this.pendingTrades[marketKey]
 
       this.connectionsCount = Object.keys(this.connections).length
 
@@ -536,28 +343,6 @@ class Aggregator {
     }, 3000)
   }
 
-  createBucket(): Volumes {
-    return {
-      timestamp: null,
-      vbuy: 0,
-      vsell: 0,
-      cbuy: 0,
-      csell: 0,
-      lbuy: 0,
-      lsell: 0
-    }
-  }
-
-  clearBucket(bucket: Volumes) {
-    bucket.cbuy =
-      bucket.csell =
-      bucket.vbuy =
-      bucket.vsell =
-      bucket.lbuy =
-      bucket.lsell =
-        0
-  }
-
   onError(exchangeId, reason) {
     let message: string
 
@@ -580,13 +365,12 @@ class Aggregator {
   }
 
   /**
-   * Trigger subscribe to pairs (settings.pairs) on all enabled exchanges
-   * @param {string[]} pairs eg ['BTCUSD', 'FTX:BTC-PERP']
+   * Trigger subscribe to feed
+   * @param {string[]} markets + feed eg ['COINBASE:BTC-USD.ticker', 'BINANCE:btcusdt.trades']
    * @returns {Promise<any>} promises of connections
-   * @memberof Server
    */
-  async connect(markets: string[], trackingId?: string) {
-    console.log(`[aggregator] connect`, markets)
+  async subscribe(markets: string[], trackingId?: string) {
+    console.log(`[aggregator] subscribe`, markets)
 
     const marketsByExchange = markets.reduce((output, market) => {
       const [exchangeId, pair] = parseMarket(market)
@@ -665,13 +449,13 @@ class Aggregator {
   }
 
   /**
-   * Trigger unsubscribe to pairs on all activated exchanges
-   * @param {string[]} pairs
+   * Trigger unsubscribe from feeds
+   * @param {string[]} markets + feed eg ['COINBASE:BTC-USD.ticker', 'BINANCE:btcusdt.trades']
    * @returns {Promise<void>} promises of disconnection
    * @memberof Server
    */
-  async disconnect(markets: string[], trackingId?: string) {
-    console.log(`[aggregator] disconnect`, markets)
+  async unsubscribe(markets: string[], trackingId?: string) {
+    console.log(`[aggregator] unsubscribe`, markets)
 
     const marketsByExchange = markets.reduce((output, market) => {
       const [exchangeId, pair] = parseMarket(market)
@@ -717,11 +501,11 @@ class Aggregator {
     }
   }
 
-  startPriceInterval() {
-    if (this['_priceInterval']) {
+  startTickerInterval() {
+    if (this['_tickerInterval']) {
       return
     }
-    this['_priceInterval'] = self.setInterval(this.emitPrices.bind(this), 1000)
+    this['_tickerInterval'] = self.setInterval(this.emitTickers.bind(this), 500)
   }
 
   startAggrInterval() {
@@ -732,20 +516,6 @@ class Aggregator {
       this.emitPendingTrades.bind(this),
       50
     )
-  }
-
-  startStatsInterval() {
-    if (this['_statsInterval']) {
-      return
-    }
-    this['_statsInterval'] = self.setInterval(this.emitStats.bind(this), 500)
-  }
-
-  clearInterval(name: string) {
-    if (this['_' + name + 'Interval']) {
-      clearInterval(this['_' + name + 'Interval'])
-      this['_' + name + 'Interval'] = null
-    }
   }
 
   async fetchExchangeProducts(
@@ -794,12 +564,6 @@ class Aggregator {
     }
 
     this.settings[key] = value
-
-    if (key === 'aggregationLength') {
-      this.baseAggregationTimeout = value
-      // update trades event handler (if 0 mean simple trade emit else group inc trades)
-      this.bindTradesEvent()
-    }
   }
 
   getHits(data, trackingId: string) {

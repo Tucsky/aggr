@@ -134,7 +134,7 @@ export function rgbToHex(rgb) {
 
 export function hexToRgb(hex) {
   const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i
-  hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+  hex = hex.replace(shorthandRegex, function (m, r, g, b) {
     return r + r + g + g + b + b
   })
 
@@ -379,7 +379,7 @@ export function getTextColor(backgroundColor, strength = 0.4) {
   return rgb
 }
 
-export function getLinearShare(
+export function getLinearShade(
   color: [number, number, number],
   strength: number,
   inverse?: boolean

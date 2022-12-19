@@ -148,7 +148,7 @@ class AlertService {
 
   getPrice(market): Promise<number> {
     return new Promise(resolve => {
-      aggregatorService.once('prices', marketsStats => {
+      aggregatorService.once('ticker', marketsStats => {
         const stats = marketsStats[market]
 
         if (!stats) {

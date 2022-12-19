@@ -32,20 +32,6 @@ export interface NoticesState {
   notices: Notice[]
 }
 
-export interface Product {
-  id: string
-  pair: string
-  exchange: string
-  type: string
-  base: string
-  quote: string
-  local: string
-}
-
-export interface ListenedProduct extends Product {
-  listeners?: number
-}
-
 export interface AppState {
   isBooted: boolean
   isLoading: boolean

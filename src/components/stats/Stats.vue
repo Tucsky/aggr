@@ -33,7 +33,6 @@ import {
 import StatDialog from './StatDialog.vue'
 import dialogService from '@/services/dialogService'
 
-import { getBucketId } from '@/utils/helpers'
 import { formatAmount } from '@/services/productsService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
@@ -52,7 +51,6 @@ export default class extends Mixins(PaneMixin) {
   private _refreshChartDimensionsTimeout: number
   private _chart: TV.IChartApi
   private _buckets: { [id: string]: Bucket } = {}
-  private _feed: string = null
 
   get enableChart() {
     return this.$store.state[this.paneId].enableChart
@@ -63,6 +61,8 @@ export default class extends Mixins(PaneMixin) {
   }
 
   created() {
+    aggregatorService.on('ticker', this.onVolume)
+
     this._onStoreMutation = this.$store.subscribe(mutation => {
       switch (mutation.type) {
         case 'settings/SET_TEXT_COLOR':
@@ -130,9 +130,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   beforeDestroy() {
-    if (this._feed) {
-      aggregatorService.off(this._feed, this.onVolume)
-    }
+    aggregatorService.off('ticker', this.onVolume)
 
     this.clearBuckets()
     this.removeChart()
@@ -199,27 +197,41 @@ export default class extends Mixins(PaneMixin) {
     }, debounceTime)
   }
   prepareBuckets() {
-    if (this._feed) {
-      console.log(`[stats/${this.paneId}] unsubscribe from feed`, this._feed)
-      aggregatorService.off(this._feed, this.onVolume)
-    }
-
     this.clearBuckets()
 
     for (const id in this.buckets) {
       this.createBucket(this.buckets[id])
     }
-
-    this._feed = 'bucket-' + getBucketId(this.pane.markets)
-    console.log(`[stats/${this.paneId}] subscribe to feed`, this._feed)
-
-    if (this._feed.length) {
-      aggregatorService.on(this._feed, this.onVolume)
-    } else {
-      console.log(`[stats/${this.paneId}] error feed empty...`)
-    }
   }
-  onVolume(sums) {
+  onVolume(marketsTickers) {
+    const paneMarkets = this.pane.markets
+
+    const sums = Object.keys(marketsTickers).reduce(
+      (acc, market) => {
+        if (paneMarkets.indexOf(market) === -1) {
+          return acc
+        }
+
+        acc.vbuy += marketsTickers[market].vbuy
+        acc.vsell += marketsTickers[market].vsell
+        acc.cbuy += marketsTickers[market].cbuy
+        acc.csell += marketsTickers[market].csell
+        acc.lbuy += marketsTickers[market].lbuy
+        acc.lsell += marketsTickers[market].lsell
+
+        return acc
+      },
+      {
+        timestamp: Date.now(),
+        vbuy: 0,
+        vsell: 0,
+        cbuy: 0,
+        csell: 0,
+        lbuy: 0,
+        lsell: 0
+      }
+    )
+
     for (const id in this._buckets) {
       this._buckets[id].onStats(sums)
 

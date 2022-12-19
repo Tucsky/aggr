@@ -5,15 +5,23 @@ import { getApiUrl } from '../utils/helpers'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
+export interface Product {
+  id: string
+  pair: string
+  exchange: string
+  type: string
+  base: string
+  quote: string
+  local: string
+}
+
 const baseQuoteLookupKnown = new RegExp(
   `^([A-Z0-9]{3,})[-/:_]?(USDT|USDC|TUSD|BUSD)$|^([A-Z0-9]{2,})[-/:]?(UST|EUR|USD)$`
 )
 const baseQuoteLookupOthers = new RegExp(`^([A-Z0-9]{2,})[-/_]?([A-Z0-9]{3,})$`)
 
 const promisesOfProducts = {}
-
 export const indexedProducts = {}
-
 export const marketDecimals = {}
 
 /**
@@ -230,7 +238,7 @@ export async function getExchangeSymbols(
 }
 
 export function parseMarket(market: string) {
-  return market.match(/([^:]*):(.*)/).slice(1, 3)
+  return market.match(/([^:]*):(.*)\.?(.*)?/).slice(1, 4)
 }
 
 export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {

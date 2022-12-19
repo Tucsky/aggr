@@ -18,8 +18,6 @@ export async function syncState(state): Promise<any> {
     delete persistModulesTimers[state._id]
   }
 
-  console.debug(`[store] saving state ${state._id}`)
-
   await workspacesService.saveState(state._id, state)
 }
 

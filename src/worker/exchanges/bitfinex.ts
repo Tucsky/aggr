@@ -15,21 +15,29 @@ export default class extends Exchange {
     return pairs.map(product => product.toUpperCase())
   }
 
+  getChannelPayload(pair: string, name: string) {
+    return {
+      channel: name,
+      symbol: 't' + pair
+    }
+  }
+
   /**
    * Sub
    * @param {WebSocket} api
-   * @param {string} pair
+   * @param {string} channel
    */
-  async subscribe(api, pair) {
-    if (!(await super.subscribe(api, pair))) {
+  async subscribe(api, channel) {
+    if (!(await super.subscribe(api, channel))) {
       return
     }
+
+    const [pair, name] = this.parseChannel(channel)
 
     api.send(
       JSON.stringify({
         event: 'subscribe',
-        channel: 'trades',
-        symbol: 't' + pair
+        ...this.getChannelPayload(pair, name)
       })
     )
 
@@ -47,14 +55,16 @@ export default class extends Exchange {
   }
 
   /**
-   * Unsub
+   * UnUnsub
    * @param {WebSocket} api
-   * @param {string} pair
+   * @param {string} channel
    */
-  async unsubscribe(api, pair) {
-    if (!(await super.unsubscribe(api, pair))) {
+  async unsubscribe(api, channel) {
+    if (!(await super.unsubscribe(api, channel))) {
       return
     }
+
+    const [pair, name] = this.parseChannel(channel)
 
     if (api._connected.length === 0) {
       const chanId = Object.keys(this.channels).find(
@@ -99,7 +109,7 @@ export default class extends Exchange {
     }
   }
 
-  onMessage(event, api) {
+  onMessage(api, event) {
     const json = JSON.parse(event.data)
 
     if (json.event === 'subscribed' && json.chanId) {

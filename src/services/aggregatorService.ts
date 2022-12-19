@@ -103,42 +103,38 @@ class AggregatorService extends EventEmitter {
     })
   }
 
-  async connect(markets: string[]): Promise<any> {
-    if (!markets.length) {
-      return
-    }
-
+  async subscribe(markets: string[]): Promise<any> {
     for (let i = 0; i < markets.length; i++) {
       const [exchange] = parseMarket(markets[i])
 
-      if (store.state.exchanges[exchange].disabled) {
-        const panes = []
-        for (const paneId in store.state.panes.panes) {
-          if (
-            store.state.panes.panes[paneId].markets.indexOf(markets[i]) !== -1
-          ) {
-            panes.push(paneId)
-          }
-        }
+      if (
+        !store.state.exchanges[exchange] ||
+        store.state.exchanges[exchange].disabled
+      ) {
+        // prevent connecting to market of disabled exchange
 
         markets.splice(i, 1)
         i--
       }
     }
 
-    await this.dispatchAsync({
-      op: 'connect',
-      data: markets
-    })
-  }
-
-  async disconnect(markets: string[]): Promise<any> {
     if (!markets.length) {
       return
     }
 
     await this.dispatchAsync({
-      op: 'disconnect',
+      op: 'subscribe',
+      data: markets
+    })
+  }
+
+  async unsubscribe(markets: string[]): Promise<any> {
+    if (!Object.keys(markets).length) {
+      return
+    }
+
+    await this.dispatchAsync({
+      op: 'unsubscribe',
       data: markets
     })
   }
@@ -148,13 +144,11 @@ class AggregatorService extends EventEmitter {
     const decimalsByLocalMarkets = {}
 
     for (const marketKey in marketDecimals) {
-      if (!store.state.panes.marketsListeners[marketKey]) {
+      if (!store.state.panes.products[marketKey]) {
         continue
       }
 
-      const localPair = store.state.panes.marketsListeners[marketKey].local
-        .replace('USDT', 'USD')
-        .replace('USDC', 'USD')
+      const localPair = store.state.panes.products[marketKey].local
 
       if (!decimalsByLocalMarkets[localPair]) {
         decimalsByLocalMarkets[localPair] = []
@@ -164,13 +158,11 @@ class AggregatorService extends EventEmitter {
     }
 
     for (const marketKey in marketDecimals) {
-      if (!store.state.panes.marketsListeners[marketKey]) {
+      if (!store.state.panes.products[marketKey]) {
         continue
       }
 
-      const localPair = stripStable(
-        store.state.panes.marketsListeners[marketKey].local
-      )
+      const localPair = stripStable(store.state.panes.products[marketKey].local)
 
       if (!decimalsByLocalMarkets[localPair]) {
         continue

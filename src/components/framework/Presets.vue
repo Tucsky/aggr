@@ -60,7 +60,7 @@
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import importService from '@/services/importService'
-import { Preset, PresetType } from '@/types/types'
+import { Preset } from '@/types/types'
 import { Component, Vue } from 'vue-property-decorator'
 import PresetDialog from '../settings/PresetDialog.vue'
 
@@ -82,7 +82,7 @@ import PresetDialog from '../settings/PresetDialog.vue'
   }
 })
 export default class extends Vue {
-  type: PresetType
+  type: string
   adapter: Function
   dropdownTrigger = null
   presets = []

@@ -18,9 +18,7 @@
         :key="index"
         @mousedown="select"
         @touchstart="select"
-        :style="
-          `transform: translate(${handle.positionX}px, ${handle.positionY}px); background-color: ${handle.color};`
-        "
+        :style="`transform: translate(${handle.positionX}px, ${handle.positionY}px); background-color: ${handle.color};`"
       >
         <div class="slider__label" v-if="label">
           <slot name="tooltip" :value="handle.value">
@@ -79,6 +77,7 @@ export default {
   methods: {
     init() {
       this.$emitInputEvent = debounce(() => {
+        console.log('emit', this.currentValue)
         this.$emit('input', this.currentValue)
       })
       this.multiple = this.values.length > 1
@@ -199,6 +198,7 @@ export default {
 
       if (this.pendingDblClick) {
         this._dblClickTimeout = window.setTimeout(() => {
+          this.$emit('release', this.currentValue)
           this.pendingDblClick = false
           this._dblClickTimeout = null
         }, 150)

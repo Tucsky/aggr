@@ -2,8 +2,6 @@ import Exchange from '../exchange'
 
 export default class extends Exchange {
   id = 'BINANCE_FUTURES'
-  private lastSubscriptionId = 0
-  private subscriptions = {}
   private specs: { [pair: string]: number }
   private dapi: { [pair: string]: string }
   protected maxConnectionsPerApi = 100
@@ -60,25 +58,30 @@ export default class extends Exchange {
     }
   }
 
+  getChannelPayload(pair: string, name: string) {
+    if (name === 'ticker') {
+      return [pair + '@miniTicker']
+    }
+
+    return [pair + '@aggTrade', pair + '@forceOrder']
+  }
+
   /**
    * Sub
    * @param {WebSocket} api
-   * @param {string} pair
+   * @param {string} channel
    */
-  async subscribe(api, pair) {
-    if (!(await super.subscribe(api, pair))) {
+  async subscribe(api, channel) {
+    if (!(await super.subscribe(api, channel))) {
       return
     }
 
-    this.subscriptions[pair] = ++this.lastSubscriptionId
-
-    const params = [pair + '@aggTrade', pair + '@forceOrder']
+    const [pair, name] = this.parseChannel(channel)
 
     api.send(
       JSON.stringify({
         method: 'SUBSCRIBE',
-        params,
-        id: this.subscriptions[pair]
+        ...this.getChannelPayload(pair, name)
       })
     )
 
@@ -86,31 +89,28 @@ export default class extends Exchange {
   }
 
   /**
-   * Sub
+   * Unsub
    * @param {WebSocket} api
-   * @param {string} pair
+   * @param {string} channel
    */
-  async unsubscribe(api, pair) {
-    if (!(await super.unsubscribe(api, pair))) {
+  async unsubscribe(api, channel) {
+    if (!(await super.unsubscribe(api, channel))) {
       return
     }
 
-    const params = [pair + '@aggTrade', pair + '@forceOrder']
+    const [pair, name] = this.parseChannel(channel)
 
     api.send(
       JSON.stringify({
         method: 'UNSUBSCRIBE',
-        params,
-        id: this.subscriptions[pair]
+        ...this.getChannelPayload(pair, name)
       })
     )
-
-    delete this.subscriptions[pair]
 
     return true
   }
 
-  onMessage(event, api) {
+  onMessage(api, event) {
     const json = JSON.parse(event.data)
 
     if (!json) {

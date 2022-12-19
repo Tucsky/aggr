@@ -63,7 +63,7 @@ export default {
     }
   },
   watch: {
-    '$store.state.app.showSearch': function(value) {
+    '$store.state.app.showSearch': function (value) {
       if (!value) {
         this.close(false)
       }
@@ -76,7 +76,7 @@ export default {
       this.newTimeframe = this.timeframe
     }
 
-    this.placeholder = this.$store.state[this.paneId].timeframe
+    this.placeholder = this.$store.state[this.paneId].timeframe.toString()
   },
   methods: {
     hide() {

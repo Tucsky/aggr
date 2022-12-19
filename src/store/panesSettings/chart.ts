@@ -12,13 +12,14 @@ import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '..'
 import merge from 'lodash.merge'
+import ScriptBuilder from '@/components/chart/scripts/scriptBuilder'
 
 export interface PriceScaleSettings {
   scaleMargins?: PriceScaleMargins
   mode?: PriceScaleMode
 }
 
-export interface IndicatorNavigationState {
+export interface IndicatorWindowState {
   sections: string[]
   tab: string
   optionsQuery: string
@@ -30,13 +31,12 @@ export interface IndicatorSettings {
   name?: string
   displayName?: string
   description?: string
-  navigationState?: IndicatorNavigationState
+  build?: string
   script?: string
   options?: SeriesOptions<SeriesType>
   createdAt?: number
   updatedAt?: number
   unsavedChanges?: boolean
-  series?: string[]
   version?: string
   uses?: number
 }
@@ -46,11 +46,11 @@ export interface ChartPaneState {
   priceScales: { [id: string]: PriceScaleSettings }
   layouting: boolean | string
   timeframe: number
+  indicatorWindowState?: IndicatorWindowState
   indicatorsErrors: { [indicatorId: string]: string }
   refreshRate?: number
   showLegend: boolean
   fillGapsWithEmpty: boolean
-  forceNormalizePrice: boolean
   showHorizontalGridlines: boolean
   horizontalGridlinesColor: string
   showVerticalGridlines: boolean
@@ -79,7 +79,6 @@ const state = {
   refreshRate: 1000,
   showLegend: true,
   fillGapsWithEmpty: true,
-  forceNormalizePrice: false,
   showHorizontalGridlines: false,
   horizontalGridlinesColor: 'rgba(255,255,255,.1)',
   showVerticalGridlines: false,
@@ -96,22 +95,25 @@ const actions = {
     state.layouting = false // start without layouting overlay
 
     if (!Object.keys(state.indicators).length) {
-      const indicators = await workspacesService.getIndicators()
-
-      for (const indicator of indicators) {
-        if ((indicator as any).enabled !== true) {
-          continue
-        }
-
-        if (!indicator.series) {
-          indicator.series = []
-        }
-
-        Vue.set(state.indicators, indicator.id, indicator)
-      }
+      state.indicators = (await workspacesService.getIndicators())
+        .filter(indicator => (indicator as any).enabled === true)
+        .reduce((acc, indicator) => {
+          acc[indicator.id] = indicator
+          return acc
+        }, {} as { [id: string]: IndicatorSettings })
 
       scheduleSync(state)
     }
+
+    // prebuild indicators (will populate .model of each indicators)
+    ScriptBuilder.buildSequence(state.indicators)
+  },
+  toSubscriptions({ state }, markets: string[]) {
+    const precision =
+      state.refreshRate < 50 || /t$/.test(state.timeframe.toString())
+        ? 'ticks'
+        : 'trades'
+    return markets.map(market => `${market}.${precision}`)
   },
   addIndicator({ state, commit }, indicator) {
     const ids = Object.keys(state.indicators)
@@ -148,6 +150,7 @@ const actions = {
     delete indicator.updatedAt
     delete indicator.createdAt
     delete indicator.enabled
+    delete indicator.model
 
     dispatch('addIndicator', indicator)
   },
@@ -291,14 +294,11 @@ const actions = {
       }
     }
   },
-  async setIndicatorNavigationState(
+  async setIndicatorWindowState(
     { state },
-    {
-      id,
-      navigationState
-    }: { id: string; navigationState: IndicatorNavigationState }
+    indicatorWindowState: IndicatorWindowState
   ) {
-    state.indicators[id].navigationState = navigationState
+    state.indicatorWindowState = indicatorWindowState
     syncState(state)
   },
   async undoIndicator({ state, commit }, indicatorId) {
@@ -347,7 +347,7 @@ const actions = {
           Vue.set(state.hiddenMarkets, market, !containsHidden)
         }
       } else {
-        const indexedMarket = rootState.panes.marketsListeners[market]
+        const indexedMarket = rootState.panes.products[market]
 
         const hide = type !== indexedMarket.type
 
@@ -356,7 +356,18 @@ const actions = {
         }
       }
     }
+
     commit('TOGGLE_MARKET')
+  },
+  setRefreshRate({ commit, state }, newValue) {
+    const oldValue = state.refreshRate
+    commit('SET_REFRESH_RATE', newValue)
+    if (
+      (oldValue >= 50 && newValue < 50) ||
+      (oldValue < 50 && newValue >= 50)
+    ) {
+      this.dispatch(`panes/refreshPaneSubscriptions`, state._id)
+    }
   }
 } as ActionTree<ChartPaneState, ModulesState>
 
@@ -388,9 +399,6 @@ const mutations = {
     } else {
       state.watermarkColor = value
     }
-  },
-  SET_INDICATOR_SERIES(state, { id, series }) {
-    state.indicators[id].series = series
   },
   SET_INDICATOR_ERROR(state, { id, error }) {
     if (error) {
@@ -456,9 +464,6 @@ const mutations = {
   TOGGLE_FILL_GAPS_WITH_EMPTY(state) {
     state.fillGapsWithEmpty = !state.fillGapsWithEmpty
   },
-  TOGGLE_FORCE_NORMALIZE_PRICE(state) {
-    state.forceNormalizePrice = !state.forceNormalizePrice
-  },
   UPDATE_INDICATOR_DISPLAY_NAME(state, id) {
     const displayName = state.indicators[id].name.replace(
       /\{([\w\d_]+)\}/g,
@@ -481,6 +486,12 @@ const mutations = {
   },
   SET_BAR_SPACING(state, value) {
     state.barSpacing = value
+  },
+  SET_INDICATOR_META(
+    state,
+    { id, meta }: { id: string; meta: IndicatorMetadata }
+  ) {
+    Vue.set(state.indicators[id], 'meta', JSON.stringify(meta))
   }
 } as MutationTree<ChartPaneState>
 

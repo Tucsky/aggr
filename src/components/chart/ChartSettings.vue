@@ -8,12 +8,13 @@
       <slider
         :min="0"
         :max="10000"
-        :step="100"
+        :step="50"
         :show-completion="true"
         class="mt8"
         :value="refreshRate"
-        @input="$store.commit(paneId + '/SET_REFRESH_RATE', $event)"
-        @reset="$store.commit(paneId + '/SET_REFRESH_RATE', 500)"
+        @input="refreshRateDisplay = $event"
+        @reset="$store.dispatch(paneId + '/setRefreshRate', 500)"
+        @release="$store.dispatch(paneId + '/setRefreshRate', $event)"
       ></slider>
     </div>
     <p v-if="refreshRate < 500" class="form-feedback">
@@ -152,29 +153,6 @@
           <div class="mr8"></div>
         </label>
         <label for="" class="-fill -center">Fill gaps with empty bars</label>
-      </div>
-    </div>
-    <div class="form-group mb8">
-      <div class="form-group column">
-        <label
-          class="checkbox-control"
-          @change="$store.commit(paneId + '/TOGGLE_FORCE_NORMALIZE_PRICE')"
-        >
-          <input
-            type="checkbox"
-            class="form-control"
-            :checked="forceNormalizePrice"
-          />
-          <div class="mr8"></div>
-        </label>
-        <label for="" class="-fill -center"
-          >Always normalize mean
-          <i
-            class="icon-info"
-            v-tippy
-            title="When enabled, the chart will always copy intial realtime price of a market to the start of the chart to garantee global average consistency (warning: leads to incorrect past price)."
-          ></i>
-        </label>
       </div>
     </div>
     <hr />
@@ -324,6 +302,7 @@ export default class extends Vue {
     'notifications-grant': 'Enable notifications for this site in your browser.'
   }
   notificationsPermissionState = 'granted'
+  refreshRateDisplay = null
 
   get showLegend() {
     return this.$store.state[this.paneId].showLegend
@@ -331,10 +310,6 @@ export default class extends Vue {
 
   get fillGapsWithEmpty() {
     return this.$store.state[this.paneId].fillGapsWithEmpty
-  }
-
-  get forceNormalizePrice() {
-    return this.$store.state[this.paneId].forceNormalizePrice
   }
 
   get refreshRate() {
@@ -390,7 +365,7 @@ export default class extends Vue {
   }
 
   get refreshRateHms() {
-    return getHms(this.refreshRate)
+    return getHms(this.refreshRateDisplay)
   }
 
   created() {

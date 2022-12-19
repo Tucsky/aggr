@@ -381,7 +381,7 @@ const ignoredOptionsKeys = [
 ]
 
 import IndicatorOption from '@/components/chart/IndicatorOption.vue'
-import { IndicatorSettings } from '@/store/panesSettings/chart'
+import { ChartPaneState, IndicatorSettings } from '@/store/panesSettings/chart'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 import Editor from '@/components/framework/Editor.vue'
 export default {
@@ -502,7 +502,7 @@ export default {
     }
   },
   created() {
-    this.restoreNavigationState()
+    this.restoreIndicatorWindowState()
 
     this.$nextTick(() => {
       this.getPlotTypes()
@@ -518,15 +518,19 @@ export default {
   },
   methods: {
     restoreNavigationState() {
-      if (this.indicator.navigationState) {
-        this.sections = this.indicator.navigationState.sections.slice()
-        this.tab = this.indicator.navigationState.tab
-        this.optionsQuery = this.indicator.navigationState.optionsQuery
-        this.editorFontSize = this.indicator.navigationState.fontSizePx || 12
+      const indicatorWindowState = (
+        this.$store.state[this.paneId] as ChartPaneState
+      ).indicatorWindowState
+
+      if (indicatorWindowState) {
+        this.sections = indicatorWindowState.sections.slice()
+        this.tab = indicatorWindowState.tab
+        this.optionsQuery = indicatorWindowState.optionsQuery
+        this.editorFontSize = indicatorWindowState.fontSizePx || 12
       }
     },
     saveNavigationState() {
-      this.$store.dispatch(this.paneId + '/setIndicatorNavigationState', {
+      this.$store.dispatch(this.paneId + '/setIndicatorWindowState', {
         id: this.indicatorId,
         navigationState: {
           sections: this.sections,

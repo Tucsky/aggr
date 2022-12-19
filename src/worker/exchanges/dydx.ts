@@ -17,12 +17,14 @@ export default class extends Exchange {
   /**
    * Sub
    * @param {WebSocket} api
-   * @param {string} pair
+   * @param {string} channel
    */
-  async subscribe(api, pair) {
-    if (!(await super.subscribe(api, pair))) {
+  async subscribe(api, channel) {
+    if (!(await super.subscribe(api, channel))) {
       return
     }
+
+    const [pair, name] = this.parseChannel(channel)
 
     api.send(
       JSON.stringify({
@@ -36,14 +38,16 @@ export default class extends Exchange {
   }
 
   /**
-   * Sub
+   * Unsub
    * @param {WebSocket} api
-   * @param {string} pair
+   * @param {string} channel
    */
-  async unsubscribe(api, pair) {
-    if (!(await super.unsubscribe(api, pair))) {
+  async unsubscribe(api, channel) {
+    if (!(await super.unsubscribe(api, channel))) {
       return
     }
+
+    const [pair, name] = this.parseChannel(channel)
 
     api.send(
       JSON.stringify({
@@ -67,7 +71,7 @@ export default class extends Exchange {
     }
   }
 
-  onMessage(event, api) {
+  onMessage(api, event) {
     const json = JSON.parse(event.data)
 
     if (json.channel === 'v3_trades') {

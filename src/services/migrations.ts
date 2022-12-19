@@ -5,6 +5,7 @@ import { AggrDB } from './workspacesService'
 import defaultPanes from '@/store/defaultPanes.json'
 import { Threshold, TradesPaneState } from '@/store/panesSettings/trades'
 import { getMarketProduct, parseMarket } from './productsService'
+import { PanesState } from '../store/panes'
 
 export const databaseUpgrades = {
   0: (db: IDBPDatabase<any>) => {
@@ -361,6 +362,29 @@ export const workspaceUpgrades = {
     for (const paneId in workspace.states.panes.panes) {
       const pane = workspace.states.panes.panes[paneId]
       pane.zoom = Math.ceil(pane.zoom / 0.0625) * 0.0625
+    }
+  },
+  6: (workspace: Workspace) => {
+    const panesState = workspace.states.panes as PanesState
+    const markets = Object.keys((panesState as any).marketsListeners)
+
+    delete (panesState as any).marketsListeners
+    panesState.products = {}
+
+    for (const paneId in panesState.panes) {
+      const pane = panesState.panes[paneId]
+
+      let feedName = 'ticker'
+
+      if (
+        pane.type === 'chart' &&
+        workspace.states[paneId] &&
+        /t$/.test(workspace.states[paneId].timeframe)
+      ) {
+        feedName = 'trades'
+      }
+
+      pane.subscriptions = markets.map(market => `${market}.${feedName}`)
     }
   }
 }
