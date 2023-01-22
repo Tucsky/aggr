@@ -1,5 +1,10 @@
 <template>
-  <button class="btn" :class="buttonClass" @click="toggleDropdown">
+  <button
+    type="button"
+    class="btn"
+    :class="buttonClass"
+    @click="toggleDropdown"
+  >
     <slot name="selection" :item="value" :placeholder="placeholder">
       <span>{{ label }}</span>
     </slot>

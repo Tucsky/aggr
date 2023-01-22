@@ -3,26 +3,27 @@
     class="pane-header hide-scrollbar pane-overlay d-flex"
     :class="{ '-loading': loading }"
   >
-    <div class="pane-header__loader"></div>
-    <span
-      class="pane-header__name ml4 mrauto"
-      data-hide-header
-      @dblclick="renamePane"
-      >{{ name }}</span
-    >
+    <span class="pane-header__name mrauto" @dblclick="renamePane">{{
+      name
+    }}</span>
     <div class="toolbar flex-grow-1" @dblclick="maximizePane">
       <slot />
-      <button type="button" @click="openSearch" class="toolbar__label min-768">
+      <button
+        type="button"
+        @click="openSearch"
+        class="btn toolbar__label toolbar__label--768 -text"
+      >
         <i class="icon-search"></i>
       </button>
-      <button
+      <btn
         v-if="settings"
         type="button"
         @click="openSettings"
-        class="toolbar__label min-768"
+        class="toolbar__label toolbar__label--768 -text"
+        :loading="isLoading"
       >
         <i class="icon-cog"></i>
-      </button>
+      </btn>
       <button type="button" @click="toggleDropdown" class="toolbar__label">
         <i class="icon-more"></i>
       </button>
@@ -77,6 +78,10 @@
           <i class="icon-copy-paste"></i>
           <span>Duplicate</span>
         </button>
+        <button type="button" class="dropdown-item" @click="downloadPane">
+          <i class="icon-download"></i>
+          <span>Download</span>
+        </button>
         <div class="dropdown--divider"></div>
         <button type="button" class="dropdown-item" @click="removePane">
           <i class="icon-trash"></i>
@@ -91,7 +96,8 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 
-import { getSiblings } from '@/utils/helpers'
+import Btn from '@/components/framework/Btn.vue'
+import { downloadAnything, getSiblings, slugify } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 
 @Component({
@@ -108,12 +114,16 @@ import dialogService from '@/services/dialogService'
       type: Boolean,
       default: false
     }
+  },
+  components: {
+    Btn
   }
 })
 export default class extends Vue {
   private settings?: () => Promise<any>
   paneId: string
   paneDropdownTrigger = null
+  isLoading = false
 
   get zoom() {
     return this.$store.state.panes.panes[this.paneId].zoom || 1
@@ -125,9 +135,10 @@ export default class extends Vue {
 
   get name() {
     const name = this.$store.state.panes.panes[this.paneId].name
-    const market = this.$store.state.panes.marketsListeners[
-      this.$store.state.panes.panes[this.paneId].markets[0]
-    ]
+    const market =
+      this.$store.state.panes.marketsListeners[
+        this.$store.state.panes.panes[this.paneId].markets[0]
+      ]
 
     if (name) {
       return name
@@ -172,11 +183,7 @@ export default class extends Vue {
   }
 
   maximizePane(event) {
-    if (
-      event.type === 'dblclick' &&
-      event.currentTarget !== event.target &&
-      event.target.className !== 'toolbar__spacer'
-    ) {
+    if (event.type === 'dblclick' && event.currentTarget !== event.target) {
       return
     }
 
@@ -209,6 +216,19 @@ export default class extends Vue {
     }
   }
 
+  async downloadPane() {
+    downloadAnything(
+      {
+        name: `${this.type}:${this.paneId}`,
+        type: this.type,
+        data: this.$store.state[this.paneId],
+        createdAt: Date.now(),
+        updatedAt: null
+      },
+      slugify(this.paneId)
+    )
+  }
+
   toggleDropdown(event) {
     if (this.paneDropdownTrigger) {
       this.paneDropdownTrigger = null
@@ -222,9 +242,11 @@ export default class extends Vue {
       return
     }
 
+    this.isLoading = true
     dialogService.open((await this.settings()).default, {
       paneId: this.paneId
     })
+    this.isLoading = false
   }
 }
 </script>

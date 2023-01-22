@@ -28,7 +28,7 @@ import {
   defaultStatsChartOptions,
   getChartOptions,
   getChartCustomColorsOptions
-} from '../chart/options'
+} from '../../services/chartService'
 
 import StatDialog from './StatDialog.vue'
 import dialogService from '@/services/dialogService'
@@ -67,14 +67,12 @@ export default class extends Mixins(PaneMixin) {
       switch (mutation.type) {
         case 'settings/SET_TEXT_COLOR':
           if (this._chart && mutation.payload) {
-            this._chart.applyOptions(
-              getChartCustomColorsOptions(mutation.payload)
-            )
+            this._chart.applyOptions(getChartCustomColorsOptions(this.paneId))
           }
           break
         case 'settings/SET_CHART_THEME':
           if (this._chart) {
-            this._chart.applyOptions(getChartCustomColorsOptions())
+            this._chart.applyOptions(getChartCustomColorsOptions(this.paneId))
           }
           break
         case 'panes/SET_PANE_MARKETS':

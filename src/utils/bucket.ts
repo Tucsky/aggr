@@ -1,4 +1,4 @@
-import { defaultPlotsOptions } from '@/components/chart/options'
+import { defaultPlotsOptions } from '@/services/chartService'
 import { Volumes } from '@/types/types'
 import { IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts'
 import store from '../store'
@@ -237,7 +237,7 @@ export default class Bucket {
       return colorInput
     }
 
-    return (function() {
+    return (function () {
       'use strict'
       return new Function('value', '"use strict"; return ' + colorInput)
     })() as BucketColor

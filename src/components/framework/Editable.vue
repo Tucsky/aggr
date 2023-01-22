@@ -3,7 +3,7 @@
     :contenteditable="editable !== false"
     :disabled="editable === false"
     @keydown="onKeyDown"
-    @input="changed = true"
+    @input="onInput"
     @focus="onFocus"
     @blur="onBlur"
     @wheel="onWheel"
@@ -78,12 +78,19 @@ export default class extends Vue {
     }
   }
 
+  onInput() {
+    this.changed = true
+  }
+
   onKeyDown(event) {
     if (this.disabled || event.which === 13) {
       event.preventDefault()
       ;(this.$el as HTMLInputElement).blur()
 
-      event.target.innerText = this.value
+      event.target.innerText =
+        this.value || (this.$el as HTMLInputElement).innerText
+
+      this.$emit('submit', this.value)
 
       return
     }

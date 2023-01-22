@@ -51,6 +51,8 @@
         frameborder="0"
         width="100%"
         height="100%"
+        :class="invert && '-solid'"
+        :scrolling="!interactive && 'no'"
         :style="style"
       ></iframe>
     </div>
@@ -65,7 +67,7 @@ import PaneHeader from '../panes/PaneHeader.vue'
 
 @Component({
   components: { PaneHeader },
-  name: 'Website',
+  name: 'Website'
 })
 export default class extends Mixins(PaneMixin) {
   customId = ''
@@ -91,6 +93,10 @@ export default class extends Mixins(PaneMixin) {
     return this.$store.state[this.paneId].interactive
   }
 
+  get invert() {
+    return this.$store.state[this.paneId].invert
+  }
+
   get reloadTimer() {
     return this.$store.state[this.paneId].reloadTimer
   }
@@ -106,7 +112,7 @@ export default class extends Mixins(PaneMixin) {
       transform: `scale(${this.zoom})`,
       width: size + '%',
       height: size + '%',
-      pointerEvents: this.interactive ? 'all' : 'none',
+      pointerEvents: this.interactive ? 'all' : 'none'
     }
   }
 
@@ -125,12 +131,6 @@ export default class extends Mixins(PaneMixin) {
 
   created() {
     this.setupReloadTimer()
-  }
-
-  mounted() {
-    if (!this.$store.state[this.paneId].url) {
-      this.$refs.paneHeader.openSettings()
-    }
   }
 
   getSettingsDialog() {
@@ -216,6 +216,10 @@ export default class extends Mixins(PaneMixin) {
     width: 100%;
     height: 100%;
     transform-origin: top left;
+
+    &.-solid {
+      filter: invert(1);
+    }
   }
 }
 </style>

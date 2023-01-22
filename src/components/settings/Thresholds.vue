@@ -3,18 +3,34 @@
     class="thresholds"
     :class="{ '-dragging': dragging, '-rendering': rendering }"
   >
+    <div class="d-flex">
+      <div class="column mlauto mrauto">
+        <label class="-fill -center mr8 text-right">Buy color</label>
+        <color-picker-control
+          :value="buyColor"
+          label="Buy color"
+          @input="regenerateSwatch('buy', $event)"
+        ></color-picker-control>
+      </div>
+      <div class="column mrauto mlauto">
+        <color-picker-control
+          :value="sellColor"
+          label="Sell color"
+          @input="regenerateSwatch('sell', $event)"
+        ></color-picker-control>
+        <label class="-fill -center ml8">Sell color</label>
+      </div>
+    </div>
     <table class="table thresholds-table" v-if="showThresholdsAsTable">
       <thead>
         <tr>
-          <th colspan="2">{{ label }}</th>
+          <th colspan="2"></th>
           <th class="table-action">
-            <button class="btn -text" @click="flipSwatches('buy')">
-              <i class="icon-sort" v-tippy title="Flip"></i>
-            </button>
+            <button class="btn -text" @click="flipSwatches('buy')">flip</button>
           </th>
           <th class="table-action">
             <button class="btn -text" @click="flipSwatches('sell')">
-              <i class="icon-sort" v-tippy title="Flip"></i>
+              flip
             </button>
           </th>
         </tr>
@@ -121,6 +137,40 @@
         ></div>
       </div>
     </div>
+    <div class="d-flex mt8">
+      <presets
+        class="mrauto"
+        type="threshold"
+        placeholder="Custom thresholds"
+        :adapter="getPreset"
+        @apply="applyPreset($event)"
+        label="Presets"
+        classes="btn -text -small"
+      />
+      <button
+        type="button"
+        v-tippy
+        title="Switch table / sliders"
+        class="btn -text -small -center mr8"
+        @click="
+          $store.commit(
+            paneId + '/TOGGLE_THRESHOLDS_TABLE',
+            !showThresholdsAsTable
+          )
+        "
+      >
+        {{ showThresholdsAsTable ? 'slider' : 'table' }}
+      </button>
+      <button
+        type="button"
+        class="btn -nowrap -text -start"
+        v-tippy
+        title="Add a threshold"
+        @click="$store.commit(paneId + '/ADD_THRESHOLD', type)"
+      >
+        <i class="icon-plus"></i>
+      </button>
+    </div>
     <dropdown v-model="thresholdPanelTrigger" interactive>
       <threshold-dropdown
         :threshold="selectedThreshold"
@@ -133,8 +183,10 @@
 </template>
 
 <script lang="ts">
+import panesSettings from '@/store/panesSettings'
+
 import { Component, Vue } from 'vue-property-decorator'
-import { sleep } from '@/utils/helpers'
+import { sleep, randomString } from '@/utils/helpers'
 import { formatAmount } from '@/services/productsService'
 
 import dialogService from '@/services/dialogService'
@@ -142,7 +194,9 @@ import ThresholdAudioDialog from '../trades/audio/ThresholdAudioDialog.vue'
 import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
 import { Threshold } from '@/store/panesSettings/trades'
 import ThresholdDropdown from './ThresholdDropdown.vue'
+import ThresholdPresetDialog from '@/components/trades/ThresholdPresetDialog.vue'
 
+import merge from 'lodash.merge'
 @Component({
   name: 'Thresholds',
   components: {
@@ -160,12 +214,17 @@ import ThresholdDropdown from './ThresholdDropdown.vue'
     },
     thresholds: {
       required: true
+    },
+    type: {
+      type: String,
+      default: 'thresholds'
     }
   }
 })
 export default class extends Vue {
   paneId: string
   thresholds: Threshold[]
+  type: string
 
   rendering = true
   dragging = null
@@ -178,6 +237,7 @@ export default class extends Vue {
     timestamp: number
     position: number
   } = null
+  private movedAmount: number
 
   private _minimum = null
   private _maximum = null
@@ -209,6 +269,14 @@ export default class extends Vue {
     return this.thresholds[this.thresholds.length - 1].max
   }
 
+  get buyColor() {
+    return this.thresholds[1].buyColor
+  }
+
+  get sellColor() {
+    return this.thresholds[1].sellColor
+  }
+
   $refs!: {
     thresholdContainer: HTMLElement
     buysGradient: HTMLElement
@@ -233,14 +301,13 @@ export default class extends Vue {
           }
           break
         case this.paneId + '/SET_THRESHOLD_AMOUNT':
+        case this.paneId + '/DELETE_THRESHOLD':
+        case this.paneId + '/ADD_THRESHOLD':
           this.reorderThresholds()
           this.refreshHandlers()
           break
         case this.paneId + '/SET_THRESHOLD_COLOR':
           this.refreshGradients()
-          break
-        case this.paneId + '/ADD_THRESHOLD':
-          this.refreshHandlers()
           break
       }
     })
@@ -306,15 +373,9 @@ export default class extends Vue {
 
   selectThreshold(id, event) {
     if (this.thresholdPanelTrigger && this.selectedThresholdId === id) {
-      this.thresholdPanelTrigger = null
-      this.selectedThresholdId = null
-
-      if (this.selectedSliderHandle) {
-        this.endDrag()
-      }
-
       return
     }
+
     this.selectedThresholdId = id
 
     if (this.selectedThresholdId) {
@@ -343,7 +404,7 @@ export default class extends Vue {
     const minLog = Math.max(0, Math.log(this._minimum + 1) || 0)
     const minLeft = (minLog / Math.log(this._maximum + 1)) * this._width
 
-    let left = Math.max(
+    const left = Math.max(
       (this._width / 3) * -1,
       Math.min(this._width * 1.5, x - this._offsetLeft)
     )
@@ -354,28 +415,12 @@ export default class extends Vue {
           Math.log(this._maximum + 1)
       ) - 1
 
-    if (x < this._offsetLeft) {
-      amount =
-        this.selectedThreshold.amount -
-        (this.selectedThreshold.amount - amount) * 0.1
-      left = 0
-    } else if (x > this._offsetLeft + this._width) {
-      amount =
-        this.selectedThreshold.amount -
-        (this.selectedThreshold.amount - amount) * 0.1
-      left = this._width
-    }
-
     if (amount < 0) {
       amount = 0
     }
 
+    this.movedAmount = amount
     this.selectedSliderHandle.style.transform = 'translateX(' + left + 'px)'
-
-    this.$store.commit(this.paneId + '/SET_THRESHOLD_AMOUNT', {
-      id: this.selectedThresholdId,
-      value: amount
-    })
   }
 
   endDrag() {
@@ -385,9 +430,17 @@ export default class extends Vue {
       this.reorderThresholds()
       this.refreshHandlers()
       this.refreshGradients()
+
+      if (typeof this.movedAmount === 'number') {
+        this.$store.commit(this.paneId + '/SET_THRESHOLD_AMOUNT', {
+          id: this.selectedThresholdId,
+          value: this.movedAmount
+        })
+      }
     }
 
     this.dragging = false
+    this.movedAmount = null
   }
 
   async refreshHandlers() {
@@ -502,6 +555,183 @@ export default class extends Vue {
     this.$store.commit(this.paneId + '/TOGGLE_THRESHOLD_MAX', threshold.id)
 
     // this.capToLastThreshold = threshold.max
+  }
+
+  async getPreset() {
+    const payload = await dialogService.openAsPromise(ThresholdPresetDialog)
+
+    if (payload) {
+      if (!payload.amounts && !payload.audios && !payload.colors) {
+        return
+      }
+
+      const audioPreset: Threshold[] = []
+
+      for (const threshold of this.thresholds) {
+        const partialThreshold: any = {}
+
+        if (payload.amounts) {
+          partialThreshold.amount = threshold.amount
+        }
+
+        if (payload.colors) {
+          partialThreshold.buyColor = threshold.buyColor
+          partialThreshold.sellColor = threshold.sellColor
+        }
+
+        if (payload.audios) {
+          partialThreshold.buyAudio = threshold.buyAudio
+          partialThreshold.sellAudio = threshold.sellAudio
+        }
+
+        audioPreset.push(partialThreshold)
+      }
+
+      return audioPreset
+    }
+  }
+
+  applyPreset(presetData?) {
+    const defaultSettings = JSON.parse(
+      JSON.stringify(panesSettings.trades.state[this.type])
+    ) as Threshold[]
+
+    let updateThresholdsColors = null
+    let updateThresholdsAudios = null
+    let updateThresholdsAmounts = null
+
+    if (presetData) {
+      if (!Array.isArray(presetData)) {
+        if (presetData[this.type] && Array.isArray(presetData[this.type])) {
+          presetData = presetData[this.type]
+        } else if (
+          presetData.thresholds &&
+          Array.isArray(presetData.thresholds)
+        ) {
+          presetData = presetData.thresholds
+        } else {
+          presetData = Object.keys(presetData).reduce((acc, key) => {
+            if (isNaN(+key)) {
+              return acc
+            }
+
+            acc.push(presetData[key])
+
+            return acc
+          }, [])
+        }
+      }
+
+      if (!presetData.length) {
+        this.$store.dispatch('app/showNotice', {
+          title: 'Preset looks empty',
+          type: 'error'
+        })
+        return
+      }
+
+      updateThresholdsAmounts = typeof presetData[0].amount !== 'undefined'
+      updateThresholdsColors = typeof presetData[0].buyColor !== 'undefined'
+      updateThresholdsAudios = typeof presetData[0].buyAudio !== 'undefined'
+
+      const replaceAll =
+        updateThresholdsAmounts &&
+        updateThresholdsColors &&
+        updateThresholdsAudios
+      const defaultMaxIndex = defaultSettings.length
+
+      if (replaceAll) {
+        merge(this.$store.state[this.paneId][this.type], presetData)
+      } else {
+        let previousAmount = this.$store.state[this.paneId][this.type][0].amount
+
+        this.$store.state[this.paneId][this.type] = merge(
+          this.$store.state[this.paneId][this.type],
+          presetData
+        ).map((threshold, index) => {
+          if (!threshold.id) {
+            threshold.id = randomString()
+          }
+          if (typeof threshold.amount === 'undefined') {
+            threshold.amount = previousAmount
+          }
+          if (typeof threshold.buyColor === 'undefined') {
+            threshold.buyColor =
+              defaultSettings[Math.min(index, defaultMaxIndex)].buyColor
+            threshold.sellColor =
+              defaultSettings[Math.min(index, defaultMaxIndex)].sellColor
+          }
+          if (typeof threshold.buyAudio === 'undefined') {
+            threshold.buyAudio =
+              defaultSettings[Math.min(index, defaultMaxIndex)].buyAudio
+            threshold.sellAudio =
+              defaultSettings[Math.min(index, defaultMaxIndex)].sellAudio
+          }
+
+          previousAmount = threshold.amount
+
+          return threshold
+        })
+      }
+    } else {
+      updateThresholdsAmounts =
+        updateThresholdsColors =
+        updateThresholdsAudios =
+          true
+
+      if (this.$store.state[this.paneId][this.type]) {
+        this.$store.state[this.paneId][this.type].splice(
+          0,
+          this.$store.state[this.paneId][this.type].length
+        )
+      }
+
+      merge(this.$store.state[this.paneId][this.type], defaultSettings)
+    }
+
+    const referenceThreshold = this.$store.state[this.paneId].thresholds[0]
+
+    if (updateThresholdsAmounts) {
+      this.$store.commit(this.paneId + '/SET_THRESHOLD_AMOUNT', {
+        id: referenceThreshold.id,
+        value: referenceThreshold.amount
+      })
+    }
+
+    if (updateThresholdsColors) {
+      this.$store.commit(this.paneId + '/SET_THRESHOLD_COLOR', {
+        id: referenceThreshold.id,
+        side: 'buy',
+        value: referenceThreshold.buyColor
+      })
+    }
+
+    if (updateThresholdsAudios) {
+      this.$store.commit(this.paneId + '/SET_THRESHOLD_AUDIO', {
+        id: referenceThreshold.id,
+        buyAudio: referenceThreshold.buyAudio,
+        sellAudio: referenceThreshold.sellAudio
+      })
+    }
+  }
+
+  async regenerateSwatch(side, value) {
+    this.$store.dispatch(`${this.paneId}/generateSwatch`, {
+      buyColor: side === 'buy' && value,
+      sellColor: side === 'sell' && value,
+      type: this.type,
+      baseVariance: 0.15
+    })
+
+    this.$store.state[this.paneId].thresholds = JSON.parse(
+      JSON.stringify(this.$store.state[this.paneId].thresholds)
+    )
+
+    this.$store.commit(this.paneId + '/SET_THRESHOLD_COLOR', {
+      id: this.thresholds[1].id,
+      side,
+      value
+    })
   }
 }
 </script>

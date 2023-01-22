@@ -5,9 +5,9 @@ import { ActionTree, Module, MutationTree } from 'vuex'
 import DEFAULTS_STATE from './defaultSettings.json'
 import {
   getColorLuminance,
-  getLinearShare,
+  getLinearShade,
   getLogShade,
-  getTextColor,
+  getLinearShadeText,
   joinRgba,
   splitColorCode
 } from '@/utils/colors'
@@ -28,6 +28,7 @@ export interface SettingsState {
   preferQuoteCurrencySize?: boolean
   calculateSlippage?: SlippageMode
   aggregationLength?: AggregationLength
+  wsProxyUrl: string
   theme?: string
   backgroundColor?: string
   textColor?: string
@@ -38,7 +39,7 @@ export interface SettingsState {
   audioVolume?: number
   audioFilters?: AudioFilters
   settings?: string[]
-  searchSections?: string[]
+  sections?: string[]
   disableAnimations?: boolean
   autoHideHeaders?: boolean
   searchTypes?: any
@@ -46,7 +47,6 @@ export interface SettingsState {
   searchExchanges?: any
   previousSearchSelections?: PreviousSearchSelection[]
   timeframes?: { label: string; value: string }[]
-  timeframeGroups?: string[]
   favoriteTimeframes?: { [timeframe: number]: string }
   normalizeWatermarks: boolean
   alerts: number | boolean
@@ -83,6 +83,16 @@ const actions = {
         value: state.preferQuoteCurrencySize
       }
     })
+
+    if (state.wsProxyUrl) {
+      aggregatorService.dispatch({
+        op: 'configureAggregator',
+        data: {
+          key: 'wsProxyUrl',
+          value: state.wsProxyUrl
+        }
+      })
+    }
 
     dispatch('updateCSS')
 
@@ -125,11 +135,13 @@ const actions = {
   },
   updateCSS({ state }) {
     const theme = state.theme
-    const backgroundDirection = theme === 'dark' ? 1 : -1
+    const backgroundScale = theme === 'dark' ? 1 : -1
+    const themeBase = theme === 'dark' ? [0, 0, 0] : [255, 255, 255]
     const backgroundRgb = splitColorCode(state.backgroundColor)
-    const background100Rgb = getLinearShare(
+    backgroundRgb[3] = 1
+    const background100Rgb = getLinearShade(
       backgroundRgb,
-      0.025 * backgroundDirection
+      0.025 * backgroundScale
     )
     const background100 = joinRgba(background100Rgb)
 
@@ -138,23 +150,38 @@ const actions = {
       state.backgroundColor
     )
     document.documentElement.style.setProperty(
+      '--theme-base',
+      joinRgba(themeBase)
+    )
+    document.documentElement.style.setProperty(
+      '--theme-base-o25',
+      joinRgba([...themeBase.slice(0, 3), 0.25])
+    )
+    document.documentElement.style.setProperty(
+      '--theme-background-75',
+      joinRgba(getLinearShade(backgroundRgb, -0.25 * backgroundScale))
+    )
+    document.documentElement.style.setProperty(
+      '--theme-background-50',
+      joinRgba(getLinearShade(backgroundRgb, -0.5 * backgroundScale))
+    )
+    document.documentElement.style.setProperty(
       '--theme-background-100',
       background100
     )
     document.documentElement.style.setProperty(
       '--theme-background-150',
-      joinRgba(getLinearShare(backgroundRgb, 0.05 * backgroundDirection))
+      joinRgba(getLinearShade(backgroundRgb, 0.075 * backgroundScale, 0.05))
     )
     document.documentElement.style.setProperty(
       '--theme-background-200',
-      joinRgba(getLinearShare(backgroundRgb, 0.08 * backgroundDirection))
+      joinRgba(getLinearShade(backgroundRgb, 0.2 * backgroundScale))
     )
     document.documentElement.style.setProperty(
       '--theme-background-300',
-      joinRgba(getLinearShare(backgroundRgb, 0.125 * backgroundDirection))
+      joinRgba(getLinearShade(backgroundRgb, 0.3 * backgroundScale))
     )
 
-    // const background100 = splitColorCode(document.documentElement.style.getPropertyValue('--theme-background-100'))
     document.documentElement.style.setProperty(
       '--theme-background-o75',
       `rgba(${background100Rgb[0]}, ${background100Rgb[1]},${background100Rgb[2]}, .75)`
@@ -168,24 +195,26 @@ const actions = {
     let textColorRgb
 
     if (!textColor) {
-      textColorRgb = getTextColor(backgroundRgb, 1.25)
+      textColorRgb = getLinearShadeText(backgroundRgb, 0.75)
       textColor = joinRgba(textColorRgb)
     } else {
       textColorRgb = splitColorCode(textColor)
     }
 
-    document.documentElement.style.setProperty('--theme-color-base', textColor)
     document.documentElement.style.setProperty(
-      '--theme-color-100',
-      joinRgba(getTextColor(backgroundRgb, 1.2))
+      '--theme-color-base',
+      joinRgba(getLinearShadeText(backgroundRgb, 1))
     )
+    document.documentElement.style.setProperty('--theme-color-100', textColor)
+
+    const colorScale = theme === 'dark' ? 0.5 : -1
     document.documentElement.style.setProperty(
-      '--theme-color-150',
-      joinRgba(getTextColor(backgroundRgb, 1.4))
+      '--theme-color-50',
+      joinRgba(getLinearShade(textColorRgb, -0.2 * -colorScale))
     )
     document.documentElement.style.setProperty(
       '--theme-color-200',
-      joinRgba(getTextColor(backgroundRgb, 1.7))
+      joinRgba(getLinearShade(textColorRgb, 0.1 * -colorScale))
     )
     document.documentElement.style.setProperty(
       '--theme-color-o75',
@@ -203,10 +232,6 @@ const actions = {
       '--theme-color-o10',
       `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .1)`
     )
-    document.documentElement.style.setProperty(
-      '--theme-color-o05',
-      `rgba(${textColorRgb[0]}, ${textColorRgb[1]},${textColorRgb[2]}, .05)`
-    )
 
     const buyRgb = splitColorCode(state.buyColor)
 
@@ -216,11 +241,17 @@ const actions = {
     )
     document.documentElement.style.setProperty(
       '--theme-buy-100',
-      getLogShade(buyRgb, 0.25)
+      joinRgba(
+        getLogShade(buyRgb, 0.1 * backgroundScale, 0.1 * backgroundScale)
+      )
+    )
+    document.documentElement.style.setProperty(
+      '--theme-buy-50',
+      joinRgba(getLogShade(buyRgb, -0.2 * backgroundScale))
     )
     document.documentElement.style.setProperty(
       '--theme-buy-color',
-      joinRgba(getTextColor(buyRgb))
+      joinRgba(getLinearShadeText(buyRgb, 1, null, 0.125))
     )
 
     const sellRgb = splitColorCode(state.sellColor)
@@ -231,11 +262,17 @@ const actions = {
     )
     document.documentElement.style.setProperty(
       '--theme-sell-100',
-      getLogShade(sellRgb, 0.25)
+      joinRgba(
+        getLogShade(sellRgb, 0.1 * backgroundScale, 0.1 * backgroundScale)
+      )
+    )
+    document.documentElement.style.setProperty(
+      '--theme-sell-50',
+      joinRgba(getLogShade(sellRgb, -0.2 * backgroundScale))
     )
     document.documentElement.style.setProperty(
       '--theme-sell-color',
-      joinRgba(getTextColor(sellRgb))
+      joinRgba(getLinearShadeText(sellRgb, 1, null, 0.125))
     )
   },
   setAudioVolume({ commit, state }, volume: number) {
@@ -327,28 +364,30 @@ const mutations = {
       data: { key: 'aggregationLength', value: state.aggregationLength }
     })
   },
+  SET_WS_PROXY_URL(state, value) {
+    state.wsProxyUrl = value || null
+
+    aggregatorService.dispatch({
+      op: 'configureAggregator',
+      data: {
+        key: 'wsProxyUrl',
+        value: state.wsProxyUrl
+      }
+    })
+  },
   TOGGLE_ANIMATIONS(state) {
     state.disableAnimations = !state.disableAnimations
   },
   TOGGLE_NORMAMIZE_WATERMARKS(state) {
     state.normalizeWatermarks = !state.normalizeWatermarks
   },
-  TOGGLE_SETTINGS_PANEL(state, value) {
-    const index = state.settings.indexOf(value)
+  TOGGLE_SECTION(state, value) {
+    const index = state.sections.indexOf(value)
 
     if (index === -1) {
-      state.settings.push(value)
+      state.sections.push(value)
     } else {
-      state.settings.splice(index, 1)
-    }
-  },
-  TOGGLE_SEARCH_PANEL(state, value) {
-    const index = state.searchSections.indexOf(value)
-
-    if (index === -1) {
-      state.searchSections.push(value)
-    } else {
-      state.searchSections.splice(index, 1)
+      state.sections.splice(index, 1)
     }
   },
   TOGGLE_AUDIO(state, value) {
@@ -493,15 +532,6 @@ const mutations = {
       label: getTimeframeForHuman(value),
       value
     })
-  },
-  TOGGLE_TIMEFRAME_GROUP(state, value) {
-    const index = state.timeframeGroups.indexOf(value)
-
-    if (index === -1) {
-      state.timeframeGroups.push(value)
-    } else {
-      state.timeframeGroups.splice(index, 1)
-    }
   }
 } as MutationTree<SettingsState>
 

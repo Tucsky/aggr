@@ -126,16 +126,8 @@ $unit: 'px'; // Feel free to change the unit.
   vertical-align: middle;
 }
 
-.text-bottom {
-  vertical-align: bottom;
-}
-
 .text-top {
   vertical-align: top;
-}
-
-.min-768 {
-  display: none !important;
 }
 
 .d-block {
@@ -180,10 +172,6 @@ $unit: 'px'; // Feel free to change the unit.
 }
 
 @media screen and (min-width: 768px) {
-  .min-768 {
-    display: revert !important;
-  }
-
   .max-767 {
     display: none !important;
   }
@@ -228,20 +216,36 @@ $unit: 'px'; // Feel free to change the unit.
   background-color: rgba(black, 0.25);
 }
 
-.icon-sm {
-  font-size: 80%;
-}
-
 .text-muted {
   opacity: 0.5;
 }
 
 .text-danger {
-  color: var(--theme-red);
+  color: $red;
 }
 
 .text-success {
   color: var(--theme-buy-100);
+}
+
+.text-color-base {
+  color: var(--theme-color-base);
+}
+
+.text-color-50 {
+  color: var(--theme-color-50);
+}
+
+.text-color-100 {
+  color: var(--theme-color-100);
+}
+
+.text-color-200 {
+  color: var(--theme-color-200);
+}
+
+.text-color-o75 {
+  color: var(--theme-color-o75);
 }
 
 .text-info {
@@ -256,28 +260,8 @@ $unit: 'px'; // Feel free to change the unit.
   font-weight: 600;
 }
 
-.color-100 {
-  color: var(--theme-color-100);
-}
-
-.background-100 {
-  background-color: var(--theme-background-100);
-}
-
-.background-100 {
-  background-color: var(--theme-background-200);
-}
-
-.background-100 {
-  background-color: var(--theme-background-150);
-}
-
 .p-relative {
   position: relative;
-}
-
-.pointer-all {
-  pointer-events: all;
 }
 
 #app.-light .text-muted {

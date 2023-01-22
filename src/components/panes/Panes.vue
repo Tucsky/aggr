@@ -111,8 +111,9 @@ export default class extends Vue {
         '-maximized'
       )[0] as HTMLElement
     } else {
-      maximizedItem = document.getElementById(this._maximizedPaneId)
-        .parentElement
+      maximizedItem = document.getElementById(
+        this._maximizedPaneId
+      ).parentElement
     }
 
     this.$nextTick(() => {

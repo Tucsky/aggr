@@ -2,7 +2,8 @@
   <div class="settings-chart">
     <div class="form-group mb16">
       <label>
-        Refresh chart every <strong v-text="refreshRateHms"></strong>
+        Refresh chart every
+        <code v-text="refreshRateHms" class="text-color-base"></code>
       </label>
 
       <slider
@@ -29,7 +30,7 @@
           @change="$store.commit(paneId + '/TOGGLE_LEGEND')"
         />
         <div></div>
-        <span>Show legend</span>
+        <span class="-inline">Show legend</span>
       </label>
     </div>
     <div class="form-group mb8">
@@ -47,13 +48,10 @@
             type="checkbox"
             class="form-control"
             :checked="showVerticalGridlines"
-            :id="paneId + 'showVerticalGridlines'"
           />
-          <div class="mr8"></div>
+          <div></div>
+          <span>Show vertical grid lines</span>
         </label>
-        <label :for="paneId + 'showVerticalGridlines'" class="-fill -center"
-          >Show vertical grid lines</label
-        >
         <color-picker-control
           v-if="showVerticalGridlines"
           class="ml8"
@@ -86,11 +84,9 @@
             :checked="showHorizontalGridlines"
             :id="paneId + 'showHorizontalGridlines'"
           />
-          <div class="mr8"></div>
+          <div></div>
+          <span>Show horizontal grid lines</span>
         </label>
-        <label :for="paneId + 'showHorizontalGridlines'" class="-fill -center"
-          >Show horizontal grid lines</label
-        >
         <color-picker-control
           v-if="showHorizontalGridlines"
           class="ml8"
@@ -107,34 +103,93 @@
         ></color-picker-control>
       </div>
     </div>
-    <div class="form-group mb8">
-      <div class="form-group column">
+    <div class="form-group mb8 column">
+      <label
+        class="checkbox-control"
+        @change="
+          $store.commit(paneId + '/SET_WATERMARK', {
+            value: $event.target.checked
+          })
+        "
+      >
+        <input type="checkbox" class="form-control" :checked="showWatermark" />
+        <div></div>
+        <span>Watermark</span>
+      </label>
+      <color-picker-control
+        v-if="showWatermark"
+        class="ml8"
+        :value="watermarkColor"
+        label="Watermark color"
+        @input="
+          $event !== watermarkColor &&
+            $store.commit(paneId + '/SET_WATERMARK', { value: $event })
+        "
+      ></color-picker-control>
+    </div>
+    <div class="form-group mb8 column">
+      <label
+        class="checkbox-control"
+        @change="
+          $store.commit(paneId + '/SET_BORDER', {
+            value: $event.target.checked
+          })
+        "
+      >
+        <input type="checkbox" class="form-control" :checked="showBorder" />
+        <div></div>
+        <span>Borders</span>
+      </label>
+      <color-picker-control
+        v-if="showBorder"
+        class="ml8"
+        :value="borderColor"
+        label="Border color"
+        @input="
+          $event !== borderColor &&
+            $store.commit(paneId + '/SET_BORDER', { value: $event })
+        "
+      ></color-picker-control>
+    </div>
+    <div class="form-group">
+      <label>Scales</label>
+      <div class="form-group mb8 column">
         <label
           class="checkbox-control"
-          @change="
-            $store.commit(paneId + '/SET_WATERMARK', {
-              value: $event.target.checked
-            })
-          "
+          @change="$store.commit(paneId + '/TOGGLE_AXIS', 'left')"
         >
           <input
             type="checkbox"
             class="form-control"
-            :checked="showWatermark"
+            :checked="showLeftScale"
           />
-          <div class="mr8"></div>
+          <div></div>
+          <span>Left</span>
         </label>
-        <label for="" class="-fill -center">Watermark</label>
-        <color-picker-control
-          v-if="showWatermark"
-          class="ml8"
-          :value="watermarkColor"
-          label="Watermark color"
-          @input="
-            $event !== watermarkColor &&
-              $store.commit(paneId + '/SET_WATERMARK', { value: $event })
-          "
-        ></color-picker-control>
+        <label
+          class="checkbox-control"
+          @change="$store.commit(paneId + '/TOGGLE_AXIS', 'right')"
+        >
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="showRightScale"
+          />
+          <div></div>
+          <span>Right</span>
+        </label>
+        <label
+          class="checkbox-control"
+          @change="$store.commit(paneId + '/TOGGLE_AXIS', 'time')"
+        >
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="showTimeScale"
+          />
+          <div></div>
+          <span>Time</span>
+        </label>
       </div>
     </div>
     <hr />
@@ -149,31 +204,8 @@
             class="form-control"
             :checked="fillGapsWithEmpty"
           />
-          <div class="mr8"></div>
-        </label>
-        <label for="" class="-fill -center">Fill gaps with empty bars</label>
-      </div>
-    </div>
-    <div class="form-group mb8">
-      <div class="form-group column">
-        <label
-          class="checkbox-control"
-          @change="$store.commit(paneId + '/TOGGLE_FORCE_NORMALIZE_PRICE')"
-        >
-          <input
-            type="checkbox"
-            class="form-control"
-            :checked="forceNormalizePrice"
-          />
-          <div class="mr8"></div>
-        </label>
-        <label for="" class="-fill -center"
-          >Always normalize mean
-          <i
-            class="icon-info"
-            v-tippy
-            title="When enabled, the chart will always copy intial realtime price of a market to the start of the chart to garantee global average consistency (warning: leads to incorrect past price)."
-          ></i>
+          <div></div>
+          <span>Fill gaps with empty bars</span>
         </label>
       </div>
     </div>
@@ -184,11 +216,11 @@
       label="Price alerts"
       @change="toggleAlerts($event)"
     >
-      <p class="mt0">
-        <strong>Warning:</strong> triggers using the
+      <p class="mt0 text-color-50">
+        <i class="icon-warning"></i> triggers using the
         <strong
           v-tippy
-          title="ex: BTCUSD alerts will use average price of 26 markets for across 13 exchanges"
+          title="for example BTCUSD alerts will use avg. price of 26 markets across 13 exchanges and not the one you have on screen"
         >
           average price
         </strong>
@@ -248,13 +280,13 @@
               :checked="alertsClick"
             />
             <div class="mr0"></div>
-            <span v-if="alertsClick" class="mr4"><code>CLICK</code></span>
+            <span v-if="alertsClick" class="mr4"><code>1 CLICK</code></span>
             <span v-else class="mr4"
               ><code>SHIFT</code> + <code>CLICK</code></span
             >
           </label>
         </div>
-        <div class="form-group mb16">
+        <div class="form-group mt16 mb16">
           <label for="audio-assistant-source"
             ><i class="icon-music-note mr8"></i> Alert sound</label
           >
@@ -268,7 +300,7 @@
               class="icon-cross mr8 btn__suffix"
               @click.stop.prevent="removeAlertSound"
             ></i>
-            <input type="file" accept="audio/*" />
+            <input type="file" class="input-file" accept="audio/*" />
           </button>
         </div>
       </div>
@@ -333,10 +365,6 @@ export default class extends Vue {
     return this.$store.state[this.paneId].fillGapsWithEmpty
   }
 
-  get forceNormalizePrice() {
-    return this.$store.state[this.paneId].forceNormalizePrice
-  }
-
   get refreshRate() {
     return this.$store.state[this.paneId].refreshRate
   }
@@ -363,6 +391,26 @@ export default class extends Vue {
 
   get watermarkColor() {
     return this.$store.state[this.paneId].watermarkColor
+  }
+
+  get showBorder() {
+    return this.$store.state[this.paneId].showBorder
+  }
+
+  get borderColor() {
+    return this.$store.state[this.paneId].borderColor
+  }
+
+  get showRightScale() {
+    return this.$store.state[this.paneId].showRightScale
+  }
+
+  get showLeftScale() {
+    return this.$store.state[this.paneId].showLeftScale
+  }
+
+  get showTimeScale() {
+    return this.$store.state[this.paneId].showTimeScale
   }
 
   get alertSound() {

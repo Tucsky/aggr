@@ -2,6 +2,12 @@ import { getApiUrl, handleFetchError } from '@/utils/helpers'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
+interface AlertResponse {
+  error?: string
+  markets?: string[]
+  priceOffset?: number
+}
+
 class AlertService {
   private publicVapidKey = process.env.VUE_APP_PUBLIC_VAPID_KEY
   private pushSubscription: PushSubscription
@@ -54,6 +60,7 @@ class AlertService {
             await registration.getNotifications()
           ).map(notification => ({
             price: notification.data.price,
+            direction: notification.data.direction,
             market: notification.data.market
           }))
         )
@@ -134,16 +141,21 @@ class AlertService {
     return this.pushSubscription
   }
 
-  subscribe(market: string, price: number) {
-    return this.toggleAlert(market, price)
+  subscribe(market: string, price: number, currentPrice?: number) {
+    return this.toggleAlert(market, price, currentPrice)
   }
 
   unsubscribe(market: string, price: number) {
-    return this.toggleAlert(market, price, true)
+    return this.toggleAlert(market, price, null, true)
   }
 
-  modify(market: string, price: number, newPrice: number) {
-    return this.moveAlert(market, price, newPrice)
+  modify(
+    market: string,
+    price: number,
+    newPrice: number,
+    currentPrice?: number
+  ) {
+    return this.moveAlert(market, price, newPrice, currentPrice)
   }
 
   getPrice(market): Promise<number> {
@@ -184,8 +196,9 @@ class AlertService {
   async toggleAlert(
     market: string,
     price: number,
+    currentPrice?: number,
     unsubscribe?: boolean
-  ): Promise<boolean> {
+  ): Promise<AlertResponse> {
     const subscription = await this.getPushSubscription()
 
     if (!subscription) {
@@ -205,6 +218,7 @@ class AlertService {
         origin,
         market,
         price,
+        currentPrice,
         unsubscribe
       }),
       headers: {
@@ -212,24 +226,25 @@ class AlertService {
       }
     })
       .then(response => response.json())
-      .then(json => {
-        if (json.error) {
-          throw new Error(json.error)
+      .then(data => {
+        if (data.error) {
+          throw new Error(data.error)
         }
 
-        return true
+        return data
       })
       .catch(err => {
         handleFetchError(err)
 
-        return false
+        return { error: err.message }
       })
   }
 
   async moveAlert(
     market: string,
     price: number,
-    newPrice: number
+    newPrice: number,
+    currentPrice?: number
   ): Promise<boolean> {
     const subscription = await this.getPushSubscription()
 
@@ -250,7 +265,8 @@ class AlertService {
         origin,
         market,
         price,
-        newPrice
+        newPrice,
+        currentPrice
       }),
       headers: {
         'Content-Type': 'application/json'

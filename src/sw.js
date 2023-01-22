@@ -31,6 +31,7 @@ self.addEventListener('push', event => {
       clients.forEach(function(client) {
         client.postMessage({
           price: data.price,
+          direction: data.direction,
           market: data.market
         })
       })

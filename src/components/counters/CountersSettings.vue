@@ -101,7 +101,7 @@ export default class extends Vue {
           return parseFloat(a) * 1000 * 60
         }
       })
-      .filter(function(item, pos, self) {
+      .filter(function (item, pos, self) {
         return self.indexOf(item) == pos
       })
 

@@ -2,8 +2,8 @@
   <Dialog @clickOutside="close">
     <template v-slot:header>
       <div>
-        <div class="title">BUCKET</div>
-        <div class="subtitle">{{ name }}</div>
+        <div class="dialog__title">BUCKET</div>
+        <div class="dialog__subtitle">{{ name }}</div>
       </div>
 
       <dropdown-button
@@ -200,10 +200,10 @@ export default {
     ColorPickerControl
   },
   computed: {
-    color: function() {
+    color: function () {
       return store.state[this.paneId].buckets[this.bucketId].color
     },
-    conditionnalColor: function() {
+    conditionnalColor: function () {
       if (
         typeof store.state[this.paneId].buckets[this.bucketId]
           .conditionnalColor === 'undefined'
@@ -217,22 +217,22 @@ export default {
 
       return store.state[this.paneId].buckets[this.bucketId].conditionnalColor
     },
-    enabled: function() {
+    enabled: function () {
       return store.state[this.paneId].buckets[this.bucketId].enabled
     },
-    name: function() {
+    name: function () {
       return store.state[this.paneId].buckets[this.bucketId].name
     },
-    type: function() {
+    type: function () {
       return store.state[this.paneId].buckets[this.bucketId].type
     },
-    input: function() {
+    input: function () {
       return store.state[this.paneId].buckets[this.bucketId].input
     },
-    precision: function() {
+    precision: function () {
       return store.state[this.paneId].buckets[this.bucketId].precision || null
     },
-    window: function() {
+    window: function () {
       const window = store.state[this.paneId].buckets[this.bucketId].window
 
       if (window) {

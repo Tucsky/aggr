@@ -1,6 +1,7 @@
 <template>
   <div class="pane-chart">
     <pane-header
+      ref="paneHeader"
       :paneId="paneId"
       :settings="() => import('@/components/chart/ChartDialog.vue')"
     >
@@ -40,7 +41,10 @@
         />
       </dropdown>
     </pane-header>
-    <div class="chart-overlay hide-scrollbar">
+    <div
+      class="chart-overlay hide-scrollbar"
+      :style="{ left: overlayLeft + 'px' }"
+    >
       <indicators-overlay
         v-model="showIndicatorsOverlay"
         :pane-id="paneId"
@@ -72,7 +76,12 @@ import {
   floorTimestampToTimeframe
 } from '@/utils/helpers'
 import { formatPrice, formatAmount } from '@/services/productsService'
-import { defaultChartOptions, getChartCustomColorsOptions } from './options'
+import {
+  defaultChartOptions,
+  getChartBorderOptions,
+  getChartCustomColorsOptions,
+  getChartGridlinesOptions
+} from '../../services/chartService'
 import { ChartPaneState } from '@/store/panesSettings/chart'
 import { getColorLuminance, joinRgba, splitColorCode } from '@/utils/colors'
 import { Chunk } from './cache'
@@ -105,7 +114,12 @@ import MarketsOverlay from '@/components/chart/MarketsOverlay.vue'
   }
 })
 export default class extends Mixins(PaneMixin) {
-  axis = [null, null]
+  axis = {
+    top: 0,
+    left: 0,
+    right: 0,
+    time: 0
+  }
 
   showIndicatorsOverlay = false
   timeframeDropdownTrigger = null
@@ -122,8 +136,16 @@ export default class extends Mixins(PaneMixin) {
   private _levelDragEndHandler: any
 
   get layouting() {
-    this.updateChartAxis()
+    this.getAxisSize()
     return (this.$store.state[this.paneId] as ChartPaneState).layouting
+  }
+
+  get overlayLeft() {
+    return this.axis.left
+  }
+
+  get overlayTop() {
+    return this.axis.top
   }
 
   get showLegend() {
@@ -152,6 +174,7 @@ export default class extends Mixins(PaneMixin) {
 
   $refs!: {
     chartContainer: HTMLElement
+    paneHeader: PaneHeader
   }
 
   created() {
@@ -161,14 +184,13 @@ export default class extends Mixins(PaneMixin) {
 
     this._onStoreMutation = this.$store.subscribe(mutation => {
       switch (mutation.type) {
-        case 'settings/SET_TEXT_COLOR':
-          this._chartController.chartInstance.applyOptions(
-            getChartCustomColorsOptions(mutation.payload)
-          )
+        case this.paneId + '/FLAG_INDICATOR_AS_SAVED':
+          this.saveIndicatorPreview(mutation.payload)
           break
         case 'settings/SET_CHART_THEME':
+        case 'settings/SET_TEXT_COLOR':
           this._chartController.chartInstance.applyOptions(
-            getChartCustomColorsOptions()
+            getChartCustomColorsOptions(this.paneId)
           )
           break
         case 'settings/TOGGLE_NORMAMIZE_WATERMARKS':
@@ -194,9 +216,8 @@ export default class extends Mixins(PaneMixin) {
         case 'panes/SET_PANE_ZOOM':
           if (mutation.payload.id === this.paneId) {
             this._chartController.updateFontSize()
+            this.$nextTick(() => this.getAxisSize())
           }
-
-          this.updateChartAxis()
           break
         case this.paneId + '/SET_TIMEFRAME':
           this.setTimeframe(mutation.payload)
@@ -219,7 +240,16 @@ export default class extends Mixins(PaneMixin) {
           }
           break
         case this.paneId + '/SET_GRIDLINES':
-          this.updateGridlines(mutation.payload.type)
+          this._chartController.chartInstance.applyOptions(
+            getChartGridlinesOptions(this.paneId)
+          )
+          break
+        case this.paneId + '/SET_BORDER':
+        case this.paneId + '/TOGGLE_AXIS':
+          this._chartController.chartInstance.applyOptions(
+            getChartBorderOptions(this.paneId)
+          )
+          this.$nextTick(() => this.getAxisSize())
           break
         case this.paneId + '/SET_WATERMARK':
         case this.paneId + '/TOGGLE_NORMAMIZE_WATERMARKS':
@@ -255,13 +285,6 @@ export default class extends Mixins(PaneMixin) {
         case this.paneId + '/TOGGLE_FILL_GAPS_WITH_EMPTY':
           this._chartController.toggleFillGapsWithEmpty()
           break
-        case this.paneId + '/TOGGLE_FORCE_NORMALIZE_PRICE':
-          this._chartController.propagateInitialPrices = (
-            this.$store.state[this.paneId] as ChartPaneState
-          ).forceNormalizePrice
-          this.clear()
-          this.fetch()
-          break
         case 'settings/TOGGLE_AUTO_HIDE_HEADERS':
           this.refreshChartDimensions()
           break
@@ -285,9 +308,17 @@ export default class extends Mixins(PaneMixin) {
     this.bindChartEvents()
     this.setupRecycle()
 
-    this.fetch()
+    setTimeout(() => {
+      this.getAxisSize()
+      this.fetch()
+      this._chartController.setupQueue()
+    })
+  }
 
-    this._chartController.setupQueue()
+  getChartCanvas() {
+    return this._chartController.chartElement.querySelector(
+      'tr:first-child td:nth-child(2) canvas:nth-child(2)'
+    )
   }
 
   destroyChart() {
@@ -523,12 +554,6 @@ export default class extends Mixins(PaneMixin) {
 
     this._chartController.chartCache.saveChunk(chunk)
 
-    if (
-      !(this.$store.state[this.paneId] as ChartPaneState).forceNormalizePrice
-    ) {
-      this._chartController.propagateInitialPrices = false
-    }
-
     this._chartController.renderAll(true)
   }
 
@@ -536,8 +561,16 @@ export default class extends Mixins(PaneMixin) {
     this._chartController.queueTrades(trades)
   }
 
-  onAlert({ price, market }: { price: number; market: string }) {
-    this._chartController.triggerAlert(market, price)
+  onAlert({
+    price,
+    market,
+    direction
+  }: {
+    price: number
+    market: string
+    direction: number
+  }) {
+    this._chartController.triggerAlert(market, price, direction)
   }
 
   refreshChartDimensions() {
@@ -606,9 +639,7 @@ export default class extends Mixins(PaneMixin) {
       .subscribeVisibleLogicalRangeChange(this.onPan)
 
     if (process.env.VUE_APP_PUBLIC_VAPID_KEY) {
-      const canvas = this._chartController.chartElement.querySelector(
-        'canvas:nth-child(2)'
-      )
+      const canvas = this.getChartCanvas()
       canvas.addEventListener(
         isTouchSupported() ? 'touchstart' : 'mousedown',
         this.onLevelDragStart
@@ -627,9 +658,7 @@ export default class extends Mixins(PaneMixin) {
       .unsubscribeVisibleLogicalRangeChange(this.onPan)
 
     if (process.env.VUE_APP_PUBLIC_VAPID_KEY) {
-      const canvas = this._chartController.chartElement.querySelector(
-        'canvas:nth-child(2)'
-      )
+      const canvas = this.getChartCanvas()
       canvas.removeEventListener(
         isTouchSupported() ? 'touchstart' : 'mousedown',
         this.onLevelDragStart
@@ -653,9 +682,7 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
-    const canvas = this._chartController.chartElement.querySelector(
-      'canvas:nth-child(2)'
-    )
+    const canvas = this.getChartCanvas()
 
     if ((dataAtPoint as any).priceline) {
       this._chartController.disableCrosshair()
@@ -714,13 +741,20 @@ export default class extends Mixins(PaneMixin) {
   }
 
   async onLevelDragEnd(
-    { api, priceline, price, market, canCreate, originalOffset, offset },
+    {
+      api,
+      priceline,
+      price,
+      currentPrice,
+      market,
+      canCreate,
+      originalOffset,
+      offset
+    },
     startedAt,
     event
   ) {
-    const canvas = this._chartController.chartElement.querySelector(
-      'canvas:nth-child(2)'
-    )
+    const canvas = this.getChartCanvas()
 
     const canMove =
       Math.abs(originalOffset.y - offset.y) > 5 || Date.now() - startedAt > 200
@@ -758,7 +792,12 @@ export default class extends Mixins(PaneMixin) {
       const newPrice = priceline.options().price
 
       if (price !== newPrice && canMove) {
-        const active = await alertService.moveAlert(market, price, newPrice)
+        const active = await alertService.moveAlert(
+          market,
+          price,
+          newPrice,
+          currentPrice
+        )
 
         alert.triggered = false
         alert.price = newPrice
@@ -841,12 +880,12 @@ export default class extends Mixins(PaneMixin) {
 
       // try subscribe to alert
       await alertService
-        .subscribe(market, price)
-        .then(active => {
+        .subscribe(market, price, currentPrice)
+        .then(data => {
           // make sure alert still exists before switching alpha / saving
           if (this._chartController.alerts[market].indexOf(alert) !== -1) {
-            alert.active = active
-            const finalAlpha = active ? alpha : alpha * 0.75
+            alert.active = !data.error
+            const finalAlpha = alert.active ? alpha : alpha * 0.75
 
             // set line color to original alpha
             color[3] = finalAlpha
@@ -881,12 +920,11 @@ export default class extends Mixins(PaneMixin) {
       return defaultChartOptions.timeScale.barSpacing
     }
 
-    const canvasWidth = this.$refs.chartContainer.querySelector('canvas').width
-    return (
-      canvasWidth /
-      (visibleLogicalRange.to - visibleLogicalRange.from) /
-      window.devicePixelRatio
-    )
+    const canvasWidth = this.getChartCanvas().clientWidth
+    const barSpacing =
+      canvasWidth / (visibleLogicalRange.to - visibleLogicalRange.from)
+
+    return barSpacing
   }
 
   savePosition(visibleLogicalRange) {
@@ -1007,6 +1045,7 @@ export default class extends Mixins(PaneMixin) {
 
   onResize() {
     this.refreshChartDimensions()
+    this._chartController.updateFontSize()
   }
 
   clear() {
@@ -1038,6 +1077,8 @@ export default class extends Mixins(PaneMixin) {
     if (
       type === this._chartController.type &&
       type === 'time' &&
+      this.$store.state.app.apiSupportedTimeframes.indexOf(newTimeframe) ===
+        -1 &&
       this._chartController.timeframe < timeframe &&
       Number.isInteger(timeframe / this._chartController.timeframe)
     ) {
@@ -1109,54 +1150,44 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  updateGridlines(type: 'vertical' | 'horizontal') {
-    const chartOptions = this.$store.state[this.paneId] as ChartPaneState
-    let show: boolean
-    let color: string
-
-    if (type === 'vertical') {
-      show = chartOptions.showVerticalGridlines
-      color = chartOptions.verticalGridlinesColor
-    } else {
-      show = chartOptions.showHorizontalGridlines
-      color = chartOptions.horizontalGridlinesColor
-    }
-
-    this._chartController.chartInstance.applyOptions({
-      grid: {
-        [type === 'vertical' ? 'vertLines' : 'horzLines']: {
-          color: color,
-          visible: show
-        }
-      }
-    })
-  }
-
-  updateWatermark() {
-    const chartOptions = this.$store.state[this.paneId] as ChartPaneState
-
-    this._chartController.chartInstance.applyOptions({
-      watermark: {
-        color: chartOptions.watermarkColor,
-        visible: chartOptions.showWatermark
-      }
-    })
-  }
-
-  updateChartAxis() {
+  async getAxisSize() {
     if (!this.$refs.chartContainer) {
       return
     }
 
-    this.axis = [
-      this.$refs.chartContainer.querySelector(
-        'td:last-child canvas:nth-child(2)'
-      ).clientWidth,
-      this.$refs.chartContainer.querySelector('tr:last-child').clientHeight
-    ]
+    await new Promise(resolve => setTimeout(resolve, 10))
+
+    const chartOptions = this.$store.state[this.paneId] as ChartPaneState
+
+    const axis = {
+      top: 0,
+      left: 0,
+      right: 0,
+      time: 0
+    }
+
+    if (chartOptions.showLeftScale) {
+      axis.left = this.$refs.chartContainer.querySelector(
+        'tr:first-child td:first-child canvas'
+      ).clientWidth
+    }
+
+    if (chartOptions.showRightScale) {
+      axis.right = this.$refs.chartContainer.querySelector(
+        'tr:first-child td:last-child canvas'
+      ).clientWidth
+    }
+
+    if (chartOptions.showTimeScale) {
+      axis.time = this.$refs.chartContainer.querySelector(
+        'tr:last-child td:nth-child(2) canvas'
+      ).clientHeight
+    }
+
+    this.axis = axis
   }
 
-  takeScreenshot() {
+  takeScreenshot(event) {
     const chartCanvas = this._chartController.chartInstance.takeScreenshot()
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
@@ -1172,32 +1203,26 @@ export default class extends Mixins(PaneMixin) {
     ctx.textBaseline = 'top'
 
     const lines = []
-    const dateString = new Date().toUTCString()
+    const [date, time] = new Date().toISOString().split('T')
 
-    const visibleMarkets = this.$store.state.panes.panes[
-      this.paneId
-    ].markets.filter(
-      a => !this.$store.state[this.paneId].hiddenMarkets[a]
-    ).length
-
-    lines.push(dateString + ' | ' + this.timeframeForHuman)
-    lines.push(
-      this._chartController.watermark +
-        (visibleMarkets > 1 && this.$store.state.settings.normalizeWatermarks
-          ? ' (' + visibleMarkets + ' markets)'
-          : '')
-    )
+    lines.push(date + ' ' + time.split('.')[0])
+    lines.push(this._chartController.watermark + ' | ' + this.timeframeForHuman)
 
     const lineHeight = Math.round(textFontsize)
     canvas.height = chartCanvas.height
 
+    const styles = getComputedStyle(document.documentElement)
+    const themeColor = styles.getPropertyValue('--theme-base')
+    const textColor = styles.getPropertyValue('--theme-color-base')
     const backgroundColor = this.$store.state.settings.backgroundColor
-    const color100 = getComputedStyle(
-      document.documentElement
-    ).getPropertyValue('--theme-color-100')
 
-    ctx.fillStyle = backgroundColor
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    if (!event.shiftKey) {
+      ctx.fillStyle = themeColor
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.fillStyle = backgroundColor
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+    }
+
     ctx.fillStyle =
       this.$store.state.settings.theme === 'light'
         ? 'rgba(255,255,255,.2)'
@@ -1205,7 +1230,7 @@ export default class extends Mixins(PaneMixin) {
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.drawImage(chartCanvas, 0, 0)
 
-    ctx.fillStyle = color100
+    ctx.fillStyle = textColor
     ctx.font = `${textFontsize}px Share Tech Mono`
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
@@ -1213,13 +1238,14 @@ export default class extends Mixins(PaneMixin) {
     let offsetY = 0
 
     for (let i = 0; i < lines.length; i++) {
+      ctx.strokeStyle = themeColor
+      ctx.lineWidth = 4 * pxRatio
+      ctx.lineJoin = 'round'
+      ctx.strokeText(lines[i], textPadding, textPadding + offsetY)
       ctx.fillText(lines[i], textPadding, textPadding + offsetY)
 
-      offsetY += lineHeight * (i + 1)
+      offsetY += lineHeight * 1.2 * (i + 1)
     }
-
-    const luminance = getColorLuminance(splitColorCode(backgroundColor))
-    const textColor = luminance < 0 ? '#ffffff' : '#000000'
 
     if (this.showIndicatorsOverlay) {
       offsetY += textPadding * 2
@@ -1249,10 +1275,12 @@ export default class extends Mixins(PaneMixin) {
 
         const text = indicator.displayName || indicator.name
 
-        ctx.fillStyle = backgroundColor
-        ctx.fillText(text, textPadding + 1, offsetY + 1)
-        ctx.fillText(text, textPadding - 1, offsetY - 1)
+        ctx.fillStyle = textColor
+        ctx.strokeStyle = themeColor
+        ctx.lineWidth = 4 * pxRatio
         ctx.fillStyle = color
+        ctx.lineJoin = 'round'
+        ctx.strokeText(text, textPadding, offsetY)
         ctx.fillText(text, textPadding, offsetY)
 
         offsetY += lineHeight * 1.2
@@ -1288,7 +1316,7 @@ export default class extends Mixins(PaneMixin) {
     const now = Date.now()
 
     if (this._chartController.type === 'time') {
-      const chartWidth = this.$refs.chartContainer.querySelector('canvas').width
+      const chartWidth = this.$el.clientWidth - this.axis.left - this.axis.right
       const barSpacing = this.getBarSpacing(
         this._chartController.chartInstance.timeScale().getVisibleLogicalRange()
       )
@@ -1309,6 +1337,12 @@ export default class extends Mixins(PaneMixin) {
     } else {
       this.timeframeDropdownTrigger = event.currentTarget
     }
+  }
+
+  async saveIndicatorPreview(indicatorId) {
+    const blob = await this._chartController.screenshotIndicator(indicatorId)
+    console.log('save blob to db')
+    workspacesService.saveIndicatorPreview(indicatorId, blob)
   }
 }
 </script>

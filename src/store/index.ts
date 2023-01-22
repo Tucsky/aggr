@@ -24,9 +24,12 @@ export interface ModulesState {
 }
 
 const store = new Vuex.Store({} as StoreOptions<ModulesState>)
-const modules = { app, settings, exchanges, panes } as AppModuleTree<
-  ModulesState
->
+const modules = {
+  app,
+  settings,
+  exchanges,
+  panes
+} as AppModuleTree<ModulesState>
 
 store.subscribe((mutation, state: any) => {
   const moduleId = mutation.type.split('/')[0]

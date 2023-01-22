@@ -46,7 +46,7 @@ class ImportService {
     await workspacesService.saveSound(uploadedSound)
 
     store.dispatch('app/showNotice', {
-      title: `Successfully imported sound ${file.name}`,
+      title: `Imported sound ${file.name}`,
       type: 'info'
     })
 
@@ -68,7 +68,7 @@ class ImportService {
     })
 
     store.dispatch('app/showNotice', {
-      title: `Successfully imported preset ${preset.name}`,
+      title: `Imported preset ${preset.name}`,
       type: 'info'
     })
 
@@ -113,7 +113,7 @@ class ImportService {
       await workspacesService.addAndSetWorkspace(workspace)
 
       store.dispatch('app/showNotice', {
-        title: `Successfully imported workspace ${workspace.name}`,
+        title: `Imported workspace ${workspace.name}`,
         type: 'info'
       })
 
@@ -146,15 +146,16 @@ class ImportService {
 
     const ids = await workspacesService.getIndicatorsIds()
     const name = json.name.split(':').slice(1).join(':')
-
     const id = uniqueName(slugify(name), ids)
-
+    const now = Date.now()
     const indicator: IndicatorSettings = {
       id: id,
       name: name,
       script: json.data.script || '',
       options: json.data.options || {},
       description: json.data.description || null,
+      createdAt: json.data.createdAt || now,
+      updatedAt: json.data.updatedAt || now,
       unsavedChanges: true
     }
 

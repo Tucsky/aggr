@@ -43,6 +43,12 @@ import { formatAmount } from '@/services/productsService'
 import aggregatorService from '@/services/aggregatorService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
+import {
+  getAppBackgroundColor,
+  getLinearShade,
+  joinRgba,
+  splitColorCode
+} from '@/utils/colors'
 
 interface Counter {
   duration: number
@@ -91,12 +97,16 @@ export default class extends Mixins(PaneMixin) {
   }
 
   get activeSteps() {
-    return this.steps.filter(a => a.hasData)
+    return this.steps
   }
 
   created() {
     this._onStoreMutation = this.$store.subscribe(mutation => {
       switch (mutation.type) {
+        case 'settings/SET_BUY_COLOR':
+        case 'settings/SET_SELL_COLOR':
+          this.generateColors()
+          break
         case 'panes/SET_PANE_MARKETS':
           if (mutation.payload.id === this.paneId) {
             this.createCounters()
@@ -111,12 +121,15 @@ export default class extends Mixins(PaneMixin) {
       }
     })
 
-    this.createCounters()
-
     this._populateCountersInterval = setInterval(
       this.populateCounters.bind(this),
       this.countersGranularity
     )
+  }
+
+  mounted() {
+    this.createCounters()
+    this.generateColors()
   }
 
   beforeDestroy() {
@@ -176,17 +189,41 @@ export default class extends Mixins(PaneMixin) {
       this.steps = []
     }
   }
+  generateColors() {
+    const style = getComputedStyle(document.documentElement)
+    const buyColor = splitColorCode(
+      style.getPropertyValue('--theme-buy-base'),
+      getAppBackgroundColor()
+    )
+    const sellColor = splitColorCode(
+      style.getPropertyValue('--theme-sell-base'),
+      getAppBackgroundColor()
+    )
+
+    const el = this.$el as HTMLElement
+    for (let i = 0; i < this.steps.length; i++) {
+      const lightenFactor = i * (0.25 / this.steps.length)
+      el.style.setProperty(
+        `--buy-color-${i + 1}`,
+        joinRgba(getLinearShade(buyColor, -lightenFactor, lightenFactor))
+      )
+      el.style.setProperty(
+        `--sell-color-${i + 1}`,
+        joinRgba(getLinearShade(sellColor, -lightenFactor, lightenFactor))
+      )
+    }
+  }
   createCounters() {
     this.clearCounters()
 
     for (const step of this.countersSteps) {
-      this._counters.push({
+      const counter = {
         duration: step,
         chunks: []
-      })
-    }
+      }
 
-    for (const counter of this._counters) {
+      this._counters.push(counter)
+
       const first = this._counters.indexOf(counter) === 0
 
       this.steps.push({
@@ -300,18 +337,62 @@ export default class extends Mixins(PaneMixin) {
     transform: translate(-50%, -50%);
     border-radius: $border-radius-small;
     padding: 0.25em;
-    font-size: 0.825em;
+    font-size: 0.875em;
     text-align: center;
     pointer-events: none;
     line-height: 1;
-    opacity: 0.5;
     padding-top: 0.33em;
+    text-shadow: 1px 1px 0 black;
   }
 
   &:hover:before {
     background-color: black;
     opacity: 1;
-    font-size: 1em;
+  }
+
+  &:nth-child(1) .counter__side {
+    &.-buy {
+      background-color: var(--buy-color-1);
+    }
+    &.-sell {
+      background-color: var(--sell-color-1);
+    }
+  }
+
+  &:nth-child(2) .counter__side {
+    &.-buy {
+      background-color: var(--buy-color-2);
+    }
+    &.-sell {
+      background-color: var(--sell-color-2);
+    }
+  }
+
+  &:nth-child(3) .counter__side {
+    &.-buy {
+      background-color: var(--buy-color-3);
+    }
+    &.-sell {
+      background-color: var(--sell-color-3);
+    }
+  }
+
+  &:nth-child(4) .counter__side {
+    &.-buy {
+      background-color: var(--buy-color-4);
+    }
+    &.-sell {
+      background-color: var(--sell-color-4);
+    }
+  }
+
+  &:nth-child(5) .counter__side {
+    &.-buy {
+      background-color: var(--buy-color-5);
+    }
+    &.-sell {
+      background-color: var(--sell-color-5);
+    }
   }
 
   &__side {
@@ -326,12 +407,10 @@ export default class extends Mixins(PaneMixin) {
     }
 
     &.-buy {
-      background-color: var(--theme-buy-base);
       color: var(--theme-buy-color);
     }
 
     &.-sell {
-      background-color: var(--theme-sell-base);
       color: var(--theme-sell-color);
       justify-content: flex-end;
     }

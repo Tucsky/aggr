@@ -1,91 +1,248 @@
 <template>
   <component
-    :is="name ? (single ? 'transition' : 'transition-group') : 'div'"
+    :is="type"
+    class="transition-height"
+    :class="[active && 'transition-height--active']"
     :name="name"
     :tag="tag"
-    @beforeEnter="beforeEnter"
+    :duration="duration"
+    @before-enter="beforeEnter"
     @enter="enter"
-    @afterEnter="afterEnter"
-    @beforeLeave="beforeLeave"
+    @after-enter="afterEnter"
+    @before-leave="beforeLeave"
     @leave="leave"
   >
     <slot />
   </component>
 </template>
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
 
-@Component({
-  name: 'Transitionheight',
+<script>
+/* eslint-disable no-param-reassign */
+
+export default {
+  name: 'TransitionHeight',
   props: {
+    single: {
+      type: Boolean,
+      default: false
+    },
     name: {
       type: String,
       required: false,
-      default: null
-    },
-    single: {
-      type: Boolean,
-      required: false
+      default: 'transition-height'
     },
     tag: {
       type: String,
       required: false,
+      default: 'div'
+    },
+    duration: {
+      type: Number,
       default: null
+    },
+    stepper: {
+      type: Boolean,
+      default: false
+    },
+    wrapped: {
+      type: Boolean,
+      default: false
+    },
+    autoWidth: {
+      type: Boolean,
+      default: false
     }
-  }
-})
-export default class extends Vue {
-  mounted() {
-    this.$nextTick(() => {
-      const element = this.$el as HTMLElement
-
-      if (element instanceof Element) {
-        element.dataset.height = this.getChildrenHeight(element)
+  },
+  data: () => ({
+    transitionTimeout: null
+  }),
+  computed: {
+    type() {
+      if (this.single) {
+        return 'transition'
       }
-    })
-  }
 
-  private getChildrenHeight(element: HTMLElement): string {
-    const children = element.children[0] as HTMLElement
+      return 'transition-group'
+    },
+    active() {
+      if (!this.duration || this.transitionTimeout) {
+        return true
+      }
 
-    if (!children) {
-      return 0 + 'px'
+      return false
     }
+  },
+  methods: {
+    beforeEnter(element) {
+      if (this.stepper) {
+        this.$el.style.height = `${this.$el.clientHeight}px`
+        element.style.top = '0px'
+        element.style.left = '0px'
+        element.style.right = '0px'
+      }
 
-    let height = children.offsetHeight
+      element.style.position = 'absolute'
 
-    const styles = window.getComputedStyle(children)
-    height += parseInt(styles.getPropertyValue('margin-top'))
-    height += parseInt(styles.getPropertyValue('margin-bottom'))
+      if (this.autoWidth) {
+        element.style.left = '0px'
+        element.style.right = '0px'
+      }
+    },
 
-    return height + 'px'
-  }
+    async enter(element) {
+      await this.scheduleComplete()
 
-  beforeEnter(element) {
-    element.style.height = '0px'
-  }
+      const height = this.getElementHeight(element)
 
-  enter(element) {
-    const height = this.getChildrenHeight(element)
-    element.dataset.height = height
+      if (this.stepper) {
+        this.$el.style.height = height
+      } else {
+        if (this.autoWidth) {
+          element.style.left = '0px'
+          element.style.right = '0px'
+        }
+        element.style.height = '0px'
+        element.style.position = ''
 
-    setTimeout(() => {
-      element.style.height = height
-    }, 100)
-  }
+        setTimeout(() => {
+          element.style.height = height
+        }, 100)
+      }
+    },
 
-  afterEnter(element) {
-    element.style.height = ''
-  }
+    afterEnter(element) {
+      if (this.stepper) {
+        this.$el.style.height = ''
+        element.style.top = ''
+        element.style.left = ''
+        element.style.right = ''
+      }
 
-  beforeLeave(element) {
-    element.style.height = element.dataset.height
-  }
+      element.style.position = ''
+      element.style.left = ''
+      element.style.right = ''
+      element.style.height = ''
 
-  leave(element) {
-    setTimeout(() => {
-      element.style.height = '0px'
-    })
+      this.$emit('after-enter', element)
+    },
+
+    beforeLeave(element) {
+      if (this.stepper) {
+        return
+      }
+
+      element.style.height = `${element.clientHeight}px`
+    },
+
+    leave(element) {
+      if (this.stepper) {
+        return
+      }
+
+      setTimeout(() => {
+        element.style.height = '0px'
+      })
+    },
+
+    async scheduleComplete() {
+      if (!this.duration) {
+        return
+      }
+
+      if (this.transitionTimeout) {
+        clearTimeout(this.transitionTimeout)
+      }
+
+      this.transitionTimeout = setTimeout(() => {
+        this.transitionTimeout = null
+      }, this.duration + 100)
+
+      await this.$nextTick()
+    },
+
+    getElementHeight(element) {
+      let height
+
+      if (this.wrapped) {
+        height = element.children[0].clientHeight
+      } else {
+        height = element.clientHeight
+      }
+
+      return height ? `${height}px` : '0px'
+    }
   }
 }
 </script>
+
+<style lang="scss">
+/* transition-height */
+
+.transition-height {
+  transition: height 0.3s $ease-out-expo;
+
+  &-leave-active,
+  &-enter-active {
+    overflow: hidden;
+    transition: all 0.3s $ease-out-expo;
+  }
+
+  &-enter,
+  &-leave-to {
+    opacity: 0;
+  }
+
+  &--active {
+    position: relative;
+  }
+}
+
+.transition-height-scale {
+  &-enter-active {
+    transition: all 0.5s $ease-out-expo 0.25s, height 0.75s $ease-out-expo;
+  }
+
+  &-leave-active {
+    transition: all 0.3s $ease-out-expo;
+  }
+
+  &-enter,
+  &-leave-to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+.slide-fade-right,
+.slide-fade-left {
+  &-enter-active,
+  &-leave-active {
+    transition: all 0.3s $ease-out-expo;
+  }
+
+  &-enter,
+  &-leave-to {
+    opacity: 0;
+  }
+}
+
+.slide-fade-left {
+  &-enter {
+    transform: translateX((-1.5rem));
+  }
+
+  &-leave-to {
+    transform: translateX(1.5rem);
+  }
+}
+
+.slide-fade-right {
+  &-enter {
+    transform: translateX(1.5rem);
+  }
+
+  &-leave-to {
+    transform: translateX((-1.5rem));
+  }
+}
+</style>

@@ -52,6 +52,9 @@
         <i class="icon-gauge"></i>
       </button>
     </pane-header>
+    <code v-if="paused" class="pane-trades__paused">
+      {{ paused }}
+    </code>
     <canvas ref="canvas" @dblclick="reset" />
   </div>
 </template>
@@ -63,9 +66,9 @@ import aggregatorService from '../../services/aggregatorService'
 import { formatAmount, formatMarketPrice } from '../../services/productsService'
 import { Threshold, TradesPaneState } from '../../store/panesSettings/trades'
 import {
-  getAppBackgroundColor,
   getColorByWeight,
-  getTextColor,
+  getLinearShadeText,
+  getLinearShade,
   joinRgba,
   rgbaToRgb,
   splitColorCode
@@ -82,6 +85,16 @@ const DEBUG = false
 const GRADIENT_DETAIL = 5
 const LOGOS = {}
 
+enum LeftColumnType {
+  price,
+  pair
+}
+
+enum TradeType {
+  trade,
+  liquidation
+}
+
 @Component({
   name: 'TradesLite',
   components: {
@@ -92,12 +105,12 @@ const LOGOS = {}
 export default class extends Mixins(PaneMixin) {
   private ctx: CanvasRenderingContext2D
   private width: number
+  private maxWidth: number
   private height: number
   private lineHeight: number
   private fontSize: number
   private padding: number
   private logoWidth: number
-  private abbr: boolean
   private pxRatio: number
   private maxLines: number
   private maxHistory: number
@@ -105,6 +118,10 @@ export default class extends Mixins(PaneMixin) {
   private buyColor100: string
   private sellColorBase: string
   private sellColor100: string
+  private themeBase: string
+  private renderTrades: boolean
+  private showHistograms: boolean
+  private drawOffset: number
 
   // prepared thresholds by type (trade or liquidation)
   private minAmount: number
@@ -136,10 +153,12 @@ export default class extends Mixins(PaneMixin) {
     [type: string]: { buy: AudioFunction; sell: AudioFunction }[]
   }
 
-  private filters: { trade: boolean; liquidation: boolean }
+  private filters: {
+    [key in TradeType]: boolean
+  }
   private rendering: boolean
   private tradesRendering: {
-    type: string
+    type: TradeType
     background: number[]
     color: number[]
     step: number
@@ -160,11 +179,10 @@ export default class extends Mixins(PaneMixin) {
   private maxCount: number
   private limit: number
   private batchSize = 1
+  private leftColumnType: LeftColumnType = LeftColumnType.price
 
   sliderDropdownTrigger = null
-  value = null
-  currentColor = null
-  paused = false
+  paused = 0
 
   $refs!: {
     canvas: HTMLCanvasElement
@@ -192,9 +210,6 @@ export default class extends Mixins(PaneMixin) {
   created() {
     this._onStoreMutation = this.$store.subscribe(mutation => {
       switch (mutation.type) {
-        case this.paneId + '/SET_MAX_ROWS':
-          this.maxHistory = +mutation.payload
-          break
         case 'panes/SET_PANE_MARKETS':
           if (mutation.payload.id === this.paneId) {
             this.clear()
@@ -203,8 +218,10 @@ export default class extends Mixins(PaneMixin) {
           }
           break
         case 'app/EXCHANGE_UPDATED':
-        case this.paneId + '/TOGGLE_TRADE_TYPE':
+        case this.paneId + '/SET_MAX_ROWS':
+        case this.paneId + '/TOGGLE_PREFERENCE':
           this.prepareTypeFilter(true)
+          this.prepareDisplaySettings()
           this.renderHistory()
           break
         case this.paneId + '/SET_THRESHOLD_AUDIO':
@@ -230,6 +247,7 @@ export default class extends Mixins(PaneMixin) {
 
           if (
             mutation.type === this.paneId + '/DELETE_THRESHOLD' ||
+            mutation.type === this.paneId + '/SET_THRESHOLDS_MULTIPLER' ||
             mutation.type === this.paneId + '/ADD_THRESHOLD'
           ) {
             this.prepareAudio()
@@ -274,7 +292,9 @@ export default class extends Mixins(PaneMixin) {
 
     for (let i = 0; i < trades.length; i++) {
       const marketKey = trades[i].exchange + ':' + trades[i].pair
-      const type = trades[i].liquidation ? 'liquidation' : 'trade'
+      const type = trades[i].liquidation
+        ? TradeType.liquidation
+        : TradeType.trade
 
       if (!this.filters[type] || !this.paneMarkets[marketKey]) {
         continue
@@ -315,6 +335,7 @@ export default class extends Mixins(PaneMixin) {
         color,
         step,
         exchange: trades[i].exchange,
+        pair: trades[i].pair,
         amount: trades[i].amount,
         count: trades[i].count,
         price: trades[i].price,
@@ -351,10 +372,10 @@ export default class extends Mixins(PaneMixin) {
     this.renderVolumeBySide()
   }
 
-  getThresholdsByType(type: string): Threshold[] {
+  getThresholdsByType(type: TradeType | string): Threshold[] {
     const paneSettings = this.$store.state[this.paneId] as TradesPaneState
 
-    if (type === 'liquidation') {
+    if (type === TradeType.liquidation) {
       return paneSettings.liquidations
     }
 
@@ -371,11 +392,9 @@ export default class extends Mixins(PaneMixin) {
   }
 
   async prepareTypeFilter(checkRequirements?: boolean) {
-    const tradeType = this.$store.state[this.paneId].tradeType
-
     this.filters = {
-      trade: tradeType === 'both' || tradeType === 'trades',
-      liquidation: tradeType === 'both' || tradeType === 'liquidations'
+      [TradeType.trade]: this.$store.state[this.paneId].showTrades,
+      [TradeType.liquidation]: this.$store.state[this.paneId].showLiquidations
     }
 
     if (checkRequirements) {
@@ -390,7 +409,10 @@ export default class extends Mixins(PaneMixin) {
           typeof this.colors[type] === 'undefined'
         ) {
           // generate required colors
-          this.prepareThresholds(type, this.getThresholdsByType(type))
+          this.prepareThresholds(
+            type as unknown as TradeType,
+            this.getThresholdsByType(type)
+          )
         }
 
         if (!this.filters[type] && typeof this.sounds[type] !== 'undefined') {
@@ -402,7 +424,7 @@ export default class extends Mixins(PaneMixin) {
           this.minAudio > 0
         ) {
           // generate required sounds
-          await this.prepareSounds(type, this.getThresholdsByType(type))
+          await this.prepareSounds(type, this.getThresholdsByType(+type))
         }
       }
     }
@@ -460,7 +482,7 @@ export default class extends Mixins(PaneMixin) {
     if (prepareSounds) {
       for (const type in this.filters) {
         if (this.filters[type]) {
-          await this.prepareSounds(type, this.getThresholdsByType(type))
+          await this.prepareSounds(type, this.getThresholdsByType(+type))
         }
       }
     }
@@ -489,22 +511,45 @@ export default class extends Mixins(PaneMixin) {
   }
 
   prepareColors() {
-    // cache color counters
     const style = getComputedStyle(document.documentElement)
-    this.buyColorBase = style.getPropertyValue('--theme-buy-base')
-    this.buyColor100 = style.getPropertyValue('--theme-buy-100')
-    this.sellColorBase = style.getPropertyValue('--theme-sell-base')
-    this.sellColor100 = style.getPropertyValue('--theme-sell-100')
+    this.themeBase = style.getPropertyValue('--theme-base')
 
+    let baseColorThreshold
+
+    if (this.filters[TradeType.trade]) {
+      baseColorThreshold =
+        this.$store.state[this.paneId].thresholds[
+          this.$store.state[this.paneId].thresholds.length - 2
+        ]
+    } else {
+      baseColorThreshold =
+        this.$store.state[this.paneId].liquidations[
+          this.$store.state[this.paneId].thresholds.length - 2
+        ]
+    }
+
+    this.buyColorBase = baseColorThreshold.buyColor
+    this.buyColor100 = joinRgba(
+      getLinearShade(splitColorCode(this.buyColorBase), 0.25)
+    )
+    this.sellColorBase = baseColorThreshold.sellColor
+    this.sellColor100 = joinRgba(
+      getLinearShade(splitColorCode(this.sellColorBase), 0.25)
+    )
+
+    // cache color counters
     for (const type in this.filters) {
       if (this.filters[type]) {
-        this.prepareThresholds(type, this.getThresholdsByType(type))
+        this.prepareThresholds(
+          type as unknown as TradeType,
+          this.getThresholdsByType(+type)
+        )
       }
     }
 
     // recalculate trades respective colors
     for (let i = 0; i < this.tradesHistory.length; i++) {
-      if (this.tradesHistory[i].amount !== this.minAmount) {
+      if (this.tradesHistory[i].amount < this.minAmount) {
         this.tradesHistory.splice(i, 1)
         i--
         continue
@@ -520,12 +565,13 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  prepareThresholds(type: string, thresholds: Threshold[]) {
+  prepareThresholds(type: TradeType, thresholds: Threshold[]) {
     // app background color for computed threshold color
-    const appBackgroundColor = getAppBackgroundColor()
+    const appBackgroundColor = splitColorCode(this.themeBase)
 
     const ranges = []
     let significantAmount
+    const total = thresholds.length * GRADIENT_DETAIL
 
     // loop through thresholds
     // thresholds [0, 1, 2, 3]
@@ -538,40 +584,25 @@ export default class extends Mixins(PaneMixin) {
         significantAmount = to
       }
 
+      const buyColorFrom = splitColorCode(thresholds[i].buyColor)
+      const buyColorTo = splitColorCode(thresholds[i + 1].buyColor)
+      const buyAlpha =
+        typeof buyColorFrom[3] === 'undefined' ? 1 : buyColorFrom[3]
+
       const buyColorRange = [
-        splitColorCode(thresholds[i].buyColor, appBackgroundColor),
-        splitColorCode(thresholds[i + 1].buyColor, appBackgroundColor)
+        rgbaToRgb(buyColorFrom, appBackgroundColor),
+        rgbaToRgb(buyColorTo, appBackgroundColor)
       ]
+
+      const sellColorFrom = splitColorCode(thresholds[i].sellColor)
+      const sellColorTo = splitColorCode(thresholds[i + 1].sellColor)
+      const sellAlpha =
+        typeof sellColorFrom[3] === 'undefined' ? 1 : sellColorFrom[3]
+
       const sellColorRange = [
-        splitColorCode(thresholds[i].sellColor, appBackgroundColor),
-        splitColorCode(thresholds[i + 1].sellColor, appBackgroundColor)
+        rgbaToRgb(sellColorFrom, appBackgroundColor),
+        rgbaToRgb(sellColorTo, appBackgroundColor)
       ]
-
-      const buyAlphaRange: [number, number] = [
-        typeof buyColorRange[0][3] === 'undefined' ? 1 : buyColorRange[0][3],
-        typeof buyColorRange[1][3] === 'undefined' ? 1 : buyColorRange[1][3]
-      ]
-
-      const sellAlphaRange: [number, number] = [
-        typeof sellColorRange[0][3] === 'undefined' ? 1 : sellColorRange[0][3],
-        typeof sellColorRange[1][3] === 'undefined' ? 1 : sellColorRange[1][3]
-      ]
-
-      if (typeof buyColorRange[0][3] !== 'undefined') {
-        buyColorRange[0] = rgbaToRgb(buyColorRange[0], appBackgroundColor)
-      }
-
-      if (typeof buyColorRange[1][3] !== 'undefined') {
-        buyColorRange[1] = rgbaToRgb(buyColorRange[1], appBackgroundColor)
-      }
-
-      if (typeof sellColorRange[0][3] !== 'undefined') {
-        buyColorRange[0] = rgbaToRgb(sellColorRange[0], appBackgroundColor)
-      }
-
-      if (typeof sellColorRange[1][3] !== 'undefined') {
-        buyColorRange[1] = rgbaToRgb(sellColorRange[1], appBackgroundColor)
-      }
 
       const buy = []
       const sell = []
@@ -587,18 +618,16 @@ export default class extends Mixins(PaneMixin) {
           buyColorRange[1],
           position
         )
-        const buyText = getTextColor(buyBackground, 0.3)
+        const buyText = getLinearShadeText(
+          buyBackground,
+          0.5 + Math.min(1, (i * GRADIENT_DETAIL + j) / total),
+          Math.exp(1 - buyAlpha) / 5
+        )
 
         buy.push({
           background: joinRgba(buyBackground),
           color: joinRgba(buyText),
-          step: i * GRADIENT_DETAIL + j,
-          alpha: `${buyAlphaRange[0].toFixed(1)} to ${buyAlphaRange[1].toFixed(
-            1
-          )} at ${position.toFixed(1)} = ${(
-            buyAlphaRange[0] +
-            (buyAlphaRange[1] - buyAlphaRange[0]) * position
-          ).toFixed(1)}`
+          step: i * GRADIENT_DETAIL + j
         })
 
         // same for the sells
@@ -607,18 +636,16 @@ export default class extends Mixins(PaneMixin) {
           sellColorRange[1],
           position
         )
-        const sellText = getTextColor(sellBackground, 0.3)
+        const sellText = getLinearShadeText(
+          sellBackground,
+          0.5 + Math.min(1, (i * GRADIENT_DETAIL + j) / total),
+          Math.exp(1 - sellAlpha) / 5
+        )
 
         sell.push({
           background: joinRgba(sellBackground),
           color: joinRgba(sellText),
-          step: i * GRADIENT_DETAIL + j,
-          alpha: `${sellAlphaRange[0].toFixed(
-            1
-          )} to ${sellAlphaRange[1].toFixed(1)} at ${position.toFixed(1)} = ${(
-            sellAlphaRange[0] +
-            (sellAlphaRange[1] - sellAlphaRange[0]) * position
-          ).toFixed(1)}`
+          step: i * GRADIENT_DETAIL + j
         })
       }
 
@@ -656,9 +683,23 @@ export default class extends Mixins(PaneMixin) {
       ranges
     }
 
-    if (type === 'trade' || !this.filters.trade) {
+    if (type == TradeType.trade || !this.filters[TradeType.trade]) {
       this.minAmount = minAmount
     }
+  }
+
+  prepareDisplaySettings() {
+    const pane = this.$store.state[this.paneId] as TradesPaneState
+    this.maxHistory = pane.maxRows
+    this.showHistograms = pane.showHistograms
+    this.renderTrades =
+      !this.$store.state[this.paneId].showHistograms ||
+      this.height > window.innerHeight / 24
+    this.leftColumnType = pane.showPrices
+      ? LeftColumnType.price
+      : LeftColumnType.pair
+    this.offset = 0
+    this.drawOffset = this.showHistograms ? this.lineHeight : 0
   }
 
   onResize(width, height, isMounting) {
@@ -682,21 +723,29 @@ export default class extends Mixins(PaneMixin) {
     this.pxRatio = window.devicePixelRatio || 1
     const zoom = this.$store.state.panes.panes[this.paneId].zoom || 1
 
-    this.logoWidth = this.pxRatio * 14 * zoom
-    this.abbr = this.$el.clientWidth / zoom < 250
     this.width = canvas.width = this.$el.clientWidth * this.pxRatio
+    this.maxWidth = this.width / 3
     this.height = canvas.height =
       (this.$el.clientHeight - headerHeight) * this.pxRatio
-    this.fontSize = Math.round(12 * zoom * this.pxRatio)
     this.padding = Math.round(
       (zoom < 1 ? 1 : zoom < 1.5 ? 2 : 4) * zoom * this.pxRatio
     )
-    this.lineHeight = Math.round(this.fontSize + this.padding)
-    this.maxLines = Math.ceil(this.height / this.lineHeight)
 
+    this.fontSize = Math.round(12 * zoom * this.pxRatio)
+    this.logoWidth = this.fontSize
+    this.lineHeight = Math.round(this.fontSize + this.padding)
+
+    this.drawOffset = this.showHistograms ? this.lineHeight : 0
+    this.maxLines = Math.ceil(this.height / this.lineHeight)
+    this.renderTrades =
+      !this.$store.state[this.paneId].showHistograms ||
+      this.height > window.innerHeight / 24
+    this.offset = this.offset || 0
     this.limit = this.offset + this.maxLines
 
-    this.ctx.font = `${this.fontSize}px Share Tech Mono`
+    this.ctx.font = `${zoom > 1.25 ? 'bold ' : ''}${
+      this.fontSize
+    }px Share Tech Mono`
     this.ctx.textBaseline = 'middle'
   }
 
@@ -722,7 +771,16 @@ export default class extends Mixins(PaneMixin) {
 
   clear() {
     this.ctx.resetTransform()
-    this.ctx.fillStyle = joinRgba(getAppBackgroundColor())
+    const style = getComputedStyle(document.documentElement)
+    const themeBase = splitColorCode(style.getPropertyValue('--theme-base'))
+    const backgroundColor = splitColorCode(
+      style.getPropertyValue('--theme-background-base'),
+      themeBase
+    )
+    themeBase[3] = 0.1
+    this.ctx.fillStyle = joinRgba(
+      splitColorCode(joinRgba(themeBase), backgroundColor)
+    )
     this.ctx.fillRect(0, 0, this.width, this.height)
   }
 
@@ -741,15 +799,13 @@ export default class extends Mixins(PaneMixin) {
     this.offset = 0
     this.limit = 0
     this.maxCount = 100
-    this.maxHistory = this.$store.state[this.paneId].maxRows
 
-    if (DEBUG) {
-      this.renderDebug()
-    }
+    this.prepareDisplaySettings()
   }
 
   renderTradesBatch() {
     if (this.paused) {
+      this.paused = this.tradesRendering.length
       this.rendering = false
       return
     }
@@ -758,13 +814,16 @@ export default class extends Mixins(PaneMixin) {
     let i = 0
     while (count-- && ++i <= this.batchSize) {
       const trade = this.tradesRendering.shift()
-      this.renderTrade(trade)
+
+      if (this.renderTrades) {
+        this.renderTrade(trade)
+
+        if (this.offset >= 1) {
+          this.offset++
+        }
+      }
 
       this.tradesHistory.unshift(trade)
-
-      if (this.offset >= 1) {
-        this.offset++
-      }
 
       if (this.tradesHistory.length > this.maxHistory) {
         const trade = this.tradesHistory.pop()
@@ -797,61 +856,84 @@ export default class extends Mixins(PaneMixin) {
 
     this.ctx.drawImage(this.ctx.canvas, 0, height)
     this.ctx.fillStyle = trade.background
-    this.ctx.fillRect(0, this.lineHeight, this.width, height)
+    this.ctx.fillRect(0, this.drawOffset, this.width, height)
 
-    this.ctx.fillStyle = 'rgba(255,255,255,0.1)'
-    this.ctx.fillRect(
-      0,
-      0,
-      Math.min(1, trade.count / 100) * this.width,
-      this.lineHeight + height
-    )
-
+    this.drawHistogram(trade, height)
     this.ctx.fillStyle = trade.color
 
     this.drawLogo(
       trade.exchange,
       this.padding * 2,
-      this.lineHeight + height / 2 - this.logoWidth / 2
+      this.drawOffset + height / 2 - this.logoWidth / 2
     )
 
-    if (trade.type === 'trade') {
-      this.ctx.textAlign = 'left'
-      this.ctx.fillText(
-        formatMarketPrice(trade.price, market),
-        this.padding + this.logoWidth * 1.5,
-        this.lineHeight + height / 2
-      )
-
-      this.ctx.textAlign = 'right'
-      this.ctx.fillText(
-        formatAmount(trade.amount),
-        this.width / 1.5,
-        this.lineHeight + height / 2
-      )
+    if (this.leftColumnType) {
+      this.drawPair(trade, height)
     } else {
-      this.ctx.textAlign = 'center'
-      this.ctx.fillText(
-        `${formatAmount(trade.amount)} ${this.abbr ? 'liqd.' : 'liquidated'} ${
-          trade.side === 'buy' ? 'SHORT' : 'LONG'
-        } @ ${formatMarketPrice(trade.price, market)}`,
-        this.width / 2,
-        this.lineHeight + height / 2
-      )
-      this.ctx.textAlign = 'right'
+      this.drawPrice(trade, market, height)
     }
+    this.drawAmount(trade, height, trade.type === TradeType.liquidation)
 
     if (trade.time) {
-      this.ctx.fillText(
-        trade.time,
-        this.width - this.padding,
-        this.lineHeight + height / 2
-      )
+      this.drawTime(trade, height)
     }
+  }
+
+  drawTime(trade, height) {
+    this.ctx.fillText(
+      trade.time,
+      this.width - this.padding,
+      this.drawOffset + height / 2 + 1
+    )
+  }
+
+  drawHistogram(trade, height) {
+    this.ctx.fillStyle = 'rgba(255,255,255,0.05)'
+    this.ctx.fillRect(
+      0,
+      0,
+      Math.min(1, trade.count / 100) * this.width,
+      this.drawOffset + height
+    )
+  }
+
+  drawPair(trade, height) {
+    this.ctx.textAlign = 'left'
+    this.ctx.fillText(
+      trade.pair,
+      this.padding + this.logoWidth * 1.5,
+      this.drawOffset + height / 2 + 1,
+      this.maxWidth
+    )
+  }
+
+  drawPrice(trade, market, height) {
+    this.ctx.textAlign = 'left'
+    this.ctx.fillText(
+      formatMarketPrice(trade.price, market),
+      this.padding + this.logoWidth * 1.5,
+      this.drawOffset + height / 2 + 1,
+      this.maxWidth
+    )
+  }
+
+  drawAmount(trade, height, liquidation) {
+    this.ctx.textAlign = 'right'
+    this.ctx.fillText(
+      formatAmount(trade.amount) +
+        (liquidation ? (trade.side === 'buy' ? '🐻' : '🐂') : ''),
+      this.width / 1.4,
+      this.drawOffset + height / 2 + 1,
+      this.maxWidth
+    )
   }
 
   renderHistory() {
     this.clear()
+
+    if (!this.renderTrades) {
+      return
+    }
 
     if (DEBUG) {
       this.renderDebug()
@@ -865,7 +947,7 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
-    for (let i = limit - 1; i > offset; i--) {
+    for (let i = limit - 1; i >= offset; i--) {
       if (!this.tradesHistory[i]) {
         continue
       }
@@ -875,6 +957,10 @@ export default class extends Mixins(PaneMixin) {
   }
 
   renderVolumeBySide() {
+    if (!this.showHistograms) {
+      return
+    }
+
     const insignificantVolume =
       this.insignificantVolumeBySide.buy + this.insignificantVolumeBySide.sell
     const volume = this.volumeBySide.buy + this.volumeBySide.sell
@@ -886,22 +972,29 @@ export default class extends Mixins(PaneMixin) {
       this.width * (this.insignificantVolumeBySide.sell / total)
     const sellWidth = this.width * (this.volumeBySide.sell / total)
 
+    const lineHeight = this.renderTrades ? this.lineHeight : this.height
+
     this.ctx.fillStyle = this.buyColorBase
-    this.ctx.fillRect(0, 0, buyWidth, this.lineHeight)
+    this.ctx.fillRect(0, 0, buyWidth, lineHeight)
     this.ctx.fillStyle = this.buyColor100
-    this.ctx.fillRect(buyWidth, 0, buyWidthFast, this.lineHeight)
+    this.ctx.fillRect(buyWidth, 0, buyWidthFast, lineHeight)
     this.ctx.fillStyle = this.sellColor100
-    this.ctx.fillRect(
-      buyWidth + buyWidthFast,
-      0,
-      sellWidthFast,
-      this.lineHeight
-    )
+    this.ctx.fillRect(buyWidth + buyWidthFast, 0, sellWidthFast, lineHeight)
     this.ctx.fillStyle = this.sellColorBase
-    this.ctx.fillRect(this.width - sellWidth, 0, sellWidth, this.lineHeight)
+    this.ctx.fillRect(this.width - sellWidth, 0, sellWidth, lineHeight)
   }
 
   renderDebug() {
+    const quarterWidth = this.width / 4
+    this.ctx.fillStyle = this.buyColorBase
+    this.ctx.fillRect(0, 0, quarterWidth, this.lineHeight)
+    this.ctx.fillStyle = this.buyColor100
+    this.ctx.fillRect(quarterWidth, 0, quarterWidth, this.lineHeight)
+    this.ctx.fillStyle = this.sellColor100
+    this.ctx.fillRect(quarterWidth * 2, 0, quarterWidth, this.lineHeight)
+    this.ctx.fillStyle = this.sellColorBase
+    this.ctx.fillRect(quarterWidth * 3, 0, quarterWidth, this.lineHeight)
+
     for (const type in this.filters) {
       if (this.filters[type]) {
         for (const range of this.colors[type].ranges) {
@@ -942,11 +1035,17 @@ export default class extends Mixins(PaneMixin) {
     this.$el.removeEventListener('wheel', this.scrollHandler)
     delete this.scrollHandler
     delete this.blurHandler
-    this.paused = false
+    this.paused = 0
+    this.offset = 0
+    this.limit = this.maxLines
+    this.renderHistory()
+    this.renderTradesBatch()
   }
 
   onScroll(event) {
-    const direction = Math.sign(event.deltaY) * (event.shiftKey ? 2 : 1)
+    event.preventDefault()
+
+    const direction = Math.sign(event.deltaY) * (event.shiftKey ? 4 : 2)
 
     const offset = Math.max(
       0,
@@ -959,7 +1058,7 @@ export default class extends Mixins(PaneMixin) {
 
     const redraw = Math.round(offset) !== Math.round(this.offset)
 
-    this.paused = offset > 0
+    this.paused = offset
     this.offset = offset
     this.limit = limit
 
@@ -974,7 +1073,7 @@ export default class extends Mixins(PaneMixin) {
       return
     }
 
-    this.paused = true
+    this.paused = 1
 
     this.blurHandler = this.onBlur.bind(this)
     this.scrollHandler = this.onScroll.bind(this)
@@ -1007,5 +1106,17 @@ canvas {
   width: 100%;
   height: 100%;
   background-color: var(--theme-background-base);
+}
+
+.pane-trades {
+  position: relative;
+
+  &__paused {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    padding: 1rem;
+    text-shadow: 1px 1px black;
+  }
 }
 </style>

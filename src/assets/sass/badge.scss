@@ -5,28 +5,39 @@
   font-family: $font-condensed;
   font-size: 0.75em;
   padding: 0.25em;
-  border-radius: 0.25em;
+  border-radius: 4px;
   color: inherit;
-  line-height: 1;
+  line-height: 0.75em;
   flex-shrink: 0;
   cursor: pointer;
-  background-color: $red;
-  color: white;
+  color: inherit;
   font-weight: 600;
 
-  &.-outline {
-    background: 0;
-    box-shadow: inset 0 0 0 0.0952380952em var(--theme-color-base);
-    color: var(--theme-color-base);
-    font-weight: 400;
+  &.-red {
+    background-color: var(--theme-sell-base);
+    color: var(--theme-sell-color);
   }
 
   &.-invert {
-    background-color: var(--theme-color-base);
-    color: var(--theme-background-base);
+    background-color: var(--theme-background-50);
+    color: var(--theme-color-100);
   }
 
-  &.-compact {
-    font-size: 0.875rem;
+  &.-green {
+    background-color: var(--theme-buy-100);
+    color: var(--theme-buy-color);
+    font-weight: 400;
+  }
+
+  &.-outline {
+    background: 0;
+    box-shadow: inset 0 0 0 0.0714285714em currentColor;
+    color: currentColor;
+    font-weight: 400;
+  }
+
+  &.-solid {
+    background-color: var(--theme-color-base);
+    color: var(--theme-background-base);
   }
 }

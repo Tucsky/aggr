@@ -8,14 +8,12 @@
           @click="toggleMarkets('perp')"
           >perp</a
         >
-        <i class="pipe -center">|</i>
         <a
           href="javascript:void(0)"
           class="btn -text"
           @click="toggleMarkets('spot')"
           >spot</a
         >
-        <i class="pipe -center">|</i>
         <a
           href="javascript:void(0)"
           class="btn -text"
@@ -23,7 +21,7 @@
           >all</a
         >
       </div>
-      <div class="mx8 mt0">
+      <div class="mx4 mt0">
         <div
           v-for="market of markets"
           :key="market"
@@ -43,14 +41,13 @@
       </div>
     </div>
     <div
-      class="chart-overlay__title pane-overlay"
+      class="chart-overlay__head pane-overlay"
       @click="showOverlay = !showOverlay"
     >
-      <div>Sources</div>
+      <div class="chart-overlay__title">Sources</div>
       <button type="button" class="btn badge -outline" @click="searchMarkets">
-        <span class="mr4">&nbsp;{{ visibleMarkets }} </span>|
-        <span>&nbsp;Add</span>
-        <i class="icon-plus -small ml4"></i>
+        <span>{{ visibleMarkets }} </span>|
+        <span>Add</span>
       </button>
       <i class="icon-up-thin"></i>
     </div>

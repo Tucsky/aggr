@@ -6,7 +6,7 @@
     @mouseup="clickOutsideClose = true"
   >
     <template v-slot:header>
-      <div class="title">{{ title }}</div>
+      <div class="dialog__title">{{ title }}</div>
     </template>
 
     <div v-if="type === 'play'" class="form-group mb16">
@@ -40,7 +40,7 @@
       </label>
       <button class="btn -file -blue -large -cases w-100" @change="handleFile">
         <i class="icon-upload mr8"></i> Browse
-        <input type="file" accept="audio/*" />
+        <input type="file" class="input-file" accept="audio/*" />
       </button>
     </div>
 
@@ -222,7 +222,7 @@
         </div>
       </div>
 
-      <div class="section__title" @click="showAdvanced = !showAdvanced">
+      <div class="section__header" @click="showAdvanced = !showAdvanced">
         Advanced
         <i class="icon-up-thin"></i>
       </div>
@@ -253,7 +253,7 @@
         <i class="icon-warning mr4"></i> {{ error }}
       </p>
     </div>
-    <footer>
+    <template v-slot:footer>
       <a
         href="javascript:void(0);"
         class="btn -text mrauto"
@@ -269,7 +269,7 @@
       <button class="btn -large" @click="submit">
         <i class="icon-check mr4"></i> Ok
       </button>
-    </footer>
+    </template>
   </Dialog>
 </template>
 

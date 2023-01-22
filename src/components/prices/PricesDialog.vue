@@ -6,10 +6,23 @@
     @mouseup="clickOutsideClose = true"
   >
     <template v-slot:header>
-      <div class="title -editable" @dblclick="renamePane" v-text="name"></div>
+      <div
+        class="dialog__title -editable"
+        @dblclick="renamePane"
+        v-text="name"
+      ></div>
       <div class="column -center"></div>
     </template>
     <prices-settings :paneId="paneId" />
+    <template v-slot:footer>
+      <presets
+        type="prices"
+        :adapter="getPreset"
+        :placeholder="paneId"
+        @apply="resetPane($event)"
+        class="-left -top"
+      />
+    </template>
   </Dialog>
 </template>
 

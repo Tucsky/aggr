@@ -1,5 +1,8 @@
 <template>
-  <div class="indicator-option form-group" :class="['-' + type]">
+  <div
+    class="indicator-option form-group"
+    :class="['-' + type, inline && 'indicator-option--inline']"
+  >
     <label>
       {{ label }}
     </label>
@@ -55,7 +58,10 @@
 </template>
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
-import { getDefaultIndicatorOptionValue } from './options'
+import {
+  getDefaultIndicatorOptionValue,
+  getIndicatorOptionType
+} from '../../services/chartService'
 
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
@@ -81,6 +87,14 @@ import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
     name: {
       type: String,
       required: true
+    },
+    inline: {
+      type: Boolean,
+      default: false
+    },
+    ensure: {
+      type: Boolean,
+      default: false
     }
   }
 })
@@ -89,7 +103,9 @@ export default class extends Vue {
   private paneId: string
   private plotTypes: string[]
   private name: string
+  private ensure: boolean
 
+  type: string = null
   value = null
 
   get currentIndicatorValue() {
@@ -100,36 +116,6 @@ export default class extends Vue {
 
   get label() {
     return this.name
-  }
-
-  get type() {
-    let type = 'string'
-
-    let typedValue
-
-    try {
-      typedValue = JSON.parse(this.value)
-    } catch (error) {
-      typedValue = this.value
-      // empty
-    }
-
-    if (
-      typeof typedValue === 'boolean' ||
-      /^(show|toggle|set|use)[A-Z]/.test(this.name)
-    ) {
-      type = 'boolean'
-    } else if (
-      /color/i.test(this.name) ||
-      /^rgba?/.test(typedValue) ||
-      /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(typedValue)
-    ) {
-      type = 'color'
-    } else if (typeof typedValue === 'number') {
-      type = 'number'
-    }
-
-    return type
   }
 
   @Watch('currentIndicatorValue')
@@ -146,6 +132,16 @@ export default class extends Vue {
 
   created() {
     this.value = this.getValue()
+    this.type = getIndicatorOptionType(
+      this.name,
+      this.plotTypes,
+      null,
+      this.currentIndicatorValue
+    )
+
+    if (this.ensure && typeof this.currentIndicatorValue === 'undefined') {
+      this.setValue(this.value)
+    }
   }
 
   getValue() {
@@ -179,13 +175,18 @@ export default class extends Vue {
   }
 
   setValue(value) {
-    this.$store.dispatch(this.paneId + '/setIndicatorOption', {
-      id: this.indicatorId,
+    this.$emit('change', {
       key: this.name,
       value
     })
 
     this.value = value
+    this.type = getIndicatorOptionType(
+      this.name,
+      this.plotTypes,
+      true,
+      this.currentIndicatorValue
+    )
   }
 
   reloadIndicator() {
@@ -198,6 +199,10 @@ export default class extends Vue {
 </script>
 <style lang="scss">
 .indicator-option {
+  &--inline > label {
+    margin: 0 0.5rem 0 0;
+  }
+
   > label {
     display: block;
   }
@@ -208,14 +213,15 @@ export default class extends Vue {
     align-items: center;
 
     > label:first-child {
-      margin: 0 1rem 0 0;
       flex-grow: 1;
+      margin: 0;
     }
   }
 
   &.-color > label {
-    margin: 0 1rem 0 0;
     flex-grow: 1;
+    color: var(--theme-color-base);
+    margin-right: 0.25rem;
   }
 
   &.-boolean {

@@ -1,10 +1,10 @@
 <template>
-  <Dialog @clickOutside="close">
+  <Dialog @clickOutside="close" size="small" :resizable="false">
     <template v-slot:header>
-      <div class="title">{{ action }}</div>
+      <div class="dialog__title">{{ action }}</div>
     </template>
-    <p class="mt0 mb8" v-if="question">{{ question }}</p>
-    <form @submit.prevent="submit">
+    <p class="mt0 mb8 -nl" v-if="question">{{ question }}</p>
+    <form ref="form" @submit.prevent="submit">
       <div class="form-group">
         <label v-if="label">{{ label }}</label>
         <input
@@ -15,16 +15,16 @@
           v-autofocus
         />
       </div>
-
-      <footer>
-        <a href="javascript:void(0);" class="btn -text" @click="close(false)"
-          >Cancel</a
-        >
-        <button type="submit" class="btn -green ml8 -large">
-          <i class="icon-check mr8"></i> {{ submitLabel }}
-        </button>
-      </footer>
     </form>
+
+    <template v-slot:footer>
+      <a href="javascript:void(0);" class="btn -text" @click="close(false)"
+        >Cancel</a
+      >
+      <button type="button" class="btn -green ml8 -large" @click="submit">
+        <i class="icon-check mr8"></i> {{ submitLabel }}
+      </button>
+    </template>
   </Dialog>
 </template>
 

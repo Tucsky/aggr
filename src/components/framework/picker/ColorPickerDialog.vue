@@ -2,31 +2,32 @@
   <Dialog
     @mousedown.native.stop
     @clickOutside="close"
-    class="color-picker"
+    class="color-picker-dialog"
+    :resizable="false"
     :mask="false"
-    :header-background="outputColor"
+    size="small"
   >
     <template v-slot:header>
       <div>
-        <div class="title">{{ label }}</div>
+        <div class="dialog__title">{{ label }}</div>
       </div>
     </template>
     <div
       ref="canvas"
-      class="color-picker-canvas"
+      class="color-picker-dialog-canvas"
       @mousedown="startMovingThumbWithMouse"
       @touchstart="startMovingThumbWithTouch"
     >
       <div
         ref="thumb"
-        class="color-picker-canvas__thumb"
+        class="color-picker-dialog-canvas__thumb"
         tabindex="0"
         aria-label="Color space thumb"
       />
     </div>
-    <div class="color-picker-sliders">
+    <div class="color-picker-dialog-sliders">
       <slider
-        class="color-picker-sliders__hue"
+        class="color-picker-dialog-sliders__hue"
         :showCompletion="false"
         :gradient="['#f00', '#ff0', '#0f0', '#0ff', '#00f', '#f0f', '#f00']"
         :max="360"
@@ -34,7 +35,7 @@
         @input="updateHue(hue)"
       ></slider>
       <slider
-        class="color-picker-sliders__alpha -alpha"
+        class="color-picker-dialog-sliders__alpha -alpha"
         :gradient="[
           `rgba(${colors.rgb.r * 255}, ${colors.rgb.g * 255}, ${
             colors.rgb.b * 255
@@ -53,7 +54,7 @@
       >
       </slider>
     </div>
-    <div class="color-picker-controls">
+    <div class="color-picker-dialog-controls">
       <button
         class="btn -text"
         @click="switchFormat"
@@ -79,33 +80,46 @@
       </button>
     </div>
     <template v-if="showPalette">
-      <div class="color-picker-colors">
-        <a
-          class="color-picker-colors__color"
-          role="button"
-          href="#"
+      <div class="color-picker-dialog-colors">
+        <button
+          type="button"
+          class="btn color-picker-dialog-colors__color"
           v-for="clr in swatches"
+          :class="[
+            clr === outputColor && 'color-picker-dialog-colors__color--active'
+          ]"
           :key="clr"
           :style="`color: ${clr}`"
           @click.prevent="setColorFromProp(clr)"
-        >
-        </a>
-        <a
-          class="color-picker-colors__color -transparent"
-          role="button"
-          href="#"
+        ></button>
+        <button
+          type="button"
+          class="btn color-picker-dialog-colors__color color-picker-dialog-colors__color--transparent"
+          @click.prevent="setTransparent"
+          title="Transparent"
+          v-tippy="{ distance: 16 }"
+        ></button>
+        <button
+          type="button"
+          class="btn -text color-picker-dialog-colors__color color-picker-dialog-colors__color--null"
           @click.prevent="setNull"
+          title="Default color"
+          v-tippy="{ distance: 16 }"
         >
-        </a>
+          <i class="icon-cross -small"></i>
+        </button>
       </div>
-      <div class="color-picker-colors">
+      <div class="color-picker-dialog-colors">
         <a
-          class="color-picker-colors__color"
+          class="color-picker-dialog-colors__color"
           role="button"
           href="#"
           v-for="clr in recentColors"
           :key="clr"
           :style="`color: ${clr}`"
+          :class="[
+            clr === outputColor && 'color-picker-dialog-colors__color--active'
+          ]"
           @click.prevent="selectRecentColor($event, clr)"
         >
         </a>
@@ -114,10 +128,16 @@
   </Dialog>
 </template>
 
-<script>
-/* eslint-disable */
+<script lang="ts">
 const ALLOWED_VISIBLE_FORMATS = ['hex', 'hsl', 'rgb']
-import { PALETTE } from '@/utils/colors'
+import {
+  getAppBackgroundColor,
+  getColorLuminance,
+  getLinearShade,
+  joinRgba,
+  PALETTE,
+  splitColorCode
+} from '@/utils/colors'
 
 import Dialog from '@/components/framework/Dialog.vue'
 import Slider from '@/components/framework/picker/Slider.vue'
@@ -129,6 +149,7 @@ import {
   conversions,
   copyColorObject,
   formatAsCssColor,
+  isValidHexColor,
   parsePropsColor
 } from '@/utils/picker'
 
@@ -155,10 +176,6 @@ export default {
     showPalette: {
       type: Boolean,
       default: true
-    },
-    allowNull: {
-      type: Boolean,
-      default: false
     }
   },
   data: () => ({
@@ -193,10 +210,6 @@ export default {
       const cssColor = formatAsCssColor(activeColor, this.activeFormat)
 
       return cssColor
-    },
-    visibleChannels() {
-      const allChannels = Object.keys(this.colors[this.activeFormat])
-      return this.activeFormat !== 'hex' ? allChannels.slice(0, 3) : allChannels
     }
   },
   created() {
@@ -238,9 +251,13 @@ export default {
 
       const result = parsePropsColor(propsColor)
 
-      this.activeFormat = result.format
-
       if (result !== null) {
+        this.activeFormat = result.format
+
+        if (result.color.a === 1 && !silent && this.alpha && this.alpha < 1) {
+          result.color.a = this.alpha
+        }
+
         this.setColor(result.format, result.color, silent)
       }
     },
@@ -279,7 +296,7 @@ export default {
         return
       }
 
-      const touchPoint = /** @type {Touch} */ (event.touches[0])
+      const touchPoint = /** @type {Touch} */ event.touches[0]
       this.moveThumb(touchPoint.clientX, touchPoint.clientY)
     },
 
@@ -351,16 +368,14 @@ export default {
      * @param {boolean} silent
      */
     setColor(format, color, silent) {
-      let normalizedColor = color
+      const normalizedColor = color
 
       if (!colorsAreValueEqual(this.colors[format], normalizedColor)) {
         this.colors[format] = normalizedColor
         this.applyColorUpdates(format)
 
         if (!silent) {
-          const emitColor =
-            this.alpha === 0 && this.allowNull ? null : this.outputColor
-          this.$emit('input', emitColor)
+          this.$emit('input', this.outputColor)
         }
       }
     },
@@ -415,9 +430,11 @@ export default {
       }
 
       this.$el.style.setProperty('--vacp-hsl-h', String(colors.hsl.h))
-      this.$el.style.setProperty('--vacp-hsl-s', String(colors.hsl.s))
-      this.$el.style.setProperty('--vacp-hsl-l', String(colors.hsl.l))
-      this.$el.style.setProperty('--vacp-hsl-a', String(colors.hsl.a))
+      this.$el.style.setProperty(
+        '--text-color',
+        this.getLinearShadeText(this.outputColor)
+      )
+      this.$el.style.setProperty('--background-color', this.outputColor)
       this.$refs.canvas.setAttribute(
         'style',
         `
@@ -440,7 +457,11 @@ export default {
       )
     },
     setNull() {
-      this.setColorFromProp('rgba(0,0,0,0)')
+      this.setColorFromProp('rgba(0,0,0,0)', true)
+      this.$emit('input', null)
+    },
+    setTransparent() {
+      this.updateAlpha(0)
     },
     selectRecentColor(event, color) {
       if (event.shiftKey) {
@@ -453,20 +474,42 @@ export default {
         return
       }
 
-      setColorFromProp(color)
+      this.setColorFromProp(color)
+    },
+    getLinearShadeText(backgroundColor) {
+      if (!backgroundColor) {
+        return
+      }
+
+      const color = splitColorCode(backgroundColor, getAppBackgroundColor())
+      const scaledColor = getLinearShade(
+        color,
+        0.75 * (getColorLuminance(color) > 0 ? -1 : 1)
+      )
+
+      return joinRgba(scaledColor)
     }
   }
 }
 </script>
-<style lang="scss" scoped>
-.color-picker {
-  ::v-deep .dialog-content {
-    background: transparent;
+<style lang="scss">
+.color-picker-dialog {
+  .dialog__content {
+    background-color: transparent;
     width: 250px;
 
-    .dialog-body {
+    .dialog__body {
       padding: 0;
       background-color: var(--theme-background-100);
+    }
+
+    .dialog__header {
+      background-color: var(--background-color);
+    }
+
+    .dialog__title,
+    .dialog__close {
+      color: var(--text-color);
     }
 
     header,
@@ -526,15 +569,37 @@ export default {
       margin: 2px;
       width: 19px;
       height: 12px;
+      padding: 0;
       background-color: currentColor;
       border-radius: 3px;
       opacity: 1;
+      transition: transform 0.2s $ease-elastic;
 
-      &.-transparent {
+      &:hover {
+        background-color: currentColor;
+        outline: 1px solid currentColor;
+      }
+
+      &--active {
+        outline: 1px solid white;
+        transform: scale(1.1);
+      }
+
+      &--transparent {
         background-color: transparent !important;
         background-image: $checkerboard;
         background-size: 6px 6px;
         background-position: 0 0, 3px -3px, 0 3px, -3px 0px;
+      }
+
+      &--null {
+        background: 0;
+        text-align: center;
+
+        .icon-cross {
+          margin: 0 auto;
+          font-size: 0.625rem;
+        }
       }
     }
   }

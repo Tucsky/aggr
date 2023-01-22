@@ -156,6 +156,44 @@ export default {
       }
     }
   },
+  heikinashi: {
+    args: [
+      {
+        instruction: 'renderer.localTimestamp',
+        injected: true
+      }
+    ],
+    state: {
+      open: null,
+      high: null,
+      low: null,
+      close: null
+    },
+    next: copyOHLC,
+    update(state, time, ohlc) {
+      state.high = ohlc.high
+      state.low = ohlc.low
+      state.open = ohlc.open
+      state.close = (state.open + state.high + state.low + state.close) / 4
+
+      if (typeof state.point !== 'undefined') {
+        state.open = (state.point.open + state.point.close) / 2
+      } else {
+        state.open = (state.open + state.close) / 2
+      }
+
+      state.low = Math.min(state.open, state.low, state.close)
+      state.high = Math.max(state.open, state.high, state.close)
+
+      return {
+        time,
+        open: state.open,
+        high: state.high,
+        low: state.low,
+        close: state.close
+      }
+    }
+  },
   /**
    * produce averaged ohlc of active sources bars contained in the renderer bar
    * use Heikin-Ashi technique (means "average bar" in Japanese)
@@ -730,41 +768,58 @@ export default {
     }
   },
   merge_overlapping_intervals: {
-    update(state, intervals) {
+    args: [{}, {}, {}],
+    state: {
+      count: 0,
+      sum: 0,
+      points: []
+    },
+    update(state, intervals, threshold, precision) {
+      if (!intervals.length) {
+        return []
+      }
+
       return intervals
-        .sort((a, b) => a[0] - b[0])
-        .reduce(
-          (acc, range) => {
-            const indexOfLast = acc.length - 1
-            const prevRange = acc[indexOfLast]
-            const end = prevRange[1]
-            const start = range[0]
-
-            if (end >= start) {
-              acc[indexOfLast][1] = Math.max(end, range[1])
-            } else {
-              acc.push(range)
-            }
-
+        .sort((a, b) => a.range[0] - b.range[0])
+        .reduce((acc, interval, index) => {
+          const pI = acc.length - 1
+          if (index && acc[pI].range[1] >= interval.range[0]) {
+            acc[pI].bottom =
+              (acc[pI].bottom * acc[pI].strength +
+                interval.range[0] * interval.strength) /
+              (acc[pI].strength + interval.strength)
+            acc[pI].top =
+              (acc[pI].top * acc[pI].strength +
+                interval.range[1] * interval.strength) /
+              (acc[pI].strength + interval.strength)
+            acc[pI].range = [
+              Math.min(interval.range[0], acc[pI].range[0]),
+              Math.max(interval.range[1], acc[pI].range[1])
+            ]
+            acc[pI].ids.push(interval.id)
+            acc[pI].strength += interval.strength
             return acc
-          },
-          [intervals[0]]
-        )
-    }
-  },
-  reverse_intervals: {
-    update(state, intervals) {
-      return intervals.reduce((acc, range, i, arr) => {
-        if (i > 0) {
-          acc[i - 1][1] = range[0]
-        }
+          } else {
+            interval.bottom = Math.min(interval.range[0], interval.range[1])
+            interval.top = Math.max(interval.range[0], interval.range[1])
+          }
+          acc.push({
+            ...interval,
+            ids: [interval.id]
+          })
 
-        if (i < arr.length - 1) {
-          acc.push([range[1]])
-        }
+          return acc
+        }, [])
+        .reduce((acc, interval) => {
+          if (interval.strength < (threshold || 1)) {
+            return acc
+          }
 
-        return acc
-      }, [])
+          interval.range = [interval.bottom, interval.top]
+
+          acc.push(interval)
+          return acc
+        }, [])
     }
   },
   stoch: {

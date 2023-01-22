@@ -1,18 +1,20 @@
 <template>
-  <div
+  <editable
     contenteditable
     class="w-100"
     ref="input"
-    @input="onInput"
-    @keydown="onKeydown"
+    value=""
+    @input.native="onInput"
+    @keydown.native="onKeydown"
     :placeholder="placeholder"
-  ></div>
+  />
 </template>
 
 <script lang="ts">
 import { isTouchSupported } from '@/utils/touchevent'
 import { Component, Vue } from 'vue-property-decorator'
 import { getTimeframeForHuman } from '../../utils/helpers'
+import EditableVue from '../framework/Editable.vue'
 
 @Component({
   name: 'TimeframeInput',
@@ -38,13 +40,14 @@ export default class extends Vue {
   disabled
 
   $refs!: {
-    input: HTMLInputElement
+    input: EditableVue
   }
 
   mounted() {
     if (!isTouchSupported()) {
       this.$nextTick(() => {
-        this.$refs.input.focus()
+        const inputElement = this.$refs.input.$el as HTMLElement
+        inputElement.focus()
       })
     }
   }
@@ -55,7 +58,10 @@ export default class extends Vue {
 
       this.$emit('submit', this.format(event.currentTarget.innerText))
 
-      this.$refs.input.innerText = ''
+      const inputElement = this.$refs.input.$el as HTMLElement
+      inputElement.innerText = ''
+    } else {
+      this.onInput(event)
     }
   }
 

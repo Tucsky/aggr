@@ -52,17 +52,13 @@ button {
     font-size: inherit;
     margin-left: 0.5em;
   }
-
-  &.-loading {
-    pointer-events: none;
-  }
-
+  
   &:focus {
     box-shadow: 0 0 0 6px rgba($green, 0.1);
 
     &.-text {
       box-shadow: none;
-      background: var(--theme-color-o20);
+      background: var(--theme-color-o10);
     }
   }
 
@@ -177,7 +173,7 @@ button {
   }
 
   &.-green {
-    background-color: var(--theme-buy-base);
+    background-color: var(--theme-buy-50);
     border: 1px solid var(--theme-buy-base);
     color: var(--theme-buy-color);
 
@@ -196,7 +192,7 @@ button {
     }
 
     &:hover {
-      background-color: var(--theme-buy-100);
+      background-color: var(--theme-buy-base);
       border-color: var(--theme-buy-100);
 
       &.-text {
@@ -234,9 +230,10 @@ button {
 
     .badge {
       top: -0.25rem;
-      right: -0.33rem;
+      right: -0.25rem;
       position: absolute;
       z-index: 1;
+      font-size: 0.875em;
 
       + span {
         padding-right: 0.5em;
@@ -266,6 +263,7 @@ a {
 .btn-group {
   .btn {
     border-radius: 0;
+    border-color: transparent;
     margin: 0;
   }
 

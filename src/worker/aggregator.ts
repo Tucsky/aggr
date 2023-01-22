@@ -1,23 +1,17 @@
 import {
   AggregatedTrade,
   AggregatorPayload,
-  AggregatorSettings,
   Connection,
   Trade,
   Volumes
 } from '@/types/types'
 import { exchanges, getExchangeById } from './exchanges'
 import { parseMarket } from './helpers/utils'
+import settings from './settings'
 
 const ctx: Worker = self as any
 
 class Aggregator {
-  settings: AggregatorSettings = {
-    calculateSlippage: null,
-    aggregationLength: null,
-    preferQuoteCurrencySize: null,
-    buckets: {}
-  }
   connections: { [name: string]: Connection } = {}
 
   activeBuckets: string[] = []
@@ -62,7 +56,7 @@ class Aggregator {
       exchange.off('trades')
       exchange.off('liquidations')
 
-      if (this.settings.aggregationLength > 0) {
+      if (settings.aggregationLength > 0) {
         exchange.on('trades', this.aggregateTrades.bind(this))
         exchange.on('liquidations', this.aggregateLiquidations.bind(this))
       } else {
@@ -71,7 +65,7 @@ class Aggregator {
       }
     }
 
-    if (this.settings.aggregationLength > 0) {
+    if (settings.aggregationLength > 0) {
       this.startAggrInterval()
       console.debug(`[worker] bind trades: aggregation`)
     } else {
@@ -173,7 +167,7 @@ class Aggregator {
     }
 
     this.activeBuckets = activeBuckets
-    this.settings.buckets = bucketsDefinition
+    settings.buckets = bucketsDefinition
   }
 
   emitTrades(trades: Trade[]) {
@@ -185,7 +179,7 @@ class Aggregator {
         continue
       }
 
-      if (this.settings.calculateSlippage) {
+      if (settings.calculateSlippage) {
         trade.originalPrice = this.marketsStats[marketKey].price || trade.price
       }
 
@@ -215,8 +209,7 @@ class Aggregator {
         const aggTrade = this.onGoingAggregations[marketKey]
 
         if (
-          aggTrade.timestamp + this.settings.aggregationLength >
-            trade.timestamp &&
+          aggTrade.timestamp + settings.aggregationLength > trade.timestamp &&
           aggTrade.side === trade.side
         ) {
           aggTrade.size += trade.size
@@ -270,8 +263,7 @@ class Aggregator {
         const aggTrade = this.onGoingAggregations[tradeKey]
 
         if (
-          aggTrade.timestamp + this.settings.aggregationLength >
-            trade.timestamp &&
+          aggTrade.timestamp + settings.aggregationLength > trade.timestamp &&
           aggTrade.side === trade.side
         ) {
           aggTrade.size += trade.size
@@ -291,8 +283,8 @@ class Aggregator {
   processTrade(trade: Trade): Trade {
     const marketKey = trade.exchange + ':' + trade.pair
 
-    if (this.settings.calculateSlippage) {
-      if (this.settings.calculateSlippage === 'price') {
+    if (settings.calculateSlippage) {
+      if (settings.calculateSlippage === 'price') {
         trade.slippage =
           Math.round(
             (trade.price - trade.originalPrice + Number.EPSILON) * 10
@@ -300,7 +292,7 @@ class Aggregator {
         if (Math.abs(trade.slippage) / trade.price < 0.00025) {
           trade.slippage = null
         }
-      } else if (this.settings.calculateSlippage === 'bps') {
+      } else if (settings.calculateSlippage === 'bps') {
         if (trade.side === 'buy') {
           trade.slippage = Math.floor(
             ((trade.price - trade.originalPrice) / trade.originalPrice) * 10000
@@ -314,7 +306,7 @@ class Aggregator {
     }
 
     trade.amount =
-      (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
+      (settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
 
     this.marketsStats[marketKey].volume += trade.amount
     this.marketsStats[marketKey].volumeDelta +=
@@ -326,7 +318,7 @@ class Aggregator {
       this.emitInitialPrice(marketKey, trade.price)
     }
 
-    if (this.settings.aggregationLength > 0) {
+    if (settings.aggregationLength > 0) {
       trade.price = Math.max(trade.price, trade.originalPrice)
     }
 
@@ -342,7 +334,7 @@ class Aggregator {
     const marketKey = trade.exchange + ':' + trade.pair
 
     trade.amount =
-      (this.settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
+      (settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
 
     if (this.connections[marketKey].bucket) {
       this.connections[marketKey].bucket['l' + trade.side] += trade.amount
@@ -384,7 +376,7 @@ class Aggregator {
   }
 
   emitPendingTrades() {
-    if (this.settings.aggregationLength > 0) {
+    if (settings.aggregationLength > 0) {
       this.timeoutExpiredAggregations()
     }
 
@@ -398,8 +390,8 @@ class Aggregator {
   emitStats() {
     const timestamp = Date.now()
 
-    for (const bucketId in this.settings.buckets) {
-      for (const market of this.settings.buckets[bucketId]) {
+    for (const bucketId in settings.buckets) {
+      for (const market of settings.buckets[bucketId]) {
         if (!this.connections[market]) {
           continue
         }
@@ -439,7 +431,7 @@ class Aggregator {
     ctx.postMessage({ op: 'prices', data: this.marketsStats })
   }
 
-  onSubscribed(exchangeId, pair) {
+  onSubscribed(exchangeId, pair, url) {
     const marketKey = exchangeId + ':' + pair
 
     if (this.connections[marketKey]) {
@@ -462,8 +454,8 @@ class Aggregator {
 
     this.connectionsCount = Object.keys(this.connections).length
 
-    for (const bucketId in this.settings.buckets) {
-      if (this.settings.buckets[bucketId].indexOf(marketKey) !== -1) {
+    for (const bucketId in settings.buckets) {
+      if (settings.buckets[bucketId].indexOf(marketKey) !== -1) {
         console.debug(`[worker] create bucket for new connection ${marketKey}`)
         this.connections[marketKey].bucket = this.createBucket()
         break
@@ -474,6 +466,7 @@ class Aggregator {
       op: 'connection',
       data: {
         pair,
+        url,
         exchangeId
       }
     })
@@ -558,13 +551,13 @@ class Aggregator {
         0
   }
 
-  onError(exchangeId, reason) {
+  onError(exchangeId, event) {
     let message: string
 
-    if (typeof reason === 'string') {
-      message = reason
-    } else if (reason.message) {
-      message = reason.message
+    if (typeof event === 'string') {
+      message = event
+    } else if (event.message) {
+      message = event.message
     }
 
     if (message) {
@@ -577,6 +570,19 @@ class Aggregator {
         }
       })
     }
+
+    const api = event && event.target
+
+    ctx.postMessage({
+      op: 'error',
+      data: {
+        exchangeId,
+        wasOpened: api ? api._wasOpened : null,
+        originalUrl: api ? api._originalUrl : null,
+        wasErrored: api ? api._wasErrored : null,
+        url: api ? api.url : null
+      }
+    })
   }
 
   /**
@@ -789,11 +795,11 @@ class Aggregator {
   }
 
   configureAggregator({ key, value }) {
-    if (this.settings[key] === value) {
+    if (typeof settings[key] === 'undefined' || settings[key] === value) {
       return
     }
 
-    this.settings[key] = value
+    settings[key] = value
 
     if (key === 'aggregationLength') {
       this.baseAggregationTimeout = value

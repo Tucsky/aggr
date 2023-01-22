@@ -7,18 +7,20 @@
         :checked="value"
         @change="$emit('change', $event)"
       />
-      <div class="mr8"></div>
+      <div></div>
       <span>{{ label }}</span>
     </label>
-    <transition-height name="toggable-group" single>
-      <div class="toggable-group__collapse" v-if="value">
+    <transition-height name="toggable-group">
+      <div class="toggable-group__collapse" v-if="value" key="content-on">
         <div class="pt8">
           <slot />
         </div>
       </div>
-    </transition-height>
-    <transition-height v-if="$slots.off" name="toggable-group" single>
-      <div class="toggable-group__collapse" v-if="!value">
+      <div
+        class="toggable-group__collapse"
+        v-if="$slots.off && !value"
+        key="content-off"
+      >
         <div class="pt8">
           <slot name="off" />
         </div>
@@ -51,7 +53,7 @@ export default class extends Vue {}
 <style lang="scss" scoped>
 .toggable-group {
   &__collapse {
-    margin-left: 3.25rem;
+    margin-left: 2.625rem;
 
     &.toggable-group-leave-active,
     &.toggable-group-enter-active {

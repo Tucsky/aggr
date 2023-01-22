@@ -7,11 +7,11 @@
   >
     <template v-slot:header>
       <div>
-        <div class="title">
+        <div class="dialog__title">
           <div>Threshold</div>
         </div>
 
-        <div class="subtitle">
+        <div class="dialog__subtitle">
           {{ thresholdId }} {{ formatAmount(threshold.amount) }}
         </div>
       </div>
@@ -141,7 +141,7 @@
         <i class="icon-warning mr4"></i> {{ sellError }}
       </p>
     </div>
-    <footer>
+    <template v-slot:footer>
       <a
         href="javascript:void(0);"
         class="btn -text mrauto"
@@ -157,7 +157,7 @@
       <button class="btn -large -green" @click="saveInputs()">
         <i class="icon-check mr4"></i> Save
       </button>
-    </footer>
+    </template>
   </Dialog>
 </template>
 

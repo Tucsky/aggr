@@ -1,31 +1,37 @@
 <template>
-  <Dialog @clickOutside="close">
+  <Dialog @clickOutside="close" size="small" :resizable="false">
     <template v-slot:header>
-      <div class="title">{{ title }}</div>
+      <div class="dialog__title">{{ title }}</div>
     </template>
-    <p class="mx0" v-if="!html" v-text="message"></p>
-    <p class="mx0" v-else v-html="message"></p>
-    <footer class="pl16">
+    <p class="mx0 -nl text-color-50" v-if="!html" v-text="message"></p>
+    <p class="mx0 text-color-50" v-else v-html="message"></p>
+    <template v-if="showFooter" v-slot:footer>
       <button
         v-for="action in actions"
         :key="action.label"
-        class="btn -text -large mr16"
+        class="btn -text mr8"
         @click="onClickAction($event, action)"
       >
         {{ action.label }}
       </button>
 
-      <a
-        href="javascript:void(0);"
+      <button
+        type="button"
         class="btn -text mr8"
         @click="close(false)"
         v-if="cancel"
         v-text="cancel"
-      ></a>
-      <button class="btn -green -large" v-autofocus @click="close(true)">
+      ></button>
+      <button
+        v-if="ok"
+        type="button"
+        class="btn -green -large"
+        v-autofocus
+        @click="close(true)"
+      >
         <i class="icon-check mr4"></i> {{ ok }}
       </button>
-    </footer>
+    </template>
   </Dialog>
 </template>
 
@@ -59,7 +65,18 @@ export default {
       default: () => []
     }
   },
+  computed: {
+    showFooter() {
+      return this.ok || this.cancel || this.actions.length
+    }
+  },
   mixins: [DialogMixin],
+  mounted() {
+    document.querySelector('.app__wrapper').classList.add('-blur')
+  },
+  beforeDestroy() {
+    document.querySelector('.app__wrapper').classList.remove('-blur')
+  },
   methods: {
     onClickAction(event, action) {
       if (action.callback) {
@@ -72,3 +89,8 @@ export default {
   }
 }
 </script>
+<style lang="scss">
+.app__wrapper.-blur {
+  filter: blur(0.25rem);
+}
+</style>

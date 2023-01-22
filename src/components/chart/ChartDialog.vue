@@ -1,18 +1,23 @@
 <template>
-  <Dialog @clickOutside="close" class="pane-dialog -small -mobile-fs">
+  <Dialog @clickOutside="close" class="pane-dialog" size="medium">
     <template v-slot:header>
-      <div class="title -editable" @dblclick="renamePane" v-text="name"></div>
+      <div
+        class="dialog__title -editable"
+        @dblclick="renamePane"
+        v-text="name"
+      ></div>
       <div class="column -center"></div>
     </template>
     <chart-settings :paneId="paneId" />
-    <footer>
+    <template v-slot:footer>
       <presets
         type="chart"
         :adapter="getPreset"
+        :placeholder="paneId"
         @apply="resetPane($event)"
         class="-left -top"
       />
-    </footer>
+    </template>
   </Dialog>
 </template>
 

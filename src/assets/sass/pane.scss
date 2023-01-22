@@ -1,4 +1,6 @@
 .vue-grid-layout {
+  flex-grow: 1;
+
   .vue-grid-item {
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -19,14 +21,18 @@
       }
     }
 
+    > div {
+      width: 100%;
+      height: 100%;
+    }
+
     > .vue-resizable-handle {
       display: none;
       width: auto;
       height: auto;
-      font-size: 2rem;
+      font-size: 1.5rem;
       width: 3rem;
       height: 3rem;
-      opacity: 0.5;
       text-align: center;
       z-index: 2;
       background: 0;
@@ -41,10 +47,6 @@
         display: block;
         width: 2rem;
         height: 2rem;
-      }
-
-      &:hover {
-        opacity: 1;
       }
     }
 
@@ -158,13 +160,19 @@
   display: flex;
   align-items: stretch;
   z-index: 4;
-  font-size: calc(11px + 0.8em);
   height: 1.5em;
   background-color: rgba(black, 0.5);
   flex-shrink: 0;
   width: 100%;
-  overflow-x: auto;
   cursor: move;
+
+  .pane.-small & {
+    height: 1.429em;
+  }
+
+  .pane.-extra-small & {
+    height: 1em;
+  }
 
   .toolbar {
     display: none;
@@ -172,11 +180,17 @@
 
   &__name {
     font-family: $font-condensed;
-    font-size: 0.64em;
     align-self: center;
     display: block;
     line-height: 1;
-    padding: 0 0.4em 0.1em;
+    font-size: 0.875em;
+    line-height: 1;
+    padding: 0 0 0 0.5em;
+
+    .pane.-small & {
+      font-size: 1em;
+      padding: 0 0 0 0.25em;
+    }
   }
 
   &__divider {
@@ -184,42 +198,32 @@
     background-color: var(--theme-color-o75);
     margin: 0.4em 0.4em;
   }
-
-  &__loader {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow: hidden;
-
-    &:after,
-    &:before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: none;
-      background-clip: padding-box;
-      transition: background-color 0.4s $ease-out-expo;
-    }
-  }
 }
 
 .chart-overlay {
   display: none;
   position: absolute;
   z-index: 3;
-  top: 3em;
-  pointer-events: none;
-
-  left: 1em;
+  top: 1.5em;
+  left: 0;
   bottom: 0;
+  margin-top: 0.25em;
+  margin-left: 0.25em;
   flex-direction: column;
   justify-content: flex-start;
+  pointer-events: none;
+
+  .pane.-small & {
+    top: 1.429em;
+    margin-top: 0.125em;
+    margin-left: 0.125em;
+  }
+
+  .pane.-extra-small & {
+    top: 1em;
+    margin-top: 0;
+    margin-left: 0;
+  }
 
   > div {
     flex-shrink: 0;
@@ -236,25 +240,49 @@
       pointer-events: all;
       position: relative;
     }
+
+    &:not(:last-child) {
+      .chart-overlay__content {
+        padding-bottom: 0.25em;
+
+        .pane.-small & {
+          padding-bottom: 0.125em;
+        }
+
+        .pane.-extra-small & {
+          padding-bottom: 0;
+        }
+      }
+    }
   }
 
   &__content {
     padding: 0;
     margin: 0;
+
+    .btn {
+      padding: 0.25em;
+      font-size: 0.75em;
+    }
   }
 
-  &__title {
+  &__head {
     cursor: pointer;
     user-select: none;
     place-self: flex-start;
-    padding: 0.25em;
+    padding: 0.125em;
     display: flex;
     align-items: center;
     gap: 0.25em;
     line-height: 1;
 
-    &:hover {
-      color: var(--theme-color-base);
+    .pane.-small &,
+    .pane.-extra-small & {
+      padding: 1px;
+    }
+
+    .btn.badge {
+      display: block;
     }
 
     &:first-child {
@@ -263,6 +291,11 @@
         transform: rotateZ(180deg);
       }
     }
+  }
+
+  &__title {
+    font-size: 0.875em;
+    margin-left: 0.125em;
   }
 }
 

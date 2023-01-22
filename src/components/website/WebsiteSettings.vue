@@ -8,14 +8,6 @@
           v-tippy
           title="Some url might not work because of the cross domain policy in place for that website"
         ></i>
-        <span v-if="originalUrl"
-          >(<a
-            :href="originalUrl"
-            v-text="originalUrlTrimmed"
-            target="_blank"
-          ></a
-          >)</span
-        >
       </label>
       <input
         ref="input"
@@ -25,6 +17,10 @@
         :value="url"
         @change="$store.dispatch(paneId + '/setUrl', $event.target.value)"
       />
+      <p class="text-muted mt4" v-if="originalUrl">
+        Currently set to
+        <a :href="originalUrl" v-text="originalUrlTrimmed" target="_blank"></a>
+      </p>
     </div>
     <div class="form-group mb16">
       <label
@@ -52,7 +48,7 @@
         @input="$store.commit(paneId + '/SET_RELOAD_TIMER', $event)"
       ></dropdown-button>
     </div>
-    <div class="form-group">
+    <div class="form-group mb8">
       <label class="checkbox-control">
         <input
           type="checkbox"
@@ -67,6 +63,25 @@
             class="icon-info"
             v-tippy="{ theme: 'left' }"
             title="Allow interaction (click, scroll etc)<br>Keep it OFF to move the pane around with ease."
+          ></i
+        ></span>
+      </label>
+    </div>
+    <div class="form-group">
+      <label class="checkbox-control">
+        <input
+          type="checkbox"
+          class="form-control"
+          :checked="invert"
+          @change="$store.commit(paneId + '/TOGGLE_INVERT')"
+        />
+        <div></div>
+        <span
+          >Invert
+          <i
+            class="icon-info"
+            v-tippy="{ theme: 'left' }"
+            title="Invert site colors"
           ></i
         ></span>
       </label>
@@ -98,12 +113,12 @@ export default class extends Vue {
   }
 
   get originalUrlTrimmed() {
-    if (this.originalUrl.length <= 33) {
-      return this.originalUrl
+    const url = this.originalUrl.replace(/https?:\/\/(www\.)?/, '')
+
+    if (url.length <= 16) {
+      return url
     } else {
-      return (
-        this.originalUrl.slice(0, 15) + '[...]' + this.originalUrl.substr(-15)
-      )
+      return url.slice(0, 8) + '[...]' + url.substr(-8)
     }
   }
 
@@ -113,6 +128,10 @@ export default class extends Vue {
 
   get interactive() {
     return this.$store.state[this.paneId].interactive
+  }
+
+  get invert() {
+    return this.$store.state[this.paneId].invert
   }
 
   get reloadTimer() {

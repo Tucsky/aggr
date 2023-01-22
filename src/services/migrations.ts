@@ -362,5 +362,43 @@ export const workspaceUpgrades = {
       const pane = workspace.states.panes.panes[paneId]
       pane.zoom = Math.ceil(pane.zoom / 0.0625) * 0.0625
     }
+  },
+  6: (workspace: Workspace) => {
+    for (const paneId in workspace.states.panes.panes) {
+      const pane = workspace.states.panes.panes[paneId]
+
+      if (!/^trades/.test(pane.type) || !workspace.states[paneId]) {
+        continue
+      }
+
+      if (typeof workspace.states[paneId].showTradesPairs !== 'undefined') {
+        workspace.states[paneId].showPairs =
+          workspace.states[paneId].showTradesPairs
+        delete workspace.states[paneId].showTradesPairs
+      }
+
+      if (typeof workspace.states[paneId].showPrice !== 'undefined') {
+        workspace.states[paneId].showPrices = workspace.states[paneId].showPrice
+        delete workspace.states[paneId].showPrice
+      }
+
+      if (
+        typeof workspace.states[paneId].showPressureHistogram !== 'undefined'
+      ) {
+        workspace.states[paneId].showHistograms =
+          workspace.states[paneId].showPressureHistogram
+        delete workspace.states[paneId].showPressureHistogram
+      }
+
+      if (typeof workspace.states[paneId].tradeType !== 'undefined') {
+        workspace.states[paneId].showTrades =
+          workspace.states[paneId].tradeType === 'both' ||
+          workspace.states[paneId].tradeType === 'trades'
+        workspace.states[paneId].showLiquidations =
+          workspace.states[paneId].tradeType === 'both' ||
+          workspace.states[paneId].tradeType === 'liquidations'
+        delete workspace.states[paneId].tradeType
+      }
+    }
   }
 }

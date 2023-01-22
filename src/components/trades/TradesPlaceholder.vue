@@ -82,19 +82,23 @@ export default class extends Vue {
     return this.$store.state[this.paneId].liquidations
   }
 
-  get tradeType() {
-    return this.$store.state[this.paneId].tradeType
+  get showTrades() {
+    return this.$store.state[this.paneId].showTrades
+  }
+
+  get showLiquidations() {
+    return this.$store.state[this.paneId].showLiquidations
   }
 
   get filterRecap() {
     const minimumTradeAmount = this.tradesThresholds[0].amount
     const minimumLiquidationAmount = this.liquidationsThresholds[0].amount
 
-    if (this.tradeType === 'both') {
+    if (this.showTrades && this.showLiquidations) {
       return `Waiting for trades or liquidations > ${formatAmount(
         minimumTradeAmount
       )} / ${formatAmount(minimumLiquidationAmount)}`
-    } else if (this.tradeType === 'trades') {
+    } else if (this.showTrades) {
       return `Waiting for trades > ${formatAmount(minimumTradeAmount)}`
     } else {
       return `Waiting for liquidations > ${formatAmount(

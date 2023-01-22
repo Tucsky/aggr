@@ -22,7 +22,8 @@ Vue.use(VueTippy, {
   animation: 'none',
   delay: [200, 0],
   animateFill: false,
-  theme: 'dark'
+  theme: 'dark',
+  boundary: 'window'
 })
 
 Vue.component('tippy', TippyComponent)

@@ -4,6 +4,8 @@ import { randomString } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
 import Worker from 'worker-loader!@/worker/aggregator'
+import dialogService from './dialogService'
+import notificationService from './notificationService'
 import {
   countDecimals,
   marketDecimals,
@@ -15,7 +17,10 @@ import workspacesService from './workspacesService'
 
 class AggregatorService extends EventEmitter {
   public worker: Worker
-  private _normalizeDecimalsTimeout: number
+  private normalizeDecimalsQueue: {
+    timeout?: number
+    markets: string[]
+  }
 
   constructor() {
     super()
@@ -34,17 +39,72 @@ class AggregatorService extends EventEmitter {
       workspacesService.initialize()
     })
 
+    this.on('error', async event => {
+      if (
+        notificationService.hasDismissed(event.exchangeId + event.originalUrl)
+      ) {
+        store.dispatch('app/showNotice', {
+          type: 'error',
+          title: `unable to reach ${event.exchangeId} (${event.originalUrl})`
+        })
+        return
+      }
+
+      if (
+        !event.wasErrored ||
+        event.wasOpened ||
+        dialogService.isDialogOpened('connection-issue')
+      ) {
+        return
+      }
+
+      const payload = await dialogService.openAsPromise(
+        (
+          await import('@/components/ConnectionIssueDialog.vue')
+        ).default,
+        {
+          exchangeId: event.exchangeId,
+          restrictedUrl: event.originalUrl
+        },
+        'connection-issue'
+      )
+
+      if (typeof payload === 'string') {
+        store.commit('settings/SET_WS_PROXY_URL', payload)
+        await store.dispatch('exchanges/disconnect', event.exchangeId)
+        await store.dispatch('exchanges/connect', event.exchangeId)
+      }
+    })
+
     this.on('price', ({ market, price }: { market: string; price: number }) => {
       marketDecimals[market] = countDecimals(price)
 
-      if (this._normalizeDecimalsTimeout) {
-        clearTimeout(this._normalizeDecimalsTimeout)
+      if (!this.normalizeDecimalsQueue) {
+        this.normalizeDecimalsQueue = {
+          markets: []
+        }
       }
 
-      this._normalizeDecimalsTimeout = setTimeout(
-        this.normalizeDecimals.bind(this),
-        1000
-      )
+      if (store.state.panes.marketsListeners[market]) {
+        if (this.normalizeDecimalsQueue.timeout) {
+          clearTimeout(this.normalizeDecimalsQueue.timeout)
+        }
+
+        if (
+          this.normalizeDecimalsQueue.markets.indexOf(
+            store.state.panes.marketsListeners[market].local
+          ) === -1
+        ) {
+          this.normalizeDecimalsQueue.markets.push(
+            stripStable(store.state.panes.marketsListeners[market].local)
+          )
+        }
+
+        this.normalizeDecimalsQueue.timeout = setTimeout(
+          this.normalizeDecimals.bind(this),
+          1000
+        )
+      }
     })
 
     this.on(
@@ -144,45 +204,44 @@ class AggregatorService extends EventEmitter {
   }
 
   normalizeDecimals() {
-    this._normalizeDecimalsTimeout = null
-    const decimalsByLocalMarkets = {}
+    this.normalizeDecimalsQueue.timeout = null
 
-    for (const marketKey in marketDecimals) {
-      if (!store.state.panes.marketsListeners[marketKey]) {
-        continue
-      }
+    const decimalsByLocalMarkets: {
+      [localPair: string]: { [market: string]: number }
+    } = {}
 
-      const localPair = store.state.panes.marketsListeners[marketKey].local
-        .replace('USDT', 'USD')
-        .replace('USDC', 'USD')
-
-      if (!decimalsByLocalMarkets[localPair]) {
-        decimalsByLocalMarkets[localPair] = []
-      }
-
-      decimalsByLocalMarkets[localPair].push(marketDecimals[marketKey])
-    }
-
-    for (const marketKey in marketDecimals) {
-      if (!store.state.panes.marketsListeners[marketKey]) {
+    for (const market in marketDecimals) {
+      if (!store.state.panes.marketsListeners[market]) {
         continue
       }
 
       const localPair = stripStable(
-        store.state.panes.marketsListeners[marketKey].local
+        store.state.panes.marketsListeners[market].local
       )
 
-      if (!decimalsByLocalMarkets[localPair]) {
+      if (this.normalizeDecimalsQueue.markets.indexOf(localPair) === -1) {
         continue
       }
 
-      const averageDecimals = Math.round(
-        decimalsByLocalMarkets[localPair].reduce((a, b) => a + b) /
-          decimalsByLocalMarkets[localPair].length
+      if (!decimalsByLocalMarkets[localPair]) {
+        decimalsByLocalMarkets[localPair] = {}
+      }
+
+      decimalsByLocalMarkets[localPair][market] = marketDecimals[market]
+    }
+
+    for (const localPair in decimalsByLocalMarkets) {
+      const decimals = Object.values(decimalsByLocalMarkets[localPair])
+      marketDecimals[localPair] = Math.round(
+        decimals.reduce((a, b) => a + b) / decimals.length
       )
 
-      marketDecimals[marketKey] = marketDecimals[localPair] = averageDecimals
+      for (const market in decimalsByLocalMarkets[localPair]) {
+        marketDecimals[market] = marketDecimals[localPair]
+      }
     }
+
+    this.normalizeDecimalsQueue = null
 
     this.emit('decimals')
   }

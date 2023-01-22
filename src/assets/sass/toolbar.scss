@@ -3,10 +3,6 @@
   justify-content: flex-end;
   align-items: stretch;
 
-  &__spacer {
-    flex-grow: 1;
-  }
-
   &__label {
     border: 0 !important;
     background: none !important;
@@ -14,11 +10,25 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    line-height: 1;
     font-family: $font-condensed;
-    font-size: 0.64em;
-    line-height: 1;
-    padding: 0.15em 0.4em 0.25em;
+    font-size: 0.875em;
     text-transform: none;
+    padding: 0 0.25em;
+
+    &--768 {
+      display: none;
+
+      @media screen and (min-width: 768px) {
+        display: inline-flex !important;
+      }
+    }
+
+    .pane.-large & {
+      font-size: 0.75em;
+    }
+  }
+
+  .btn__loader {
+    font-size: 0.625em;
   }
 }

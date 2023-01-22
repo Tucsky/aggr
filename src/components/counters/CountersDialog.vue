@@ -1,7 +1,11 @@
 <template>
   <Dialog @clickOutside="close" class="pane-dialog">
     <template v-slot:header>
-      <div class="title -editable" @dblclick="renamePane" v-text="name"></div>
+      <div
+        class="dialog__title -editable"
+        @dblclick="renamePane"
+        v-text="name"
+      ></div>
       <div class="column -center"></div>
     </template>
     <counters-settings :paneId="paneId" />

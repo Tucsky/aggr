@@ -28,11 +28,7 @@
             })
           "
           log
-        >
-          <template v-slot:tooltip>
-            {{ +(thresholdsMultipler * 100).toFixed(2) }}%
-          </template>
-        </slider>
+        />
       </dropdown>
       <button
         :name="paneId"
@@ -122,11 +118,7 @@ export default class extends Mixins(PaneMixin) {
       switch (mutation.type) {
         case 'app/EXCHANGE_UPDATED':
         case 'settings/TOGGLE_SLIPPAGE':
-        case this.paneId + '/TOGGLE_TRADE_TYPE':
-        case this.paneId + '/TOGGLE_TRADES_PAIRS':
-        case this.paneId + '/TOGGLE_LOGOS':
-        case this.paneId + '/TOGGLE_TIME_AGO':
-        case this.paneId + '/TOGGLE_PRICE':
+        case this.paneId + '/TOGGLE_PREFERENCE':
           this.feed.cachePreferences()
           this.refreshList()
           break
@@ -228,7 +220,7 @@ export default class extends Mixins(PaneMixin) {
       const amount =
         size * (this.$store.state.settings.preferQuoteCurrencySize ? price : 1)
       const trade: Trade = {
-        timestamp: (timestamp as unknown) as number,
+        timestamp: timestamp as unknown as number,
         exchange,
         pair,
         price,
@@ -407,7 +399,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   &.-level-2 {
-    line-height: 2em;
+    line-height: 1.75em;
     font-size: 1.125em;
     font-weight: 600;
     padding-bottom: 1px;

@@ -6,6 +6,7 @@ export interface WebsitePaneState {
   url?: string
   reloadTimer: number
   interactive?: boolean
+  invert?: boolean
   locked?: boolean
 }
 
@@ -15,6 +16,7 @@ const state = {
   url: null,
   reloadTimer: 0,
   interactive: false,
+  invert: false,
   locked: false
 } as WebsitePaneState
 
@@ -27,6 +29,10 @@ const actions = {
   setUrl({ dispatch, commit }, url) {
     if (!url) {
       return
+    }
+
+    if (!/^http/.test(url)) {
+      url = 'https://' + url
     }
 
     try {
@@ -74,6 +80,9 @@ const mutations = {
   },
   TOGGLE_INTERACTIVE(state) {
     state.interactive = !state.interactive
+  },
+  TOGGLE_INVERT(state) {
+    state.invert = !state.invert
   },
   UNLOCK_URL(state) {
     state.locked = false

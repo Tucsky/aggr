@@ -365,13 +365,8 @@ function chainConvert(sourceColor, convertFunctions) {
   )
 }
 
-/**
- * @param {T} color
- * @returns {T}
- * @template T
- */
-export function copyColorObject(color) {
-  /** @type {T} */ const newColor = {}
+export function copyColorObject(color): any {
+  const newColor = {}
 
   for (const prop in color) {
     newColor[prop] = color[prop]

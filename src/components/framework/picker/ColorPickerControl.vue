@@ -1,18 +1,22 @@
+<!-- eslint-disable no-var -->
 <template>
-  <button class="btn color-picker-control" @click="openPicker">
-    <div
-      class="color-picker-control__color"
-      :style="{
-        backgroundColor: value
-      }"
-    ></div>
+  <button
+    class="btn color-picker-control"
+    @click="openPicker"
+    :style="{
+      '--text-color': inverseValue,
+      '--background-color': value
+    }"
+  >
+    <div class="color-picker-control__color"></div>
     <div class="color-picker-control__wrapper">
       <i class="icon-dropper"></i>
     </div>
   </button>
 </template>
 
-<script>
+<script lang="ts">
+import { joinRgba, splitColorCode, getLinearShadeText } from '@/utils/colors'
 import dialogService from '../../../services/dialogService'
 
 export default {
@@ -24,9 +28,6 @@ export default {
     },
     label: {
       type: String
-    },
-    allowNull: {
-      type: Boolean
     }
   },
   data: () => ({
@@ -37,29 +38,43 @@ export default {
       this.dialogInstance.close()
     }
   },
+  computed: {
+    inverseValue() {
+      if (!this.value) {
+        return
+      }
+
+      return joinRgba(getLinearShadeText(splitColorCode(this.value), 0.5))
+    }
+  },
   methods: {
     async openPicker() {
-      let colorDidChanged = false
-      let timeout
+      this.colorDidChanged = false
 
       this.dialogInstance = await dialogService.openPicker(
         this.value,
-        color => {
-          if (timeout) {
-            clearTimeout(timeout)
-          }
-          colorDidChanged = true
-
-          timeout = setTimeout(() => {
-            timeout = null
-
-            this.$emit('input', color)
-          }, 500)
-        },
         this.label,
-        () => this.$emit('close', colorDidChanged),
-        this.allowNull
+        this.onInput,
+        this.onClose
       )
+    },
+    onInput(color) {
+      if (this._debounceTimeoutId) {
+        clearTimeout(this._debounceTimeoutId)
+      }
+      this.colorDidChanged = true
+
+      this._debounceTimeoutId = setTimeout(() => {
+        this._debounceTimeoutId = null
+
+        this.onChange(color)
+      }, 500)
+    },
+    onChange(color) {
+      this.$emit('input', color)
+    },
+    onClose() {
+      this.$emit('close', this.colorDidChanged)
     }
   }
 }
@@ -68,15 +83,28 @@ export default {
 .color-picker-control {
   background-color: transparent !important;
   background-image: $checkerboard;
-  background-size: 6px 6px;
-  background-position: 0 0, 3px -3px, 0 3px, -3px 0px;
+  background-size: 14px 14px;
+  background-position: 0 0, 7px -7px, 0 7px, -7px 0px;
   position: relative;
   overflow: hidden;
-  border: 1px solid transparent;
+  padding: 0;
+
+  + label {
+    color: var(--theme-color-base);
+  }
 
   &__wrapper {
     position: relative;
-    z-index: 1;
+    padding: 0.5em;
+    border: 1px solid var(--background-color);
+    border-radius: 0.25rem;
+    outline: 1px solid #0000000f;
+    background-color: var(--background-color);
+
+    i {
+      display: block;
+      color: var(--text-color);
+    }
   }
 
   &__color {
@@ -85,6 +113,7 @@ export default {
     right: 0;
     bottom: 0;
     position: absolute;
+    border-radius: 0.25rem;
   }
 }
 </style>

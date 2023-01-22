@@ -2,25 +2,28 @@
   <div
     class="chart-layout"
     :style="{
-      right: axis[0] + 'px',
-      bottom: axis[1] + 'px'
+      left: axis.left + 'px',
+      right: axis.right + 'px',
+      bottom: axis.time + 'px'
     }"
-    @dblclick="$store.commit(paneId + '/TOGGLE_LAYOUTING')"
+    @dblclick="close"
   >
     <div class="chart-layout__controls">
       <button
-        class="btn -red -small"
-        title="Close menu while reverting chart layout to it's original state"
+        class="btn -text"
+        title="Revert back to original positions"
+        v-tippy="{ placement: 'bottom', boundary: 'window' }"
         @click="cancel"
       >
-        Cancel <i class="icon-eraser ml4"></i>
+        <i class="icon-eraser"></i>
       </button>
       <button
-        class="btn -green -small ml8"
-        title="Click if you finished rearranging the chart layout"
-        @click="$store.commit(paneId + '/TOGGLE_LAYOUTING')"
+        class="btn -text"
+        title="Save positions"
+        v-tippy="{ placement: 'bottom', boundary: 'window' }"
+        @click="close"
       >
-        Ok <i class="icon-check ml4"></i>
+        <i class="icon-check"></i>
       </button>
     </div>
     <chart-price-scale
@@ -60,10 +63,15 @@ export default class extends Vue {
   paneId: string
   layouting: string
   unsyncableMoveId: string
-  axis: [number, number]
+  axis: {
+    left: number
+    right: number
+    time: number
+  }
   activePriceScales: { [id: string]: PriceScaleSettings }
 
   private _originalActivePriceScales: { [id: string]: PriceScaleSettings }
+  private _handleEscKey: (event: KeyboardEvent) => void
 
   created() {
     this.getActivePriceScales()
@@ -71,10 +79,16 @@ export default class extends Vue {
 
   mounted() {
     document.body.classList.add('-unselectable')
+
+    this.bindEscKey()
   }
 
   beforeDestroy() {
     document.body.classList.remove('-unselectable')
+
+    if (this._handleEscKey) {
+      document.removeEventListener('keydown', this._handleEscKey)
+    }
   }
 
   getActivePriceScales() {
@@ -92,9 +106,8 @@ export default class extends Vue {
         const priceScaleId = indicators[indicatorId].options.priceScaleId
 
         if (!priceScales[priceScaleId]) {
-          priceScales[priceScaleId] = this.$store.state[
-            this.paneId
-          ].priceScales[priceScaleId]
+          priceScales[priceScaleId] =
+            this.$store.state[this.paneId].priceScales[priceScaleId]
           priceScales[priceScaleId].indicators = []
         }
 
@@ -126,8 +139,8 @@ export default class extends Vue {
   }
 
   syncMoveWithOthers(priceScaleId, side, scaleMargins): boolean {
-    const originalScaleMargins = this.activePriceScales[priceScaleId]
-      .scaleMargins
+    const originalScaleMargins =
+      this.activePriceScales[priceScaleId].scaleMargins
 
     let hasSynced = false
 
@@ -168,6 +181,24 @@ export default class extends Vue {
 
     this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING')
   }
+
+  close() {
+    this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING')
+  }
+
+  bindEscKey() {
+    if (this._handleEscKey) {
+      return
+    }
+
+    this._handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        this.close()
+      }
+    }
+
+    document.addEventListener('keydown', this._handleEscKey)
+  }
 }
 </script>
 
@@ -186,13 +217,16 @@ export default class extends Vue {
   &__controls {
     position: absolute;
     top: 0;
-    padding: 1rem;
     border-radius: 0 0 4px 4px;
-    background-color: var(--theme-background-base);
+    background-color: var(--theme-background-100);
     left: 50%;
     transform: translateX(-50%);
     z-index: 4;
     box-shadow: 0 0.2rem 1rem rgba(black, 0.2);
+
+    .btn {
+      font-size: 1.25em;
+    }
   }
 }
 </style>

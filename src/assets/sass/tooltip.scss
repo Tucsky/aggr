@@ -15,6 +15,15 @@
       display: none;
     }
   }
+
+  &.auto-theme {
+    max-width: none;
+    background-color: transparent;
+
+    .tippy-arrow {
+      display: none;
+    }
+  }
 }
 
 .tippy-popper[x-placement^='bottom'] {

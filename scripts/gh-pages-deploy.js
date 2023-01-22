@@ -3,8 +3,10 @@ const execa = require('execa')
 const fs = require('fs')
 ;(async () => {
   try {
-    // eslint-disable-next-line no-console
-    console.log('Building started...')
+    const branch = (await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD']))
+      .stdout
+    console.log('Building started...', branch)
+    await execa('npm', ['run', 'build', '--', '--mode', 'github'])
     await execa('npm', ['run', 'build', '--', '--mode', 'github'])
     await execa('git', ['checkout', '--orphan', 'gh-pages'])
     // Understand if it's dist or build folder
@@ -14,7 +16,7 @@ const fs = require('fs')
     console.log('Pushing to gh-pages...')
     await execa('git', ['push', 'origin', 'HEAD:gh-pages', '--force'])
     await execa('rm', ['-r', folderName])
-    await execa('git', ['checkout', '-f', 'master'])
+    await execa('git', ['checkout', '-f', branch])
     await execa('git', ['branch', '-D', 'gh-pages'])
     console.log('Successfully deployed')
   } catch (e) {

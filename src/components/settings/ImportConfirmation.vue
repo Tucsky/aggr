@@ -1,7 +1,7 @@
 <template>
   <Dialog @clickOutside="close">
     <template v-slot:header>
-      <div class="title">Import settings</div>
+      <div class="dialog__title">Import settings</div>
     </template>
     <div class="form-group mb16">
       <label>Name</label>
@@ -44,7 +44,7 @@
         {{ market }}
       </button>
     </div>
-    <footer>
+    <footer class="dialog__footer">
       <a href="javascript:void(0);" class="btn -text mr8" @click="close(false)"
         >Cancel</a
       >

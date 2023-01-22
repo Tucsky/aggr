@@ -54,7 +54,7 @@
         "OKEX:BTC-USDT-SWAP"
       ],
       "settings": {
-        "tradeType": "trades",
+        "showLiquidations": false,
         "thresholds": [
           {
             "amount": 100000
@@ -85,7 +85,7 @@
         "OKEX:BTC-USDT-SWAP"
       ],
       "settings": {
-        "tradeType": "liquidations"
+        "showTrades": false
       }
     }
   },

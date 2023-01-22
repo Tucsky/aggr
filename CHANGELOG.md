@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented here.
 
+## [3.3] - 2023-01-11
+### Added
+- Kucoin spot
+- Detect US blocked ip
+### Changed
+- Bug fix
+
+
 ## [3.2] - 2022-07-09
 ### Added
 - Trades feed lite

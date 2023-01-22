@@ -1,5 +1,10 @@
 <template>
-  <transition-height :name="transitionGroupName" tag="div" class="notices">
+  <transition-height
+    :name="transitionGroupName"
+    tag="div"
+    class="notices"
+    width-auto
+  >
     <div
       v-for="notice in notices"
       :key="notice.id"

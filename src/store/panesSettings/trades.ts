@@ -26,18 +26,20 @@ export interface TradesPaneState {
   thresholds: Threshold[]
   audioThreshold: number
   showThresholdsAsTable: boolean
-  tradeType: TradeTypeFilter
   muted: boolean
   audioPitch: number
   audioVolume: number
   maxRows: number
-  showLogos: boolean
-  multipliers: { [identifier: string]: number }
-  monochromeLogos: boolean
-  showTradesPairs: boolean
-  thresholdsMultipler: number
+  showPairs: boolean
   showTimeAgo: boolean
-  showPrice: boolean
+  showPrices: boolean
+  showHistograms: boolean
+  showTrades: boolean
+  showLiquidations: boolean
+  showLogos: boolean
+  monochromeLogos: boolean
+  multipliers: { [identifier: string]: number }
+  thresholdsMultipler: number
 }
 
 const getters = {
@@ -162,24 +164,18 @@ play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.13, 0.24,,0)`
   muted: false,
   audioPitch: null,
   audioVolume: null,
-  showTradesPairs: false,
-  tradeType: 'both',
+  showPairs: false,
+  showTrades: true,
+  showLiquidations: true,
   showLogos: true,
   monochromeLogos: false,
   showTimeAgo: true,
-  showPrice: true,
+  showPrices: true,
+  showHistograms: true,
   thresholdsMultipler: 1
 } as TradesPaneState
 
 const actions = {
-  boot({ rootState, dispatch }, firstTime?: boolean) {
-    if (firstTime) {
-      dispatch('generateSwatch', {
-        buyColor: rootState.settings.buyColor,
-        sellColor: rootState.settings.sellColor
-      })
-    }
-  },
   updateThreshold(
     { state, commit },
     { index, prop, value }: { index: number; prop: string; value: any }
@@ -204,43 +200,65 @@ const actions = {
 
     state.thresholds = JSON.parse(JSON.stringify(state.thresholds))
   },
-  updateLiquidations(
-    { state, commit },
-    { prop, value }: { prop: string; value: any }
-  ) {
-    const threshold = state.liquidations
-
-    if (!threshold) {
-      throw new Error('No liquidation threshold')
-    }
-
-    commit('SET_LIQUIDATIONS_' + prop, value)
-  },
   generateSwatch(
     { state },
     {
       buyColor,
       sellColor,
+      type = 'thresholds',
       baseVariance = 0.15
-    }: { buyColor: string; sellColor: string; baseVariance: number }
+    }: {
+      buyColor: string
+      sellColor: string
+      type: 'thresholds' | 'liquidations'
+      baseVariance: number
+    }
   ) {
-    const count = state.thresholds.length
+    const count = state[type].length
     const baseMultipler = (count / 2) * -baseVariance
-    const buyRgb = splitColorCode(buyColor)
-    const sellRgb = splitColorCode(sellColor)
+    const buyRgb = buyColor ? splitColorCode(buyColor) : null
+    const sellRgb = sellColor ? splitColorCode(sellColor) : null
 
     for (let i = 0; i < count; i++) {
-      let buyScaled = getLogShade(buyRgb, baseMultipler + baseVariance * i)
-      if (!i) {
-        buyScaled = joinRgba([...splitColorCode(buyScaled), 0.33])
+      if (buyRgb) {
+        if (i === 1) {
+          state[type][i].buyColor = joinRgba([
+            buyRgb[0],
+            buyRgb[1],
+            buyRgb[2],
+            (buyRgb[3] || 1) * 0.8
+          ])
+        } else {
+          const buyScaled = getLogShade(
+            buyRgb,
+            baseMultipler + baseVariance * (i ? i : -0.5)
+          )
+          if (!i) {
+            buyScaled[3] = 0.5
+          }
+          state[type][i].buyColor = joinRgba(buyScaled)
+        }
       }
-      state.thresholds[i].buyColor = buyScaled
 
-      let sellScaled = getLogShade(sellRgb, baseMultipler + baseVariance * i)
-      if (!i) {
-        sellScaled = joinRgba([...splitColorCode(sellScaled), 0.33])
+      if (sellColor) {
+        if (i === 1) {
+          state[type][i].sellColor = joinRgba([
+            sellRgb[0],
+            sellRgb[1],
+            sellRgb[2],
+            (sellRgb[3] || 1) * 0.8
+          ])
+        } else {
+          const sellScaled = getLogShade(
+            sellRgb,
+            baseMultipler + baseVariance * i
+          )
+          if (!i) {
+            sellScaled[3] = 0.5
+          }
+          state[type][i].sellColor = joinRgba(sellScaled)
+        }
       }
-      state.thresholds[i].sellColor = sellScaled
     }
 
     this.dispatch('app/showNotice', {
@@ -251,22 +269,8 @@ const actions = {
 } as ActionTree<TradesPaneState, ModulesState>
 
 const mutations = {
-  TOGGLE_TRADES_PAIRS(state) {
-    state.showTradesPairs = !state.showTradesPairs
-  },
   SET_MAX_ROWS(state, value) {
     state.maxRows = value
-  },
-  TOGGLE_LOGOS(state) {
-    if (state.monochromeLogos) {
-      state.showLogos = false
-      state.monochromeLogos = false
-    } else if (!state.showLogos) {
-      state.showLogos = true
-      state.monochromeLogos = false
-    } else {
-      state.monochromeLogos = true
-    }
   },
   TOGGLE_MUTED(state) {
     state.muted = !state.muted
@@ -296,7 +300,7 @@ const mutations = {
     if (isNaN(+value) || value === null) {
       state.audioVolume = null
     } else {
-      state.audioVolume = +value
+      state.audioVolume = +(+value).toFixed(2)
 
       if (state.audioVolume === 0 && !state.muted) {
         state.muted = true
@@ -305,24 +309,11 @@ const mutations = {
       }
     }
   },
-  TOGGLE_MONOCHROME_LOGOS(state, value) {
-    state.monochromeLogos = value ? true : false
+  TOGGLE_PREFERENCE(state, key) {
+    state[key] = !state[key]
   },
-  TOGGLE_TRADE_TYPE(state) {
-    const values: TradeTypeFilter[] = ['both', 'liquidations', 'trades']
-
-    const index = Math.max(0, values.indexOf(state.tradeType))
-
-    state.tradeType = values[(index + 1) % values.length]
-  },
-  TOGGLE_TIME_AGO(state) {
-    state.showTimeAgo = !state.showTimeAgo
-  },
-  TOGGLE_PRICE(state) {
-    state.showPrice = !state.showPrice
-  },
-  TOGGLE_THRESHOLDS_TABLE(state, value) {
-    state.showThresholdsAsTable = value ? true : false
+  TOGGLE_THRESHOLDS_TABLE(state) {
+    state.showThresholdsAsTable = !state.showThresholdsAsTable
   },
   SET_THRESHOLD_AMOUNT(state, { id, value }) {
     const threshold = this.getters[state._id + '/getThreshold'](id)
@@ -404,7 +395,7 @@ const mutations = {
 
     state[type].push({
       id: randomString(8),
-      amount: state[type][state.thresholds.length - 1].amount * 2,
+      amount: state[type][state[type].length - 1].amount * 2,
       buyColor: 'rgb(0, 255, 0)',
       sellColor: 'rgb(255, 0, 0)',
       buyAudio,

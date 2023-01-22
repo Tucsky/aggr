@@ -52,15 +52,14 @@
         @action="onClickIndicator"
       />
     </div>
-    <div class="chart-overlay__title pane-overlay" @click="toggleOverlay">
-      <span>Indicators</span>
+    <div class="chart-overlay__head pane-overlay" @click="toggleOverlay">
+      <span class="chart-overlay__title">Indicators</span>
       <button
         type="button"
         class="btn badge -outline"
         @click.stop="addIndicator"
       >
         Add
-        <i class="icon-plus -small ml4"></i>
       </button>
       <i class="icon-up-thin"></i>
     </div>
@@ -76,7 +75,7 @@ import { ChartPaneState } from '../../store/panesSettings/chart'
 import dialogService from '../../services/dialogService'
 
 import IndicatorControl from '@/components/chart/IndicatorControl.vue'
-import CreateIndicatorDialog from '@/components/chart/CreateIndicatorDialog.vue'
+import IndicatorLibraryDialog from '@/components/chart/IndicatorLibraryDialog.vue'
 
 @Component({
   name: 'IndicatorsOverlay',
@@ -152,7 +151,7 @@ export default class extends Vue {
   }
 
   addIndicator() {
-    dialogService.open(CreateIndicatorDialog, { paneId: this.paneId })
+    dialogService.open(IndicatorLibraryDialog, { paneId: this.paneId })
   }
 
   onClickIndicator({
@@ -177,8 +176,3 @@ export default class extends Vue {
   }
 }
 </script>
-<style lang="scss" scoped>
-.chart-overlay__content {
-  padding-bottom: 1rem;
-}
-</style>

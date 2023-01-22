@@ -11,9 +11,9 @@ export function ago(timestamp) {
   let interval, output
 
   if ((interval = Math.floor(seconds / 31536000)) > 1) {
-    output = interval + 'yr'
+    output = interval + ' yr.'
   } else if ((interval = Math.floor(seconds / 2592000)) >= 1) {
-    output = interval + 'mo'
+    output = interval + ' mo.'
   } else if ((interval = Math.floor(seconds / 86400)) >= 1) {
     output = interval + 'd'
   } else if ((interval = Math.floor(seconds / 3600)) >= 1) {

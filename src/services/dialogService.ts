@@ -4,8 +4,16 @@ import store from '@/store'
 import ConfirmDialog from '@/components/framework/ConfirmDialog.vue'
 import PromptDialog from '@/components/framework/PromptDialog.vue'
 
+export interface DialogPosition {
+  x?: number
+  y?: number
+  w?: number
+  h?: number
+}
+
 class DialogService {
   mountedComponents: { [id: string]: any } = {}
+  dialogPositions: { [id: string]: any } = {}
   isInteracting = false
   hasDialogOpened = false
   pickerInstance: any
@@ -90,10 +98,9 @@ class DialogService {
 
   async openPicker(
     initialColor,
-    cb,
     label?: string,
-    onClose?: Function,
-    allowNull?: boolean
+    onInput?: () => void,
+    onClose?: () => void
   ) {
     if (this.pickerInstance) {
       this.pickerInstance.$off('input')
@@ -106,16 +113,15 @@ class DialogService {
           .default,
         {
           value: initialColor,
-          label,
-          allowNull
+          label
         },
         null,
         onClose
       )
     }
 
-    if (typeof cb === 'function') {
-      this.pickerInstance.$on('input', cb)
+    if (typeof onInput === 'function') {
+      this.pickerInstance.$on('input', onInput)
     }
 
     return this.pickerInstance

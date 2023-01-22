@@ -47,8 +47,8 @@ export default class TradesFeed {
   private showTrades: boolean
   private showLiquidations: boolean
   private showLogos: boolean
-  private showTradesPairs: boolean
-  private showPrice: boolean
+  private showPairs: boolean
+  private showPrices: boolean
   private showTimeAgo: boolean
   private slippageMode: SlippageMode
   private paneMarkets: { [identifier: string]: boolean }
@@ -294,7 +294,7 @@ export default class TradesFeed {
 
     let pairName = ''
 
-    if (this.showTradesPairs) {
+    if (this.showPairs) {
       pairName = `<div class="trade__pair">${trade.pair.replace(
         '_',
         ' '
@@ -314,7 +314,7 @@ export default class TradesFeed {
     <div class="trade__exchange">${exchangeName}</div>
     ${pairName}
     ${
-      this.showPrice
+      this.showPrices
         ? `<div class="trade__price">${formatMarketPrice(
             trade.price,
             marketKey
@@ -328,7 +328,7 @@ export default class TradesFeed {
       </span>
       <span class="trade__amount__base">
         <span class="icon-base"></span>
-        <span>${trade.size}</span>
+        <span>${formatAmount(trade.size)}</span>
       </span>
     </div>
     <div class="trade__time ${timestampClass}" data-timestamp="${trade.timestamp.toString()}">${timestampText}</div>
@@ -508,15 +508,13 @@ export default class TradesFeed {
   }
 
   cachePreferences() {
-    const tradeType = store.state[this.paneId].tradeType
-
     this.slippageMode = store.state.settings.calculateSlippage
-    this.showTrades = tradeType === 'both' || tradeType === 'trades'
-    this.showLiquidations = tradeType === 'both' || tradeType === 'liquidations'
+    this.showTrades = store.state[this.paneId].showTrades
+    this.showLiquidations = store.state[this.paneId].showLiquidations
     this.showGifs = !store.state.settings.disableAnimations
     this.showLogos = store.state[this.paneId].showLogos
-    this.showTradesPairs = store.state[this.paneId].showTradesPairs
-    this.showPrice = store.state[this.paneId].showPrice
+    this.showPairs = store.state[this.paneId].showPairs
+    this.showPrices = store.state[this.paneId].showPrices
     this.showTimeAgo = store.state[this.paneId].showTimeAgo
 
     if (this.showTimeAgo && !this.timeUpdateInterval) {
@@ -566,9 +564,8 @@ export default class TradesFeed {
     }
 
     this.timeUpdateInterval = setInterval(() => {
-      const elements = this.containerElement.getElementsByClassName(
-        '-timestamp'
-      )
+      const elements =
+        this.containerElement.getElementsByClassName('-timestamp')
       const length = elements.length
 
       if (!length) {

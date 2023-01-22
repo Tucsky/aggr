@@ -48,7 +48,7 @@ export default class PaneDialogMixin extends Vue {
       input: this.name
     })
 
-    if (name !== this.name) {
+    if (name !== null && name !== this.name) {
       this.name = name
     }
   }
@@ -68,6 +68,17 @@ export default class PaneDialogMixin extends Vue {
   }
 
   async getPreset() {
-    return await workspacesService.getState(this.paneId)
+    let storedState = await workspacesService.getState(this.paneId)
+
+    if (!storedState) {
+      await workspacesService.saveState(
+        this.paneId,
+        this.$store.state[this.paneId]
+      )
+
+      storedState = await workspacesService.getState(this.paneId)
+    }
+
+    return storedState
   }
 }

@@ -1,84 +1,84 @@
 export const PALETTE = [
-  '#ffffff',
-  '#D1D4DC',
-  '#B2B5BE',
-  '#9598A1',
-  '#787B86',
-  '#5D606B',
-  '#434651',
-  '#2A2E39',
-  '#131722',
-  '#000000',
-  '#F23645',
-  '#FF9800',
-  '#ffeb3b',
-  '#4caf50',
-  '#089981',
-  '#00bcd4',
-  '#2962FF',
-  '#673ab7',
-  '#9c27b0',
-  '#e91e63',
-  '#FCCBCD',
-  '#FFE0B2',
-  '#FFF9C4',
-  '#C8E6C9',
-  '#ACE5DC',
-  '#B2EBF2',
-  '#BBD9FB',
-  '#D1C4E9',
-  '#E1BEE7',
-  '#F8BBD0',
-  '#FAA1A4',
-  '#FFCC80',
-  '#FFF59D',
-  '#A5D6A7',
-  '#70CCBD',
-  '#80DEEA',
-  '#90BFF9',
-  '#B39DDB',
-  '#CE93D8',
-  '#f48fb1',
-  '#F77C80',
-  '#ffb74d',
-  '#FFF176',
-  '#81c784',
-  '#42BDA8',
-  '#4dd0e1',
-  '#5B9CF6',
-  '#9575cd',
-  '#ba68c8',
-  '#f06292',
-  '#F7525F',
-  '#FFA726',
-  '#ffee58',
-  '#66BB6A',
-  '#22AB94',
-  '#26c6da',
-  '#3179F5',
-  '#7e57c2',
-  '#ab47bc',
-  '#ec407a',
-  '#B22833',
-  '#F57C00',
-  '#fbc02d',
-  '#388e3c',
-  '#056656',
-  '#0097A7',
-  '#1848CC',
-  '#512da8',
-  '#7b1fa2',
-  '#C2185B',
-  '#801922',
-  '#e65100',
-  '#F57F17',
-  '#1B5E20',
-  '#00332A',
-  '#006064',
-  '#0C3299',
-  '#311B92',
-  '#4A148C',
-  '#880E4F'
+  'rgb(255,255,255)',
+  'rgb(209,212,220)',
+  'rgb(178,181,190)',
+  'rgb(149,152,161)',
+  'rgb(120,123,134)',
+  'rgb(93,96,107)',
+  'rgb(67,70,81)',
+  'rgb(42,46,57)',
+  'rgb(19,23,34)',
+  'rgb(0,0,0)',
+  'rgb(242,54,69)',
+  'rgb(255,152,0)',
+  'rgb(255,235,59)',
+  'rgb(76,175,80)',
+  'rgb(8,153,129)',
+  'rgb(0,188,212)',
+  'rgb(41,98,255)',
+  'rgb(103,58,183)',
+  'rgb(156,39,176)',
+  'rgb(233,30,99)',
+  'rgb(252,203,205)',
+  'rgb(255,224,178)',
+  'rgb(255,249,196)',
+  'rgb(200,230,201)',
+  'rgb(172,229,220)',
+  'rgb(178,235,242)',
+  'rgb(187,217,251)',
+  'rgb(209,196,233)',
+  'rgb(225,190,231)',
+  'rgb(248,187,208)',
+  'rgb(250,161,164)',
+  'rgb(255,204,128)',
+  'rgb(255,245,157)',
+  'rgb(165,214,167)',
+  'rgb(112,204,189)',
+  'rgb(128,222,234)',
+  'rgb(144,191,249)',
+  'rgb(179,157,219)',
+  'rgb(206,147,216)',
+  'rgb(244,143,177)',
+  'rgb(247,124,128)',
+  'rgb(255,183,77)',
+  'rgb(255,241,118)',
+  'rgb(129,199,132)',
+  'rgb(66,189,168)',
+  'rgb(77,208,225)',
+  'rgb(91,156,246)',
+  'rgb(149,117,205)',
+  'rgb(186,104,200)',
+  'rgb(240,98,146)',
+  'rgb(247,82,95)',
+  'rgb(255,167,38)',
+  'rgb(255,238,88)',
+  'rgb(102,187,106)',
+  'rgb(34,171,148)',
+  'rgb(38,198,218)',
+  'rgb(49,121,245)',
+  'rgb(126,87,194)',
+  'rgb(171,71,188)',
+  'rgb(236,64,122)',
+  'rgb(178,40,51)',
+  'rgb(245,124,0)',
+  'rgb(251,192,45)',
+  'rgb(56,142,60)',
+  'rgb(5,102,86)',
+  'rgb(0,151,167)',
+  'rgb(24,72,204)',
+  'rgb(81,45,168)',
+  'rgb(123,31,162)',
+  'rgb(194,24,91)',
+  'rgb(128,25,34)',
+  'rgb(230,81,0)',
+  'rgb(245,127,23)',
+  'rgb(27,94,32)',
+  'rgb(0,51,42)',
+  'rgb(0,96,100)',
+  'rgb(12,50,153)',
+  'rgb(49,27,146)',
+  'rgb(74,20,140)',
+  'rgb(136,14,79)'
 ]
 
 export function getColor(except = []) {
@@ -109,16 +109,17 @@ export function getColorByWeight(a, b, weight) {
 }
 
 export function rgbaToRgb(color, backgroundColor) {
-  const alpha = 1 - color[3]
+  const alpha = typeof color[3] === 'number' ? color[3] : 1
+  const inverse = 1 - alpha
 
   color[0] = Math.round(
-    (color[3] * (color[0] / 255) + alpha * (backgroundColor[0] / 255)) * 255
+    (alpha * (color[0] / 255) + inverse * (backgroundColor[0] / 255)) * 255
   )
   color[1] = Math.round(
-    (color[3] * (color[1] / 255) + alpha * (backgroundColor[1] / 255)) * 255
+    (alpha * (color[1] / 255) + inverse * (backgroundColor[1] / 255)) * 255
   )
   color[2] = Math.round(
-    (color[3] * (color[2] / 255) + alpha * (backgroundColor[2] / 255)) * 255
+    (alpha * (color[2] / 255) + inverse * (backgroundColor[2] / 255)) * 255
   )
   color.splice(3, 1)
 
@@ -134,7 +135,7 @@ export function rgbToHex(rgb) {
 
 export function hexToRgb(hex) {
   const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i
-  hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+  hex = hex.replace(shorthandRegex, function (m, r, g, b) {
     return r + r + g + g + b + b
   })
 
@@ -229,54 +230,14 @@ export function joinRgba(color) {
 }
 
 export function getAppBackgroundColor() {
-  const color = getComputedStyle(document.getElementById('app')).backgroundColor
-
-  let output: number[]
-
-  if (color.indexOf('#') !== -1) {
-    output = hexToRgb(color)
-  } else {
-    output = splitColorCode(color)
-  }
-
-  return output
+  const style = getComputedStyle(document.getElementById('app'))
+  const color = style.backgroundColor
+  return splitColorCode(
+    color,
+    splitColorCode(style.getPropertyValue('--theme-base'))
+  )
 }
 
-export function getLogShade(color: [number, number, number], percent: number) {
-  // const sourcergba = joinRgba(color)
-  const luminance = getColorLuminance(color)
-
-  let adjustedPercent = percent
-
-  if (luminance < 0 && luminance > -0.9) {
-    adjustedPercent *= 1 - Math.abs(luminance)
-  }
-
-  /*console.log(
-    `%c [getLogShade] ${sourcergba} ×${adjustedPercent}${
-      adjustedPercent !== percent ? ` (ajusted from ${percent})` : ''
-    } (lum: ${luminance})`,
-    `background: ${sourcergba};`
-  )*/
-
-  adjustedPercent = Math.max(-1, Math.min(1, adjustedPercent))
-  const P = adjustedPercent < 0
-  const t = P ? 0 : adjustedPercent * 255 ** 2
-  const p = P ? 1 + adjustedPercent : 1 - adjustedPercent
-
-  const result =
-    'rgb(' +
-    Math.round((p * color[0] ** 2 + t) ** 0.5) +
-    ',' +
-    Math.round((p * color[1] ** 2 + t) ** 0.5) +
-    ',' +
-    Math.round((p * color[2] ** 2 + t) ** 0.5) +
-    ')'
-
-  // console.log(`%c \t -> ${result}`, `background: ${result};`)
-
-  return result
-}
 export function rgbToHsl([r, g, b]) {
   r /= 255
   g /= 255
@@ -309,7 +270,7 @@ export function rgbToHsl([r, g, b]) {
   return [h, s, l]
 }
 
-function hslToRgb([h, s, l]) {
+export function hslToRgb([h, s, l]: number[]) {
   let r: number
   let g: number
   let b: number
@@ -337,67 +298,77 @@ function hslToRgb([h, s, l]) {
   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)]
 }
 
-export function increaseBrightness(color, percent) {
-  const HSL = rgbToHsl(color)
-  const [r, g, b] = hslToRgb([HSL[0], HSL[1], HSL[2] + HSL[2] * (percent / 100)]) // prettier-ignore
-  return [r, g, b]
-}
+export function getLinearShade(color, strength: number, saturation?) {
+  strength = Math.max(-1, Math.min(1, strength))
+  const [a, b, c, d] = color
+  const P = strength < 0
+  const t = P ? 0 : 255 * strength
+  const f = P ? 1 + strength : 1 - strength
 
-export function getTextColor(backgroundColor, strength = 0.4) {
-  const luminance = getColorLuminance(backgroundColor)
+  color = [
+    Math.round(a * f + t),
+    Math.round(b * f + t),
+    Math.round(c * f + t),
+    typeof d === 'undefined' ? 1 : d
+  ]
 
-  if (luminance < -0.95) {
-    backgroundColor = [255, 255, 255]
+  if (saturation) {
+    const HSL = rgbToHsl(color)
+
+    HSL[1] += saturation
+
+    return hslToRgb(HSL)
   }
 
-  const hsl = rgbToHsl(backgroundColor)
-
-  const inverse = luminance > 0.33
-  const luminanceFactor = Math.log(1 + (1 - Math.abs(luminance))) / 2
-  const strengthLog =
-    Math.log(1 + strength + luminanceFactor) * (inverse ? -1.25 : 1)
-  const saturation = Math.min(1, hsl[1] + strengthLog)
-
-  const lightness = Math.max(0.01, Math.min(0.99, hsl[2] + strengthLog))
-
-  const rgb = hslToRgb([hsl[0], saturation, lightness])
-  /* const luminanceIndexedTo1 = (luminance + 1) / 2
-  console.log(
-    `%c [getTextColor] bg:${joinRgba(
-      backgroundColor
-    )} input : ${strength.toFixed(2)} (log : ${strengthLog.toFixed(
-      2
-    )}) : ${luminance.toFixed(2)} luminance (${luminanceIndexedTo1.toFixed(
-      2
-    )} indexed, ${luminanceFactor.toFixed(2)} factor) | ${lightness.toFixed(
-      2
-    )} lightness (was ${hsl[2]}) | ${saturation.toFixed(
-      2
-    )} saturation (was ${hsl[1].toFixed(2)})`,
-    `background: ${joinRgba(backgroundColor)};color:${joinRgba(rgb)}`
-  )*/
-  return rgb
+  return color
 }
 
-export function getLinearShare(
-  color: [number, number, number],
-  strength: number,
-  inverse?: boolean
+export function getLogShade(color, percent, saturation?) {
+  percent = Math.max(-1, Math.min(1, percent))
+  const [a, b, c, d] = color
+  const P = percent < 0
+  const t = P ? 0 : percent * 255 ** 2
+  const F = P ? 1 + percent : 1 - percent
+  color = [
+    Math.round((F * a ** 2 + t) ** 0.5),
+    Math.round((F * b ** 2 + t) ** 0.5),
+    Math.round((F * c ** 2 + t) ** 0.5),
+    typeof d === 'undefined' ? 1 : d
+  ]
+
+  if (saturation) {
+    const HSL = rgbToHsl(color)
+
+    HSL[1] += saturation
+
+    return hslToRgb(HSL)
+  }
+
+  return color
+}
+
+export function getLinearShadeText(
+  color,
+  strength,
+  saturation?: number,
+  threshold = 0.125
 ) {
-  if (typeof inverse === 'undefined') {
-    inverse = strength < 0
-  }
+  return getLinearShade(
+    color,
+    strength * (getColorLuminance(color) > threshold ? -1 : 1),
+    saturation
+  )
+}
 
-  const hsl = rgbToHsl(color)
-  const luminance = getColorLuminance(color)
-  const luminanceIndexedTo1 = (luminance + 1) / 2
-  const luminanceWithMinimum = 0.1 - Math.max(0.05, luminanceIndexedTo1) * 0.1
-  const luminanceLog = Math.log(1 + luminanceWithMinimum)
-  strength = strength + luminanceLog * (inverse ? -1 : 1)
-
-  const saturation = Math.min(1, hsl[1] * (1 + strength))
-
-  const lightness = Math.max(0.01, Math.min(0.99, hsl[2] + strength))
-
-  return hslToRgb([hsl[0], saturation, lightness])
+export function getLogShadeText(
+  color,
+  strength,
+  saturation?: number,
+  threshold = 0
+) {
+  return getLogShade(
+    color,
+    strength * (getColorLuminance(color) > threshold ? -1 : 1),
+    saturation
+  )
 }

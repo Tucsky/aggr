@@ -1,27 +1,25 @@
 <template>
   <Dialog
-    @clickOutside="close"
-    class="indicator-dialog -auto -sticky-footer -mobile-fs"
+    class="indicator-dialog"
+    size="large"
     :mask="false"
+    :close-on-escape="false"
+    @clickOutside="close"
+    @resize="resizeEditor"
   >
-    <template v-slot:header>
-      <div>
-        <div class="title">
+    <template #header>
+      <div class="d-flex">
+        <div class="dialog__title indicator-dialog__title -center">
           <div @dblclick="renameIndicator">{{ name }}</div>
+          <code
+            class="dialog__subtitle indicator-dialog__id -filled"
+            @click="copyIndicatorId"
+            @dblclick="editDescription"
+            :title="indicatorId"
+            v-tippy
+            >{{ displayId }}</code
+          >
         </div>
-        <div
-          v-if="description"
-          class="subtitle pl0"
-          v-text="description"
-          @dblclick="editDescription"
-        ></div>
-        <code
-          v-else
-          class="subtitle -filled"
-          @click="copyIndicatorId"
-          v-text="indicatorId"
-          @dblclick="editDescription"
-        ></code>
       </div>
 
       <a
@@ -29,7 +27,7 @@
         target="_blank"
         title="Scripting documentation"
         v-tippy
-        class="btn -text -white mlauto -center -no-grab"
+        class="btn -text -white mlauto -center -no-grab indicator-dialog__action"
         ><i class="icon-info"></i><span class="ml8">Wiki</span></a
       >
 
@@ -37,291 +35,246 @@
         v-if="unsavedChanges"
         title="Rollback changes"
         v-tippy
-        class="btn ml8 -text -no-grab"
+        class="btn ml8 -text -no-grab indicator-dialog__action"
         @click="undoIndicator"
       >
-        <i class="icon-trash"></i><span class="ml8">Discard</span>
+        <i class="icon-eraser"></i><span class="ml8">Discard</span>
       </button>
 
       <button
         title="Save changes"
         v-tippy
-        class="btn ml8 -no-grab"
+        class="btn ml8 -no-grab indicator-dialog__action"
         :class="[!unsavedChanges && '-text', unsavedChanges && '-green']"
         @click="saveIndicator"
       >
         <i class="icon-save"></i><span class="ml8">Save</span>
       </button>
     </template>
-    <p v-if="error" class="form-feedback ml16">
-      <i class="icon-warning mr4"></i> {{ error }}
-    </p>
-    <div class="d-flex indicator-dialog__wrapper" ref="containerElement">
-      <tabs class="indicator-tabs" v-model="tab" ref="tabsComponent">
-        <tab name="Script" class="d-flex p-relative editor">
-          <editor
-            ref="editor"
-            :value="code"
-            :font-size="editorFontSize"
-            @blur="updateScript"
-          />
-          <div class="editor__zoom">
-            <div class="btn -text -small" @click="updateEditorFontSize(1)">
-              <i class="icon-plus"></i>
-            </div>
-            <div class="btn -text -small" @click="updateEditorFontSize(-1)">
-              <i class="icon-minus"></i>
-            </div>
-          </div>
-          <i
-            class="icon-up-thin editor__resize"
-            @mousedown="handleResize"
-            @touchstart="handleResize"
-          ></i>
-        </tab>
-        <tab
-          name="Options"
-          class="indicator-options indicator-options--tab hide-scrollbar"
-        >
-          <section class="section" v-if="scriptOptionsKeys.length">
-            <div
-              v-if="sections.indexOf('scriptOptions') > -1"
-              class="section__content"
-            >
-              <indicator-option
-                v-for="key in scriptOptionsKeys"
-                :key="key"
-                :name="key"
-                :pane-id="paneId"
-                :indicator-id="indicatorId"
-                :plot-types="plotTypes"
-                class="indicator-options__option"
-              />
-            </div>
-            <div
-              class="section__title"
-              @click="toggleSection('scriptOptions', $event)"
-            >
-              Script options <i class="icon-up-thin"></i>
-            </div>
-          </section>
-          <section class="section" v-if="colorOptionsKeys.length">
-            <div
-              v-if="sections.indexOf('colors') > -1"
-              class="section__content"
-            >
-              <indicator-option
-                v-for="key in colorOptionsKeys"
-                :key="key"
-                :name="key"
-                :pane-id="paneId"
-                :indicator-id="indicatorId"
-                :plot-types="plotTypes"
-                class="indicator-options__option"
-              />
-            </div>
-            <div
-              class="section__title"
-              @click="toggleSection('colors', $event)"
-            >
-              Colors <i class="icon-up-thin"></i>
-            </div>
-          </section>
-          <section class="section">
-            <div
-              v-if="sections.indexOf('defaultOptions') > -1"
-              class="section__content"
-            >
-              <indicator-option
-                v-for="key in defaultOptionsKeys"
-                :key="key"
-                :name="key"
-                :pane-id="paneId"
-                :indicator-id="indicatorId"
-                :plot-types="plotTypes"
-                class="indicator-options__option"
-              />
-            </div>
-            <div
-              class="section__title"
-              @click="toggleSection('defaultOptions', $event)"
-            >
-              Other options <i class="icon-up-thin"></i>
-            </div>
-          </section>
-        </tab>
+    <template #subheader>
+      <tabs v-model="tab">
+        <tab name="script">Script</tab>
+        <tab name="options">Options</tab>
       </tabs>
-      <hr class="-vertical" />
-      <div class="indicator-options">
-        <section class="indicator-options__search section">
-          <div>
-            <div class="input-group">
-              <input
-                type="text"
-                class="form-control"
-                placeholder="search option..."
-                v-model="optionsQuery"
-              />
-              <button
-                v-if="optionsQuery"
-                type="button"
-                class="btn -text -small"
-                @click="optionsQuery = ''"
-              >
-                <i class="icon-cross"></i>
-              </button>
-            </div>
-            <indicator-option
-              v-for="key in queryOptionsKeys"
-              :key="key"
-              :name="key"
-              :pane-id="paneId"
-              :indicator-id="indicatorId"
-              :plot-types="plotTypes"
-            />
-          </div>
-        </section>
-        <div
-          v-if="!optionsQuery.length"
-          class="indicator-options__options-scroller hide-scrollbar"
-        >
-          <section v-if="colorOptionsKeys.length" class="section">
-            <div
-              v-if="sections.indexOf('colors') > -1"
-              class="section__content"
-            >
-              <indicator-option
-                v-for="key in colorOptionsKeys"
-                :key="key"
-                :name="key"
-                :pane-id="paneId"
-                :indicator-id="indicatorId"
-                :plot-types="plotTypes"
-              />
-            </div>
-            <div
-              class="section__title"
-              @click="toggleSection('colors', $event)"
-            >
-              Colors <i class="icon-up-thin"></i>
-            </div>
-          </section>
-
-          <section class="section" v-if="scriptOptionsKeys.length">
-            <div
-              v-if="sections.indexOf('scriptOptions') > -1"
-              class="section__content"
-            >
-              <indicator-option
-                v-for="key in scriptOptionsKeys"
-                :key="key"
-                :name="key"
-                :pane-id="paneId"
-                :indicator-id="indicatorId"
-                :plot-types="plotTypes"
-              />
-            </div>
-            <div
-              class="section__title"
-              @click="toggleSection('scriptOptions', $event)"
-            >
-              Script <i class="icon-up-thin"></i>
-            </div>
-          </section>
-
-          <section class="section">
-            <div
-              v-if="sections.indexOf('defaultOptions') > -1"
-              class="section__content"
-            >
-              <indicator-option
-                v-for="key in defaultOptionsKeys"
-                :key="key"
-                :name="key"
-                :pane-id="paneId"
-                :indicator-id="indicatorId"
-                :plot-types="plotTypes"
-              />
-            </div>
-            <div
-              class="section__title"
-              @click="toggleSection('defaultOptions', $event)"
-            >
-              Other <i class="icon-up-thin"></i>
-            </div>
-          </section>
-
-          <section class="section">
-            <div
-              v-if="sections.indexOf('position') > -1"
-              class="section__content"
-            >
-              <div class="form-group">
-                <label
-                  >Scale with
-                  <i class="icon-info" v-tippy :title="helps.priceScaleId"></i
-                ></label>
-                <dropdown-button
-                  :value="indicator.options.priceScaleId"
-                  :options="availableScales"
-                  placeholder="Default scale"
-                  class="-outline form-control -arrow w-100"
-                  @input="setPriceScale($event)"
-                ></dropdown-button>
-              </div>
-            </div>
-            <div
-              class="section__title"
-              @click="toggleSection('position', $event)"
-            >
-              Position in chart <i class="icon-up-thin"></i>
-            </div>
-          </section>
-          <section class="section">
-            <div
-              v-if="sections.indexOf('format') > -1"
-              class="section__content"
-            >
-              <div class="d-flex mb4">
-                <small class="mrauto">Format</small>
-                <small>Precision</small>
-              </div>
-              <div class="d-flex">
-                <dropdown-button
-                  :value="priceFormat"
-                  :options="['price', 'volume']"
-                  class="mr8 -outline form-control -arrow"
-                  @input="setPriceFormat($event, precision)"
-                  v-tippy
-                  title="Volume uses abbreviation for Million and Thousand"
-                ></dropdown-button>
-                <editable
-                  class="form-control mlauto"
-                  :value="precision"
-                  @input="setPriceFormat(priceFormat, $event)"
-                ></editable>
-              </div>
-            </div>
-
-            <div
-              class="section__title"
-              @click="toggleSection('format', $event)"
-            >
-              Price format <i class="icon-up-thin"></i>
-            </div>
-          </section>
+    </template>
+    <div v-show="tab === 'script'" class="indicator-editor">
+      <p v-if="error" class="form-feedback ml16">
+        <i class="icon-warning mr4"></i> {{ error }}
+      </p>
+      <editor
+        ref="editor"
+        :value="code"
+        :font-size="editorFontSize"
+        @blur="updateScript"
+      />
+      <div class="indicator-editor__zoom">
+        <div class="btn -text -small" @click="updateEditorFontSize(1)">
+          <i class="icon-plus"></i>
+        </div>
+        <div class="btn -text -small" @click="updateEditorFontSize(-1)">
+          <i class="icon-minus"></i>
         </div>
       </div>
     </div>
+    <div
+      v-show="tab === 'options'"
+      class="indicator-options indicator-options--tab hide-scrollbar"
+    >
+      <ToggableSection
+        v-if="scriptOptionsKeys.length"
+        :badge="scriptOptionsKeys.length"
+        title="Script options"
+        id="indicator-left-script"
+      >
+        <div class="indicator-options__grid mt16">
+          <indicator-option
+            v-for="key in scriptOptionsKeys"
+            :key="key"
+            class="indicator-options__option"
+            :name="key"
+            :pane-id="paneId"
+            :indicator-id="indicatorId"
+            :plot-types="plotTypes"
+            ensure
+            @change="setIndicatorOption"
+          />
+        </div>
+      </ToggableSection>
+      <ToggableSection
+        v-if="colorOptionsKeys.length"
+        :badge="colorOptionsKeys.length"
+        title="Colors"
+        id="indicator-left-colors"
+      >
+        <div class="indicator-options__grid mt16">
+          <indicator-option
+            v-for="key in colorOptionsKeys"
+            :key="key"
+            class="indicator-options__option"
+            :name="key"
+            :pane-id="paneId"
+            :indicator-id="indicatorId"
+            :plot-types="plotTypes"
+            @change="setIndicatorOption"
+          />
+        </div>
+      </ToggableSection>
+      <ToggableSection
+        v-if="defaultOptionsKeys.length"
+        :badge="defaultOptionsKeys.length"
+        title="Other options"
+        id="indicator-left-other"
+      >
+        <div class="indicator-options__grid mt16">
+          <indicator-option
+            v-for="key in defaultOptionsKeys"
+            :key="key"
+            class="indicator-options__option"
+            :name="key"
+            :pane-id="paneId"
+            :indicator-id="indicatorId"
+            :plot-types="plotTypes"
+            @change="setIndicatorOption"
+          />
+        </div>
+      </ToggableSection>
+    </div>
+    <hr class="-vertical" />
+    <div class="indicator-options indicator-options--column hide-scrollbar">
+      <div
+        class="indicator-search input-group"
+        :class="[optionsQuery && 'indicator-search--active']"
+      >
+        <input
+          type="text"
+          class="form-control"
+          placeholder="search option..."
+          v-model="optionsQuery"
+        />
+        <button
+          v-if="optionsQuery"
+          type="button"
+          class="btn -text -small"
+          @click="optionsQuery = ''"
+        >
+          <i class="icon-cross"></i>
+        </button>
+      </div>
+      <div v-if="optionsQuery.length" class="indicator-search__results">
+        <indicator-option
+          v-for="key in queryOptionsKeys"
+          :key="key"
+          :name="key"
+          :pane-id="paneId"
+          :indicator-id="indicatorId"
+          :plot-types="plotTypes"
+          @change="setIndicatorOption"
+        />
+        <p v-if="!queryOptionsKeys.length">No results</p>
+      </div>
+      <template v-else>
+        <ToggableSection
+          v-if="colorOptionsKeys.length"
+          :badge="colorOptionsKeys.length"
+          title="Colors"
+          id="indicator-right-colors"
+        >
+          <indicator-option
+            v-for="key in colorOptionsKeys"
+            :key="key"
+            :name="key"
+            :pane-id="paneId"
+            :indicator-id="indicatorId"
+            :plot-types="plotTypes"
+            inline
+            @change="setIndicatorOption"
+          />
+        </ToggableSection>
 
-    <footer>
+        <ToggableSection
+          v-if="scriptOptionsKeys.length"
+          :badge="scriptOptionsKeys.length"
+          title="Script"
+          id="indicator-right-script"
+        >
+          <indicator-option
+            v-for="key in scriptOptionsKeys"
+            :key="key"
+            :name="key"
+            :pane-id="paneId"
+            :indicator-id="indicatorId"
+            :plot-types="plotTypes"
+            ensure
+            @change="setIndicatorOption"
+          />
+        </ToggableSection>
+
+        <ToggableSection
+          v-if="defaultOptionsKeys.length"
+          :badge="defaultOptionsKeys.length"
+          title="Other"
+          id="indicator-right-default"
+        >
+          <indicator-option
+            v-for="key in defaultOptionsKeys"
+            :key="key"
+            :name="key"
+            :pane-id="paneId"
+            :indicator-id="indicatorId"
+            :plot-types="plotTypes"
+            @change="setIndicatorOption"
+          />
+        </ToggableSection>
+
+        <ToggableSection title="Scale" id="indicator-right-scale">
+          <div class="form-group">
+            <label
+              >Scale with
+              <i class="icon-info" v-tippy :title="helps.priceScaleId"></i
+            ></label>
+            <dropdown-button
+              :value="indicator.options.priceScaleId"
+              :options="availableScales"
+              placeholder="Default scale"
+              class="-outline form-control -arrow w-100"
+              @input="setPriceScale($event)"
+            ></dropdown-button>
+          </div>
+        </ToggableSection>
+
+        <ToggableSection title="Format" id="indicator-right-format">
+          <div class="d-flex mb4">
+            <div class="mrauto">Format</div>
+            <div>Precision</div>
+          </div>
+          <div class="d-flex">
+            <dropdown-button
+              :value="priceFormat"
+              :options="['price', 'volume']"
+              class="mr8 -outline form-control -arrow"
+              @input="setPriceFormat($event, precision)"
+              v-tippy
+              title="Volume uses abbreviation for Million and Thousand"
+            ></dropdown-button>
+            <editable
+              class="form-control mlauto"
+              :value="precision"
+              @input="setPriceFormat(priceFormat, $event)"
+            ></editable>
+          </div>
+        </ToggableSection>
+      </template>
+    </div>
+
+    <template v-slot:footer>
       <presets
         :type="'indicator:' + indicatorId"
         class="mr8 -left"
         :adapter="getIndicatorPreset"
-        @apply="applyIndicatorPreset($event)"
+        :placeholder="presetPlaceholder"
         label="Presets"
         :show-reset="false"
+        @apply="applyIndicatorPreset($event)"
       />
       <button class="btn -text -arrow" @click="toggleIndicatorDropdown">
         Options
@@ -337,23 +290,36 @@
             />
             <div></div>
             <span>Use as default</span>
+            <i
+              class="icon-info text-muted ml8"
+              title="Will be added to new chart templates"
+              v-tippy
+            />
           </label>
         </div>
+        <button type="button" class="dropdown-item" @click="copyIndicatorId">
+          <i class="icon-copy-paste"></i> <span>Copy ID</span>
+          <i
+            class="icon-info text-muted ml8"
+            title="ID can be used to reference in other indicator using $ sign followed by the id ($price)"
+            v-tippy
+          />
+        </button>
         <button type="button" class="dropdown-item" @click="resizeIndicator">
-          <i class="icon-resize-height"></i> Resize
+          <i class="icon-resize-height"></i> <span>Resize</span>
         </button>
         <button type="button" class="dropdown-item" @click="downloadIndicator">
-          <i class="icon-download"></i> Download
+          <i class="icon-download"></i> <span>Download</span>
         </button>
         <button type="button" class="dropdown-item" @click="duplicateIndicator">
-          <i class="icon-copy-paste"></i> Duplicate
+          <i class="icon-copy-paste"></i> <span>Duplicate</span>
         </button>
         <div class="dropdown-divider"></div>
         <button type="button" class="dropdown-item" @click="removeIndicator">
-          <i class="icon-cross"></i> Unload
+          <i class="icon-cross"></i> <span>Unload</span>
         </button>
       </dropdown>
-    </footer>
+    </template>
   </Dialog>
 </template>
 
@@ -361,16 +327,19 @@
 import DialogMixin from '../../mixins/dialogMixin'
 import Tabs from '@/components/framework/Tabs.vue'
 import Tab from '@/components/framework/Tab.vue'
+
 import {
   defaultPlotsOptions,
   defaultSerieOptions,
+  getChartScales,
+  getIndicatorOptionType,
   getIndicatorOptionValue,
   plotTypesMap
-} from './options'
+} from '../../services/chartService'
 import dialogService from '../../services/dialogService'
 import merge from 'lodash.merge'
 import IndicatorPresetDialog from './IndicatorPresetDialog.vue'
-import { copyTextToClipboard, getEventCords } from '@/utils/helpers'
+import { copyTextToClipboard } from '@/utils/helpers'
 
 const ignoredOptionsKeys = [
   'crosshairMarkerVisible',
@@ -380,27 +349,28 @@ const ignoredOptionsKeys = [
   'priceFormat'
 ]
 
+import ToggableSection from '@/components/framework/ToggableSection.vue'
 import IndicatorOption from '@/components/chart/IndicatorOption.vue'
-import { IndicatorSettings } from '@/store/panesSettings/chart'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 import Editor from '@/components/framework/Editor.vue'
+import { Preset } from '@/types/types'
 export default {
   components: {
     IndicatorOption,
     Tabs,
     Tab,
     DropdownButton,
+    ToggableSection,
     Editor
   },
   props: ['paneId', 'indicatorId'],
   mixins: [DialogMixin],
   data: () => ({
     code: '',
-    editorFontSize: 12,
+    editorFontSize: 14,
     plotTypes: [],
-    sections: ['position', 'colors'],
     optionsQuery: '',
-    tab: 0,
+    tab: 'options',
     defaultOptionsKeys: [],
     scriptOptionsKeys: [],
     colorOptionsKeys: [],
@@ -421,6 +391,16 @@ export default {
     },
     displayName() {
       return this.indicator.displayName
+    },
+    displayId() {
+      if (this.indicatorId.length <= 16) {
+        return this.indicatorId
+      } else {
+        return this.indicatorId.slice(0, 6) + '..' + this.indicatorId.substr(-6)
+      }
+    },
+    presetPlaceholder() {
+      return `${this.indicator.name.replace(/\{.*\}/, '').trim()} preset`
     },
     description() {
       return this.indicator.description
@@ -455,26 +435,9 @@ export default {
         : 'price'
     },
     availableScales() {
-      return Object.values(
-        this.$store.state[this.paneId].indicators as IndicatorSettings
-      ).reduce(
-        (scales, indicator) => {
-          if (
-            indicator.id !== this.indicatorId &&
-            indicator.options &&
-            indicator.options.priceScaleId &&
-            !scales[indicator.options.priceScaleId]
-          ) {
-            scales[indicator.options.priceScaleId] =
-              indicator.name || indicator.id
-          }
-
-          return scales
-        },
-        {
-          [this.indicatorId]: 'Own scale',
-          right: 'Right scale (main)'
-        }
+      return getChartScales(
+        this.$store.state[this.paneId].indicators,
+        this.indicatorId
       )
     },
     queryOptionsKeys() {
@@ -495,10 +458,14 @@ export default {
   watch: {
     script: {
       handler(value) {
-        console.log('script change, set code')
         this.code = value
       },
       immediate: true
+    },
+    async tab() {
+      await this.$nextTick()
+
+      this.resizeEditor()
     }
   },
   created() {
@@ -511,29 +478,23 @@ export default {
   },
   beforeDestroy() {
     this.saveNavigationState()
-
-    if (this._editor) {
-      this._editor.destroy()
-    }
   },
   methods: {
     restoreNavigationState() {
-      if (this.indicator.navigationState) {
-        this.sections = this.indicator.navigationState.sections.slice()
-        this.tab = this.indicator.navigationState.tab
-        this.optionsQuery = this.indicator.navigationState.optionsQuery
-        this.editorFontSize = this.indicator.navigationState.fontSizePx || 12
+      const navigationState = this.$store.state[this.paneId].navigationState
+
+      if (navigationState) {
+        this.tab = navigationState.tab || 'options'
+        this.optionsQuery = navigationState.optionsQuery
+        this.editorFontSize =
+          navigationState.fontSizePx || (window.devicePixelRatio > 1 ? 12 : 14)
       }
     },
     saveNavigationState() {
-      this.$store.dispatch(this.paneId + '/setIndicatorNavigationState', {
-        id: this.indicatorId,
-        navigationState: {
-          sections: this.sections,
-          tab: this.tab,
-          optionsQuery: this.optionsQuery,
-          fontSizePx: this.editorFontSize
-        }
+      this.$store.commit(this.paneId + '/SET_NAVIGATION_STATE', {
+        tab: this.tab,
+        optionsQuery: this.optionsQuery,
+        fontSizePx: this.editorFontSize
       })
     },
     setPriceScale(id) {
@@ -544,9 +505,7 @@ export default {
       })
     },
     updateScript(script) {
-      console.log('update script')
       script = script.trim()
-
       this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', {
         id: this.indicatorId,
         value: script
@@ -610,7 +569,7 @@ export default {
         input: this.$store.state[this.paneId].indicators[this.indicatorId].name
       })
 
-      if (name && name !== this.name) {
+      if (typeof name === 'string' && name !== this.name) {
         await this.close()
         await this.$store.dispatch(this.paneId + '/renameIndicator', {
           id: this.indicatorId,
@@ -624,7 +583,7 @@ export default {
         input: this.description
       })
 
-      if (description !== null && description !== this.description) {
+      if (typeof description === 'string' && description !== this.description) {
         await this.$store.commit(this.paneId + '/UPDATE_DESCRIPTION', {
           id: this.indicatorId,
           description
@@ -654,28 +613,24 @@ export default {
 
       this.$store.dispatch(this.paneId + '/undoIndicator', this.indicatorId)
     },
-    toggleSection(id, event: Event) {
-      const index = this.sections.indexOf(id)
-
-      if (index === -1) {
-        this.sections.push(id)
-      } else {
-        this.sections.splice(index, 1)
-      }
-
-      this.$nextTick(() => {
-        const sectionEl = (event.target as HTMLElement).parentElement
-
-        if (sectionEl && sectionEl.scrollIntoView) {
-          sectionEl.scrollIntoView()
-        }
+    async getIndicatorPreset(originalPreset: Preset) {
+      const optionsKeys = [
+        ...this.colorOptionsKeys,
+        ...this.scriptOptionsKeys,
+        ...this.defaultOptionsKeys
+      ]
+      const payload = await dialogService.openAsPromise(IndicatorPresetDialog, {
+        keys: optionsKeys,
+        plotTypes: this.plotTypes,
+        originalKeys: originalPreset && Object.keys(originalPreset.data.options)
       })
-    },
-    async getIndicatorPreset() {
-      const payload = await dialogService.openAsPromise(IndicatorPresetDialog)
 
       if (payload) {
-        if (!payload.colors && !payload.script && !payload.values) {
+        if (
+          typeof Object.values(payload.selection).find(a => !!a) ===
+            'undefined' &&
+          !payload.script
+        ) {
           this.$store.dispatch('app/showNotice', {
             title: 'You did not select anything to save in the preset !',
             type: 'error'
@@ -687,36 +642,16 @@ export default {
           options: {}
         }
 
-        if (payload.values) {
-          // + script + default
-          for (const key of this.scriptOptionsKeys) {
-            indicatorPreset.options[key] = getIndicatorOptionValue(
-              this.paneId,
-              this.indicatorId,
-              key,
-              this.plotTypes
-            )
+        for (const key of optionsKeys) {
+          if (!payload.selection[key]) {
+            continue
           }
-          for (const key of this.defaultOptionsKeys) {
-            indicatorPreset.options[key] = getIndicatorOptionValue(
-              this.paneId,
-              this.indicatorId,
-              key,
-              this.plotTypes
-            )
-          }
-        }
-
-        if (payload.colors) {
-          // + colors
-          for (const key of this.colorOptionsKeys) {
-            indicatorPreset.options[key] = getIndicatorOptionValue(
-              this.paneId,
-              this.indicatorId,
-              key,
-              this.plotTypes
-            )
-          }
+          indicatorPreset.options[key] = getIndicatorOptionValue(
+            this.paneId,
+            this.indicatorId,
+            key,
+            this.plotTypes
+          )
         }
 
         if (payload.script) {
@@ -727,6 +662,8 @@ export default {
       }
     },
     getOptionsKeys() {
+      // retrieve all options keys more or less linked to that indicator
+      const scriptOptionsKeys = this.getScriptOptions(this.script)
       const defaultOptionsKeys = Object.keys(defaultSerieOptions)
       const defaultSeriesOptionsKeys = this.plotTypes.reduce(
         (typesKeys, key) => [
@@ -735,20 +672,19 @@ export default {
         ],
         []
       )
-      const scriptOptionsKeys = this.getScriptOptions(this.script)
 
-      const customOptionsKeys = [
+      // merge / clean duplicates
+      const allKeys = [
         ...defaultOptionsKeys,
         ...defaultSeriesOptionsKeys,
         ...scriptOptionsKeys
-      ].filter((x, i, a) => {
-        return ignoredOptionsKeys.indexOf(x) === -1 && a.indexOf(x) == i
-      })
-
-      this.scriptOptionsKeys = customOptionsKeys
-        .filter(
-          key => !/color/i.test(key) && scriptOptionsKeys.indexOf(key) !== -1
-        )
+      ]
+        .filter((x, i, a) => {
+          if (ignoredOptionsKeys.indexOf(x) === -1 && a.indexOf(x) == i) {
+            return true
+          }
+          return false
+        })
         .sort((a, b) => {
           if (a > b) {
             return 1
@@ -759,23 +695,33 @@ export default {
           return 0
         })
 
-      this.defaultOptionsKeys = customOptionsKeys
-        .filter(
-          key => !/color/i.test(key) && scriptOptionsKeys.indexOf(key) === -1
-        )
-        .sort((a, b) => {
-          if (a > b) {
-            return 1
-          } else if (a < b) {
-            return -1
-          }
+      const colorKeys = []
+      const nonColorScriptKeys = []
+      const otherKeys = []
 
-          return 0
-        })
+      // order by type / origin
+      for (let i = 0; i < allKeys.length; i++) {
+        const key = allKeys[i]
+        if (
+          getIndicatorOptionType(
+            key,
+            this.plotTypes,
+            false,
+            this.indicator.options[key]
+          ) === 'color'
+        ) {
+          colorKeys.push(allKeys.shift())
+        } else if (scriptOptionsKeys.indexOf(key) !== -1) {
+          nonColorScriptKeys.push(allKeys.shift())
+        } else {
+          otherKeys.push(allKeys.shift())
+        }
+        i--
+      }
 
-      this.colorOptionsKeys = customOptionsKeys.filter(key =>
-        /color/i.test(key)
-      )
+      this.scriptOptionsKeys = nonColorScriptKeys
+      this.defaultOptionsKeys = otherKeys
+      this.colorOptionsKeys = colorKeys
     },
     applyIndicatorPreset(presetData) {
       const indicator =
@@ -831,47 +777,6 @@ export default {
 
       return this.saveIndicator()
     },
-    handleResize(event) {
-      this._resizeOrigin = getEventCords(event)
-
-      this.$refs.tabsComponent.$el.style.width =
-        this.$refs.tabsComponent.$el.clientWidth + 'px'
-      this.$refs.containerElement.style.height =
-        this.$refs.containerElement.clientHeight + 'px'
-
-      document.addEventListener('mousemove', this.resize)
-      document.addEventListener('mouseup', this.release)
-      document.addEventListener('touchmove', this.resize)
-      document.addEventListener('touchend', this.release)
-
-      document.body.classList.add('-unselectable')
-    },
-    resize(event) {
-      const coordinates = getEventCords(event)
-
-      const editorWidth =
-        parseInt(this.$refs.tabsComponent.$el.style.width) +
-        (coordinates.x - this._resizeOrigin.x) * 2
-      const editorHeight =
-        parseInt(this.$refs.containerElement.style.height) +
-        (coordinates.y - this._resizeOrigin.y) * 2
-      this.$refs.tabsComponent.$el.style.width = editorWidth + 'px'
-      this.$refs.containerElement.style.height = editorHeight + 'px'
-
-      this._resizeOrigin = coordinates
-    },
-    release() {
-      document.removeEventListener('mousemove', this.resize)
-      document.removeEventListener('mouseup', this.release)
-      document.removeEventListener('touchmove', this.resize)
-      document.removeEventListener('touchend', this.release)
-
-      document.body.classList.remove('-unselectable')
-
-      if (this.$refs.editor) {
-        this.$refs.editor.editorInstance.resize()
-      }
-    },
     updateEditorFontSize(change) {
       this.editorFontSize += change
     },
@@ -909,124 +814,156 @@ export default {
       } else {
         this.dropdownIndicatorTrigger = event.currentTarget
       }
+    },
+    setIndicatorOption({ key, value }) {
+      this.$store.dispatch(this.paneId + '/setIndicatorOption', {
+        id: this.indicatorId,
+        key: key,
+        value
+      })
+    },
+    resizeEditor() {
+      if (this.$refs.editor) {
+        this.$refs.editor.resize()
+      }
     }
   }
 }
 </script>
 <style lang="scss" scoped>
+hr.-vertical {
+  margin: 0;
+}
+
 .indicator-dialog {
-  ::v-deep .dialog-content {
-    header {
+  ::v-deep .dialog__content {
+    .dialog__body {
+      padding: 0;
+      flex-direction: row;
+      align-items: stretch;
+    }
+
+    .dialog__header {
       border-bottom: 0 !important;
+      padding-bottom: 0;
     }
-    .dialog-body {
-      max-height: 90vh;
+
+    .dialog__header,
+    .dialog__subheader {
+      background-color: var(--theme-base-o25);
     }
   }
 
-  &__wrapper {
-    height: 50vh;
-    flex-grow: 1;
-  }
-  .indicator-tabs {
+  &__title {
     display: flex;
-    flex-direction: column;
-    flex-grow: 1;
+    align-items: center;
+    gap: 0.5rem;
+  }
 
-    @media screen and (min-width: 768px) {
-      width: 50vw;
-    }
-
-    @media screen and (min-width: 1400px) {
-      width: 25vw;
-    }
-
-    + hr.-vertical {
-      margin: 2.5rem 0 0;
+  &__action {
+    .dialog--small & span {
+      display: none;
     }
   }
 
-  .indicator-options {
-    margin-top: 2.5rem;
-    border-top: 1px solid var(--theme-background-200);
-    flex-direction: column;
+  &__id {
     display: none;
+    max-width: 5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     @media screen and (min-width: 768px) {
-      display: flex;
-    }
-
-    &__search {
-      .input-group + .indicator-option {
-        margin-top: 1rem;
-      }
-    }
-
-    &__options-scroller {
-      overflow-y: auto;
-    }
-
-    &--tab {
-      margin: 0;
-      border: 0;
       display: block;
-      overflow: auto;
+    }
 
-      .section {
-        &__content {
-          margin: -0.25rem;
-        }
-      }
-
-      .indicator-options__option {
-        width: calc(50% - 1rem);
-        display: inline-block;
-        margin: 0.5rem;
-
-        @media screen and (min-width: 768px) {
-          width: auto;
-        }
-
-        .form-control {
-          max-width: 100%;
-        }
-      }
+    .dialog--small & {
+      display: none;
     }
   }
 }
 
-.editor {
+.indicator-search {
+  backdrop-filter: blur(0.25rem);
+  background-color: var(--theme-background-o75);
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+
+  input {
+    border: 0;
+    background: 0;
+    color: inherit;
+    padding: 1rem;
+    border-radius: 0;
+  }
+
+  &__results {
+    padding: 1rem;
+  }
+}
+
+.indicator-options {
+  position: relative;
+
+  &--tab {
+    display: block;
+    overflow: auto;
+    flex-grow: 1;
+  }
+
+  &--column {
+    width: 15rem;
+    flex-shrink: 0;
+    flex-direction: column;
+    display: none;
+    overflow-y: auto;
+
+    .dialog--small & {
+      width: 100%;
+      display: none;
+    }
+
+    @media screen and (min-width: 768px) {
+      display: flex;
+    }
+  }
+
+  &__grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: stretch;
+
+    .indicator-options__option {
+      margin: 0;
+      flex-basis: 0;
+      min-width: 150px;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.indicator-editor {
+  display: flex;
+  flex-direction: column;
   position: relative;
   flex-grow: 1;
-  min-height: 0;
+  min-height: 50px;
 
-  &__zoom,
-  &__resize {
+  &__zoom {
     position: absolute;
     font-size: 1rem;
-    padding: 0.5em;
+    padding: 1.5rem;
     right: 0;
     top: 0;
     z-index: 6;
-  }
 
-  &__zoom .btn {
-    display: block;
-  }
-
-  &__resize {
-    top: auto;
-    bottom: 0;
-    cursor: se-resize;
-
-    &:before {
-      display: inline-block;
-      transform: rotateZ(-225deg) scale(1);
-      transition: transform 0.2s;
-    }
-
-    &:hover:before {
-      transform: translate(5%, 5%) rotateZ(-225deg) scale(1);
+    .btn {
+      display: block;
     }
   }
 }

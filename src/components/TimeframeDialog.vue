@@ -2,13 +2,13 @@
   <Dialog @clickOutside="hide" class="-timeframe">
     <template v-slot:header>
       <div>
-        <div class="title">Timeframe</div>
-        <div class="subtitle pl0" v-text="paneName"></div>
+        <div class="dialog__title">Timeframe</div>
+        <div class="dialog__subtitle pl0" v-text="paneName"></div>
       </div>
 
       <div class="column -center"></div>
     </template>
-    <form @submit.prevent="submit">
+    <form @submit.prevent="submit" ref="form">
       <div class="text-center">
         <timeframe-input
           :placeholder="placeholder"
@@ -26,11 +26,17 @@
         ></code>
         <code v-else class="form-feedback">Unknown timeframe</code>
       </div>
-
-      <footer>
-        <button type="submit" class="btn -green ml8 -large">Go</button>
-      </footer>
     </form>
+
+    <template v-slot:footer>
+      <button
+        type="button"
+        class="btn -green ml8 -large"
+        @click="$refs.form.submit"
+      >
+        Go
+      </button>
+    </template>
   </Dialog>
 </template>
 
@@ -63,7 +69,7 @@ export default {
     }
   },
   watch: {
-    '$store.state.app.showSearch': function(value) {
+    '$store.state.app.showSearch': function (value) {
       if (!value) {
         this.close(false)
       }
@@ -99,7 +105,7 @@ export default {
 </script>
 <style lang="scss">
 .dialog.-timeframe {
-  .dialog-content {
+  .dialog__content {
     min-width: 0;
 
     .form-control {

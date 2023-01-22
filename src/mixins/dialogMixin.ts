@@ -4,7 +4,7 @@ export default {
   components: {
     Dialog
   },
-  data: function() {
+  data() {
     return {
       output: null
     }

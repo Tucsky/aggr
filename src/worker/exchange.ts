@@ -3,12 +3,20 @@ import { EventEmitter } from 'eventemitter3'
 import { sleep } from './helpers/utils'
 import { dispatchAsync } from './helpers/com'
 import { randomString } from './helpers/utils'
+import settings from './settings'
 interface Api extends WebSocket {
   _id: string
   _pending: string[]
   _connected: string[]
   _timestamp: number
   _reconnecting: boolean
+  _wasOpened?: boolean
+  _originalUrl?: string
+  _errored?: boolean
+}
+
+interface ApiEventError extends Event {
+  target: Api
 }
 
 type ExchangeEndpoint =
@@ -115,9 +123,10 @@ class Exchange extends EventEmitter {
   /**
    * Link exchange to a pair
    * @param {*} pair
+   * @param {Boolean} hadError
    * @returns {Promise<WebSocket>}
    */
-  async link(pair) {
+  async link(pair: string, hadError?: boolean) {
     pair = pair.replace(/[^:]*:/, '')
 
     if (!this.isMatching(pair)) {
@@ -126,17 +135,27 @@ class Exchange extends EventEmitter {
 
     console.debug(`[${this.id}.link] linking ${pair}`)
 
-    this.resolveApi(pair)
+    this.resolveApi(pair, hadError)
   }
 
-  async resolveApi(pair) {
-    const url = await this.getUrl(pair)
+  async resolveApi(pair: string, hadError?: boolean) {
+    const originalUrl = await this.getUrl(pair)
+
+    let url
+    if (settings.wsProxyUrl && hadError) {
+      url = settings.wsProxyUrl + originalUrl
+    } else {
+      url = originalUrl
+    }
 
     let api = this.getActiveApiByUrl(url)
 
     if (!api) {
       api = this.createWs(url, pair)
     }
+
+    api._wasErrored = hadError
+    api._originalUrl = originalUrl
 
     if (api._pending.indexOf(pair) !== -1) {
       console.warn(
@@ -155,19 +174,18 @@ class Exchange extends EventEmitter {
     api._pending.push(pair)
 
     if (api.readyState === WebSocket.OPEN) {
-      this.schedule(
-        () => {
-          this.subscribePendingPairs(api)
-        },
-        'subscribe-' + api.url,
-        1000
-      )
+      const timeoutId = 'subscribe-' + api._id
+      clearTimeout(this.scheduledOperations[timeoutId])
+      this.scheduledOperations[timeoutId] = setTimeout(() => {
+        delete this.scheduledOperations[timeoutId]
+        this.subscribePendingPairs(api)
+      }, 1000)
     }
 
     return api
   }
 
-  createWs(url, pair) {
+  createWs(url: string, pair: string) {
     const api = new WebSocket(url) as Api
     api._id = randomString()
 
@@ -191,6 +209,8 @@ class Exchange extends EventEmitter {
     }
 
     api.onopen = event => {
+      api._wasOpened = true
+
       if (typeof this.scheduledOperationsDelays[url] !== 'undefined') {
         this.clearReconnectionDelayTimeout[url] = setTimeout(() => {
           delete this.clearReconnectionDelayTimeout[url]
@@ -225,14 +245,6 @@ class Exchange extends EventEmitter {
       const pairsToReconnect = [...api._pending, ...api._connected]
 
       if (pairsToReconnect.length) {
-        const pairsToDisconnect = api._connected.slice()
-
-        if (pairsToDisconnect.length) {
-          for (const pair of pairsToDisconnect) {
-            await this.unlink(this.id + ':' + pair)
-          }
-        }
-
         console.error(
           `[${
             this.id
@@ -241,22 +253,23 @@ class Exchange extends EventEmitter {
           )})`
         )
 
-        api._reconnecting = true
-
-        this.scheduledOperationsDelays[api.url] = this.schedule(
-          () => {
-            this.reconnectPairs(pairsToReconnect)
-          },
-          api.url,
-          500,
-          1.5,
-          1000 * 60
-        )
+        setTimeout(() => {
+          this.reconnectApi(api)
+        }, this.getTimeoutDelay(api.url))
+      } else {
+        this.removeWs(api)
       }
     }
 
-    api.onerror = event => {
-      this.onError(event, api._connected)
+    api.onerror = (event: ApiEventError) => {
+      api._errored = true
+      console.debug(
+        `[${this.id}.onError] ${event.target._connected.join(
+          ','
+        )}'s api errored`,
+        event
+      )
+      this.onError(event)
     }
 
     this.connecting[api._id] = {}
@@ -305,9 +318,19 @@ class Exchange extends EventEmitter {
     }
 
     if (api._connected.indexOf(pair) === -1) {
-      console.debug(
-        `[${this.id}.unlink] "${pair}" does not exist on exchange ${this.id} (resolved immediately)`
-      )
+      const pendingIndex = api._pending.indexOf(pair)
+
+      if (pendingIndex !== -1) {
+        console.debug(
+          `[${this.id}.unlink] remove "${pair}" from ${api._id}'s pending pairs`
+        )
+        api._pending.splice(pendingIndex, 1)
+      } else {
+        console.debug(
+          `[${this.id}.unlink] "${pair}" does not exist on exchange ${this.id} (resolved immediately)`
+        )
+      }
+
       return
     }
 
@@ -332,7 +355,10 @@ class Exchange extends EventEmitter {
    */
   getActiveApiByPair(pair) {
     for (let i = 0; i < this.apis.length; i++) {
-      if (this.apis[i]._connected.indexOf(pair) !== -1) {
+      if (
+        this.apis[i]._connected.indexOf(pair) !== -1 ||
+        this.apis[i]._pending.indexOf(pair) !== -1
+      ) {
         return this.apis[i]
       }
     }
@@ -346,6 +372,7 @@ class Exchange extends EventEmitter {
   getActiveApiByUrl(url) {
     for (let i = 0; i < this.apis.length; i++) {
       if (
+        this.apis[i].readyState < 2 &&
         this.apis[i].url === url &&
         (!this.maxConnectionsPerApi ||
           this.apis[i]._connected.length + this.apis[i]._pending.length <
@@ -400,26 +427,29 @@ class Exchange extends EventEmitter {
    * Reconnect api
    * @param {WebSocket} api
    */
-  reconnectApi(api) {
+  reconnectApi(api: Api) {
     console.debug(
       `[${this.id}.reconnectApi] reconnect api (url: ${
         api.url
       }, _connected: ${api._connected.join(
         ', '
-      )}, _pending: ${api._connected.join(', ')})`
+      )}, _pending: ${api._connected.join(', ')}, readyState: ${
+        api.readyState
+      })`
     )
 
     const pairsToReconnect = [...api._pending, ...api._connected]
-
-    this.reconnectPairs(pairsToReconnect)
+    this.removeWs(api)
+    this.reconnectPairs(pairsToReconnect, api._errored)
   }
 
   /**
    * Reconnect pairs
    * @param {string[]} pairs (local)
+   * @param {Boolean} hadError
    * @returns {Promise<any>}
    */
-  async reconnectPairs(pairs) {
+  async reconnectPairs(pairs, hadError?: boolean) {
     const pairsToReconnect = pairs.slice(0, pairs.length)
 
     console.info(
@@ -441,7 +471,7 @@ class Exchange extends EventEmitter {
       console.debug(
         `[${this.id}.reconnectPairs] linking market ${this.id + ':' + pair}`
       )
-      await this.link(this.id + ':' + pair)
+      await this.link(this.id + ':' + pair, hadError)
     }
   }
 
@@ -545,14 +575,10 @@ class Exchange extends EventEmitter {
 
   /**
    * Fire when a new websocket connection reported an error
-   * @param {Event} event
+   * @param {ApiEventError} event
    * @param {string[]} pairs
    */
-  onError(event, pairs) {
-    console.debug(
-      `[${this.id}.onError] ${pairs.join(',')}'s api errored`,
-      event
-    )
+  onError(event: ApiEventError) {
     this.emit('error', event)
   }
 
@@ -593,7 +619,7 @@ class Exchange extends EventEmitter {
       return false
     }
 
-    this.emit('subscribed', pair, api._reconnecting)
+    this.emit('subscribed', pair, api.url)
 
     if (api.readyState !== WebSocket.OPEN) {
       // webSocket is in CLOSING or CLOSED state
@@ -712,37 +738,13 @@ class Exchange extends EventEmitter {
     }
   }
 
-  schedule(
-    operationFunction,
-    operationId,
-    minDelay,
-    delayMultiplier?,
-    maxDelay?,
-    currentDelay?
-  ) {
-    if (this.scheduledOperations[operationId]) {
-      clearTimeout(this.scheduledOperations[operationId])
-    }
+  getTimeoutDelay(url: string, minDelay = 1000) {
+    const currentDelay = Math.max(
+      minDelay,
+      this.scheduledOperationsDelays[url] || 0
+    )
 
-    if (typeof currentDelay === 'undefined') {
-      currentDelay = this.scheduledOperationsDelays[operationId]
-    }
-
-    currentDelay = Math.max(minDelay, currentDelay || 0)
-
-    this.scheduledOperations[operationId] = setTimeout(() => {
-      console.debug(`[${this.id}] schedule timer fired`)
-
-      delete this.scheduledOperations[operationId]
-
-      operationFunction()
-    }, currentDelay)
-
-    currentDelay *= delayMultiplier || 1
-
-    if (typeof maxDelay === 'number' && minDelay > 0) {
-      currentDelay = Math.min(maxDelay, currentDelay)
-    }
+    this.scheduledOperationsDelays[url] = currentDelay * 1.5
 
     return currentDelay
   }

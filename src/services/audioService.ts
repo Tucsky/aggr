@@ -283,7 +283,13 @@ class AudioService {
   }
 
   async retrieveArrayBuffer(name: string) {
-    const blob = (await workspacesService.getSound(name)).data
+    const savedSound = await workspacesService.getSound(name)
+
+    if (!savedSound) {
+      return null
+    }
+
+    const blob = savedSound.data
     const reader = new FileReader()
 
     return new Promise<ArrayBuffer>(resolve => {
@@ -305,9 +311,15 @@ class AudioService {
       arrayBuffer = await this.retrieveArrayBuffer(url)
     }
 
+    if (!arrayBuffer) {
+      return false
+    }
+
     AudioService.savedAudioBuffers[url] = await this.context.decodeAudioData(
       arrayBuffer
     )
+
+    return true
   }
 
   async playurl(
@@ -593,10 +605,16 @@ class AudioService {
             ) {
               functionArguments[0] *= frequencyMultiplier
             }
-          } else {
-            await this.loadSoundBuffer(
+          } else if (
+            !(await this.loadSoundBuffer(
               functionArguments[0].slice(1, functionArguments[0].length - 1)
+            ))
+          ) {
+            litteral = litteral.replace(
+              functionMatch[0] + originalParameters + ')',
+              ''
             )
+            continue
           }
 
           if (gainMultiplier && gainMultiplier !== 1) {
@@ -644,9 +662,9 @@ class AudioService {
   }
 
   async playOnce(url) {
-    await this.loadSoundBuffer(url)
-
-    this.playurl(url, 1, 1, 0, 0, 0, 0, 0.00001, 0.00001)
+    if (await this.loadSoundBuffer(url)) {
+      this.playurl(url, 1, 1, 0, 0, 0, 0, 0.00001, 0.00001)
+    }
   }
 }
 

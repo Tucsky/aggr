@@ -600,18 +600,35 @@ class WorkspacesService {
   async saveIndicator(indicator: IndicatorSettings) {
     const now = Date.now()
 
-    if (indicator.createdAt) {
-      indicator.updatedAt = now
-    } else {
-      indicator.createdAt = now
+    const originalIndicator: IndicatorSettings = await this.db.get(
+      'indicators',
+      indicator.id
+    )
+
+    const payload = {
+      ...originalIndicator,
+      ...JSON.parse(JSON.stringify(indicator)),
+      preview: originalIndicator && originalIndicator.preview,
+      unsavedChanges: false
     }
+
+    payload.createdAt = payload.createdAt || now
+    payload.updatedAt = now
 
     store.dispatch('app/showNotice', {
       type: 'info',
-      title: `Saved indicator ${indicator.id}`
+      title: `Saved indicator ${payload.id}`
     })
 
-    return this.db.put('indicators', indicator)
+    return this.db.put('indicators', payload)
+  }
+
+  async saveIndicatorPreview(indicatorId: string, blob: Blob) {
+    const originalIndicator = await this.db.get('indicators', indicatorId)
+
+    originalIndicator.preview = blob
+
+    await this.db.put('indicators', originalIndicator)
   }
 
   async incrementIndicatorUsage(id: string): Promise<string> {
@@ -621,11 +638,7 @@ class WorkspacesService {
       return
     }
 
-    if (!indicator.uses) {
-      indicator.uses = 0
-    }
-
-    indicator.uses++
+    indicator.updatedAt = Date.now()
 
     return this.saveIndicator(indicator)
   }
@@ -654,7 +667,9 @@ class WorkspacesService {
       const targetType = type.split(':')[0]
 
       if (targetType !== inputType) {
-        throw new Error(`Preset type ${inputType} is not ${targetType} type`)
+        throw new Error(
+          `Preset doesn't match with pane type (${inputType} is not ${targetType})`
+        )
       }
 
       preset.type = targetType
@@ -670,7 +685,7 @@ class WorkspacesService {
         cancel: 'Cancel'
       }))
     ) {
-      throw new Error(`Save preset : aborted`)
+      return
     }
 
     return this.db.put('presets', preset)

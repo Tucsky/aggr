@@ -1,7 +1,7 @@
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import { downloadAnything, sleep, slugify, uniqueName } from '@/utils/helpers'
-import { scheduleSync, syncState } from '@/utils/store'
+import { scheduleSync } from '@/utils/store'
 import {
   PriceScaleMargins,
   PriceScaleMode,
@@ -19,7 +19,6 @@ export interface PriceScaleSettings {
 }
 
 export interface IndicatorNavigationState {
-  sections: string[]
   tab: string
   optionsQuery: string
   fontSizePx: number
@@ -38,7 +37,7 @@ export interface IndicatorSettings {
   unsavedChanges?: boolean
   series?: string[]
   version?: string
-  uses?: number
+  preview?: Blob
 }
 export interface ChartPaneState {
   _id?: string
@@ -50,15 +49,20 @@ export interface ChartPaneState {
   refreshRate?: number
   showLegend: boolean
   fillGapsWithEmpty: boolean
-  forceNormalizePrice: boolean
   showHorizontalGridlines: boolean
   horizontalGridlinesColor: string
   showVerticalGridlines: boolean
   verticalGridlinesColor: string
   showWatermark: boolean
   watermarkColor: string
+  showBorder: boolean
+  borderColor: string
+  showLeftScale: boolean
+  showRightScale: boolean
+  showTimeScale: boolean
   hiddenMarkets: { [indicatorId: string]: boolean }
   barSpacing: number
+  navigationState: IndicatorNavigationState
 }
 
 const getters = {} as GetterTree<ChartPaneState, ModulesState>
@@ -79,15 +83,20 @@ const state = {
   refreshRate: 1000,
   showLegend: true,
   fillGapsWithEmpty: true,
-  forceNormalizePrice: false,
   showHorizontalGridlines: false,
   horizontalGridlinesColor: 'rgba(255,255,255,.1)',
   showVerticalGridlines: false,
   verticalGridlinesColor: 'rgba(255,255,255,.1)',
   showWatermark: true,
   watermarkColor: 'rgba(255,255,255,.1)',
+  showBorder: true,
+  borderColor: null,
+  showLeftScale: false,
+  showRightScale: true,
+  showTimeScale: true,
   hiddenMarkets: {},
-  barSpacing: null
+  barSpacing: null,
+  navigationState: null
 } as ChartPaneState
 
 const actions = {
@@ -174,7 +183,9 @@ const actions = {
         data: {
           options: exportableIndicator,
           description: indicator.description,
-          script: indicator.script
+          script: indicator.script,
+          createdAt: indicator.createdAt,
+          updatedAt: indicator.updatedAt
         }
       },
       'indicator_' + indicatorId
@@ -226,7 +237,7 @@ const actions = {
     if (state.indicators[id].unsavedChanges && confirm) {
       const output = await dialogService.confirm({
         title: 'Save changes ?',
-        message: `This indicator has unsaved changes <i class="icon-warning"></i>`,
+        message: `Indicator has unsaved&nbsp;changes&nbsp;<i class="icon-warning"></i><br><br>Click <code class="-filled -green">SAVE</code> to save indicator under "${id}"`,
         cancel: 'DISCARD',
         ok: 'SAVE',
         actions: [
@@ -252,9 +263,9 @@ const actions = {
     await sleep(100)
   },
   async saveIndicator({ state, commit, dispatch }, id) {
-    commit('FLAG_INDICATOR_AS_SAVED', id)
+    await workspacesService.saveIndicator(state.indicators[id])
 
-    workspacesService.saveIndicator(state.indicators[id])
+    commit('FLAG_INDICATOR_AS_SAVED', id)
 
     await dispatch('syncIndicator', state.indicators[id])
   },
@@ -292,14 +303,11 @@ const actions = {
     }
   },
   async setIndicatorNavigationState(
-    { state },
-    {
-      id,
-      navigationState
-    }: { id: string; navigationState: IndicatorNavigationState }
+    { commit },
+    navigationState: IndicatorNavigationState
   ) {
-    state.indicators[id].navigationState = navigationState
-    syncState(state)
+    state.navigationState = navigationState
+    commit('SET_NAVIGATION_STATE', navigationState)
   },
   async undoIndicator({ state, commit }, indicatorId) {
     const savedIndicator = await workspacesService.getIndicator(indicatorId)
@@ -389,6 +397,22 @@ const mutations = {
       state.watermarkColor = value
     }
   },
+  SET_BORDER(state, { value }) {
+    if (typeof value === 'boolean') {
+      state.showBorder = value
+    } else {
+      state.borderColor = value
+    }
+  },
+  TOGGLE_AXIS(state, side) {
+    if (side === 'left') {
+      state.showLeftScale = !state.showLeftScale
+    } else if (side === 'right') {
+      state.showRightScale = !state.showRightScale
+    } else if (side === 'time') {
+      state.showTimeScale = !state.showTimeScale
+    }
+  },
   SET_INDICATOR_SERIES(state, { id, series }) {
     state.indicators[id].series = series
   },
@@ -456,9 +480,6 @@ const mutations = {
   TOGGLE_FILL_GAPS_WITH_EMPTY(state) {
     state.fillGapsWithEmpty = !state.fillGapsWithEmpty
   },
-  TOGGLE_FORCE_NORMALIZE_PRICE(state) {
-    state.forceNormalizePrice = !state.forceNormalizePrice
-  },
   UPDATE_INDICATOR_DISPLAY_NAME(state, id) {
     const displayName = state.indicators[id].name.replace(
       /\{([\w\d_]+)\}/g,
@@ -481,6 +502,9 @@ const mutations = {
   },
   SET_BAR_SPACING(state, value) {
     state.barSpacing = value
+  },
+  SET_NAVIGATION_STATE(state, value) {
+    state.navigationState = value
   }
 } as MutationTree<ChartPaneState>
 

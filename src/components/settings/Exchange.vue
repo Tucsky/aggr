@@ -12,7 +12,7 @@
         <i :class="'icon-' + name"></i>
         <span class="ml4">{{ name }}</span>
       </div>
-      <div class="settings-exchange__controls">
+      <div v-if="markets.length" class="settings-exchange__controls">
         <button
           class="settings-exchange__more"
           @click.stop.prevent="expanded = !expanded"
@@ -105,6 +105,8 @@ export default class extends Vue {
   }
 
   &.-enabled {
+    color: var(--theme-color-base);
+
     .settings-exchange__threshold {
       display: block;
     }

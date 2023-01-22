@@ -35,6 +35,11 @@ export default {
       required: false,
       default: false
     },
+    isolate: {
+      type: Boolean,
+      required: false,
+      default: false
+    },
     noScroll: {
       type: Boolean,
       required: false,
@@ -46,6 +51,11 @@ export default {
       default: false
     },
     transparent: {
+      type: Boolean,
+      required: false,
+      default: false
+    },
+    autoFocus: {
       type: Boolean,
       required: false,
       default: false
@@ -88,7 +98,9 @@ export default {
 
       await this.$nextTick()
 
-      this.bindClickOutside()
+      if (!this.isolate) {
+        this.bindClickOutside()
+      }
     },
 
     /**
@@ -115,10 +127,12 @@ export default {
 
       this.fitScreen()
 
-      const button = this.$el.querySelector('button')
+      if (this.autoFocus) {
+        const button = this.$el.querySelector('button')
 
-      if (button) {
-        button.focus()
+        if (button) {
+          button.focus()
+        }
       }
     },
 
@@ -271,8 +285,18 @@ export default {
       }
 
       this.clickOutsideHandler = event => {
+        let parentElement = event.target as HTMLElement
+        let depth = 0
+        let isOutside = true
+
+        while (depth++ < 10 && (parentElement = parentElement.parentElement)) {
+          if (parentElement.classList.contains('dropdown')) {
+            isOutside = false
+          }
+        }
+
         if (
-          !this.$el.contains(event.target) &&
+          isOutside &&
           !this.triggerElement.contains(event.target) &&
           this.triggerElement !== event.target
         ) {
@@ -306,7 +330,7 @@ export default {
   position: fixed;
   z-index: 10;
   border-radius: 0.75em;
-  background-color: var(--theme-background-200);
+  background-color: var(--theme-background-150);
   box-shadow: rgba(0, 0, 0, 0.2) 0px 18px 50px -10px;
   max-height: 150px;
   max-width: 300px;
@@ -365,6 +389,14 @@ export default {
 
     &:hover {
       background-color: var(--theme-color-o10);
+    }
+
+    &--group {
+      padding: 0;
+
+      span {
+        padding: 0.625em;
+      }
     }
 
     &__subtitle {

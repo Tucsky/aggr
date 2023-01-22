@@ -14,6 +14,7 @@
       '-light': theme === 'light'
     }"
   >
+    <Loader v-if="isLoading" />
     <Notices />
     <div class="app__wrapper">
       <Menu />
@@ -31,20 +32,7 @@
           reset everything
         </button>
       </div>
-      <div class="lds-spinner -center">
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
+      <Loader />
     </div>
   </div>
 </template>
@@ -54,6 +42,7 @@ import { Component, Vue } from 'vue-property-decorator'
 
 import aggregatorService from './services/aggregatorService'
 
+import Loader from '@/components/framework/Loader.vue'
 import Notices from '@/components/framework/Notices.vue'
 import Menu from '@/components/Menu.vue'
 
@@ -68,19 +57,18 @@ import workspacesService from '@/services/workspacesService'
 import { formatMarketPrice } from '@/services/productsService'
 import dialogService from '@/services/dialogService'
 import importService from '@/services/importService'
+import { clearChartsCrosshairs } from './services/chartService'
 
 @Component({
   name: 'App',
   components: {
     Menu,
     Notices,
-    Panes
+    Panes,
+    Loader
   },
   watch: {
-    '$store.state.panes.marketsListeners': function(
-      newMarkets,
-      previousMarkets
-    ) {
+    '$store.state.panes.marketsListeners'(newMarkets, previousMarkets) {
       if (newMarkets !== previousMarkets) {
         this.refreshMainMarkets(newMarkets)
       }
@@ -160,6 +148,7 @@ export default class extends Vue {
 
     document.addEventListener('keydown', this.onDocumentKeyPress)
     window.addEventListener('blur', this.onBlur)
+    document.addEventListener('mouseleave', clearChartsCrosshairs)
   }
 
   beforeDestroy() {

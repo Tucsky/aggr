@@ -2,10 +2,10 @@
   <Dialog @clickOutside="close">
     <template v-slot:header>
       <div>
-        <div class="title">
+        <div class="dialog__title">
           <div @dblclick="renamePreset" v-text="meta.name"></div>
         </div>
-        <div class="subtitle" v-text="meta.type"></div>
+        <div class="dialog__subtitle" v-text="meta.type"></div>
       </div>
     </template>
 
@@ -40,14 +40,13 @@
       </li>
     </ul>
 
-    <footer>
+    <template v-slot:footer>
       <button
         type="button"
         class="btn -text -arrow"
         @click="$refs.presetDropdown.toggle($event.currentTarget)"
       >
-        <i class="icon-cog mr4"></i>
-        Manage
+        <i class="icon-more"></i>
       </button>
       <dropdown ref="presetDropdown">
         <button type="button" class="dropdown-item" @click="downloadPreset">
@@ -62,7 +61,7 @@
           @click="replacePreset"
         >
           <i class="icon-refresh"></i>
-          <span>Replace</span>
+          <span>Update</span>
         </button>
         <div class="dropdown-divider"></div>
         <button type="button" class="dropdown-item" @click="deletePreset">
@@ -70,17 +69,18 @@
           <span>Delete</span>
         </button>
       </dropdown>
-      <button type="button" class="btn -text -large mlauto" @click="copyPreset">
-        <i class="icon-copy-paste mr4"></i> Copy
-      </button>
       <button
         type="button"
-        class="btn -blue -large ml16"
-        @click="replacePreset"
+        class="btn -text -large mlauto"
+        @click="downloadPreset"
       >
+        <i class="icon-download mr8"></i>
+        <span>Download</span>
+      </button>
+      <button type="button" class="btn -blue -large ml16" @click="setPreset">
         <i class="icon-check mr4"></i> Set
       </button>
-    </footer>
+    </template>
   </Dialog>
 </template>
 
@@ -129,10 +129,7 @@ export default {
   },
   computed: {
     meta() {
-      const [, type, cat, name] = this.preset.name.match(
-        /^([a-z-]+):?([a-z-]+)?:(.*)/
-      )
-
+      const [type, cat, name] = this.preset.name.split(':')
       return {
         type,
         cat,
@@ -172,6 +169,9 @@ export default {
     replacePreset() {
       this.close('replace')
     },
+    setPreset() {
+      this.close('set')
+    },
     async copyPreset() {
       await copyTextToClipboard(JSON.stringify(this.preset))
 
@@ -183,7 +183,7 @@ export default {
     async renamePreset() {
       const name = await dialogService.prompt({
         action: 'Rename',
-        input: this.name
+        input: this.meta.name
       })
 
       if (name && name !== this.meta.name) {

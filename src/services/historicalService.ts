@@ -54,15 +54,21 @@ class HistoricalService extends EventEmitter {
       return this.promisesOfData[url]
     }
 
-    store.commit('app/TOGGLE_LOADING', true)
-
     this.promisesOfData[url] = fetch(url)
-      .then(response =>
-        response.json().then(json => {
-          json.status = response.status
-          return json
-        })
-      )
+      .then(async response => {
+        const contentType = response.headers.get('content-type')
+        let json
+
+        if (contentType && contentType.indexOf('application/json') !== -1) {
+          json = await response.json()
+        } else {
+          // text = error
+          throw new Error(await response.text())
+        }
+
+        json.status = response.status
+        return json
+      })
       .then(json => {
         if (!json || json.error) {
           throw new Error(json && json.error ? json.error : 'empty-response')

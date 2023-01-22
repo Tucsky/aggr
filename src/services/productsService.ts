@@ -293,9 +293,6 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   let localSymbolAlpha = localSymbol.replace(/[-_/:]/, '')
 
   let match
-  if (exchangeId === 'POLONIEX' && symbol === 'BTC_USDT') {
-    debugger
-  }
   match = localSymbol.match(baseQuoteLookupKnown)
 
   if (!match) {
@@ -345,7 +342,6 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
 
 export async function getApiSupportedMarkets() {
   let products = process.env.VUE_APP_API_SUPPORTED_PAIRS
-
   if (products && products.length) {
     products = products.split(',').map(market => market.trim())
   } else {
@@ -373,21 +369,26 @@ export async function getApiSupportedMarkets() {
       throw new Error('api supported pairs products cache has expired')
     }
 
-    products = cache.products
+    return cache.products
   } catch (error) {
-    await fetch(getApiUrl('products'))
-      .then(response => response.json())
-      .then(arr => {
-        products = arr
-      })
-      .catch(err => {
-        console.log(err)
-      })
+    console.error(error)
+  }
 
+  try {
+    const products = await fetch(getApiUrl('products')).then(response =>
+      response.json()
+    )
     localStorage.setItem(
       'API_SUPPORTED_PAIRS',
-      JSON.stringify({ products, timestamp: now })
+      JSON.stringify({
+        products,
+        timestamp: now
+      })
     )
+
+    return products
+  } catch (error) {
+    console.error(error)
   }
 
   return products

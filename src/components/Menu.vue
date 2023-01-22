@@ -55,9 +55,7 @@
         >
           <div>
             <div>Trades <span>LITE ⚡️</span></div>
-            <div class="dropdown-item__subtitle">
-              Minimal but faster
-            </div>
+            <div class="dropdown-item__subtitle">Minimal but faster</div>
           </div>
           <i class="icon-plus" />
         </button>
@@ -126,11 +124,7 @@
           @input="$store.dispatch('settings/setAudioVolume', $event)"
           @reset="$store.dispatch('settings/setAudioVolume', 1)"
           log
-        >
-          <template v-slot:tooltip>
-            {{ +(audioVolume * 100).toFixed(2) }}%
-          </template>
-        </slider>
+        />
       </dropdown>
 
       <button
@@ -263,14 +257,14 @@ export default class extends Vue {
       (element as any).requestFullScreen ||
       (element as any).webkitRequestFullScreen ||
       (element as any).mozRequestFullScreen ||
-      function() {
+      function () {
         return false
       }
     ;(document as any).cancelFullScreen =
       (document as any).cancelFullScreen ||
       (document as any).webkitCancelFullScreen ||
       (document as any).mozCancelFullScreen ||
-      function() {
+      function () {
         return false
       }
 
@@ -318,13 +312,16 @@ export default class extends Vue {
     border-radius: 50%;
     justify-content: center;
     background-color: var(--theme-background-100);
-    color: var(--theme-color-base);
+    color: var(--theme-buy-color);
     z-index: 1;
     position: relative;
 
+    background-color: var(--theme-buy-50);
+    border: 1px solid var(--theme-buy-base);
+
     &:hover {
       background-color: var(--theme-buy-base);
-      color: var(--theme-buy-color);
+      border-color: var(--theme-buy-100);
     }
   }
 

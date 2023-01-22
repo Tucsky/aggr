@@ -3,14 +3,12 @@
   border: 0;
   border-spacing: 0px;
 
-  thead {
-    th {
-      text-align: left;
-      padding: 0.42rem 0.5rem;
-      font-weight: 400;
-      border-bottom: 0;
-      opacity: 0.6;
-    }
+  th {
+    text-align: left;
+    padding: 0.42rem 0.5rem;
+    font-weight: 400;
+    border-bottom: 0;
+    opacity: 0.6;
   }
 
   &-input {
@@ -81,11 +79,8 @@
 
     .btn {
       display: block;
-      height: 1.75rem;
-      width: 1.75rem;
       font-size: 12px;
       display: inline-block;
-      padding: 0;
       text-align: center;
     }
   }
@@ -96,6 +91,11 @@
 
       &:hover {
         background-color: var(--theme-color-o10);
+
+        td,
+        + tr td {
+          border-color: transparent;
+        }
       }
     }
 
@@ -116,7 +116,7 @@
 
     + tr > td {
       //border-left: 1px solid var(--theme-color-o20);
-      border-top: 1px solid var(--theme-background-200);
+      border-top: 1px solid var(--theme-background-150);
 
       &:first-child {
         border-left: 0;
@@ -129,6 +129,11 @@
   }
 
   td {
+    .badge {
+      position: relative;
+      bottom: 2px;
+    }
+
     + td {
       //border-left: 1px solid var(--theme-color-o20);
       border-top: 1px solid var(--theme-background-200);
@@ -137,5 +142,59 @@
 
   tr:last-child > td {
     border-bottom: 0;
+  }
+
+  &--inset {
+    margin: 1rem -1rem 0 -1rem;
+    width: calc(100% + 2rem);
+
+    thead th {
+      &:first-child {
+        padding-left: 1rem;
+      }
+      &:last-child {
+        padding-left: 1rem;
+      }
+    }
+
+    tbody td {
+      &:first-child {
+        padding-left: 1rem;
+      }
+      &:last-child {
+        padding-left: 1rem;
+      }
+    }
+  }
+  .table-sortable {
+    cursor: pointer;
+    white-space: nowrap;
+    opacity: 1;
+
+    span {
+      opacity: 1;
+      color: var(--theme-color-base);
+
+      &:last-child {
+        opacity: 0.5;
+        color: var(--theme-color-100);
+      }
+    }
+
+    &__direction {
+      font-size: 0.75rem;
+      margin-left: 0.25rem;
+      display: inline-block;
+      transition: transform 0.2s;
+      color: var(--theme-color-base);
+
+      &--desc {
+        transform: rotateZ(180deg);
+      }
+    }
+
+    &:hover {
+      opacity: 1;
+    }
   }
 }

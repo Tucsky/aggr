@@ -1,408 +1,376 @@
 <template>
-  <Dialog @clickOutside="close" class="-sticky-footer" contentClass="settings">
+  <Dialog
+    @clickOutside="close"
+    class="settings-dialog"
+    contentClass="settings"
+    size="medium"
+  >
     <template v-slot:header
       ><div>
-        <div class="title">Settings</div>
-        <div class="subtitle" v-if="hits">
+        <div class="dialog__title">Settings</div>
+        <div class="dialog__subtitle" v-if="hits">
           <i class="icon-bolt"></i> <code v-text="hits"></code> messages /s
         </div>
       </div>
       <div class="column -center"></div>
     </template>
-    <section class="section" v-if="currentWorkspace">
-      <div v-if="settings.indexOf('workspaces') > -1">
-        <div class="column">
-          <button
-            type="button"
-            class="btn -blue -large -cases flex-grow-1 column text-ellipsis"
-            @click="toggleWorkspaceDropdown($event, currentWorkspace.id)"
-          >
-            <i class="icon-dashboard -center mr16"></i>
+    <ToggableSection
+      v-if="currentWorkspace"
+      id="settings-workspaces"
+      title="Workspaces"
+      description="templates"
+      :badge="workspaces.length"
+      inset
+    >
+      <div class="column mt16">
+        <button
+          type="button"
+          class="btn -blue -large -cases flex-grow-1 column text-ellipsis"
+          @click="toggleWorkspaceDropdown($event, currentWorkspace.id)"
+        >
+          <i class="icon-dashboard -center mr16"></i>
 
-            <div class="-fill text-left text-ellipsis">
-              <div class="text-ellipsis">
-                {{ currentWorkspace.name }}
-              </div>
-              <small class="text-muted">
-                created {{ currentWorkspace.createdAt }} ago
-              </small>
+          <div class="-fill text-left text-ellipsis">
+            <div class="text-ellipsis">
+              {{ currentWorkspace.name }}
             </div>
-            <i class="icon-cog"></i>
-          </button>
-          <dropdown v-model="workspaceDropdownTrigger">
-            <button
-              type="button"
-              class="dropdown-item"
-              @click="openWorkspace(workspaceDropdownId, true)"
-            >
-              <i class="icon-external-link-square-alt"></i>
-              <span>Open in a new tab</span>
-            </button>
-            <button
-              type="button"
-              class="dropdown-item"
-              @click="renameWorkspace(workspaceDropdownId)"
-            >
-              <i class="icon-edit"></i>
-              <span>Rename</span>
-            </button>
-            <button
-              type="button"
-              class="dropdown-item"
-              @click="duplicateWorkspace(workspaceDropdownId)"
-            >
-              <i class="icon-copy-paste"></i>
-              <span>Duplicate</span>
-            </button>
-            <button
-              type="button"
-              class="dropdown-item"
-              @click="exportWorkspace(workspaceDropdownId)"
-            >
-              <i class="icon-download"></i>
-              <span>Download</span>
-            </button>
-            <div class="dropdown-divider"></div>
-            <button
-              type="button"
-              class="dropdown-item"
-              @click="removeWorkspace(workspaceDropdownId)"
-            >
-              <i class="icon-cross"></i>
-              <span>Remove workspace</span>
-            </button>
-          </dropdown>
+            <small class="text-muted">
+              created {{ currentWorkspace.createdAt }} ago
+            </small>
+          </div>
+          <i class="icon-cog"></i>
+        </button>
+        <dropdown v-model="workspaceDropdownTrigger">
           <button
             type="button"
-            class="btn -text -large  -cases ml8"
-            @click="$refs.createWorkspaceDropdown.toggle($event.currentTarget)"
+            class="dropdown-item"
+            @click="openWorkspace(workspaceDropdownId, true)"
           >
-            <i class="icon-plus mr4"></i>
-            <span>New</span>
+            <i class="icon-external-link-square-alt"></i>
+            <span>Open in a new tab</span>
           </button>
-
-          <dropdown ref="createWorkspaceDropdown">
-            <button
-              type="button"
-              class="dropdown-item"
-              @click="uploadWorkspace"
-            >
-              <i class="icon-upload"></i>
-              <span>Upload template file</span>
-            </button>
-            <button
-              type="button"
-              class="dropdown-item"
-              @click="createBlankWorkspace"
-            >
-              <i class="icon-plus"></i>
-              <span>Create blank template</span>
-            </button>
-          </dropdown>
-        </div>
-        <table v-if="workspaces.length" class="table mt8">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th class="text-nowrap">Updated at</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="workspace of workspaces"
-              :key="workspace.id"
-              class="option -action"
-              @click="openWorkspace(workspace.id)"
-            >
-              <td
-                class="table-input table-ellipsis text-nowrap"
-                :class="[workspace.id === currentWorkspace.id && 'text-bold']"
-                v-text="workspace.name"
-                :title="
-                  `${workspace.name}, created ${ago(workspace.createdAt)} ago`
-                "
-                v-tippy="{ boundary: 'window', placement: 'left' }"
-              ></td>
-              <td class="table-input table-min">
-                {{ ago(workspace.updatedAt) }} ago
-              </td>
-              <td class="table-action -hover">
-                <button
-                  class="btn -text -small"
-                  @click.stop="toggleWorkspaceDropdown($event, workspace.id)"
-                >
-                  <i class="icon-more"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div
-        class="section__title"
-        @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'workspaces')"
-      >
-        Workspaces
-        <small>templates</small>
-        <i class="icon-up-thin"></i>
-      </div>
-    </section>
-
-    <section class="section">
-      <div v-if="settings.indexOf('list') > -1" class="settings-trades">
-        <div class="form-group column mb8">
-          <label class="checkbox-control -aggr -auto flex-grow-1">
-            <input
-              type="checkbox"
-              class="form-control"
-              :checked="true"
-              @click.prevent="$store.commit('settings/TOGGLE_AGGREGATION')"
-            />
-            <div :on="aggregationLength + 'ms'" off="No aggregation"></div>
-            <span v-if="aggregationLength"
-              >{{ aggregationLength }}ms aggregation</span
-            >
-            <span v-else>No aggregation</span>
-          </label>
-        </div>
-
-        <div class="form-group mb8">
-          <label
-            class="checkbox-control -slippage"
-            :title="
-              calculateSlippage === 'price'
-                ? 'Show slippage in $'
-                : calculateSlippage === 'bps'
-                ? 'Show slippage in basis point (bps)'
-                : 'Slippage disabled'
-            "
-            v-tippy="{ placement: 'left' }"
+          <button
+            type="button"
+            class="dropdown-item"
+            @click="renameWorkspace(workspaceDropdownId)"
           >
-            <input
-              type="checkbox"
-              class="form-control"
-              :checked="calculateSlippage"
-              @change="$store.commit('settings/TOGGLE_SLIPPAGE')"
-            />
-            <div></div>
+            <i class="icon-edit"></i>
+            <span>Rename</span>
+          </button>
+          <button
+            type="button"
+            class="dropdown-item"
+            @click="duplicateWorkspace(workspaceDropdownId)"
+          >
+            <i class="icon-copy-paste"></i>
+            <span>Duplicate</span>
+          </button>
+          <button
+            type="button"
+            class="dropdown-item"
+            @click="exportWorkspace(workspaceDropdownId)"
+          >
+            <i class="icon-download"></i>
+            <span>Download</span>
+          </button>
+          <div class="dropdown-divider"></div>
+          <button
+            type="button"
+            class="dropdown-item"
+            @click="removeWorkspace(workspaceDropdownId)"
+          >
+            <i class="icon-cross"></i>
+            <span>Remove workspace</span>
+          </button>
+        </dropdown>
+        <button
+          type="button"
+          class="btn -text -large -cases ml8"
+          @click="$refs.createWorkspaceDropdown.toggle($event.currentTarget)"
+        >
+          <i class="icon-plus mr4"></i>
+          <span>New</span>
+        </button>
+
+        <dropdown ref="createWorkspaceDropdown">
+          <button type="button" class="dropdown-item" @click="uploadWorkspace">
+            <i class="icon-upload"></i>
+            <span>Upload template file</span>
+          </button>
+          <button
+            type="button"
+            class="dropdown-item"
+            @click="createBlankWorkspace"
+          >
+            <i class="icon-plus"></i>
+            <span>Create blank template</span>
+          </button>
+        </dropdown>
+      </div>
+      <table v-if="workspaces.length" class="table mt8 table--inset">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th class="text-nowrap">Updated at</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="workspace of workspaces"
+            :key="workspace.id"
+            class="option -action"
+            @click="openWorkspace(workspace.id)"
+          >
+            <td
+              class="table-input table-ellipsis text-nowrap text-color-base"
+              :class="[workspace.id === currentWorkspace.id && 'text-bold']"
+              v-text="workspace.name"
+              :title="`${workspace.name}<br>created ${ago(
+                workspace.createdAt
+              )} ago`"
+              v-tippy="{ boundary: 'window', placement: 'left' }"
+            ></td>
+            <td class="table-input table-min">
+              {{ ago(workspace.updatedAt) }} ago
+            </td>
+            <td class="table-action -hover">
+              <button
+                class="btn -text -small"
+                @click.stop="toggleWorkspaceDropdown($event, workspace.id)"
+              >
+                <i class="icon-more"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </ToggableSection>
+
+    <ToggableSection
+      v-if="currentWorkspace"
+      id="settings-trades"
+      title="Trades"
+      description="aggregation, slippage, currency"
+      inset
+    >
+      <div class="form-group column mb8">
+        <label class="checkbox-control -aggr -auto flex-grow-1">
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="true"
+            @click.prevent="$store.commit('settings/TOGGLE_AGGREGATION')"
+          />
+          <div :on="aggregationLength + 'ms'" off="No aggregation"></div>
+          <span v-if="aggregationLength"
+            >{{ aggregationLength }}ms aggregation</span
+          >
+          <span v-else>No aggregation</span>
+        </label>
+      </div>
+
+      <div class="form-group mb8">
+        <label
+          class="checkbox-control -auto"
+          :title="
+            calculateSlippage === 'price'
+              ? 'Show slippage in $'
+              : calculateSlippage === 'bps'
+              ? 'Show slippage in basis point (bps)'
+              : 'Slippage disabled'
+          "
+          v-tippy="{ placement: 'top', boundary: 'window' }"
+        >
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="calculateSlippage"
+            @change="$store.commit('settings/TOGGLE_SLIPPAGE')"
+          />
+          <div>
             <span v-if="calculateSlippage === 'price'">
-              Calculate slippage in price change (<i class="icon-dollar"></i>)
+              change <i class="icon-dollar"></i>
             </span>
             <span v-if="calculateSlippage === 'bps'">
-              Calculate slippage in bps <i class="icon-bps"></i>
+              bps <i class="icon-bps"></i>
             </span>
-            <span v-if="!calculateSlippage">Do not show slippage</span>
-          </label>
-        </div>
+          </div>
+          <span>Show Slippage</span>
+        </label>
+      </div>
 
-        <div class="form-group">
-          <label
-            class="checkbox-control checkbox-control-input -auto"
-            v-tippy="{ placement: 'left' }"
-            title="Size display preference"
-          >
-            <input
-              type="checkbox"
-              class="form-control"
-              :checked="preferQuoteCurrencySize"
-              @change="
-                $store.commit(
-                  'settings/SET_QUOTE_AS_PREFERED_CURRENCY',
-                  $event.target.checked
-                )
-              "
-            />
-            <span>Size in</span>
-            <div on="quote currency" off="base currency"></div>
-            <span
-              >(<i
+      <div class="form-group">
+        <label
+          class="checkbox-control checkbox-control-input -auto"
+          v-tippy="{ placement: 'top', boundary: 'window' }"
+          title="Size display preference"
+        >
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="preferQuoteCurrencySize"
+            @change="
+              $store.commit(
+                'settings/SET_QUOTE_AS_PREFERED_CURRENCY',
+                $event.target.checked
+              )
+            "
+          />
+          <span>Size in</span>
+          <div on="quote currency" off="base currency"></div>
+          <span>
+            <span class="text-success">
+              (<i
                 :class="preferQuoteCurrencySize ? 'icon-quote' : 'icon-base'"
               ></i
-              >)</span
-            >
-          </label>
-        </div>
+              >)
+            </span>
+          </span>
+        </label>
       </div>
-      <div
-        class="section__title"
-        @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'list')"
-      >
-        Trades
-        <small>aggregation, slippage, currency</small>
-        <i class="icon-up-thin"></i>
-      </div>
-    </section>
+    </ToggableSection>
 
-    <section class="section">
-      <audio-settings v-if="settings.indexOf('audio') > -1"></audio-settings>
-      <div
-        class="section__title"
-        @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'audio')"
-      >
-        Audio
-        <small>main volume</small>
-        <i class="icon-up-thin"></i>
-      </div>
-    </section>
+    <ToggableSection
+      id="settings-audio"
+      title="Audio"
+      description="main volume"
+      inset
+    >
+      <audio-settings />
+    </ToggableSection>
 
-    <section class="section">
-      <div v-if="settings.indexOf('colors') > -1" class="settings-chart">
-        <div class="form-group column mb8">
-          <color-picker-control
-            :value="backgroundColor"
-            label="Background color"
-            @input="
-              $store.dispatch('settings/setColor', {
-                type: 'BACKGROUND',
-                value: $event
-              })
-            "
-          ></color-picker-control>
-          <label class="-fill -center ml8">Background color</label>
-        </div>
-        <div class="form-group column mb8">
-          <color-picker-control
-            :value="textColor"
-            label="App text color"
-            @input="
-              $store.dispatch('settings/setColor', {
-                type: 'TEXT',
-                value: $event
-              })
-            "
-          ></color-picker-control>
-          <label for="" class="-fill -center ml8"
-            >Text color
-            <a
-              ><i
-                class="icon-cross text-small"
-                v-if="textColor"
-                @click="
-                  $store.dispatch('settings/setColor', {
-                    type: 'TEXT',
-                    value: null
-                  })
-                "
-              ></i></a
-          ></label>
-        </div>
-        <div class="form-group column mb8">
-          <color-picker-control
-            :value="buyColor"
-            label="Buy color"
-            @close="regenerateSwatch"
-            @input="
-              $store.dispatch('settings/setColor', {
-                type: 'BUY',
-                value: $event
-              })
-            "
-          ></color-picker-control>
-          <label class="-fill -center ml8">Buy color</label>
-        </div>
-        <div class="form-group column mb8">
-          <color-picker-control
-            :value="sellColor"
-            label="Sell color"
-            @close="regenerateSwatch"
-            @input="
-              $store.dispatch('settings/setColor', {
-                type: 'SELL',
-                value: $event
-              })
-            "
-          ></color-picker-control>
-          <label class="-fill -center ml8">Sell color</label>
-        </div>
+    <ToggableSection
+      id="settings-colors"
+      title="Colors"
+      description="background, buy/sell color"
+      inset
+    >
+      <div class="form-group column mb8">
+        <color-picker-control
+          :value="backgroundColor"
+          label="Background color"
+          @input="
+            $store.dispatch('settings/setColor', {
+              type: 'BACKGROUND',
+              value: $event
+            })
+          "
+        ></color-picker-control>
+        <label class="-fill -center ml8">Background color</label>
       </div>
-      <div
-        class="section__title"
-        @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'colors')"
-      >
-        Colors
-        <small>background, buy/sell color</small>
-        <i class="icon-up-thin"></i>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="form-group" v-if="settings.indexOf('exchanges') > -1">
-        <div class="settings-exchanges">
-          <Exchange
-            v-for="exchangeId of exchanges"
-            :key="exchangeId"
-            :id="exchangeId"
-          />
-        </div>
-      </div>
-      <div
-        class="section__title"
-        @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'exchanges')"
-      >
-        Exchanges
-        <small>enable/disable exchange globally</small>
-        <i class="icon-up-thin"></i>
-      </div>
-    </section>
-
-    <section class="section">
-      <other-settings v-if="settings.indexOf('other') > -1"></other-settings>
-      <div
-        class="section__title"
-        @click="$store.commit('settings/TOGGLE_SETTINGS_PANEL', 'other')"
-      >
-        Other
-        <i class="icon-up-thin"></i>
-      </div>
-    </section>
-
-    <footer class="section mt16 settings__footer">
-      <div class="form-group">
-        <div v-if="version" class="column">
-          <div class="-grow">
-            <button class="btn -text pl0">
-              v{{ version }} <sup class="version-date">{{ buildDate }}</sup>
-            </button>
-          </div>
+      <div class="form-group column mb8">
+        <color-picker-control
+          :value="textColor"
+          label="App text color"
+          @input="
+            $store.dispatch('settings/setColor', {
+              type: 'TEXT',
+              value: $event
+            })
+          "
+        ></color-picker-control>
+        <label for="" class="-fill -center ml8"
+          >Text color
           <a
-            class="btn -text"
-            href="https://github.com/Tucsky/aggr"
-            target="_blank"
-            >github</a
-          >
-          <i class="pipe -center">|</i>
-          <span>
-            <dono-dropdown class="-top -text-left" />
-          </span>
-          <i class="pipe -center">|</i>
-          <span>
-            <button
-              type="button"
-              class="btn -text -arrow"
-              @click="$refs.databaseDropdown.toggle($event.currentTarget)"
-            >
-              Reset
-            </button>
-            <dropdown ref="databaseDropdown">
-              <button type="button" class="dropdown-item" @click="reset">
-                <i class="icon-warning"></i>
-                <span>Reset to default</span>
-              </button>
-              <button
-                type="button"
-                class="dropdown-item"
-                @click="exportDatabase"
-              >
-                <i class="icon-upload"></i>
-                <span>Export database</span>
-              </button>
-            </dropdown>
-          </span>
-        </div>
+            ><i
+              class="icon-cross text-small"
+              v-if="textColor"
+              @click="
+                $store.dispatch('settings/setColor', {
+                  type: 'TEXT',
+                  value: null
+                })
+              "
+            ></i></a
+        ></label>
       </div>
-    </footer>
+      <div class="form-group column mb8">
+        <color-picker-control
+          :value="buyColor"
+          label="Buy color"
+          @close="regenerateSwatch"
+          @input="
+            $store.dispatch('settings/setColor', {
+              type: 'BUY',
+              value: $event
+            })
+          "
+        ></color-picker-control>
+        <label class="-fill -center ml8">Buy color</label>
+      </div>
+      <div class="form-group column mb8">
+        <color-picker-control
+          :value="sellColor"
+          label="Sell color"
+          @close="regenerateSwatch"
+          @input="
+            $store.dispatch('settings/setColor', {
+              type: 'SELL',
+              value: $event
+            })
+          "
+        ></color-picker-control>
+        <label class="-fill -center ml8">Sell color</label>
+      </div>
+    </ToggableSection>
+
+    <ToggableSection
+      id="settings-exchanges"
+      title="Exchanges"
+      description="enable/disable exchange globally"
+      inset
+    >
+      <div class="settings-exchanges">
+        <Exchange
+          v-for="exchangeId of exchanges"
+          :key="exchangeId"
+          :id="exchangeId"
+        />
+      </div>
+    </ToggableSection>
+
+    <ToggableSection id="settings-other" title="Other" inset>
+      <other-settings />
+    </ToggableSection>
+
+    <template v-slot:footer>
+      <button class="btn -text mrauto">
+        v{{ version }}&nbsp;<sup class="settings-footer__version">{{
+          buildDate
+        }}</sup>
+      </button>
+      <a
+        class="btn -text settings-footer__button"
+        href="https://github.com/Tucsky/aggr"
+        target="_blank"
+        >github</a
+      >
+      <i class="settings-footer__divider -center mr4">|</i>
+      <span>
+        <dono-dropdown class="-top -text-left" />
+      </span>
+      <i class="settings-footer__divider -center mr4">|</i>
+      <span>
+        <button
+          type="button"
+          class="btn -text -arrow settings-footer__button"
+          @click="$refs.databaseDropdown.toggle($event.currentTarget)"
+        >
+          Reset
+        </button>
+        <dropdown ref="databaseDropdown">
+          <button type="button" class="dropdown-item" @click="reset">
+            <i class="icon-warning"></i>
+            <span>Reset to default</span>
+          </button>
+          <button type="button" class="dropdown-item" @click="exportDatabase">
+            <i class="icon-upload"></i>
+            <span>Export database</span>
+          </button>
+        </dropdown>
+      </span>
+    </template>
   </Dialog>
 </template>
 
@@ -416,6 +384,7 @@ import dialogService from '../../services/dialogService'
 import AudioSettings from './AudioSettings.vue'
 import OtherSettings from './OtherSettings.vue'
 import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
+import ToggableSection from '@/components/framework/ToggableSection.vue'
 
 import importService from '@/services/importService'
 import workspacesService from '@/services/workspacesService'
@@ -432,7 +401,8 @@ export default {
     AudioSettings,
     OtherSettings,
     DonoDropdown,
-    ColorPickerControl
+    ColorPickerControl,
+    ToggableSection
   },
   data() {
     return {
@@ -519,7 +489,9 @@ export default {
     },
 
     async getWorkspaces() {
-      const workspaces = await workspacesService.getWorkspaces()
+      const workspaces = (await workspacesService.getWorkspaces()).sort(
+        (a, b) => b.updatedAt - a.updatedAt
+      )
       this.workspaces = workspaces
       const workspace = workspacesService.workspace
 
@@ -539,6 +511,10 @@ export default {
         window.open(url)
       } else {
         window.location.href = url
+
+        if (workspacesService.urlStrategy === 'hash') {
+          window.location.reload()
+        }
       }
     },
 
@@ -565,7 +541,9 @@ export default {
       await workspacesService.removeWorkspace(workspace.id)
 
       if (isCurrent) {
-        let nextWorkspace = this.workspaces.find(w => w.id !== workspace.id)
+        let nextWorkspace = this.workspaces
+          .sort((a, b) => b.updatedAt - a.updatedAt)
+          .find(w => w.id !== workspace.id)
 
         if (!nextWorkspace) {
           nextWorkspace = await workspacesService.createWorkspace()
@@ -682,7 +660,6 @@ export default {
       if (
         await dialogService.confirm({
           title: 'Reset everything ?',
-          html: true,
           ok: 'Reset & reload',
           message: `Everything will be removed${
             content.length
@@ -722,7 +699,18 @@ export default {
         return
       }
 
-      if (await dialogService.confirm(`Generate thresholds colors ?`)) {
+      if (
+        await dialogService.confirm({
+          message: `Generate thresholds colors ? 
+          <i
+            class="icon-info -lower ml4" 
+            title="Will override every thresholds color with global buy / sell colors" 
+          />`,
+          html: true,
+          ok: 'Yes please',
+          cancel: 'No thanks'
+        })
+      ) {
         const buyColor = this.$store.state.settings.buyColor
         const sellColor = this.$store.state.settings.sellColor
 
@@ -751,42 +739,19 @@ export default {
 </script>
 
 <style lang="scss">
-.settings {
-  width: 360px;
+.settings-footer__version {
+  opacity: 0.75;
+  line-height: 1;
+  position: relative;
+  top: -0.5em;
+  left: 0.25em;
+  align-self: center;
 }
 
-.settings__footer {
-  margin-top: auto;
-
-  .version-date {
-    opacity: 0.75;
-    line-height: 1;
-    position: relative;
-    top: -0.5em;
-    left: 0.25em;
-  }
-
-  .pipe {
-    opacity: 0.5;
-    line-height: 1;
-  }
-
-  .btn {
-    background: 0 !important;
-  }
-}
-
-.settings-audio {
-  align-items: center;
-
-  label {
-    margin: 0;
-  }
-
-  input[type='range'] {
-    width: 100%;
-    margin: 0;
-  }
+.settings-footer__divider {
+  opacity: 0.5;
+  line-height: 1;
+  align-self: center;
 }
 
 .settings-exchanges {
@@ -794,39 +759,5 @@ export default {
   flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-start;
-}
-
-.settings-chart {
-  &__sub-settings {
-    margin-left: 2.4em;
-    margin-bottom: 0.5em;
-
-    > div {
-      + div {
-        margin-top: 0.75em;
-      }
-    }
-
-    > div + div {
-      margin-top: 0.75em;
-    }
-
-    input[type='range'] {
-      font-size: 0.5em;
-      vertical-align: middle;
-    }
-  }
-}
-
-#app.-light {
-  .section__title {
-    opacity: 1;
-  }
-
-  .form-group {
-    .checkbox-control {
-      opacity: 1;
-    }
-  }
 }
 </style>

@@ -19,7 +19,7 @@ ace.config.set(
     },
     fontSize: {
       type: Number,
-      default: 12
+      default: () => (window.devicePixelRatio > 1 ? 12 : 14)
     },
     minimal: {
       type: Boolean,
@@ -33,6 +33,9 @@ export default class extends Vue {
   private minimal: boolean
 
   private editorInstance: any
+
+  private _blurTimeout: number
+  private _beforeUnloadHandler: (event: Event) => void
 
   get options() {
     const baseOptions = {
@@ -48,7 +51,8 @@ export default class extends Vue {
       showGutter: true,
       showLineNumbers: true,
       showPrintMargin: false,
-      tabSize: 2
+      tabSize: 2,
+      useWorker: false
     }
 
     if (this.minimal) {
@@ -70,83 +74,181 @@ export default class extends Vue {
     this.editorInstance.setValue(value)
   }
 
-  mounted() {
-    this.editorInstance = ace.edit(this.$el, this.options)
-
-    this.editorInstance.setKeyboardHandler('ace/keyboard/vscode')
-
-    this.editorInstance.on('blur', () => {
-      this.$emit('blur', this.editorInstance.getValue())
-    })
-
-    this.editorInstance.on('change', () => {
-      this.$emit('input', this.editorInstance.getValue())
-    })
+  async mounted() {
+    this.createEditor()
   }
 
   beforeDestroy() {
     this.editorInstance.destroy()
+
+    if (this._blurTimeout) {
+      this.onBlur()
+    }
   }
 
   resize() {
     this.editorInstance.resize()
   }
+
+  onBlur() {
+    if (this._beforeUnloadHandler) {
+      window.removeEventListener('beforeunload', this._beforeUnloadHandler)
+      this._beforeUnloadHandler = null
+    }
+
+    this.$emit('blur', this.editorInstance.getValue())
+  }
+
+  onFocus() {
+    if (this._beforeUnloadHandler) {
+      return
+    }
+
+    this._beforeUnloadHandler = (event: any) => {
+      event.preventDefault()
+      event.returnValue = ''
+      return false
+    }
+    window.addEventListener('beforeunload', this._beforeUnloadHandler)
+  }
+
+  async createEditor() {
+    this.editorInstance = ace.edit(this.$el, this.options)
+    ;(window as any).editorInstance = this.editorInstance
+    this.editorInstance.renderer.setPadding(8)
+    this.editorInstance.renderer.setScrollMargin(8, 0, 0, 0)
+    this.editorInstance.container.style.lineHeight = 1.25
+
+    this.editorInstance.setKeyboardHandler('ace/keyboard/vscode')
+
+    this.editorInstance.on('blur', () => {
+      if (this._blurTimeout) {
+        clearTimeout(this._blurTimeout)
+      }
+
+      this._blurTimeout = setTimeout(() => {
+        this.onBlur()
+        this._blurTimeout = null
+      }, 100)
+    })
+
+    this.editorInstance.on('focus', () => {
+      if (this._blurTimeout) {
+        clearTimeout(this._blurTimeout)
+        this._blurTimeout = null
+      }
+
+      this.onFocus()
+    })
+
+    this.editorInstance.on('change', () => {
+      this.$emit('input', this.editorInstance.getValue())
+    })
+
+    await this.$nextTick()
+
+    this.editorInstance.focus()
+  }
 }
 </script>
 
 <style lang="scss">
-#app.-light .editor {
-  .ace_content {
-    background: 0;
-  }
-
-  .ace_marker-layer .ace_active-line,
-  .ace_gutter-active-line {
-    background-color: rgba(black, 0.1);
-  }
-
-  .ace_gutter {
-    background-color: var(--theme-background-200);
-    color: var(--theme-color-o50);
-  }
-}
-
 .editor {
   width: 100%;
   height: 100%;
   min-height: 50px;
-  background: 0;
-  color: var(--theme-color-300);
 
-  .ace_scrollbar::-webkit-scrollbar-track {
-    background: 0;
-  }
+  &.ace_editor {
+    background: var(--theme-background-75);
+    font-family: $font-monospace;
+    color: var(--theme-color-50);
 
-  .ace_scrollbar::-webkit-scrollbar-thumb {
-    background-color: rgba(black, 0.5);
-  }
+    .ace_scrollbar {
+      z-index: 10;
 
-  .ace_scrollbar::-webkit-scrollbar {
-    width: 0.5rem;
-    height: 0.5rem;
-  }
+      &-v {
+        width: 1rem !important;
+        height: auto !important;
+        background: var(--theme-background-75);
+      }
 
-  .ace_gutter {
-    background-color: var(--theme-background-100);
-    color: var(--theme-color-o50);
-  }
+      &-h {
+        height: 1rem !important;
+        width: auto !important;
+        background: var(--theme-background-75);
+      }
+    }
 
-  .ace_content {
-    background-color: rgba(black, 0.1);
-  }
+    .ace_scrollbar::-webkit-scrollbar-track {
+      background: 0;
+    }
 
-  .ace_marker-layer .ace_active-line,
-  .ace_gutter-active-line {
-    background-color: rgba(black, 0.1);
-  }
+    .ace_scrollbar::-webkit-scrollbar-thumb {
+      background-color: var(--theme-buy-100);
+      border: 4px solid var(--theme-background-75);
+      border-radius: 8px;
+    }
 
-  .ace_marker-layer .ace_selection {
-    background-color: var(--theme-background-200);
+    .ace_scrollbar::-webkit-scrollbar {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .ace_gutter {
+      background-color: var(--theme-background-100);
+      border-right: 0;
+      color: var(--theme-color-o50);
+
+      &-cell {
+        padding-left: 0.25rem;
+      }
+    }
+
+    .ace_mobile-menu {
+      display: none;
+    }
+
+    .ace_marker-layer .ace_active-line,
+    .ace_gutter-active-line {
+      background: rgba(white, 0.05);
+    }
+
+    .ace-github.ace_focus .ace_marker-layer .ace_active-line {
+      background: rgba(white, 0.05);
+    }
+
+    .ace_marker-layer .ace_selection {
+      background: rgba(white, 0.1);
+    }
+
+    .ace_fold {
+      box-shadow: 0 0 0.25em var(--theme-buy-base),
+        0 0 0.5em var(--theme-buy-100);
+      border-color: white;
+    }
+
+    .ace_fold-widget {
+      background: 0;
+
+      &:before {
+        font-family: 'icon';
+        font-size: 0.75em;
+        content: $icon-down-thin;
+        display: block;
+        line-height: 1.5;
+      }
+
+      &.ace_closed:before {
+        transform: rotateZ(-90deg);
+      }
+
+      &:hover {
+        border: 0;
+        box-shadow: none;
+        opacity: 1;
+        color: var(--theme-color-base);
+      }
+    }
   }
 }
 </style>
