@@ -4,6 +4,7 @@
     :class="[
       impliedSize && `dialog--size-${impliedSize}`,
       currentSize && `dialog--${currentSize}`,
+      moved && `dialog--moved`,
       mask && 'dialog--mask'
     ]"
   >
@@ -89,6 +90,8 @@ export default class extends Vue {
   delta = { x: 0, y: 0 }
   impliedSize = null
   currentSize = null
+  moved = false
+
   private _deinteractionTimeout: number
   private _windowResizeTimeout: number
   private _handleTranslateMove: (event: any) => void
@@ -178,6 +181,7 @@ export default class extends Vue {
     const minY = startOffset * -1
 
     this._handleTranslateMove = evnt => {
+      this.moved = true
       const endPosition = getEventCords(evnt)
 
       const x = lastMove.x + endPosition.x - startPosition.x
@@ -330,7 +334,11 @@ export default class extends Vue {
     }
 
     this._handleEscKey = event => {
-      if (event.key === 'Escape') {
+      if (
+        event.key === 'Escape' &&
+        this.$el === this.$el.parentElement.querySelector('.dialog:last-child')
+      ) {
+        event.stopPropagation()
         this.close()
       }
     }

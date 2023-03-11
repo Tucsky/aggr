@@ -1,59 +1,33 @@
 <template>
-  <button
-    type="button"
-    class="btn -arrow mrauto"
-    :class="classes"
-    @click="toggleDropdown"
-  >
-    Presets
-    <dropdown v-model="dropdownTrigger" @input="onDropdown">
+  <btn class="-arrow mrauto" :class="classes" @click="toggleDropdown">
+    {{ label }}
+    <dropdown v-model="dropdownTrigger" @opened="onOpened">
       <div class="d-flex btn-group presets-control" @click.stop>
+        <input
+          ref="query"
+          type="text"
+          placeholder="Search"
+          class="form-control presets-control__query"
+          v-model="query"
+          @keyup.enter="savePreset"
+        />
         <div
-          class="btn -text mrauto"
+          class="mlauto btn -text"
           @click="savePreset()"
-          title="Create"
+          title="Save as"
           v-tippy="{ boundary: 'window', placement: 'left' }"
         >
-          <i class="icon-plus mr8"></i>
-          <span>new</span>
-        </div>
-        <button
-          type="button"
-          class="btn -file -text"
-          title="Import"
-          v-tippy="{ boundary: 'window', placement: 'top' }"
-        >
-          <i class="icon-download"></i>
-          <input
-            type="file"
-            class="input-file"
-            @change="handleFile"
-            title="Browse"
-          />
-        </button>
-        <button
-          type="button"
-          class="btn -text"
-          @click.stop="downloadSettings"
-          title="Download"
-          v-tippy="{ boundary: 'window', placement: 'top' }"
-        >
           <i class="icon-save"></i>
-        </button>
-        <template v-if="showReset">
-          <button
-            type="button"
-            class="btn -text -red"
-            @click="applyDefault"
-            title="Reset"
-            v-tippy="{ boundary: 'window', placement: 'right' }"
-          >
-            <i class="icon-eraser"></i>
-          </button>
-        </template>
+        </div>
+        <div
+          class="btn -text  flex-right"
+          @click.stop="toggleUtilityDropdown($event)"
+        >
+          <i class="icon-cog"></i>
+        </div>
       </div>
       <div
-        v-for="preset in presets"
+        v-for="preset in filteredPresets"
         :key="preset.id"
         class="dropdown-item dropdown-item--group"
         @click="selectPreset(preset)"
@@ -110,11 +84,49 @@
           <span>Remove</span>
         </button>
       </dropdown>
+      <dropdown v-model="utilityDropdownTrigger">
+        <button
+          type="button"
+          class="dropdown-item btn -file -text -cases"
+          title="Import from preset file"
+          v-tippy="{ boundary: 'window', placement: 'left' }"
+        >
+          <i class="icon-upload"></i>
+          <input
+            type="file"
+            class="input-file"
+            @change="handleFile"
+            title="Browse"
+          />
+          <span>Import</span>
+        </button>
+        <button
+          type="button"
+          class="dropdown-item btn -text -cases"
+          title="Download preset file"
+          v-tippy="{ boundary: 'window', placement: 'left' }"
+          @click.stop="downloadSettings"
+        >
+          <i class="icon-download"></i>
+          <span>Download</span>
+        </button>
+        <template v-if="showReset">
+          <button
+            type="button"
+            class="dropdown-item btn -text -red -cases"
+            @click="applyDefault"
+          >
+            <span>Reset</span>
+            <i class="icon-eraser"></i>
+          </button>
+        </template>
+      </dropdown>
     </dropdown>
-  </button>
+  </btn>
 </template>
 
 <script lang="ts">
+import Btn from '@/components/framework/Btn.vue'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import importService from '@/services/importService'
@@ -150,6 +162,9 @@ interface PresetSummary {
       type: String,
       default: '-green'
     }
+  },
+  components: {
+    Btn
   }
 })
 export default class extends Vue {
@@ -158,17 +173,37 @@ export default class extends Vue {
   placeholder: string
   presets: PresetSummary[] = []
 
+  // container dropdown
   dropdownTrigger: HTMLElement = null
-  presetDropdownTrigger: HTMLElement = null
-  dropdownPreset: PresetSummary = null
 
-  created() {
-    this.getPresets()
+  // selected preset dropdown
+  presetDropdownTrigger: HTMLElement = null
+
+  // utility dropdown
+  utilityDropdownTrigger: HTMLElement = null
+
+  dropdownPreset: PresetSummary = null
+  query = ''
+
+  $refs!: {
+    query: HTMLInputElement
   }
 
-  toggleDropdown(event) {
+  get filteredPresets() {
+    if (!this.query.length) {
+      return this.presets
+    }
+
+    return this.presets.filter(
+      preset => preset.label.indexOf(this.query) !== -1
+    )
+  }
+
+  async toggleDropdown(event) {
     if (!this.dropdownTrigger) {
-      this.dropdownTrigger = event.currentTarget
+      await this.getPresets()
+
+      this.dropdownTrigger = event.target
     } else {
       this.dropdownTrigger = null
     }
@@ -180,6 +215,14 @@ export default class extends Vue {
     } else {
       this.presetDropdownTrigger = event.currentTarget
       this.dropdownPreset = preset
+    }
+  }
+
+  toggleUtilityDropdown(event) {
+    if (this.utilityDropdownTrigger) {
+      this.utilityDropdownTrigger = null
+    } else {
+      this.utilityDropdownTrigger = event.currentTarget
     }
   }
 
@@ -198,7 +241,10 @@ export default class extends Vue {
 
   async selectPreset(presetSummary: PresetSummary) {
     const preset = await workspacesService.getPreset(presetSummary.id)
-    this.$emit('apply', preset.data)
+    this.$emit('apply', {
+      ...preset,
+      name: presetSummary.label
+    })
   }
 
   async replacePreset(presetSummary: PresetSummary) {
@@ -215,7 +261,7 @@ export default class extends Vue {
           action: 'Save as',
           question: 'Save current settings',
           submitLabel: 'Save',
-          input: this.placeholder
+          input: this.query || this.placeholder
         })
 
         if (typeof name !== 'string') {
@@ -374,14 +420,22 @@ export default class extends Vue {
     )
   }
 
-  onDropdown() {
-    this.getPresets()
+  async onOpened() {
+    await this.$nextTick()
+
+    this.$refs.query.focus()
   }
 }
 </script>
 <style lang="scss">
 .presets-control {
   background-color: var(--theme-background-150);
+
+  &__query {
+    border: 0;
+    width: 7rem;
+    flex-grow: 1;
+  }
 
   .d-flex {
     .btn {

@@ -166,6 +166,12 @@
   width: 100%;
   cursor: move;
 
+  &--corner {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
   .pane.-small & {
     height: 1.429em;
   }

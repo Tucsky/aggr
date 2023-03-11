@@ -175,14 +175,16 @@
         />
       </div>
 
-      <p v-if="!useAudio" class="mt0 mb0 text-success">
-        <i class="icon-info mr8 -lower"></i>
-        <a
-          href="javascript:void(0);"
-          @click="$store.commit('settings/TOGGLE_AUDIO', true)"
-          >Enable audio to use this feature</a
-        >
-      </p>
+      <button
+        v-if="!useAudio"
+        type="button"
+        class="btn -text -small -green"
+        @click="$store.commit('settings/TOGGLE_AUDIO', true)"
+        title="Click to enable audio"
+        v-tippy
+      >
+        <i class="icon-info mr8 -lower"></i>Audio is disabled
+      </button>
     </ToggableSection>
 
     <ToggableSection title="Preferences" id="trades-display" inset>
@@ -535,11 +537,6 @@ export default class extends Vue {
 
   get showHistograms() {
     return (this.$store.state[this.paneId] as TradesPaneState).showHistograms
-  }
-
-  get showThresholdsAsTable() {
-    return (this.$store.state[this.paneId] as TradesPaneState)
-      .showThresholdsAsTable
   }
 
   get audioThreshold() {

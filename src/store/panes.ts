@@ -11,6 +11,11 @@ import { ListenedProduct } from './app'
 import { GRID_COLS } from '@/utils/constants'
 import { getMarketProduct, parseMarket } from '../services/productsService'
 
+enum StaticPaneType {
+  website = 'website',
+  alerts = 'alerts'
+}
+
 export type PaneType =
   | 'trades'
   | 'chart'
@@ -18,7 +23,10 @@ export type PaneType =
   | 'counters'
   | 'prices'
   | 'website'
+  | 'alerts'
+
 export type MarketsListeners = { [market: string]: ListenedProduct }
+
 export interface GridItem {
   x?: number
   y?: number
@@ -97,7 +105,10 @@ const actions = {
       type: options.type,
       zoom: options.zoom,
       settings: options.settings,
-      markets: options.markets || Object.keys(state.marketsListeners)
+      markets:
+        options.type in StaticPaneType
+          ? []
+          : options.markets || Object.keys(state.marketsListeners)
     }
 
     await registerModule(id, {}, true, pane)

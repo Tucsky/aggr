@@ -109,11 +109,6 @@ body {
     white-space: nowrap;
   }
 
-  > .-fill-70 {
-    flex-grow: 1;
-    flex-basis: 70%;
-  }
-
   > .-unshrinkable {
     flex-shrink: 0;
   }

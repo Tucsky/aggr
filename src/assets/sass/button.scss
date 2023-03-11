@@ -107,8 +107,8 @@ button {
   }
 
   &.-red {
-    background-color: var(--theme-sell-base);
-    border: 1px solid var(--theme-sell-base);
+    background-color: var(--theme-sell-50);
+    border: 1px solid var(--theme-sell-50);
     color: var(--theme-sell-color);
 
     &.-text {
@@ -265,6 +265,10 @@ a {
     border-radius: 0;
     border-color: transparent;
     margin: 0;
+
+    &:hover {
+      border-color: transparent;
+    }
   }
 
   .btn:first-child {

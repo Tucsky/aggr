@@ -25,6 +25,7 @@ import { PanesState } from '@/store/panes'
 import alertService from './alertService'
 import dialogService from './dialogService'
 import { stripStable } from './productsService'
+import notificationService from './notificationService'
 
 export interface AggrDB extends DBSchema {
   products: {
@@ -309,6 +310,14 @@ class WorkspacesService {
     }
 
     if (!workspace) {
+      if (
+        localStorage.getItem('settings') &&
+        /aggr.trade$/.test(window.location.hostname) &&
+        !notificationService.hasDismissed('legacy-redirection-notice')
+      ) {
+        this.showLegacyNotice()
+      }
+
       // create workspace, name it from url (or generate one)
       workspace = await this.createWorkspace(urlWorkspaceId)
 
@@ -730,6 +739,10 @@ class WorkspacesService {
     return this.db.delete('colors', color)
   }
 
+  getAllAlerts() {
+    return this.db.getAll('alerts')
+  }
+
   async getAlerts(market: string) {
     const marketAlerts = await this.db.get('alerts', market)
 
@@ -741,6 +754,7 @@ class WorkspacesService {
   }
 
   saveAlerts(marketAlerts: MarketAlerts) {
+    console.log('save alerts', marketAlerts.market, marketAlerts.alerts.length)
     if (!marketAlerts.alerts.length) {
       return this.db.delete('alerts', marketAlerts.market)
     }
@@ -785,6 +799,22 @@ class WorkspacesService {
       .map(a => a.id)
 
     downloadAnything(blob, 'aggr-' + workspaces.join('-'))
+  }
+
+  async showLegacyNotice() {
+    const stay = await dialogService.confirm({
+      title: 'Update notice',
+      message: `Welcome to aggr.trade ${process.env.VUE_APP_VERSION}.<br>We are replacing the old version with the new on the main app.<br><br>If for some reasons you don't like it,<br>legacy app can still be found on <a href="https://legacy.aggr.trade">legacy.aggr.trade</a> ☺️`,
+      ok: 'Stay ',
+      cancel: 'Go back',
+      html: true
+    })
+
+    if (stay === false) {
+      window.location.href = 'https://legacy.aggr.trade/'
+    } else if (stay === true) {
+      notificationService.dismiss('legacy-redirection-notice')
+    }
   }
 }
 

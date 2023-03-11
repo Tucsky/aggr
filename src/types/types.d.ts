@@ -124,6 +124,15 @@ export interface MarketAlert {
   triggered?: boolean
 }
 
+export interface AlertUpdate {
+  price: number
+  timestamp: number
+  market: string
+  add?: boolean
+  newPrice?: number
+  remove?: boolean
+}
+
 export type ProductsData = string[] | { [prop: string]: any }
 
 export interface PreviousSearchSelection {

@@ -55,6 +55,7 @@ export interface SettingsState {
   alertsColor: string
   alertsClick: boolean
   alertSound: string
+  showThresholdsAsTable: boolean
 }
 
 const state = Object.assign(
@@ -532,6 +533,9 @@ const mutations = {
       label: getTimeframeForHuman(value),
       value
     })
+  },
+  TOGGLE_THRESHOLDS_TABLE(state) {
+    state.showThresholdsAsTable = !state.showThresholdsAsTable
   }
 } as MutationTree<SettingsState>
 

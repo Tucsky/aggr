@@ -3,23 +3,27 @@
     class="thresholds"
     :class="{ '-dragging': dragging, '-rendering': rendering }"
   >
-    <div class="d-flex">
-      <div class="column mlauto mrauto">
-        <label class="-fill -center mr8 text-right">Buy color</label>
+    <div class="d-flex mx8">
+      <label class="column mlauto mrauto -center">
+        <small class="-fill -center mr8 text-right">Buy color</small>
         <color-picker-control
           :value="buyColor"
           label="Buy color"
+          class="-small"
           @input="regenerateSwatch('buy', $event)"
-        ></color-picker-control>
-      </div>
-      <div class="column mrauto mlauto">
+        >
+          <i class="icon-up -small"></i>
+        </color-picker-control>
+      </label>
+      <label class="column mrauto mlauto -center">
         <color-picker-control
           :value="sellColor"
           label="Sell color"
+          class="-small"
           @input="regenerateSwatch('sell', $event)"
         ></color-picker-control>
-        <label class="-fill -center ml8">Sell color</label>
-      </div>
+        <small class="-fill -center ml8">Sell color</small>
+      </label>
     </div>
     <table class="table thresholds-table" v-if="showThresholdsAsTable">
       <thead>
@@ -144,23 +148,8 @@
         placeholder="Custom thresholds"
         :adapter="getPreset"
         @apply="applyPreset($event)"
-        label="Presets"
-        classes="btn -text -small"
+        classes="btn -small -center"
       />
-      <button
-        type="button"
-        v-tippy
-        title="Switch table / sliders"
-        class="btn -text -small -center mr8"
-        @click="
-          $store.commit(
-            paneId + '/TOGGLE_THRESHOLDS_TABLE',
-            !showThresholdsAsTable
-          )
-        "
-      >
-        {{ showThresholdsAsTable ? 'slider' : 'table' }}
-      </button>
       <button
         type="button"
         class="btn -nowrap -text -start"
@@ -183,8 +172,6 @@
 </template>
 
 <script lang="ts">
-import panesSettings from '@/store/panesSettings'
-
 import { Component, Vue } from 'vue-property-decorator'
 import { sleep, randomString } from '@/utils/helpers'
 import { formatAmount } from '@/services/productsService'
@@ -195,8 +182,10 @@ import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
 import { Threshold } from '@/store/panesSettings/trades'
 import ThresholdDropdown from './ThresholdDropdown.vue'
 import ThresholdPresetDialog from '@/components/trades/ThresholdPresetDialog.vue'
+import defaultTresholds from '@/store/defaultThresholds.json'
 
 import merge from 'lodash.merge'
+import { Preset } from '@/types/types'
 @Component({
   name: 'Thresholds',
   components: {
@@ -258,7 +247,7 @@ export default class extends Vue {
   }
 
   get showThresholdsAsTable() {
-    return this.$store.state[this.paneId].showThresholdsAsTable
+    return this.$store.state.settings.showThresholdsAsTable
   }
 
   get useAudio() {
@@ -591,9 +580,11 @@ export default class extends Vue {
     }
   }
 
-  applyPreset(presetData?) {
+  applyPreset(preset?: Preset) {
+    let presetData = preset ? preset.data : null
+
     const defaultSettings = JSON.parse(
-      JSON.stringify(panesSettings.trades.state[this.type])
+      JSON.stringify(defaultTresholds[this.type])
     ) as Threshold[]
 
     let updateThresholdsColors = null

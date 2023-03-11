@@ -889,12 +889,8 @@ export default class extends Mixins(PaneMixin) {
 
   drawHistogram(trade, height) {
     this.ctx.fillStyle = 'rgba(255,255,255,0.05)'
-    this.ctx.fillRect(
-      0,
-      0,
-      Math.min(1, trade.count / 100) * this.width,
-      this.drawOffset + height
-    )
+    const x = Math.min(1, trade.count / 100) * this.width
+    this.ctx.fillRect(x - 2, 0, 2, this.drawOffset + height)
   }
 
   drawPair(trade, height) {

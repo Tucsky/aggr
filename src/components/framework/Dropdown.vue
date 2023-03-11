@@ -1,5 +1,5 @@
 <template>
-  <transition name="dropdown" @enter="onEnterStart">
+  <transition name="dropdown" @enter="onEnterStart" @after-enter="onEnterEnd">
     <div
       class="dropdown hide-scrollbar"
       :class="[
@@ -85,18 +85,20 @@ export default {
     /**
      * Open the dropdown
      */
-    async open(nextTriggerElement: HTMLElement) {
-      nextTriggerElement.classList.add('dropdown-trigger')
+    async open(nextTriggerElement) {
+      if (nextTriggerElement instanceof HTMLElement) {
+        nextTriggerElement.classList.add('dropdown-trigger')
+      }
 
       document.getElementById('app').appendChild(this.$el)
-
-      if (this.$el instanceof HTMLElement) {
-        this.fitScreen()
-      }
 
       this.bindResize()
 
       await this.$nextTick()
+
+      if (this.$el instanceof HTMLElement) {
+        this.fitScreen()
+      }
 
       if (!this.isolate) {
         this.bindClickOutside()
@@ -136,12 +138,16 @@ export default {
       }
     },
 
+    onEnterEnd() {
+      this.$emit('opened')
+    },
+
     /**
      * Close if was open then open if given a trigger element
-     * @param {HTMLElement} triggerElement element that triggered the dropdown
+     * @param {HTMLElement | { top, left, width, height }} triggerElement element that triggered the dropdown
      * @param {boolean} emit mutate v-model with the new triggerElement if true
      */
-    toggle(triggerElement: HTMLElement, emit = false) {
+    toggle(triggerElement, emit = false) {
       const nextTriggerElement =
         triggerElement && triggerElement !== this.triggerElement
           ? triggerElement
@@ -153,7 +159,11 @@ export default {
 
       this.triggerElement = nextTriggerElement
 
-      if (nextTriggerElement && nextTriggerElement.classList) {
+      if (
+        nextTriggerElement &&
+        (nextTriggerElement.getBoundingClientRect ||
+          typeof nextTriggerElement.top !== 'undefined')
+      ) {
         this.open(nextTriggerElement)
       }
 
@@ -166,8 +176,12 @@ export default {
      * Align the dropdown below or above of trigger element
      */
     fitScreen() {
-      const triggerElement = this.triggerElement as HTMLElement
-      if (!triggerElement || !triggerElement.getBoundingClientRect) {
+      const triggerElement = this.triggerElement
+      if (
+        !triggerElement ||
+        (!triggerElement.getBoundingClientRect &&
+          typeof triggerElement.top === 'undefined')
+      ) {
         return
       }
 
@@ -176,13 +190,17 @@ export default {
         return
       }
 
-      /*const fontSize = getComputedStyle(triggerElement).fontSize
-      this.$el.style.fontSize = fontSize*/
       dropdownElement.offsetHeight
 
       const viewportWidth = window.innerWidth
       const viewportHeight = window.innerHeight
-      const triggerElementRect = triggerElement.getBoundingClientRect()
+
+      let triggerElementRect
+      if (triggerElement instanceof HTMLElement) {
+        triggerElementRect = triggerElement.getBoundingClientRect()
+      } else {
+        triggerElementRect = triggerElement
+      }
       const dropdownElementRect = dropdownElement.getBoundingClientRect()
       const dropdownElementWidth = dropdownElementRect.width
 
@@ -297,8 +315,9 @@ export default {
 
         if (
           isOutside &&
-          !this.triggerElement.contains(event.target) &&
-          this.triggerElement !== event.target
+          (typeof this.triggerElement.top !== 'undefined' ||
+            (!this.triggerElement.contains(event.target) &&
+              this.triggerElement !== event.target))
         ) {
           this.toggle(null, true)
         }
@@ -368,11 +387,26 @@ export default {
   }
 
   ::v-deep &-divider {
-    background-color: var(--theme-color-base);
-    opacity: 0.1;
+    background-color: var(--theme-background-200);
     height: 1px;
     padding: 0;
     margin: 0.5em 0;
+    position: relative;
+
+    &[data-label]:before {
+      content: attr(data-label);
+      position: absolute;
+      color: white;
+      background-color: var(--theme-background-150);
+      color: var(--theme-background-300);
+      font-weight: 600;
+      padding: 0 0.25rem;
+      font-size: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      left: 0.5rem;
+      margin-top: -1px;
+    }
   }
 
   ::v-deep &-item {
@@ -382,10 +416,13 @@ export default {
     display: flex;
     align-items: center;
     color: var(--theme-color-base);
+    font-family: $font-base;
     width: 100%;
     cursor: pointer;
     box-sizing: border-box;
     font-size: 1em;
+    border-radius: 0;
+    box-shadow: none;
 
     &:hover {
       background-color: var(--theme-color-o10);

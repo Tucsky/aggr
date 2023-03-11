@@ -17,6 +17,8 @@
         "BINANCE_FUTURES:btcusdt",
         "BINANCE:btcbusd",
         "BINANCE_FUTURES:btcbusd",
+        "BITGET:BTCUSDT",
+        "BITGET:BTCUSDT_UMCBL",
         "BITFINEX:BTCUST",
         "BITFINEX:BTCF0:USTF0",
         "BITMEX:XBTUSDT",
@@ -43,6 +45,8 @@
         "BINANCE_FUTURES:btcusdt",
         "BINANCE:btcbusd",
         "BINANCE_FUTURES:btcbusd",
+        "BITGET:BTCUSDT",
+        "BITGET:BTCUSDT_UMCBL",
         "BITFINEX:BTCUST",
         "BITFINEX:BTCF0:USTF0",
         "BITMEX:XBTUSDT",
@@ -54,15 +58,7 @@
         "OKEX:BTC-USDT-SWAP"
       ],
       "settings": {
-        "showLiquidations": false,
-        "thresholds": [
-          {
-            "amount": 100000
-          }
-        ],
-        "liquidations": {
-          "amount": 50000
-        }
+        "showLiquidations": false
       }
     },
     "liquidations": {

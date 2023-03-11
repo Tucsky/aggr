@@ -19,9 +19,10 @@ const supportedExchanges = process.env.VUE_APP_EXCHANGES.split(',').map(id =>
 const state = supportedExchanges.reduce(
   (exchangesState: ExchangesState, id: string) => {
     exchangesState[id] = {
-      disabled: /AGGR|HITBTC|PHEMEX|BINANCE_US|SERUM|HUOBI|POLONIEX|FTX/.test(
-        id
-      )
+      disabled:
+        /AGGR|UNISWAP|HITBTC|PHEMEX|BINANCE_US|SERUM|HUOBI|POLONIEX|FTX/.test(
+          id
+        )
     }
 
     return exchangesState

@@ -690,14 +690,16 @@ class Exchange extends EventEmitter {
 
   startKeepAlive(
     api,
-    payload: {
-      type?: string
-      event?: string
-      op?: string
-      method?: string
-      id?: number
-      params?: Array<any>
-    } = { event: 'ping' },
+    payload:
+      | {
+          type?: string
+          event?: string
+          op?: string
+          method?: string
+          id?: number
+          params?: Array<any>
+        }
+      | string = { event: 'ping' },
     every = 30000
   ) {
     if (this.keepAliveIntervals[api.url]) {
@@ -706,7 +708,9 @@ class Exchange extends EventEmitter {
 
     this.keepAliveIntervals[api.url] = setInterval(() => {
       if (api.readyState === WebSocket.OPEN) {
-        api.send(JSON.stringify(payload))
+        api.send(
+          typeof payload === 'string' ? payload : JSON.stringify(payload)
+        )
       }
     }, every)
   }

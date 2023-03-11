@@ -58,7 +58,8 @@ import { GridItem } from '@/store/panes'
     Counters: () => import('@/components/counters/Counters.vue'),
     Prices: () => import('@/components/prices/Prices.vue'),
     Website: () => import('@/components/website/Website.vue'),
-    TradesLite: () => import('@/components/trades/TradesLite.vue')
+    TradesLite: () => import('@/components/trades/TradesLite.vue'),
+    Alerts: () => import('@/components/alerts/Alerts.vue')
   }
 })
 export default class extends Vue {

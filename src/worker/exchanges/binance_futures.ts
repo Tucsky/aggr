@@ -1,4 +1,5 @@
 import Exchange from '../exchange'
+import { sleep } from '../helpers/utils'
 
 export default class extends Exchange {
   id = 'BINANCE_FUTURES'
@@ -81,6 +82,8 @@ export default class extends Exchange {
         id: this.subscriptions[pair]
       })
     )
+
+    await sleep(250 * this.apis.length)
 
     return true
   }

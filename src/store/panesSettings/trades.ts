@@ -4,7 +4,8 @@ import Vue from 'vue'
 import { randomString } from '@/utils/helpers'
 import { formatMarketPrice } from '@/services/productsService'
 import { ModulesState } from '..'
-import { getLogShade, joinRgba, splitColorCode } from '../../utils/colors'
+import { getLogShade, joinRgba, splitColorCode } from '@/utils/colors'
+import defaultTresholds from '@/store/defaultThresholds.json'
 
 export interface Threshold {
   id: string
@@ -25,7 +26,6 @@ export interface TradesPaneState {
   liquidations: Threshold[]
   thresholds: Threshold[]
   audioThreshold: number
-  showThresholdsAsTable: boolean
   muted: boolean
   audioPitch: number
   audioVolume: number
@@ -59,107 +59,10 @@ const getters = {
 } as GetterTree<TradesPaneState, ModulesState>
 
 const state = {
-  liquidations: [
-    {
-      id: 'liquidation_threshold',
-      amount: 50000,
-      buyColor: 'rgba(236,64,122,0.5)',
-      sellColor: 'rgba(255,152,0,0.5)',
-      buyAudio:
-        "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*2,0,,,'sine')\nplay(329.63, srqtR, srqtR*4,0.08,,,'sine')",
-      sellAudio:
-        "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*2,0,,,'sine')\nplay(440, srqtR, srqtR*4,0.08,,,'sine')"
-    },
-    {
-      id: 'liquidation_significant',
-      amount: 100000,
-      buyColor: 'rgba(236,64,122,0.6)',
-      sellColor: 'rgba(255,152,0,0.7)',
-      buyAudio:
-        "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*6,0.08,,,'sine')",
-      sellAudio:
-        "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*6,0.08,,,'sine')"
-    },
-    {
-      id: 'liquidation_huge',
-      amount: 200000,
-      buyGif: 'flying money',
-      sellGif: 'flying money',
-      buyColor: 'rgba(236,64,122,0.7)',
-      sellColor: 'rgba(255,152,0,0.8)',
-      buyAudio:
-        "var srqtR = Math.min(1, gain / 4)\nplay(329.63, srqtR, srqtR*4,0,,,'sine')\nplay(329.63, srqtR, srqtR*8,0.08,,,'sine')",
-      sellAudio:
-        "var srqtR = Math.min(1, gain / 6)\nplay(440, srqtR, srqtR*4,0,,,'sine')\nplay(440, srqtR, srqtR*8,0.08,,,'sine')"
-    },
-    {
-      id: 'liquidation_rare',
-      amount: 1000000,
-      buyGif: 'explosion',
-      sellGif: 'explosion',
-      buyColor: 'rgb(156,39,176)',
-      sellColor: 'rgb(255,235,59)',
-      buyAudio:
-        "var srqtR = Math.min(1, gain / 10)\nplay(329.63, srqtR, 1,0,,,'sine')\nplay(329.63, srqtR, srqtR*10,0.08,,,'sine')",
-      sellAudio:
-        "var srqtR = Math.min(1, gain / 10)\nplay(440, srqtR, 1,0,,,'sine')\nplay(440, srqtR, srqtR*10,0.08,,,'sine')"
-    }
-  ],
-  thresholds: [
-    {
-      id: 'threshold',
-      amount: 100000,
-      buyColor: 'rgba(119, 148, 92, 0.25)',
-      sellColor: 'rgba(239, 67, 82, 0.25)',
-      buyAudio: `play(659.26, gain / 10, 0.1 + gain / 7)`,
-      sellAudio: `play(493.88, gain * 1.5 / 10, 0.1 + gain / 7)`
-    },
-    {
-      id: 'significant',
-      amount: 250000,
-      buyColor: 'rgb(100, 157, 102)',
-      sellColor: 'rgb(239, 67, 82)',
-      buyAudio: `play(659.26, 0.05 + gain / 10, 0.2 + ratio * 0.23,0,,0);
-play(830.6, 0.05 + gain / 10, 0.2 + ratio * 0.23, 0.08,,0)`,
-      sellAudio: `play(493.88, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23,0,,0);
-play(392, 0.05 + gain * 1.5 / 10, 0.2 + ratio * 0.23, 0.08,,0)`
-    },
-    {
-      id: 'huge',
-      amount: 1000000,
-      buyGif: 'cash bullish',
-      sellGif: 'cash bearish',
-      buyColor: 'rgb(59, 202, 109)',
-      sellColor: 'rgb(235, 30, 47)',
-      buyAudio: `play(659.26, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0,,0);
-play(830.6, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0.08,,0);
-play(987.76, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0.16,,0);
-play(1318.52, 0.05 + gain / 10, 0.1 + ratio * 0.23, 0.24,,0)`,
-      sellAudio: `play(493.88, 0.05 + gain / 25, 0.1 + ratio * 0.23, 0,,0);
-play(369.99, 0.05 + gain * 1.5 / 10, 0.2, 0.08,,0);
-play(293.66, 0.05 + gain * 1.5 / 10, 0.2, 0.16,,0);
-play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.23, 0.24,,0)`
-    },
-    {
-      id: 'rare',
-      amount: 10000000,
-      buyGif: 'explosion',
-      sellGif: 'explosion',
-      buyColor: 'rgb(0, 255, 127)',
-      sellColor: 'rgb(217, 31, 28)',
-      buyAudio: `play(659.26, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0,,0);
-play(830.6, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0.08,,0);
-play(987.76, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0.16,,0);
-play(1318.52, 0.05 + gain / 10, 0.1 + ratio * 0.13, 0.24,,0)`,
-      sellAudio: `play(493.88, 0.05 + gain / 25, 0.1 + ratio * 0.13, 0,,0);
-play(369.99, 0.05 + gain * 1.5 / 10, 0.2, 0.08,,0);
-play(293.66, 0.05 + gain * 1.5 / 10, 0.2, 0.16,,0);
-play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.13, 0.24,,0)`
-    }
-  ],
+  liquidations: [],
+  thresholds: [],
   audioThreshold: null,
   multipliers: {},
-  showThresholdsAsTable: true,
   maxRows: 100,
   muted: false,
   audioPitch: null,
@@ -176,6 +79,23 @@ play(246.94, 0.05 + gain * 1.5 / 10, 0.1 + ratio * 0.13, 0.24,,0)`
 } as TradesPaneState
 
 const actions = {
+  boot({ state }) {
+    if (
+      !state.thresholds.length ||
+      (state.thresholds.length === 1 &&
+        typeof state.thresholds[0].id === 'undefined')
+    ) {
+      state.thresholds = defaultTresholds.thresholds
+    }
+
+    if (
+      !state.liquidations.length ||
+      (state.liquidations.length === 1 &&
+        typeof state.liquidations[0].id === 'undefined')
+    ) {
+      state.liquidations = defaultTresholds.liquidations
+    }
+  },
   updateThreshold(
     { state, commit },
     { index, prop, value }: { index: number; prop: string; value: any }
@@ -311,9 +231,6 @@ const mutations = {
   },
   TOGGLE_PREFERENCE(state, key) {
     state[key] = !state[key]
-  },
-  TOGGLE_THRESHOLDS_TABLE(state) {
-    state.showThresholdsAsTable = !state.showThresholdsAsTable
   },
   SET_THRESHOLD_AMOUNT(state, { id, value }) {
     const threshold = this.getters[state._id + '/getThreshold'](id)

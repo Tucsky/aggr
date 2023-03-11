@@ -20,6 +20,7 @@ import Phemex from './phemex'
 import Dydx from './dydx'
 import Uniswap from './uniswap'
 import Kucoin from './kucoin'
+import Bitget from './bitget'
 
 export const exchanges = [
   new Aggr(),
@@ -41,7 +42,8 @@ export const exchanges = [
   new Phemex(),
   new Dydx(),
   new Uniswap(),
-  new Kucoin()
+  new Kucoin(),
+  new Bitget()
 ] as Exchange[]
 
 export function getExchangeById(id: string) {

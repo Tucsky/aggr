@@ -272,7 +272,7 @@
         class="mr8 -left"
         :adapter="getIndicatorPreset"
         :placeholder="presetPlaceholder"
-        label="Presets"
+        :label="lastPreset"
         :show-reset="false"
         @apply="applyIndicatorPreset($event)"
       />
@@ -292,7 +292,7 @@
             <span>Use as default</span>
             <i
               class="icon-info text-muted ml8"
-              title="Will be added to new chart templates"
+              title="New charts to use this indicator"
               v-tippy
             />
           </label>
@@ -315,6 +315,9 @@
           <i class="icon-copy-paste"></i> <span>Duplicate</span>
         </button>
         <div class="dropdown-divider"></div>
+        <button type="button" class="dropdown-item" @click="revertChanges">
+          <i class="icon-refresh"></i> <span>Revert changes</span>
+        </button>
         <button type="button" class="dropdown-item" @click="removeIndicator">
           <i class="icon-cross"></i> <span>Unload</span>
         </button>
@@ -453,6 +456,18 @@ export default {
         ...this.defaultOptionsKeys,
         ...this.colorOptionsKeys
       ].filter(key => query.test(key))
+    },
+    lastPreset: {
+      get() {
+        if (this.indicator.lastPreset) {
+          return this.indicator.lastPreset
+        }
+
+        return 'Presets'
+      },
+      set(preset: Preset) {
+        this.indicator.lastPreset = (preset && preset.name) || null
+      }
     }
   },
   watch: {
@@ -475,6 +490,8 @@ export default {
       this.getPlotTypes()
       this.getOptionsKeys()
     })
+
+    this.originalIndicator = JSON.parse(JSON.stringify(this.indicator))
   },
   beforeDestroy() {
     this.saveNavigationState()
@@ -723,12 +740,16 @@ export default {
       this.defaultOptionsKeys = otherKeys
       this.colorOptionsKeys = colorKeys
     },
-    applyIndicatorPreset(presetData) {
+    applyIndicatorPreset(preset?: Preset & { name: string }) {
+      const data = preset ? preset.data : null
+
       const indicator =
         this.$store.state[this.paneId].indicators[this.indicatorId]
 
-      if (presetData) {
-        merge(indicator, presetData)
+      this.lastPreset = preset
+
+      if (data) {
+        merge(indicator, data)
       } else {
         // script + default + colors
         const keys = this.scriptOptionsKeys.concat(
@@ -826,6 +847,11 @@ export default {
       if (this.$refs.editor) {
         this.$refs.editor.resize()
       }
+    },
+    revertChanges() {
+      this.applyIndicatorPreset({
+        data: this.originalIndicator
+      })
     }
   }
 }

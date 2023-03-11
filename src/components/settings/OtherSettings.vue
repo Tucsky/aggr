@@ -73,6 +73,18 @@
         <span>Use local time for charts</span>
       </label>
     </div>
+    <div class="form-group mb8">
+      <label class="checkbox-control flex-left">
+        <input
+          type="checkbox"
+          class="form-control"
+          :checked="!showThresholdsAsTable"
+          @change="$store.commit('settings/TOGGLE_THRESHOLDS_TABLE')"
+        />
+        <div></div>
+        <span>Use slider for thresholds</span>
+      </label>
+    </div>
   </div>
 </template>
 
@@ -103,6 +115,10 @@ export default class extends Vue {
 
   get timezoneOffset() {
     return this.$store.state.settings.timezoneOffset
+  }
+
+  get showThresholdsAsTable() {
+    return this.$store.state.settings.showThresholdsAsTable
   }
 }
 </script>

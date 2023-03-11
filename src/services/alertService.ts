@@ -1,3 +1,5 @@
+import store from '@/store'
+import { MarketAlert } from '@/types/types'
 import { getApiUrl, handleFetchError } from '@/utils/helpers'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
@@ -5,6 +7,7 @@ import workspacesService from './workspacesService'
 interface AlertResponse {
   error?: string
   markets?: string[]
+  alert?: any
   priceOffset?: number
 }
 
@@ -32,6 +35,24 @@ class AlertService {
       outputArray[i] = rawData.charCodeAt(i)
     }
     return outputArray
+  }
+
+  getPaneMarkets(paneId: string) {
+    const markets = store.state.panes.panes[paneId].markets
+    const indexes = []
+
+    for (const marketKey of markets) {
+      const market = store.state.panes.marketsListeners[marketKey]
+      if (market && indexes.indexOf(market.local) === -1) {
+        indexes.push(market.local)
+      }
+    }
+
+    return indexes.reduce(async (acc, index) => {
+      const alerts = await this.getAlerts(index)
+      Array.prototype.push.apply(acc, alerts)
+      return acc
+    }, [])
   }
 
   /**
@@ -141,21 +162,36 @@ class AlertService {
     return this.pushSubscription
   }
 
-  subscribe(market: string, price: number, currentPrice?: number) {
-    return this.toggleAlert(market, price, currentPrice)
+  async subscribe(market: string, price: number, currentPrice?: number) {
+    const data = await this.toggleAlert(market, price, currentPrice)
+
+    if (!data.error) {
+      store.dispatch('app/showNotice', {
+        title: `Added ${market} @${price}`,
+        type: 'success'
+      })
+    }
+
+    return data
   }
 
-  unsubscribe(market: string, price: number) {
-    return this.toggleAlert(market, price, null, true)
-  }
+  async unsubscribe(market: string, price: number) {
+    const data = await this.toggleAlert(market, price, null, true)
 
-  modify(
-    market: string,
-    price: number,
-    newPrice: number,
-    currentPrice?: number
-  ) {
-    return this.moveAlert(market, price, newPrice, currentPrice)
+    if (data.alert) {
+      const { alert } = data
+
+      store.dispatch('app/showNotice', {
+        title: `Removed ${alert.market} @${alert.price}`,
+        type: 'success'
+      })
+    } else if (!data.error) {
+      store.dispatch('app/showNotice', {
+        title: `Alert not found (or expired)`
+      })
+    }
+
+    return data
   }
 
   getPrice(market): Promise<number> {
@@ -197,7 +233,8 @@ class AlertService {
     market: string,
     price: number,
     currentPrice?: number,
-    unsubscribe?: boolean
+    unsubscribe?: boolean,
+    status?: boolean
   ): Promise<AlertResponse> {
     const subscription = await this.getPushSubscription()
 
@@ -219,7 +256,8 @@ class AlertService {
         market,
         price,
         currentPrice,
-        unsubscribe
+        unsubscribe,
+        status
       }),
       headers: {
         'Content-Type': 'application/json'
@@ -240,11 +278,43 @@ class AlertService {
       })
   }
 
-  async moveAlert(
-    market: string,
-    price: number,
-    newPrice: number,
+  async createAlert(
+    createdAlert: MarketAlert,
+    marketAlerts: MarketAlert[],
     currentPrice?: number
+  ) {
+    marketAlerts.push(createdAlert)
+
+    await this.subscribe(createdAlert.market, createdAlert.price, currentPrice)
+      .then(data => {
+        createdAlert.active = !data.error
+      })
+      .catch(err => {
+        store.dispatch('app/showNotice', {
+          id: 'alert-registration-failure',
+          title: `${err.message}\nYou need to make sure your browser is set to allow push notifications.`,
+          type: 'error'
+        })
+      })
+
+    workspacesService.saveAlerts({
+      market: createdAlert.market,
+      alerts: marketAlerts
+    })
+
+    aggregatorService.emit('alert', {
+      price: createdAlert.price,
+      market: createdAlert.market,
+      timestamp: createdAlert.timestamp,
+      add: true
+    })
+  }
+
+  async moveAlert(
+    movedAlert: MarketAlert,
+    newPrice: number,
+    currentPrice: number,
+    marketAlerts: MarketAlert[]
   ): Promise<boolean> {
     const subscription = await this.getPushSubscription()
 
@@ -252,19 +322,19 @@ class AlertService {
       return
     }
 
-    if (!(await this.validateAlert(market, newPrice))) {
+    if (!(await this.validateAlert(movedAlert.market, newPrice))) {
       return
     }
 
     const origin = location.href
 
-    return fetch(this.url, {
+    const active = await fetch(this.url, {
       method: 'POST',
       body: JSON.stringify({
         ...subscription,
         origin,
-        market,
-        price,
+        market: movedAlert.market,
+        price: movedAlert.price,
         newPrice,
         currentPrice
       }),
@@ -285,6 +355,50 @@ class AlertService {
 
         return false
       })
+
+    aggregatorService.emit('alert', {
+      price: movedAlert.price,
+      market: movedAlert.market,
+      newPrice
+    })
+
+    movedAlert.triggered = false
+    movedAlert.active = active
+    movedAlert.price = newPrice
+
+    await workspacesService.saveAlerts({
+      market: movedAlert.market,
+      alerts: marketAlerts
+    })
+  }
+
+  async removeAlert(removedAlert: MarketAlert, marketAlerts?: MarketAlert[]) {
+    if (!removedAlert.triggered) {
+      try {
+        await this.unsubscribe(removedAlert.market, removedAlert.price)
+      } catch (err) {
+        if (alert && removedAlert.active) {
+          store.dispatch('app/showNotice', {
+            id: 'alert-registration-failure',
+            title: `${err.message}\nYou need to make sure your browser is set to allow push notifications.`,
+            type: 'error'
+          })
+        }
+      }
+    }
+
+    aggregatorService.emit('alert', {
+      price: removedAlert.price,
+      market: removedAlert.market,
+      remove: true
+    })
+
+    if (marketAlerts) {
+      await workspacesService.saveAlerts({
+        market: removedAlert.market,
+        alerts: marketAlerts.filter(alert => alert.price !== removedAlert.price)
+      })
+    }
   }
 }
 

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented here.
 
+## [3.3.1] - 2023-02-24
+### Added
+- Bitget
+- Alerts pane
+
 ## [3.3] - 2023-01-11
 ### Added
 - Kucoin spot

@@ -336,7 +336,7 @@ export default {
     },
     dismiss() {
       this.hide()
-      notificationService.dismiss(this.contextId, 604800000)
+      notificationService.dismiss(this.contextId, 86400000)
     },
     next() {
       if (this.stepIndex === 1 && !this.valid) {

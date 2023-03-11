@@ -11,10 +11,7 @@
       class="notice"
       :class="'-' + notice.type"
     >
-      <div
-        class="notice__wrapper"
-        @click="$store.dispatch('app/hideNotice', notice.id)"
-      >
+      <div class="notice__wrapper" @click="onClick(notice)">
         <i v-if="notice.icon" class="notice__icon" :class="notice.icon"></i>
         <div
           v-if="!notice.html"
@@ -53,14 +50,16 @@ export default class extends Vue {
     }
   }
 
-  onButtonClick(notice) {
-    let hide = true
+  onClick(notice) {
+    if (typeof notice.action === 'function') {
+      const result = notice.action()
 
-    if (typeof notice.button.click === 'function') {
-      hide = notice.button.click()
+      if (result === false) {
+        return
+      }
     }
 
-    hide !== false && this.$store.dispatch('app/hideNotice', notice.id)
+    this.$store.dispatch('app/hideNotice', notice.id)
   }
 }
 </script>

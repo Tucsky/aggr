@@ -1,14 +1,14 @@
 <template>
-  <div
-    class="pane-header hide-scrollbar pane-overlay d-flex"
-    :class="{ '-loading': loading }"
-  >
-    <span class="pane-header__name mrauto" @dblclick="renamePane">{{
-      name
-    }}</span>
+  <div class="pane-header hide-scrollbar pane-overlay d-flex">
+    <span class="pane-header__name mrauto" @dblclick="renamePane">
+      <slot name="title">
+        {{ name }}
+      </slot>
+    </span>
     <div class="toolbar flex-grow-1" @dblclick="maximizePane">
       <slot />
       <button
+        v-if="showSearch"
         type="button"
         @click="openSearch"
         class="btn toolbar__label toolbar__label--768 -text"
@@ -24,7 +24,7 @@
       >
         <i class="icon-cog"></i>
       </btn>
-      <button type="button" @click="toggleDropdown" class="toolbar__label">
+      <button type="button" @click="toggleDropdown" class="btn toolbar__label">
         <i class="icon-more"></i>
       </button>
 
@@ -52,7 +52,6 @@
             <i class="icon-plus"></i>
           </button>
         </div>
-        <slot name="menu"></slot>
         <button
           v-if="settings !== null"
           type="button"
@@ -63,6 +62,7 @@
           <span>Settings</span>
         </button>
         <button
+          v-if="showSearch"
           type="button"
           class="dropdown-item"
           @click="$store.dispatch('app/showSearch', paneId)"
@@ -70,6 +70,13 @@
           <i class="icon-search"></i>
           <span>Sources</span>
         </button>
+        <div
+          v-if="$slots.menu"
+          class="dropdown-divider"
+          :data-label="`${paneId} options`"
+        ></div>
+        <slot name="menu"></slot>
+        <div class="dropdown-divider" data-label="pane options"></div>
         <button type="button" class="dropdown-item" @click="maximizePane">
           <i class="icon-enlarge"></i>
           <span>Maximize</span>
@@ -82,7 +89,7 @@
           <i class="icon-download"></i>
           <span>Download</span>
         </button>
-        <div class="dropdown--divider"></div>
+        <div class="dropdown-divider"></div>
         <button type="button" class="dropdown-item" @click="removePane">
           <i class="icon-trash"></i>
           <span>Remove</span>
@@ -110,9 +117,9 @@ import dialogService from '@/services/dialogService'
       type: Function,
       default: null
     },
-    loading: {
+    showSearch: {
       type: Boolean,
-      default: false
+      default: true
     }
   },
   components: {

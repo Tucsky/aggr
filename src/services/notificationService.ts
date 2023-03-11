@@ -15,7 +15,7 @@ class NotificationService {
   }
 
   dismiss(contextId, duration = -1) {
-    this.dismissedContext[contextId] = Date.now() + duration
+    this.dismissedContext[contextId] = duration > 0 ? Date.now() + duration : -1
     this.save()
   }
 

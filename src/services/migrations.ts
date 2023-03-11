@@ -1,8 +1,6 @@
-import panesSettings from '@/store/panesSettings'
 import { MarketAlert, Workspace } from '@/types/types'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
 import { AggrDB } from './workspacesService'
-import defaultPanes from '@/store/defaultPanes.json'
 import { Threshold, TradesPaneState } from '@/store/panesSettings/trades'
 import { getMarketProduct, parseMarket } from './productsService'
 
@@ -105,67 +103,6 @@ export const workspaceUpgrades = {
     }
 
     delete workspace.states.panes.layout
-
-    const normalTradesSettings = JSON.parse(
-      JSON.stringify(panesSettings.trades.state)
-    )
-    const liquidationsTradesSettings = JSON.parse(
-      JSON.stringify(defaultPanes.panes.liquidations.settings)
-    )
-
-    const upgradeThreshold = (threshold, paneId) => {
-      let buyAudio: string = null
-      let sellAudio: string = null
-      let settings: TradesPaneState
-
-      if (paneId === 'liquidations') {
-        settings = liquidationsTradesSettings
-      } else {
-        settings = normalTradesSettings
-      }
-
-      if (threshold.id === 'liquidations') {
-        buyAudio = normalTradesSettings.liquidations.buyAudio
-        sellAudio = normalTradesSettings.liquidations.sellAudio
-      } else {
-        const defaultThreshold = settings.thresholds.find(
-          t => t.id === threshold.id
-        )
-
-        if (defaultThreshold) {
-          buyAudio = defaultThreshold.buyAudio
-          sellAudio = defaultThreshold.sellAudio
-        }
-      }
-
-      if (buyAudio !== null && sellAudio !== null) {
-        threshold.buyAudio = buyAudio
-        threshold.sellAudio = sellAudio
-      } else {
-        console.log(
-          `[idb/upgrade/workspace] couldn't find default threshold audio script for threshold ${threshold.id} of pane ${paneId}`
-        )
-      }
-    }
-
-    for (const paneId in workspace.states.panes.panes) {
-      if (
-        workspace.states.panes.panes[paneId].type !== 'trades' ||
-        !workspace.states[paneId]
-      ) {
-        continue
-      }
-
-      console.log(
-        `[idb/upgrade/workspace] set default audio scripts for pane ${paneId}`
-      )
-
-      upgradeThreshold(workspace.states[paneId].liquidations, paneId)
-
-      for (const threshold of workspace.states[paneId].thresholds) {
-        upgradeThreshold(threshold, paneId)
-      }
-    }
   },
   2: (workspace: Workspace) => {
     if (!workspace.states.settings) {

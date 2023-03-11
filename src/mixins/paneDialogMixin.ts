@@ -3,6 +3,7 @@ import { parseMarket } from '@/services/productsService'
 import workspacesService from '@/services/workspacesService'
 import { Pane } from '@/store/panes'
 import panesSettings from '@/store/panesSettings'
+import { Preset } from '@/types/types'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 
@@ -53,18 +54,23 @@ export default class PaneDialogMixin extends Vue {
     }
   }
 
-  async resetPane(data?: any) {
+  async resetPane(preset?: Preset) {
     await (this as any).close()
 
-    if (!data) {
-      data = JSON.parse(
+    let presetData = preset ? preset.data : null
+
+    if (!presetData) {
+      presetData = JSON.parse(
         JSON.stringify(
           panesSettings[this.$store.state.panes.panes[this.paneId].type].state
         )
       )
     }
 
-    await this.$store.dispatch('panes/resetPane', { id: this.paneId, data })
+    await this.$store.dispatch('panes/resetPane', {
+      id: this.paneId,
+      data: presetData
+    })
   }
 
   async getPreset() {

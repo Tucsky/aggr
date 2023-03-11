@@ -18,7 +18,6 @@
           <i class="icon-add-photo"></i>
           <span>Snapshot</span>
         </button>
-        <div class="dropdown-divider"></div>
       </template>
       <button
         v-for="(timeframeLabel, timeframe) of favoriteTimeframes"
@@ -61,6 +60,29 @@
         :axis="axis"
       ></chart-layout>
     </div>
+    <dropdown v-model="contextMenuDropdownTrigger">
+      <button @click.stop="toggleTimeframeDropdown" class="dropdown-item">
+        {{ timeframeForHuman }}
+      </button>
+      <button @click="resetChart" class="dropdown-item">
+        <i class="icon-refresh"></i> 
+        <span>Restart</span>
+      </button>
+      <button @click="takeScreenshot" class="dropdown-item">
+        <i class="icon-add-photo"></i> 
+        <span>Snapshot</span>
+      </button>
+      <div v-if="showAlerts" class="dropdown-divider"></div>
+      <button
+        v-if="showAlerts"
+        type="button"
+        class="dropdown-item"
+        @click="clearAlerts"
+      >
+        <i class="icon-cross"></i>
+        <span>Clear lines</span>
+      </button>
+    </dropdown>
   </div>
 </template>
 
@@ -73,7 +95,8 @@ import {
   formatBytes,
   openBase64InNewTab,
   getTimeframeForHuman,
-  floorTimestampToTimeframe
+  floorTimestampToTimeframe,
+  getEventCords
 } from '@/utils/helpers'
 import { formatPrice, formatAmount } from '@/services/productsService'
 import {
@@ -83,10 +106,10 @@ import {
   getChartGridlinesOptions
 } from '../../services/chartService'
 import { ChartPaneState } from '@/store/panesSettings/chart'
-import { getColorLuminance, joinRgba, splitColorCode } from '@/utils/colors'
+import { joinRgba, splitColorCode } from '@/utils/colors'
 import { Chunk } from './cache'
 import { isTouchSupported, getEventOffset } from '@/utils/touchevent'
-import { MarketAlert, Trade } from '@/types/types'
+import { AlertUpdate, MarketAlert, Trade } from '@/types/types'
 
 import aggregatorService from '@/services/aggregatorService'
 import historicalService, {
@@ -123,6 +146,7 @@ export default class extends Mixins(PaneMixin) {
 
   showIndicatorsOverlay = false
   timeframeDropdownTrigger = null
+  contextMenuDropdownTrigger = null
 
   private _timeToRecycle: number
   private _recycleTimeout: number
@@ -150,6 +174,10 @@ export default class extends Mixins(PaneMixin) {
 
   get showLegend() {
     return (this.$store.state[this.paneId] as ChartPaneState).showLegend
+  }
+
+  get showAlerts() {
+    return this.$store.state.settings.showAlerts
   }
 
   get favoriteTimeframes() {
@@ -220,9 +248,12 @@ export default class extends Mixins(PaneMixin) {
           }
           break
         case this.paneId + '/SET_TIMEFRAME':
-          this.setTimeframe(mutation.payload)
+          this.onTimeframeChange(mutation.payload)
           break
         case 'settings/TOGGLE_ALERTS':
+        case 'settings/SET_ALERTS_COLOR':
+        case 'settings/SET_ALERTS_LINESTYLE':
+        case 'settings/SET_ALERTS_LINEWIDTH':
         case 'app/EXCHANGE_UPDATED':
         case this.paneId + '/TOGGLE_MARKET':
           this._chartController.refreshMarkets()
@@ -439,6 +470,11 @@ export default class extends Mixins(PaneMixin) {
       )
       .then(results => this.onHistorical(results))
       .catch(err => {
+        /*if (err.message === 'unknown timeframe') {
+          this.$store.commit(this.paneId + '/SET_TIMEFRAME', 60)
+          return
+        }*/
+
         console.error(err)
 
         this._reachedEnd = true
@@ -561,16 +597,8 @@ export default class extends Mixins(PaneMixin) {
     this._chartController.queueTrades(trades)
   }
 
-  onAlert({
-    price,
-    market,
-    direction
-  }: {
-    price: number
-    market: string
-    direction: number
-  }) {
-    this._chartController.triggerAlert(market, price, direction)
+  onAlert(alertUpdate: AlertUpdate) {
+    this._chartController.triggerAlert(alertUpdate)
   }
 
   refreshChartDimensions() {
@@ -644,6 +672,7 @@ export default class extends Mixins(PaneMixin) {
         isTouchSupported() ? 'touchstart' : 'mousedown',
         this.onLevelDragStart
       )
+      canvas.addEventListener('contextmenu', this.onContextMenu)
     }
   }
 
@@ -663,6 +692,39 @@ export default class extends Mixins(PaneMixin) {
         isTouchSupported() ? 'touchstart' : 'mousedown',
         this.onLevelDragStart
       )
+      canvas.removeEventListener('contextmenu', this.onContextMenu)
+    }
+  }
+
+  onContextMenu(event) {
+    event.preventDefault()
+    const { x, y } = getEventCords(event)
+    this.contextMenuDropdownTrigger = {
+      top: y - 1,
+      left: x - 1,
+      width: 2,
+      height: 2
+    }
+  }
+
+  async clearAlerts() {
+    const alerts = await alertService.getPaneMarkets(this.paneId)
+
+    const indexes = []
+
+    for (const alert of alerts) {
+      if (indexes.indexOf(alert.market) === -1) {
+        indexes.push(alert.market)
+      }
+
+      await alertService.removeAlert(alert)
+    }
+
+    for (const index of indexes) {
+      await workspacesService.saveAlerts({
+        market: index,
+        alerts: []
+      })
     }
   }
 
@@ -792,63 +854,23 @@ export default class extends Mixins(PaneMixin) {
       const newPrice = priceline.options().price
 
       if (price !== newPrice && canMove) {
-        const active = await alertService.moveAlert(
-          market,
-          price,
+        await alertService.moveAlert(
+          alert,
           newPrice,
-          currentPrice
+          currentPrice,
+          this._chartController.alerts[market]
         )
-
-        alert.triggered = false
-        alert.price = newPrice
-        alert.active = active
-
-        await workspacesService.saveAlerts({
-          market,
-          alerts: this._chartController.alerts[market].filter(
-            a => a.market === alert.market
-          )
-        })
-
-        priceline.applyOptions({
-          title: ''
-        })
-      } else {
         api.removePriceLine(priceline)
-
-        // unregister alert from server
-        try {
-          await alertService.unsubscribe(market, price)
-        } catch (err) {
-          if (alert && alert.active) {
-            this.$store.dispatch('app/showNotice', {
-              id: 'alert-registration-failure',
-              title: `${err.message}\nYou need to make sure your browser is set to allow push notifications.`,
-              type: 'error'
-            })
-          }
-        }
-
-        // save remaining active alerts for this market
-        const index = this._chartController.alerts[market].indexOf(alert)
-
-        if (index !== -1) {
-          this._chartController.alerts[market].splice(index, 1)
-        }
-
-        await workspacesService.saveAlerts({
-          market,
-          alerts: this._chartController.alerts[market].filter(
-            a => a.price !== price
-          )
-        })
+      } else {
+        await alertService.removeAlert(
+          {
+            price,
+            market
+          },
+          this._chartController.alerts[market]
+        )
       }
     } else if (canCreate) {
-      // draw line first with 50% opacity
-      const color = splitColorCode(this.$store.state.settings.alertsColor)
-      const alpha = color[3] || 1
-      color[3] = alpha * 0.5
-
       let timestamp
 
       if (!(event.ctrlKey || event.metaKey)) {
@@ -857,16 +879,6 @@ export default class extends Mixins(PaneMixin) {
           .coordinateToTime(offset.x)
       }
 
-      const priceline = this._chartController.renderAlert(
-        {
-          price,
-          market,
-          timestamp
-        },
-        api,
-        joinRgba(color)
-      )
-
       const alert: MarketAlert = {
         price,
         market,
@@ -874,44 +886,11 @@ export default class extends Mixins(PaneMixin) {
         active: false
       }
 
-      this._chartController.alerts[market].push(alert)
-
-      let finalColor
-
-      // try subscribe to alert
-      await alertService
-        .subscribe(market, price, currentPrice)
-        .then(data => {
-          // make sure alert still exists before switching alpha / saving
-          if (this._chartController.alerts[market].indexOf(alert) !== -1) {
-            alert.active = !data.error
-            const finalAlpha = alert.active ? alpha : alpha * 0.75
-
-            // set line color to original alpha
-            color[3] = finalAlpha
-
-            finalColor = joinRgba(color)
-          }
-        })
-        .catch(err => {
-          this.$store.dispatch('app/showNotice', {
-            id: 'alert-registration-failure',
-            title: `${err.message}\nYou need to make sure your browser is set to allow push notifications.`,
-            type: 'error'
-          })
-
-          finalColor = this.$store.state.settings.alertsColor
-        })
-        .finally(() => {
-          workspacesService.saveAlerts({
-            market,
-            alerts: this._chartController.alerts[market]
-          })
-
-          priceline.applyOptions({
-            color: finalColor
-          })
-        })
+      alertService.createAlert(
+        alert,
+        this._chartController.alerts[market],
+        currentPrice
+      )
     }
   }
 
@@ -1070,11 +1049,12 @@ export default class extends Mixins(PaneMixin) {
     }
   }
 
-  setTimeframe(newTimeframe) {
+  onTimeframeChange(newTimeframe) {
     const timeframe = parseInt(newTimeframe)
     const type = newTimeframe[newTimeframe.length - 1] === 't' ? 'tick' : 'time'
 
     if (
+      this._chartController.renderedRange.from &&
       type === this._chartController.type &&
       type === 'time' &&
       this.$store.state.app.apiSupportedTimeframes.indexOf(newTimeframe) ===
@@ -1341,7 +1321,6 @@ export default class extends Mixins(PaneMixin) {
 
   async saveIndicatorPreview(indicatorId) {
     const blob = await this._chartController.screenshotIndicator(indicatorId)
-    console.log('save blob to db')
     workspacesService.saveIndicatorPreview(indicatorId, blob)
   }
 }

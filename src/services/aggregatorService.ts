@@ -41,16 +41,6 @@ class AggregatorService extends EventEmitter {
 
     this.on('error', async event => {
       if (
-        notificationService.hasDismissed(event.exchangeId + event.originalUrl)
-      ) {
-        store.dispatch('app/showNotice', {
-          type: 'error',
-          title: `unable to reach ${event.exchangeId} (${event.originalUrl})`
-        })
-        return
-      }
-
-      if (
         !event.wasErrored ||
         event.wasOpened ||
         dialogService.isDialogOpened('connection-issue')
@@ -58,22 +48,35 @@ class AggregatorService extends EventEmitter {
         return
       }
 
-      const payload = await dialogService.openAsPromise(
-        (
-          await import('@/components/ConnectionIssueDialog.vue')
-        ).default,
-        {
-          exchangeId: event.exchangeId,
-          restrictedUrl: event.originalUrl
-        },
-        'connection-issue'
-      )
-
-      if (typeof payload === 'string') {
-        store.commit('settings/SET_WS_PROXY_URL', payload)
-        await store.dispatch('exchanges/disconnect', event.exchangeId)
-        await store.dispatch('exchanges/connect', event.exchangeId)
+      if (
+        notificationService.hasDismissed(event.exchangeId + event.originalUrl)
+      ) {
+        return
       }
+
+      store.dispatch('app/showNotice', {
+        id: `ws-error-${event.originalUrl}`,
+        type: 'error',
+        title: `unable to reach ${event.exchangeId} (${event.originalUrl})`,
+        action: async () => {
+          const payload = await dialogService.openAsPromise(
+            (
+              await import('@/components/ConnectionIssueDialog.vue')
+            ).default,
+            {
+              exchangeId: event.exchangeId,
+              restrictedUrl: event.originalUrl
+            },
+            'connection-issue'
+          )
+
+          if (typeof payload === 'string') {
+            store.commit('settings/SET_WS_PROXY_URL', payload)
+            await store.dispatch('exchanges/disconnect', event.exchangeId)
+            await store.dispatch('exchanges/connect', event.exchangeId)
+          }
+        }
+      })
     })
 
     this.on('price', ({ market, price }: { market: string; price: number }) => {

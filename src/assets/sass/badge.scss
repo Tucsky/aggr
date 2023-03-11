@@ -14,7 +14,7 @@
   font-weight: 600;
 
   &.-red {
-    background-color: var(--theme-sell-base);
+    background-color: var(--theme-sell-50);
     color: var(--theme-sell-color);
   }
 
@@ -39,5 +39,12 @@
   &.-solid {
     background-color: var(--theme-color-base);
     color: var(--theme-background-base);
+  }
+
+  &.-inline {
+    padding: 0.125em 0.25em;
+    line-height: 1;
+    position: relative;
+    vertical-align: top;
   }
 }

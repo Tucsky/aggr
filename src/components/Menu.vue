@@ -99,6 +99,16 @@
           </div>
           <i class="icon-plus" />
         </button>
+        <button
+          class="dropdown-item dropdown-item--space-between"
+          @click="addPane('alerts')"
+        >
+          <div>
+            <div>Alerts</div>
+            <div class="dropdown-item__subtitle">Manage alerts</div>
+          </div>
+          <i class="icon-plus" />
+        </button>
       </dropdown>
 
       <dropdown

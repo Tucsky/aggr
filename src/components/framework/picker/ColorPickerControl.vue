@@ -1,4 +1,3 @@
-<!-- eslint-disable no-var -->
 <template>
   <button
     class="btn color-picker-control"
@@ -10,7 +9,9 @@
   >
     <div class="color-picker-control__color"></div>
     <div class="color-picker-control__wrapper">
-      <i class="icon-dropper"></i>
+      <slot>
+        <i class="icon-dropper"></i>
+      </slot>
     </div>
   </button>
 </template>

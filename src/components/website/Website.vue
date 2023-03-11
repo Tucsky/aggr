@@ -4,6 +4,7 @@
       ref="paneHeader"
       :paneId="paneId"
       :settings="() => import('@/components/website/WebsiteDialog.vue')"
+      :show-search="false"
     >
       <template v-slot:menu>
         <div class="dropdown-item">

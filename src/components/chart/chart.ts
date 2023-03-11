@@ -20,7 +20,7 @@ import store from '../../store'
 import seriesUtils from './serieUtils'
 import ChartCache, { Chunk } from './cache'
 import SerieBuilder from './serieBuilder'
-import { MarketAlert, Trade } from '@/types/types'
+import { AlertUpdate, MarketAlert, Trade } from '@/types/types'
 import dialogService from '@/services/dialogService'
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
 import { waitForStateMutation } from '../../utils/store'
@@ -1686,7 +1686,6 @@ export default class ChartController {
     this.ensurePriceScale(indicator.options.priceScaleId, indicator)
 
     // attach indicator to active renderer
-    console.log('bind indicator to renderer')
     this.bindIndicator(indicator, this.activeRenderer)
   }
 
@@ -1750,7 +1749,7 @@ export default class ChartController {
           )
         : [],
       null,
-      triggerPan
+      !triggerPan
     )
 
     if (scrollPosition) {
@@ -1808,32 +1807,84 @@ export default class ChartController {
     this._alertsRendered = true
   }
 
-  triggerAlert(market: string, price: number, direction: number) {
+  triggerAlert({
+    timestamp,
+    price,
+    market,
+    add,
+    newPrice,
+    remove
+  }: AlertUpdate) {
     if (!this.alerts[market]) {
       return
     }
 
-    const alert = this.alerts[market].find(a => a.price === price)
+    const existingAlert = this.alerts[market].find(a => a.price === price)
+    const api = this.getPriceApi()
 
-    if (alert) {
-      if (store.state.settings.alertSound) {
-        audioService.playOnce(store.state.settings.alertSound)
-      }
+    if (!api) {
+      return
+    }
 
-      alert.triggered = true
-
-      const api = this.getPriceApi()
+    if (!add) {
       const priceline = api.getPriceLine(price)
 
-      if (priceline) {
-        api.removePriceLine(priceline)
-      }
+      if (remove) {
+        if (priceline) {
+          api.removePriceLine(priceline)
+        }
 
-      this.renderAlert(alert, api)
+        if (existingAlert) {
+          this.alerts[market].splice(
+            this.alerts[market].indexOf(existingAlert),
+            1
+          )
+        }
+      } else if (newPrice) {
+        if (priceline) {
+          api.removePriceLine(priceline)
+        }
+
+        existingAlert.price = newPrice
+        existingAlert.active = true
+        existingAlert.triggered = false
+        this.renderAlert(existingAlert, api)
+      } else {
+        if (store.state.settings.alertSound) {
+          audioService.playOnce(store.state.settings.alertSound)
+        }
+
+        existingAlert.triggered = true
+
+        if (priceline) {
+          api.removePriceLine(priceline)
+        }
+
+        this.renderAlert(existingAlert, api)
+      }
+    } else if (add) {
+      if (existingAlert) {
+        this.renderAlert(existingAlert, api)
+      } else {
+        this.renderAlert(
+          this.alerts[market][
+            this.alerts[market].push({
+              timestamp,
+              price,
+              market
+            }) - 1
+          ],
+          api
+        )
+      }
     }
   }
 
   renderAlert(alert: MarketAlert, api: ISeriesApi<any>, color?: string) {
+    if (!api) {
+      return
+    }
+
     let index
 
     if (alert.timestamp) {
@@ -2514,7 +2565,6 @@ export default class ChartController {
 
     return new Promise(resolve => {
       chartCanvas.toBlob(blob => {
-        console.log('screenshot done')
         resolve(blob)
       })
     })

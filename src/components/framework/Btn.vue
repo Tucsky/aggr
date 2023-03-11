@@ -1,5 +1,5 @@
 <template>
-  <button type="button" class="btn" @click="!loading && $emit('click', $event)">
+  <button type="button" class="btn" @click="onClick">
     <loader v-if="loading" class="btn__loader" small />
     <slot />
   </button>
@@ -17,7 +17,7 @@ import Loader from '@/components/framework/Loader.vue'
   props: {
     loading: {
       type: Boolean,
-      required: true
+      default: false
     },
     type: {
       type: String,
@@ -25,7 +25,15 @@ import Loader from '@/components/framework/Loader.vue'
     }
   }
 })
-export default class extends Vue {}
+export default class extends Vue {
+  loading: boolean
+
+  onClick(event) {
+    if (!this.loading) {
+      this.$emit('click', event)
+    }
+  }
+}
 </script>
 
 <style lang="scss" scoped>

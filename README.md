@@ -5,7 +5,7 @@
 
 Cryptocurrency market trades aggregator.<br>
 
-Currently supporting BitMEX, Bitfinex, Binance & Binance Futures, Coinbase, Bitstamp, Deribit, Huobi, Okex, Hitbtc, Poloniex, Bybit and FTX ([see src/exchanges/](src/exchanges) for detail)
+Currently supporting Kucoin, BitMEX, Bitfinex, Binance, Coinbase, Bitstamp, Deribit, Huobi, Okex, Hitbtc, Poloniex, Bybit, Bitget ([see src/exchanges/](src/exchanges) for detail)
 
   
 
@@ -87,9 +87,7 @@ Create a <code>.env.local</code> or <code>.env.development</code> or <code>.env.
   
 |key| description |default value|
 |--|--|--|
-|<code>API_SUPPORTED_PAIRS</code>|Markets supported by the server instance provided in <code>API_URL</code><br>Write the full market names separated by a comma COINBASE:BTC-USD,BINANCE:btcusdt|null|
-|<code>API_SUPPORTED_TIMEFRAMES</code>|Timeframes supported by the server instance provided in <code>API_URL</code><br>Write the timeframe (seconds) separated by a comma 5,10,15,30,60,180,300,900,1800,3600,7200,14400,21600,86400|null|
-|<code>API_URL</code>|Server instance url.<br>As of now only used to fetch historical data for the chart component.<br>Example: http://localhost:3000/historical/{from}/{to}/{timeframe}/{markets} |null|
+|<code>API_URL</code>|Server instance url.<br>We use it to fetch historical data for the chart component.<br>Example: http://localhost:3000/ |null|
 |<code>PROXY_URL</code>|Redirect HTTP requests from app through a proxy<br>If the <code>PROXY_URL</code> is set to https://cors.aggr.trade/, the app will retrieve Binance's products through this url : https://cors.aggr.trade/https://api.binance.com/api/v3/exchangeInfo |http://localhost:8080/|
 
 ## Implement historical data
@@ -105,8 +103,8 @@ Let's say you have a server instance running on port 3000, start the client with
 If you plan to use real money with this, USE AT YOUR OWN RISK.
 
 ## Support this project !
-ETH [0xe3c893cdA4bB41fCF402726154FB4478Be2732CE](https://etherscan.io/address/0xe3c893cdA4bB41fCF402726154FB4478Be2732CE)<br>
-BTC [3PK1bBK8sG3zAjPBPD7g3PL14Ndux3zWEz](bitcoin:3PK1bBK8sG3zAjPBPD7g3PL14Ndux3zWEz)<br>
+ETH 0x83bBC120a998cF7dFcBa1518CDDCb68Aa0D0c158<br>
+BTC [bc1qpqms65vr9nrudph9qsjj0dfm7ance3368k8ua3](bitcoin:bc1qpqms65vr9nrudph9qsjj0dfm7ance3368k8ua3)<br>
 XMR 48NJj3RJDo33zMLaudQDdM8G6MfPrQbpeZU2YnRN2Ep6hbKyYRrS2ZSdiAKpkUXBcjD2pKiPqXtQmSZjZM7fC6YT6CMmoX6<br>
 COINBASE
 https://commerce.coinbase.com/checkout/c58bd003-5e47-4cfb-ae25-5292f0a0e1e8

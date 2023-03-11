@@ -1,4 +1,5 @@
 import Exchange from '../exchange'
+import { sleep } from '../helpers/utils'
 
 export default class extends Exchange {
   id = 'BINANCE'
@@ -42,6 +43,9 @@ export default class extends Exchange {
       })
     )
 
+    // this websocket api have a limit of about 5 messages per second.
+    await sleep(250 * this.apis.length)
+
     return true
   }
 
@@ -67,8 +71,7 @@ export default class extends Exchange {
 
     delete this.subscriptions[pair]
 
-    // BINANCE: WebSocket connections have a limit of 5 incoming messages per second.
-    return new Promise<boolean>(resolve => setTimeout(resolve, 250))
+    return true
   }
 
   onMessage(event, api) {

@@ -93,7 +93,7 @@
   }
 
   @media screen and (max-width: 579px) {
-    &:not(.dialog--size-small) {
+    &:not(.dialog--size-small):not(.dialog--moved) {
       .dialog__content {
         width: 100%;
         height: 100%;
@@ -195,6 +195,10 @@
     &:hover:before {
       transform: translate(5%, 5%) rotateZ(-225deg) scale(1);
       opacity: 1;
+    }
+
+    #{$self}--moved & {
+      display: block;
     }
 
     @media screen and (min-width: 580px) {

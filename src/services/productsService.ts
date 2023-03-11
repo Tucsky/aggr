@@ -238,7 +238,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
 
   let type = 'spot'
 
-  if (/[UZ_-]\d{2}/.test(symbol)) {
+  if (/[HUZ_-]\d{2}/.test(symbol)) {
     type = 'future'
   } else if (exchangeId === 'BINANCE_FUTURES' || exchangeId === 'DYDX') {
     type = 'perp'
@@ -263,6 +263,10 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     type = 'perp'
   } else if (exchangeId === 'KRAKEN' && /_/.test(symbol) && type === 'spot') {
     type = 'perp'
+  } else if (exchangeId === 'BITGET' && symbol.indexOf('_') !== -1) {
+    type = 'perp'
+  } else if (exchangeId === 'KUCOIN' && symbol.indexOf('-') === -1) {
+    type = 'perp'
   }
 
   let localSymbol = symbol
@@ -281,6 +285,13 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     localSymbol = localSymbol.replace(/_CW|_CQ|_NW|_NQ/i, 'USD')
   } else if (exchangeId === 'DERIBIT') {
     localSymbol = localSymbol.replace(/_(\w+)-PERPETUAL/i, '$1')
+  } else if (exchangeId === 'BITGET') {
+    localSymbol = localSymbol
+      .replace('USD_DMCBL', 'USD')
+      .replace('PERP_CMCBL', 'USDC')
+      .replace(/_.*/, '')
+  } else if (exchangeId === 'KUCOIN') {
+    localSymbol = localSymbol.replace(/M$/, '')
   }
 
   localSymbol = localSymbol

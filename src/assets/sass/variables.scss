@@ -122,6 +122,7 @@ $icon-switch: "\e91a";
 $icon-lab: "\e941";
 $icon-UNISWAP: "\e944";
 $icon-KUCOIN: "\e946";
+$icon-BITGET: "\e950";
 
 $exchanges: (
   'BITMEX': $icon-BITMEX,
@@ -143,6 +144,7 @@ $exchanges: (
   'DYDX': $icon-DYDX,
   'UNISWAP': $icon-UNISWAP,
   'KUCOIN': $icon-KUCOIN,
+  'BITGET': $icon-BITGET
 );
 
 @function unicode($str) {

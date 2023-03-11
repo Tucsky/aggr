@@ -17,6 +17,7 @@ import DYDX from './DYDX.svg'
 import KRAKEN from './KRAKEN.svg'
 import UNISWAP from './UNISWAP.svg'
 import KUCOIN from './KUCOIN.svg'
+import BITGET from './BITGET.svg'
 
 export default {
   BINANCE,
@@ -37,5 +38,6 @@ export default {
   DYDX,
   KRAKEN,
   UNISWAP,
-  KUCOIN
+  KUCOIN,
+  BITGET
 }
