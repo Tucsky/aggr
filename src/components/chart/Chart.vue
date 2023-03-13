@@ -61,27 +61,48 @@
       ></chart-layout>
     </div>
     <dropdown v-model="contextMenuDropdownTrigger">
-      <button @click.stop="toggleTimeframeDropdown" class="dropdown-item">
+      <button @click="toggleTimeframeDropdown" class="dropdown-item -arrow">
         {{ timeframeForHuman }}
       </button>
-      <button @click="resetChart" class="dropdown-item">
-        <i class="icon-refresh"></i> 
-        <span>Restart</span>
-      </button>
       <button @click="takeScreenshot" class="dropdown-item">
-        <i class="icon-add-photo"></i> 
+        <i class="icon-add-photo"></i>
         <span>Snapshot</span>
       </button>
-      <div v-if="showAlerts" class="dropdown-divider"></div>
+      <button @click="resetChart" class="dropdown-item">
+        <i class="icon-refresh"></i>
+        <span>Restart</span>
+      </button>
+      <div class="dropdown-divider" data-label="alerts"></div>
+      <button
+        @click="
+          createAlertAtPrice(
+            contextMenuDropdownTrigger.price,
+            contextMenuDropdownTrigger.timestamp
+          )
+        "
+        class="dropdown-item"
+      >
+        <i class="icon-plus"></i>
+        <span v-if="contextMenuDropdownTrigger">{{
+          contextMenuDropdownTrigger.price
+        }}</span>
+      </button>
       <button
         v-if="showAlerts"
         type="button"
         class="dropdown-item"
-        @click="clearAlerts"
+        @click.stop="toggleAlertsDropdown"
       >
-        <i class="icon-cross"></i>
-        <span>Clear lines</span>
+        <i class="icon-edit"></i>
+        <span>Alerts</span>
       </button>
+    </dropdown>
+    <dropdown
+      v-if="contextMenuDropdownTrigger"
+      v-model="alertsDropdownTrigger"
+      @click.stop
+    >
+      <alerts-list :query="contextMenuDropdownTrigger.market" />
     </dropdown>
   </div>
 </template>
@@ -98,7 +119,11 @@ import {
   floorTimestampToTimeframe,
   getEventCords
 } from '@/utils/helpers'
-import { formatPrice, formatAmount } from '@/services/productsService'
+import {
+  formatPrice,
+  formatAmount,
+  formatMarketPrice
+} from '@/services/productsService'
 import {
   defaultChartOptions,
   getChartBorderOptions,
@@ -125,6 +150,7 @@ import ChartLayout from '@/components/chart/Layout.vue'
 import TimeframeDropdown from '@/components/chart/TimeframeDropdown.vue'
 import IndicatorsOverlay from '@/components/chart/IndicatorsOverlay.vue'
 import MarketsOverlay from '@/components/chart/MarketsOverlay.vue'
+import AlertsList from '@/components/alerts/AlertsList.vue'
 
 @Component({
   name: 'Chart',
@@ -133,7 +159,8 @@ import MarketsOverlay from '@/components/chart/MarketsOverlay.vue'
     PaneHeader,
     TimeframeDropdown,
     IndicatorsOverlay,
-    MarketsOverlay
+    MarketsOverlay,
+    AlertsList
   }
 })
 export default class extends Mixins(PaneMixin) {
@@ -146,6 +173,7 @@ export default class extends Mixins(PaneMixin) {
 
   showIndicatorsOverlay = false
   timeframeDropdownTrigger = null
+  alertsDropdownTrigger = null
   contextMenuDropdownTrigger = null
 
   private _timeToRecycle: number
@@ -177,7 +205,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   get showAlerts() {
-    return this.$store.state.settings.showAlerts
+    return this.$store.state.settings.alerts
   }
 
   get favoriteTimeframes() {
@@ -194,10 +222,6 @@ export default class extends Mixins(PaneMixin) {
     }
 
     return getTimeframeForHuman(this.timeframe)
-  }
-
-  get alerts() {
-    return this.$store.state[this.paneId].alerts
   }
 
   $refs!: {
@@ -697,13 +721,27 @@ export default class extends Mixins(PaneMixin) {
   }
 
   onContextMenu(event) {
+    if (window.innerWidth < 375) {
+      return
+    }
+
     event.preventDefault()
     const { x, y } = getEventCords(event)
+    const { left, top } = this.$el.getBoundingClientRect()
+    const api = this._chartController.getPriceApi()
+    const market = this._chartController.getMainIndex()
+    const price = +formatMarketPrice(api.coordinateToPrice(y), market)
+    const timestamp = this._chartController.chartInstance
+      .timeScale()
+      .coordinateToTime(x)
     this.contextMenuDropdownTrigger = {
-      top: y - 1,
-      left: x - 1,
+      top: top + y - 1,
+      left: left + x - 1,
       width: 2,
-      height: 2
+      height: 2,
+      market,
+      price,
+      timestamp
     }
   }
 
@@ -892,6 +930,44 @@ export default class extends Mixins(PaneMixin) {
         currentPrice
       )
     }
+  }
+
+  async createAlertAtPrice(price, timestamp) {
+    if (!this.showAlerts) {
+      if (
+        !(await dialogService.confirm({
+          title: 'Alerts are disabled',
+          message: 'Enable alerts ?',
+          ok: 'Yes please'
+        }))
+      ) {
+        return
+      }
+
+      this.$store.commit('settings/TOGGLE_ALERTS', true)
+    }
+
+    const market = this._chartController.getMainIndex()
+
+    const message = await dialogService.prompt({
+      action: `Create alert @${formatMarketPrice(price, market)}`,
+      question: 'Label',
+      submitLabel: 'Create',
+      placeholder: 'Custom message (optional)'
+    })
+
+    if (typeof message !== 'string') {
+      return
+    }
+
+    const alert: MarketAlert = {
+      price,
+      market,
+      timestamp,
+      message: message.length ? message : null,
+      active: false
+    }
+    alertService.createAlert(alert, this._chartController.alerts[market], price)
   }
 
   getBarSpacing(visibleLogicalRange) {
@@ -1316,6 +1392,14 @@ export default class extends Mixins(PaneMixin) {
       this.timeframeDropdownTrigger = null
     } else {
       this.timeframeDropdownTrigger = event.currentTarget
+    }
+  }
+
+  toggleAlertsDropdown(event) {
+    if (this.alertsDropdownTrigger) {
+      this.alertsDropdownTrigger = null
+    } else {
+      this.alertsDropdownTrigger = event.currentTarget
     }
   }
 

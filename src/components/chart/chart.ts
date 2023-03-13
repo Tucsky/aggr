@@ -42,6 +42,7 @@ import {
   SeriesOptions,
   UTCTimestamp
 } from 'lightweight-charts'
+import { joinRgba, splitColorCode } from '@/utils/colors'
 
 export interface Bar {
   vbuy?: number
@@ -538,7 +539,9 @@ export default class ChartController {
    * @returns
    */
   updateWatermark(marketsUpdate?: string[]) {
-    if (marketsUpdate) {
+    if (store.state.panes.panes[this.paneId].name) {
+      this.watermark = store.state.panes.panes[this.paneId].name
+    } else if (marketsUpdate) {
       if (store.state.settings.normalizeWatermarks) {
         this.watermark = marketsUpdate.join(' | ')
       } else {
@@ -1593,6 +1596,10 @@ export default class ChartController {
       this.activeRenderer = temporaryRenderer
     }
 
+    this.replaceData(computedSeries, silent)
+
+    setTimeout(this.renderAlerts.bind(this))
+
     if (!indicatorsIds || !indicatorsIds.length) {
       this.activeRenderer.length = barCount
       if (!bars.length) {
@@ -1602,10 +1609,6 @@ export default class ChartController {
         this.renderedRange.to = to
       }
     }
-
-    this.replaceData(computedSeries, silent)
-
-    this.renderAlerts()
   }
 
   removeIndicatorSeries(indicator) {
@@ -1807,14 +1810,7 @@ export default class ChartController {
     this._alertsRendered = true
   }
 
-  triggerAlert({
-    timestamp,
-    price,
-    market,
-    add,
-    newPrice,
-    remove
-  }: AlertUpdate) {
+  triggerAlert({ timestamp, price, market, type, newPrice }: AlertUpdate) {
     if (!this.alerts[market]) {
       return
     }
@@ -1826,61 +1822,66 @@ export default class ChartController {
       return
     }
 
-    if (!add) {
-      const priceline = api.getPriceLine(price)
+    const priceline = api.getPriceLine(price)
 
-      if (remove) {
-        if (priceline) {
-          api.removePriceLine(priceline)
-        }
-
-        if (existingAlert) {
-          this.alerts[market].splice(
-            this.alerts[market].indexOf(existingAlert),
-            1
-          )
-        }
-      } else if (newPrice) {
-        if (priceline) {
-          api.removePriceLine(priceline)
-        }
-
-        existingAlert.price = newPrice
-        existingAlert.active = true
-        existingAlert.triggered = false
-        this.renderAlert(existingAlert, api)
-      } else {
-        if (store.state.settings.alertSound) {
-          audioService.playOnce(store.state.settings.alertSound)
-        }
-
-        existingAlert.triggered = true
-
-        if (priceline) {
-          api.removePriceLine(priceline)
-        }
-
-        this.renderAlert(existingAlert, api)
+    if (type === 'remove') {
+      if (priceline) {
+        api.removePriceLine(priceline)
       }
-    } else if (add) {
+
       if (existingAlert) {
-        this.renderAlert(existingAlert, api)
-      } else {
-        this.renderAlert(
-          this.alerts[market][
-            this.alerts[market].push({
-              timestamp,
-              price,
-              market
-            }) - 1
-          ],
-          api
+        this.alerts[market].splice(
+          this.alerts[market].indexOf(existingAlert),
+          1
         )
       }
+    } else if (newPrice) {
+      if (priceline) {
+        api.removePriceLine(priceline)
+      }
+
+      existingAlert.price = newPrice
+      existingAlert.active = true
+      existingAlert.triggered = false
+      this.renderAlert(existingAlert, api)
+    } else if (type === 'triggered') {
+      if (store.state.settings.alertSound) {
+        audioService.playOnce(store.state.settings.alertSound)
+      }
+
+      existingAlert.triggered = true
+
+      if (priceline) {
+        api.removePriceLine(priceline)
+      }
+
+      this.renderAlert(existingAlert, api)
+    } else if (type === 'add') {
+      if (priceline) {
+        api.removePriceLine(priceline)
+      }
+
+      const createdAlert =
+        existingAlert ||
+        this.alerts[market][
+          this.alerts[market].push({
+            timestamp,
+            price,
+            market
+          }) - 1
+        ]
+
+      this.renderAlert(createdAlert, api, 0.5)
+    } else if (type === 'active') {
+      if (priceline) {
+        api.removePriceLine(priceline)
+      }
+
+      this.renderAlert(existingAlert, api)
     }
   }
 
-  renderAlert(alert: MarketAlert, api: ISeriesApi<any>, color?: string) {
+  renderAlert(alert: MarketAlert, api: ISeriesApi<any>, opacity?: number) {
     if (!api) {
       return
     }
@@ -1903,17 +1904,25 @@ export default class ChartController {
 
     let title
 
+    let color = store.state.settings.alertsColor
+
     if (alert.triggered) {
       title = '✔'
+    }
+
+    if (opacity || alert.triggered) {
+      const colorRgb = splitColorCode(color)
+      colorRgb[3] = (colorRgb[3] || 1) * (opacity || 0.5)
+      color = joinRgba(colorRgb)
     }
 
     return api.createPriceLine({
       market: alert.market,
       index,
       price: alert.price,
-      color: color || store.state.settings.alertsColor,
       lineWidth: store.state.settings.alertsLineWidth,
       lineStyle: store.state.settings.alertsLineStyle,
+      color,
       title
     } as any)
   }
@@ -2066,6 +2075,13 @@ export default class ChartController {
   }
 
   getPriceApi() {
+    const price = this.loadedIndicators.find(a => a.id === 'price')
+
+    if (price && price.options.visible !== false) {
+      this._priceIndicatorId = 'price'
+      return price.apis[0]
+    }
+
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
         const api = this.loadedIndicators[i].apis[j]
@@ -2343,6 +2359,19 @@ export default class ChartController {
     }
   }
 
+  getMainIndex() {
+    for (const marketKey in this.markets) {
+      if (
+        this.markets[marketKey].active &&
+        this.markets[marketKey].historical
+      ) {
+        return this.markets[marketKey].index
+      }
+    }
+
+    return Object.values(this.markets)[0].index
+  }
+
   /**
    * Get price api, index & price at a point on the chart
    * Return the priceline if found at price
@@ -2396,19 +2425,7 @@ export default class ChartController {
     }
 
     if (!market) {
-      for (const marketKey in this.markets) {
-        if (
-          this.markets[marketKey].active &&
-          this.markets[marketKey].historical
-        ) {
-          market = this.markets[marketKey].index
-          break
-        }
-      }
-
-      if (!market) {
-        market = Object.values(this.markets)[0].index
-      }
+      market = this.getMainIndex()
     }
 
     if (!priceline) {
@@ -2422,7 +2439,7 @@ export default class ChartController {
     let currentPrice = null
 
     if (this.activeRenderer) {
-      currentPrice = seriesUtils.avg_close.update({}, this.activeRenderer)
+      currentPrice = this.getPrice()
     }
 
     return {
@@ -2568,5 +2585,9 @@ export default class ChartController {
         resolve(blob)
       })
     })
+  }
+
+  getPrice() {
+    return seriesUtils.avg_close.update({}, this.activeRenderer)
   }
 }

@@ -119,6 +119,7 @@ export interface MarketAlerts {
 export interface MarketAlert {
   price: number
   market?: string
+  message?: string
   active?: boolean
   timestamp?: number
   triggered?: boolean
@@ -128,9 +129,8 @@ export interface AlertUpdate {
   price: number
   timestamp: number
   market: string
-  add?: boolean
+  type?: string
   newPrice?: number
-  remove?: boolean
 }
 
 export type ProductsData = string[] | { [prop: string]: any }

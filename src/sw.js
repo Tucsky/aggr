@@ -17,7 +17,9 @@ self.addEventListener('push', event => {
     data: {
       url: data.origin,
       price: data.price,
-      market: data.market
+      market: data.market,
+      direction: data.direction,
+      message: data.message,
     }
   }
 
@@ -31,8 +33,9 @@ self.addEventListener('push', event => {
       clients.forEach(function(client) {
         client.postMessage({
           price: data.price,
+          market: data.market,
           direction: data.direction,
-          market: data.market
+          message: data.message
         })
       })
     })
@@ -41,7 +44,7 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', function(event) {
   event.notification.close()
 
-  let url = 'https://charts.aggr.trade'
+  let url = 'https://aggr.trade'
 
   if (event.notification.data.url) {
     url = event.notification.data.url

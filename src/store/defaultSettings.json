@@ -67,7 +67,7 @@
   "favoriteTimeframes": {},
   "normalizeWatermarks": true,
   "alerts": true,
-  "alertsColor": "red",
+  "alertsColor": "rgb(255,0,0)",
   "alertsLineStyle": 2,
   "alertsLineWidth": 2,
   "alertsClick": false,

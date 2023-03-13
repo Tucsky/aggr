@@ -21,6 +21,8 @@
           label="Sell color"
           class="-small"
           @input="regenerateSwatch('sell', $event)"
+        >
+          <i class="icon-down -small"></i
         ></color-picker-control>
         <small class="-fill -center ml8">Sell color</small>
       </label>

@@ -245,6 +245,8 @@ export default {
     bottom: 0;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
+    width: 0;
   }
 
   &__title {

@@ -80,4 +80,12 @@ export default class extends Exchange {
       json.data.map(trade => this.formatTrade(trade))
     )
   }
+
+  onApiCreated(api) {
+    this.startKeepAlive(api, { event: 'ping' }, 30000)
+  }
+
+  onApiRemoved(api) {
+    this.stopKeepAlive(api)
+  }
 }

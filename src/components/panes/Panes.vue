@@ -18,7 +18,7 @@
       :key="gridItem.i"
       :type="gridItem.type"
       drag-allow-from=".pane-header"
-      drag-ignore-from="a, button, .-no-grab"
+      drag-ignore-from=".-no-grab"
       :x="gridItem.x"
       :y="gridItem.y"
       :w="gridItem.w"

@@ -56,7 +56,7 @@
 
     <div class="column">
       <div class="form-group mb16 mt16">
-        <label><i class="icon-click mr8"></i> Control</label>
+        <label><i class="icon-click mr8"></i> control</label>
         <label
           class="checkbox-control -click -small d-flex -wrap"
           @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
@@ -66,9 +66,10 @@
           <input type="checkbox" class="form-control" :checked="alertsClick" />
           <div class="mr0"></div>
           <span v-if="alertsClick" class="mr4"><code>1 CLICK</code></span>
-          <span v-else class="mr4"
-            ><code>SHIFT</code> + <code>CLICK</code></span
-          >
+          <span v-else class="mr4">
+            <code>SHIFT</code> + <code>CLICK</code><br />
+            <small>(default)</small>
+          </span>
         </label>
       </div>
       <div class="form-group mt16 mb16">

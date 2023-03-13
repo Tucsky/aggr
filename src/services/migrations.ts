@@ -337,5 +337,10 @@ export const workspaceUpgrades = {
         delete workspace.states[paneId].tradeType
       }
     }
+  },
+  7: (workspace: Workspace) => {
+    if (workspace.states.settings.alertsColor === 'red') {
+      workspace.states.settings.alertsColor = 'rgb(255, 0, 0)'
+    }
   }
 }

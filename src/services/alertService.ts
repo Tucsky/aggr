@@ -2,6 +2,7 @@ import store from '@/store'
 import { MarketAlert } from '@/types/types'
 import { getApiUrl, handleFetchError } from '@/utils/helpers'
 import aggregatorService from './aggregatorService'
+import { formatMarketPrice } from './productsService'
 import workspacesService from './workspacesService'
 
 interface AlertResponse {
@@ -82,6 +83,7 @@ class AlertService {
           ).map(notification => ({
             price: notification.data.price,
             direction: notification.data.direction,
+            message: notification.data.message,
             market: notification.data.market
           }))
         )
@@ -93,7 +95,10 @@ class AlertService {
       navigator.serviceWorker.addEventListener('message', event => {
         this.markAlertsAsTriggered([event.data])
 
-        aggregatorService.emit('alert', event.data)
+        aggregatorService.emit('alert', {
+          ...event.data,
+          type: 'triggered'
+        })
       })
     })
   }
@@ -162,12 +167,27 @@ class AlertService {
     return this.pushSubscription
   }
 
-  async subscribe(market: string, price: number, currentPrice?: number) {
-    const data = await this.toggleAlert(market, price, currentPrice)
+  async subscribe(
+    market: string,
+    price: number,
+    currentPrice?: number,
+    message?: string
+  ) {
+    const data = await this.toggleAlert(
+      market,
+      price,
+      currentPrice,
+      false,
+      false,
+      message
+    )
 
     if (!data.error) {
       store.dispatch('app/showNotice', {
-        title: `Added ${market} @${price}`,
+        title: `Added ${market} @${price} (± ${formatMarketPrice(
+          data.priceOffset,
+          market
+        )})`,
         type: 'success'
       })
     }
@@ -184,10 +204,6 @@ class AlertService {
       store.dispatch('app/showNotice', {
         title: `Removed ${alert.market} @${alert.price}`,
         type: 'success'
-      })
-    } else if (!data.error) {
-      store.dispatch('app/showNotice', {
-        title: `Alert not found (or expired)`
       })
     }
 
@@ -234,7 +250,8 @@ class AlertService {
     price: number,
     currentPrice?: number,
     unsubscribe?: boolean,
-    status?: boolean
+    status?: boolean,
+    message?: string
   ): Promise<AlertResponse> {
     const subscription = await this.getPushSubscription()
 
@@ -257,6 +274,7 @@ class AlertService {
         price,
         currentPrice,
         unsubscribe,
+        message,
         status
       }),
       headers: {
@@ -285,7 +303,19 @@ class AlertService {
   ) {
     marketAlerts.push(createdAlert)
 
-    await this.subscribe(createdAlert.market, createdAlert.price, currentPrice)
+    aggregatorService.emit('alert', {
+      price: createdAlert.price,
+      market: createdAlert.market,
+      timestamp: createdAlert.timestamp,
+      type: 'add'
+    })
+
+    await this.subscribe(
+      createdAlert.market,
+      createdAlert.price,
+      currentPrice,
+      createdAlert.message
+    )
       .then(data => {
         createdAlert.active = !data.error
       })
@@ -302,12 +332,14 @@ class AlertService {
       alerts: marketAlerts
     })
 
-    aggregatorService.emit('alert', {
-      price: createdAlert.price,
-      market: createdAlert.market,
-      timestamp: createdAlert.timestamp,
-      add: true
-    })
+    if (createdAlert.active) {
+      aggregatorService.emit('alert', {
+        price: createdAlert.price,
+        market: createdAlert.market,
+        timestamp: createdAlert.timestamp,
+        type: 'active'
+      })
+    }
   }
 
   async moveAlert(
@@ -359,7 +391,8 @@ class AlertService {
     aggregatorService.emit('alert', {
       price: movedAlert.price,
       market: movedAlert.market,
-      newPrice
+      newPrice,
+      type: 'update'
     })
 
     movedAlert.triggered = false
@@ -373,6 +406,12 @@ class AlertService {
   }
 
   async removeAlert(removedAlert: MarketAlert, marketAlerts?: MarketAlert[]) {
+    aggregatorService.emit('alert', {
+      price: removedAlert.price,
+      market: removedAlert.market,
+      type: 'remove'
+    })
+
     if (!removedAlert.triggered) {
       try {
         await this.unsubscribe(removedAlert.market, removedAlert.price)
@@ -386,12 +425,6 @@ class AlertService {
         }
       }
     }
-
-    aggregatorService.emit('alert', {
-      price: removedAlert.price,
-      market: removedAlert.market,
-      remove: true
-    })
 
     if (marketAlerts) {
       await workspacesService.saveAlerts({

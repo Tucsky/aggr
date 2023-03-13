@@ -6,7 +6,7 @@ import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
 const baseQuoteLookupKnown = new RegExp(
-  `^([A-Z0-9]{3,})[-/:_]?(USDT|USDC|TUSD|BUSD)$|^([A-Z0-9]{2,})[-/:]?(UST|EUR|USD)$`
+  `^([A-Z0-9]{3,})[-/:_]?(USDT|USDC|TUSD|BUSD|USDD|USDK|USDP)$|^([A-Z0-9]{2,})[-/:]?(UST|EUR|USD)$`
 )
 const baseQuoteLookupOthers = new RegExp(`^([A-Z0-9]{2,})[-/_]?([A-Z0-9]{3,})$`)
 
