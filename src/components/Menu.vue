@@ -198,6 +198,13 @@ export default class extends Vue {
     volumeSlider: any
     volumeSliderTrigger: HTMLElement
   }
+  mounted() {
+    document.addEventListener(
+      'webkitfullscreenchange',
+      this.handleFullScreenChange
+    )
+    document.addEventListener('fullscreenchange', this.handleFullScreenChange)
+  }
 
   get useAudio() {
     return this.$store.state.settings.useAudio
@@ -256,21 +263,18 @@ export default class extends Vue {
     dialogService.open(SettingsDialog)
   }
 
-  toggleFullscreen() {
-    let element = document.body
+  async toggleFullscreen() {
+    const element = document.body
 
-    if (event instanceof HTMLElement) {
-      element = event
-    }
-
-    ;(element as any).requestFullScreen =
-      (element as any).requestFullScreen ||
-      (element as any).webkitRequestFullScreen ||
-      (element as any).mozRequestFullScreen ||
+    ;(element as any).requestFullscreen =
+      (element as any).requestFullscreen ||
+      (element as any).webkitRequestFullscreen ||
       function () {
         return false
       }
-    ;(document as any).cancelFullScreen =
+    ;(document as any).cancelFullscreen =
+      (document as any).exitFullscreen ||
+      (document as any).webkitExitFullscreen ||
       (document as any).cancelFullScreen ||
       (document as any).webkitCancelFullScreen ||
       (document as any).mozCancelFullScreen ||
@@ -279,11 +283,22 @@ export default class extends Vue {
       }
 
     if (this.isFullscreen) {
-      ;(document as any).cancelFullScreen()
+      ;(document as any).cancelFullscreen()
       this.isFullscreen = false
     } else {
-      ;(element as any).requestFullScreen()
+      ;(element as any).requestFullscreen()
       this.isFullscreen = true
+    }
+  }
+
+  handleFullScreenChange() {
+    if (
+      document.fullscreenElement ||
+      (document as any).webkitFullscreenElement
+    ) {
+      this.isFullscreen = true
+    } else {
+      this.isFullscreen = false
     }
   }
 
