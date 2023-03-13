@@ -68,6 +68,10 @@
         <i class="icon-add-photo"></i>
         <span>Snapshot</span>
       </button>
+      <button @click="flipChart" class="dropdown-item">
+        <i class="icon-flip"></i>
+        <span>Flip</span>
+      </button>
       <button @click="resetChart" class="dropdown-item">
         <i class="icon-refresh"></i>
         <span>Restart</span>
@@ -134,7 +138,6 @@ import { ChartPaneState } from '@/store/panesSettings/chart'
 import { joinRgba, splitColorCode } from '@/utils/colors'
 import { Chunk } from './cache'
 import { isTouchSupported, getEventOffset } from '@/utils/touchevent'
-import { AlertUpdate, MarketAlert, Trade } from '@/types/types'
 
 import aggregatorService from '@/services/aggregatorService'
 import historicalService, {
@@ -142,7 +145,7 @@ import historicalService, {
 } from '@/services/historicalService'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import alertService from '@/services/alertService'
+import alertService, { AlertEvent, MarketAlert } from '@/services/alertService'
 
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '@/components/panes/PaneHeader.vue'
@@ -151,6 +154,7 @@ import TimeframeDropdown from '@/components/chart/TimeframeDropdown.vue'
 import IndicatorsOverlay from '@/components/chart/IndicatorsOverlay.vue'
 import MarketsOverlay from '@/components/chart/MarketsOverlay.vue'
 import AlertsList from '@/components/alerts/AlertsList.vue'
+import { Trade } from '@/types/types'
 
 @Component({
   name: 'Chart',
@@ -621,8 +625,8 @@ export default class extends Mixins(PaneMixin) {
     this._chartController.queueTrades(trades)
   }
 
-  onAlert(alertUpdate: AlertUpdate) {
-    this._chartController.triggerAlert(alertUpdate)
+  onAlert(alertEvent: AlertEvent) {
+    this._chartController.onAlert(alertEvent)
   }
 
   refreshChartDimensions() {
@@ -742,27 +746,6 @@ export default class extends Mixins(PaneMixin) {
       market,
       price,
       timestamp
-    }
-  }
-
-  async clearAlerts() {
-    const alerts = await alertService.getPaneMarkets(this.paneId)
-
-    const indexes = []
-
-    for (const alert of alerts) {
-      if (indexes.indexOf(alert.market) === -1) {
-        indexes.push(alert.market)
-      }
-
-      await alertService.removeAlert(alert)
-    }
-
-    for (const index of indexes) {
-      await workspacesService.saveAlerts({
-        market: index,
-        alerts: []
-      })
     }
   }
 
@@ -927,7 +910,7 @@ export default class extends Mixins(PaneMixin) {
       alertService.createAlert(
         alert,
         this._chartController.alerts[market],
-        currentPrice
+        this._chartController
       )
     }
   }
@@ -949,25 +932,18 @@ export default class extends Mixins(PaneMixin) {
 
     const market = this._chartController.getMainIndex()
 
-    const message = await dialogService.prompt({
-      action: `Create alert @${formatMarketPrice(price, market)}`,
-      question: 'Label',
-      submitLabel: 'Create',
-      placeholder: 'Custom message (optional)'
-    })
-
-    if (typeof message !== 'string') {
-      return
-    }
-
     const alert: MarketAlert = {
       price,
       market,
       timestamp,
-      message: message.length ? message : null,
       active: false
     }
-    alertService.createAlert(alert, this._chartController.alerts[market], price)
+
+    alertService.createAlert(
+      alert,
+      this._chartController.alerts[market],
+      this._chartController
+    )
   }
 
   getBarSpacing(visibleLogicalRange) {
@@ -1042,6 +1018,17 @@ export default class extends Mixins(PaneMixin) {
 
   renderChart() {
     this._chartController.renderAll()
+  }
+
+  flipChart() {
+    const api = this._chartController.getPriceApi()
+    const ps = api.priceScale()
+
+    const invertScale = ps.options().invertScale
+
+    api.priceScale().applyOptions({
+      invertScale: !invertScale
+    })
   }
 
   resetChart() {

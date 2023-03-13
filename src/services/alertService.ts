@@ -1,7 +1,8 @@
+import ChartController from '@/components/chart/chart'
 import store from '@/store'
-import { MarketAlert } from '@/types/types'
-import { getApiUrl, handleFetchError } from '@/utils/helpers'
+import { getApiUrl, handleFetchError, sleep } from '@/utils/helpers'
 import aggregatorService from './aggregatorService'
+import dialogService from './dialogService'
 import { formatMarketPrice } from './productsService'
 import workspacesService from './workspacesService'
 
@@ -10,6 +11,37 @@ interface AlertResponse {
   markets?: string[]
   alert?: any
   priceOffset?: number
+}
+
+export interface MarketAlerts {
+  market: string
+  alerts: MarketAlert[]
+}
+
+export interface MarketAlert {
+  price: number
+  market?: string
+  message?: string
+  active?: boolean
+  timestamp?: number
+  triggered?: boolean
+}
+
+export interface AlertEvent {
+  type: AlertEventType
+  price: number
+  market: string
+  timestamp?: number
+  newPrice?: number
+}
+
+export enum AlertEventType {
+  CREATED,
+  ACTIVATED,
+  DELETED,
+  STATUS,
+  DEACTIVATED,
+  TRIGGERED
 }
 
 class AlertService {
@@ -97,7 +129,7 @@ class AlertService {
 
         aggregatorService.emit('alert', {
           ...event.data,
-          type: 'triggered'
+          type: AlertEventType.TRIGGERED
         })
       })
     })
@@ -299,16 +331,40 @@ class AlertService {
   async createAlert(
     createdAlert: MarketAlert,
     marketAlerts: MarketAlert[],
-    currentPrice?: number
+    chartInstance?: ChartController
   ) {
-    marketAlerts.push(createdAlert)
-
     aggregatorService.emit('alert', {
       price: createdAlert.price,
       market: createdAlert.market,
       timestamp: createdAlert.timestamp,
-      type: 'add'
+      type: AlertEventType.CREATED
     })
+
+    if (chartInstance) {
+      createdAlert.message = await dialogService.openAsPromise(
+        (
+          await import('@/components/alerts/CreateAlertDialog.vue')
+        ).default,
+        {
+          price: +formatMarketPrice(createdAlert.price, createdAlert.market)
+        }
+      )
+
+      if (typeof createdAlert.message !== 'string') {
+        aggregatorService.emit('alert', {
+          price: createdAlert.price,
+          market: createdAlert.market,
+          type: AlertEventType.DELETED
+        })
+        return
+      }
+    }
+
+    let currentPrice
+
+    if (chartInstance) {
+      currentPrice = chartInstance.getPrice()
+    }
 
     await this.subscribe(
       createdAlert.market,
@@ -327,19 +383,21 @@ class AlertService {
         })
       })
 
-    workspacesService.saveAlerts({
-      market: createdAlert.market,
-      alerts: marketAlerts
-    })
-
     if (createdAlert.active) {
       aggregatorService.emit('alert', {
         price: createdAlert.price,
         market: createdAlert.market,
         timestamp: createdAlert.timestamp,
-        type: 'active'
+        type: AlertEventType.ACTIVATED
       })
     }
+
+    await sleep(1)
+
+    workspacesService.saveAlerts({
+      market: createdAlert.market,
+      alerts: marketAlerts
+    })
   }
 
   async moveAlert(
@@ -405,11 +463,23 @@ class AlertService {
     })
   }
 
+  async deactivateAlert(alert: MarketAlert, alerts: MarketAlerts) {
+    aggregatorService.emit('alert', {
+      price: alert.price,
+      market: alert.market,
+      type: AlertEventType.DEACTIVATED
+    })
+
+    alert.active = false
+
+    await workspacesService.saveAlerts(alerts)
+  }
+
   async removeAlert(removedAlert: MarketAlert, marketAlerts?: MarketAlert[]) {
     aggregatorService.emit('alert', {
       price: removedAlert.price,
       market: removedAlert.market,
-      type: 'remove'
+      type: AlertEventType.DELETED
     })
 
     if (!removedAlert.triggered) {

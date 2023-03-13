@@ -1,8 +1,9 @@
-import { MarketAlert, Workspace } from '@/types/types'
+import { Workspace } from '@/types/types'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
 import { AggrDB } from './workspacesService'
 import { Threshold, TradesPaneState } from '@/store/panesSettings/trades'
 import { getMarketProduct, parseMarket } from './productsService'
+import { MarketAlert } from './alertService'
 
 export const databaseUpgrades = {
   0: (db: IDBPDatabase<any>) => {

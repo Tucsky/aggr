@@ -48,6 +48,10 @@ export default class extends Mixins(PaneMixin) {
 .pane-alerts {
   $self: &;
 
+  ::v-deep .alerts-list__table {
+    width: 100%;
+  }
+
   &__query {
     border: 0;
     width: 10rem;

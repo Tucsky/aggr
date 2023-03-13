@@ -6,7 +6,6 @@ import { IndicatorSettings } from '@/store/panesSettings/chart'
 import {
   GifsStorage,
   ImportedSound,
-  MarketAlerts,
   Preset,
   PresetType,
   ProductsStorage,
@@ -22,7 +21,7 @@ import {
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import { databaseUpgrades, workspaceUpgrades } from './migrations'
 import { PanesState } from '@/store/panes'
-import alertService from './alertService'
+import alertService, { MarketAlerts } from './alertService'
 import dialogService from './dialogService'
 import { stripStable } from './productsService'
 import notificationService from './notificationService'
@@ -754,7 +753,6 @@ class WorkspacesService {
   }
 
   saveAlerts(marketAlerts: MarketAlerts) {
-    console.log('save alerts', marketAlerts.market, marketAlerts.alerts.length)
     if (!marketAlerts.alerts.length) {
       return this.db.delete('alerts', marketAlerts.market)
     }

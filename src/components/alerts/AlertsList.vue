@@ -110,9 +110,13 @@ import { Component, Vue } from 'vue-property-decorator'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
 
 import workspacesService from '@/services/workspacesService'
-import { AlertUpdate, MarketAlert, MarketAlerts } from '@/types/types'
 import Btn from '@/components/framework/Btn.vue'
-import alertService from '@/services/alertService'
+import alertService, {
+  AlertEvent,
+  AlertEventType,
+  MarketAlert,
+  MarketAlerts
+} from '@/services/alertService'
 import dialogService from '@/services/dialogService'
 import aggregatorService from '@/services/aggregatorService'
 import { sleep } from '@/utils/helpers'
@@ -148,11 +152,11 @@ export default class extends Vue {
     return this.indexes.filter(a => this.queryFilter.test(a.market))
   }
 
-  created() {
-    this.getAlerts()
+  async created() {
+    await this.getAlerts()
 
-    if (this.indexes.length === 1) {
-      this.sections.push(`alerts-${this.indexes[0].market}`)
+    if (this.filteredIndexes.length === 1) {
+      this.sections.push(`alerts-${this.filteredIndexes[0].market}`)
     }
 
     aggregatorService.on('alert', this.onAlert)
@@ -223,7 +227,8 @@ export default class extends Vue {
       })
     } else {
       const action = await dialogService.confirm({
-        message: `Server forgot that alert or it expired`,
+        title: 'Not found',
+        message: `Alert already triggered or expired`,
         html: true,
         ok: 'Recreate',
         actions: [
@@ -240,15 +245,20 @@ export default class extends Vue {
         } else {
           this.createAlert(alert)
         }
+      } else {
+        await alertService.deactivateAlert(
+          alert,
+          this.indexes.find(a => a.market === alert.market)
+        )
       }
     }
   }
 
-  onAlert({ price, market, type, newPrice }: AlertUpdate) {
+  onAlert({ price, market, type, newPrice }: AlertEvent) {
     let group = this.indexes.find(index => index.market === market)
 
     if (!group) {
-      if (type === 'add') {
+      if (type === AlertEventType.CREATED) {
         this.$set(this.indexes, this.indexes.length, {
           market: market,
           alerts: []
@@ -264,19 +274,21 @@ export default class extends Vue {
     )
 
     if (index !== -1) {
-      if (type === 'remove') {
+      if (type === AlertEventType.DELETED) {
         group.alerts.splice(index, 1)
         if (!group.alerts.length) {
           this.indexes.splice(this.indexes.indexOf(group), 1)
         }
       } else if (newPrice) {
         this.$set(group.alerts[index], 'price', newPrice)
-      } else if (type === 'triggered') {
+      } else if (type === AlertEventType.TRIGGERED) {
         this.$set(group.alerts[index], 'triggered', true)
-      } else if (type === 'active') {
+      } else if (type === AlertEventType.ACTIVATED) {
         this.$set(group.alerts[index], 'active', true)
+      } else if (type === AlertEventType.DEACTIVATED) {
+        this.$set(group.alerts[index], 'active', false)
       }
-    } else if (type === 'add') {
+    } else if (type === AlertEventType.CREATED) {
       this.$set(group.alerts, group.alerts.length, {
         price,
         market
@@ -331,6 +343,7 @@ export default class extends Vue {
 
   &__table {
     table-layout: fixed;
+    width: auto;
   }
 
   &-item {

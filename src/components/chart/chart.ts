@@ -20,7 +20,6 @@ import store from '../../store'
 import seriesUtils from './serieUtils'
 import ChartCache, { Chunk } from './cache'
 import SerieBuilder from './serieBuilder'
-import { AlertUpdate, MarketAlert, Trade } from '@/types/types'
 import dialogService from '@/services/dialogService'
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
 import { waitForStateMutation } from '../../utils/store'
@@ -43,6 +42,12 @@ import {
   UTCTimestamp
 } from 'lightweight-charts'
 import { joinRgba, splitColorCode } from '@/utils/colors'
+import {
+  MarketAlert,
+  AlertEvent,
+  AlertEventType
+} from '@/services/alertService'
+import { Trade } from '@/types/types'
 
 export interface Bar {
   vbuy?: number
@@ -1810,7 +1815,7 @@ export default class ChartController {
     this._alertsRendered = true
   }
 
-  triggerAlert({ timestamp, price, market, type, newPrice }: AlertUpdate) {
+  onAlert({ timestamp, price, market, type, newPrice }: AlertEvent) {
     if (!this.alerts[market]) {
       return
     }
@@ -1824,7 +1829,7 @@ export default class ChartController {
 
     const priceline = api.getPriceLine(price)
 
-    if (type === 'remove') {
+    if (type === AlertEventType.DELETED) {
       if (priceline) {
         api.removePriceLine(priceline)
       }
@@ -1844,7 +1849,7 @@ export default class ChartController {
       existingAlert.active = true
       existingAlert.triggered = false
       this.renderAlert(existingAlert, api)
-    } else if (type === 'triggered') {
+    } else if (type === AlertEventType.TRIGGERED) {
       if (store.state.settings.alertSound) {
         audioService.playOnce(store.state.settings.alertSound)
       }
@@ -1856,7 +1861,7 @@ export default class ChartController {
       }
 
       this.renderAlert(existingAlert, api)
-    } else if (type === 'add') {
+    } else if (type === AlertEventType.CREATED) {
       if (priceline) {
         api.removePriceLine(priceline)
       }
@@ -1872,12 +1877,20 @@ export default class ChartController {
         ]
 
       this.renderAlert(createdAlert, api, 0.5)
-    } else if (type === 'active') {
+    } else if (type === AlertEventType.ACTIVATED) {
       if (priceline) {
         api.removePriceLine(priceline)
       }
 
+      existingAlert.active = true
+
       this.renderAlert(existingAlert, api)
+    } else if (type === AlertEventType.DEACTIVATED) {
+      if (priceline) {
+        api.removePriceLine(priceline)
+      }
+
+      this.renderAlert(existingAlert, api, 0.5)
     }
   }
 
