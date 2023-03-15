@@ -637,8 +637,7 @@ class AudioService {
         }
       } while (functionMatch)
 
-      litteral = litteral.replaceAll('play(', "audioService['play'](")
-      litteral = litteral.replaceAll('playurl(', "audioService['playurl'](")
+      litteral = litteral.replace(/(play|playurl)\(/g, "audioService['$1'](")
 
       return new Function('audioService', 'ratio', litteral) as AudioFunction
     } catch (error) {
