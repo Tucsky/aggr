@@ -124,8 +124,8 @@ export default class extends Vue {
     display: flex;
     flex-wrap: wrap;
     list-style: none;
-    margin: 0;
-    padding: 0;
+    margin: 0 1rem;
+    padding: 1rem 0;
     overflow: auto;
     position: relative;
     justify-content: center;

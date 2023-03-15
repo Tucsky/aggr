@@ -340,7 +340,7 @@ class AlertService {
       type: AlertEventType.CREATED
     })
 
-    if (chartInstance) {
+    if (chartInstance && !store.state.settings.alertsClick) {
       createdAlert.message = await dialogService.openAsPromise(
         (
           await import('@/components/alerts/CreateAlertDialog.vue')

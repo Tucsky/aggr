@@ -16,17 +16,19 @@
 
         <div class="column -center"></div>
       </template>
-      <form ref="form" class="alert-dialog__form" @submit.prevent="submit">
+      <form ref="form" class="alert-dialog__form" @submit.prevent="create">
         <div class="form-group">
           <label>Label</label>
 
           <div class="input-group">
             <input
+              ref="input"
               type="text"
               class="form-control w-100"
               placeholder="Custom message (optional)"
               v-model="value"
               v-autofocus
+              @keyup.enter="create"
             />
             <button
               v-if="value.length"
@@ -39,7 +41,7 @@
           </div>
         </div>
 
-        <emoji-picker @emoji="value += $event" class="alert-dialog__picker" />
+        <emoji-picker @emoji="appendEmoji" class="alert-dialog__picker" />
       </form>
 
       <template v-slot:footer>
@@ -91,6 +93,11 @@ export default {
     create() {
       this.data = this.value
       this.hide()
+    },
+    appendEmoji(str) {
+      this.value += str
+
+      this.$refs.input.focus()
     }
   }
 }
@@ -102,7 +109,7 @@ export default {
   }
 
   .dialog__body {
-    height: 420px;
+    height: 250px;
     padding: 0;
   }
 
@@ -112,7 +119,7 @@ export default {
     height: 100%;
 
     .form-group {
-      padding: 1rem;
+      padding: 1rem 1rem 0;
     }
   }
 
