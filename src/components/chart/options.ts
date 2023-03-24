@@ -1,24 +1,18 @@
 import store from '@/store'
 import { getColor } from '@/utils/colors'
 import {
-  createChart as createTVChart,
   ChartOptions,
   DeepPartial,
-  IChartApi,
   LineType,
-  LineWidth,
-  MouseEventParams,
-  MouseEventHandler,
-  Time
+  LineWidth
 } from 'lightweight-charts'
 import { ChartPaneState, IndicatorSettings } from '@/store/panesSettings/chart'
 import merge from 'lodash.merge'
-import { floorTimestampToTimeframe } from '@/utils/helpers'
 
 const computedDefaultValues = {}
 const computedOptionTypes = {}
 
-export const defaultChartOptions = {
+export const defaultChartOptions: DeepPartial<ChartOptions> = {
   crosshair: {
     vertLine: {
       color: 'rgba(255, 255, 255, .5)',
@@ -318,9 +312,9 @@ export function getChartScales(
       return scales
     },
     {
-      ...(indicatorId ? { [indicatorId]: '📍 Own scale' } : {}),
-      left: '← LEFT',
-      right: '→ RIGHT'
+      ...(indicatorId ? { [indicatorId]: `* Indicator's scale (📍)` } : {}),
+      left: '* Left (←)',
+      right: '* Right (→)'
     }
   )
 }
@@ -467,75 +461,4 @@ export function getIndicatorOptionValue(
   }
 
   return null
-}
-
-export type ISyncedChartApi = IChartApi & {
-  paneId: string
-  timeframe: number
-  isOddTimeframe: boolean
-}
-const charts: ISyncedChartApi[] = []
-
-function syncCrosshair(paneId, param: MouseEventParams) {
-  if (!param.time) {
-    return
-  }
-
-  for (let i = 0; i < charts.length; i++) {
-    if (charts[i].paneId === paneId) {
-      continue
-    }
-
-    ;(charts[i] as any).setCrosshair(
-      charts[i]
-        .timeScale()
-        .timeToCoordinate(
-          floorTimestampToTimeframe(
-            +param.time,
-            charts[i].timeframe,
-            charts[i].isOddTimeframe
-          ) as Time
-        ),
-      true
-    )
-  }
-}
-
-export function createChart(
-  paneId: string,
-  element: HTMLElement
-): ISyncedChartApi {
-  const chartOptions = merge(
-    getChartOptions(defaultChartOptions as any, paneId),
-    getChartWatermarkOptions(paneId),
-    getChartGridlinesOptions(paneId),
-    getChartBarSpacingOptions(paneId, element.clientWidth)
-  )
-
-  const chartInstance = createTVChart(element, chartOptions) as ISyncedChartApi
-  chartInstance.paneId = paneId
-  chartInstance.timeframe = 1
-  chartInstance.subscribeCrosshairMove(syncCrosshair.bind(null, paneId))
-  charts.push(chartInstance)
-
-  return chartInstance
-}
-
-export function destroyChart(chartInstance: ISyncedChartApi) {
-  chartInstance.unsubscribeCrosshairMove(syncCrosshair as MouseEventHandler)
-  chartInstance.remove()
-
-  const index = charts.indexOf(chartInstance)
-
-  if (index === -1) {
-    console.error('Chart instance not found')
-  } else {
-    charts.splice(index, 1)
-  }
-}
-
-export function clearChartsCrosshairs() {
-  for (let i = 0; i < charts.length; i++) {
-    ;(charts[i] as any).setCrosshair(null, null, false)
-  }
 }

@@ -31,7 +31,7 @@ export default {
 }
 
 .loader {
-  margin: 0 auto;
+  margin-inline: auto;
   border-radius: 50%;
   width: 3em;
   height: 3em;

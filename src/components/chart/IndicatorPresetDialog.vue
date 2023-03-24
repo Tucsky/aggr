@@ -109,7 +109,7 @@
 
 <script>
 import DialogMixin from '@/mixins/dialogMixin'
-import { getIndicatorOptionType } from '../../services/chartService'
+import { getIndicatorOptionType } from './options'
 
 export default {
   mixins: [DialogMixin],

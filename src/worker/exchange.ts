@@ -627,7 +627,7 @@ class Exchange extends EventEmitter {
     }
 
     if (this.delayBetweenMessages) {
-      await sleep(this.delayBetweenMessages)
+      await sleep(this.delayBetweenMessages * this.apis.length)
     }
 
     return true
@@ -652,7 +652,7 @@ class Exchange extends EventEmitter {
     }
 
     if (this.delayBetweenMessages) {
-      await sleep(this.delayBetweenMessages)
+      await sleep(this.delayBetweenMessages * this.apis.length)
     }
 
     return api.readyState === WebSocket.OPEN
@@ -815,9 +815,10 @@ class Exchange extends EventEmitter {
     }
 
     const delay = count * this.delayBetweenMessages
+    const apisCount = Math.ceil(count / this.maxConnectionsPerApi)
 
     if (this.maxConnectionsPerApi && count > this.maxConnectionsPerApi) {
-      return delay / Math.ceil(count / this.maxConnectionsPerApi)
+      return (delay / Math.ceil(count / this.maxConnectionsPerApi)) * apisCount
     }
 
     return delay

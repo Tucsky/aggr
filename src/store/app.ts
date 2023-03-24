@@ -3,7 +3,6 @@ import { randomString } from '@/utils/helpers'
 import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
-import SearchDialog from '../components/SearchDialog.vue'
 import TimeframeDialog from '../components/TimeframeDialog.vue'
 import { getApiSupportedMarkets } from '../services/productsService'
 
@@ -52,7 +51,7 @@ export interface AppState {
   isExchangesReady: boolean
   showSearch: boolean
   historicalMarkets: string[]
-  apiSupportedTimeframes: number[]
+  apiSupportedTimeframes: string[]
   activeExchanges: { [exchangeId: string]: boolean }
   version: string
   buildDate: number | string
@@ -171,7 +170,7 @@ const actions = {
       notice
     })
   },
-  showSearch({ commit, state }, paneId?: string) {
+  async showSearch({ commit, state }, { paneId, pristine = false } = {}) {
     if (state.showSearch) {
       return
     }
@@ -182,7 +181,10 @@ const actions = {
       paneId = state.focusedPaneId
     }
 
-    dialogService.open(SearchDialog, { paneId })
+    dialogService.open(
+      (await import('@/components/SearchDialog.vue')).default,
+      { paneId, pristine }
+    )
   },
   showTimeframe({ commit, state, rootState }) {
     if (

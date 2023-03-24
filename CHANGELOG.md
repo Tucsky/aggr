@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented here.
 
+## [3.3.2] - 2023-03-24
+### Added
+- Kucoin perp
+- Alerts message (SHIFT+CLICK)
+- Measurement tool (ALT+CLICK)
+- Chart context menu
+- Drag market to pane
+### Changed
+- Smaller head for charts
+
+
 ## [3.3.1] - 2023-02-24
 ### Added
 - Bitget

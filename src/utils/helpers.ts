@@ -1,3 +1,4 @@
+import Vue from 'vue'
 import store from '@/store'
 
 const DAY = 60 * 60 * 24
@@ -436,15 +437,22 @@ export function getApiUrl(path: string): string {
   return base + path
 }
 
-export function getEventCords(event) {
+export function getEventCords(event, page = false) {
+  const props = {
+    x: page ? 'pageX' : 'clientX',
+    y: page ? 'pageY' : 'clientY'
+  }
+
+  let point = event
+
   if (event.type.match(/^touch/i)) {
-    const touch = event.touches[0]
-    return { x: touch.clientX, y: touch.clientY }
+    point = event.touches[0]
   }
-  if (event.type.match(/^mouse/i)) {
-    return { x: event.clientX, y: event.clientY }
+
+  return {
+    x: typeof point[props.x] !== 'undefined' ? point[props.x] : point.offsetX,
+    y: typeof point[props.y] !== 'undefined' ? point[props.y] : point.offsetY
   }
-  return { x: event.offsetX, y: event.offsetY }
 }
 
 export function debounce(func, immediate = false) {
@@ -474,4 +482,28 @@ export function getClosestValue(array, value) {
   return array.reduce((prev, curr) => {
     return Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
   })
+}
+
+export function createComponent(componentModule, props: any = {}): Vue {
+  const Factory = Vue.extend(Object.assign({ store }, componentModule))
+
+  const cmp: any = new Factory(
+    Object.assign(
+      {},
+      {
+        propsData: Object.assign({}, props)
+      }
+    )
+  )
+
+  return cmp
+}
+
+export function mountComponent(cmp: Vue, container?: HTMLElement): void {
+  if (!container) {
+    container = document.getElementById('app') || document.body
+  }
+
+  const mounted = cmp.$mount()
+  container.appendChild(mounted.$el)
 }

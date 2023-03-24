@@ -17,7 +17,7 @@ import {
   randomString,
   uniqueName
 } from '@/utils/helpers'
-import { plotTypesMap } from '../../services/chartService'
+import { plotTypesMap } from './options'
 const SERIE_UPDATE_REGEX = /series\[[a-zA-Z0-9+\-$ ]+\]\.update\(/
 const VARIABLES_VAR_NAME = 'vars'
 const FUNCTIONS_VAR_NAME = 'fns'

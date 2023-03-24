@@ -255,10 +255,8 @@ const actions = {
       }
     }
 
-    await Promise.all([
-      aggregatorService.connect(toConnect),
-      aggregatorService.disconnect(toDisconnect)
-    ])
+    aggregatorService.connect(toConnect)
+    aggregatorService.disconnect(toDisconnect)
 
     aggregatorService.dispatch({
       op: 'updateBuckets',
@@ -279,9 +277,13 @@ const actions = {
     return dispatch('refreshMarketsListeners', { markets })
   },
   setMarketsForPane(
-    { dispatch },
+    { dispatch, state },
     { id, markets }: { id: string; markets: string[] }
   ) {
+    if (state.panes[id].type in StaticPaneType) {
+      return dispatch('refreshMarketsListeners', { id, markets: [] })
+    }
+
     return dispatch('refreshMarketsListeners', { id, markets })
   },
   duplicatePane({ state, rootState, dispatch }, id: string) {

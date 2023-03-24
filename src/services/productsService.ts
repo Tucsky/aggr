@@ -137,10 +137,6 @@ async function fetchExchangeProducts(
     }
   }
 
-  console.log(
-    `[products.${exchangeId}] received API products response => format products`
-  )
-
   if (data.indexOf(null) !== -1) {
     // today if one of the endpoint fail, consider they all failed
     // todo => accept this set of products without saving
@@ -275,8 +271,6 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     localSymbol = localSymbol.replace(/-SPOT$/, '')
   } else if (exchangeId === 'KRAKEN') {
     localSymbol = localSymbol.replace(/PI_/, '').replace(/FI_/, '')
-  } else if (exchangeId === 'FTX' && type === 'future') {
-    localSymbol = localSymbol.replace(/(\w+)-\d+$/, '$1-USD')
   } else if (exchangeId === 'BITFINEX') {
     localSymbol = localSymbol
       .replace(/(.*)F0:(\w+)F0/, '$1-$2')
@@ -310,10 +304,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     match = localSymbolAlpha.match(baseQuoteLookupOthers)
   }
 
-  if (
-    !match &&
-    (exchangeId === 'DERIBIT' || exchangeId === 'FTX' || exchangeId === 'HUOBI')
-  ) {
+  if (!match && (exchangeId === 'DERIBIT' || exchangeId === 'HUOBI')) {
     match = localSymbolAlpha.match(/(\w+)[^a-z0-9]/i)
 
     if (match) {
@@ -382,7 +373,7 @@ export async function getApiSupportedMarkets() {
 
     return cache.products
   } catch (error) {
-    console.error(error)
+    // console.error(error)
   }
 
   try {
@@ -498,9 +489,9 @@ export function formatAmount(amount, decimals?: number) {
   } else if (amount >= 1000000) {
     amount = +(amount / 1000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' M'
   } else if (amount >= 1000) {
-    amount = +(amount / 1000).toFixed(isNaN(decimals) ? 1 : decimals) + 'k'
+    amount = +(amount / 1000).toFixed(isNaN(decimals) ? 1 : decimals) + ' K'
   } else {
-    amount = +amount.toFixed(2)
+    amount = +amount.toFixed(isNaN(decimals) ? 2 : decimals)
   }
 
   if (negative) {

@@ -180,11 +180,6 @@ const actions = {
         }
       }
     }
-
-    this.dispatch('app/showNotice', {
-      title: `Generating swatches for ${count} thresholds with ${baseVariance} variance`,
-      type: 'info'
-    })
   }
 } as ActionTree<TradesPaneState, ModulesState>
 

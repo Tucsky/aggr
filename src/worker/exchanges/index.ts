@@ -15,7 +15,6 @@ import Okex from './okex'
 import Poloniex from './poloniex'
 import Deribit from './deribit'
 import Bybit from './bybit'
-import Ftx from './ftx'
 import Phemex from './phemex'
 import Dydx from './dydx'
 import Uniswap from './uniswap'
@@ -38,7 +37,6 @@ export const exchanges = [
   new Poloniex(),
   new Deribit(),
   new Bybit(),
-  new Ftx(),
   new Phemex(),
   new Dydx(),
   new Uniswap(),

@@ -102,8 +102,24 @@
       display: none;
       position: absolute;
 
+      &--split {
+        position: absolute;
+        top: 0;
+        right: 0;
+
+        .pane-header__name {
+          flex-grow: 0;
+        }
+
+        .toolbar {
+          flex-grow: 0 !important;
+          margin-left: auto;
+        }
+      }
+
       .toolbar {
         display: flex;
+        flex-grow: 1;
       }
     }
 
@@ -160,16 +176,15 @@
   display: flex;
   align-items: stretch;
   z-index: 4;
-  height: 1.5em;
-  background-color: rgba(black, 0.5);
+  height: 1.375em;
+  background: 0;
   flex-shrink: 0;
   width: 100%;
   cursor: move;
+  pointer-events: none;
 
-  &--corner {
-    position: absolute;
-    top: 0;
-    right: 0;
+  > div {
+    pointer-events: all;
   }
 
   .pane.-small & {
@@ -186,15 +201,16 @@
 
   &__name {
     font-family: $font-condensed;
-    align-self: center;
-    display: block;
-    line-height: 1;
+    align-self: stretch;
+    display: inline-flex;
     font-size: 0.875em;
-    line-height: 1;
-    padding: 0 0 0 0.5em;
+    padding: 0 0.375em;
+    align-items: center;
+    flex-grow: 1;
 
     .pane.-small & {
       font-size: 1em;
+      line-height: 1rem;
       padding: 0 0 0 0.25em;
     }
   }
@@ -307,4 +323,8 @@
 
 body.-unselectable #app.-auto-hide-headers .pane-header {
   display: none !important;
+}
+
+body.-dragging-market .pane * {
+  pointer-events: none;
 }

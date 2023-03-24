@@ -74,6 +74,11 @@ export default {
     top: null,
     left: null
   }),
+  mounted() {
+    if (this.value) {
+      this.toggle(this.value)
+    }
+  },
   beforeDestroy() {
     this.toggle(null, true)
 
@@ -307,7 +312,11 @@ export default {
         let depth = 0
         let isOutside = true
 
-        while (depth++ < 10 && (parentElement = parentElement.parentElement)) {
+        while (
+          isOutside &&
+          depth++ < 10 &&
+          (parentElement = parentElement.parentElement)
+        ) {
           if (parentElement.classList.contains('dropdown')) {
             isOutside = false
           }
@@ -366,12 +375,12 @@ export default {
   }
 
   &-enter-active {
-    transition: all 0.2s $ease-out-expo, transform 0.2s $ease-elastic;
+    transition: all 0.1s $ease-out-expo, transform 0.1s $ease-elastic;
     pointer-events: none;
   }
 
   &-leave-active {
-    transition: all 0.5s $ease-out-expo;
+    transition: all 0.2s $ease-out-expo;
   }
 
   &-leave,
@@ -418,11 +427,12 @@ export default {
     color: var(--theme-color-base);
     font-family: $font-base;
     width: 100%;
-    cursor: pointer;
     box-sizing: border-box;
     font-size: 1em;
     border-radius: 0;
     box-shadow: none;
+    line-height: 1;
+    cursor: pointer;
 
     &:hover {
       background-color: var(--theme-color-o10);

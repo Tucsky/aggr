@@ -83,7 +83,7 @@ export default class extends Vue {
   }
 
   searchMarkets(event) {
-    this.$store.dispatch('app/showSearch', this.paneId)
+    this.$store.dispatch('app/showSearch', { paneId: this.paneId })
     event.stopPropagation()
   }
 

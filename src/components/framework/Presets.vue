@@ -20,7 +20,7 @@
           <i class="icon-save"></i>
         </div>
         <div
-          class="btn -text  flex-right"
+          class="btn -text flex-right"
           @click.stop="toggleUtilityDropdown($event)"
         >
           <i class="icon-cog"></i>

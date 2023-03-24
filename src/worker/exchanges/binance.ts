@@ -1,5 +1,4 @@
 import Exchange from '../exchange'
-import { sleep } from '../helpers/utils'
 
 export default class extends Exchange {
   id = 'BINANCE'
@@ -17,7 +16,11 @@ export default class extends Exchange {
 
   formatProducts(data) {
     return data.symbols
-      .filter(product => product.status === 'TRADING')
+      .filter(
+        product =>
+          product.status === 'TRADING' &&
+          product.permissions.indexOf('LEVERAGED') === -1
+      )
       .map(product => product.symbol.toLowerCase())
   }
 
@@ -42,9 +45,6 @@ export default class extends Exchange {
         id: this.subscriptions[pair]
       })
     )
-
-    // this websocket api have a limit of about 5 messages per second.
-    await sleep(250 * this.apis.length)
 
     return true
   }

@@ -61,7 +61,7 @@ import { Component, Vue, Watch } from 'vue-property-decorator'
 import {
   getDefaultIndicatorOptionValue,
   getIndicatorOptionType
-} from '../../services/chartService'
+} from './options'
 
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'

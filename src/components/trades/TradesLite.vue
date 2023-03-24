@@ -55,7 +55,7 @@
     <code v-if="paused" class="pane-trades__paused">
       {{ paused }}
     </code>
-    <canvas ref="canvas" @dblclick="reset" />
+    <canvas ref="canvas" @dblclick="prepareEverything" />
   </div>
 </template>
 
@@ -84,11 +84,6 @@ import { Trade } from '../../types/types'
 const DEBUG = false
 const GRADIENT_DETAIL = 5
 const LOGOS = {}
-
-enum LeftColumnType {
-  price,
-  pair
-}
 
 enum TradeType {
   trade,
@@ -120,6 +115,8 @@ export default class extends Mixins(PaneMixin) {
   private sellColor100: string
   private themeBase: string
   private renderTrades: boolean
+  private showPairs: boolean
+  private showPrices: boolean
   private showHistograms: boolean
   private drawOffset: number
 
@@ -179,7 +176,6 @@ export default class extends Mixins(PaneMixin) {
   private maxCount: number
   private limit: number
   private batchSize = 1
-  private leftColumnType: LeftColumnType = LeftColumnType.price
 
   sliderDropdownTrigger = null
   paused = 0
@@ -692,12 +688,10 @@ export default class extends Mixins(PaneMixin) {
     const pane = this.$store.state[this.paneId] as TradesPaneState
     this.maxHistory = pane.maxRows
     this.showHistograms = pane.showHistograms
+    this.showPairs = pane.showPairs
     this.renderTrades =
-      !this.$store.state[this.paneId].showHistograms ||
-      this.height > window.innerHeight / 24
-    this.leftColumnType = pane.showPrices
-      ? LeftColumnType.price
-      : LeftColumnType.pair
+      !pane.showHistograms || this.height > window.innerHeight / 24
+    this.showPrices = pane.showPrices
     this.offset = 0
     this.drawOffset = this.showHistograms ? this.lineHeight : 0
   }
@@ -867,11 +861,12 @@ export default class extends Mixins(PaneMixin) {
       this.drawOffset + height / 2 - this.logoWidth / 2
     )
 
-    if (this.leftColumnType) {
+    if (this.showPairs) {
       this.drawPair(trade, height)
-    } else {
+    } else if (this.showPrices) {
       this.drawPrice(trade, market, height)
     }
+
     this.drawAmount(trade, height, trade.type === TradeType.liquidation)
 
     if (trade.time) {
@@ -918,7 +913,7 @@ export default class extends Mixins(PaneMixin) {
     this.ctx.fillText(
       formatAmount(trade.amount) +
         (liquidation ? (trade.side === 'buy' ? '🐻' : '🐂') : ''),
-      this.width / 1.4,
+      this.width / (!this.showPrices && !this.showPairs ? 1.8 : 1.4),
       this.drawOffset + height / 2 + 1,
       this.maxWidth
     )

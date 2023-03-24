@@ -2,11 +2,8 @@
   <Dialog @clickOutside="hide" class="search-dialog" ref="dialog">
     <template v-slot:header>
       <div v-if="paneId">
-        <div class="dialog__title">ADD/REMOVE SOURCES</div>
-        <div class="dialog__subtitle">
-          to
-          <u class="text-color-base" v-text="paneName"></u>
-          pane
+        <div class="dialog__title">
+          Connect <code class="-filled -green">{{ paneName }}</code>
           <button
             type="button"
             class="btn -small ml4 -text"
@@ -19,9 +16,9 @@
         </div>
       </div>
       <div v-else>
-        <div class="dialog__title">REPLACE SOURCES</div>
-        <div class="dialog__subtitle">across all panes</div>
+        <div class="dialog__title">Manage connections</div>
       </div>
+      <Loader v-if="isPreloading" small class="mtauto mbauto mr0" />
       <div class="column -center"></div>
     </template>
     <div
@@ -146,7 +143,11 @@
         </label>
       </ToggableSection>
 
-      <ToggableSection title="Quote currency" id="search-quotes">
+      <ToggableSection
+        title="Quote currency"
+        id="search-quotes"
+        :badge="quotesCount.length"
+      >
         <label
           class="checkbox-control -small mb4"
           v-for="quote of quoteCurrencies"
@@ -179,7 +180,7 @@
       >
         <div v-if="selection.length" class="search-dialog-selection__controls">
           <button
-            class="btn -text"
+            class="search-dialog__tags-item btn -text"
             @click="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')"
             title="Toggle grouping"
             v-tippy="{ boundary: 'window', placement: 'bottom' }"
@@ -187,7 +188,7 @@
             <i class="icon-merge"></i>
           </button>
           <button
-            class="btn -text"
+            class="search-dialog__tags-item btn -text"
             @click="clearSelection"
             title="Clear"
             v-tippy="{ boundary: 'window', placement: 'bottom' }"
@@ -199,9 +200,9 @@
           <button
             v-for="(markets, localPair) of groupedSelection"
             :key="localPair"
-            class="btn -green -pill"
+            class="search-dialog__tags-item btn -green -pill"
             :title="'Click to remove ' + markets.join(', ')"
-            @click.stop.prevent="deselectWhileRetainingScroll(markets)"
+            @click.stop.prevent="toggleMarkets(markets)"
           >
             <span
               v-if="markets.length > 1"
@@ -215,15 +216,16 @@
           <button
             v-for="market of selection"
             :key="market"
-            class="btn"
+            class="search-dialog__tags-item btn"
             :class="{ '-green': activeMarkets.indexOf(market) !== -1 }"
             title="Click to remove"
-            @click.stop.prevent="deselectWhileRetainingScroll(market)"
+            @click.stop.prevent="toggleMarkets(market)"
             v-text="market"
           ></button>
         </template>
         <input
           ref="input"
+          class="search-dialog__tags-item"
           type="text"
           placeholder="Search"
           :value="query"
@@ -264,7 +266,7 @@
                 :key="savedSelection.label"
                 class="-action"
                 :title="savedSelection.markets.join(', ')"
-                @click="selectMarkets(savedSelection.markets, $event.shiftKey)"
+                @click="toggleMarkets(savedSelection.markets, $event.shiftKey)"
               >
                 <td class="search-dialog-recents__label">
                   {{ savedSelection.label }}
@@ -288,7 +290,7 @@
               <tr
                 v-for="(group, index) in results"
                 :key="group.localPair"
-                @click="selectMarkets(group.markets)"
+                @click="toggleMarkets(group.markets)"
                 :class="{ active: activeIndex === index }"
                 class="-action"
               >
@@ -315,7 +317,7 @@
               <tr
                 v-for="(market, index) of results"
                 :key="market.id"
-                @click="selectMarket(market.id)"
+                @click="toggleMarkets([market.id])"
                 :class="{ active: activeIndex === index }"
                 class="-action"
               >
@@ -366,13 +368,12 @@
     </div>
 
     <template v-slot:footer>
-      <a
-        href="javascript:void(0);"
+      <btn
         class="btn -text mrauto search-dialog__side-toggle"
         @click="mobileShowFilters = !mobileShowFilters"
       >
         <i class="icon-cog"></i
-      ></a>
+      ></btn>
       <a href="javascript:void(0);" class="btn -text" @click="hide">Cancel</a>
       <btn
         class="-large -green ml8"
@@ -386,6 +387,7 @@
 </template>
 
 <script>
+import Loader from '@/components/framework/Loader.vue'
 import Btn from '@/components/framework/Btn.vue'
 import Dialog from '@/components/framework/Dialog.vue'
 import DialogMixin from '@/mixins/dialogMixin'
@@ -409,11 +411,16 @@ export default {
   components: {
     ToggableSection,
     Dialog,
-    Btn
+    Btn,
+    Loader
   },
   props: {
     paneId: {
       required: false
+    },
+    pristine: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({
@@ -421,6 +428,7 @@ export default {
     query: '',
     markets: [],
     isLoading: false,
+    isPreloading: false,
     selection: [],
     originalSelection: [],
     activeIndex: null,
@@ -490,9 +498,9 @@ export default {
       const toDisconnect = +this.toDisconnect
 
       if (!this.selection.length && toDisconnect) {
-        return 'disconnect'
+        return `disconnect (${toDisconnect})`
       } else if (toConnect) {
-        return 'connect'
+        return `connect (${toConnect})`
       }
 
       return 'refresh'
@@ -512,8 +520,11 @@ export default {
         return acc
       }, {})
     },
+    quotesCount() {
+      return Object.values(this.searchQuotes).filter(a => !!a)
+    },
     allQuotes() {
-      return !Object.values(this.searchQuotes).find(a => !!a)
+      return !this.quotesCount.length
     },
     exchanges() {
       return this.$store.getters['exchanges/getExchanges']
@@ -714,7 +725,9 @@ export default {
     }
   },
   async created() {
+    this.isPreloading = true
     await ensureIndexedProducts(this.searchExchanges)
+    this.isPreloading = false
 
     this.initSelection()
 
@@ -747,6 +760,10 @@ export default {
       this.initSelection()
     },
     initSelection() {
+      if (this.pristine) {
+        return
+      }
+
       if (this.paneId) {
         this.selection =
           this.$store.state.panes.panes[this.paneId].markets.slice()
@@ -763,51 +780,19 @@ export default {
           .filter((v, i, a) => a.indexOf(v) === i).length > 1
       )
     },
-    selectPaneMarkets(paneId) {
-      const pane = this.otherPanes[paneId]
+    async toggleMarkets(markets, removeFromHistory) {
+      const scrollTop = this.$refs.selection.scrollTop
 
-      for (let i = 0; i < pane.markets.length; i++) {
-        if (this.selection.indexOf(pane.markets[i]) !== -1) {
-          continue
-        }
-
-        this.selection.push(pane.markets[i])
+      if (!Array.isArray(markets)) {
+        markets = [markets]
       }
-    },
-    selectMarket(market) {
-      this.selection.push(market)
-    },
-    selectMarkets(markets, removeFromHistory) {
       if (removeFromHistory) {
         this.$store.commit('settings/REMOVE_SEARCH_HISTORY', markets)
         clearTimeout(this._hideHistoryTimeout)
         return
       }
-
-      const marketsToAdd = markets.filter(
-        market => this.selection.indexOf(market) === -1
-      )
-
-      if (!marketsToAdd.length) {
-        this.$store.dispatch('app/showNotice', {
-          id: 'select-market-already-added',
-          title: `You already selected ${
-            markets.length > 1 ? 'these markets' : markets[0]
-          } !`,
-          type: 'error'
-        })
-        return
-      }
-
-      this.selection = this.selection.concat(marketsToAdd)
-    },
-    async deselectWhileRetainingScroll(markets) {
-      const scrollTop = this.$refs.selection.scrollTop
-
-      if (Array.isArray(markets)) {
-        this.deselectMarkets(markets)
-      } else {
-        this.deselectMarket(markets)
+      for (const market of markets) {
+        this.toggleMarket(market)
       }
 
       await this.$nextTick()
@@ -816,12 +801,13 @@ export default {
 
       this.$refs.selection.scrollTop = scrollTop
     },
-    deselectMarket(market) {
-      this.selection.splice(this.selection.indexOf(market), 1)
-    },
-    deselectMarkets(markets) {
-      for (const market of markets) {
-        this.deselectMarket(market)
+    toggleMarket(market) {
+      const index = this.selection.indexOf(market)
+
+      if (index === -1) {
+        this.selection.push(market)
+      } else {
+        this.selection.splice(index, 1)
       }
     },
     async submit() {
@@ -849,7 +835,7 @@ export default {
       } else {
         this.isLoading = true
 
-        await this.$store.dispatch('panes/setMarketsForPane', {
+        this.$store.dispatch('panes/setMarketsForPane', {
           id: this.paneId,
           markets: this.selection
         })
@@ -922,9 +908,9 @@ export default {
           event.preventDefault()
           if (this.results[this.activeIndex]) {
             if (this.searchTypes.normalize) {
-              this.selectMarkets(this.results[this.activeIndex].markets)
+              this.toggleMarkets([this.results[this.activeIndex].markets])
             } else {
-              this.selectMarket(this.results[this.activeIndex].id)
+              this.toggleMarkets([this.results[this.activeIndex].id])
             }
           }
           break
@@ -967,7 +953,7 @@ export default {
       if (!this.query.length && this.selection.length) {
         if (this.searchTypes.normalize) {
           const lastPair = Object.keys(this.groupedSelection).pop()
-          this.deselectMarkets(this.groupedSelection[lastPair])
+          this.toggleMarkets(this.groupedSelection[lastPair])
         } else {
           this.selection.splice(this.selection.length - 1, 1)
         }
@@ -988,7 +974,7 @@ export default {
         }
       }
 
-      this.selectMarkets(markets)
+      this.toggleMarkets(markets)
     },
 
     toggleAll(selectAll) {
@@ -1107,7 +1093,7 @@ export default {
     }
 
     &-toggle {
-      .dialog:not(.dialog--small):not(.dialog--small) & {
+      .dialog:not(.dialog--small) & {
         display: none;
       }
     }
@@ -1150,14 +1136,18 @@ export default {
   }
 
   &__tags {
-    padding: 6px 2rem 2px 6px;
+    padding: 0.25rem;
 
-    &-controls > button,
-    > button,
-    > input {
-      margin-bottom: 4px;
-      margin-right: 5px;
-      height: 34px;
+    &-item {
+      padding: 0.25rem;
+
+      .dialog--small & {
+        padding: 0.125rem;
+      }
+
+      .dialog--large & {
+        padding: 0.375rem;
+      }
     }
 
     input {
@@ -1165,7 +1155,7 @@ export default {
       background: 0;
       color: inherit;
       font-family: inherit;
-      padding: 0 4px;
+      padding: 0.25rem;
       flex-grow: 1;
       font-size: 1em;
     }
@@ -1190,6 +1180,9 @@ export default {
     border: 0;
     max-height: 50%;
     overflow: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
 
     &.-sticky {
       @media screen and (min-width: 550px) {
@@ -1206,7 +1199,9 @@ export default {
       position: absolute;
       top: 0;
       right: 0;
-      margin: 6px;
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.25rem;
     }
   }
 

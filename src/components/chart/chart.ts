@@ -1,53 +1,62 @@
-import { MAX_BARS_PER_CHUNKS } from '../../utils/constants'
+import store from '@/store'
+
+import { MAX_BARS_PER_CHUNKS } from '@/utils/constants'
 import {
   getHms,
   camelize,
   getTimeframeForHuman,
   floorTimestampToTimeframe,
   isOddTimeframe,
-  sleep
-} from '../../utils/helpers'
+  sleep,
+  openBase64InNewTab,
+  formatBytes
+} from '@/utils/helpers'
+import { waitForStateMutation } from '@/utils/store'
+import { joinRgba, splitColorCode } from '@/utils/colors'
+import merge from 'lodash.merge'
+
 import {
-  createChart,
+  defaultChartOptions,
   defaultPlotsOptions,
   defaultSerieOptions,
-  destroyChart,
-  getChartCrosshairOptions,
-  getChartWatermarkOptions,
-  ISyncedChartApi
-} from '../../services/chartService'
-import store from '../../store'
-import seriesUtils from './serieUtils'
-import ChartCache, { Chunk } from './cache'
-import SerieBuilder from './serieBuilder'
+  getChartBarSpacingOptions,
+  getChartGridlinesOptions,
+  getChartOptions,
+  getChartWatermarkOptions
+} from '@/components/chart/options'
 import dialogService from '@/services/dialogService'
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
-import { waitForStateMutation } from '../../utils/store'
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
-import { getEventOffset } from '@/utils/touchevent'
+import { stripStable, marketDecimals } from '@/services/productsService'
+import audioService from '@/services/audioService'
+import alertService, {
+  MarketAlert,
+  AlertEvent,
+  AlertEventType
+} from '@/services/alertService'
+import historicalService, {
+  HistoricalResponse
+} from '@/services/historicalService'
+
+import seriesUtils from '@/components/chart/serieUtils'
+import ChartCache, { Chunk } from '@/components/chart/cache'
+import SerieBuilder from '@/components/chart/serieBuilder'
+
 import {
-  formatPrice,
-  stripStable,
-  marketDecimals
-} from '@/services/productsService'
-import audioService from '../../services/audioService'
-import {
+  createChart as createTVChart,
   BarData,
   HistogramData,
   ISeriesApi,
   LineData,
   PriceScaleOptions,
   SeriesOptions,
-  UTCTimestamp
+  UTCTimestamp,
+  IChartApi,
+  Time
 } from 'lightweight-charts'
-import { joinRgba, splitColorCode } from '@/utils/colors'
-import {
-  MarketAlert,
-  AlertEvent,
-  AlertEventType
-} from '@/services/alertService'
 import { Trade } from '@/types/types'
+import ChartControl from './controls'
 
 export interface Bar {
   vbuy?: number
@@ -169,33 +178,39 @@ interface RendererIndicatorData {
   minLength?: number
 }
 
-export default class ChartController {
+type MarketsFilters = {
+  [identifier: string]: boolean
+}
+
+// @todo: to split into 5 categories of things going on here
+// + chart (create, configure, maintain, destroy)
+// + indicators (all about indicators, scripting, and options)
+// + ticker/engine (known as renderer, all about the developping data)
+// + renderer (all about actual rendering)
+// + helpers (utilities, exposed getters)
+export default class Chart {
   paneId: string
   watermark: string
 
-  chartInstance: ISyncedChartApi
+  chartCache: ChartCache
+  chartControl: ChartControl
+  chartInstance: IChartApi
   chartElement: HTMLElement
   loadedIndicators: LoadedIndicator[] = []
   panPrevented: boolean
   activeRenderer: Renderer
   renderedRange: TimeRange = { from: null, to: null }
-  chartCache: ChartCache
-  markets: {
-    [identifier: string]: {
-      active: boolean
-      index: string
-      historical: boolean
-    }
-  } = {}
-  alerts: {
-    [identifier: string]: MarketAlert[]
-  } = {}
+  marketsFilters: MarketsFilters = {}
+  marketsIndexes: string[] = []
+  mainIndex: string
   timezoneOffset = 0
   fillGapsWithEmpty = true
   timeframe: number
   isOddTimeframe: boolean
   type: 'time' | 'tick'
   priceScales: string[] = []
+  isLoading = false
+  hasReachedEnd = false
 
   private activeChunk: Chunk
   private queuedTrades: Trade[] = []
@@ -210,16 +225,31 @@ export default class ChartController {
   private _promiseOfMarketsRender: Promise<void>
   private _priceIndicatorId: string
   private _alertsRendered: boolean
+  private _timeToRecycle: number
+  private _recycleTimeout: number
 
-  constructor(id: string) {
+  constructor(id: string, chartElement: HTMLElement) {
     this.paneId = id
+    this.chartElement = chartElement
 
+    // @todo: refactor as abstract
     this.chartCache = new ChartCache()
+
+    // @todo: refactor as abstract
     this.serieBuilder = new SerieBuilder()
 
+    this.initialize()
+  }
+
+  initialize() {
+    this.createChart()
+    this.setupQueue()
+    this.setupRecycle()
     this.setTimeframe(store.state[this.paneId].timeframe)
     this.setTimezoneOffset(store.state.settings.timezoneOffset)
     this.refreshMarkets()
+    this.fetch()
+
     aggregatorService.on('decimals', this._refreshDecimalsHandler)
 
     this.fillGapsWithEmpty = Boolean(store.state[this.paneId].fillGapsWithEmpty)
@@ -243,11 +273,11 @@ export default class ChartController {
       this._promiseOfMarkets = null
     }
 
-    const markets = store.state.panes.panes[this.paneId].markets
-    const historicalMarkets = store.state.app.historicalMarkets
+    const markets: string[] = store.state.panes.panes[this.paneId].markets
     const normalizeWatermarks = store.state.settings.normalizeWatermarks
-    const marketsForWatermark = []
-    const cachedMarkets: any = {}
+    const marketsForWatermark: string[] = []
+    const marketsIndexes: { [index: string]: number } = {}
+    const marketsFilters: any = {}
 
     for (const marketKey of markets) {
       const [exchange] = marketKey.split(':')
@@ -259,17 +289,15 @@ export default class ChartController {
         localPair = stripStable(market.local)
       }
 
-      cachedMarkets[marketKey] = {
-        active:
-          store.state.exchanges[exchange] &&
-          !store.state.exchanges[exchange].disabled &&
-          !store.state[this.paneId].hiddenMarkets[marketKey],
-        index: localPair,
-        historical: historicalMarkets.indexOf(marketKey) !== -1
-      }
+      // build up markets
+      marketsFilters[marketKey] =
+        store.state.exchanges[exchange] &&
+        !store.state.exchanges[exchange].disabled &&
+        !store.state[this.paneId].hiddenMarkets[marketKey]
 
+      // build up watermark
       if (
-        cachedMarkets[marketKey].active &&
+        marketsFilters[marketKey] &&
         marketsForWatermark.indexOf(localPair) === -1
       ) {
         marketsForWatermark.push(
@@ -277,16 +305,30 @@ export default class ChartController {
             localPair
         )
       }
+
+      // build up indexes
+      if (!marketsIndexes[localPair]) {
+        marketsIndexes[localPair] = 0
+      }
+      marketsIndexes[localPair]++
     }
 
-    this.markets = cachedMarkets
+    this.marketsFilters = marketsFilters
+    this.marketsIndexes = Object.keys(marketsIndexes)
+    this.mainIndex = this.marketsIndexes
+      .reduce((acc, index) => {
+        acc.push({
+          index,
+          count: this.marketsIndexes[index]
+        })
 
-    if (store.state.app.isExchangesReady) {
-      await this.retrieveAlerts()
-    }
+        return acc
+      }, [])
+      .sort((a, b) => b.count - a.count)[0].index
 
     this.updateWatermark(marketsForWatermark)
     this.resetPriceScales()
+    this.refreshAutoDecimals([this.mainIndex])
   }
 
   /**
@@ -324,17 +366,30 @@ export default class ChartController {
 
   /**
    * create Lightweight Charts instance and render pane's indicators
-   * @param {HTMLElement} containerElement
    */
-  createChart(containerElement: HTMLElement) {
+  createChart() {
     console.log(`[chart/${this.paneId}/controller] create chart`)
 
-    this.chartInstance = createChart(this.paneId, containerElement)
-    this.chartElement = containerElement
+    const chartOptions = merge(
+      getChartOptions(defaultChartOptions, this.paneId),
+      getChartWatermarkOptions(this.paneId),
+      getChartGridlinesOptions(this.paneId),
+      getChartBarSpacingOptions(this.paneId, this.chartElement.clientWidth)
+    )
+
+    this.chartInstance = createTVChart(
+      this.chartElement,
+      chartOptions
+    ) as IChartApi
 
     this.addEnabledSeries()
     this.updateWatermark()
     this.updateFontSize()
+
+    if (!this.chartControl) {
+      this.chartControl = new ChartControl(this)
+    }
+    this.chartControl.bindEvents()
   }
 
   /**
@@ -343,18 +398,20 @@ export default class ChartController {
   removeChart() {
     console.log(`[chart/${this.paneId}/controller] remove chart`)
 
-    if (!this.chartInstance) {
-      return
-    }
+    this.chartControl.unbindEvents()
+
+    this.priceScales.splice(0, this.priceScales.length)
 
     while (this.loadedIndicators.length) {
       this.removeIndicator(this.loadedIndicators[0])
     }
 
-    destroyChart(this.chartInstance)
-    this.priceScales.splice(0, this.priceScales.length)
+    if (!this.chartInstance) {
+      return
+    }
 
     this.chartInstance = null
+    this.chartElement.innerHTML = ''
   }
 
   /**
@@ -393,7 +450,7 @@ export default class ChartController {
 
       return
     } else if (key === 'priceFormat' && value.auto) {
-      this.refreshAutoDecimals(id)
+      this.refreshAutoDecimals(null, id)
     } else if (key === 'priceScaleId') {
       this.ensurePriceScale(value, indicator)
     }
@@ -544,9 +601,7 @@ export default class ChartController {
    * @returns
    */
   updateWatermark(marketsUpdate?: string[]) {
-    if (store.state.panes.panes[this.paneId].name) {
-      this.watermark = store.state.panes.panes[this.paneId].name
-    } else if (marketsUpdate) {
+    if (marketsUpdate) {
       if (store.state.settings.normalizeWatermarks) {
         this.watermark = marketsUpdate.join(' | ')
       } else {
@@ -562,9 +617,6 @@ export default class ChartController {
     if (!this.chartInstance) {
       return
     }
-
-    this.chartInstance.timeframe = this.timeframe
-    this.chartInstance.isOddTimeframe = this.isOddTimeframe
 
     /**
      * weird spaces (\u00A0) are for left / right margins
@@ -666,6 +718,7 @@ export default class ChartController {
 
     // build complete
     this.loadedIndicators.push(indicator)
+
     return true
   }
 
@@ -952,144 +1005,8 @@ export default class ChartController {
     this.chartCache.clear()
     this.clearData()
     this.clearChart()
-
+    this.hasReachedEnd = false
     this.setTimeframe(store.state[this.paneId].timeframe)
-  }
-
-  resample(timeframe: number) {
-    console.log(`[chart/${this.paneId}/controller] resample to ${timeframe}`)
-
-    const activeRendererTimestamp = floorTimestampToTimeframe(
-      this.activeRenderer.timestamp,
-      timeframe
-    )
-
-    const activeChunk = this.getActiveChunk()
-
-    if (activeChunk) {
-      for (const source in this.activeRenderer.sources) {
-        if (this.activeRenderer.sources[source].empty === false) {
-          activeChunk.bars.push(
-            this.cloneSourceBar(
-              this.activeRenderer.sources[source],
-              activeRendererTimestamp
-            )
-          )
-        }
-      }
-    }
-
-    this.setTimeframe(timeframe)
-
-    if (!this.chartCache.chunks.length) {
-      return
-    }
-
-    const newBar = (source, destination, timestamp) => {
-      if (typeof source.close === 'number') {
-        destination.open =
-          destination.high =
-          destination.low =
-          destination.close =
-            source.close
-      } else if (
-        typeof destination.close === 'undefined' ||
-        destination.close === null
-      ) {
-        destination.open =
-          destination.high =
-          destination.low =
-          destination.close =
-            null
-
-        destination.vbuy = 0
-        destination.vsell = 0
-        destination.cbuy = 0
-        destination.csell = 0
-        destination.lbuy = 0
-        destination.lsell = 0
-      }
-
-      destination.time = timestamp
-
-      return destination
-    }
-
-    const markets = {}
-
-    for (let i = 0; i < this.chartCache.chunks.length; i++) {
-      for (let j = 0; j < this.chartCache.chunks[i].bars.length; j++) {
-        const bar = this.chartCache.chunks[i].bars[j]
-
-        const market = bar.exchange + ':' + bar.pair
-
-        const barTimestamp = floorTimestampToTimeframe(
-          bar.time,
-          this.timeframe,
-          this.isOddTimeframe
-        )
-
-        if (!markets[market] || markets[market].time < barTimestamp) {
-          if (markets[market]) {
-            markets[market] = newBar(markets[market], bar, barTimestamp)
-          } else {
-            markets[market] = newBar({}, bar, barTimestamp)
-          }
-          continue
-        }
-
-        if (typeof markets[market].open === null) {
-          markets[market].open = bar.open
-          markets[market].high = bar.high
-          markets[market].low = bar.low
-          markets[market].close = bar.close
-        }
-
-        markets[market].vbuy += bar.vbuy
-        markets[market].vsell += bar.vsell
-        markets[market].cbuy += bar.cbuy
-        markets[market].csell += bar.csell
-        markets[market].lbuy += bar.lbuy
-        markets[market].lsell += bar.lsell
-        markets[market].close = bar.close
-        markets[market].high = Math.max(
-          markets[market].high,
-          bar.high,
-          bar.open,
-          bar.close
-        )
-        markets[market].low = Math.min(
-          markets[market].low,
-          bar.low,
-          bar.open,
-          bar.close
-        )
-
-        this.chartCache.chunks[i].bars.splice(j--, 1)
-      }
-
-      if (i && this.chartCache.chunks[i].bars.length < MAX_BARS_PER_CHUNKS) {
-        if (this.chartCache.chunks[i].bars.length) {
-          const available =
-            MAX_BARS_PER_CHUNKS - this.chartCache.chunks[i - 1].bars.length
-
-          if (available) {
-            this.chartCache.chunks[i - 1].bars = this.chartCache.chunks[
-              i - 1
-            ].bars.concat(this.chartCache.chunks[i].bars.splice(0, available))
-          }
-        }
-
-        if (!this.chartCache.chunks[i].bars.length) {
-          this.chartCache.chunks.splice(i, 1)
-          i--
-        }
-      }
-    }
-
-    this.activeRenderer = null
-
-    this.renderAll()
   }
 
   getActiveChunk() {
@@ -1127,6 +1044,7 @@ export default class ChartController {
     this.clearChart()
     this.removeChart()
     this.clearQueue()
+    this.clearRecycle()
 
     aggregatorService.off('decimals', this._refreshDecimalsHandler)
   }
@@ -1222,7 +1140,7 @@ export default class ChartController {
       const trade = trades[i]
       const identifier = trade.exchange + ':' + trade.pair
 
-      if (typeof this.markets[identifier] === 'undefined') {
+      if (typeof this.marketsFilters[identifier] === 'undefined') {
         continue
       }
 
@@ -1301,13 +1219,13 @@ export default class ChartController {
           pair: trade.pair,
           exchange: trade.exchange,
           close: +trade.price,
-          active: this.markets[identifier].active
+          active: this.marketsFilters[identifier]
         }
 
         this.resetBar(this.activeRenderer.sources[identifier])
       }
 
-      const isActive = this.markets[identifier].active
+      const isActive = this.marketsFilters[identifier]
 
       if (trade.liquidation) {
         this.activeRenderer.sources[identifier]['l' + trade.side] += amount
@@ -1573,7 +1491,7 @@ export default class ChartController {
 
       const marketKey = bar.exchange + ':' + bar.pair
 
-      const isActive = this.markets[marketKey].active
+      const isActive = this.marketsFilters[marketKey]
 
       if (isActive && !bar.empty) {
         temporaryRenderer.bar.empty = false
@@ -1617,10 +1535,12 @@ export default class ChartController {
   }
 
   removeIndicatorSeries(indicator) {
-    // remove from chart instance (derender)
-    for (let i = 0; i < indicator.apis.length; i++) {
-      this.chartInstance.removeSeries(indicator.apis[i])
-      indicator.apis.splice(i--, 1)
+    if (this.chartInstance) {
+      // remove from chart instance (derender)
+      for (let i = 0; i < indicator.apis.length; i++) {
+        this.chartInstance.removeSeries(indicator.apis[i])
+        indicator.apis.splice(i--, 1)
+      }
     }
 
     // unbind from activebar (remove serie meta data like sma memory etc)
@@ -1765,37 +1685,7 @@ export default class ChartController {
     }
   }
 
-  async retrieveAlerts() {
-    const indexes = Object.values(this.markets).reduce((acc, market) => {
-      if (acc.indexOf(market.index) === -1) {
-        acc.push(market.index)
-      }
-
-      return acc
-    }, [])
-
-    for (const index of Object.keys(this.alerts)) {
-      if (indexes.indexOf(index) === -1) {
-        delete this.alerts[index]
-      }
-    }
-
-    for (const index of indexes) {
-      if (this.alerts[index]) {
-        continue
-      }
-
-      this.alerts[index] = []
-
-      await workspacesService.getAlerts(index).then(alerts => {
-        for (let i = 0; i < alerts.length; i++) {
-          this.alerts[index].push(alerts[i])
-        }
-      })
-    }
-  }
-
-  renderAlerts() {
+  async renderAlerts() {
     if (this._alertsRendered || !store.state.settings.alerts) {
       return
     }
@@ -1806,9 +1696,10 @@ export default class ChartController {
       return
     }
 
-    for (const index in this.alerts) {
-      for (let i = 0; i < this.alerts[index].length; i++) {
-        this.renderAlert(this.alerts[index][i], api)
+    for (const index of this.marketsIndexes) {
+      const alerts = await alertService.getAlerts(index)
+      for (let i = 0; i < alerts.length; i++) {
+        this.renderAlert(alerts[i], api)
       }
     }
 
@@ -1816,81 +1707,94 @@ export default class ChartController {
   }
 
   onAlert({ timestamp, price, market, type, newPrice }: AlertEvent) {
-    if (!this.alerts[market]) {
+    if (this.marketsIndexes.indexOf(market) === -1) {
       return
     }
 
-    const existingAlert = this.alerts[market].find(a => a.price === price)
+    const existingAlert = alertService.alerts[market].find(
+      a => a.price === price
+    )
+
     const api = this.getPriceApi()
 
     if (!api) {
       return
     }
 
-    const priceline = api.getPriceLine(price)
+    const timeScale = this.chartInstance.timeScale()
+    let index
+    if (timeScale && timestamp) {
+      index = timeScale.coordinateToLogical(
+        timeScale.timeToCoordinate(timestamp as Time)
+      )
+    }
 
-    if (type === AlertEventType.DELETED) {
-      if (priceline) {
-        api.removePriceLine(priceline)
-      }
+    const priceline = api.getPriceLine(newPrice || price, index)
 
-      if (existingAlert) {
-        this.alerts[market].splice(
-          this.alerts[market].indexOf(existingAlert),
-          1
+    switch (type) {
+      case AlertEventType.DELETED:
+        if (priceline) {
+          api.removePriceLine(priceline)
+        }
+        break
+
+      case AlertEventType.UPDATED:
+        if (priceline) {
+          api.removePriceLine(priceline)
+        }
+
+        this.renderAlert(
+          {
+            ...existingAlert,
+            price: newPrice
+          },
+          api
         )
-      }
-    } else if (newPrice) {
-      if (priceline) {
-        api.removePriceLine(priceline)
-      }
+        break
 
-      existingAlert.price = newPrice
-      existingAlert.active = true
-      existingAlert.triggered = false
-      this.renderAlert(existingAlert, api)
-    } else if (type === AlertEventType.TRIGGERED) {
-      if (store.state.settings.alertSound) {
-        audioService.playOnce(store.state.settings.alertSound)
-      }
+      case AlertEventType.TRIGGERED:
+        if (store.state.settings.alertSound) {
+          audioService.playOnce(store.state.settings.alertSound)
+        }
 
-      existingAlert.triggered = true
+        if (priceline) {
+          api.removePriceLine(priceline)
+        }
 
-      if (priceline) {
-        api.removePriceLine(priceline)
-      }
+        this.renderAlert(existingAlert, api)
+        break
 
-      this.renderAlert(existingAlert, api)
-    } else if (type === AlertEventType.CREATED) {
-      if (priceline) {
-        api.removePriceLine(priceline)
-      }
+      case AlertEventType.CREATED:
+        if (priceline) {
+          api.removePriceLine(priceline)
+        }
 
-      const createdAlert =
-        existingAlert ||
-        this.alerts[market][
-          this.alerts[market].push({
+        this.renderAlert(
+          {
             timestamp,
             price,
             market
-          }) - 1
-        ]
+          },
+          api,
+          0.5
+        )
+        break
 
-      this.renderAlert(createdAlert, api, 0.5)
-    } else if (type === AlertEventType.ACTIVATED) {
-      if (priceline) {
-        api.removePriceLine(priceline)
-      }
+      case AlertEventType.ACTIVATED:
+        if (priceline) {
+          api.removePriceLine(priceline)
+        }
 
-      existingAlert.active = true
+        this.renderAlert(existingAlert, api)
+        break
 
-      this.renderAlert(existingAlert, api)
-    } else if (type === AlertEventType.DEACTIVATED) {
-      if (priceline) {
-        api.removePriceLine(priceline)
-      }
+      case AlertEventType.DEACTIVATED:
+        if (priceline) {
+          api.removePriceLine(priceline)
+        }
 
-      this.renderAlert(existingAlert, api, 0.5)
+        this.renderAlert(existingAlert, api, 0.5)
+        break
     }
   }
 
@@ -1915,12 +1819,16 @@ export default class ChartController {
         )
     }
 
-    let title
+    let title = ''
+
+    if (alert.message && alert.message.length < 3) {
+      title = alert.message
+    }
 
     let color = store.state.settings.alertsColor
 
     if (alert.triggered) {
-      title = '✔'
+      title += '✔'
     }
 
     if (opacity || alert.triggered) {
@@ -1931,12 +1839,13 @@ export default class ChartController {
 
     return api.createPriceLine({
       market: alert.market,
+      message: alert.message,
       index,
       price: alert.price,
       lineWidth: store.state.settings.alertsLineWidth,
       lineStyle: store.state.settings.alertsLineStyle,
       color,
-      title
+      title: title.length ? title : null
     } as any)
   }
 
@@ -2322,15 +2231,14 @@ export default class ChartController {
     this.renderAll()
   }
 
-  refreshAutoDecimals(indicatorId?: string) {
-    const chartMarkets = Object.keys(this.markets)
-    const pricedMarket = Object.keys(marketDecimals).find(
-      market => chartMarkets.indexOf(market) !== -1
-    )
-
-    if (pricedMarket) {
-      const precision = marketDecimals[pricedMarket]
-
+  refreshAutoDecimals(indexes?: string[], indicatorId?: string) {
+    if (indexes.indexOf(this.mainIndex) !== -1) {
+      const precision = marketDecimals[this.mainIndex]
+      console.debug(
+        'chart->refresh precision with',
+        this.mainIndex,
+        `(precision ${precision})`
+      )
       for (let i = 0; i < this.loadedIndicators.length; i++) {
         if (indicatorId && indicatorId !== this.loadedIndicators[i].id) {
           continue
@@ -2361,6 +2269,11 @@ export default class ChartController {
           silent: true
         })
 
+        console.debug(
+          'chart->apply precision to indi',
+          this.loadedIndicators[i],
+          precision
+        )
         for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
           this.loadedIndicators[i].apis[j].applyOptions({
             priceFormat
@@ -2370,120 +2283,6 @@ export default class ChartController {
         }
       }
     }
-  }
-
-  getMainIndex() {
-    for (const marketKey in this.markets) {
-      if (
-        this.markets[marketKey].active &&
-        this.markets[marketKey].historical
-      ) {
-        return this.markets[marketKey].index
-      }
-    }
-
-    return Object.values(this.markets)[0].index
-  }
-
-  /**
-   * Get price api, index & price at a point on the chart
-   * Return the priceline if found at price
-   * @param {MouseEvent | TouchEvent} event
-   * @returns {{
-   *  originalOffset: {x: number, y: number},
-   *  offset: {x?: number, y?: number},
-   *  priceline: TV.IPriceLine | null,
-   *  api: IndicatorApi,
-   *  price: number,
-   *  market: string,
-   *  canCreate: boolean
-   * }}
-   */
-  getPricelineAtPoint(event) {
-    const originalOffset = getEventOffset(event)
-    const offset = {
-      x: originalOffset.x,
-      y: originalOffset.y
-    }
-
-    const api = this.getPriceApi()
-
-    if (!api) {
-      return
-    }
-
-    let price = api.coordinateToPrice(originalOffset.y) as number
-
-    if (!price) {
-      return
-    }
-
-    let priceline = api.getPriceLine(
-      price,
-      this.chartInstance.timeScale().coordinateToLogical(originalOffset.x)
-    )
-
-    let market
-
-    if (priceline) {
-      const priceLineOptions = priceline.options() as any
-      market = priceLineOptions.market
-
-      if (!priceLineOptions.market) {
-        priceline = null
-      } else {
-        market = priceLineOptions.market
-        price = priceLineOptions.price
-      }
-    }
-
-    if (!market) {
-      market = this.getMainIndex()
-    }
-
-    if (!priceline) {
-      price = +formatPrice(price, api.options().priceFormat.precision)
-    }
-
-    const canCreate =
-      store.state.settings.alerts &&
-      (event.shiftKey || store.state.settings.alertsClick)
-
-    let currentPrice = null
-
-    if (this.activeRenderer) {
-      currentPrice = this.getPrice()
-    }
-
-    return {
-      api,
-      price,
-      market,
-      priceline,
-      canCreate,
-      originalOffset,
-      offset,
-      currentPrice
-    }
-  }
-
-  disableCrosshair() {
-    this.chartInstance.applyOptions({
-      crosshair: {
-        vertLine: {
-          color: 'transparent',
-          labelVisible: false
-        },
-        horzLine: {
-          color: 'transparent',
-          labelVisible: false
-        }
-      }
-    })
-  }
-
-  enableCrosshair() {
-    this.chartInstance.applyOptions(getChartCrosshairOptions())
   }
 
   async screenshotIndicator(indicatorId): Promise<Blob> {
@@ -2601,6 +2400,467 @@ export default class ChartController {
   }
 
   getPrice() {
-    return seriesUtils.avg_close.update({}, this.activeRenderer)
+    if (!this.activeRenderer) {
+      return null
+    }
+    return +seriesUtils.avg_close.update({}, this.activeRenderer).toFixed(8)
+  }
+
+  getChartCanvas(): HTMLCanvasElement {
+    return this.chartElement.querySelector(
+      'tr:first-child td:nth-child(2) canvas:nth-child(2)'
+    )
+  }
+
+  flipChart() {
+    const api = this.getPriceApi()
+    const ps = api.priceScale()
+
+    const invertScale = ps.options().invertScale
+
+    api.priceScale().applyOptions({
+      invertScale: !invertScale
+    })
+  }
+
+  takeScreenshot(event) {
+    const chartCanvas = this.chartInstance.takeScreenshot()
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+
+    const zoom = store.state.panes.panes[this.paneId].zoom || 1
+
+    const pxRatio = window.devicePixelRatio || 1
+    const textPadding = 16 * zoom * pxRatio
+    const textFontsize = 12 * zoom * pxRatio
+    canvas.width = chartCanvas.width
+    ctx.font = `${textFontsize}px Share Tech Mono`
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
+
+    const lines = []
+    const [date, time] = new Date().toISOString().split('T')
+
+    lines.push(date + ' ' + time.split('.')[0])
+    lines.push(
+      this.watermark +
+        ' | ' +
+        getTimeframeForHuman(store.state[this.paneId].timeframe)
+    )
+
+    const lineHeight = Math.round(textFontsize)
+    canvas.height = chartCanvas.height
+
+    const styles = getComputedStyle(document.documentElement)
+    const themeColor = styles.getPropertyValue('--theme-base')
+    const textColor = styles.getPropertyValue('--theme-color-base')
+    const backgroundColor = store.state.settings.backgroundColor
+
+    if (!event.shiftKey) {
+      ctx.fillStyle = themeColor
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.fillStyle = backgroundColor
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+    }
+
+    ctx.fillStyle =
+      store.state.settings.theme === 'light'
+        ? 'rgba(255,255,255,.2)'
+        : 'rgba(0,0,0,.2)'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(chartCanvas, 0, 0)
+
+    ctx.fillStyle = textColor
+    ctx.font = `${textFontsize}px Share Tech Mono`
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
+
+    let offsetY = 0
+
+    for (let i = 0; i < lines.length; i++) {
+      ctx.strokeStyle = themeColor
+      ctx.lineWidth = 4 * pxRatio
+      ctx.lineJoin = 'round'
+      ctx.strokeText(lines[i], textPadding, textPadding + offsetY)
+      ctx.fillText(lines[i], textPadding, textPadding + offsetY)
+
+      offsetY += lineHeight * 1.2 * (i + 1)
+    }
+
+    offsetY += textPadding * 2
+
+    Object.values(
+      (store.state[this.paneId] as ChartPaneState).indicators
+    ).forEach(indicator => {
+      const options = indicator.options as any
+
+      if (options.visible === false) {
+        return
+      }
+
+      let color = options.color || options.upColor || textColor
+
+      try {
+        color = splitColorCode(color)
+
+        if (typeof color[3] !== 'undefined') {
+          color[3] = 1
+        }
+
+        color = joinRgba(color)
+      } catch (error) {
+        // not rgb(a)
+      }
+
+      const text = indicator.displayName || indicator.name
+
+      ctx.fillStyle = textColor
+      ctx.strokeStyle = themeColor
+      ctx.lineWidth = 4 * pxRatio
+      ctx.fillStyle = color
+      ctx.lineJoin = 'round'
+      ctx.strokeText(text, textPadding, offsetY)
+      ctx.fillText(text, textPadding, offsetY)
+
+      offsetY += lineHeight * 1.2
+    })
+
+    const dataURL = canvas.toDataURL('image/png')
+    const startIndex = dataURL.indexOf('base64,') + 7
+    const b64 = dataURL.substr(startIndex)
+
+    openBase64InNewTab(b64, 'image/png')
+  }
+
+  restart() {
+    this.destroy()
+    this.initialize()
+  }
+
+  /**
+   * fetch whatever is missing based on visiblerange
+   * @param {TimeRange} range range to fetch
+   */
+  fetch(range?: TimeRange) {
+    if (!range) {
+      this.hasReachedEnd = false
+    }
+    const alreadyHasData =
+      this.chartCache.cacheRange && this.chartCache.cacheRange.from
+
+    const historicalMarkets = historicalService.filterOutUnavailableMarkets(
+      store.state.panes.panes[this.paneId].markets
+    )
+
+    if (!historicalMarkets.length) {
+      return
+    }
+
+    const timeframe = +(store.state[this.paneId] as ChartPaneState).timeframe
+
+    if (!timeframe) {
+      this.hasReachedEnd = true
+      return
+    }
+
+    if (
+      store.state.app.apiSupportedTimeframes.indexOf(timeframe.toString()) ===
+      -1
+    ) {
+      return
+    }
+
+    const visibleRange = this.getVisibleRange() as TimeRange
+
+    let rangeToFetch
+
+    if (!range) {
+      let rightTime
+
+      if (alreadyHasData) {
+        rightTime = this.chartCache.cacheRange.from
+      } else if (visibleRange && visibleRange.from) {
+        rightTime =
+          visibleRange.from + store.state.settings.timezoneOffset / 1000
+      } else {
+        rightTime = Date.now() / 1000
+      }
+
+      rangeToFetch = {
+        from: rightTime - timeframe * 20,
+        to: rightTime
+      }
+    } else {
+      rangeToFetch = range
+    }
+
+    rangeToFetch.from = floorTimestampToTimeframe(
+      Math.round(rangeToFetch.from),
+      timeframe
+    )
+    rangeToFetch.to =
+      floorTimestampToTimeframe(Math.round(rangeToFetch.to), timeframe) +
+      timeframe
+
+    if (this.chartCache.cacheRange.from) {
+      rangeToFetch.to = Math.min(
+        floorTimestampToTimeframe(this.chartCache.cacheRange.from, timeframe),
+        rangeToFetch.to
+      )
+    }
+
+    const barsCount = Math.floor(
+      (rangeToFetch.to - rangeToFetch.from) / timeframe
+    )
+    const bytesPerBar = 112
+    const estimatedSize = formatBytes(
+      barsCount * historicalMarkets.length * bytesPerBar
+    )
+
+    store.dispatch('app/showNotice', {
+      id: 'fetching-' + this.paneId,
+      timeout: 15000,
+      title: `Fetching ${
+        barsCount * historicalMarkets.length
+      } bars (~${estimatedSize})`,
+      type: 'info'
+    })
+
+    this.isLoading = true
+
+    return historicalService
+      .fetch(
+        rangeToFetch.from * 1000,
+        rangeToFetch.to * 1000,
+        timeframe,
+        historicalMarkets
+      )
+      .then(results => this.onHistorical(results))
+      .catch(err => {
+        console.error(err)
+
+        this.hasReachedEnd = true
+      })
+      .then(() => {
+        store.dispatch('app/hideNotice', 'fetching-' + this.paneId)
+
+        setTimeout(() => {
+          this.isLoading = false
+
+          this.fetchMore(
+            this.chartInstance.timeScale().getVisibleLogicalRange()
+          )
+        }, 200)
+      })
+  }
+
+  /**
+   * Handle the historical service response
+   * Split bars into chunks and add to chartCache
+   * Render chart once everything is done
+   */
+  onHistorical(results: HistoricalResponse) {
+    const chunk: Chunk = {
+      from: results.from,
+      to: results.to,
+      bars: results.data
+    }
+
+    this.chartCache.saveChunk(chunk)
+
+    this.renderAll(true)
+  }
+
+  async fetchMore(visibleLogicalRange) {
+    if (
+      this.isLoading ||
+      this.hasReachedEnd ||
+      !visibleLogicalRange ||
+      visibleLogicalRange.from > 0
+    ) {
+      return
+    }
+
+    let indicatorLength = 0
+
+    if (this.activeRenderer) {
+      for (const indicatorId in this.activeRenderer.indicators) {
+        if (!this.activeRenderer.indicators[indicatorId].minLength) {
+          continue
+        }
+        indicatorLength = Math.max(
+          indicatorLength,
+          this.activeRenderer.indicators[indicatorId].minLength
+        )
+      }
+    }
+
+    const barsToLoad =
+      Math.round(
+        Math.min(Math.abs(visibleLogicalRange.from) + indicatorLength, 500)
+      ) + 1
+
+    if (!barsToLoad) {
+      return
+    }
+
+    const rangeToFetch = {
+      from:
+        this.chartCache.cacheRange.from -
+        barsToLoad * store.state[this.paneId].timeframe,
+      to: this.chartCache.cacheRange.from - 1
+    }
+
+    await this.fetch(rangeToFetch)
+  }
+
+  savePosition(visibleLogicalRange) {
+    store.commit(
+      this.paneId + '/SET_BAR_SPACING',
+      this.getBarSpacing(visibleLogicalRange)
+    )
+  }
+
+  getBarSpacing(visibleLogicalRange) {
+    if (!visibleLogicalRange) {
+      return defaultChartOptions.timeScale.barSpacing
+    }
+
+    const canvasWidth = this.getChartCanvas().clientWidth
+    const barSpacing =
+      canvasWidth / (visibleLogicalRange.to - visibleLogicalRange.from)
+
+    return barSpacing
+  }
+
+  trimChart() {
+    if (Date.now() > this._timeToRecycle) {
+      const visibleRange = this.getVisibleRange() as TimeRange
+
+      let end
+
+      if (visibleRange) {
+        end = visibleRange.from - (visibleRange.to - visibleRange.from) * 2
+      }
+
+      if (this.chartCache.trim(end)) {
+        this.renderAll()
+      }
+
+      this.setTimeToRecycle()
+    }
+
+    const fastRefreshRate =
+      (store.state[this.paneId] as ChartPaneState).refreshRate < 1000
+
+    if (fastRefreshRate) {
+      this.fixFastRefreshRate()
+    }
+
+    this._recycleTimeout = setTimeout(
+      this.trimChart,
+      1000 * 60 * (fastRefreshRate ? 3 : 15)
+    )
+  }
+
+  fixFastRefreshRate() {
+    const fontSize = this.chartInstance.options().layout.fontSize
+
+    this.preventPan()
+    this.chartInstance.applyOptions({
+      layout: { fontSize: fontSize + 1 }
+    })
+
+    setTimeout(() => {
+      this.chartInstance.applyOptions({
+        layout: { fontSize: fontSize }
+      })
+    }, 50)
+  }
+
+  setupRecycle() {
+    this._recycleTimeout = setTimeout(this.trimChart.bind(this), 1000 * 60 * 3)
+    this.setTimeToRecycle()
+  }
+
+  clearRecycle() {
+    clearTimeout(this._recycleTimeout)
+  }
+
+  setTimeToRecycle() {
+    const now = Date.now()
+
+    if (this.type === 'time') {
+      const chartCanvas = this.getChartCanvas()
+      const chartWidth = chartCanvas.clientWidth
+      const barSpacing = this.getBarSpacing(
+        this.chartInstance.timeScale().getVisibleLogicalRange()
+      )
+      this._timeToRecycle =
+        now +
+        Math.min(
+          1000 * 60 * 60 * 24,
+          (this.timeframe * 1000 * (chartWidth / barSpacing)) / 2
+        )
+    }
+
+    this._timeToRecycle = now + 900000
+  }
+
+  async createAlertAtPrice(price, timestamp) {
+    if (!store.state.settings.alerts) {
+      if (
+        !(await dialogService.confirm({
+          title: 'Alerts are disabled',
+          message: 'Enable alerts ?',
+          ok: 'Yes please'
+        }))
+      ) {
+        return
+      }
+
+      store.commit('settings/TOGGLE_ALERTS', true)
+    }
+
+    const market = this.mainIndex
+
+    const alert: MarketAlert = {
+      price,
+      market,
+      timestamp,
+      active: false
+    }
+
+    alertService.createAlert(alert, this.getPrice())
+  }
+
+  async refreshChartDimensions() {
+    if (!this.chartInstance) {
+      return
+    }
+
+    await sleep(10)
+
+    let headerHeight = 0
+
+    if (!store.state.settings.autoHideHeaders) {
+      headerHeight = (store.state.panes.panes[this.paneId].zoom || 1) * 2 * 16
+    }
+
+    const paneElement = this.chartElement.parentElement
+
+    this.chartInstance.resize(
+      paneElement.clientWidth,
+      paneElement.clientHeight - headerHeight
+    )
+  }
+
+  async saveIndicatorPreview(indicatorId) {
+    const blob = await this.screenshotIndicator(indicatorId)
+    workspacesService.saveIndicatorPreview(indicatorId, blob)
+  }
+
+  toggleTimeframeDropdown(event) {
+    this.chartControl.toggleTimeframeDropdown(event)
   }
 }

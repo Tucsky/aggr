@@ -10,7 +10,7 @@
       <button
         type="button"
         class="dropdown-item dropdown-item--space-between"
-        @click="$store.dispatch('app/showSearch', null)"
+        @click="$store.dispatch('app/showSearch')"
       >
         <span class="mr4">Search</span>
         <i class="icon-search"></i>

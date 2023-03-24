@@ -293,7 +293,6 @@
       </div>
 
       <div
-        v-if="isLegacy"
         class="form-group column mb8"
         @click.stop="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showPairs')"
       >
@@ -440,7 +439,7 @@
         No active markets,
         <a
           href="javascript:void(0);"
-          @click="$store.dispatch('app/showSearch', paneId)"
+          @click="$store.dispatch('app/showSearch', { paneId })"
         >
           add markets</a
         >.

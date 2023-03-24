@@ -1,6 +1,5 @@
-import ChartController from '@/components/chart/chart'
 import store from '@/store'
-import { getApiUrl, handleFetchError, sleep } from '@/utils/helpers'
+import { getApiUrl, handleFetchError } from '@/utils/helpers'
 import aggregatorService from './aggregatorService'
 import dialogService from './dialogService'
 import { formatMarketPrice } from './productsService'
@@ -20,7 +19,7 @@ export interface MarketAlerts {
 
 export interface MarketAlert {
   price: number
-  market?: string
+  market: string
   message?: string
   active?: boolean
   timestamp?: number
@@ -31,6 +30,7 @@ export interface AlertEvent {
   type: AlertEventType
   price: number
   market: string
+  message?: string
   timestamp?: number
   newPrice?: number
 }
@@ -41,18 +41,24 @@ export enum AlertEventType {
   DELETED,
   STATUS,
   DEACTIVATED,
-  TRIGGERED
+  TRIGGERED,
+  UPDATED
 }
 
 class AlertService {
+  alerts: { [market: string]: MarketAlert[] } = {}
+
   private publicVapidKey = process.env.VUE_APP_PUBLIC_VAPID_KEY
   private pushSubscription: PushSubscription
   private url: string
-
   private _promiseOfSync: Promise<void>
 
   constructor() {
     this.url = getApiUrl('alert')
+  }
+
+  formatPrice(price) {
+    return +price.toFixed(8)
   }
 
   urlBase64ToUint8Array(base64String) {
@@ -70,24 +76,6 @@ class AlertService {
     return outputArray
   }
 
-  getPaneMarkets(paneId: string) {
-    const markets = store.state.panes.panes[paneId].markets
-    const indexes = []
-
-    for (const marketKey of markets) {
-      const market = store.state.panes.marketsListeners[marketKey]
-      if (market && indexes.indexOf(market.local) === -1) {
-        indexes.push(market.local)
-      }
-    }
-
-    return indexes.reduce(async (acc, index) => {
-      const alerts = await this.getAlerts(index)
-      Array.prototype.push.apply(acc, alerts)
-      return acc
-    }, [])
-  }
-
   /**
    * Query database alerts for given markets
    * Wait for sync to complete before query
@@ -95,11 +83,29 @@ class AlertService {
    * @returns
    */
   async getAlerts(market) {
+    if (this.alerts[market]) {
+      return this.alerts[market]
+    }
+
     if (this._promiseOfSync) {
       await this._promiseOfSync
     }
 
-    return workspacesService.getAlerts(market)
+    const alerts = await workspacesService.getAlerts(market)
+
+    this.alerts[market] = alerts
+
+    return this.alerts[market]
+  }
+
+  async getAlert(market, price) {
+    if (!this.alerts[market]) {
+      await this.getAlerts(market)
+    }
+
+    const alert = this.alerts[market].find(alert => alert.price === price)
+
+    return alert
   }
 
   /**
@@ -151,23 +157,29 @@ class AlertService {
     }, {})
 
     for (const market in markets) {
-      const alerts = await workspacesService.getAlerts(market)
+      if (!this.alerts[market]) {
+        this.alerts[market] = await workspacesService.getAlerts(market)
+      }
 
-      if (!alerts.length) {
+      if (!this.alerts[market].length) {
         continue
       }
 
       for (const price of markets[market]) {
-        const alert = alerts.find(a => a.price === price)
+        const alert = this.alerts[market].find(a => a.price === price)
 
         if (alert) {
           alert.triggered = true
+        } else {
+          console.error(
+            `[alertService] couldn't set alert as triggered (alert not found @${price})`
+          )
         }
       }
 
       await workspacesService.saveAlerts({
         market,
-        alerts
+        alerts: this.alerts[market]
       })
     }
   }
@@ -216,10 +228,11 @@ class AlertService {
 
     if (!data.error) {
       store.dispatch('app/showNotice', {
-        title: `Added ${market} @${price} (± ${formatMarketPrice(
-          data.priceOffset,
-          market
-        )})`,
+        title: `Added ${market} ${this.getNoticeLabel(
+          market,
+          price,
+          data.priceOffset
+        )}`,
         type: 'success'
       })
     }
@@ -234,7 +247,7 @@ class AlertService {
       const { alert } = data
 
       store.dispatch('app/showNotice', {
-        title: `Removed ${alert.market} @${alert.price}`,
+        title: `Removed ${alert.market} ${this.getNoticeLabel(market, price)}`,
         type: 'success'
       })
     }
@@ -256,27 +269,6 @@ class AlertService {
     })
   }
 
-  async validateAlert(market: string, price: number) {
-    const marketPrice = await this.getPrice(market)
-
-    if (marketPrice) {
-      const percentChangeToAlert = (price / marketPrice - 1) * 100
-
-      if (
-        price < 0 ||
-        percentChangeToAlert > 100 ||
-        percentChangeToAlert < -50
-      ) {
-        console.error(
-          `[alert] price ${price} is too far from market price (${marketPrice})`
-        )
-        return false
-      }
-    }
-
-    return true
-  }
-
   async toggleAlert(
     market: string,
     price: number,
@@ -288,10 +280,6 @@ class AlertService {
     const subscription = await this.getPushSubscription()
 
     if (!subscription) {
-      return
-    }
-
-    if (!(await this.validateAlert(market, price))) {
       return
     }
 
@@ -328,11 +316,11 @@ class AlertService {
       })
   }
 
-  async createAlert(
-    createdAlert: MarketAlert,
-    marketAlerts: MarketAlert[],
-    chartInstance?: ChartController
-  ) {
+  async createAlert(createdAlert: MarketAlert, referencePrice?: number) {
+    if (!this.alerts[createdAlert.market]) {
+      await this.getAlerts(createdAlert.market)
+    }
+
     aggregatorService.emit('alert', {
       price: createdAlert.price,
       market: createdAlert.market,
@@ -340,7 +328,7 @@ class AlertService {
       type: AlertEventType.CREATED
     })
 
-    if (chartInstance && !store.state.settings.alertsClick) {
+    if (referencePrice && !store.state.settings.alertsClick) {
       createdAlert.message = await dialogService.openAsPromise(
         (
           await import('@/components/alerts/CreateAlertDialog.vue')
@@ -360,16 +348,12 @@ class AlertService {
       }
     }
 
-    let currentPrice
-
-    if (chartInstance) {
-      currentPrice = chartInstance.getPrice()
-    }
+    this.alerts[createdAlert.market].push(createdAlert)
 
     await this.subscribe(
       createdAlert.market,
       createdAlert.price,
-      currentPrice,
+      referencePrice,
       createdAlert.message
     )
       .then(data => {
@@ -388,94 +372,124 @@ class AlertService {
         price: createdAlert.price,
         market: createdAlert.market,
         timestamp: createdAlert.timestamp,
+        message: createdAlert.message,
         type: AlertEventType.ACTIVATED
       })
     }
 
-    await sleep(1)
-
     workspacesService.saveAlerts({
       market: createdAlert.market,
-      alerts: marketAlerts
+      alerts: this.alerts[createdAlert.market]
     })
   }
 
   async moveAlert(
-    movedAlert: MarketAlert,
-    newPrice: number,
-    currentPrice: number,
-    marketAlerts: MarketAlert[]
-  ): Promise<boolean> {
+    market,
+    price,
+    newAlert: MarketAlert,
+    currentPrice: number
+  ): Promise<void> {
     const subscription = await this.getPushSubscription()
 
-    if (!subscription) {
-      return
-    }
+    if (subscription) {
+      const origin = location.href
 
-    if (!(await this.validateAlert(movedAlert.market, newPrice))) {
-      return
-    }
+      newAlert.triggered = false
 
-    const origin = location.href
-
-    const active = await fetch(this.url, {
-      method: 'POST',
-      body: JSON.stringify({
-        ...subscription,
-        origin,
-        market: movedAlert.market,
-        price: movedAlert.price,
-        newPrice,
-        currentPrice
-      }),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-      .then(response => response.json())
-      .then(json => {
-        if (json.error) {
-          throw new Error(json.error)
+      newAlert.active = await fetch(this.url, {
+        method: 'POST',
+        body: JSON.stringify({
+          ...subscription,
+          origin,
+          market,
+          price,
+          newPrice: newAlert.price,
+          message: newAlert.message,
+          currentPrice
+        }),
+        headers: {
+          'Content-Type': 'application/json'
         }
-
-        return true
       })
-      .catch(err => {
-        handleFetchError(err)
+        .then(response => response.json())
+        .then(json => {
+          if (json.error) {
+            throw new Error(json.error)
+          }
 
-        return false
+          store.dispatch('app/showNotice', {
+            title: `Moved ${market} ${this.getNoticeLabel(
+              market,
+              price,
+              json.priceOffset
+            )}`,
+            type: 'success'
+          })
+
+          return true
+        })
+        .catch(err => {
+          handleFetchError(err)
+
+          return false
+        })
+    }
+
+    const alert = await this.getAlert(market, price)
+
+    if (alert) {
+      this.alerts[market][this.alerts[market].indexOf(alert)] = {
+        ...alert,
+        ...newAlert
+      }
+      await workspacesService.saveAlerts({
+        market: market,
+        alerts: this.alerts[market]
       })
+    } else {
+      console.error(
+        `[alertService] couldn't update alert (alert not found @${price})`,
+        this.alerts[market]
+      )
+    }
 
     aggregatorService.emit('alert', {
-      price: movedAlert.price,
-      market: movedAlert.market,
-      newPrice,
-      type: 'update'
+      price,
+      market,
+      newPrice: newAlert.price,
+      type: AlertEventType.UPDATED
     })
 
-    movedAlert.triggered = false
-    movedAlert.active = active
-    movedAlert.price = newPrice
-
-    await workspacesService.saveAlerts({
-      market: movedAlert.market,
-      alerts: marketAlerts
-    })
+    if (newAlert.active) {
+      aggregatorService.emit('alert', {
+        price: newAlert.price,
+        market,
+        message: newAlert.message,
+        type: AlertEventType.ACTIVATED
+      })
+    }
   }
 
-  async deactivateAlert(alert: MarketAlert, alerts: MarketAlerts) {
+  async deactivateAlert({ market, price }: { market: string; price: number }) {
+    const alert = await this.getAlert(market, price)
+
+    if (alert) {
+      alert.active = false
+
+      await workspacesService.saveAlerts({
+        market,
+        alerts: this.alerts[market]
+      })
+    }
+
     aggregatorService.emit('alert', {
-      price: alert.price,
-      market: alert.market,
+      price,
+      market,
       type: AlertEventType.DEACTIVATED
     })
-
-    alert.active = false
-
-    await workspacesService.saveAlerts(alerts)
   }
 
-  async removeAlert(removedAlert: MarketAlert, marketAlerts?: MarketAlert[]) {
+  async removeAlert(removedAlert: MarketAlert) {
     aggregatorService.emit('alert', {
       price: removedAlert.price,
       market: removedAlert.market,
@@ -496,12 +510,48 @@ class AlertService {
       }
     }
 
-    if (marketAlerts) {
-      await workspacesService.saveAlerts({
-        market: removedAlert.market,
-        alerts: marketAlerts.filter(alert => alert.price !== removedAlert.price)
-      })
+    if (!this.alerts[removedAlert.market]) {
+      await this.getAlerts(removedAlert.market)
     }
+
+    if (this.alerts[removedAlert.market].length) {
+      const removedAlertIndex = this.alerts[removedAlert.market].findIndex(
+        alert => alert.price === removedAlert.price
+      )
+
+      if (removedAlertIndex !== -1) {
+        this.alerts[removedAlert.market].splice(removedAlertIndex, 1)
+
+        await workspacesService.saveAlerts({
+          market: removedAlert.market,
+          alerts: this.alerts[removedAlert.market]
+        })
+      } else {
+        console.error(
+          `[alertService] couldn't splice alert (no alerts with price @${removedAlert.price})`,
+          this.alerts[removedAlert.market]
+        )
+      }
+    } else {
+      console.error(
+        `[alertService] couldn't update alert (no alerts data for market ${removedAlert.price})`
+      )
+    }
+  }
+
+  getNoticeLabel(market: string, price: number, offset?: number) {
+    const priceLabel = `@${formatMarketPrice(price, market)}`
+
+    let offsetLabel = ''
+
+    if (offset) {
+      const percent = Math.abs((1 - (price + offset) / price) * -1 * 100)
+      offsetLabel = ` (± ${formatMarketPrice(offset, market)}${
+        percent > 0.5 ? ` ⚠️` : ''
+      })`
+    }
+
+    return priceLabel + offsetLabel
   }
 }
 

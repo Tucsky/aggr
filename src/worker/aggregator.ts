@@ -586,8 +586,8 @@ class Aggregator {
   }
 
   /**
-   * Trigger subscribe to pairs (settings.pairs) on all enabled exchanges
-   * @param {string[]} pairs eg ['BTCUSD', 'FTX:BTC-PERP']
+   * Connect to a set of markets
+   * @param {string[]} markets
    * @returns {Promise<any>} promises of connections
    * @memberof Server
    */

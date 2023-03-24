@@ -17,6 +17,7 @@
           class="form-control"
           placeholder="search"
           v-model="query"
+          v-autofocus
         />
         <div v-text="indicators.length" class="-center text-muted ml16"></div>
       </div>
@@ -435,17 +436,17 @@ export default {
 
       if (!alreadyAdded) {
         this.$store.dispatch(this.paneId + '/addIndicator', indicator)
-        await sleep(500)
+        await sleep(250)
       }
 
       await this.$store.dispatch(this.paneId + '/saveIndicator', indicator.id)
 
       if (!alreadyAdded) {
-        await sleep(500)
+        await sleep(250)
         this.$store.commit(this.paneId + '/REMOVE_INDICATOR', indicator.id)
       }
 
-      await sleep(500)
+      await sleep(250)
 
       this.getIndicators()
     },

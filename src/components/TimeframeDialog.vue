@@ -29,11 +29,7 @@
     </form>
 
     <template v-slot:footer>
-      <button
-        type="button"
-        class="btn -green ml8 -large"
-        @click="$refs.form.submit"
-      >
+      <button type="button" class="btn -green ml8 -large" @click="submit">
         Go
       </button>
     </template>

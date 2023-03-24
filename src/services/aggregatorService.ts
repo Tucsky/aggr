@@ -82,6 +82,13 @@ class AggregatorService extends EventEmitter {
     this.on('price', ({ market, price }: { market: string; price: number }) => {
       marketDecimals[market] = countDecimals(price)
 
+      console.debug(
+        'aggr-> on first price',
+        market,
+        price,
+        marketDecimals[market]
+      )
+
       if (!this.normalizeDecimalsQueue) {
         this.normalizeDecimalsQueue = {
           markets: []
@@ -238,15 +245,20 @@ class AggregatorService extends EventEmitter {
       marketDecimals[localPair] = Math.round(
         decimals.reduce((a, b) => a + b) / decimals.length
       )
+      console.debug(
+        'normalize->' + localPair,
+        decimals,
+        marketDecimals[localPair]
+      )
 
       for (const market in decimalsByLocalMarkets[localPair]) {
         marketDecimals[market] = marketDecimals[localPair]
       }
     }
 
-    this.normalizeDecimalsQueue = null
+    this.emit('decimals', this.normalizeDecimalsQueue.markets)
 
-    this.emit('decimals')
+    this.normalizeDecimalsQueue = null
   }
 }
 

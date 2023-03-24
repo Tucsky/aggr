@@ -92,7 +92,7 @@
     }
   }
 
-  @media screen and (max-width: 579px) {
+  @media screen and (max-width: 579px), (max-height: 420px) {
     &:not(.dialog--size-small):not(.dialog--moved) {
       .dialog__content {
         width: 100%;
@@ -116,7 +116,7 @@
     justify-content: space-between;
     position: relative;
     z-index: 1;
-    padding: 1rem;
+    padding: 0.75rem;
     background-color: var(--theme-background-100);
     border-bottom: 1px solid var(--theme-background-150);
     cursor: grab;
@@ -169,16 +169,20 @@
   }
 
   &__footer {
-    padding: 1rem;
+    padding: 0.75rem;
     justify-content: flex-end;
     border-top: 1px solid var(--theme-background-150);
+
+    &--small & {
+      padding: 0.5rem;
+    }
   }
 
   &__resize {
     display: none;
     position: absolute;
     font-size: 1rem;
-    padding: 1rem 0.25rem 0.25rem 1rem;
+    padding: 1rem 0.0rem 0.0rem 1rem;
     right: 0;
     bottom: 0;
     z-index: 10;
@@ -218,8 +222,8 @@
 
   .dialog__close {
     text-align: center;
-    padding: 1rem;
-    margin: -1rem -1rem -1rem 1rem;
+    padding: 0.75rem;
+    margin: -0.75rem -0.75rem -0.75rem 0.75rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -250,6 +254,7 @@
 
   &-leave-active {
     transition: opacity 0.2s $ease-out-expo;
+    pointer-events: all;
 
     #{$self}-content {
       transition: transform 0.2s $ease-out-expo;

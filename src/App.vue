@@ -8,7 +8,6 @@
     :data-quote="quoteCurrency"
     :data-quote-symbol="quoteCurrencySymbol"
     :class="{
-      '-loading': isLoading,
       '-no-animations': disableAnimations,
       '-auto-hide-headers': autoHideHeaders,
       '-light': theme === 'light'
@@ -25,7 +24,7 @@
     </div>
   </div>
   <div id="app" v-else>
-    <div class="app-loader d-flex -column">
+    <div class="app__loader d-flex -column">
       <div v-if="showStuck" class="px8 py8">
         💡 Stuck here ?
         <button class="btn -text" @click="resetAndReload">
@@ -57,7 +56,6 @@ import workspacesService from '@/services/workspacesService'
 import { formatMarketPrice } from '@/services/productsService'
 import dialogService from '@/services/dialogService'
 import importService from '@/services/importService'
-import { clearChartsCrosshairs } from './services/chartService'
 
 @Component({
   name: 'App',
@@ -148,7 +146,6 @@ export default class extends Vue {
 
     document.addEventListener('keydown', this.onDocumentKeyPress)
     window.addEventListener('blur', this.onBlur)
-    document.addEventListener('mouseleave', clearChartsCrosshairs)
   }
 
   beforeDestroy() {
@@ -182,7 +179,7 @@ export default class extends Vue {
         }
       }
 
-      this.price = formatMarketPrice(price, this._mainMarkets[0])
+      this.price = formatMarketPrice(price, this._mainPair)
 
       window.document.title = this._mainPair + ' ' + this.price
     } else {
@@ -242,7 +239,9 @@ export default class extends Vue {
     event = event || (window.event as any)
 
     if (/^[a-z]$/i.test(event.key)) {
-      this.$store.dispatch('app/showSearch')
+      this.$store.dispatch('app/showSearch', {
+        pristine: true
+      })
     } else if (/^[0-9]$/i.test(event.key)) {
       this.$store.dispatch('app/showTimeframe')
     }

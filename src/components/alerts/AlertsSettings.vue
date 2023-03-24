@@ -56,25 +56,25 @@
 
     <div class="column">
       <div class="form-group mb16 mt16">
-        <label><i class="icon-click mr8"></i> control</label>
+        <label><i class="icon-click mr4"></i> Control</label>
         <label
-          class="checkbox-control -click -small d-flex -wrap"
+          class="checkbox-control -click d-flex -wrap -auto"
           @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
-          title="1 click only (instead of shift + click)"
-          v-tippy="{ placement: 'left', distance: 24, boundary: 'window' }"
+          title="Place alerts faster ⚡️"
+          v-tippy
         >
           <input type="checkbox" class="form-control" :checked="alertsClick" />
-          <div class="mr0"></div>
-          <span v-if="alertsClick" class="mr4"><code>1 CLICK</code></span>
-          <span v-else class="mr4">
-            <code>SHIFT</code> + <code>CLICK</code><br />
-            <small>(default)</small>
-          </span>
+          <div v-if="alertsClick" class="mr4">
+            <code>1 CLICK</code>&nbsp;⚡️
+          </div>
+          <div v-else class="mr4">
+            <code>ALT</code> + <code>CLICK</code><br />
+          </div>
         </label>
       </div>
       <div class="form-group mt16 mb16">
         <label for="audio-assistant-source"
-          ><i class="icon-music-note mr8"></i> Alert sound</label
+          ><i class="icon-music-note mr4"></i> Alert sound</label
         >
         <button
           class="btn -file -blue -large -cases"

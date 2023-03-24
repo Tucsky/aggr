@@ -7,6 +7,7 @@
     <pane-header
       :paneId="paneId"
       :settings="() => import('@/components/prices/PricesDialog.vue')"
+      split
     >
       <prices-sort-dropdown
         :pane-id="paneId"
@@ -27,18 +28,22 @@
           class="market"
           :class="market.status"
           :title="market.id"
+          :data-market="market.id"
+          v-draggable-market
         >
           <div class="market__exchange" :class="market.exchange"></div>
-          <div v-if="showPairs" class="market__pair">{{ market.local }}</div>
+          <div v-if="showPairs" class="market__pair">
+            {{ market.local }}
+          </div>
           <div class="market__price" v-if="showPrice">{{ market.price }}</div>
           <div class="market__change" v-if="showChange">
             {{ (market.change >= 0 ? '+' : '') + market.change.toFixed(2) }}%
           </div>
           <div v-if="showVolume" class="market__volume">
-            {{ formatAmount(market.volume, 2) }}
+            {{ formatAmount(market.volume) }}
           </div>
           <div v-if="showVolumeDelta" class="market__volume">
-            {{ formatAmount(market.volumeDelta, 2) }}
+            {{ formatAmount(market.volumeDelta) }}
           </div>
         </div>
       </component>
@@ -280,7 +285,7 @@ export default class extends Mixins(PaneMixin) {
 
     this.markets.push({
       ...market,
-      local: product.local,
+      local: product.local + (product.type === 'perp' ? 'PERP' : ''),
       status: '-pending',
       price: null,
       change: 0,
@@ -333,7 +338,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   formatAmount(amount) {
-    return formatAmount(amount, 2)
+    return formatAmount(amount, 0)
   }
 
   onResize(width: number, height: number) {
@@ -406,7 +411,7 @@ export default class extends Mixins(PaneMixin) {
   &__wrapper {
     overflow-y: auto;
     height: 100%;
-    padding: 0 0.5em;
+    padding: 0;
   }
 
   > div {
@@ -457,6 +462,7 @@ export default class extends Mixins(PaneMixin) {
   .market {
     font-size: 0.875em;
     font-family: $font-monospace;
+    white-space: nowrap;
 
     > div {
       padding: 0 0.25em;
@@ -481,14 +487,14 @@ export default class extends Mixins(PaneMixin) {
     }
 
     &__change {
-      width: 1px;
       padding-left: 0.25em;
     }
 
     &__exchange {
+      padding: 0;
       background-repeat: no-repeat;
       background-size: 1em;
-      width: 2em;
+      width: 1.5rem;
       align-self: stretch;
       flex-shrink: 0;
       background-position: center;

@@ -754,9 +754,19 @@ class WorkspacesService {
 
   saveAlerts(marketAlerts: MarketAlerts) {
     if (!marketAlerts.alerts.length) {
+      console.debug(
+        'workspace->delete alerts',
+        marketAlerts.market,
+        marketAlerts.alerts.length
+      )
       return this.db.delete('alerts', marketAlerts.market)
     }
 
+    console.debug(
+      'workspace->save alerts',
+      marketAlerts.market,
+      marketAlerts.alerts.length
+    )
     return this.db.put('alerts', marketAlerts)
   }
 

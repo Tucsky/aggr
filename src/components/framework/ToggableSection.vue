@@ -83,6 +83,10 @@ export default {
     autoClose: {
       type: Boolean,
       default: false
+    },
+    autoOpen: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
@@ -103,10 +107,14 @@ export default {
     } else {
       this.sectionId = this.id
     }
+
+    if (this.autoOpen && !this.value) {
+      this.toggle()
+    }
   },
   methods: {
-    toggle(event: MouseEvent) {
-      event.stopPropagation()
+    toggle(event?: MouseEvent) {
+      event && event.stopPropagation()
 
       if (this.id) {
         this.$store.commit('settings/TOGGLE_SECTION', this.sectionId)

@@ -1,11 +1,15 @@
 <template>
-  <div class="pane-header hide-scrollbar pane-overlay d-flex">
-    <span class="pane-header__name mrauto" @dblclick="renamePane">
+  <div
+    class="pane-header hide-scrollbar d-flex"
+    :class="[split && 'pane-header--split']"
+    @dblclick="maximizePane"
+  >
+    <div class="pane-header__name pane-overlay" @dblclick="renamePane">
       <slot name="title">
         {{ name }}
       </slot>
-    </span>
-    <div class="toolbar flex-grow-1" @dblclick="maximizePane">
+    </div>
+    <div class="toolbar pane-overlay">
       <slot />
       <button
         v-if="showSearch"
@@ -24,7 +28,11 @@
       >
         <i class="icon-cog"></i>
       </btn>
-      <button type="button" @click="toggleDropdown" class="btn toolbar__label">
+      <button
+        type="button"
+        @click="toggleDropdown"
+        class="btn -text toolbar__label"
+      >
         <i class="icon-more"></i>
       </button>
 
@@ -65,7 +73,7 @@
           v-if="showSearch"
           type="button"
           class="dropdown-item"
-          @click="$store.dispatch('app/showSearch', paneId)"
+          @click="openSearch"
         >
           <i class="icon-search"></i>
           <span>Sources</span>
@@ -76,7 +84,7 @@
           :data-label="`${paneId} options`"
         ></div>
         <slot name="menu"></slot>
-        <div class="dropdown-divider" data-label="pane options"></div>
+        <div class="dropdown-divider" data-label="utilities"></div>
         <button type="button" class="dropdown-item" @click="maximizePane">
           <i class="icon-enlarge"></i>
           <span>Maximize</span>
@@ -89,7 +97,6 @@
           <i class="icon-download"></i>
           <span>Download</span>
         </button>
-        <div class="dropdown-divider"></div>
         <button type="button" class="dropdown-item" @click="removePane">
           <i class="icon-trash"></i>
           <span>Remove</span>
@@ -120,6 +127,10 @@ import dialogService from '@/services/dialogService'
     showSearch: {
       type: Boolean,
       default: true
+    },
+    split: {
+      type: Boolean,
+      default: false
     }
   },
   components: {
@@ -157,7 +168,7 @@ export default class extends Vue {
   }
 
   openSearch() {
-    this.$store.dispatch('app/showSearch', this.paneId)
+    this.$store.dispatch('app/showSearch', { paneId: this.paneId })
   }
 
   changeZoom(event, direction) {
@@ -174,7 +185,9 @@ export default class extends Vue {
   }
 
   async removePane() {
-    if (await dialogService.confirm(`Delete pane "${this.paneId}" ?`)) {
+    if (
+      await dialogService.confirm(`Delete pane ${this.type} "${this.name}" ?`)
+    ) {
       this.$store.dispatch('panes/removePane', this.paneId)
     }
   }
@@ -212,7 +225,11 @@ export default class extends Vue {
     window.dispatchEvent(new cls('resize'))
   }
 
-  async renamePane() {
+  async renamePane(event) {
+    if (event) {
+      event.stopPropagation()
+    }
+
     const name = await dialogService.prompt({
       action: 'Rename',
       input: this.name

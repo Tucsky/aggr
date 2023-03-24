@@ -1,8 +1,29 @@
 <template>
   <div class="alerts-list hide-scrollbar">
+    <div v-if="withOptions" class="alert-list__header dropdown-item">
+      <label
+        class="checkbox-control -small w-100"
+        @click.stop
+        @mousedown.prevent
+      >
+        <input
+          type="checkbox"
+          class="form-control"
+          :checked="alertsClick"
+          @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
+        />
+        <span>1 click</span>
+        <i
+          class="icon-info text-muted ml8"
+          title="Place alerts faster ⚡️"
+          v-tippy
+        />
+        <div class="mlauto"></div>
+      </label>
+    </div>
     <div
       class="alerts-list__empty px8 text-danger"
-      v-if="!indexes.length && !isLoading"
+      v-if="!filteredIndexes.length && !isLoading"
     >
       <i class="icon-cross -small"></i> no alerts
       <template v-if="query"> matching "{{ query }}" </template>
@@ -11,13 +32,23 @@
       v-for="(index, cursor) of filteredIndexes"
       :key="index.market"
       :model="sections"
-      :id="`alerts-${index.market}`"
-      :badge="index.alerts.length"
-      :title="index.market"
+      :id="persistSections && `alerts-${index.market}`"
       class="alerts-list__section"
       auto-close
       small
     >
+      <template v-slot:title>
+        <div
+          class="toggable-section__title"
+          :data-market="index.market"
+          v-draggable-market
+        >
+          {{ index.market }}
+          <span v-if="index.alerts.length" class="badge -outline ml8">{{
+            index.alerts.length
+          }}</span>
+        </div>
+      </template>
       <template v-slot:control>
         <Btn
           ref="clearBtns"
@@ -40,10 +71,10 @@
                 v-tippy="{ followCursor: true, distance: 24 }"
                 :title="alert.message"
               >
-                {{ alert.price }}
+                {{ formatPrice(alert.price, alert.market) }}
               </span>
               <span v-else>
-                {{ alert.price }}
+                {{ formatPrice(alert.price, alert.market) }}
               </span>
             </td>
             <td
@@ -120,6 +151,7 @@ import alertService, {
 import dialogService from '@/services/dialogService'
 import aggregatorService from '@/services/aggregatorService'
 import { sleep } from '@/utils/helpers'
+import { formatMarketPrice } from '@/services/productsService'
 
 @Component({
   components: { ToggableSection, Btn },
@@ -128,6 +160,14 @@ import { sleep } from '@/utils/helpers'
     query: {
       type: String,
       default: ''
+    },
+    persistSections: {
+      type: Boolean,
+      default: false
+    },
+    withOptions: {
+      type: Boolean,
+      default: false
     }
   }
 })
@@ -144,6 +184,10 @@ export default class extends Vue {
     return new RegExp(this.query, 'i')
   }
 
+  get alertsClick() {
+    return this.$store.state.settings.alertsClick
+  }
+
   get filteredIndexes() {
     if (!this.query) {
       return this.indexes
@@ -156,14 +200,20 @@ export default class extends Vue {
     await this.getAlerts()
 
     if (this.filteredIndexes.length === 1) {
-      this.sections.push(`alerts-${this.filteredIndexes[0].market}`)
+      const singleSectionId = `alerts-${this.filteredIndexes[0].market}`
+
+      if (this.$store.state.settings.sections.indexOf(singleSectionId) === -1) {
+        this.$store.commit('settings/TOGGLE_SECTION', singleSectionId)
+      }
     }
 
     aggregatorService.on('alert', this.onAlert)
+    aggregatorService.on('decimals', this.onDecimals)
   }
 
   beforeDestroy() {
     aggregatorService.off('alert', this.onAlert)
+    aggregatorService.off('decimals', this.onDecimals)
   }
 
   async getAlerts() {
@@ -178,6 +228,10 @@ export default class extends Vue {
     this.isLoading = false
   }
 
+  formatPrice(price, market) {
+    return formatMarketPrice(price, market)
+  }
+
   togglePresetDropdown(event, alert) {
     if (this.alertDropdownTrigger) {
       this.alertDropdownTrigger = null
@@ -188,22 +242,14 @@ export default class extends Vue {
   }
 
   async removeAlert(alert: MarketAlert) {
-    const alerts = this.indexes.find(
-      index => index.market === alert.market
-    ).alerts
-
     this.isLoading = true
-    await alertService.removeAlert(alert, alerts)
+    await alertService.removeAlert(alert)
     this.isLoading = false
   }
 
   async createAlert(alert: MarketAlert) {
-    const alerts = this.indexes.find(
-      index => index.market === alert.market
-    ).alerts
-
     this.isLoading = true
-    await alertService.createAlert(alert, alerts)
+    await alertService.createAlert(alert)
     this.isLoading = false
   }
 
@@ -246,15 +292,12 @@ export default class extends Vue {
           this.createAlert(alert)
         }
       } else {
-        await alertService.deactivateAlert(
-          alert,
-          this.indexes.find(a => a.market === alert.market)
-        )
+        await alertService.deactivateAlert(alert)
       }
     }
   }
 
-  onAlert({ price, market, type, newPrice }: AlertEvent) {
+  onAlert({ price, market, type, newPrice, message }: AlertEvent) {
     let group = this.indexes.find(index => index.market === market)
 
     if (!group) {
@@ -264,6 +307,9 @@ export default class extends Vue {
           alerts: []
         })
         group = this.indexes[this.indexes.length - 1]
+        if (this.sections.indexOf(`alerts-${this.sections}`) === -1) {
+          this.sections.push(`alerts-${this.sections}`)
+        }
       } else {
         return
       }
@@ -279,12 +325,16 @@ export default class extends Vue {
         if (!group.alerts.length) {
           this.indexes.splice(this.indexes.indexOf(group), 1)
         }
-      } else if (newPrice) {
+      } else if (type === AlertEventType.UPDATED) {
         this.$set(group.alerts[index], 'price', newPrice)
       } else if (type === AlertEventType.TRIGGERED) {
         this.$set(group.alerts[index], 'triggered', true)
       } else if (type === AlertEventType.ACTIVATED) {
         this.$set(group.alerts[index], 'active', true)
+
+        if (typeof message !== 'undefined') {
+          this.$set(group.alerts[index], 'message', message)
+        }
       } else if (type === AlertEventType.DEACTIVATED) {
         this.$set(group.alerts[index], 'active', false)
       }
@@ -323,6 +373,10 @@ export default class extends Vue {
     if (button) {
       button.loading = false
     }
+  }
+
+  onDecimals(markets) {
+    console.log('decimals', markets)
   }
 }
 </script>

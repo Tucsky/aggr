@@ -151,31 +151,6 @@ textarea.form-control {
   cursor: pointer;
   margin-right: auto;
 
-  &.-label-left {
-    > span {
-      order: 1;
-      margin-left: 0;
-      margin-right: 0.5rem;
-    }
-    > div {
-      order: 2;
-    }
-  }
-
-  + .settings-chart__sub-settings {
-    position: relative;
-
-    &:before {
-      content: '';
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: -1.5em;
-      width: 2px;
-      background-color: rgba(white, 0.2);
-    }
-  }
-
   &.-slippage input ~ div {
     &:before,
     &:after {

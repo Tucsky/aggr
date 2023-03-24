@@ -15,6 +15,6 @@ export function dispatchAsync(payload: AggregatorPayload) {
     self.addEventListener('message', listener)
 
     payload.trackingId = trackingId
-    ;((self as unknown) as Worker).postMessage(payload)
+    ;(self as unknown as Worker).postMessage(payload)
   })
 }

@@ -1,10 +1,20 @@
 <template>
   <div class="emoji-picker">
     <div class="emoji-picker__controls">
-      <button class="btn -text -small" @click="prev" :disabled="!canPrev">
+      <button
+        type="button"
+        class="btn -text -small"
+        @click="prev"
+        :disabled="!canPrev"
+      >
         <i class="icon-up" />
       </button>
-      <button class="btn -text -small" @click="next" :disabled="!canNext">
+      <button
+        type="button"
+        class="btn -text -small"
+        @click="next"
+        :disabled="!canNext"
+      >
         <i class="icon-down" />
       </button>
     </div>
@@ -23,7 +33,9 @@
 import { Component, Vue } from 'vue-property-decorator'
 const emojisRanges = [
   [128513, 128591],
-  [128640, 128704]
+  [128640, 128704],
+  [127757, 127999],
+  [128000, 128359]
 ]
 
 @Component({

@@ -338,7 +338,7 @@ import {
   getIndicatorOptionType,
   getIndicatorOptionValue,
   plotTypesMap
-} from '../../services/chartService'
+} from './options'
 import dialogService from '../../services/dialogService'
 import merge from 'lodash.merge'
 import IndicatorPresetDialog from './IndicatorPresetDialog.vue'

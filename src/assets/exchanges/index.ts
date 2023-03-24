@@ -4,7 +4,6 @@ import BINANCE_US from './BINANCE_US.svg'
 import BYBIT from './BYBIT.svg'
 import COINBASE from './COINBASE.svg'
 import HUOBI from './HUOBI.svg'
-import FTX from './FTX.svg'
 import DERIBIT from './DERIBIT.svg'
 import OKEX from './OKEX.svg'
 import POLONIEX from './POLONIEX.svg'
@@ -26,7 +25,6 @@ export default {
   BYBIT,
   COINBASE,
   HUOBI,
-  FTX,
   DERIBIT,
   OKEX,
   POLONIEX,

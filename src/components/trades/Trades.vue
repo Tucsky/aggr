@@ -458,10 +458,9 @@ export default class extends Mixins(PaneMixin) {
   }
 
   .trade__amount {
-    padding: 0 0.5em;
-
     .trade__amount__base {
       display: none;
+      padding: 0 0.5em;
     }
 
     &:hover {

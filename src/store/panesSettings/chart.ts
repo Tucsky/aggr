@@ -48,6 +48,7 @@ export interface ChartPaneState {
   indicatorsErrors: { [indicatorId: string]: string }
   refreshRate?: number
   showLegend: boolean
+  showIndicators: boolean
   fillGapsWithEmpty: boolean
   showHorizontalGridlines: boolean
   horizontalGridlinesColor: string
@@ -79,7 +80,8 @@ const state = {
     }
   },
   layouting: false,
-  timeframe: 10,
+  showIndicators: true,
+  timeframe: 5,
   refreshRate: 1000,
   showLegend: true,
   fillGapsWithEmpty: true,
@@ -365,6 +367,18 @@ const actions = {
       }
     }
     commit('TOGGLE_MARKET')
+  },
+  setTimeframe({ rootState, commit }, timeframe) {
+    if ((window.event as any).shiftKey) {
+      for (const id in rootState.panes.panes) {
+        const type = rootState.panes.panes[id].type
+        if (type === 'chart' && rootState[id].timeframe !== timeframe) {
+          this.commit(id + '/SET_TIMEFRAME', timeframe)
+        }
+      }
+    } else {
+      commit('SET_TIMEFRAME', timeframe)
+    }
   }
 } as ActionTree<ChartPaneState, ModulesState>
 
@@ -374,6 +388,9 @@ const mutations = {
   },
   TOGGLE_LEGEND(state) {
     state.showLegend = !state.showLegend
+  },
+  TOGGLE_INDICATORS(state, value) {
+    state.showIndicators = value
   },
   SET_GRIDLINES(state, { type, value }) {
     if (type === 'vertical') {

@@ -322,9 +322,11 @@ export default class TradesFeed {
         : ''
     }
     <div class="trade__amount">
-      <span class="trade__amount__quote">
+    <span class="trade__amount__quote">
+        ${' '}
         <span class="icon-quote"></span>
         <span>${formatAmount(trade.size * trade.price)}</span>
+        ${' '}
       </span>
       <span class="trade__amount__base">
         <span class="icon-base"></span>

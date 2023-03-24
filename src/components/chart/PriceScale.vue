@@ -291,10 +291,6 @@ export default class extends Vue {
     .chart-pricescale__content:before {
       background-color: var(--theme-base-o25);
     }
-
-    .chart-pricescale__boundary:before {
-      border-color: var(--theme-background-100);
-    }
   }
 
   &__boundary {
@@ -307,7 +303,7 @@ export default class extends Vue {
     &:before {
       content: '';
       position: absolute;
-      border-top: 1px solid var(--theme-background-100);
+      border-top: 1px solid var(--theme-background-200);
       width: 100%;
       margin: 0.5em 0;
     }
@@ -332,6 +328,7 @@ export default class extends Vue {
     &:hover {
       &:before {
         display: block;
+        border-color: var(--theme-color-base);
       }
     }
   }

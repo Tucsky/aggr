@@ -5,6 +5,7 @@
       :paneId="paneId"
       :settings="() => import('@/components/alerts/AlertsDialog.vue')"
       :show-search="false"
+      split
     >
       <template #title>&nbsp;</template>
       <Btn
@@ -22,7 +23,7 @@
       class="form-control pane-alerts__query"
       v-model="query"
     />
-    <alerts-list ref="list" :query="query" />
+    <alerts-list ref="list" :query="query" persist-sections />
   </div>
 </template>
 
@@ -59,11 +60,14 @@ export default class extends Mixins(PaneMixin) {
   }
 
   &__header {
-    background: 0;
     z-index: auto;
 
     ::v-deep .toolbar__label {
       z-index: 1;
+    }
+
+    ::v-deep .pane-header__name {
+      background: 0;
     }
   }
 }

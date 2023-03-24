@@ -9,7 +9,10 @@
       <template v-slot:header>
         <div>
           <div class="dialog__title">
-            <i class="icon-plus -lower"></i>
+            <i
+              class="-lower"
+              :class="[!edit && 'icon-plus', edit && 'icon-pencil']"
+            ></i>
             Alert @<code>{{ price }}</code>
           </div>
         </div>
@@ -45,11 +48,11 @@
       </form>
 
       <template v-slot:footer>
-        <a href="javascript:void(0);" class="btn -text" @click="close(false)">
+        <button type="button" class="btn -text" @click="close(false)">
           Cancel
-        </a>
+        </button>
         <button type="button" class="btn -green ml8 -large" @click="create">
-          <i class="icon-check mr8"></i> Create
+          <i class="icon-check mr8"></i> {{ submitLabel }}
         </button>
       </template>
     </Dialog>
@@ -61,10 +64,18 @@ import DialogMixin from '@/mixins/dialogMixin'
 import EmojiPicker from '@/components/framework/EmojiPicker.vue'
 
 export default {
-  name: 'AlertDialog',
+  name: 'CreateAlertDialog',
   props: {
     price: {
       type: Number
+    },
+    input: {
+      type: String,
+      default: null
+    },
+    edit: {
+      type: Boolean,
+      default: false
     }
   },
   mixins: [DialogMixin, EmojiPicker],
@@ -75,7 +86,20 @@ export default {
     }
   },
   mounted() {
+    if (this.input) {
+      this.value = this.input
+    }
+
     this.show()
+  },
+  computed: {
+    submitLabel() {
+      if (!this.edit) {
+        return 'Create'
+      }
+
+      return 'Update'
+    }
   },
   methods: {
     show() {

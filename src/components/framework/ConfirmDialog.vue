@@ -9,6 +9,7 @@
       <button
         v-for="action in actions"
         :key="action.label"
+        type="button"
         class="btn -text mr8"
         @click="onClickAction($event, action)"
       >

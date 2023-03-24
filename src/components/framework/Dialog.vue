@@ -380,7 +380,7 @@ export default class extends Vue {
   detectSize(w) {
     if (w >= 720) {
       this.currentSize = 'large'
-    } else if (w >= 375) {
+    } else if (w > 375) {
       this.currentSize = 'medium'
     } else {
       this.currentSize = 'small'

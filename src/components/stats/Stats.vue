@@ -28,7 +28,7 @@ import {
   defaultStatsChartOptions,
   getChartOptions,
   getChartCustomColorsOptions
-} from '../../services/chartService'
+} from '../chart/options'
 
 import StatDialog from './StatDialog.vue'
 import dialogService from '@/services/dialogService'
