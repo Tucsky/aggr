@@ -46,6 +46,16 @@ module.exports = {
   productionSourceMap: false,
   publicPath: process.env.VUE_APP_PUBLIC_PATH,
   configureWebpack: {
+    devtool: 'source-map',
+    output: {
+      devtoolModuleFilenameTemplate: info => {
+        return info.resourcePath.match(/\.vue$/) &&
+          !info.identifier.match(/type=script/) // this is change ✨
+          ? `webpack-generated:///${info.resourcePath}?${info.hash}`
+          : `webpack-yourcode:///${info.resourcePath}`
+      },
+      devtoolFallbackModuleFilenameTemplate: 'webpack:///[resource-path]?[hash]'
+    },
     plugins: [
       new ServiceWorkerWebpackPlugin({
         entry: path.join(__dirname, 'src/sw.js'),
@@ -96,19 +106,6 @@ module.exports = {
         ...options,
         worker: 'Worker'
       }))
-      .end()
-
-    const svgRule = config.module.rule('svg')
-
-    svgRule.uses.clear()
-
-    svgRule
-      .use('url-loader')
-      .loader('url-loader')
-      .options({
-        limit: 1024,
-        esModule: false
-      })
       .end()
   },
   css: {

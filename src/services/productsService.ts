@@ -259,7 +259,10 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     type = 'perp'
   } else if (exchangeId === 'KRAKEN' && /_/.test(symbol) && type === 'spot') {
     type = 'perp'
-  } else if (exchangeId === 'BITGET' && symbol.indexOf('_') !== -1) {
+  } else if (
+    (exchangeId === 'BITGET' || exchangeId === 'MEXC') &&
+    symbol.indexOf('_') !== -1
+  ) {
     type = 'perp'
   } else if (exchangeId === 'KUCOIN' && symbol.indexOf('-') === -1) {
     type = 'perp'

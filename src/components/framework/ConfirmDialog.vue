@@ -12,6 +12,7 @@
         type="button"
         class="btn -text mr8"
         @click="onClickAction($event, action)"
+        @mousedown.prevent
       >
         {{ action.label }}
       </button>
@@ -20,6 +21,7 @@
         type="button"
         class="btn -text mr8"
         @click="close(false)"
+        @mousedown.prevent
         v-if="cancel"
         v-text="cancel"
       ></button>
@@ -29,6 +31,7 @@
         class="btn -green -large"
         v-autofocus
         @click="close(true)"
+        @mousedown.prevent
       >
         <i class="icon-check mr4"></i> {{ ok }}
       </button>

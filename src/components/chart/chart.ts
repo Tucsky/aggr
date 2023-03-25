@@ -301,12 +301,11 @@ export default class Chart {
         marketsForWatermark.indexOf(localPair) === -1
       ) {
         marketsForWatermark.push(
-          (!normalizeWatermarks && market ? market.exchange + ':' : '') +
-            localPair
+          !normalizeWatermarks || !market ? marketKey : localPair
         )
       }
 
-      // build up indexes
+      // find main pair
       if (!marketsIndexes[localPair]) {
         marketsIndexes[localPair] = 0
       }
@@ -1686,7 +1685,11 @@ export default class Chart {
   }
 
   async renderAlerts() {
-    if (this._alertsRendered || !store.state.settings.alerts) {
+    if (
+      this._alertsRendered ||
+      !store.state.settings.alerts ||
+      !store.state[this.paneId].showAlerts
+    ) {
       return
     }
 
@@ -1819,9 +1822,10 @@ export default class Chart {
         )
     }
 
+    const showLabel = store.state[this.paneId].showAlertsLabel
     let title = ''
 
-    if (alert.message && alert.message.length < 3) {
+    if (showLabel && alert.message && alert.message.length < 3) {
       title = alert.message
     }
 
@@ -1845,7 +1849,8 @@ export default class Chart {
       lineWidth: store.state.settings.alertsLineWidth,
       lineStyle: store.state.settings.alertsLineStyle,
       color,
-      title: title.length ? title : null
+      title: title.length ? title : null,
+      axisLabelVisible: showLabel
     } as any)
   }
 
@@ -2758,7 +2763,7 @@ export default class Chart {
     }
 
     this._recycleTimeout = setTimeout(
-      this.trimChart,
+      this.trimChart.bind(this),
       1000 * 60 * (fastRefreshRate ? 3 : 15)
     )
   }
@@ -2861,6 +2866,6 @@ export default class Chart {
   }
 
   toggleTimeframeDropdown(event) {
-    this.chartControl.toggleTimeframeDropdown(event)
+    return this.chartControl.toggleTimeframeDropdown(event)
   }
 }

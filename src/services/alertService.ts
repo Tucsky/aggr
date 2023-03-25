@@ -316,7 +316,11 @@ class AlertService {
       })
   }
 
-  async createAlert(createdAlert: MarketAlert, referencePrice?: number) {
+  async createAlert(
+    createdAlert: MarketAlert,
+    referencePrice?: number,
+    askMessage?: boolean
+  ) {
     if (!this.alerts[createdAlert.market]) {
       await this.getAlerts(createdAlert.market)
     }
@@ -328,7 +332,7 @@ class AlertService {
       type: AlertEventType.CREATED
     })
 
-    if (referencePrice && !store.state.settings.alertsClick) {
+    if (askMessage) {
       createdAlert.message = await dialogService.openAsPromise(
         (
           await import('@/components/alerts/CreateAlertDialog.vue')

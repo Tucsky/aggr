@@ -64,6 +64,8 @@ export default class AlertEventHandler {
     this.timestamp = Date.now()
     this.alert = this.getAlert(price)
 
+    console.log('alerts => select priceline', price)
+
     return true
   }
 
@@ -76,6 +78,7 @@ export default class AlertEventHandler {
   }
 
   bindEvents(event) {
+    console.log('alerts => bind move & end events')
     const canvas = this.chart.getChartCanvas()
     this.levelDragMoveHandler = this.onLevelDragMove.bind(this)
     this.levelDragEndHandler = this.onLevelDragEnd.bind(this)
@@ -220,6 +223,7 @@ export default class AlertEventHandler {
     )
     this.levelDragEndHandler = null
 
+    console.log('alerts => unbind move & end events')
     canvas.removeEventListener(
       this.getMoveEvent(event),
       this.levelDragMoveHandler

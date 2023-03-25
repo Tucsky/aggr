@@ -8,10 +8,10 @@ All notable changes to this project will be documented here.
 - Alerts message (SHIFT+CLICK)
 - Measurement tool (ALT+CLICK)
 - Chart context menu
-- Drag market to pane
+- Drag market from pane to another
+- Mexc
 ### Changed
-- Smaller head for charts
-
+- Split pane head for charts & watchlist
 
 ## [3.3.1] - 2023-02-24
 ### Added

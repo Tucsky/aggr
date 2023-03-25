@@ -9,7 +9,9 @@ let isLoading = false
 async function createDraggableMarketComponent(target) {
   isLoading = true
   const module = await import(`@/components/DraggableMarket.vue`)
-
+  if (!marketContext) {
+    debugger
+  }
   draggableMarketComponent = createComponent(module.default, {
     market: marketContext.market,
     target
@@ -41,7 +43,12 @@ async function handleDragMove(event: MouseEvent | TouchEvent) {
   const target = getEventCords(event)
 
   if (!draggableMarketComponent) {
-    await createDraggableMarketComponent(target)
+    try {
+      await createDraggableMarketComponent(target)
+    } catch (error) {
+      debugger
+      throw error
+    }
   } else {
     draggableMarketComponent.target = target
   }

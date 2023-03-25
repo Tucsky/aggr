@@ -440,6 +440,7 @@ export default {
       'USDT',
       'UST',
       'USDC',
+      'USDD',
       'BUSD',
       'ETH',
       'BTC',
@@ -1066,6 +1067,8 @@ export default {
 <style lang="scss" scoped>
 .search-dialog {
   ::v-deep .dialog__content {
+    width: 75vw;
+
     .dialog__body {
       padding: 0;
       flex-direction: row;

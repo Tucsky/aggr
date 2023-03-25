@@ -17,6 +17,7 @@ import KRAKEN from './KRAKEN.svg'
 import UNISWAP from './UNISWAP.svg'
 import KUCOIN from './KUCOIN.svg'
 import BITGET from './BITGET.svg'
+import MEXC from './MEXC.svg'
 
 export default {
   BINANCE,
@@ -37,5 +38,6 @@ export default {
   KRAKEN,
   UNISWAP,
   KUCOIN,
-  BITGET
+  BITGET,
+  MEXC
 }

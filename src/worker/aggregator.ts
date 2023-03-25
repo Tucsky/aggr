@@ -6,7 +6,7 @@ import {
   Volumes
 } from '@/types/types'
 import { exchanges, getExchangeById } from './exchanges'
-import { parseMarket } from './helpers/utils'
+import { getHms, parseMarket } from './helpers/utils'
 import settings from './settings'
 
 const ctx: Worker = self as any
@@ -424,11 +424,14 @@ class Aggregator {
   }
 
   emitPrices() {
-    if (!this.connectionsCount) {
-      return
+    if (this.connectionsCount) {
+      ctx.postMessage({ op: 'prices', data: this.marketsStats })
     }
 
-    ctx.postMessage({ op: 'prices', data: this.marketsStats })
+    this['_priceInterval'] = setTimeout(
+      this.emitPrices.bind(this),
+      Math.random() * 1000
+    )
   }
 
   onSubscribed(exchangeId, pair, url) {
@@ -637,9 +640,11 @@ class Aggregator {
               timeout: estimatedTimeToConnectThemAll,
               title: `Connecting to ${
                 marketsByExchange[exchangeId].length
-              } markets on ${exchangeId}\nThis could take some time (about ${Math.round(
-                estimatedTimeToConnectThemAll / 1000
-              )}s)`
+              } markets on ${exchangeId}\nThis will take about ${getHms(
+                estimatedTimeToConnectThemAll,
+                undefined,
+                ' and '
+              )}s`
             }
           })
         }
@@ -727,7 +732,7 @@ class Aggregator {
     if (this['_priceInterval']) {
       return
     }
-    this['_priceInterval'] = self.setInterval(this.emitPrices.bind(this), 1000)
+    this.emitPrices()
   }
 
   startAggrInterval() {

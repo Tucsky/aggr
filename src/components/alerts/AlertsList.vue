@@ -208,12 +208,10 @@ export default class extends Vue {
     }
 
     aggregatorService.on('alert', this.onAlert)
-    aggregatorService.on('decimals', this.onDecimals)
   }
 
   beforeDestroy() {
     aggregatorService.off('alert', this.onAlert)
-    aggregatorService.off('decimals', this.onDecimals)
   }
 
   async getAlerts() {
@@ -229,6 +227,12 @@ export default class extends Vue {
   }
 
   formatPrice(price, market) {
+    console.log(
+      'formatMarketPrice',
+      price,
+      market,
+      formatMarketPrice(price, market)
+    )
     return formatMarketPrice(price, market)
   }
 
@@ -373,10 +377,6 @@ export default class extends Vue {
     if (button) {
       button.loading = false
     }
-  }
-
-  onDecimals(markets) {
-    console.log('decimals', markets)
   }
 }
 </script>

@@ -12,8 +12,8 @@
       <div class="chart-measurement__price">{{ high }}</div>
     </div>
     <div class="chart-measurement__percent">
-      <i class="icon-up chart-measurement__icon"></i> {{ percent
-      }}<small>%</small>
+      <i class="icon-up-thin chart-measurement__icon"></i>
+      {{ percent > 0 ? '+' : '' }}{{ percent.toFixed(2) }}<small>%</small>
     </div>
     <div class="chart-measurement__line chart-measurement__line--bottom">
       <div class="chart-measurement__price">{{ low }}</div>
@@ -92,6 +92,7 @@ export default {
   align-items: center;
   justify-content: center;
   font-family: $font-monospace;
+  text-shadow: 1.5px 1.5px 0 var(--theme-background-o75);
 
   &:before {
     content: '';
@@ -100,7 +101,7 @@ export default {
     left: 0;
     right: 0;
     bottom: 0;
-    opacity: 0.25;
+    opacity: 0.375;
   }
 
   &__icon {
@@ -160,7 +161,7 @@ export default {
     position: relative;
 
     #{$self}--large & {
-      font-size: 2em;
+      font-size: 1.5em;
     }
   }
 

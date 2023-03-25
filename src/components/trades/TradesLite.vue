@@ -884,8 +884,12 @@ export default class extends Mixins(PaneMixin) {
 
   drawHistogram(trade, height) {
     this.ctx.fillStyle = 'rgba(255,255,255,0.05)'
-    const x = Math.min(1, trade.count / 100) * this.width
-    this.ctx.fillRect(x - 2, 0, 2, this.drawOffset + height)
+    this.ctx.fillRect(
+      0,
+      0,
+      Math.min(1, trade.count / 100) * this.width,
+      this.drawOffset + height
+    )
   }
 
   drawPair(trade, height) {
@@ -908,7 +912,7 @@ export default class extends Mixins(PaneMixin) {
     )
   }
 
-  drawAmount(trade, height, liquidation) {
+  drawAmount(trade: Trade, height, liquidation) {
     this.ctx.textAlign = 'right'
     this.ctx.fillText(
       formatAmount(trade.amount) +

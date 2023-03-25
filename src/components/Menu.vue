@@ -64,8 +64,8 @@
           @click="addPane('prices')"
         >
           <div>
-            <div>Markets</div>
-            <div class="dropdown-item__subtitle">Price change & volume</div>
+            <div>Watchlist</div>
+            <div class="dropdown-item__subtitle">% change & volume</div>
           </div>
           <i class="icon-plus" />
         </button>

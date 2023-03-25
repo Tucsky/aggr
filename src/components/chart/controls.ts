@@ -153,6 +153,8 @@ export default class ChartControl {
           this.chart.fetch()
           break
         case 'settings/TOGGLE_ALERTS':
+        case this.chart.paneId + '/TOGGLE_ALERTS':
+        case this.chart.paneId + '/TOGGLE_ALERTS_LABEL':
         case 'settings/SET_ALERTS_COLOR':
         case 'settings/SET_ALERTS_LINESTYLE':
         case 'settings/SET_ALERTS_LINEWIDTH':
@@ -337,12 +339,14 @@ export default class ChartControl {
     const previousEventBusy = this.activeEvent && this.activeEvent.isBusy
 
     if (event.shiftKey) {
+      console.log('new MeasurementEventHandler')
       this.activeEvent = new MeasurementEventHandler(this.chart, event)
     } else if (store.state.settings.alerts) {
       if (previousEventBusy) {
         return
       }
 
+      console.log('new AlertEventHandler')
       this.activeEvent = new AlertEventHandler(this.chart, event)
     }
   }

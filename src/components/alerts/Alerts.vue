@@ -10,7 +10,7 @@
       <template #title>&nbsp;</template>
       <Btn
         type="button"
-        class="toolbar__label btn"
+        class="toolbar__label -text"
         @click="$refs.list.getAlerts()"
       >
         <i class="icon-refresh"></i>

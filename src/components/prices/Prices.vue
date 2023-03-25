@@ -494,11 +494,12 @@ export default class extends Mixins(PaneMixin) {
       padding: 0;
       background-repeat: no-repeat;
       background-size: 1em;
-      width: 1.5rem;
+      width: 1.25rem;
       align-self: stretch;
       flex-shrink: 0;
       background-position: center;
       min-width: 1em;
+      padding: 0 !important;
     }
 
     &__pair {

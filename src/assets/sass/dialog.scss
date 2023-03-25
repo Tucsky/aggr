@@ -243,7 +243,7 @@
   &-enter-active {
     transition: opacity 0.2s ease-out;
 
-    #{$self}-content {
+    #{$self}__content {
       transition: transform 0.3s $ease-out-expo;
 
       @media screen and (min-width: 768px) {
@@ -256,7 +256,7 @@
     transition: opacity 0.2s $ease-out-expo;
     pointer-events: all;
 
-    #{$self}-content {
+    #{$self}__content {
       transition: transform 0.2s $ease-out-expo;
     }
   }
@@ -265,12 +265,17 @@
   &-leave-to {
     opacity: 0;
 
-    #{$self}-content {
+    #{$self}__content {
       transform: translateY(100%);
 
       @media screen and (min-width: 768px) {
         transform: scale(0.8) translateY(1.5rem);
       }
     }
+  }
+
+  &-leave,
+  &-leave-to {
+    pointer-events: none;
   }
 }
