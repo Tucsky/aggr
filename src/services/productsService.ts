@@ -5,10 +5,24 @@ import { getApiUrl } from '../utils/helpers'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
-const baseQuoteLookupKnown = new RegExp(
-  `^([A-Z0-9]{3,})[-/:_]?(USDT|USDC|TUSD|BUSD|USDD|USDK|USDP)$|^([A-Z0-9]{2,})[-/:]?(UST|EUR|USD)$`
+const stablecoins = [
+  'USDT',
+  'USDC',
+  'TUSD',
+  'BUSD',
+  'USDD',
+  'USDK',
+  'USDP',
+  'UST'
+]
+const currencies = ['EUR', 'USD', 'GBP', 'AUD', 'CAD', 'CHF']
+const currencyPairLookup = new RegExp(
+  `^([A-Z0-9]{2,})[-/:]?(${currencies.join('|')})$`
 )
-const baseQuoteLookupOthers = new RegExp(`^([A-Z0-9]{2,})[-/_]?([A-Z0-9]{3,})$`)
+const stablecoinPairLookup = new RegExp(
+  `^([A-Z0-9]{2,})[-/:_]?(${stablecoins.join('|')})$`
+)
+const simplePairLookup = new RegExp(`^([A-Z0-9]{2,})[-/_]?([A-Z0-9]{3,})$`)
 
 const promisesOfProducts = {}
 
@@ -196,10 +210,14 @@ export async function getStoredProductsOrFetch(
   return productsData
 }
 
-export function stripStable(pair) {
+export function stripStablePair(pair) {
   return pair
     .replace(/(\w{3,})BUSD$/i, '$1USD')
-    .replace(/(\w{3})?(usd|ust|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?$/i, '$1$2')
+    .replace(/(\w{3})?(usd|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?$/i, '$1$2')
+}
+
+export function stripStableQuote(quote) {
+  return quote.replace(/[a-z]?(usd|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?$/i, '$1')
 }
 
 export async function getExchangeSymbols(
@@ -232,6 +250,10 @@ export function parseMarket(market: string) {
 export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   const id = exchangeId + ':' + symbol
 
+  if (id === 'BINANCE:btcbusd') {
+    debugger
+  }
+
   let type = 'spot'
 
   if (/[HUZ_-]\d{2}/.test(symbol)) {
@@ -245,7 +267,11 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   } else if (exchangeId === 'HUOBI' && /-/.test(symbol)) {
     type = 'perp'
   } else if (exchangeId === 'BYBIT' && !/-SPOT$/.test(symbol)) {
-    type = 'perp'
+    if (/.*[0-9]{2}$/.test(symbol)) {
+      type = 'future'
+    } else if (!/-SPOT$/.test(symbol)) {
+      type = 'perp'
+    }
   } else if (
     exchangeId === 'BITMEX' ||
     /(-|_)swap$|(-|_|:)perp/i.test(symbol)
@@ -259,7 +285,10 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     type = 'perp'
   } else if (exchangeId === 'KRAKEN' && /_/.test(symbol) && type === 'spot') {
     type = 'perp'
-  } else if (exchangeId === 'BITGET' && symbol.indexOf('_') !== -1) {
+  } else if (
+    (exchangeId === 'BITGET' || exchangeId === 'MEXC') &&
+    symbol.indexOf('_') !== -1
+  ) {
     type = 'perp'
   } else if (exchangeId === 'KUCOIN' && symbol.indexOf('-') === -1) {
     type = 'perp'
@@ -298,37 +327,44 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   let localSymbolAlpha = localSymbol.replace(/[-_/:]/, '')
 
   let match
-  match = localSymbol.match(baseQuoteLookupKnown)
-
-  if (!match) {
-    match = localSymbolAlpha.match(baseQuoteLookupOthers)
+  if (exchangeId !== 'BINANCE' && exchangeId !== 'BINANCE_FUTURES') {
+    match = localSymbol.match(currencyPairLookup)
   }
 
-  if (!match && (exchangeId === 'DERIBIT' || exchangeId === 'HUOBI')) {
-    match = localSymbolAlpha.match(/(\w+)[^a-z0-9]/i)
+  if (!match) {
+    match = localSymbol.match(stablecoinPairLookup)
 
-    if (match) {
-      match[2] = match[1]
+    if (!match) {
+      match = localSymbolAlpha.match(simplePairLookup)
     }
+
+    if (!match && (exchangeId === 'DERIBIT' || exchangeId === 'HUOBI')) {
+      match = localSymbolAlpha.match(/(\w+)[^a-z0-9]/i)
+
+      if (match) {
+        match[2] = match[1]
+      }
+    }
+  }
+  if (!match) {
+    return null
   }
 
   let base
   let quote
 
-  if (match) {
-    if (match[1] === undefined && match[2] === undefined) {
-      base = match[3]
-      quote = match[4]
-    } else {
-      base = match[1]
-      quote = match[2]
-    }
+  if (match[1] === undefined && match[2] === undefined) {
+    base = match[3]
+    quote = match[4] || ''
+  } else {
+    base = match[1]
+    quote = match[2] || ''
+  }
 
-    if (noStable) {
-      localSymbolAlpha = stripStable(base + quote)
-    } else {
-      localSymbolAlpha = base + quote
-    }
+  if (noStable) {
+    localSymbolAlpha = stripStablePair(base + quote)
+  } else {
+    localSymbolAlpha = base + quote
   }
 
   return {
@@ -399,9 +435,15 @@ export async function getApiSupportedMarkets() {
 export async function indexProducts(exchangeId: string, symbols: string[]) {
   console.debug(`[products.${exchangeId}] indexed ${symbols.length} products`)
 
-  indexedProducts[exchangeId] = symbols.map(product =>
-    getMarketProduct(exchangeId, product)
-  )
+  indexedProducts[exchangeId] = symbols.reduce((acc, symbol) => {
+    const product = getMarketProduct(exchangeId, symbol)
+
+    if (product) {
+      acc.push(product)
+    }
+
+    return acc
+  }, [])
 
   return indexedProducts[exchangeId]
 }
@@ -485,9 +527,9 @@ export function formatAmount(amount, decimals?: number) {
 
   if (amount >= 1000000000) {
     amount =
-      +(amount / 1000000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' B'
+      +(amount / 1000000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' B'
   } else if (amount >= 1000000) {
-    amount = +(amount / 1000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' M'
+    amount = +(amount / 1000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' M'
   } else if (amount >= 1000) {
     amount = +(amount / 1000).toFixed(isNaN(decimals) ? 1 : decimals) + ' K'
   } else {

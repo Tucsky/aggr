@@ -112,18 +112,17 @@ export function rgbaToRgb(color, backgroundColor) {
   const alpha = typeof color[3] === 'number' ? color[3] : 1
   const inverse = 1 - alpha
 
-  color[0] = Math.round(
-    (alpha * (color[0] / 255) + inverse * (backgroundColor[0] / 255)) * 255
-  )
-  color[1] = Math.round(
-    (alpha * (color[1] / 255) + inverse * (backgroundColor[1] / 255)) * 255
-  )
-  color[2] = Math.round(
-    (alpha * (color[2] / 255) + inverse * (backgroundColor[2] / 255)) * 255
-  )
-  color.splice(3, 1)
-
-  return color
+  return [
+    Math.round(
+      (alpha * (color[0] / 255) + inverse * (backgroundColor[0] / 255)) * 255
+    ),
+    Math.round(
+      (alpha * (color[1] / 255) + inverse * (backgroundColor[1] / 255)) * 255
+    ),
+    Math.round(
+      (alpha * (color[2] / 255) + inverse * (backgroundColor[2] / 255)) * 255
+    )
+  ]
 }
 
 export function rgbToHex(rgb) {

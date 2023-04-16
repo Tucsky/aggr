@@ -59,7 +59,7 @@ export default class ChartControl {
 
     // bind click
     if (process.env.VUE_APP_PUBLIC_VAPID_KEY) {
-      const canvas = this.chart.getChartCanvas()
+      const canvas = this.chart.chartElement
       const clickEventName = isTouchSupported() ? 'touchstart' : 'mousedown'
 
       this.clickHandler = this.onClick.bind(this)
@@ -94,7 +94,7 @@ export default class ChartControl {
 
     // unbind click / context menu
     if (process.env.VUE_APP_PUBLIC_VAPID_KEY) {
-      const canvas = this.chart.getChartCanvas()
+      const canvas = this.chart.chartElement
       const clickEventName = isTouchSupported() ? 'touchstart' : 'mousedown'
       canvas.removeEventListener(clickEventName, this.clickHandler)
       this.clickHandler = null
@@ -153,6 +153,8 @@ export default class ChartControl {
           this.chart.fetch()
           break
         case 'settings/TOGGLE_ALERTS':
+        case this.chart.paneId + '/TOGGLE_ALERTS':
+        case this.chart.paneId + '/TOGGLE_ALERTS_LABEL':
         case 'settings/SET_ALERTS_COLOR':
         case 'settings/SET_ALERTS_LINESTYLE':
         case 'settings/SET_ALERTS_LINEWIDTH':
@@ -305,8 +307,10 @@ export default class ChartControl {
         contextMenuComponent[key] = propsData[key]
       }
     } else {
+      document.body.style.cursor = 'loading'
       const module = await import(`@/components/chart/ChartContextMenu.vue`)
       contextMenuComponent = createComponent(module.default, propsData)
+      document.body.style.cursor = ''
 
       mountComponent(contextMenuComponent)
     }
@@ -337,12 +341,14 @@ export default class ChartControl {
     const previousEventBusy = this.activeEvent && this.activeEvent.isBusy
 
     if (event.shiftKey) {
+      console.log('new MeasurementEventHandler')
       this.activeEvent = new MeasurementEventHandler(this.chart, event)
     } else if (store.state.settings.alerts) {
       if (previousEventBusy) {
         return
       }
 
+      console.log('new AlertEventHandler')
       this.activeEvent = new AlertEventHandler(this.chart, event)
     }
   }

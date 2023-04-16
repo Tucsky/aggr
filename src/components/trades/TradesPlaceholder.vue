@@ -26,7 +26,7 @@
 
 <script lang="ts">
 import { Threshold } from '@/store/panesSettings/trades'
-import { formatAmount, stripStable } from '@/services/productsService'
+import { formatAmount, stripStablePair } from '@/services/productsService'
 import { Component, Vue } from 'vue-property-decorator'
 
 @Component({
@@ -63,7 +63,7 @@ export default class extends Vue {
       let localPair = market ? market.local : marketKey
 
       if (mergeUsdt) {
-        localPair = stripStable(localPair)
+        localPair = stripStablePair(localPair)
       }
 
       if (pairs.indexOf(localPair) === -1) {

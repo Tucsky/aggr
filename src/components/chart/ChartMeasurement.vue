@@ -12,8 +12,8 @@
       <div class="chart-measurement__price">{{ high }}</div>
     </div>
     <div class="chart-measurement__percent">
-      <i class="icon-up chart-measurement__icon"></i> {{ percent
-      }}<small>%</small>
+      <i class="icon-up-thin chart-measurement__icon"></i>
+      {{ percent > 0 ? '+' : '' }}{{ percent.toFixed(2) }}<small>%</small>
     </div>
     <div class="chart-measurement__line chart-measurement__line--bottom">
       <div class="chart-measurement__price">{{ low }}</div>
@@ -49,11 +49,19 @@ export default {
     size() {
       const surface = this.position.width * this.position.height
 
-      if (surface < 50000) {
+      if (surface < 10000) {
         return 'small'
       }
 
-      return 'large'
+      if (surface < 50000) {
+        return 'medium'
+      }
+
+      if (surface < 100000) {
+        return 'large'
+      }
+
+      return 'extra-large'
     },
     styles() {
       return {
@@ -92,6 +100,7 @@ export default {
   align-items: center;
   justify-content: center;
   font-family: $font-monospace;
+  text-shadow: 1.5px 1.5px 0 var(--theme-background-o75);
 
   &:before {
     content: '';
@@ -100,13 +109,17 @@ export default {
     left: 0;
     right: 0;
     bottom: 0;
-    opacity: 0.25;
+    opacity: 0.375;
   }
 
   &__icon {
     display: inline-block;
     font-size: 0.75em;
     transition: transform 0.2s $ease-out-expo;
+
+    #{$self}--small & {
+      display: none;
+    }
   }
 
   &--up {
@@ -154,12 +167,25 @@ export default {
     line-height: 1;
     font-size: 0.75em;
     color: white;
+
+    #{$self}--large &,
+    #{$self}--extra-large & {
+      font-size: 1em;
+    }
   }
 
   &__percent {
     position: relative;
 
+    #{$self}--medium & {
+      font-size: 1em;
+    }
+
     #{$self}--large & {
+      font-size: 1.5em;
+    }
+
+    #{$self}--extra-large & {
       font-size: 2em;
     }
   }

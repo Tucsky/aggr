@@ -170,7 +170,10 @@ const actions = {
       notice
     })
   },
-  async showSearch({ commit, state }, { paneId, pristine = false } = {}) {
+  async showSearch(
+    { commit, state },
+    { paneId, pristine = false, input = null } = {}
+  ) {
     if (state.showSearch) {
       return
     }
@@ -183,7 +186,7 @@ const actions = {
 
     dialogService.open(
       (await import('@/components/SearchDialog.vue')).default,
-      { paneId, pristine }
+      { paneId, pristine, input }
     )
   },
   showTimeframe({ commit, state, rootState }) {

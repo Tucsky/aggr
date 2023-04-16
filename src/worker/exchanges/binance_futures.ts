@@ -119,7 +119,7 @@ export default class extends Exchange {
     if (!json) {
       return
     } else {
-      if (json.e === 'trade' && json.X !== 'INSURANCE_FUND') {
+      if (json.e === 'aggTrade' && json.X !== 'INSURANCE_FUND') {
         let size = +json.q
 
         const symbol = json.s.toLowerCase()

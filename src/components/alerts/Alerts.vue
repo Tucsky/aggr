@@ -5,12 +5,12 @@
       :paneId="paneId"
       :settings="() => import('@/components/alerts/AlertsDialog.vue')"
       :show-search="false"
+      :show-name="false"
       split
     >
-      <template #title>&nbsp;</template>
       <Btn
         type="button"
-        class="toolbar__label btn"
+        class="toolbar__label -text"
         @click="$refs.list.getAlerts()"
       >
         <i class="icon-refresh"></i>
@@ -20,7 +20,7 @@
       ref="query"
       type="text"
       placeholder="Search..."
-      class="form-control pane-alerts__query"
+      class="form-control pane-alerts__query pane-overlay"
       v-model="query"
     />
     <alerts-list ref="list" :query="query" persist-sections />
@@ -55,19 +55,19 @@ export default class extends Mixins(PaneMixin) {
 
   &__query {
     border: 0;
-    width: 10rem;
-    position: relative;
+    width: 100%;
+    position: absolute;
+    z-index: 1;
+    border-radius: 0;
+    padding: 0;
+    font-size: 1.125em;
   }
 
   &__header {
-    z-index: auto;
+    background: 0;
 
     ::v-deep .toolbar__label {
       z-index: 1;
-    }
-
-    ::v-deep .pane-header__name {
-      background: 0;
     }
   }
 }

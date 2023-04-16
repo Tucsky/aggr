@@ -179,12 +179,12 @@ export default {
 /* transition-height */
 
 .transition-height {
-  transition: height 0.3s $ease-out-expo;
+  transition: height 0.15s $ease-out-expo;
 
   &-leave-active,
   &-enter-active {
     overflow: hidden;
-    transition: all 0.3s $ease-out-expo;
+    transition: all 0.15s $ease-out-expo;
   }
 
   &-enter,
@@ -199,11 +199,11 @@ export default {
 
 .transition-height-scale {
   &-enter-active {
-    transition: all 0.5s $ease-out-expo 0.25s, height 0.75s $ease-out-expo;
+    transition: all 0.25s $ease-out-expo 0.15s, height 0.375s $ease-out-expo;
   }
 
   &-leave-active {
-    transition: all 0.3s $ease-out-expo;
+    transition: all 0.15s $ease-out-expo;
   }
 
   &-enter,
@@ -217,7 +217,7 @@ export default {
 .slide-fade-left {
   &-enter-active,
   &-leave-active {
-    transition: all 0.3s $ease-out-expo;
+    transition: all 0.15s $ease-out-expo;
   }
 
   &-enter,

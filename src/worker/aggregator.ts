@@ -6,7 +6,7 @@ import {
   Volumes
 } from '@/types/types'
 import { exchanges, getExchangeById } from './exchanges'
-import { parseMarket } from './helpers/utils'
+import { getHms, parseMarket } from './helpers/utils'
 import settings from './settings'
 
 const ctx: Worker = self as any
@@ -19,6 +19,7 @@ class Aggregator {
   connectionsCount = 0
   connectionChange = 0
 
+  private tickerDelay = 10
   private baseAggregationTimeout = 50
   private onGoingAggregations: { [identifier: string]: AggregatedTrade } = {}
   private aggregationTimeouts: { [identifier: string]: number } = {}
@@ -424,11 +425,14 @@ class Aggregator {
   }
 
   emitPrices() {
-    if (!this.connectionsCount) {
-      return
+    if (this.connectionsCount) {
+      ctx.postMessage({ op: 'prices', data: this.marketsStats })
     }
 
-    ctx.postMessage({ op: 'prices', data: this.marketsStats })
+    this['_priceInterval'] = self.setTimeout(
+      () => this.emitPrices(),
+      this.tickerDelay
+    )
   }
 
   onSubscribed(exchangeId, pair, url) {
@@ -472,6 +476,8 @@ class Aggregator {
     })
 
     this.noticeConnectionChange(1)
+
+    this.refreshTickerDelay()
   }
 
   onUnsubscribed(exchangeId, pair) {
@@ -496,6 +502,8 @@ class Aggregator {
       })
 
       this.noticeConnectionChange(-1)
+
+      this.refreshTickerDelay()
     }
   }
 
@@ -637,9 +645,11 @@ class Aggregator {
               timeout: estimatedTimeToConnectThemAll,
               title: `Connecting to ${
                 marketsByExchange[exchangeId].length
-              } markets on ${exchangeId}\nThis could take some time (about ${Math.round(
-                estimatedTimeToConnectThemAll / 1000
-              )}s)`
+              } markets on ${exchangeId}\nThis will take about ${getHms(
+                estimatedTimeToConnectThemAll,
+                undefined,
+                ' and '
+              )}`
             }
           })
         }
@@ -727,7 +737,7 @@ class Aggregator {
     if (this['_priceInterval']) {
       return
     }
-    this['_priceInterval'] = self.setInterval(this.emitPrices.bind(this), 1000)
+    this.emitPrices()
   }
 
   startAggrInterval() {
@@ -814,6 +824,13 @@ class Aggregator {
       trackingId: trackingId,
       data: exchanges.reduce((hits, exchanges) => hits + exchanges.count, 0)
     })
+  }
+
+  refreshTickerDelay() {
+    const count = Object.keys(this.connections).length
+
+    this.tickerDelay = Math.log(Math.exp(count / 20 + 1) * 200) * 100
+    return this.tickerDelay
   }
 }
 

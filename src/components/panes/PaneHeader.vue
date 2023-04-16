@@ -4,7 +4,11 @@
     :class="[split && 'pane-header--split']"
     @dblclick="maximizePane"
   >
-    <div class="pane-header__name pane-overlay" @dblclick="renamePane">
+    <div
+      v-if="showName"
+      class="pane-header__name pane-overlay"
+      @dblclick="renamePane"
+    >
       <slot name="title">
         {{ name }}
       </slot>
@@ -128,6 +132,10 @@ import dialogService from '@/services/dialogService'
       type: Boolean,
       default: true
     },
+    showName: {
+      type: Boolean,
+      default: true
+    },
     split: {
       type: Boolean,
       default: false
@@ -223,6 +231,11 @@ export default class extends Vue {
     const cls = Event as any
 
     window.dispatchEvent(new cls('resize'))
+
+    this.$store.dispatch('panes/refreshZoom', {
+      id: this.paneId,
+      zoom: isMaximized ? 2 : this.zoom
+    })
   }
 
   async renamePane(event) {

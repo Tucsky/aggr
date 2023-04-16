@@ -47,6 +47,8 @@ export interface ChartPaneState {
   timeframe: number
   indicatorsErrors: { [indicatorId: string]: string }
   refreshRate?: number
+  showAlerts?: boolean
+  showAlertsLabel?: boolean
   showLegend: boolean
   showIndicators: boolean
   fillGapsWithEmpty: boolean
@@ -83,6 +85,8 @@ const state = {
   showIndicators: true,
   timeframe: 5,
   refreshRate: 1000,
+  showAlerts: true,
+  showAlertsLabel: true,
   showLegend: true,
   fillGapsWithEmpty: true,
   showHorizontalGridlines: false,
@@ -383,6 +387,12 @@ const actions = {
 } as ActionTree<ChartPaneState, ModulesState>
 
 const mutations = {
+  TOGGLE_ALERTS(state) {
+    state.showAlerts = !state.showAlerts
+  },
+  TOGGLE_ALERTS_LABEL(state) {
+    state.showAlertsLabel = !state.showAlertsLabel
+  },
   SET_REFRESH_RATE(state, value) {
     state.refreshRate = +value || 0
   },

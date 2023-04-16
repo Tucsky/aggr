@@ -25,13 +25,17 @@
         :key="timeframe"
         @click="$store.dispatch(`${paneId}/setTimeframe`, timeframe)"
         title="Maintain shift key to change timeframe on all panes"
-        class="toolbar__label timeframe"
+        class="toolbar__label timeframe -text"
       >
         <span>{{ timeframeLabel }}</span>
       </button>
-      <button @click="toggleTimeframeDropdown" class="-arrow toolbar__label">
+      <Btn
+        ref="timeframeButton"
+        @click="toggleTimeframeDropdown($event, $refs.timeframeButton)"
+        class="-arrow toolbar__label -text"
+      >
         {{ timeframeForHuman }}
-      </button>
+      </Btn>
     </pane-header>
     <div
       class="chart-overlay hide-scrollbar"
@@ -69,6 +73,8 @@ import ChartLayout from '@/components/chart/Layout.vue'
 import IndicatorsOverlay from '@/components/chart/IndicatorsOverlay.vue'
 import MarketsOverlay from '@/components/chart/MarketsOverlay.vue'
 import AlertsList from '@/components/alerts/AlertsList.vue'
+import Btn from '@/components/framework/Btn.vue'
+
 import { Trade } from '@/types/types'
 
 @Component({
@@ -78,7 +84,8 @@ import { Trade } from '@/types/types'
     PaneHeader,
     IndicatorsOverlay,
     MarketsOverlay,
-    AlertsList
+    AlertsList,
+    Btn
   }
 })
 export default class extends Mixins(PaneMixin) {
@@ -88,8 +95,6 @@ export default class extends Mixins(PaneMixin) {
     right: 0,
     time: 0
   }
-
-  timeframeDropdownTrigger = null
 
   private chart: Chart
 
@@ -228,8 +233,10 @@ export default class extends Mixins(PaneMixin) {
     this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING')
   }
 
-  toggleTimeframeDropdown(event) {
-    this.chart.toggleTimeframeDropdown(event)
+  async toggleTimeframeDropdown(event, button) {
+    button.isLoading = true
+    await this.chart.toggleTimeframeDropdown(event)
+    button.isLoading = false
   }
 
   restart() {

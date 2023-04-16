@@ -6,6 +6,10 @@
     >
       {{ timeframeForHuman }}
     </button>
+    <button @click="$store.dispatch('app/showSearch')" class="dropdown-item">
+      <i class="icon-search"></i>
+      <span>Search</span>
+    </button>
     <button
       @click="$emit('cmd', ['takeScreenshot', $event])"
       class="dropdown-item"
@@ -16,10 +20,6 @@
     <button @click="$emit('cmd', ['flipChart'])" class="dropdown-item">
       <i class="icon-flip"></i>
       <span>Flip</span>
-    </button>
-    <button @click="$emit('cmd', ['restart'])" class="dropdown-item">
-      <i class="icon-refresh"></i>
-      <span>Restart</span>
     </button>
     <template v-if="price">
       <template v-if="alert">
@@ -38,19 +38,46 @@
         <button @click="createAlert" class="dropdown-item">
           <i class="icon-plus"></i>
           <span>{{ priceFormatted }}</span>
+          <i class="icon-cog" @click.stop="toggleAlertsSettingsDropdown"></i>
         </button>
       </template>
-      <button
-        v-if="showAlerts"
-        type="button"
-        class="dropdown-item"
-        @click.stop="toggleAlertsDropdown"
-      >
-        <i class="icon-more"></i>
-        <span>Alerts</span>
-      </button>
       <dropdown v-model="alertsDropdownTrigger" @click.stop>
         <alerts-list :query="market" with-options />
+      </dropdown>
+      <dropdown v-model="alertsDropdownSettingsTrigger" @click.stop>
+        <button type="button" class="dropdown-item" @click.stop>
+          <label class="checkbox-control -small">
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="showAlerts"
+              @change="$store.commit(`${paneId}/TOGGLE_ALERTS`)"
+            />
+            <div></div>
+            <span>Visible</span>
+          </label>
+        </button>
+        <button type="button" class="dropdown-item" @click.stop>
+          <label class="checkbox-control -small">
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="showAlertsLabel"
+              @change="$store.commit(`${paneId}/TOGGLE_ALERTS_LABEL`)"
+              :disabled="!showAlerts"
+            />
+            <div></div>
+            <span>Label</span>
+          </label>
+        </button>
+        <button
+          type="button"
+          class="dropdown-item"
+          @click.stop="toggleAlertsDropdown"
+        >
+          Manage
+          <i class="icon-more mr0"></i>
+        </button>
       </dropdown>
     </template>
   </dropdown>
@@ -62,6 +89,7 @@ import { getTimeframeForHuman } from '@/utils/helpers'
 import { formatMarketPrice } from '@/services/productsService'
 import dialogService from '@/services/dialogService'
 import alertService, { MarketAlert } from '@/services/alertService'
+import { ChartPaneState } from '@/store/panesSettings/chart'
 
 export default {
   name: 'ChartContextMenu',
@@ -103,7 +131,8 @@ export default {
     }
   },
   data: () => ({
-    alertsDropdownTrigger: null
+    alertsDropdownTrigger: null,
+    alertsDropdownSettingsTrigger: null
   }),
   computed: {
     timeframeForHuman() {
@@ -113,8 +142,14 @@ export default {
 
       return getTimeframeForHuman(this.timeframe)
     },
-    showAlerts() {
+    alertsEnabled() {
       return this.$store.state.settings.alerts
+    },
+    showAlerts() {
+      return (this.$store.state[this.paneId] as ChartPaneState).showAlerts
+    },
+    showAlertsLabel() {
+      return (this.$store.state[this.paneId] as ChartPaneState).showAlertsLabel
     },
     priceFormatted() {
       return +formatMarketPrice(this.price, this.market)
@@ -142,10 +177,21 @@ export default {
       if (this.alertsDropdownTrigger) {
         this.alertsDropdownTrigger = null
       } else {
-        this.alertsDropdownTrigger = event.currentTarget
+        this.alertsDropdownTrigger = event.currentTarget.parentElement
       }
     },
-    async createAlert() {
+    async toggleAlertsSettingsDropdown(event) {
+      if (!(await this.ensureAlerts())) {
+        return
+      }
+
+      if (this.alertsDropdownSettingsTrigger) {
+        this.alertsDropdownSettingsTrigger = null
+      } else {
+        this.alertsDropdownSettingsTrigger = event.currentTarget.parentElement
+      }
+    },
+    async ensureAlerts() {
       if (!this.$store.state.settings.alerts) {
         if (
           !(await dialogService.confirm({
@@ -154,10 +200,17 @@ export default {
             ok: 'Yes please'
           }))
         ) {
-          return
+          return false
         }
 
         this.$store.commit('settings/TOGGLE_ALERTS', true)
+      }
+
+      return true
+    },
+    async createAlert() {
+      if (!(await this.ensureAlerts())) {
+        return
       }
 
       const alert: MarketAlert = {
@@ -167,7 +220,7 @@ export default {
         active: false
       }
 
-      alertService.createAlert(alert, this.getPrice())
+      alertService.createAlert(alert, this.getPrice(), true)
     },
     removeAlert() {
       alertService.removeAlert(this.alert)

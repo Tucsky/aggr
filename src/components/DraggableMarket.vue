@@ -61,8 +61,8 @@ export default {
         return
       }
 
-      this.position.x += offset.x * 0.25
-      this.position.y += offset.y * 0.25
+      this.position.x += offset.x * 0.125
+      this.position.y += offset.y * 0.125
 
       requestAnimationFrame(this.animate)
     }

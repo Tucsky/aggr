@@ -23,7 +23,7 @@ import { databaseUpgrades, workspaceUpgrades } from './migrations'
 import { PanesState } from '@/store/panes'
 import alertService, { MarketAlerts } from './alertService'
 import dialogService from './dialogService'
-import { stripStable } from './productsService'
+import { stripStablePair } from './productsService'
 import notificationService from './notificationService'
 
 export interface AggrDB extends DBSchema {
@@ -332,7 +332,7 @@ class WorkspacesService {
     if (urlPairs && urlPairs.trim().length > 4) {
       this.pairsFromURL = urlPairs
         .split(/\+|,/)
-        .map(pair => stripStable(pair.toUpperCase()))
+        .map(pair => stripStablePair(pair.toUpperCase()))
     }
 
     return workspace

@@ -1,9 +1,7 @@
 import { formatMarketPrice } from '@/services/productsService'
-import store from '@/store'
 import { createComponent, getEventCords, mountComponent } from '@/utils/helpers'
 import { Time } from 'lightweight-charts'
 import ChartController, { IndicatorApi } from '../chart'
-import AlertEventHandler from './alertEventHandler'
 
 export default class MeasurementEventHandler {
   isBusy = false
@@ -133,7 +131,7 @@ export default class MeasurementEventHandler {
     const x = [this.a.x, this.b.x].sort((a, b) => a - b)
     const y = [this.a.y, this.b.y].sort((a, b) => a - b)
     const prices = [this.a.price, this.b.price].sort((a, b) => a - b)
-    const percent = +((1 - this.b.price / this.a.price) * -1 * 100).toFixed(2)
+    const percent = (1 - this.b.price / this.a.price) * -1 * 100
 
     return {
       position: {
@@ -172,6 +170,7 @@ export default class MeasurementEventHandler {
     const timeScale = this.chart.chartInstance.timeScale()
 
     if (timeScale) {
+      console.log('sub pan')
       this.onPanHandler = this.onPan.bind(this)
       timeScale.subscribeVisibleLogicalRangeChange(this.onPanHandler)
     }
@@ -190,10 +189,6 @@ export default class MeasurementEventHandler {
 
   onEnd(event) {
     this.unbindEvents(event)
-
-    if (/mouse/.test(event.type) && !store.state.settings.alertsClick) {
-      new AlertEventHandler(this.chart, event)
-    }
   }
 
   async unbindEvents(event) {
@@ -232,6 +227,7 @@ export default class MeasurementEventHandler {
     this.measurementComponent = null
 
     if (this.onPanHandler) {
+      console.log('unsub pan')
       const timeScale = this.chart.chartInstance.timeScale()
 
       if (timeScale) {

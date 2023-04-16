@@ -11,7 +11,7 @@ import {
   marketDecimals,
   getStoredProductsOrFetch,
   parseMarket,
-  stripStable
+  stripStablePair
 } from './productsService'
 import workspacesService from './workspacesService'
 
@@ -106,7 +106,7 @@ class AggregatorService extends EventEmitter {
           ) === -1
         ) {
           this.normalizeDecimalsQueue.markets.push(
-            stripStable(store.state.panes.marketsListeners[market].local)
+            stripStablePair(store.state.panes.marketsListeners[market].local)
           )
         }
 
@@ -181,7 +181,10 @@ class AggregatorService extends EventEmitter {
     for (let i = 0; i < markets.length; i++) {
       const [exchange] = parseMarket(markets[i])
 
-      if (store.state.exchanges[exchange].disabled) {
+      if (
+        store.state.exchanges[exchange] &&
+        store.state.exchanges[exchange].disabled
+      ) {
         const panes = []
         for (const paneId in store.state.panes.panes) {
           if (
@@ -225,7 +228,7 @@ class AggregatorService extends EventEmitter {
         continue
       }
 
-      const localPair = stripStable(
+      const localPair = stripStablePair(
         store.state.panes.marketsListeners[market].local
       )
 

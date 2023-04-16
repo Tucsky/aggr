@@ -259,11 +259,11 @@ export default {
 
   &__title {
     position: relative;
+    display: flex;
+    align-items: center;
 
     .badge {
-      position: absolute;
-      left: 100%;
-      top: 0.125rem;
+      margin-left: 0.5rem;
     }
   }
 

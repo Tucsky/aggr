@@ -5,13 +5,13 @@ export default class extends Exchange {
   private lastSubscriptionId = 0
   private subscriptions = {}
   protected endpoints = {
-    PRODUCTS: 'https://api.binance.com/api/v3/exchangeInfo'
+    PRODUCTS: 'https://data.binance.com/api/v3/exchangeInfo'
   }
   protected maxConnectionsPerApi = 100
   protected delayBetweenMessages = 250
 
   async getUrl() {
-    return `wss://stream.binance.com:9443/ws`
+    return `wss://data-stream.binance.com:9443/ws`
   }
 
   formatProducts(data) {

@@ -430,6 +430,10 @@ export default {
   cum: {
     next: closeOHLC,
     update(state, value) {
+      if (isNaN(value)) {
+        return
+      }
+
       if (typeof state.open === 'undefined') {
         state.open = value
       }
@@ -855,5 +859,8 @@ export default {
 
       return state.output
     }
+  },
+  na(val) {
+    return val || 0
   }
 }

@@ -152,7 +152,14 @@ export default class AlertEventHandler {
     const canMove =
       Math.abs(this.originalOffset.y - this.offset.y) > 5 ||
       Date.now() - this.timestamp > 750
-    const canCreate = !this.priceline && !canMove
+
+    const canCreate =
+      !this.priceline &&
+      !canMove &&
+      Math.abs(this.originalOffset.x - this.offset.x) +
+        Math.abs(this.originalOffset.y - this.offset.y) <
+        10
+
     store.state.settings.alerts &&
       (event.altKey || store.state.settings.alertsClick)
     const market = this.alert.market

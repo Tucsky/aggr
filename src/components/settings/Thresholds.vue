@@ -64,7 +64,7 @@
             <editable
               placeholder="Amount*"
               class="pl16 w-100"
-              :value="threshold.amount"
+              :value="formatAmount(threshold.amount)"
               @input="
                 $store.commit(paneId + '/SET_THRESHOLD_AMOUNT', {
                   id: threshold.id,

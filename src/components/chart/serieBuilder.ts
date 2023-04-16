@@ -573,13 +573,9 @@ export default class SerieBuilder {
         const targetFunction = seriesUtils[functionName]
 
         if (!targetFunction) {
-          //if (/for|if|rgba/i.test(functionName)) {
           FUNCTION_LOOKUP_REGEX.lastIndex =
             functionMatch.index + functionMatch[0].length
           continue
-          /*} else {
-            continue
-          }*/
         }
 
         const instruction: IndicatorFunction = {
@@ -600,6 +596,17 @@ export default class SerieBuilder {
             customArgsEndIndex
           )
         )
+
+        if (typeof seriesUtils[functionName] === 'function') {
+          output = `${output.slice(
+            0,
+            customArgsStartIndex
+          )}utils.${functionName}(${instruction.args
+            .map(a => a.instruction)
+            .join(',')})${output.slice(customArgsEndIndex + 1, output.length)}`
+          continue
+        }
+
         let totalArgsCount =
           (targetFunction.args ? targetFunction.args.length : 0) +
           customArgs.length

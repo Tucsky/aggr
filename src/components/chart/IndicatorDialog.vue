@@ -433,9 +433,11 @@ export default {
         : 2
     },
     priceFormat() {
-      return this.indicator.options.priceFormat
-        ? this.indicator.options.priceFormat.type
-        : 'price'
+      return (
+        (this.indicator.options.priceFormat &&
+          this.indicator.options.priceFormat.type) ||
+        'price'
+      )
     },
     availableScales() {
       return getChartScales(
@@ -983,13 +985,14 @@ hr.-vertical {
   &__zoom {
     position: absolute;
     font-size: 1rem;
-    padding: 1.5rem;
-    right: 0;
-    top: 0;
     z-index: 6;
+    pointer-events: none;
+    top: 1.5rem;
+    right: 1.5rem;
 
     .btn {
       display: block;
+      pointer-events: all;
     }
   }
 }

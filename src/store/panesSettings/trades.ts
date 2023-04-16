@@ -237,8 +237,9 @@ const mutations = {
         } else {
           threshold.amount = parseFloat(value) * 1000
         }
+      } else {
+        threshold.amount = +value
       }
-      threshold.amount = +value
     }
   },
   TOGGLE_THRESHOLD_MAX(state, id) {

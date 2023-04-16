@@ -338,10 +338,15 @@ const actions = {
   setZoom({ commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
     commit('SET_PANE_ZOOM', { id, zoom })
 
-    dispatch('refreshZoom', id)
+    dispatch('refreshZoom', { id })
   },
-  refreshZoom({ state }, id: string) {
-    const zoom = state.panes[id].zoom ? Math.max(0.1, state.panes[id].zoom) : 1
+  refreshZoom({ state }, { id, zoom }: { id: string; zoom?: number }) {
+    zoom =
+      typeof zoom === 'number'
+        ? zoom
+        : state.panes[id].zoom
+        ? Math.max(0.1, state.panes[id].zoom)
+        : 1
     const el = document.getElementById(id) as HTMLElement
 
     if (el) {

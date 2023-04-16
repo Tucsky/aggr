@@ -311,6 +311,8 @@ export default class extends Vue {
         label: name.split(':').pop()
       })
     }
+
+    this.query = ''
   }
 
   async applyDefault() {

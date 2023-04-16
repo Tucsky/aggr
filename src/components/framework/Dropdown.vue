@@ -308,6 +308,10 @@ export default {
       }
 
       this.clickOutsideHandler = event => {
+        if (event.defaultPrevented) {
+          return
+        }
+
         let parentElement = event.target as HTMLElement
         let depth = 0
         let isOutside = true

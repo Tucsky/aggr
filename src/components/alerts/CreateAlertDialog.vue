@@ -11,7 +11,7 @@
           <div class="dialog__title">
             <i
               class="-lower"
-              :class="[!edit && 'icon-plus', edit && 'icon-pencil']"
+              :class="[!edit && 'icon-plus', edit && 'icon-edit']"
             ></i>
             Alert @<code>{{ price }}</code>
           </div>

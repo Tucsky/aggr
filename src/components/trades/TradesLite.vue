@@ -71,7 +71,8 @@ import {
   getLinearShade,
   joinRgba,
   rgbaToRgb,
-  splitColorCode
+  splitColorCode,
+  getAppBackgroundColor
 } from '../../utils/colors'
 import Slider from '@/components/framework/picker/Slider.vue'
 
@@ -563,7 +564,8 @@ export default class extends Mixins(PaneMixin) {
 
   prepareThresholds(type: TradeType, thresholds: Threshold[]) {
     // app background color for computed threshold color
-    const appBackgroundColor = splitColorCode(this.themeBase)
+    const themeBackgroundColor = splitColorCode(this.themeBase)
+    const appBackgroundColor = getAppBackgroundColor()
 
     const ranges = []
     let significantAmount
@@ -590,6 +592,11 @@ export default class extends Mixins(PaneMixin) {
         rgbaToRgb(buyColorTo, appBackgroundColor)
       ]
 
+      const buyColorRangeTheme = [
+        rgbaToRgb(buyColorFrom, themeBackgroundColor),
+        rgbaToRgb(buyColorTo, themeBackgroundColor)
+      ]
+
       const sellColorFrom = splitColorCode(thresholds[i].sellColor)
       const sellColorTo = splitColorCode(thresholds[i + 1].sellColor)
       const sellAlpha =
@@ -598,6 +605,11 @@ export default class extends Mixins(PaneMixin) {
       const sellColorRange = [
         rgbaToRgb(sellColorFrom, appBackgroundColor),
         rgbaToRgb(sellColorTo, appBackgroundColor)
+      ]
+
+      const sellColorRangeTheme = [
+        rgbaToRgb(buyColorFrom, themeBackgroundColor),
+        rgbaToRgb(buyColorTo, themeBackgroundColor)
       ]
 
       const buy = []
@@ -614,8 +626,13 @@ export default class extends Mixins(PaneMixin) {
           buyColorRange[1],
           position
         )
+        const buyTextColor = getColorByWeight(
+          buyColorRangeTheme[0],
+          buyColorRangeTheme[1],
+          position
+        )
         const buyText = getLinearShadeText(
-          buyBackground,
+          buyTextColor,
           0.5 + Math.min(1, (i * GRADIENT_DETAIL + j) / total),
           Math.exp(1 - buyAlpha) / 5
         )
@@ -632,8 +649,13 @@ export default class extends Mixins(PaneMixin) {
           sellColorRange[1],
           position
         )
+        const sellTextColor = getColorByWeight(
+          sellColorRangeTheme[0],
+          sellColorRangeTheme[1],
+          position
+        )
         const sellText = getLinearShadeText(
-          sellBackground,
+          sellTextColor,
           0.5 + Math.min(1, (i * GRADIENT_DETAIL + j) / total),
           Math.exp(1 - sellAlpha) / 5
         )
@@ -884,8 +906,12 @@ export default class extends Mixins(PaneMixin) {
 
   drawHistogram(trade, height) {
     this.ctx.fillStyle = 'rgba(255,255,255,0.05)'
-    const x = Math.min(1, trade.count / 100) * this.width
-    this.ctx.fillRect(x - 2, 0, 2, this.drawOffset + height)
+    this.ctx.fillRect(
+      0,
+      0,
+      Math.min(1, trade.count / 100) * this.width,
+      this.drawOffset + height
+    )
   }
 
   drawPair(trade, height) {
@@ -908,7 +934,7 @@ export default class extends Mixins(PaneMixin) {
     )
   }
 
-  drawAmount(trade, height, liquidation) {
+  drawAmount(trade: Trade, height, liquidation) {
     this.ctx.textAlign = 'right'
     this.ctx.fillText(
       formatAmount(trade.amount) +

@@ -28,7 +28,7 @@ import dialogService from '@/services/dialogService'
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
-import { stripStable, marketDecimals } from '@/services/productsService'
+import { stripStablePair, marketDecimals } from '@/services/productsService'
 import audioService from '@/services/audioService'
 import alertService, {
   MarketAlert,
@@ -286,7 +286,7 @@ export default class Chart {
       let localPair = marketKey
 
       if (market) {
-        localPair = stripStable(market.local)
+        localPair = stripStablePair(market.local)
       }
 
       // build up markets
@@ -301,12 +301,11 @@ export default class Chart {
         marketsForWatermark.indexOf(localPair) === -1
       ) {
         marketsForWatermark.push(
-          (!normalizeWatermarks && market ? market.exchange + ':' : '') +
-            localPair
+          !normalizeWatermarks || !market ? marketKey : localPair
         )
       }
 
-      // build up indexes
+      // find main pair
       if (!marketsIndexes[localPair]) {
         marketsIndexes[localPair] = 0
       }
@@ -328,7 +327,7 @@ export default class Chart {
 
     this.updateWatermark(marketsForWatermark)
     this.resetPriceScales()
-    this.refreshAutoDecimals([this.mainIndex])
+    this.refreshAutoDecimals()
   }
 
   /**
@@ -449,17 +448,15 @@ export default class Chart {
       this.toggleIndicatorVisibility(indicator, value)
 
       return
-    } else if (key === 'priceFormat' && value.auto) {
-      this.refreshAutoDecimals(null, id)
+    } else if (key === 'priceFormat') {
+      if (value.auto) {
+        setTimeout(() => this.refreshAutoDecimals(null, id))
+      }
     } else if (key === 'priceScaleId') {
       this.ensurePriceScale(value, indicator)
     }
 
     for (let i = 0; i < indicator.apis.length; i++) {
-      if (key === 'priceFormat' && !value.auto) {
-        indicator.apis[i].precision = value.precision
-      }
-
       indicator.apis[i].applyOptions({
         [key]: value
       })
@@ -1565,6 +1562,16 @@ export default class Chart {
   createIndicatorSeries(indicator) {
     const series = []
 
+    const priceScale =
+      store.state[this.paneId].priceScales[indicator.options.priceScaleId]
+
+    if (priceScale && priceScale.priceFormat) {
+      indicator.options.priceFormat = {
+        ...indicator.options.priceFormat,
+        ...priceScale.priceFormat
+      }
+    }
+
     for (let i = 0; i < indicator.model.plots.length; i++) {
       const plot = indicator.model.plots[i]
       const apiMethodName = camelize('add-' + plot.type + '-series')
@@ -1588,13 +1595,6 @@ export default class Chart {
       ) as IndicatorApi
 
       api.id = plot.id
-
-      if (
-        serieOptions.priceFormat &&
-        typeof serieOptions.priceFormat.precision === 'number'
-      ) {
-        api.precision = serieOptions.priceFormat.precision
-      }
 
       this.seriesIndicatorsMap[plot.id] = {
         indicatorId: indicator.id,
@@ -1620,9 +1620,9 @@ export default class Chart {
   refreshPriceScale(priceScaleId: string) {
     const priceScale: PriceScaleSettings =
       store.state[this.paneId].priceScales[priceScaleId]
-
     this.chartInstance.priceScale(priceScaleId).applyOptions({
-      ...priceScale
+      scaleMargins: priceScale.scaleMargins,
+      mode: priceScale.mode
     })
   }
 
@@ -1686,7 +1686,11 @@ export default class Chart {
   }
 
   async renderAlerts() {
-    if (this._alertsRendered || !store.state.settings.alerts) {
+    if (
+      this._alertsRendered ||
+      !store.state.settings.alerts ||
+      !store.state[this.paneId].showAlerts
+    ) {
       return
     }
 
@@ -1819,9 +1823,10 @@ export default class Chart {
         )
     }
 
+    const showLabel = store.state[this.paneId].showAlertsLabel
     let title = ''
 
-    if (alert.message && alert.message.length < 3) {
+    if (showLabel && alert.message && alert.message.length < 3) {
       title = alert.message
     }
 
@@ -1845,7 +1850,8 @@ export default class Chart {
       lineWidth: store.state.settings.alertsLineWidth,
       lineStyle: store.state.settings.alertsLineStyle,
       color,
-      title: title.length ? title : null
+      title: title.length ? title : null,
+      axisLabelVisible: showLabel
     } as any)
   }
 
@@ -2232,55 +2238,71 @@ export default class Chart {
   }
 
   refreshAutoDecimals(indexes?: string[], indicatorId?: string) {
-    if (indexes.indexOf(this.mainIndex) !== -1) {
-      const precision = marketDecimals[this.mainIndex]
-      console.debug(
-        'chart->refresh precision with',
-        this.mainIndex,
-        `(precision ${precision})`
-      )
-      for (let i = 0; i < this.loadedIndicators.length; i++) {
-        if (indicatorId && indicatorId !== this.loadedIndicators[i].id) {
-          continue
-        }
+    if (indexes && indexes.indexOf(this.mainIndex) === -1) {
+      return
+    }
 
-        let priceFormat = this.loadedIndicators[i].options.priceFormat || {
-          type: 'price'
-        }
+    const precision = marketDecimals[this.mainIndex]
 
-        if (
-          !priceFormat.auto ||
-          priceFormat.type === 'volume' ||
-          priceFormat.precision === precision
-        ) {
-          continue
-        }
+    for (let i = 0; i < this.loadedIndicators.length; i++) {
+      if (indicatorId && indicatorId !== this.loadedIndicators[i].id) {
+        continue
+      }
 
-        priceFormat = {
-          ...priceFormat,
-          precision,
-          minMove: 1 / Math.pow(10, precision)
-        }
+      let priceFormat = this.loadedIndicators[i].options.priceFormat || {
+        type: 'price'
+      }
 
-        store.dispatch(this.paneId + '/setIndicatorOption', {
-          id: this.loadedIndicators[i].id,
-          key: 'priceFormat',
-          value: priceFormat,
-          silent: true
+      const indicatorPrecision =
+        typeof precision === 'number'
+          ? precision
+          : typeof priceFormat.precision === 'number'
+          ? priceFormat.precision
+          : 2
+
+      if (
+        !priceFormat.auto ||
+        priceFormat.type === 'volume' ||
+        priceFormat.precision === indicatorPrecision
+      ) {
+        continue
+      }
+
+      const precisionOptions = {
+        precision: indicatorPrecision,
+        minMove: 1 / Math.pow(10, indicatorPrecision)
+      }
+
+      priceFormat = {
+        ...priceFormat,
+        ...precisionOptions,
+        auto: true
+      }
+
+      store.dispatch(this.paneId + '/setIndicatorOption', {
+        id: this.loadedIndicators[i].id,
+        key: 'priceFormat',
+        value: priceFormat,
+        silent: true
+      })
+
+      const priceScale =
+        store.state[this.paneId].priceScales[
+          this.loadedIndicators[i].options.priceScaleId
+        ]
+
+      store.commit(this.paneId + '/SET_PRICE_SCALE', {
+        id: this.loadedIndicators[i].options.priceScaleId,
+        priceScale: {
+          ...priceScale,
+          priceFormat: precisionOptions
+        }
+      })
+
+      for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
+        this.loadedIndicators[i].apis[j].applyOptions({
+          priceFormat: precisionOptions
         })
-
-        console.debug(
-          'chart->apply precision to indi',
-          this.loadedIndicators[i],
-          precision
-        )
-        for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
-          this.loadedIndicators[i].apis[j].applyOptions({
-            priceFormat
-          })
-
-          this.loadedIndicators[i].apis[j].precision = precision
-        }
       }
     }
   }
@@ -2441,7 +2463,7 @@ export default class Chart {
     const lines = []
     const [date, time] = new Date().toISOString().split('T')
 
-    lines.push(date + ' ' + time.split('.')[0])
+    lines.push(date + ' ' + time.split('.')[0] + ' UTC')
     lines.push(
       this.watermark +
         ' | ' +
@@ -2758,7 +2780,7 @@ export default class Chart {
     }
 
     this._recycleTimeout = setTimeout(
-      this.trimChart,
+      this.trimChart.bind(this),
       1000 * 60 * (fastRefreshRate ? 3 : 15)
     )
   }
@@ -2861,6 +2883,6 @@ export default class Chart {
   }
 
   toggleTimeframeDropdown(event) {
-    this.chartControl.toggleTimeframeDropdown(event)
+    return this.chartControl.toggleTimeframeDropdown(event)
   }
 }

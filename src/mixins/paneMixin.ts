@@ -21,6 +21,8 @@ export default class PaneMixin extends Vue {
   mounted() {
     this.$el.id = this.paneId
 
+    this.refreshZoom()
+
     this.$nextTick(() => {
       const width = this.$el.clientWidth
 
@@ -41,7 +43,9 @@ export default class PaneMixin extends Vue {
   }
 
   refreshZoom() {
-    this.$store.dispatch('panes/refreshZoom', this.paneId)
+    this.$store.dispatch('panes/refreshZoom', {
+      id: this.paneId
+    })
   }
 
   focusPane() {

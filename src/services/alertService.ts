@@ -165,11 +165,14 @@ class AlertService {
         continue
       }
 
+      let mutation = false
+
       for (const price of markets[market]) {
         const alert = this.alerts[market].find(a => a.price === price)
 
-        if (alert) {
+        if (alert && !alert.triggered) {
           alert.triggered = true
+          mutation = true
         } else {
           console.error(
             `[alertService] couldn't set alert as triggered (alert not found @${price})`
@@ -177,10 +180,12 @@ class AlertService {
         }
       }
 
-      await workspacesService.saveAlerts({
-        market,
-        alerts: this.alerts[market]
-      })
+      if (mutation) {
+        await workspacesService.saveAlerts({
+          market,
+          alerts: this.alerts[market]
+        })
+      }
     }
   }
 
@@ -316,7 +321,11 @@ class AlertService {
       })
   }
 
-  async createAlert(createdAlert: MarketAlert, referencePrice?: number) {
+  async createAlert(
+    createdAlert: MarketAlert,
+    referencePrice?: number,
+    askMessage?: boolean
+  ) {
     if (!this.alerts[createdAlert.market]) {
       await this.getAlerts(createdAlert.market)
     }
@@ -328,7 +337,7 @@ class AlertService {
       type: AlertEventType.CREATED
     })
 
-    if (referencePrice && !store.state.settings.alertsClick) {
+    if (askMessage) {
       createdAlert.message = await dialogService.openAsPromise(
         (
           await import('@/components/alerts/CreateAlertDialog.vue')

@@ -329,7 +329,9 @@
       <div
         v-if="isLegacy"
         class="form-group column"
-        @click.stop="$store.commit(paneId + '/TOGGLE_TIME_AGO')"
+        @click.stop="
+          $store.commit(paneId + '/TOGGLE_PREFERENCE', 'showTimeAgo')
+        "
       >
         <label class="-fill -center -inline">Time format</label>
         <div

@@ -1,5 +1,8 @@
 <template>
-  <div class="alerts-list hide-scrollbar">
+  <div
+    class="alerts-list hide-scrollbar"
+    :class="[withOptions && 'alerts-list--with-options']"
+  >
     <div v-if="withOptions" class="alert-list__header dropdown-item">
       <label
         class="checkbox-control -small w-100"
@@ -44,7 +47,7 @@
           v-draggable-market
         >
           {{ index.market }}
-          <span v-if="index.alerts.length" class="badge -outline ml8">{{
+          <span v-if="index.alerts.length > 1" class="badge -invert ml8">{{
             index.alerts.length
           }}</span>
         </div>
@@ -208,12 +211,10 @@ export default class extends Vue {
     }
 
     aggregatorService.on('alert', this.onAlert)
-    aggregatorService.on('decimals', this.onDecimals)
   }
 
   beforeDestroy() {
     aggregatorService.off('alert', this.onAlert)
-    aggregatorService.off('decimals', this.onDecimals)
   }
 
   async getAlerts() {
@@ -374,10 +375,6 @@ export default class extends Vue {
       button.loading = false
     }
   }
-
-  onDecimals(markets) {
-    console.log('decimals', markets)
-  }
 }
 </script>
 
@@ -386,6 +383,11 @@ export default class extends Vue {
   min-width: 150px;
   overflow: auto;
   flex-grow: 1;
+  padding-top: 1.25rem;
+
+  &--with-options {
+    padding: 0;
+  }
 
   &__section:hover {
     background-color: var(--theme-background-100);

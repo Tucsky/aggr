@@ -240,7 +240,8 @@ export default class extends Vue {
 
     if (/^[a-z]$/i.test(event.key)) {
       this.$store.dispatch('app/showSearch', {
-        pristine: true
+        pristine: true,
+        input: event.key
       })
     } else if (/^[0-9]$/i.test(event.key)) {
       this.$store.dispatch('app/showTimeframe')

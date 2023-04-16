@@ -225,5 +225,31 @@
         }
       ]
     }
+  },
+
+  {
+    "name": "threshold:lite",
+    "type": "threshold",
+    "version": "3.3.2",
+    "data": {
+      "thresholds": [
+        {
+          "buyColor": "rgba(60,138,63,0.01)",
+          "sellColor": "rgba(255,0,23,0.2)"
+        },
+        {
+          "buyColor": "rgba(76,175,80,0.27)",
+          "sellColor": "rgba(228,24,42,0.36)"
+        },
+        {
+          "buyColor": "rgba(76,175,80,0.72)",
+          "sellColor": "rgba(213,43,43,0.8)"
+        },
+        {
+          "buyColor": "rgb(105,209,108)",
+          "sellColor": "rgb(255,0,30)"
+        }
+      ]
+    }
   }
 ]

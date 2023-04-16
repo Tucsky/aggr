@@ -143,11 +143,15 @@
         </label>
       </ToggableSection>
 
-      <ToggableSection
-        title="Quote currency"
-        id="search-quotes"
-        :badge="quotesCount.length"
-      >
+      <ToggableSection id="search-quotes">
+        <template v-slot:title>
+          <div class="toggable-section__title">
+            Currency
+            <span v-if="quotesCount.length" class="badge -red ml8 mr8">{{
+              quotesCount.length
+            }}</span>
+          </div>
+        </template>
         <label
           class="checkbox-control -small mb4"
           v-for="quote of quoteCurrencies"
@@ -395,12 +399,12 @@ import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import {
-  stripStable,
   indexedProducts,
   indexProducts,
   getExchangeSymbols,
   ensureIndexedProducts,
-  parseMarket
+  parseMarket,
+  stripStableQuote
 } from '@/services/productsService'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
 
@@ -421,6 +425,10 @@ export default {
     pristine: {
       type: Boolean,
       default: false
+    },
+    input: {
+      type: String,
+      default: null
     }
   },
   data: () => ({
@@ -429,6 +437,7 @@ export default {
     markets: [],
     isLoading: false,
     isPreloading: false,
+    productsReady: false,
     selection: [],
     originalSelection: [],
     activeIndex: null,
@@ -440,6 +449,7 @@ export default {
       'USDT',
       'UST',
       'USDC',
+      'USDD',
       'BUSD',
       'ETH',
       'BTC',
@@ -552,6 +562,7 @@ export default {
       )
     },
     hasFilters() {
+      console.log('recompute hasFilters')
       const hasHistorical = this.searchTypes.historical
       const hasSpot = this.searchTypes.spots
       const hasPerpetuals = this.searchTypes.perpetuals
@@ -569,6 +580,7 @@ export default {
       return this.$store.state.app.historicalMarkets
     },
     queryFilter: function () {
+      console.log('recompute queryFilter')
       const multiQuery = this.query
         .replace(/[ ,]/g, '|')
         .replace(/(^|\w|\s)\*(\w|\s|$)/g, '$1.*$2')
@@ -580,6 +592,7 @@ export default {
       }
     },
     filteredProducts() {
+      console.log('recompute filteredProducts')
       const hasHistorical = this.searchTypes.historical
       const hasSpot = this.searchTypes.spots
       const hasPerpetuals = this.searchTypes.perpetuals
@@ -626,8 +639,8 @@ export default {
       })
     },
     results: function () {
+      console.log('recompute result')
       const offset = this.page * RESULTS_PER_PAGE
-
       if (this.searchTypes.normalize) {
         const marketsByPair = this.filteredProducts
           .filter(
@@ -636,17 +649,19 @@ export default {
               this.queryFilter.test(product.local)
           )
           .reduce((groups, product) => {
-            let local = product.local
+            let localPair
 
-            if (this.searchTypes.mergeUsdt) {
-              local = stripStable(local)
+            if (product && this.searchTypes.mergeUsdt) {
+              localPair = product.base + stripStableQuote(product.quote)
+            } else {
+              localPair = product.base + product.quote
             }
 
-            if (!groups[local]) {
-              groups[local] = []
+            if (!groups[localPair]) {
+              groups[localPair] = []
             }
 
-            groups[local].push(product.id)
+            groups[localPair].push(product.id)
 
             return groups
           }, {})
@@ -681,10 +696,16 @@ export default {
       }
     },
     groupedSelection: function () {
+      if (!this.productsReady) {
+        return {}
+      }
+
+      console.log('recompute groupedSelection')
       return this.selection.reduce((groups, market) => {
         const [exchange] = market.split(':')
 
         if (!indexedProducts[exchange]) {
+          console.log('ignore', market, 'exchange not indexed')
           return groups
         }
 
@@ -692,10 +713,15 @@ export default {
           product => product.id === market
         )
 
-        let localPair = indexedProduct ? indexedProduct.local : market
+        let localPair = market
 
-        if (this.searchTypes.mergeUsdt) {
-          localPair = stripStable(localPair)
+        if (indexedProduct) {
+          if (indexedProduct && this.searchTypes.mergeUsdt) {
+            localPair =
+              indexedProduct.base + stripStableQuote(indexedProduct.quote)
+          } else {
+            localPair = indexedProduct.base + indexedProduct.quote
+          }
         }
 
         if (!groups[localPair]) {
@@ -708,6 +734,7 @@ export default {
       }, {})
     },
     groupsCount() {
+      console.log('recompute groupsCount')
       return Object.keys(this.groupedSelection).length
     }
   },
@@ -719,31 +746,39 @@ export default {
       }
     },
     async searchExchanges() {
-      if (await ensureIndexedProducts(this.searchExchanges)) {
+      if (await this.ensureIndexedProducts()) {
         this.cacheProducts()
       }
     }
   },
   async created() {
-    this.isPreloading = true
-    await ensureIndexedProducts(this.searchExchanges)
-    this.isPreloading = false
-
     this.initSelection()
+
+    this.isPreloading = true
+    await this.ensureIndexedProducts()
+    this.isPreloading = false
 
     this.cacheProducts()
   },
-  mounted() {
-    this.$nextTick(() => {
-      if (!this.$refs.input) {
-        return
-      }
-
-      this.$refs.input.focus()
-    })
-
+  async mounted() {
     document.addEventListener('paste', this.onPaste)
     document.addEventListener('keydown', this.onKeydown)
+
+    await this.$nextTick()
+
+    if (!this.$refs.input) {
+      return
+    }
+
+    this.$refs.input.focus()
+
+    if (
+      this.input &&
+      !window.event &&
+      this.$refs.input.value.indexOf(this.input) !== 0
+    ) {
+      this.query = this.input + this.query
+    }
   },
   beforeDestroy() {
     document.removeEventListener('paste', this.onPaste)
@@ -754,6 +789,35 @@ export default {
     }
   },
   methods: {
+    async ensureIndexedProducts() {
+      const selectedExchanges = this.selection.reduce((acc, market) => {
+        const [exchangeId] = parseMarket(market)
+
+        if (!acc[exchangeId]) {
+          acc[exchangeId] = true
+        }
+
+        return acc
+      }, {})
+
+      const requiredExchanges = {
+        ...this.searchExchanges,
+        ...selectedExchanges
+      }
+
+      console.log('ensure', requiredExchanges)
+      const indexChanged = await ensureIndexedProducts(requiredExchanges)
+
+      this.productsReady = true
+
+      if (indexChanged) {
+        console.log('ensured')
+        return true
+      }
+
+      console.log('didnt do shit')
+      return false
+    },
     detargetPane() {
       this.$store.commit('app/SET_FOCUSED_PANE', null)
       this.paneId = null
@@ -1066,6 +1130,8 @@ export default {
 <style lang="scss" scoped>
 .search-dialog {
   ::v-deep .dialog__content {
+    width: 75vw;
+
     .dialog__body {
       padding: 0;
       flex-direction: row;

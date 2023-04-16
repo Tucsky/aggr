@@ -340,7 +340,10 @@ export const workspaceUpgrades = {
     }
   },
   7: (workspace: Workspace) => {
-    if (workspace.states.settings.alertsColor === 'red') {
+    if (
+      workspace.states.settings &&
+      workspace.states.settings.alertsColor === 'red'
+    ) {
       workspace.states.settings.alertsColor = 'rgb(255, 0, 0)'
     }
   }
