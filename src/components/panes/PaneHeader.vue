@@ -204,12 +204,6 @@ export default class extends Vue {
     this.$store.dispatch('panes/duplicatePane', this.paneId)
   }
 
-  highlightPane(value: boolean) {
-    this.$el.parentElement.parentElement.classList[value ? 'add' : 'remove'](
-      '-highlight'
-    )
-  }
-
   maximizePane(event) {
     if (event.type === 'dblclick' && event.currentTarget !== event.target) {
       return

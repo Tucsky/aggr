@@ -11,6 +11,10 @@
   z-index: 10;
   pointer-events: none;
 
+  @media (-webkit-min-device-pixel-ratio: 1) {
+    font-size: 1.125rem;
+  }
+
   &--mask {
     pointer-events: all;
   }
@@ -182,7 +186,7 @@
     display: none;
     position: absolute;
     font-size: 1rem;
-    padding: 1rem 0.0rem 0.0rem 1rem;
+    padding: 1rem 0rem 0rem 1rem;
     right: 0;
     bottom: 0;
     z-index: 10;

@@ -145,19 +145,19 @@ export default {
 
 <style lang="scss" scoped>
 .toggable-section {
-  padding: 1rem;
+  padding: 1em;
 
   &--inset {
-    margin: -1rem;
+    margin: -1em;
 
     + .toggable-section {
-      margin-top: 1rem;
+      margin-top: 1em;
     }
   }
 
   &--outline {
     border: 1px solid var(--theme-color-o20);
-    border-radius: 0.5rem;
+    border-radius: 0.5em;
 
     &:not(:last-child) {
       border-bottom-left-radius: 0;
@@ -176,7 +176,7 @@ export default {
 
     .toggable-section__header {
       margin: 0;
-      padding: 0.5rem;
+      padding: 0.5em;
     }
 
     .toggable-section__spacer {
@@ -200,8 +200,8 @@ export default {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    margin: -1rem;
-    padding: 1rem;
+    margin: -1em;
+    padding: 1em;
     color: var(--theme-color-base);
     position: relative;
     cursor: pointer;
@@ -212,16 +212,16 @@ export default {
       font-size: 12px;
       line-height: 1;
       text-align: right;
-      padding-left: 1rem;
+      padding-left: 1em;
       color: var(--theme-color-200);
 
       + .icon-up-thin {
-        margin-left: 1rem;
+        margin-left: 1em;
       }
     }
 
     .icon-up-thin {
-      margin-left: 0.5rem;
+      margin-left: 0.5em;
       transition: transform 0.2s $ease-elastic;
     }
 
@@ -239,7 +239,7 @@ export default {
   }
 
   &__spacer {
-    margin-top: 0.5rem;
+    margin-top: 0.5em;
   }
 
   &__content {
@@ -248,7 +248,7 @@ export default {
 
   &__control {
     position: absolute;
-    right: 0.75rem;
+    right: 0.75em;
     top: 0;
     bottom: 0;
     display: flex;
@@ -263,7 +263,7 @@ export default {
     align-items: center;
 
     .badge {
-      margin-left: 0.5rem;
+      margin-left: 0.5em;
     }
   }
 

@@ -5,7 +5,7 @@ export default class extends Exchange {
 
   protected endpoints = {
     PRODUCTS: [
-      'https://api.mexc.com/api/v3/defaultSymbols',
+      'https://api.mexc.com/api/v3/exchangeInfo',
       'https://contract.mexc.com/api/v1/contract/detail'
     ]
   }
@@ -26,18 +26,19 @@ export default class extends Exchange {
     const products = []
     const contractSizes = {}
     const inversed = {}
+    const [spot, perp] = responses
 
-    for (const response of responses) {
-      const type = ['spot', 'contract'][responses.indexOf(response)]
+    if (spot) {
+      for (const product of spot.symbols) {
+        products.push(product.symbol)
+      }
+    }
 
-      for (const product of response.data) {
-        if (type === 'contract') {
-          products.push(product.symbol)
-          contractSizes[product.symbol] = product.contractSize
-          inversed[product.symbol] = product.quoteCoin === product.settleCoin
-        } else {
-          products.push(product)
-        }
+    if (perp) {
+      for (const product of perp.data) {
+        products.push(product.symbol)
+        contractSizes[product.symbol] = product.contractSize
+        inversed[product.symbol] = product.quoteCoin === product.settleCoin
       }
     }
 

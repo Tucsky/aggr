@@ -865,6 +865,8 @@ hr.-vertical {
 
 .indicator-dialog {
   ::v-deep .dialog__content {
+    width: 755px;
+
     .dialog__body {
       padding: 0;
       flex-direction: row;

@@ -182,9 +182,12 @@
         @click="$refs.input.focus()"
         ref="selection"
       >
-        <div v-if="selection.length" class="search-dialog-selection__controls">
+        <div
+          v-if="selection.length"
+          class="search-dialog-selection__controls d-flex btn-group"
+        >
           <button
-            class="search-dialog__tags-item btn -text"
+            class="btn -text -small"
             @click="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')"
             title="Toggle grouping"
             v-tippy="{ boundary: 'window', placement: 'bottom' }"
@@ -192,7 +195,7 @@
             <i class="icon-merge"></i>
           </button>
           <button
-            class="search-dialog__tags-item btn -text"
+            class="btn -text -small"
             @click="clearSelection"
             title="Clear"
             v-tippy="{ boundary: 'window', placement: 'bottom' }"
@@ -1146,8 +1149,8 @@ export default {
   }
 
   &__side {
-    width: 12.5rem;
-    min-width: 12.5rem;
+    width: 12.5em;
+    min-width: 12.5em;
     overflow: auto;
 
     .dialog--small & {
@@ -1202,17 +1205,17 @@ export default {
   }
 
   &__tags {
-    padding: 0.25rem;
+    padding: 0.25em;
 
     &-item {
-      padding: 0.25rem;
+      padding: 0.25em;
 
       .dialog--small & {
-        padding: 0.125rem;
+        padding: 0.125em;
       }
 
       .dialog--large & {
-        padding: 0.375rem;
+        padding: 0.375em;
       }
     }
 
@@ -1221,7 +1224,7 @@ export default {
       background: 0;
       color: inherit;
       font-family: inherit;
-      padding: 0.25rem;
+      padding: 0.25em;
       flex-grow: 1;
       font-size: 1em;
     }
@@ -1242,17 +1245,18 @@ export default {
   }
   &-selection {
     position: relative;
-    min-width: 19rem;
+    min-width: 19em;
     border: 0;
     max-height: 50%;
     overflow: auto;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem;
+    gap: 0.25em;
+    padding-right: 2em;
 
     &.-sticky {
       @media screen and (min-width: 550px) {
-        backdrop-filter: blur(0.25rem);
+        backdrop-filter: blur(0.25em);
         background-color: var(--theme-background-o75);
         position: sticky;
         top: 0;
@@ -1266,27 +1270,27 @@ export default {
       top: 0;
       right: 0;
       display: flex;
-      gap: 0.25rem;
-      padding: 0.25rem;
+      gap: 0.25em;
+      padding: 0.25em;
     }
   }
 
   &__group-count {
-    width: 2rem;
+    width: 2em;
     display: inline-flex;
     justify-content: center;
     .badge {
       font-weight: 400;
       text-align: center;
       color: var(--theme-color-base);
-      font-size: 1rem;
+      font-size: 1em;
       line-height: 0;
       margin: 0;
     }
   }
 
   &__exchange-logo {
-    width: 2rem;
+    width: 2em;
     color: var(--theme-background-300);
   }
 

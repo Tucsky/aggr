@@ -23,9 +23,9 @@ button {
 .btn {
   display: inline-flex;
   align-items: center;
-  font-size: inherit;
   text-transform: uppercase;
   font-family: $font-condensed;
+  font-size: 1em;
   padding: 0.5em;
   border: 0;
   border-radius: 0.25rem;
@@ -261,13 +261,33 @@ a {
 }
 
 .btn-group {
-  .btn {
+  > .btn {
     border-radius: 0;
     border-color: transparent;
     margin: 0;
 
     &:hover {
       border-color: transparent;
+    }
+
+    &:not(:first-child) {
+      padding-left: 0.25em;
+
+      &.-small {
+        padding-left: 0.25em;
+      }
+    }
+
+    &:not(:last-child) {
+      padding-right: 0.25em;
+
+      &.-small {
+        padding-right: 0.25em;
+      }
+    }
+
+    &:last-child {
+      padding-left: 0.25rem;
     }
   }
 

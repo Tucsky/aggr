@@ -250,10 +250,6 @@ export function parseMarket(market: string) {
 export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   const id = exchangeId + ':' + symbol
 
-  if (id === 'BINANCE:btcbusd') {
-    debugger
-  }
-
   let type = 'spot'
 
   if (/[HUZ_-]\d{2}/.test(symbol)) {
@@ -327,7 +323,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   let localSymbolAlpha = localSymbol.replace(/[-_/:]/, '')
 
   let match
-  if (exchangeId !== 'BINANCE' && exchangeId !== 'BINANCE_FUTURES') {
+  if (!/BINANCE/.test(exchangeId)) {
     match = localSymbol.match(currencyPairLookup)
   }
 
