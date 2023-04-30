@@ -973,6 +973,8 @@ hr.-vertical {
       flex-basis: 0;
       min-width: 150px;
       flex-shrink: 0;
+      flex-grow: 1;
+      max-width: calc(50% - 1rem);
     }
   }
 }

@@ -2,6 +2,7 @@ import store from '@/store'
 import { getColor } from '@/utils/colors'
 import {
   ChartOptions,
+  ColorType,
   DeepPartial,
   LineType,
   LineWidth
@@ -38,7 +39,10 @@ export const defaultChartOptions: DeepPartial<ChartOptions> = {
     vertAlign: 'center'
   },
   layout: {
-    backgroundColor: 'transparent',
+    background: {
+      type: ColorType.Solid,
+      color: 'transparent'
+    },
     textColor: 'white',
     fontFamily: 'Barlow Semi Condensed'
   },
@@ -126,10 +130,10 @@ export const defaultAreaOptions = {
 export const defaultCloudAreaOptions = {
   positiveColor: 'rgba(76,175,80,0.1)',
   negativeColor: 'rgba(255,82,82,0.1)',
-  higherLineColor: '#4CAF50',
+  positiveLineColor: '#4CAF50',
   higherLineStyle: LineType.Simple,
   higherLineWidth: 1,
-  lowerLineColor: '#FF5252',
+  negativeLineColor: '#FF5252',
   lowerLineStyle: LineType.Simple,
   lowerLineWidth: 1
 }

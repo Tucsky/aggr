@@ -157,6 +157,7 @@ export interface Renderer {
   sources: { [name: string]: Bar }
   indicators: { [id: string]: RendererIndicatorData }
   empty?: boolean
+  price?: number
 }
 
 interface RendererIndicatorData {
@@ -224,6 +225,7 @@ export default class Chart {
   private _promiseOfMarkets: Promise<void>
   private _promiseOfMarketsRender: Promise<void>
   private _priceIndicatorId: string
+  private _priceApi: IndicatorApi
   private _alertsRendered: boolean
   private _timeToRecycle: number
   private _recycleTimeout: number
@@ -1050,6 +1052,11 @@ export default class Chart {
    * @param {LoadedIndicator} indicator indicator owning series
    */
   clearIndicatorSeries(indicator: LoadedIndicator) {
+    if (indicator.id === this._priceIndicatorId) {
+      this._priceIndicatorId = null
+      this._priceApi = null
+    }
+
     for (let i = 0; i < indicator.apis.length; i++) {
       indicator.apis[i].removeAllPriceLines()
       indicator.apis[i].setData([])
@@ -2003,11 +2010,16 @@ export default class Chart {
   }
 
   getPriceApi() {
+    if (this._priceApi) {
+      return this._priceApi
+    }
+
     const price = this.loadedIndicators.find(a => a.id === 'price')
 
     if (price && price.options.visible !== false) {
       this._priceIndicatorId = 'price'
-      return price.apis[0]
+      this._priceApi = price.apis[0]
+      return this._priceApi
     }
 
     for (let i = 0; i < this.loadedIndicators.length; i++) {
@@ -2016,8 +2028,9 @@ export default class Chart {
 
         if (api.options().priceScaleId === 'right') {
           this._priceIndicatorId = this.loadedIndicators[i].id
+          this._priceApi = api
 
-          return api
+          return this._priceApi
         }
       }
     }
@@ -2123,6 +2136,7 @@ export default class Chart {
     renderer.length++
     renderer.timestamp += renderer.timeframe
     renderer.localTimestamp += renderer.timeframe
+    renderer.price = null
 
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       const rendererSerieData = renderer.indicators[this.loadedIndicators[i].id]
@@ -2425,7 +2439,16 @@ export default class Chart {
     if (!this.activeRenderer) {
       return null
     }
-    return +seriesUtils.avg_close.update({}, this.activeRenderer).toFixed(8)
+
+    if (this.activeRenderer.price) {
+      return this.activeRenderer.price
+    }
+
+    this.activeRenderer.price = +seriesUtils.avg_close
+      .update({}, this.activeRenderer)
+      .toFixed(8)
+
+    return this.activeRenderer.price
   }
 
   getChartCanvas(): HTMLCanvasElement {
@@ -2772,32 +2795,7 @@ export default class Chart {
       this.setTimeToRecycle()
     }
 
-    const fastRefreshRate =
-      (store.state[this.paneId] as ChartPaneState).refreshRate < 1000
-
-    if (fastRefreshRate) {
-      this.fixFastRefreshRate()
-    }
-
-    this._recycleTimeout = setTimeout(
-      this.trimChart.bind(this),
-      1000 * 60 * (fastRefreshRate ? 3 : 15)
-    )
-  }
-
-  fixFastRefreshRate() {
-    const fontSize = this.chartInstance.options().layout.fontSize
-
-    this.preventPan()
-    this.chartInstance.applyOptions({
-      layout: { fontSize: fontSize + 1 }
-    })
-
-    setTimeout(() => {
-      this.chartInstance.applyOptions({
-        layout: { fontSize: fontSize }
-      })
-    }, 50)
+    this._recycleTimeout = setTimeout(this.trimChart.bind(this), 1000 * 60 * 15)
   }
 
   setupRecycle() {

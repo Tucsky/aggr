@@ -37,9 +37,11 @@ export default class ChartControl {
   private legendElements: { [id: string]: HTMLElement }
   private lastCrosshairX: number
   private activeEvent: any
+  private isSyncingCrosshairs: boolean
 
   private clickHandler: (event: MouseEvent | TouchEvent) => void
   private contextMenuHandler: (event: MouseEvent | TouchEvent) => void
+  private clearChartsCrosshairsHandler: (event: MouseEvent) => void
   private crosshairMoveHandler: (MouseEventParams) => void
   private onPanHandler: (MouseEventParams) => void
   private unsubscribeStore: () => void
@@ -56,14 +58,15 @@ export default class ChartControl {
     this.chart.chartInstance
       .timeScale()
       .subscribeVisibleLogicalRangeChange(this.onPanHandler)
+    const canvas = this.chart.chartElement
 
     // bind click
     if (process.env.VUE_APP_PUBLIC_VAPID_KEY) {
-      const canvas = this.chart.chartElement
-      const clickEventName = isTouchSupported() ? 'touchstart' : 'mousedown'
-
       this.clickHandler = this.onClick.bind(this)
-      canvas.addEventListener(clickEventName, this.clickHandler)
+      canvas.addEventListener(
+        isTouchSupported() ? 'touchstart' : 'mousedown',
+        this.clickHandler
+      )
       this.contextMenuHandler = this.onContextMenu.bind(this)
       canvas.addEventListener('contextmenu', this.contextMenuHandler)
     }
@@ -71,6 +74,8 @@ export default class ChartControl {
     // bind crosshair
     this.crosshairMoveHandler = this.onCrosshairMove.bind(this)
     this.chart.chartInstance.subscribeCrosshairMove(this.crosshairMoveHandler)
+    this.clearChartsCrosshairsHandler = this.clearChartsCrosshairs.bind(this)
+    canvas.addEventListener('mouseleave', this.clearChartsCrosshairsHandler)
 
     // bind legends
     if (
@@ -307,10 +312,11 @@ export default class ChartControl {
         contextMenuComponent[key] = propsData[key]
       }
     } else {
-      document.body.style.cursor = 'loading'
+      document.body.style.cursor = 'progress'
       const module = await import(`@/components/chart/ChartContextMenu.vue`)
-      contextMenuComponent = createComponent(module.default, propsData)
       document.body.style.cursor = ''
+
+      contextMenuComponent = createComponent(module.default, propsData)
 
       mountComponent(contextMenuComponent)
     }
@@ -341,14 +347,12 @@ export default class ChartControl {
     const previousEventBusy = this.activeEvent && this.activeEvent.isBusy
 
     if (event.shiftKey) {
-      console.log('new MeasurementEventHandler')
       this.activeEvent = new MeasurementEventHandler(this.chart, event)
     } else if (store.state.settings.alerts) {
       if (previousEventBusy) {
         return
       }
 
-      console.log('new AlertEventHandler')
       this.activeEvent = new AlertEventHandler(this.chart, event)
     }
   }
@@ -357,11 +361,15 @@ export default class ChartControl {
    * TV chart mousemove event
    */
   onCrosshairMove(event: MouseEventParams) {
-    if (!event || !event.point || this.lastCrosshairX === event.point.x) {
+    if (!event || !event.point) {
       return
     }
 
     this.syncCrosshair(event)
+
+    if (this.lastCrosshairX === event.point.x) {
+      return
+    }
 
     this.lastCrosshairX = event.point.x
 
@@ -458,19 +466,29 @@ export default class ChartControl {
     }
   }
 
-  clearChartsCrosshairs(paneId: string) {
-    for (let i = 0; i < controlledCharts.length; i++) {
-      if (typeof paneId !== paneId && paneId !== controlledCharts[i].paneId) {
-        continue
-      }
-
-      controlledCharts[i].chartInstance.setCrosshair(null, null)
+  clearChartsCrosshairs() {
+    if (!this.isSyncingCrosshairs) {
+      return
     }
+
+    for (let i = 0; i < controlledCharts.length; i++) {
+      controlledCharts[i].chartInstance.setCrosshair(null, null, null)
+    }
+
+    this.isSyncingCrosshairs = false
   }
 
   syncCrosshair(param: MouseEventParams) {
-    if (!param.time) {
-      return
+    let priceChange
+
+    if (param.point && param.point.y) {
+      const chartPrice = this.chart.getPrice()
+      const priceApi = this.chart.getPriceApi()
+
+      if (chartPrice && priceApi) {
+        const crosshairPrice = priceApi.coordinateToPrice(param.point.y)
+        priceChange = (1 - crosshairPrice / chartPrice) * -1
+      }
     }
 
     for (let i = 0; i < controlledCharts.length; i++) {
@@ -478,18 +496,31 @@ export default class ChartControl {
         continue
       }
 
-      controlledCharts[i].chartInstance.setCrosshair(
-        controlledCharts[i].chartInstance
-          .timeScale()
-          .timeToCoordinate(
-            floorTimestampToTimeframe(
-              +param.time,
-              controlledCharts[i].timeframe,
-              controlledCharts[i].isOddTimeframe
-            ) as Time
-          ),
-        true
-      )
+      const priceApi = controlledCharts[i].getPriceApi()
+      const timeScale = controlledCharts[i].chartInstance.timeScale()
+
+      let x
+      let y
+
+      if (param.time && timeScale) {
+        x = timeScale.timeToCoordinate(
+          floorTimestampToTimeframe(
+            +param.time,
+            controlledCharts[i].timeframe,
+            controlledCharts[i].isOddTimeframe
+          ) as Time
+        )
+      }
+
+      if (priceApi) {
+        const chartPrice = controlledCharts[i].getPrice()
+
+        y = priceApi.priceToCoordinate(chartPrice + chartPrice * priceChange)
+      }
+
+      controlledCharts[i].chartInstance.setCrosshair(x, y, true)
+
+      this.isSyncingCrosshairs = true
     }
   }
   updateLegend(event: MouseEventParams) {
@@ -519,7 +550,8 @@ export default class ChartControl {
 
         const api = indicator.apis[j]
 
-        const data = event.seriesPrices.get(api) as any
+        // const data = event.seriesPrices.get(api) as any
+        const data = event.seriesData.get(api) as any
 
         if (text.length) {
           text += '\u00a0|\u00a0'
@@ -530,22 +562,29 @@ export default class ChartControl {
           continue
         }
 
-        const formatFunction =
-          indicator.options.priceFormat &&
-          indicator.options.priceFormat.type === 'volume'
-            ? formatAmount
-            : formatPrice
+        let type = 'price'
+        let precision
 
-        if (typeof data === 'number') {
-          text += formatFunction(data, api.precision)
+        if (indicator.options.priceFormat) {
+          if (indicator.options.priceFormat.type) {
+            type = indicator.options.priceFormat.type
+          }
+
+          precision = indicator.options.priceFormat.precision
+        }
+
+        const formatFunction = type === 'volume' ? formatAmount : formatPrice
+
+        if (data.value) {
+          text += formatFunction(data.value, precision)
         } else if (data.close) {
           text += `O: ${formatFunction(
             data.open,
-            api.precision
-          )} H: ${formatFunction(data.high, api.precision)} L: ${formatFunction(
+            precision
+          )} H: ${formatFunction(data.high, precision)} L: ${formatFunction(
             data.low,
-            api.precision
-          )} C: ${formatFunction(data.close, api.precision)}`
+            precision
+          )} C: ${formatFunction(data.close, precision)}`
         }
       }
 

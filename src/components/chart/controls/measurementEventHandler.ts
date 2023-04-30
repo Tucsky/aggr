@@ -154,6 +154,7 @@ export default class MeasurementEventHandler {
     }
 
     this.isLoading = true
+    document.body.style.cursor = 'progress'
 
     const module = await import(`@/components/chart/ChartMeasurement.vue`)
     const { position, low, high, percent } = this.getPropsData()
@@ -176,6 +177,7 @@ export default class MeasurementEventHandler {
     }
 
     this.isLoading = false
+    document.body.style.cursor = ''
   }
 
   updateComponent() {

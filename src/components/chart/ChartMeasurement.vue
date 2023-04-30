@@ -13,7 +13,8 @@
     </div>
     <div class="chart-measurement__percent">
       <i class="icon-up-thin chart-measurement__icon"></i>
-      {{ percent > 0 ? '+' : '' }}{{ percent.toFixed(2) }}<small>%</small>
+      {{ percent > 0 ? '+' : '' }}{{ percent.toFixed(precision)
+      }}<small>%</small>
     </div>
     <div class="chart-measurement__line chart-measurement__line--bottom">
       <div class="chart-measurement__price">{{ low }}</div>
@@ -70,6 +71,17 @@ export default {
         width: this.position.width + 'px',
         height: this.position.height + 'px'
       }
+    },
+    precision() {
+      if (this.percent > 10) {
+        return 2
+      }
+
+      if (this.percent > 1) {
+        return 2
+      }
+
+      return 3
     }
   },
   methods: {
@@ -142,6 +154,7 @@ export default {
     position: absolute;
     width: 100%;
     display: flex;
+    align-items: flex-start;
 
     &::before,
     &::after {
@@ -156,15 +169,14 @@ export default {
     }
 
     &--bottom {
-      bottom: -0.75em;
+      bottom: 0;
     }
   }
 
   &__price {
     padding: 0 0.5em;
     position: relative;
-    top: -0.375em;
-    line-height: 1;
+    line-height: 0;
     font-size: 0.75em;
     color: white;
 
@@ -176,6 +188,7 @@ export default {
 
   &__percent {
     position: relative;
+    white-space: nowrap;
 
     #{$self}--medium & {
       font-size: 1em;

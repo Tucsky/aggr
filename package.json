@@ -16,7 +16,7 @@
     "color-fns": "^0.1.1",
     "eventemitter3": "^4.0.7",
     "idb": "^6.0.0",
-    "lightweight-charts": "git+https://github.com/Tucsky/lightweight-charts.git#beded41a930276d40da3d8df5e37ee8d8c8e6b65",
+    "lightweight-charts": "git+https://github.com/Tucsky/lightweight-charts.git#a36ce5589f82e3d40f36ffcf08bdd1d67956f15a",
     "lodash.merge": "^4.6.2",
     "pako": "^1.0.6",
     "serviceworker-webpack-plugin": "^1.0.1",

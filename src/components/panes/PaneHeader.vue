@@ -138,7 +138,7 @@ import dialogService from '@/services/dialogService'
     },
     split: {
       type: Boolean,
-      default: false
+      default: true
     }
   },
   components: {
@@ -242,7 +242,7 @@ export default class extends Vue {
       input: this.name
     })
 
-    if (name !== this.name) {
+    if (typeof name === 'string' && name !== this.name) {
       this.$store.commit('panes/SET_PANE_NAME', { id: this.paneId, name: name })
     }
   }
