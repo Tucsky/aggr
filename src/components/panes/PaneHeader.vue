@@ -5,7 +5,7 @@
     @dblclick="maximizePane"
   >
     <div
-      v-if="showName"
+      v-if="showName && name"
       class="pane-header__name pane-overlay"
       @dblclick="renamePane"
     >
@@ -101,6 +101,10 @@
           <i class="icon-download"></i>
           <span>Download</span>
         </button>
+        <button type="button" class="dropdown-item" @click="renamePane">
+          <i class="icon-edit"></i>
+          <span>Rename</span>
+        </button>
         <button type="button" class="dropdown-item" @click="removePane">
           <i class="icon-trash"></i>
           <span>Remove</span>
@@ -167,7 +171,7 @@ export default class extends Vue {
       ]
 
     if (name) {
-      return name
+      return name.trim()
     } else if (market) {
       return market.local
     } else {

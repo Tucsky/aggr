@@ -967,6 +967,7 @@ hr.-vertical {
     gap: 1rem;
     align-items: center;
     justify-content: stretch;
+    container-type: inline-size;
 
     .indicator-options__option {
       margin: 0;
@@ -974,7 +975,29 @@ hr.-vertical {
       min-width: 150px;
       flex-shrink: 0;
       flex-grow: 1;
-      max-width: calc(50% - 1rem);
+
+      @container (min-width: 0px) {
+        max-width: none;
+        min-width: 0;
+        flex-grow: 0;
+        flex-basis: 100%;
+        width: 100%;
+      }
+
+      @container (min-width: 420px) {
+        flex-basis: calc(50% - 0.5rem);
+        width: calc(50% - 0.5rem);
+      }
+
+      @container (min-width: 580px) {
+        flex-basis: calc(33% - 0.66rem);
+        width: calc(33% - 0.66rem);
+      }
+
+      @container (min-width: 768px) {
+        flex-basis: calc(25% - 0.75rem);
+        width: calc(25% - 0.75rem);
+      }
     }
   }
 }
