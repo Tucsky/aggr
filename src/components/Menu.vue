@@ -157,10 +157,9 @@
         class="dropdown-item dropdown-item--space-between"
         @click="toggleFullscreen"
       >
-        <span
-          class="mr4"
-          v-text="isFullscreen ? 'Exit' : 'Go Fullscreen'"
-        ></span>
+        <span class="mr4">{{
+          isFullscreen ? 'Exit\xa0fullscreen' : 'Go\xa0fullscreen'
+        }}</span>
         <i class="icon-enlarge"></i>
       </button>
       <button
