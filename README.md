@@ -1,5 +1,5 @@
 
-# SignificantTrades [![Build Status](https://travis-ci.org/Tucsky/aggr.svg?branch=master)](https://travis-ci.org/Tucsky/aggr)
+# SignificantTrades
 
   
 
