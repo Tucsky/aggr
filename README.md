@@ -7,13 +7,11 @@ Cryptocurrency market trades aggregator.<br>
 
 Currently supporting Kucoin, BitMEX, Bitfinex, Binance, Coinbase, Bitstamp, Deribit, Huobi, Okex, Hitbtc, Poloniex, Bybit, Bitget and Mexc ([see src/exchanges/](src/exchanges) for detail)
 
-  
 
 ![screenshot](https://i.imgur.com/nHJxsdL.gif)
 
-  
+## What it does
 
-## What it do
 This tool shows **markets orders** LIVE on the crypto market(s) of your choice.
 
 - Show live trades from exchanges on a specific pair
