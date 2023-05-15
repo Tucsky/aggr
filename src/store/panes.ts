@@ -24,6 +24,7 @@ export type PaneType =
   | 'prices'
   | 'website'
   | 'alerts'
+  | 'trades-lite'
 
 export type MarketsListeners = { [market: string]: ListenedProduct }
 
