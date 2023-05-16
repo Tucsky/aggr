@@ -56,7 +56,7 @@
     </div>
     <div class="color-picker-dialog-controls">
       <button
-        class="btn -text"
+        class="btn -text -small"
         @click="switchFormat"
         type="button"
         title="Rotate"
@@ -70,7 +70,7 @@
         @input="setColorFromProp($event)"
       ></editable>
       <button
-        class="btn -text"
+        class="btn -text -small"
         @click="submitColor"
         type="button"
         title="Save color"

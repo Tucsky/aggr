@@ -412,6 +412,11 @@ export async function getApiSupportedMarkets() {
     const products = await fetch(getApiUrl('products')).then(response =>
       response.json()
     )
+
+    if (!products.length) {
+      throw new Error('invalid supported markets list')
+    }
+
     localStorage.setItem(
       'API_SUPPORTED_PAIRS',
       JSON.stringify({

@@ -250,7 +250,7 @@
           <div class="d-flex">
             <dropdown-button
               :value="priceFormat"
-              :options="['price', 'volume']"
+              :options="['price', 'volume', 'percent']"
               class="mr8 -outline form-control -arrow"
               @input="setPriceFormat($event, precision)"
               v-tippy

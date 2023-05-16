@@ -247,6 +247,12 @@ const actions = {
       )
     )
     document.documentElement.style.setProperty(
+      '--theme-buy-200',
+      joinRgba(
+        getLogShade(buyRgb, 0.5 * backgroundScale, 0.5 * backgroundScale)
+      )
+    )
+    document.documentElement.style.setProperty(
       '--theme-buy-50',
       joinRgba(getLogShade(buyRgb, -0.2 * backgroundScale))
     )
@@ -265,6 +271,12 @@ const actions = {
       '--theme-sell-100',
       joinRgba(
         getLogShade(sellRgb, 0.1 * backgroundScale, 0.1 * backgroundScale)
+      )
+    )
+    document.documentElement.style.setProperty(
+      '--theme-sell-200',
+      joinRgba(
+        getLogShade(sellRgb, 0.5 * backgroundScale, 0.5 * backgroundScale)
       )
     )
     document.documentElement.style.setProperty(

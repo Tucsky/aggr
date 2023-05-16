@@ -335,18 +335,17 @@
     </ToggableSection>
 
     <template v-slot:footer>
-      <button class="btn -text mrauto">
+      <a
+        class="btn -text mrauto"
+        href="https://github.com/Tucsky/aggr"
+        target="_blank"
+        v-tippy
+        title="Github"
+      >
         v{{ version }}&nbsp;<sup class="settings-footer__version">{{
           buildDate
         }}</sup>
-      </button>
-      <a
-        class="btn -text settings-footer__button"
-        href="https://github.com/Tucsky/aggr"
-        target="_blank"
-        >github</a
-      >
-      <i class="settings-footer__divider -center mr4">|</i>
+      </a>
       <span>
         <dono-dropdown class="-top -text-left" />
       </span>

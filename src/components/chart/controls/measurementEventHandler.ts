@@ -171,7 +171,6 @@ export default class MeasurementEventHandler {
     const timeScale = this.chart.chartInstance.timeScale()
 
     if (timeScale) {
-      console.log('sub pan')
       this.onPanHandler = this.onPan.bind(this)
       timeScale.subscribeVisibleLogicalRangeChange(this.onPanHandler)
     }
@@ -229,7 +228,6 @@ export default class MeasurementEventHandler {
     this.measurementComponent = null
 
     if (this.onPanHandler) {
-      console.log('unsub pan')
       const timeScale = this.chart.chartInstance.timeScale()
 
       if (timeScale) {

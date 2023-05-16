@@ -95,14 +95,11 @@ In order to show historical data YOU WILL need to setup your own server to provi
 
 See [aggr-server repository](https://github.com/Tucsky/aggr-server).
 
-Let's say you have a server instance running on port 3000, start the client with an environment variable `API_URL=http://localhost:3000/{from}/{to}/{timeframe}/{markets} npm run serve`
+Let's say you have a server instance running on port 3000, start the client with an environment variable `API_URL=http://localhost:3000/ npm run serve`
 
 ## Disclaimer
 If you plan to use real money with this, USE AT YOUR OWN RISK.
 
 ## Support this project !
 ETH 0x83bBC120a998cF7dFcBa1518CDDCb68Aa0D0c158<br>
-BTC [bc1qpqms65vr9nrudph9qsjj0dfm7ance3368k8ua3](bitcoin:bc1qpqms65vr9nrudph9qsjj0dfm7ance3368k8ua3)<br>
-XMR 48NJj3RJDo33zMLaudQDdM8G6MfPrQbpeZU2YnRN2Ep6hbKyYRrS2ZSdiAKpkUXBcjD2pKiPqXtQmSZjZM7fC6YT6CMmoX6<br>
-COINBASE
-https://commerce.coinbase.com/checkout/c58bd003-5e47-4cfb-ae25-5292f0a0e1e8
+COINBASE https://commerce.coinbase.com/checkout/c58bd003-5e47-4cfb-ae25-5292f0a0e1e8

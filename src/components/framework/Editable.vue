@@ -13,6 +13,7 @@
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import { countDecimals } from '@/services/productsService'
+import { toPlainString } from '@/utils/helpers'
 
 @Component({
   name: 'Editable',
@@ -30,9 +31,7 @@ export default class extends Vue {
   private _emitTimeout: number
 
   mounted() {
-    const el = this.$el as HTMLElement
-
-    el.innerText = this.value
+    this.setValue(this.value)
   }
 
   @Watch('value')
@@ -40,6 +39,14 @@ export default class extends Vue {
     if ((this.$el as HTMLElement).innerText !== this.value) {
       ;(this.$el as HTMLElement).innerText = this.value
     }
+  }
+
+  setValue(value) {
+    if (typeof value === 'number' && (value < 1e-6 || value > 1e6)) {
+      value = toPlainString(value)
+    }
+    const el = this.$el as HTMLElement
+    el.innerText = value
   }
 
   getCaretPosition() {

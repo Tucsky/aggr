@@ -565,7 +565,6 @@ export default {
       )
     },
     hasFilters() {
-      console.log('recompute hasFilters')
       const hasHistorical = this.searchTypes.historical
       const hasSpot = this.searchTypes.spots
       const hasPerpetuals = this.searchTypes.perpetuals
@@ -583,7 +582,6 @@ export default {
       return this.$store.state.app.historicalMarkets
     },
     queryFilter: function () {
-      console.log('recompute queryFilter')
       const multiQuery = this.query
         .replace(/[ ,]/g, '|')
         .replace(/(^|\w|\s)\*(\w|\s|$)/g, '$1.*$2')
@@ -595,7 +593,6 @@ export default {
       }
     },
     filteredProducts() {
-      console.log('recompute filteredProducts')
       const hasHistorical = this.searchTypes.historical
       const hasSpot = this.searchTypes.spots
       const hasPerpetuals = this.searchTypes.perpetuals
@@ -642,7 +639,6 @@ export default {
       })
     },
     results: function () {
-      console.log('recompute result')
       const offset = this.page * RESULTS_PER_PAGE
       if (this.searchTypes.normalize) {
         const marketsByPair = this.filteredProducts
@@ -703,12 +699,10 @@ export default {
         return {}
       }
 
-      console.log('recompute groupedSelection')
       return this.selection.reduce((groups, market) => {
         const [exchange] = market.split(':')
 
         if (!indexedProducts[exchange]) {
-          console.log('ignore', market, 'exchange not indexed')
           return groups
         }
 
@@ -737,7 +731,6 @@ export default {
       }, {})
     },
     groupsCount() {
-      console.log('recompute groupsCount')
       return Object.keys(this.groupedSelection).length
     }
   },
@@ -808,17 +801,14 @@ export default {
         ...selectedExchanges
       }
 
-      console.log('ensure', requiredExchanges)
       const indexChanged = await ensureIndexedProducts(requiredExchanges)
 
       this.productsReady = true
 
       if (indexChanged) {
-        console.log('ensured')
         return true
       }
 
-      console.log('didnt do shit')
       return false
     },
     detargetPane() {
