@@ -21,6 +21,7 @@ import Uniswap from './uniswap'
 import Kucoin from './kucoin'
 import Bitget from './bitget'
 import Mexc from './mexc'
+import Gateio from './gateio'
 
 export const exchanges = [
   new Aggr(),
@@ -43,7 +44,8 @@ export const exchanges = [
   new Uniswap(),
   new Kucoin(),
   new Bitget(),
-  new Mexc()
+  new Mexc(),
+  new Gateio()
 ] as Exchange[]
 
 export function getExchangeById(id: string) {

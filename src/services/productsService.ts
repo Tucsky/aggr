@@ -375,9 +375,9 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
 }
 
 export async function getApiSupportedMarkets() {
-  let products = process.env.VUE_APP_API_SUPPORTED_PAIRS
+  let products = process.env.VUE_APP_API_SUPPORTED_PAIRS as string | string[]
   if (products && products.length) {
-    products = products.split(',').map(market => market.trim())
+    products = (products as string).split(',').map(market => market.trim())
   } else {
     products = []
   }
