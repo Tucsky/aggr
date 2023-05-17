@@ -25,6 +25,7 @@
       <div class="form-group" v-if="markets.length">
         <div>
           <div v-for="market in markets" :key="market.id" class="d-flex">
+            {{ 'test' }}
             <div class="-fill -center">{{ market.pair }}</div>
           </div>
         </div>

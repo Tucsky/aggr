@@ -361,7 +361,7 @@ export default class extends Mixins(PaneMixin) {
     this._resetTimeout = setTimeout(
       this.periodReset.bind(this),
       this.getTimeToNextReset()
-    )
+    )  as unknown as number
   }
 
   periodReset() {

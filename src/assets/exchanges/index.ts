@@ -18,6 +18,7 @@ import UNISWAP from './UNISWAP.svg'
 import KUCOIN from './KUCOIN.svg'
 import BITGET from './BITGET.svg'
 import MEXC from './MEXC.svg'
+import GATEIO from './GATEIO.svg'
 
 export default {
   BINANCE,
@@ -39,5 +40,6 @@ export default {
   UNISWAP,
   KUCOIN,
   BITGET,
-  MEXC
+  MEXC,
+  GATEIO
 }

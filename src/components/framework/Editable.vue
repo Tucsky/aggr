@@ -170,7 +170,7 @@ export default class extends Vue {
         }
 
         this.position = null
-      }, 100)
+      }, 100)  as unknown as number
     }
 
     ;(this.$el as any).innerText = text
@@ -181,7 +181,7 @@ export default class extends Vue {
     this._emitTimeout = setTimeout(() => {
       this._emitTimeout = null
       this.$emit('input', text)
-    }, 50)
+    }, 50)  as unknown as number
   }
 
   onWheel(event) {

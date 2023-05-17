@@ -229,7 +229,7 @@ export default class extends Vue {
       this._deinteractionTimeout = setTimeout(() => {
         dialogService.isInteracting = false
         this._deinteractionTimeout = null
-      }, 100)
+      }, 100)  as unknown as number
     }
 
     document.addEventListener('mouseup', handler)
@@ -358,7 +358,7 @@ export default class extends Vue {
       this._windowResizeTimeout = setTimeout(() => {
         this.detectSize(this.$refs.content.clientWidth)
         this._windowResizeTimeout = null
-      })
+      })  as unknown as number
     }
 
     window.addEventListener('resize', this._handleWindowResize)

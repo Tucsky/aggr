@@ -605,7 +605,7 @@ export default class TradesFeed {
 
         previousRowTimeAgo = txt
       }
-    }, 1000)
+    }, 1000)  as unknown as number
   }
 
   setMaxCount(maxCount: number) {

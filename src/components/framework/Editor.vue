@@ -129,7 +129,7 @@ export default class extends Vue {
       this._blurTimeout = setTimeout(() => {
         this.onBlur()
         this._blurTimeout = null
-      }, 100)
+      }, 100)  as unknown as number
     })
 
     this.editorInstance.on('focus', () => {

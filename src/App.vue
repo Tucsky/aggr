@@ -95,7 +95,7 @@ export default class extends Vue {
       this.showStuck = false
       this._stuckTimeout = setTimeout(() => {
         this.showStuck = true
-      }, 15000)
+      }, 15000) as unknown as number
     }
 
     return isBooted

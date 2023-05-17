@@ -194,7 +194,7 @@ export default class extends Mixins(PaneMixin) {
     this._refreshChartDimensionsTimeout = setTimeout(() => {
       this._chart &&
         this._chart.resize(this.$el.clientWidth, this.$el.clientHeight)
-    }, debounceTime)
+    }, debounceTime)  as unknown as number
   }
   prepareBuckets() {
     if (this._feed) {

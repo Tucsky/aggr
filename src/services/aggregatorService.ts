@@ -106,7 +106,7 @@ class AggregatorService extends EventEmitter {
         this.normalizeDecimalsQueue.timeout = setTimeout(
           this.normalizeDecimals.bind(this),
           1000
-        )
+        )  as unknown as number
       }
     })
 
