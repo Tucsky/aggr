@@ -7,7 +7,6 @@
     <pane-header
       :paneId="paneId"
       :settings="() => import('@/components/prices/PricesDialog.vue')"
-      split
     >
       <prices-sort-dropdown
         :pane-id="paneId"

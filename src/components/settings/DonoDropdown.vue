@@ -35,12 +35,10 @@ export default class extends Vue {
       click: () => window.open('bitcoin:3PK1bBK8sG3zAjPBPD7g3PL14Ndux3zWEz')
     },
     {
-      label: 'with Monero',
-      icon: 'icon-xmr',
+      label: 'Ethereum',
+      icon: 'icon-eth',
       click: () =>
-        window.open(
-          'monero:48NJj3RJDo33zMLaudQDdM8G6MfPrQbpeZU2YnRN2Ep6hbKyYRrS2ZSdiAKpkUXBcjD2pKiPqXtQmSZjZM7fC6YT6CMmoX6'
-        )
+        window.open('erc20:0x83bBC120a998cF7dFcBa1518CDDCb68Aa0D0c158')
     },
     {
       label: 'with other coin',

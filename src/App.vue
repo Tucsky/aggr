@@ -10,6 +10,7 @@
     :class="{
       '-no-animations': disableAnimations,
       '-auto-hide-headers': autoHideHeaders,
+      '-auto-hide-names': autoHideNames,
       '-light': theme === 'light'
     }"
   >
@@ -111,6 +112,10 @@ export default class extends Vue {
 
   get autoHideHeaders() {
     return this.$store.state.settings.autoHideHeaders
+  }
+
+  get autoHideNames() {
+    return this.$store.state.settings.autoHideNames
   }
 
   get preferedSizingCurrency() {

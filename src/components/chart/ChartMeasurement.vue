@@ -73,11 +73,13 @@ export default {
       }
     },
     precision() {
-      if (this.percent > 10) {
+      const abs = Math.abs(this.percent)
+
+      if (abs > 10) {
         return 2
       }
 
-      if (this.percent > 1) {
+      if (abs > 1) {
         return 2
       }
 
@@ -112,7 +114,6 @@ export default {
   align-items: center;
   justify-content: center;
   font-family: $font-monospace;
-  text-shadow: 1.5px 1.5px 0 var(--theme-background-o75);
 
   &:before {
     content: '';
@@ -121,7 +122,7 @@ export default {
     left: 0;
     right: 0;
     bottom: 0;
-    opacity: 0.375;
+    opacity: 0.25;
   }
 
   &__icon {
@@ -135,12 +136,16 @@ export default {
   }
 
   &--up {
+    color: var(--theme-buy-200);
+
     &:before {
       background-color: var(--theme-buy-base);
     }
   }
 
   &--down {
+    color: var(--theme-sell-200);
+
     &:before {
       background-color: var(--theme-sell-base);
     }
@@ -161,7 +166,7 @@ export default {
       content: '';
       flex-grow: 1;
       height: 0.0625em;
-      background-color: var(--theme-color-base);
+      background-color: currentColor;
     }
 
     &--top {
@@ -178,7 +183,6 @@ export default {
     position: relative;
     line-height: 0;
     font-size: 0.75em;
-    color: white;
 
     #{$self}--large &,
     #{$self}--extra-large & {
@@ -189,6 +193,8 @@ export default {
   &__percent {
     position: relative;
     white-space: nowrap;
+    text-shadow: 1.5px 1.5px 0 var(--theme-background-base);
+    font-weight: 700;
 
     #{$self}--medium & {
       font-size: 1em;

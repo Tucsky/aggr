@@ -111,13 +111,11 @@ export interface LoadedIndicator {
   script: string
   model: IndicatorTranspilationResult
   adapter: IndicatorRealtimeAdapter
-  silentAdapter: IndicatorRealtimeAdapter
   apis: IndicatorApi[]
 }
 
 export interface IndicatorTranspilationResult {
   output: string
-  silentOutput: string
   variables: IndicatorVariable[]
   functions: IndicatorFunction[]
   plots: IndicatorPlot[]
@@ -163,6 +161,7 @@ export interface Renderer {
 interface RendererIndicatorData {
   canRender: boolean
   series: {
+    rendered?: boolean
     time: number
     value?: number
     open?: number
@@ -684,7 +683,6 @@ export default class Chart {
       script: indicatorSettings.script,
       model: null,
       adapter: null,
-      silentAdapter: null,
       apis: []
     }
 
@@ -846,9 +844,6 @@ export default class Chart {
       // create function ready to calculate (& render) everything for this indicator
       try {
         indicator.adapter = this.serieBuilder.getAdapter(indicator.model.output)
-        indicator.silentAdapter = this.serieBuilder.getAdapter(
-          indicator.model.silentOutput
-        )
       } catch (error) {
         this.unbindIndicator(indicator, renderer)
 
@@ -953,6 +948,7 @@ export default class Chart {
       this.clearIndicatorSeries(indicator)
     }
 
+    this._alertsRendered = false
     this.renderedRange.from = this.renderedRange.to = null
   }
 
@@ -1910,6 +1906,8 @@ export default class Chart {
   updateBar(renderer: Renderer) {
     this.preventPan()
 
+    const toUpdate = []
+
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       if (this.loadedIndicators[i].options.visible === false) {
         continue
@@ -1918,25 +1916,41 @@ export default class Chart {
       const indicator = this.loadedIndicators[i]
       const serieData = renderer.indicators[indicator.id]
 
+      this.loadedIndicators[i].adapter(
+        renderer,
+        serieData.functions,
+        serieData.variables,
+        indicator.apis,
+        indicator.options,
+        seriesUtils
+      )
+
       if (serieData.canRender) {
-        this.loadedIndicators[i].adapter(
-          renderer,
-          serieData.functions,
-          serieData.variables,
-          indicator.apis,
-          indicator.options,
-          seriesUtils
-        )
-      } else {
-        this.loadedIndicators[i].silentAdapter(
-          renderer,
-          serieData.functions,
-          serieData.variables,
-          indicator.apis,
-          indicator.options,
-          seriesUtils
-        )
+        for (let j = 0; j < indicator.apis.length; j++) {
+          if (serieData.series[j] && !serieData.series[j].rendered) {
+            if (
+              (indicator.model.plots[j].type === 'line' &&
+                !serieData.series[j].value) ||
+              (indicator.model.plots[j].type === 'histogram' &&
+                !serieData.series[j].value) ||
+              ((indicator.model.plots[j].type === 'cloudarea' ||
+                indicator.model.plots[j].type === 'brokenarea') &&
+                serieData.series[j].lowerValue === null) ||
+              (indicator.model.plots[j].type === 'histogram' &&
+                !serieData.series[j].value)
+            ) {
+              continue
+            }
+
+            toUpdate.push([indicator.apis[j], serieData.series[j]])
+          }
+        }
       }
+    }
+
+    for (let i = 0; i < toUpdate.length; i++) {
+      toUpdate[i][0].update(toUpdate[i][1])
+      toUpdate[i][1].rendered = true
     }
   }
 
@@ -1968,7 +1982,7 @@ export default class Chart {
       serieData.series = []
 
       try {
-        indicator.silentAdapter(
+        indicator.adapter(
           renderer,
           serieData.functions,
           serieData.variables,

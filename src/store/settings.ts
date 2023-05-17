@@ -42,6 +42,7 @@ export interface SettingsState {
   sections?: string[]
   disableAnimations?: boolean
   autoHideHeaders?: boolean
+  autoHideNames?: boolean
   searchTypes?: any
   searchQuotes?: any
   searchExchanges?: any
@@ -247,6 +248,12 @@ const actions = {
       )
     )
     document.documentElement.style.setProperty(
+      '--theme-buy-200',
+      joinRgba(
+        getLogShade(buyRgb, 0.5 * backgroundScale, 0.5 * backgroundScale)
+      )
+    )
+    document.documentElement.style.setProperty(
       '--theme-buy-50',
       joinRgba(getLogShade(buyRgb, -0.2 * backgroundScale))
     )
@@ -265,6 +272,12 @@ const actions = {
       '--theme-sell-100',
       joinRgba(
         getLogShade(sellRgb, 0.1 * backgroundScale, 0.1 * backgroundScale)
+      )
+    )
+    document.documentElement.style.setProperty(
+      '--theme-sell-200',
+      joinRgba(
+        getLogShade(sellRgb, 0.5 * backgroundScale, 0.5 * backgroundScale)
       )
     )
     document.documentElement.style.setProperty(
@@ -427,6 +440,9 @@ const mutations = {
   },
   TOGGLE_AUTO_HIDE_HEADERS(state) {
     state.autoHideHeaders = !state.autoHideHeaders
+  },
+  TOGGLE_AUTO_HIDE_NAMES(state) {
+    state.autoHideNames = !state.autoHideNames
   },
   TOGGLE_SEARCH_TYPE(state, key: string) {
     Vue.set(state.searchTypes, key, !state.searchTypes[key])

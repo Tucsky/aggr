@@ -18,7 +18,6 @@ import {
   uniqueName
 } from '@/utils/helpers'
 import { plotTypesMap } from './options'
-const SERIE_UPDATE_REGEX = /series\[[a-zA-Z0-9+\-$ ]+\]\.update\(/
 const VARIABLES_VAR_NAME = 'vars'
 const FUNCTIONS_VAR_NAME = 'fns'
 const SERIE_TYPES = {
@@ -75,7 +74,6 @@ export default class SerieBuilder {
 
     return {
       output: result.output,
-      silentOutput: result.silentOutput,
       functions: result.functions,
       variables: result.variables,
       references: result.references,
@@ -205,34 +203,6 @@ export default class SerieBuilder {
     }
   }
 
-  getSilentOutput(originalOutput) {
-    let silentOutput = originalOutput
-
-    let instructionMatch = null
-    let iterations = 0
-
-    do {
-      if ((instructionMatch = SERIE_UPDATE_REGEX.exec(silentOutput))) {
-        const openingParenthesisIndex =
-          instructionMatch.index + instructionMatch[0].length - 1
-        const closingParenthesisIndex = findClosingBracketMatchIndex(
-          silentOutput,
-          openingParenthesisIndex
-        )
-        silentOutput = silentOutput.replace(
-          instructionMatch[0] +
-            silentOutput.slice(
-              openingParenthesisIndex + 1,
-              closingParenthesisIndex + 1
-            ),
-          1
-        )
-      }
-    } while (instructionMatch && ++iterations < 1000)
-
-    return silentOutput
-  }
-
   /**
    * parse variable, functions referenced sources and external indicators used in it
    * @param input
@@ -264,11 +234,8 @@ export default class SerieBuilder {
 
     output = this.formatOutput(output)
 
-    const silentOutput = this.getSilentOutput(output)
-
     return {
       output,
-      silentOutput,
       functions,
       variables,
       plots,
@@ -491,26 +458,7 @@ export default class SerieBuilder {
       }
     }
 
-    // this line will paint the point
-    const serieUpdate = `series[${plots.length}].update(renderer.indicators['${this.indicatorId}'].series[${plots.length}])`
-
-    // put everything together
-    let finalInstruction = seriePoint + ','
-
-    if (serieType === 'histogram') {
-      // only update point if there is a value to avoid long histogram * base line * at zero
-      finalInstruction += pointVariable + '.value&&'
-    } else if (serieType === 'line') {
-      // prevent null
-      finalInstruction += pointVariable + '.value !== null&&'
-    } else if (serieType === 'cloudarea' || serieType === 'brokenarea') {
-      // prevent null
-      finalInstruction += pointVariable + '.lowerValue !== null&&'
-    }
-
-    finalInstruction += serieUpdate
-
-    output = output.replace(rawFunctionInstruction, finalInstruction)
+    output = output.replace(rawFunctionInstruction, seriePoint)
 
     let id: string
 
