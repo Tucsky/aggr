@@ -24,7 +24,13 @@ fs.readdirSync('./src/worker/exchanges/').forEach(file => {
 
 process.env.VUE_APP_EXCHANGES = exchanges.join(',')
 process.env.VUE_APP_PROXY_URL =
-  typeof process.env.PROXY_URL !== 'undefined' ? process.env.PROXY_URL : ''
+  process.env.NODE_ENV === 'production'
+    ? typeof process.env.PROXY_URL !== 'undefined'
+      ? process.env.PROXY_URL
+      : ''
+    : typeof process.env.DEV_PROXY_URL !== 'undefined'
+    ? process.env.DEV_PROXY_URL
+    : ''
 process.env.VUE_APP_API_URL =
   typeof process.env.API_URL !== 'undefined' ? process.env.API_URL : ''
 process.env.VUE_APP_API_SUPPORTED_PAIRS =

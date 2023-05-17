@@ -55,6 +55,13 @@ npm install
   
 
 Development mode
+
+```bash
+npm run cors
+```
+
+This will start a cors proxy for your development environment
+
 ```bash
 npm run serve
 ```

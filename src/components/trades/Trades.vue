@@ -286,7 +286,7 @@ export default class extends Mixins(PaneMixin) {
       flex-grow: 0.5;
 
       &:before {
-        font-family: 'icon';
+        font-family: 'exchanges', 'icon';
         font-weight: 400;
         font-size: 1em;
         line-height: 0;
@@ -295,7 +295,7 @@ export default class extends Mixins(PaneMixin) {
       }
     }
 
-    @each $exchange, $icon in $exchanges {
+    @each $exchange, $icon in $exchange-list {
       .-#{$exchange} .trade__exchange:before {
         content: $icon;
       }
@@ -312,9 +312,9 @@ export default class extends Mixins(PaneMixin) {
         }
       }
 
-      @each $exchange, $icon in $exchanges {
+      @each $exchange, $icon in $exchange-list {
         .-#{$exchange} .trade__exchange {
-          background-image: url('../../assets/exchanges/#{$exchange}.svg');
+          background-image: url('../../assets/exchanges/svg/#{$exchange}.svg');
         }
       }
     }

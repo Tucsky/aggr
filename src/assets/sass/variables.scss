@@ -28,7 +28,6 @@ $checkerboard: linear-gradient(45deg, $accent 25%, transparent 25%),
 $border-radius-base: 6px;
 $border-radius-small: 3px;
 
-
 $icon-bitcoin: "\e900";
 $icon-btc: "\e901";
 $icon-dollar: "\e902";
@@ -53,24 +52,15 @@ $icon-download: "\e914";
 $icon-external-link-square-alt: "\e915";
 $icon-upload: "\e917";
 $icon-cross: "\e918";
-$icon-KRAKEN: "\e91b";
-$icon-OKEX: "\e91c";
 $icon-down-thin: "\e91d";
 $icon-skull: "\e91e";
 $icon-edit: "\e91f";
 $icon-plus: "\e920";
 $icon-minus: "\e916";
-$icon-POLONIEX: "\e921";
 $icon-visible: "\e922";
 $icon-hidden: "\e923";
 $icon-up-thin: "\e924";
 $icon-volume-high: "\e925";
-$icon-COINEX: "\e926";
-$icon-BINANCE: "\e927";
-$icon-BINANCE_FUTURES: "\e928";
-$icon-BITFINEX: "\e929";
-$icon-BITMEX: "\e92a";
-$icon-HUOBI: "\e92b";
 $icon-xrp: "\e92c";
 $icon-ada: "\e92d";
 $icon-trx: "\e92e";
@@ -83,15 +73,10 @@ $icon-bear: "\e934";
 $icon-bps: "\e935";
 $icon-ms: "\e936";
 $icon-pile: "\e937";
-$icon-HITBTC: "\e938";
 $icon-search: "\e939";
 $icon-dropper: "\e93a";
-$icon-COINBASE: "\e93b";
-$icon-DERIBIT: "\e93c";
 $icon-trash: "\e93d";
 $icon-click: "\e93e";
-$icon-BYBIT: "\e93f";
-$icon-BITSTAMP: "\e940";
 $icon-menu: "\e943";
 $icon-stamp: "\e945";
 $icon-copy-paste: "\e947";
@@ -103,7 +88,6 @@ $icon-add-photo: "\e94c";
 $icon-candlestick: "\e94d";
 $icon-refresh: "\e94e";
 $icon-music-note: "\e94f";
-$icon-PHEMEX: "\e951";
 $icon-eraser: "\e953";
 $icon-github: "\e954";
 $icon-enlarge: "\e955";
@@ -114,41 +98,70 @@ $icon-star: "\e959";
 $icon-star-filled: "\e95a";
 $icon-save: "\e95b";
 $icon-gauge: "\e95d";
-$icon-DYDX: "\e95e";
-$icon-BINANCE_US: "\e95f";
 $icon-flip: "\e919";
 $icon-switch: "\e91a";
 $icon-lab: "\e941";
-$icon-UNISWAP: "\e944";
-$icon-KUCOIN: "\e946";
-$icon-BITGET: "\e950";
-$icon-MEXC: "\e952";
-$icon-GATEIO: "\e960";
 
-$exchanges: (
-  'BITMEX': $icon-BITMEX,
-  'BINANCE': $icon-BINANCE,
-  'BINANCE_FUTURES': $icon-BINANCE_FUTURES,
-  'BINANCE_US': $icon-BINANCE,
-  'BITFINEX': $icon-BITFINEX,
-  'OKEX': $icon-OKEX,
-  'HUOBI': $icon-HUOBI,
-  'BITSTAMP': $icon-BITSTAMP,
-  'COINBASE': $icon-COINBASE,
-  'HITBTC': $icon-HITBTC,
-  'POLONIEX': $icon-POLONIEX,
-  'KRAKEN': $icon-KRAKEN,
-  'DERIBIT': $icon-DERIBIT,
-  'BYBIT': $icon-BYBIT,
-  'PHEMEX': $icon-PHEMEX,
-  'DYDX': $icon-DYDX,
-  'UNISWAP': $icon-UNISWAP,
-  'KUCOIN': $icon-KUCOIN,
-  'BITGET': $icon-BITGET,
-  'MEXC': $icon-MEXC,
-  'GATEIO': $icon-GATEIO
-);
 
 @function unicode($str) {
   @return unquote('"') + $str + unquote('"');
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$exchanges-BINANCE: "\e960";
+$exchanges-BINANCE_FUTURES: "\e961";
+$exchanges-BINANCE_US: "\e962";
+$exchanges-BITFINEX: "\e963";
+$exchanges-BITGET: "\e964";
+$exchanges-BITMEX: "\e965";
+$exchanges-BITSTAMP: "\e966";
+$exchanges-BYBIT: "\e967";
+$exchanges-COINBASE: "\e968";
+$exchanges-DERIBIT: "\e969";
+$exchanges-DYDX: "\e96a";
+$exchanges-GATEIO: "\e96b";
+$exchanges-HITBTC: "\e96c";
+$exchanges-HUOBI: "\e96d";
+$exchanges-KRAKEN: "\e96e";
+$exchanges-KUCOIN: "\e96f";
+$exchanges-MEXC: "\e970";
+$exchanges-OKEX: "\e971";
+$exchanges-PHEMEX: "\e972";
+$exchanges-POLONIEX: "\e973";
+$exchanges-UNISWAP: "\e974";
+
+$exchange-list: (
+	'BINANCE': $exchanges-BINANCE,
+	'BINANCE_FUTURES': $exchanges-BINANCE_FUTURES,
+	'BINANCE_US': $exchanges-BINANCE_US,
+	'BITFINEX': $exchanges-BITFINEX,
+	'BITGET': $exchanges-BITGET,
+	'BITMEX': $exchanges-BITMEX,
+	'BITSTAMP': $exchanges-BITSTAMP,
+	'BYBIT': $exchanges-BYBIT,
+	'COINBASE': $exchanges-COINBASE,
+	'DERIBIT': $exchanges-DERIBIT,
+	'DYDX': $exchanges-DYDX,
+	'GATEIO': $exchanges-GATEIO,
+	'HITBTC': $exchanges-HITBTC,
+	'HUOBI': $exchanges-HUOBI,
+	'KRAKEN': $exchanges-KRAKEN,
+	'KUCOIN': $exchanges-KUCOIN,
+	'MEXC': $exchanges-MEXC,
+	'OKEX': $exchanges-OKEX,
+	'PHEMEX': $exchanges-PHEMEX,
+	'POLONIEX': $exchanges-POLONIEX,
+	'UNISWAP': $exchanges-UNISWAP
+);

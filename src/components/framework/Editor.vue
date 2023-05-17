@@ -129,7 +129,7 @@ export default class extends Vue {
       this._blurTimeout = setTimeout(() => {
         this.onBlur()
         this._blurTimeout = null
-      }, 100)  as unknown as number
+      }, 100) as unknown as number
     })
 
     this.editorInstance.on('focus', () => {
@@ -231,7 +231,7 @@ export default class extends Vue {
       background: 0;
 
       &:before {
-        font-family: 'icon';
+        font-family: 'exchanges', 'icon';
         font-size: 0.75em;
         content: $icon-down-thin;
         display: block;

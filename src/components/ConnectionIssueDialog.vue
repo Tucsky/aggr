@@ -89,7 +89,7 @@
                     >
                       <i class="icon-cross mr8"></i> Disable&nbsp;
                       <span>{{ exchangeId }}</span>
-                      <i class="ml4" :class="'icon-' + exchangeId"></i>
+                      <i class="ml4" :class="'exchanges-' + exchangeId"></i>
                     </button>
                   </li>
 
@@ -131,14 +131,12 @@
                 <template #title> Proxy install </template>
                 <p class="mt0">
                   Since
-                  <i class="-lower" :class="`icon-${exchangeId}`"></i>&nbsp;{{
-                    exchangeId
-                  }}
-                  is blocking your IP you may want to get realtime data from
-                  that exchange through a proxy located in an authorized
-                  country.<br /><br />At the moment you will have to set it up
-                  yourself using a simple NodeJS script that you can download
-                  below.
+                  <i class="-lower" :class="`exchanges-${exchangeId}`"></i
+                  >&nbsp;{{ exchangeId }} is blocking your IP you may want to
+                  get realtime data from that exchange through a proxy located
+                  in an authorized country.<br /><br />At the moment you will
+                  have to set it up yourself using a simple NodeJS script that
+                  you can download below.
                 </p>
                 <a
                   target="_blank"
@@ -156,7 +154,7 @@
               :disable="selectedAction"
             >
               <i class="icon-cross"></i>&nbsp;
-              <i class="mrauto" :class="'icon-' + exchangeId"></i>
+              <i class="mrauto" :class="'exchanges-' + exchangeId"></i>
               Disable&nbsp;
               <span>{{ exchangeId }}</span>
             </button>
