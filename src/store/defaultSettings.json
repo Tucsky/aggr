@@ -5,6 +5,7 @@
   "wsProxyUrl": null,
   "disableAnimations": false,
   "autoHideHeaders": true,
+  "autoHideNames": true,
   "theme": "dark",
   "backgroundColor": "rgb(23,27,41)",
   "textColor": "",

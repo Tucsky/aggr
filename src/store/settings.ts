@@ -42,6 +42,7 @@ export interface SettingsState {
   sections?: string[]
   disableAnimations?: boolean
   autoHideHeaders?: boolean
+  autoHideNames?: boolean
   searchTypes?: any
   searchQuotes?: any
   searchExchanges?: any
@@ -439,6 +440,9 @@ const mutations = {
   },
   TOGGLE_AUTO_HIDE_HEADERS(state) {
     state.autoHideHeaders = !state.autoHideHeaders
+  },
+  TOGGLE_AUTO_HIDE_NAMES(state) {
+    state.autoHideNames = !state.autoHideNames
   },
   TOGGLE_SEARCH_TYPE(state, key: string) {
     Vue.set(state.searchTypes, key, !state.searchTypes[key])

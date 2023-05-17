@@ -9,9 +9,23 @@
           @change="$store.commit('settings/TOGGLE_AUTO_HIDE_HEADERS')"
         />
         <div></div>
-        <span>Auto hide headers</span>
+        <span>Floating headers</span>
       </label>
     </div>
+    <transition-height :duration="5000">
+      <div v-if="autoHideHeaders" key="a" class="form-group mb8">
+        <label class="checkbox-control">
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="autoHideNames"
+            @change="$store.commit('settings/TOGGLE_AUTO_HIDE_NAMES')"
+          />
+          <div></div>
+          <span>Auto hide names</span>
+        </label>
+      </div>
+    </transition-height>
     <div class="form-group mb8">
       <label class="checkbox-control -animations">
         <input
@@ -90,9 +104,13 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import TransitionHeight from '@/components/framework/TransitionHeight.vue'
 
 @Component({
-  name: 'OtherSettings'
+  name: 'OtherSettings',
+  components: {
+    TransitionHeight
+  }
 })
 export default class extends Vue {
   responsiveEnabled: boolean = null
@@ -103,6 +121,10 @@ export default class extends Vue {
 
   get autoHideHeaders() {
     return this.$store.state.settings.autoHideHeaders
+  }
+
+  get autoHideNames() {
+    return this.$store.state.settings.autoHideNames
   }
 
   get locked() {

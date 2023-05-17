@@ -111,6 +111,23 @@
       }
     }
   }
+
+  &.-auto-hide-names {
+    .pane {
+
+      .pane-header {
+        display: none;
+
+        .toolbar {
+          display: flex;
+        }
+      }
+
+      &:hover .pane-header {
+        display: flex;
+      }
+    }
+  }
 }
 
 .pane-overlay {

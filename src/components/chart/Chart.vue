@@ -4,7 +4,6 @@
       ref="paneHeader"
       :paneId="paneId"
       :settings="() => import('@/components/chart/ChartDialog.vue')"
-      split
     >
       <template v-slot:menu>
         <button type="button" class="dropdown-item" @click="toggleLayout">

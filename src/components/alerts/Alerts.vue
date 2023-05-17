@@ -6,7 +6,6 @@
       :settings="() => import('@/components/alerts/AlertsDialog.vue')"
       :show-search="false"
       :show-name="false"
-      split
     >
       <Btn
         type="button"
