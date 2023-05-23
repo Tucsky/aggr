@@ -1,12 +1,9 @@
 
-# SignificantTrades
+# SignificantTrade
 
-  
-
-Cryptocurrency market trades aggregator.<br>
+Cryptocurrency market trades aggregator.\
 
 Currently supporting Kucoin, BitMEX, Bitfinex, Binance, Coinbase, Bitstamp, Deribit, Huobi, Okex, Hitbtc, Poloniex, Bybit, Bitget and Mexc ([see src/exchanges/](src/exchanges) for detail)
-
 
 ![screenshot](https://i.imgur.com/nHJxsdL.gif)
 
@@ -96,6 +93,10 @@ In order to show historical data YOU WILL need to setup your own server to provi
 See [aggr-server repository](https://github.com/Tucsky/aggr-server).
 
 Let's say you have a server instance running on port 3000, start the client with an environment variable `API_URL=http://localhost:3000/ npm run serve`
+
+## Community
+
+Discord: https://discord.gg/ZA6CFMkq
 
 ## Disclaimer
 If you plan to use real money with this, USE AT YOUR OWN RISK.
