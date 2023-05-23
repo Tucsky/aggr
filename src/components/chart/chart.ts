@@ -1110,8 +1110,12 @@ export default class Chart {
       return
     }
 
-    this.renderRealtimeTrades(this.queuedTrades)
-    this.queuedTrades.splice(0, this.queuedTrades.length)
+    try {
+      this.renderRealtimeTrades(this.queuedTrades)
+      this.queuedTrades.splice(0, this.queuedTrades.length)
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   /**
