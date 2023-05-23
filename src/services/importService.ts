@@ -64,7 +64,8 @@ class ImportService {
 
     store.dispatch('panes/addPane', {
       type: preset.type,
-      settings: preset.data
+      settings: preset.data,
+      markets: preset.markets
     })
 
     store.dispatch('app/showNotice', {

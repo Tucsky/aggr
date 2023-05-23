@@ -257,6 +257,7 @@ export default class extends Vue {
         name: `${this.type}:${this.paneId}`,
         type: this.type,
         data: this.$store.state[this.paneId],
+        markets: this.$store.state.panes.panes[this.paneId].markets,
         createdAt: Date.now(),
         updatedAt: null
       },
