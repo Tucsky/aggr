@@ -1,27 +1,9 @@
 const svgtofont = require('svgtofont')
 const fs = require('fs')
-// const svgFlatten = require('svg-flatten')
-// const { optimize } = require('svgo');
 
-// fs.readdirSync(__dirname + '/../src/assets/exchanges/svg').forEach(file => {
-//   if (file.endsWith('.svg')) {
-//     const svgString = fs.readFileSync(
-//       __dirname + '/../src/assets/exchanges/svg/' + file,
-//       'utf8'
-//     )
-//     const modifiedSvgString = svgFlatten(svgString).pathify().value()
-//     const optimized = optimize(modifiedSvgString, {
-//       removeAttrs: {
-//         attrs: '.*:fill:.*'
-//       }
-//     }).data
-//     console.log(optimized)
-//     fs.writeFileSync(
-//       __dirname + '/../src/assets/exchanges/flat/' + file,
-//       optimized
-//     )
-//   }
-// })
+const HEADER = `/**\n* EXCHANGES HEADER\n* DO NOT CHANGE OR REMOVE\n**/\n`
+
+const FOOTER = `/**\n* EXCHANGES FOOTER\n* DO NOT CHANGE OR REMOVE\n**/\n`
 
 svgtofont({
   src: __dirname + '/../src/assets/exchanges/flat',
@@ -91,13 +73,15 @@ svgtofont({
     __dirname + '/../src/assets/sass/variables.scss',
     'utf-8'
   )
-  const variablesIndex = variables.indexOf('$exchanges-')
+  const variablesIndex = variables.indexOf(HEADER)
   if (variablesIndex !== -1) {
-    variables = variables.slice(0, variablesIndex)
+    const variablesFooterIndex = variables.indexOf(FOOTER) + FOOTER.length
+    variables =
+      variables.slice(0, variablesIndex) + variables.slice(variablesFooterIndex)
   }
   fs.writeFileSync(
     __dirname + '/../src/assets/sass/variables.scss',
-    variables + '\n' + variableData
+    variables + '\n' + HEADER + variableData + '\n' + FOOTER
   )
 
   console.log('wrote scss variable')
