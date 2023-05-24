@@ -102,24 +102,13 @@ $icon-flip: "\e919";
 $icon-switch: "\e91a";
 $icon-lab: "\e941";
 
-
 @function unicode($str) {
   @return unquote('"') + $str + unquote('"');
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/**
+* EXCHANGES HEADER
+* DO NOT CHANGE OR REMOVE
+**/
 $exchanges-BINANCE: "\e960";
 $exchanges-BINANCE_FUTURES: "\e961";
 $exchanges-BINANCE_US: "\e962";
@@ -165,3 +154,7 @@ $exchange-list: (
 	'POLONIEX': $exchanges-POLONIEX,
 	'UNISWAP': $exchanges-UNISWAP
 );
+/**
+* EXCHANGES FOOTER
+* DO NOT CHANGE OR REMOVE
+**/
