@@ -81,7 +81,7 @@ svgtofont({
   }
   fs.writeFileSync(
     __dirname + '/../src/assets/sass/variables.scss',
-    variables + '\n' + HEADER + variableData + '\n' + FOOTER
+    variables + HEADER + variableData + '\n' + FOOTER
   )
 
   console.log('wrote scss variable')
