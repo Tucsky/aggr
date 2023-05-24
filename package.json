@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@types/node": "20.2.0",
+    "@types/pako": "^2.0.0",
     "@types/sharedworker": "0.0.29",
     "@vitejs/plugin-vue2": "^2.2.0",
     "@vue/cli-plugin-eslint": "^5.0.8",
