@@ -1,11 +1,11 @@
 $iconpath: '../fonts/';
 @font-face {font-family: "exchanges";
-  src: url('#{$iconpath}exchanges.eot?t=1684365120729'); /* IE9*/
-  src: url('#{$iconpath}exchanges.eot?t=1684365120729#iefix') format('embedded-opentype'), /* IE6-IE8 */
-  url("#{$iconpath}exchanges.woff2?t=1684365120729") format("woff2"),
-  url("#{$iconpath}exchanges.woff?t=1684365120729") format("woff"),
-  url('#{$iconpath}exchanges.ttf?t=1684365120729') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
-  url('#{$iconpath}exchanges.svg?t=1684365120729#exchanges') format('svg'); /* iOS 4.1- */
+  src: url('#{$iconpath}exchanges.eot?t=1684893109582'); /* IE9*/
+  src: url('#{$iconpath}exchanges.eot?t=1684893109582#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url("#{$iconpath}exchanges.woff2?t=1684893109582") format("woff2"),
+  url("#{$iconpath}exchanges.woff?t=1684893109582") format("woff"),
+  url('#{$iconpath}exchanges.ttf?t=1684893109582') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('#{$iconpath}exchanges.svg?t=1684893109582#exchanges') format('svg'); /* iOS 4.1- */
 }
 
 [class^="exchanges-"], [class*=" exchanges-"] {
@@ -21,20 +21,21 @@ $iconpath: '../fonts/';
 .exchanges-BINANCE_US:before { content: "\e962"; }
 .exchanges-BITFINEX:before { content: "\e963"; }
 .exchanges-BITGET:before { content: "\e964"; }
-.exchanges-BITMEX:before { content: "\e965"; }
-.exchanges-BITSTAMP:before { content: "\e966"; }
-.exchanges-BYBIT:before { content: "\e967"; }
-.exchanges-COINBASE:before { content: "\e968"; }
-.exchanges-DERIBIT:before { content: "\e969"; }
-.exchanges-DYDX:before { content: "\e96a"; }
-.exchanges-GATEIO:before { content: "\e96b"; }
-.exchanges-HITBTC:before { content: "\e96c"; }
-.exchanges-HUOBI:before { content: "\e96d"; }
-.exchanges-KRAKEN:before { content: "\e96e"; }
-.exchanges-KUCOIN:before { content: "\e96f"; }
-.exchanges-MEXC:before { content: "\e970"; }
-.exchanges-OKEX:before { content: "\e971"; }
-.exchanges-PHEMEX:before { content: "\e972"; }
-.exchanges-POLONIEX:before { content: "\e973"; }
-.exchanges-UNISWAP:before { content: "\e974"; }
+.exchanges-BITMART:before { content: "\e965"; }
+.exchanges-BITMEX:before { content: "\e966"; }
+.exchanges-BITSTAMP:before { content: "\e967"; }
+.exchanges-BYBIT:before { content: "\e968"; }
+.exchanges-COINBASE:before { content: "\e969"; }
+.exchanges-DERIBIT:before { content: "\e96a"; }
+.exchanges-DYDX:before { content: "\e96b"; }
+.exchanges-GATEIO:before { content: "\e96c"; }
+.exchanges-HITBTC:before { content: "\e96d"; }
+.exchanges-HUOBI:before { content: "\e96e"; }
+.exchanges-KRAKEN:before { content: "\e96f"; }
+.exchanges-KUCOIN:before { content: "\e970"; }
+.exchanges-MEXC:before { content: "\e971"; }
+.exchanges-OKEX:before { content: "\e972"; }
+.exchanges-PHEMEX:before { content: "\e973"; }
+.exchanges-POLONIEX:before { content: "\e974"; }
+.exchanges-UNISWAP:before { content: "\e975"; }
 
