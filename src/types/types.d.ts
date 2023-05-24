@@ -103,6 +103,7 @@ export interface Preset {
   data: any
   createdAt: number
   updatedAt: number
+  markets?: string[]
   version?: string
 }
 

@@ -1081,7 +1081,7 @@ export default class Chart {
     this._releaseQueueInterval = setInterval(
       this._queueHandler,
       store.state[this.paneId].refreshRate
-    )  as unknown as number
+    ) as unknown as number
   }
 
   /**
@@ -1110,8 +1110,12 @@ export default class Chart {
       return
     }
 
-    this.renderRealtimeTrades(this.queuedTrades)
-    this.queuedTrades.splice(0, this.queuedTrades.length)
+    try {
+      this.renderRealtimeTrades(this.queuedTrades)
+      this.queuedTrades.splice(0, this.queuedTrades.length)
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   /**
@@ -2809,11 +2813,17 @@ export default class Chart {
       this.setTimeToRecycle()
     }
 
-    this._recycleTimeout = setTimeout(this.trimChart.bind(this), 1000 * 60 * 15) as unknown as number
+    this._recycleTimeout = setTimeout(
+      this.trimChart.bind(this),
+      1000 * 60 * 15
+    ) as unknown as number
   }
 
   setupRecycle() {
-    this._recycleTimeout = setTimeout(this.trimChart.bind(this), 1000 * 60 * 3) as unknown as number
+    this._recycleTimeout = setTimeout(
+      this.trimChart.bind(this),
+      1000 * 60 * 3
+    ) as unknown as number
     this.setTimeToRecycle()
   }
 
