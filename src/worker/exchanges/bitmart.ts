@@ -6,7 +6,8 @@ export default class extends Exchange {
   protected endpoints: { [id: string]: any } = {
     PRODUCTS: [
       'https://api-cloud.bitmart.com/spot/v1/symbols/details',
-      'https://api-cloud.bitmart.com/contract/public/details'
+      // can't use futures until we know what `trade.way` is
+      // 'https://api-cloud.bitmart.com/contract/public/details'
     ]
   }
 
