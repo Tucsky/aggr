@@ -18,13 +18,13 @@
           @input="
             $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
               value: $event,
-              market: market
+              market: market,
             })
           "
           @reset="
             $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
               value: 1,
-              market: market
+              market: market,
             })
           "
           log
@@ -34,9 +34,7 @@
         :name="paneId"
         class="toolbar__label"
         @click="
-          sliderDropdownTrigger = sliderDropdownTrigger
-            ? null
-            : $event.currentTarget
+          sliderDropdownTrigger = sliderDropdownTrigger ? null : $event.currentTarget
         "
       >
         <i class="icon-gauge"></i>
@@ -48,54 +46,51 @@
       :class="[
         'hide-scrollbar',
         this.showLogos && '-logos',
-        !this.monochromeLogos && '-logos-colors'
+        !this.monochromeLogos && '-logos-colors',
       ]"
     ></div>
-    <trades-placeholder
-      v-if="showPlaceholder"
-      :paneId="paneId"
-    ></trades-placeholder>
+    <trades-placeholder v-if="showPlaceholder" :paneId="paneId"></trades-placeholder>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Mixins } from 'vue-property-decorator'
+import { Component, Mixins } from "vue-property-decorator";
 
-import { Trade } from '@/types/types'
+import { Trade } from "@/types/types";
 
-import aggregatorService from '@/services/aggregatorService'
-import gifsService from '@/services/gifsService'
-import PaneMixin from '@/mixins/paneMixin'
-import PaneHeader from '@/components/panes/PaneHeader.vue'
-import TradesPlaceholder from '@/components/trades/TradesPlaceholder.vue'
-import { parseMarket } from '@/services/productsService'
-import TradesFeed from '@/components/trades/tradesFeed'
-import Slider from '@/components/framework/picker/Slider.vue'
+import aggregatorService from "@/services/aggregatorService";
+import gifsService from "@/services/gifsService";
+import PaneMixin from "@/mixins/paneMixin";
+import PaneHeader from "@/components/panes/PaneHeader.vue";
+import TradesPlaceholder from "@/components/trades/TradesPlaceholder.vue";
+import { parseMarket } from "@/services/productsService";
+import TradesFeed from "@/components/trades/tradesFeed";
+import Slider from "@/components/framework/picker/Slider.vue";
 
 @Component({
   components: { PaneHeader, TradesPlaceholder, Slider },
-  name: 'Trades'
+  name: "Trades",
 })
 export default class Trades extends Mixins(PaneMixin) {
-  showPlaceholder = true
-  sliderDropdownTrigger = null
+  showPlaceholder = true;
+  sliderDropdownTrigger = null;
 
-  private feed: TradesFeed
+  private feed: TradesFeed;
 
   get market() {
-    return this.pane.markets[0]
+    return this.pane.markets[0];
   }
 
   get showLogos() {
-    return this.$store.state[this.paneId].showLogos
+    return this.$store.state[this.paneId].showLogos;
   }
 
   get monochromeLogos() {
-    return this.$store.state[this.paneId].monochromeLogos
+    return this.$store.state[this.paneId].monochromeLogos;
   }
 
   get thresholdsMultipler() {
-    return this.$store.state[this.paneId].thresholdsMultipler
+    return this.$store.state[this.paneId].thresholdsMultipler;
   }
 
   get gradient() {
@@ -103,73 +98,73 @@ export default class Trades extends Mixins(PaneMixin) {
       this.$store.state[this.paneId].thresholds[0].buyColor,
       this.$store.state[this.paneId].thresholds[
         this.$store.state[this.paneId].thresholds.length - 1
-      ].buyColor
-    ]
+      ].buyColor,
+    ];
   }
 
   $refs!: {
-    tradesContainer: HTMLElement
-  }
+    tradesContainer: HTMLElement;
+  };
 
   created() {
-    aggregatorService.on('trades', this.onTrades)
+    aggregatorService.on("trades", this.onTrades);
 
-    this._onStoreMutation = this.$store.subscribe(mutation => {
+    this._onStoreMutation = this.$store.subscribe((mutation) => {
       switch (mutation.type) {
-        case 'app/EXCHANGE_UPDATED':
-        case 'settings/TOGGLE_SLIPPAGE':
-        case this.paneId + '/TOGGLE_PREFERENCE':
-          this.feed.cachePreferences()
-          this.refreshList()
-          break
-        case this.paneId + '/SET_MAX_ROWS':
-          this.feed.setMaxCount(mutation.payload)
-          break
-        case 'panes/SET_PANE_MARKETS':
-        case this.paneId + '/SET_THRESHOLD_MULTIPLIER':
+        case "app/EXCHANGE_UPDATED":
+        case "settings/TOGGLE_SLIPPAGE":
+        case this.paneId + "/TOGGLE_PREFERENCE":
+          this.feed.cachePreferences();
+          this.refreshList();
+          break;
+        case this.paneId + "/SET_MAX_ROWS":
+          this.feed.setMaxCount(mutation.payload);
+          break;
+        case "panes/SET_PANE_MARKETS":
+        case this.paneId + "/SET_THRESHOLD_MULTIPLIER":
           if (
-            mutation.type !== 'panes/SET_PANE_MARKETS' ||
+            mutation.type !== "panes/SET_PANE_MARKETS" ||
             mutation.payload.id === this.paneId
           ) {
-            this.feed.cachePaneMarkets()
-            this.refreshList()
+            this.feed.cachePaneMarkets();
+            this.refreshList();
           }
-          break
-        case this.paneId + '/SET_THRESHOLD_GIF':
-          gifsService.getGifs(mutation.payload.value, true)
-          this.feed.prepareColors()
-          this.refreshList()
-          break
-        case this.paneId + '/SET_THRESHOLD_AUDIO':
-        case this.paneId + '/SET_AUDIO_VOLUME':
-        case this.paneId + '/SET_AUDIO_PITCH':
-        case 'settings/SET_AUDIO_VOLUME':
-        case 'settings/TOGGLE_AUDIO':
-          this.feed.cacheAudio()
-          break
-        case this.paneId + '/SET_AUDIO_THRESHOLD':
-        case this.paneId + '/TOGGLE_MUTED':
-          this.feed.cacheAudio(false)
-          break
-        case 'settings/SET_BACKGROUND_COLOR':
-        case this.paneId + '/SET_THRESHOLD_COLOR':
-        case this.paneId + '/SET_THRESHOLD_AMOUNT':
-        case this.paneId + '/SET_THRESHOLDS_MULTIPLER':
-        case this.paneId + '/TOGGLE_THRESHOLD_MAX':
-        case this.paneId + '/DELETE_THRESHOLD':
-        case this.paneId + '/ADD_THRESHOLD':
-          this.feed.prepareColors()
-          this.refreshList()
+          break;
+        case this.paneId + "/SET_THRESHOLD_GIF":
+          gifsService.getGifs(mutation.payload.value, true);
+          this.feed.prepareColors();
+          this.refreshList();
+          break;
+        case this.paneId + "/SET_THRESHOLD_AUDIO":
+        case this.paneId + "/SET_AUDIO_VOLUME":
+        case this.paneId + "/SET_AUDIO_PITCH":
+        case "settings/SET_AUDIO_VOLUME":
+        case "settings/TOGGLE_AUDIO":
+          this.feed.cacheAudio();
+          break;
+        case this.paneId + "/SET_AUDIO_THRESHOLD":
+        case this.paneId + "/TOGGLE_MUTED":
+          this.feed.cacheAudio(false);
+          break;
+        case "settings/SET_BACKGROUND_COLOR":
+        case this.paneId + "/SET_THRESHOLD_COLOR":
+        case this.paneId + "/SET_THRESHOLD_AMOUNT":
+        case this.paneId + "/SET_THRESHOLDS_MULTIPLER":
+        case this.paneId + "/TOGGLE_THRESHOLD_MAX":
+        case this.paneId + "/DELETE_THRESHOLD":
+        case this.paneId + "/ADD_THRESHOLD":
+          this.feed.prepareColors();
+          this.refreshList();
 
           if (
-            mutation.type === this.paneId + '/DELETE_THRESHOLD' ||
-            this.paneId + '/ADD_THRESHOLD'
+            mutation.type === this.paneId + "/DELETE_THRESHOLD" ||
+            this.paneId + "/ADD_THRESHOLD"
           ) {
-            this.feed.cacheAudio()
+            this.feed.cacheAudio();
           }
-          break
+          break;
       }
-    })
+    });
   }
 
   mounted() {
@@ -177,67 +172,63 @@ export default class Trades extends Mixins(PaneMixin) {
       this.paneId,
       this.$refs.tradesContainer,
       this.$store.state[this.paneId].maxRows
-    )
+    );
   }
 
   beforeDestroy() {
-    aggregatorService.off('trades', this.onTrades)
+    aggregatorService.off("trades", this.onTrades);
 
     if (this.feed) {
-      this.feed.destroy()
+      this.feed.destroy();
     }
   }
 
   onTrades(trades: Trade[]) {
     if (this.feed.processTrades(trades) === this.showPlaceholder) {
-      this.showPlaceholder = false
+      this.showPlaceholder = false;
     }
   }
 
   refreshList() {
-    const elements = this.$el.getElementsByClassName('trade')
+    const elements = this.$el.getElementsByClassName("trade");
 
-    const trades: Trade[] = []
+    const trades: Trade[] = [];
 
     for (const element of elements) {
-      const [exchange, pair] = parseMarket(element.getAttribute('title'))
+      const [exchange, pair] = parseMarket(element.getAttribute("title"));
 
       const timestamp = element
-        .querySelector('.trade__time')
-        .getAttribute('data-timestamp')
+        .querySelector(".trade__time")
+        .getAttribute("data-timestamp");
       const price =
-        parseFloat(
-          (element.querySelector('.trade__price') as HTMLElement)?.innerText
-        ) || 0
+        parseFloat((element.querySelector(".trade__price") as HTMLElement)?.innerText) ||
+        0;
       const size =
         parseFloat(
-          (element.querySelector('.trade__amount__base') as HTMLElement)
-            .innerText
-        ) || 0
-      const side: 'buy' | 'sell' = element.classList.contains('-buy')
-        ? 'buy'
-        : 'sell'
+          (element.querySelector(".trade__amount__base") as HTMLElement).innerText
+        ) || 0;
+      const side: "buy" | "sell" = element.classList.contains("-buy") ? "buy" : "sell";
       const amount =
-        size * (this.$store.state.settings.preferQuoteCurrencySize ? price : 1)
+        size * (this.$store.state.settings.preferQuoteCurrencySize ? price : 1);
       const trade: Trade = {
-        timestamp: timestamp as unknown as number,
+        timestamp: (timestamp as unknown) as number,
         exchange,
         pair,
         price,
         amount,
         size,
-        side
+        side,
+      };
+
+      if (element.classList.contains("-liquidation")) {
+        trade.liquidation = true;
       }
 
-      if (element.classList.contains('-liquidation')) {
-        trade.liquidation = true
-      }
-
-      trades.push(trade)
+      trades.push(trade);
     }
 
-    this.feed.clear()
-    this.feed.processTradesSilent(trades)
+    this.feed.clear();
+    this.feed.processTradesSilent(trades);
   }
 }
 </script>
@@ -286,7 +277,7 @@ export default class Trades extends Mixins(PaneMixin) {
       flex-grow: 0.5;
 
       &:before {
-        font-family: 'icon';
+        font-family: "icon";
         font-weight: 400;
         font-size: 1em;
         line-height: 0;
@@ -314,7 +305,7 @@ export default class Trades extends Mixins(PaneMixin) {
 
       @each $exchange, $icon in $exchange-list {
         .-#{$exchange} .trade__exchange {
-          background-image: url('../../assets/exchanges/#{$exchange}.svg');
+          background-image: url("../../assets/exchanges/#{$exchange}.svg");
         }
       }
     }
@@ -340,7 +331,7 @@ export default class Trades extends Mixins(PaneMixin) {
   padding: 0 2rem 0 1.5rem;
 
   &:after {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -487,7 +478,7 @@ export default class Trades extends Mixins(PaneMixin) {
   }
 }
 
-#app[data-prefered-sizing-currency='base'] .trade .trade__amount {
+#app[data-prefered-sizing-currency="base"] .trade .trade__amount {
   .trade__amount__quote {
     display: none;
   }

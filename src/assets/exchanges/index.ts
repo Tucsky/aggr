@@ -20,6 +20,7 @@ import BITGET from './BITGET.svg'
 import MEXC from './MEXC.svg'
 import GATEIO from './GATEIO.svg'
 import CRYPTOCOM from './CRYPTOCOM.svg'
+import BITMART from './BITMART.svg'
 
 export default {
   BINANCE,
@@ -43,5 +44,6 @@ export default {
   BITGET,
   MEXC,
   GATEIO,
-  CRYPTOCOM
+  CRYPTOCOM,
+  BITMART
 }
