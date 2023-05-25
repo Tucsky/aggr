@@ -212,7 +212,7 @@ import { Preset } from '@/types/types'
     }
   }
 })
-export default class extends Vue {
+export default class Thresholds extends Vue {
   paneId: string
   thresholds: Threshold[]
   type: string

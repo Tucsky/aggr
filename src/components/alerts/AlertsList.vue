@@ -174,7 +174,7 @@ import { formatMarketPrice } from '@/services/productsService'
     }
   }
 })
-export default class extends Vue {
+export default class AlertsList extends Vue {
   dropdownAlert: MarketAlert = null
   alertDropdownTrigger: HTMLElement = null
   indexes: MarketAlerts[] = []

@@ -41,7 +41,7 @@ const emojisRanges = [
 @Component({
   name: 'EmojiPicker'
 })
-export default class extends Vue {
+export default class EmojiPicker extends Vue {
   index = 0
 
   get canPrev() {

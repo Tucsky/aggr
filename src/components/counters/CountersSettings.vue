@@ -66,7 +66,7 @@ import { Component, Vue } from 'vue-property-decorator'
     }
   }
 })
-export default class extends Vue {
+export default class CountersSettings extends Vue {
   paneId: string
 
   get countersCount() {

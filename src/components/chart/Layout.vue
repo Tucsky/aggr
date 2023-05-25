@@ -59,7 +59,7 @@ import ChartPriceScale from './PriceScale.vue'
     }
   }
 })
-export default class extends Vue {
+export default class Layout extends Vue {
   paneId: string
   layouting: string
   unsyncableMoveId: string

@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class BINANCE extends Exchange {
   id = 'BINANCE'
   private lastSubscriptionId = 0
   private subscriptions = {}

@@ -1,7 +1,7 @@
 import Exchange from '../exchange'
 import pako from 'pako'
 
-export default class extends Exchange {
+export default class HUOBI extends Exchange {
   id = 'HUOBI'
 
   liquidationOrdersSubscriptions = {}

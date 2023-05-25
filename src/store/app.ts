@@ -86,10 +86,10 @@ const actions = {
     await dispatch('getApiSupportedPairs')
     commit(
       'SET_API_SUPPORTED_TIMEFRAMES',
-      process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES
+      import.meta.env.VITE_APP_API_SUPPORTED_TIMEFRAMES
     )
-    commit('SET_VERSION', process.env.VUE_APP_VERSION)
-    commit('SET_BUILD_DATE', process.env.VUE_APP_BUILD_DATE)
+    commit('SET_VERSION', import.meta.env.VITE_APP_VERSION)
+    commit('SET_BUILD_DATE', import.meta.env.VITE_APP_BUILD_DATE)
   },
   setBooted({ commit }, value = true) {
     commit('SET_BOOTED', value)

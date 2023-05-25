@@ -98,7 +98,7 @@ import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
     }
   }
 })
-export default class extends Vue {
+export default class IndicatorOption extends Vue {
   private indicatorId: string
   private paneId: string
   private plotTypes: string[]

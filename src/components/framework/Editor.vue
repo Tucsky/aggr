@@ -27,7 +27,7 @@ ace.config.set(
     }
   }
 })
-export default class extends Vue {
+export default class Editor extends Vue {
   private value: string
   private fontSize: number
   private minimal: boolean

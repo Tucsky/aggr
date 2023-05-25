@@ -68,7 +68,7 @@ import Slider from '../framework/picker/Slider.vue'
   components: { Slider },
   name: 'AudioSettings'
 })
-export default class extends Vue {
+export default class AudioSettings extends Vue {
   filters: string[] = []
   filtersDescriptions = {
     HighPassFilter:

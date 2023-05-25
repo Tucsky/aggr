@@ -19,7 +19,7 @@ import { toPlainString } from '@/utils/helpers'
   name: 'Editable',
   props: ['value', 'step', 'min', 'max', 'editable', 'disabled']
 })
-export default class extends Vue {
+export default class Editable extends Vue {
   editable: boolean
   private value: string
   private min: number

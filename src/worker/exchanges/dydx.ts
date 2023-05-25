@@ -1,7 +1,7 @@
 import { Trade } from '../../types/types'
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class DYDX extends Exchange {
   id = 'DYDX'
 
   protected endpoints = { PRODUCTS: 'https://api.dydx.exchange/v3/markets' }

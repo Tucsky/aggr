@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class PHEMEX extends Exchange {
   id = 'PHEMEX'
   leverages = []
   currencies = []

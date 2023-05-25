@@ -10,12 +10,6 @@ import Presets from '@/components/framework/Presets.vue'
 import autofocus from '@/directives/autofocusDirective'
 import draggableMarket from '@/directives/draggableMarketDirective'
 
-import runtime from 'serviceworker-webpack-plugin/lib/runtime'
-
-if ('serviceWorker' in navigator) {
-  runtime.register()
-}
-
 Vue.use(VueTippy, {
   maxWidth: '200px',
   duration: 0,
@@ -27,10 +21,10 @@ Vue.use(VueTippy, {
   boundary: 'window'
 })
 
-Vue.component('tippy', TippyComponent)
-Vue.component('dropdown', Dropdown)
-Vue.component('editable', Editable)
-Vue.component('presets', Presets)
+Vue.component('TippyComponent', TippyComponent)
+Vue.component('DropdownComponent', Dropdown)
+Vue.component('EditableComponent', Editable)
+Vue.component('PresetsComponent', Presets)
 Vue.directive('autofocus', autofocus)
 Vue.directive('draggable-market', draggableMarket)
 

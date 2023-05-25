@@ -204,18 +204,12 @@ export default {
       return store.state[this.paneId].buckets[this.bucketId].color
     },
     conditionnalColor: function () {
-      if (
-        typeof store.state[this.paneId].buckets[this.bucketId]
-          .conditionnalColor === 'undefined'
-      ) {
-        this.$set(
-          store.state[this.paneId].buckets[this.bucketId],
-          'conditionnalColor',
-          false
-        )
-      }
-
-      return store.state[this.paneId].buckets[this.bucketId].conditionnalColor
+	    const bucket = store.state[this.paneId].buckets[this.bucketId];
+		
+		if (typeof bucket.conditionnalColor === 'undefined') {
+			this.setConditionnalColor(false);
+		}
+		return bucket.conditionnalColor;
     },
     enabled: function () {
       return store.state[this.paneId].buckets[this.bucketId].enabled
@@ -261,6 +255,10 @@ export default {
       await this.close()
 
       this.$store.commit(this.paneId + '/REMOVE_BUCKET', this.bucketId)
+    },
+    setConditionnalColor(value) {
+      const bucket = store.state[this.paneId].buckets[this.bucketId]
+      this.$set(bucket, 'conditionnalColor', value)
     }
   }
 }
