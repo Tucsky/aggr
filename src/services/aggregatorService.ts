@@ -3,7 +3,7 @@ import { AggregatorPayload } from '@/types/types'
 import { randomString } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
-import { aggregatorWorkerInstance } from '@/worker/index'
+import aggregatorWorkerInstance from '@/worker/index'
 import dialogService from './dialogService'
 import notificationService from './notificationService'
 import {
@@ -31,7 +31,6 @@ class AggregatorService extends EventEmitter {
     this.worker.addEventListener('message', event => {
       this.emit(event.data.op, event.data.data, event.data.trackingId)
     })
-    
 
     this.listenUtilityEvents()
   }
