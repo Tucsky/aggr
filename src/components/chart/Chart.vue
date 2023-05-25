@@ -161,7 +161,6 @@ export default class ChartComponent extends Mixins(PaneMixin) {
   }
 
   onTrades(trades: Trade[]) {
-
     this.chart.queueTrades(trades)
   }
 

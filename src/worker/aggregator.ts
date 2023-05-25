@@ -51,6 +51,7 @@ class Aggregator {
   }
 
   bindTradesEvent() {
+    console.log('bind trades event')
     for (const exchange of exchanges) {
       exchange.off('trades')
       exchange.off('liquidations')
