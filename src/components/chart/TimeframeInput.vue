@@ -36,7 +36,7 @@ import EditableVue from '../framework/Editable.vue'
     }
   }
 })
-export default class extends Vue {
+export default class TimeframeInput extends Vue {
   disabled
 
   $refs!: {

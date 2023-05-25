@@ -10,11 +10,6 @@ import Presets from '@/components/framework/Presets.vue'
 import autofocus from '@/directives/autofocusDirective'
 import draggableMarket from '@/directives/draggableMarketDirective'
 
-import runtime from 'serviceworker-webpack-plugin/lib/runtime'
-
-if ('serviceWorker' in navigator) {
-  runtime.register()
-}
 
 Vue.use(VueTippy, {
   maxWidth: '200px',

@@ -72,7 +72,7 @@ interface CounterStep {
   components: { PaneHeader },
   name: 'Counters'
 })
-export default class extends Mixins(PaneMixin) {
+export default class Counters extends Mixins(PaneMixin) {
   steps: CounterStep[] = []
 
   private _populateCountersInterval: number

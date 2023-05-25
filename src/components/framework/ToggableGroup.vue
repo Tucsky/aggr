@@ -48,7 +48,7 @@ import TransitionHeight from './TransitionHeight.vue'
     }
   }
 })
-export default class extends Vue {}
+export default class TogglableGroup extends Vue {}
 </script>
 <style lang="scss" scoped>
 .toggable-group {

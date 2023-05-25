@@ -12,7 +12,7 @@ export type ExchangesState = { [exchangeId: string]: ExchangeSettings } & {
   _exchanges: string[]
 }
 
-const supportedExchanges = process.env.VUE_APP_EXCHANGES.split(',').map(id =>
+const supportedExchanges = import.meta.env.VITE_APP_EXCHANGES.split(',').map(id =>
   id.toUpperCase()
 )
 

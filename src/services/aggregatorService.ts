@@ -3,7 +3,7 @@ import { AggregatorPayload } from '@/types/types'
 import { randomString } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
-import Worker from 'worker-loader!@/worker/aggregator'
+import { aggregatorWorkerInstance } from '@/worker/index'
 import dialogService from './dialogService'
 import notificationService from './notificationService'
 import {
@@ -17,6 +17,7 @@ import workspacesService from './workspacesService'
 
 class AggregatorService extends EventEmitter {
   public worker: Worker
+
   private normalizeDecimalsQueue: {
     timeout?: number
     markets: string[]
@@ -25,11 +26,12 @@ class AggregatorService extends EventEmitter {
   constructor() {
     super()
 
-    this.worker = new Worker()
+    this.worker = aggregatorWorkerInstance
 
     this.worker.addEventListener('message', event => {
       this.emit(event.data.op, event.data.data, event.data.trackingId)
     })
+    
 
     this.listenUtilityEvents()
   }

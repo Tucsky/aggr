@@ -1,7 +1,7 @@
 import Exchange from '../exchange'
 import { sleep } from '../helpers/utils'
 
-export default class extends Exchange {
+export default class BINANCE_FUTURES extends Exchange {
   id = 'BINANCE_FUTURES'
   private lastSubscriptionId = 0
   private subscriptions = {}

@@ -837,6 +837,7 @@ class Aggregator {
 const aggregator = new Aggregator()
 
 self.addEventListener('message', (event: any) => {
+  console.log(event)
   const payload = event.data as AggregatorPayload
 
   if (typeof aggregator[payload.op] === 'function') {

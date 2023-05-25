@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class BITSTAMP extends Exchange {
   id = 'BITSTAMP'
   protected endpoints = {
     PRODUCTS: 'https://www.bitstamp.net/api/v2/trading-pairs-info/'

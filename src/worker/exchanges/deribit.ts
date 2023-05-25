@@ -1,7 +1,7 @@
 import { Trade } from '@/types/types'
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class DERIBIT extends Exchange {
   id = 'DERIBIT'
 
   private types: { [pair: string]: 'reversed' | 'linear' }

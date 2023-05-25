@@ -473,7 +473,7 @@ import ToggableSection from '@/components/framework/ToggableSection.vue'
     }
   }
 })
-export default class extends Vue {
+export default class TradesSettings extends Vue {
   paneId: string
   secondsAgoExample = '0s ago'
 

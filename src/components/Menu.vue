@@ -188,7 +188,7 @@ import SettingsDialog from './settings/SettingsDialog.vue'
     Slider
   }
 })
-export default class extends Vue {
+export default class Menu extends Vue {
   volumeSliderOpened = false
   isFullscreen = false
   open = false

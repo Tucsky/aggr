@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class GATEIO extends Exchange {
   id = 'GATEIO'
   protected endpoints: { [id: string]: any } = {
     PRODUCTS: [

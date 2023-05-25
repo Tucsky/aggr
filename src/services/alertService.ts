@@ -48,7 +48,7 @@ export enum AlertEventType {
 class AlertService {
   alerts: { [market: string]: MarketAlert[] } = {}
 
-  private publicVapidKey = process.env.VUE_APP_PUBLIC_VAPID_KEY
+  private publicVapidKey = import.meta.env.VITE_APP_PUBLIC_VAPID_KEY
   private pushSubscription: PushSubscription
   private url: string
   private _promiseOfSync: Promise<void>

@@ -76,7 +76,7 @@ import { GridItem } from '@/store/panes'
       import(/* webpackChunkName: "Alerts"*/ '@/components/alerts/Alerts.vue')
   }
 })
-export default class extends Vue {
+export default class Panes extends Vue {
   draggable = true
   resizable = true
   rowHeight = 80

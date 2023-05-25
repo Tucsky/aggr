@@ -79,7 +79,7 @@ type MarketStats = Market & {
   components: { PaneHeader, PricesSortDropdown },
   name: 'Prices'
 })
-export default class extends Mixins(PaneMixin) {
+export default class Prices extends Mixins(PaneMixin) {
   mode = 'vertical'
   pauseSort = false
   markets: MarketStats[] = []

@@ -51,7 +51,7 @@ import { Component, Vue } from 'vue-property-decorator'
     }
   }
 })
-export default class extends Vue {
+export default class DropdownButton extends Vue {
   private value: any
   private placeholder: string
   private options: any[] | { [key: string]: any }

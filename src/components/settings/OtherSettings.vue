@@ -112,7 +112,7 @@ import TransitionHeight from '@/components/framework/TransitionHeight.vue'
     TransitionHeight
   }
 })
-export default class extends Vue {
+export default class OtherSettings extends Vue {
   responsiveEnabled: boolean = null
 
   get animationsEnabled() {

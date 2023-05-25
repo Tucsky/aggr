@@ -87,7 +87,7 @@ import { Trade } from '@/types/types'
     Btn
   }
 })
-export default class extends Mixins(PaneMixin) {
+export default class ChartComponent extends Mixins(PaneMixin) {
   axis = {
     top: 0,
     left: 0,
@@ -161,6 +161,7 @@ export default class extends Mixins(PaneMixin) {
   }
 
   onTrades(trades: Trade[]) {
+
     this.chart.queueTrades(trades)
   }
 

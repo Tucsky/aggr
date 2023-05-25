@@ -84,7 +84,8 @@ import { getEventCords } from '../../utils/helpers'
     }
   }
 })
-export default class extends Vue {
+
+export default class Dialog extends Vue {
   size: string
   closeOnEscape: boolean
   delta = { x: 0, y: 0 }

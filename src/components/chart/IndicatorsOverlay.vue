@@ -92,7 +92,7 @@ import IndicatorLibraryDialog from '@/components/chart/IndicatorLibraryDialog.vu
     }
   }
 })
-export default class extends Vue {
+export default class IndicatorsOverlay extends Vue {
   private paneId: string
   private value: boolean
 

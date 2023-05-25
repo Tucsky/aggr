@@ -39,7 +39,7 @@ import AlertsList from '@/components/alerts/AlertsList.vue'
   components: { PaneHeader, ToggableSection, AlertsList, Btn },
   name: 'Alerts'
 })
-export default class extends Mixins(PaneMixin) {
+export default class Alerts extends Mixins(PaneMixin) {
   query = ''
 }
 </script>

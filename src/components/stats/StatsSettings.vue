@@ -102,7 +102,7 @@ import { getHms } from '@/utils/helpers'
     }
   }
 })
-export default class extends Vue {
+export default class StatsSettings extends Vue {
   paneId: string
 
   get enableChart() {

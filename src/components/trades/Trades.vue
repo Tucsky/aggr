@@ -76,7 +76,7 @@ import Slider from '@/components/framework/picker/Slider.vue'
   components: { PaneHeader, TradesPlaceholder, Slider },
   name: 'Trades'
 })
-export default class extends Mixins(PaneMixin) {
+export default class Trades extends Mixins(PaneMixin) {
   showPlaceholder = true
   sliderDropdownTrigger = null
 

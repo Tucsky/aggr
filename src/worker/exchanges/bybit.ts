@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class BYBIT extends Exchange {
   id = 'BYBIT'
   protected endpoints = {
     PRODUCTS: [

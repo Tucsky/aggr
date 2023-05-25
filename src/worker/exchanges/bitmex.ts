@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class BITMEX extends Exchange {
   id = 'BITMEX'
   private xbtPrice = 48000
   private types: { [pair: string]: 'quanto' | 'inverse' | 'linear' }

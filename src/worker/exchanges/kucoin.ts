@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class KUCOIN extends Exchange {
   id = 'KUCOIN'
 
   protected endpoints: { [id: string]: any } = {
@@ -18,7 +18,7 @@ export default class extends Exchange {
     }
 
     return fetch(
-      process.env.VUE_APP_PROXY_URL +
+      import.meta.env.VITE_APP_PROXY_URL +
         'https://api.kucoin.com/api/v1/bullet-public',
       {
         method: 'POST'

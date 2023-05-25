@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class COINBASE extends Exchange {
   id = 'COINBASE'
 
   protected endpoints = { PRODUCTS: 'https://api.pro.coinbase.com/products' }

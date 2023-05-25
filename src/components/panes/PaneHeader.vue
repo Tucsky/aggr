@@ -149,7 +149,7 @@ import dialogService from '@/services/dialogService'
     Btn
   }
 })
-export default class extends Vue {
+export default class PaneHeader extends Vue {
   private settings?: () => Promise<any>
   paneId: string
   paneDropdownTrigger = null

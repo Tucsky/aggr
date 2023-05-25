@@ -66,7 +66,7 @@ import Component from 'vue-class-component'
     }
   }
 })
-export default class extends Vue {
+export default class MarketsOverlay extends Vue {
   private paneId: string
   showOverlay = false
 

@@ -98,7 +98,7 @@ enum TradeType {
     Slider
   }
 })
-export default class extends Mixins(PaneMixin) {
+export default class TradesLite extends Mixins(PaneMixin) {
   private ctx: CanvasRenderingContext2D
   private width: number
   private maxWidth: number

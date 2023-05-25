@@ -461,7 +461,7 @@ export default {
   async created() {
     await this.getWorkspaces()
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (import.meta.env.NODE_ENV !== 'production') {
       this.getHits()
     }
   },

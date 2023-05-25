@@ -21,7 +21,7 @@ import { Component, Vue } from 'vue-property-decorator'
     }
   }
 })
-export default class extends Vue {
+export default class Tab extends Vue {
   selected = false
 
   select() {
