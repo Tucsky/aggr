@@ -59,8 +59,8 @@ export default class Bucket {
 
     this.clear()
 
-    if (module.hot) {
-      module.hot.dispose(() => {
+    if (import.meta.hot) {
+      import.meta.hot.dispose(() => {
         this.unbind()
       })
     }
