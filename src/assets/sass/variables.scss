@@ -158,3 +158,57 @@ $exchange-list: (
 * EXCHANGES FOOTER
 * DO NOT CHANGE OR REMOVE
 **/
+
+/**
+* EXCHANGES HEADER
+* DO NOT CHANGE OR REMOVE
+**/
+$exchanges-BINANCE: "\e960";
+$exchanges-BINANCE_FUTURES: "\e961";
+$exchanges-BINANCE_US: "\e962";
+$exchanges-BITFINEX: "\e963";
+$exchanges-BITGET: "\e964";
+$exchanges-BITMEX: "\e965";
+$exchanges-BITSTAMP: "\e966";
+$exchanges-BYBIT: "\e967";
+$exchanges-COINBASE: "\e968";
+$exchanges-DERIBIT: "\e969";
+$exchanges-DYDX: "\e96a";
+$exchanges-GATEIO: "\e96b";
+$exchanges-HITBTC: "\e96c";
+$exchanges-HUOBI: "\e96d";
+$exchanges-KRAKEN: "\e96e";
+$exchanges-KUCOIN: "\e96f";
+$exchanges-MEXC: "\e970";
+$exchanges-OKEX: "\e971";
+$exchanges-PHEMEX: "\e972";
+$exchanges-POLONIEX: "\e973";
+$exchanges-UNISWAP: "\e974";
+
+$exchange-list: (
+	'BINANCE': $exchanges-BINANCE,
+	'BINANCE_FUTURES': $exchanges-BINANCE_FUTURES,
+	'BINANCE_US': $exchanges-BINANCE_US,
+	'BITFINEX': $exchanges-BITFINEX,
+	'BITGET': $exchanges-BITGET,
+	'BITMEX': $exchanges-BITMEX,
+	'BITSTAMP': $exchanges-BITSTAMP,
+	'BYBIT': $exchanges-BYBIT,
+	'COINBASE': $exchanges-COINBASE,
+	'DERIBIT': $exchanges-DERIBIT,
+	'DYDX': $exchanges-DYDX,
+	'GATEIO': $exchanges-GATEIO,
+	'HITBTC': $exchanges-HITBTC,
+	'HUOBI': $exchanges-HUOBI,
+	'KRAKEN': $exchanges-KRAKEN,
+	'KUCOIN': $exchanges-KUCOIN,
+	'MEXC': $exchanges-MEXC,
+	'OKEX': $exchanges-OKEX,
+	'PHEMEX': $exchanges-PHEMEX,
+	'POLONIEX': $exchanges-POLONIEX,
+	'UNISWAP': $exchanges-UNISWAP
+);
+/**
+* EXCHANGES FOOTER
+* DO NOT CHANGE OR REMOVE
+**/
