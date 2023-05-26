@@ -10,8 +10,8 @@ export default {
     }
   },
   created() {
-    if (module.hot) {
-      module.hot.dispose(() => {
+    if (import.meta.hot) {
+      import.meta.hot.dispose(() => {
         this.close()
       })
     }
