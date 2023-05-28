@@ -608,8 +608,8 @@ export default class extends Mixins(PaneMixin) {
       ]
 
       const sellColorRangeTheme = [
-        rgbaToRgb(buyColorFrom, themeBackgroundColor),
-        rgbaToRgb(buyColorTo, themeBackgroundColor)
+        rgbaToRgb(sellColorFrom, themeBackgroundColor),
+        rgbaToRgb(sellColorTo, themeBackgroundColor)
       ]
 
       const buy = []
