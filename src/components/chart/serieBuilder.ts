@@ -8,7 +8,9 @@ import {
   IndicatorFunction,
   LoadedIndicator,
   IndicatorReference,
-  IndicatorMarkets
+  IndicatorMarkets,
+  IndicatorSource,
+  MarketsFilters
 } from './chart'
 import store from '@/store'
 import {
@@ -78,19 +80,12 @@ export default class SerieBuilder {
       variables: result.variables,
       references: result.references,
       markets: result.markets,
+      sources: result.sources,
       plots: result.plots
     }
   }
 
-  /**
-   * replace shorthands with real variables names :
-   * replace 'bar' with renderer.bar
-   * replace all data (vbuy, vsell etc) from bar with renderer.bar.*
-   * remove spaces (keep new lines)
-   * @param input
-   * @returns
-   */
-  normalizeInput(input, strings) {
+  normalizeCommonVariables(input) {
     input = input.replace(
       /([^.])?\b(indicatorId)\b/gi,
       `$1'${this.indicatorId}'`
@@ -104,60 +99,6 @@ export default class SerieBuilder {
       /([^.]|^)\b(time)\b([^:])/gi,
       '$1renderer.localTimestamp$3'
     )
-    input = input.replace(/(\n|^)\s*?\/\/.*/g, '')
-
-    const STRING_REGEX = /'([^']*)'|"([^"]*)"/
-    let stringMatch = null
-    let iterations = 0
-
-    do {
-      if ((stringMatch = STRING_REGEX.exec(input))) {
-        let refIndex = strings.indexOf(stringMatch[0])
-
-        if (refIndex === -1) {
-          refIndex = strings.push(stringMatch[0]) - 1
-        }
-        input =
-          input.slice(0, stringMatch.index) +
-          '#STRING_' +
-          refIndex +
-          '#' +
-          input.slice(stringMatch.index + stringMatch[0].length)
-      }
-    } while (stringMatch && ++iterations < 1000)
-
-    // input = input.replace(/[^\S\r\n]/g, '')
-
-    const PARANTHESIS_REGEX = /\(/g
-    let paranthesisMatch
-    iterations = 0
-
-    do {
-      if ((paranthesisMatch = PARANTHESIS_REGEX.exec(input))) {
-        const closingParenthesisIndex = findClosingBracketMatchIndex(
-          input,
-          paranthesisMatch.index,
-          /\(|{|\[/,
-          /\)|}|\]/
-        )
-
-        if (closingParenthesisIndex !== -1) {
-          const contentWithinParenthesis = input
-            .slice(paranthesisMatch.index + 1, closingParenthesisIndex)
-            .replace(/\n/g, ' ')
-
-          input =
-            input.slice(0, paranthesisMatch.index) +
-            input.slice(paranthesisMatch.index, paranthesisMatch.index + 1) +
-            contentWithinParenthesis.replace(/\n/g, '') +
-            input.slice(closingParenthesisIndex, closingParenthesisIndex + 1) +
-            '\n' +
-            input.slice(closingParenthesisIndex + 1, input.length)
-
-          PARANTHESIS_REGEX.lastIndex = closingParenthesisIndex
-        }
-      }
-    } while (paranthesisMatch && ++iterations < 1000)
 
     return input
   }
@@ -213,13 +154,14 @@ export default class SerieBuilder {
     const variables: IndicatorVariable[] = []
     const plots: IndicatorPlot[] = []
     const markets: IndicatorMarkets = {}
+    const sources: IndicatorSource[] = []
     const references: IndicatorReference[] = []
     const strings = []
 
-    let output = this.normalizeInput(input, strings)
-
+    let output = this.parseSources(input, sources)
+    output = this.normalizeCommonVariables(output)
+    output = this.parseStrings(output, strings)
     output = this.parseVariables(output, variables)
-
     output = this.parseMarkets(output, markets)
 
     for (let i = 0; i < strings.length; i++) {
@@ -240,8 +182,66 @@ export default class SerieBuilder {
       variables,
       plots,
       markets,
-      references
+      references,
+      sources
     }
+  }
+
+  parseStrings(input, strings) {
+    input = input.replace(/(\n|^)\s*?\/\/.*/g, '')
+
+    const STRING_REGEX = /'([^']*)'|"([^"]*)"/
+    let stringMatch = null
+    let iterations = 0
+
+    do {
+      if ((stringMatch = STRING_REGEX.exec(input))) {
+        let refIndex = strings.indexOf(stringMatch[0])
+
+        if (refIndex === -1) {
+          refIndex = strings.push(stringMatch[0]) - 1
+        }
+        input =
+          input.slice(0, stringMatch.index) +
+          '#STRING_' +
+          refIndex +
+          '#' +
+          input.slice(stringMatch.index + stringMatch[0].length)
+      }
+    } while (stringMatch && ++iterations < 1000)
+
+    const PARANTHESIS_REGEX = /\(/g
+    let paranthesisMatch
+    iterations = 0
+
+    do {
+      if ((paranthesisMatch = PARANTHESIS_REGEX.exec(input))) {
+        const closingParenthesisIndex = findClosingBracketMatchIndex(
+          input,
+          paranthesisMatch.index,
+          /\(|{|\[/,
+          /\)|}|\]/
+        )
+
+        if (closingParenthesisIndex !== -1) {
+          const contentWithinParenthesis = input
+            .slice(paranthesisMatch.index + 1, closingParenthesisIndex)
+            .replace(/\n/g, ' ')
+
+          input =
+            input.slice(0, paranthesisMatch.index) +
+            input.slice(paranthesisMatch.index, paranthesisMatch.index + 1) +
+            contentWithinParenthesis.replace(/\n/g, '') +
+            input.slice(closingParenthesisIndex, closingParenthesisIndex + 1) +
+            '\n' +
+            input.slice(closingParenthesisIndex + 1, input.length)
+
+          PARANTHESIS_REGEX.lastIndex = closingParenthesisIndex
+        }
+      }
+    } while (paranthesisMatch && ++iterations < 1000)
+
+    return input
   }
 
   formatOutput(input) {
@@ -379,33 +379,9 @@ export default class SerieBuilder {
 
     // plot function arguments ['sma($price.close,options.smaLength)','color=red']
     const args = parseFunctionArguments(rawFunctionArguments)
-    const serieOptions: { [key: string]: any } = {}
 
     // parse and store serie options in dedicated object (eg. color=red in plotline arguments)
-    for (let i = 1; i < args.length; i++) {
-      try {
-        const [, key, value] = args[i].match(/^(\w+)\s*=(.*)/)
-
-        if (!key || !value.length) {
-          continue
-        }
-
-        let parsedValue = value.trim()
-
-        try {
-          parsedValue = JSON.parse(parsedValue)
-        } catch (error) {
-          // value a string
-        }
-
-        serieOptions[key.trim()] = parsedValue
-
-        args.splice(i, 1)
-        i--
-      } catch (error) {
-        continue
-      }
-    }
+    const serieOptions = this.parseCustomArguments(args, 1)
 
     // prepare final input that goes in plotline (store it for reference)
     const pointVariable = `renderer.indicators['${this.indicatorId}'].series[${plots.length}]`
@@ -483,6 +459,38 @@ export default class SerieBuilder {
       expectedInput: expectedInput,
       options: serieOptions
     })
+
+    return output
+  }
+
+  parseCustomArguments(args, startIndex = 0): { [key: string]: any } {
+    const output: { [key: string]: any } = {}
+
+    for (let i = startIndex; i < args.length; i++) {
+      try {
+        const [, key, value] = args[i].match(/^(\w+)\s*=(.*)/)
+
+        if (!key || !value.length) {
+          continue
+        }
+
+        let parsedValue = value.trim()
+
+        try {
+          parsedValue = JSON.parse(parsedValue)
+        } catch (error) {
+          // value a string
+          parsedValue = parsedValue.replace(/^'(.*)'$|^"(.*)"$/, '$1$2')
+        }
+
+        output[key.trim()] = parsedValue
+
+        args.splice(i, 1)
+        i--
+      } catch (error) {
+        continue
+      }
+    }
 
     return output
   }
@@ -598,6 +606,47 @@ export default class SerieBuilder {
           .join(',')})${output.slice(customArgsEndIndex + 1, output.length)}`
 
         instructions.push(instruction)
+      }
+    } while (functionMatch && ++iterations < 1000)
+
+    return output
+  }
+
+  parseSources(output, sources) {
+    const SOURCE_FUNCTION_REGEX = new RegExp(`source\\(`, 'g')
+    let functionMatch = null
+    let iterations = 0
+
+    do {
+      if ((functionMatch = SOURCE_FUNCTION_REGEX.exec(output))) {
+        const customArgsStartIndex = functionMatch.index
+        const customArgsEndIndex = findClosingBracketMatchIndex(
+          output,
+          customArgsStartIndex + functionMatch[0].length - 1
+        )
+        const options = parseFunctionArguments(
+          output.slice(
+            customArgsStartIndex + functionMatch[0].length,
+            customArgsEndIndex
+          )
+        )
+
+        let prop
+
+        if (options[0].indexOf('=') === -1) {
+          prop = options.shift().replace(/\W/g, '')
+        }
+
+        const filters = this.parseCustomArguments(options)
+
+        output = output.replace(
+          output.slice(customArgsStartIndex, customArgsEndIndex + 1),
+          `#SOURCE${sources.length}#`
+        )
+        sources.push({
+          prop,
+          filters
+        })
       }
     } while (functionMatch && ++iterations < 1000)
 
@@ -795,7 +844,100 @@ export default class SerieBuilder {
     return output
   }
 
-  getAdapter(output) {
+  getSourcedOutput(
+    model: IndicatorTranspilationResult,
+    marketFilters: MarketsFilters
+  ) {
+    const products = store.state.panes.marketsListeners
+    let output = model.output
+
+    const shouldAvgProps = ['open', 'high', 'low', 'close']
+
+    for (let i = 0; i < model.sources.length; i++) {
+      const markets = []
+
+      const sourceId = `#SOURCE${i}#`
+
+      const prop = model.sources[i].prop
+      const filters = model.sources[i].filters
+
+      for (const marketId in marketFilters) {
+        if (filters.type && products[marketId].type !== filters.type) {
+          continue
+        }
+        if (
+          filters.exchange &&
+          products[marketId].exchange !== filters.exchange
+        ) {
+          continue
+        }
+        if (filters.quote && products[marketId].quote !== filters.quote) {
+          continue
+        }
+
+        markets.push(marketId)
+      }
+
+      if (!markets.length) {
+        output = output.replace(sourceId, '0')
+        continue
+      }
+
+      if (prop) {
+        if (shouldAvgProps.indexOf(prop) !== -1) {
+          output = output.replace(
+            sourceId,
+            `(() => {
+              let count = 0;
+              let sum = 0;
+              ${markets
+                .map(
+                  market => `if (renderer.sources['${market}'].${prop}) {
+                count++;
+                sum += renderer.sources['${market}'].${prop}
+              }`
+                )
+                .join(';')}
+              return sum / count
+            })()`
+          )
+        } else {
+          output = output.replace(
+            sourceId,
+            `(${markets
+              .map(market => `renderer.sources['${market}'].${prop}`)
+              .join('+')})`
+          )
+        }
+      } else {
+        output = output.replace(
+          sourceId,
+          `{
+            timestamp: renderer.timestamp,
+            localTimestamp: renderer.localTimestamp,
+            sources: {
+              ${markets
+                .map(market => `'${market}': renderer.sources['${market}']`)
+                .join(',')}
+            },
+          }`
+        )
+      }
+    }
+
+    return output
+  }
+
+  getAdapter(
+    model: IndicatorTranspilationResult,
+    marketFilters: MarketsFilters
+  ) {
+    let sourcedOutput = model.output
+
+    if (model.sources.length) {
+      sourcedOutput = this.getSourcedOutput(model, marketFilters)
+    }
+
     return (function () {
       'use strict'
       return new Function(
@@ -805,7 +947,7 @@ export default class SerieBuilder {
         'series',
         'options',
         'utils',
-        '"use strict"; ' + output
+        '"use strict"; ' + sourcedOutput
       )
     })() as IndicatorRealtimeAdapter
   }
