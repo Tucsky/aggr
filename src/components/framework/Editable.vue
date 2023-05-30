@@ -181,7 +181,7 @@ export default class extends Vue {
       }, 100) as unknown as number
     }
 
-    ;(this.$el as any).innerText = text
+    ;(this.$el as HTMLElement).innerText = text
 
     if (this._emitTimeout) {
       clearTimeout(this._emitTimeout)
@@ -191,8 +191,7 @@ export default class extends Vue {
       this.$emit('input', text)
     }, 50) as unknown as number
   }
-
-  onWheel(event) {
+  onWheel(event: WheelEvent) {
     const focusedElement = document.activeElement as HTMLElement
 
     if (focusedElement !== event.target || !focusedElement.isContentEditable) {

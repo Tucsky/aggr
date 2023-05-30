@@ -231,7 +231,7 @@ export default class extends Vue {
       background: 0;
 
       &:before {
-        font-family: 'icon';
+        font-family: 'exchanges', 'icon';
         font-size: 0.75em;
         content: $icon-down-thin;
         display: block;

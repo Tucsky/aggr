@@ -92,6 +92,10 @@ textarea.form-control {
   i[class^='icon-'] {
     vertical-align: text-bottom;
   }
+
+  i[class^='exchanges-'] {
+    vertical-align: text-bottom;
+  }
 }
 
 ::-webkit-input-placeholder {
@@ -314,7 +318,7 @@ textarea.form-control {
 
     &:before,
     &:after {
-      font-family: 'icon';
+      font-family: 'exchanges', 'icon';
       font-size: 1em;
       position: absolute;
       left: 0;
@@ -331,9 +335,10 @@ textarea.form-control {
       pointer-events: none;
     }
 
-    &:not([class^='icon-']):before {
+    &:not([class^='exchanges-']):not([class^='icon-']):before {
       content: unicode($icon-check);
     }
+
 
     &:after {
       transform: none;
