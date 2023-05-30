@@ -28,6 +28,7 @@ import DropdownButton from '@/components/framework/DropdownButton.vue'
   }
 })
 export default class extends Vue {
+  label: string
   donationMenu = [
     {
       label: 'Ethereum',

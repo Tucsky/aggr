@@ -124,7 +124,7 @@ export default class extends Mixins(PaneMixin) {
     this._populateCountersInterval = setInterval(
       this.populateCounters.bind(this),
       this.countersGranularity
-    )
+    ) as unknown as number
   }
 
   mounted() {

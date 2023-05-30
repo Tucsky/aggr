@@ -120,7 +120,9 @@ export default class Bucket {
     if (!this.stacks.length || this.stacks[this.stacks.length - 1]) {
       this.stacks.push(0)
 
-      this.timeouts.push(setTimeout(this.shiftStack.bind(this), this.window))
+      this.timeouts.push(
+        setTimeout(this.shiftStack.bind(this), this.window) as unknown as number
+      )
     }
 
     this.timestamp = timestamp

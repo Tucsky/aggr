@@ -534,7 +534,7 @@ class Aggregator {
       }
 
       this.connectionChange = 0
-    }, 3000)
+    }, 3000) as unknown as number
   }
 
   createBucket(): Volumes {

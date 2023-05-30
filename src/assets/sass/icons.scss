@@ -514,3 +514,8 @@ $iconpath: '../fonts';
     content: $icon-MEXC;
   }
 }
+.icon-GATEIO {
+  &:before {
+    content: $icon-GATEIO;
+  }
+}

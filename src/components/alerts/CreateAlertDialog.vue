@@ -59,7 +59,7 @@
   </transition>
 </template>
 
-<script>
+<script lang="ts">
 import DialogMixin from '@/mixins/dialogMixin'
 import EmojiPicker from '@/components/framework/EmojiPicker.vue'
 
