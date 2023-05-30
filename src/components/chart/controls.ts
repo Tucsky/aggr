@@ -408,7 +408,7 @@ export default class ChartControl {
       this.chart.savePosition(visibleLogicalRange)
 
       this.chart.fetchMore(visibleLogicalRange)
-    }, 500)
+    }, 500) as unknown as number
   }
 
   async bindLegend(indicatorId?: string) {

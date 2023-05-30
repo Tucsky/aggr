@@ -618,7 +618,7 @@ export default class extends Vue {
 
     this._secondsAgoExampleTimeout = setInterval(() => {
       this.secondsAgoExample = `${ago(time)} ago`
-    }, 1000)
+    }, 1000) as unknown as number
   }
 
   beforeDestroy() {
