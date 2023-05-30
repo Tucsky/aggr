@@ -9,7 +9,7 @@
   >
     <div class="settings-exchange__header" @click="toggleExchange">
       <div class="settings-exchange__name">
-        <i :class="'icon-' + name"></i>
+        <i :class="'exchanges-' + name"></i>
         <span class="ml4">{{ name }}</span>
       </div>
       <div v-if="markets.length" class="settings-exchange__controls">

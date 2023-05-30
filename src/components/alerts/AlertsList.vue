@@ -417,7 +417,7 @@ export default class extends Vue {
 
       &:before {
         content: unicode($icon-dollar);
-        font-family: 'icon';
+        font-family: 'exchanges', 'icon';
         opacity: 0.5;
         font-size: 0.75em;
         margin-right: 0.25rem;

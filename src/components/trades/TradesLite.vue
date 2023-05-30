@@ -79,7 +79,7 @@ import Slider from '@/components/framework/picker/Slider.vue'
 import PaneHeader from '@/components/panes/PaneHeader.vue'
 import dialogService from '../../services/dialogService'
 import audioService, { AudioFunction } from '../../services/audioService'
-import logos from '@/assets/exchanges'
+import logos from '@/assets/exchanges/svg'
 import { Trade } from '../../types/types'
 
 const DEBUG = false
