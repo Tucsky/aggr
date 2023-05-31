@@ -107,30 +107,6 @@ $icon-BITGET: "\e950";
 $icon-MEXC: "\e952";
 $icon-GATEIO: "\e960";
 
-$exchanges: (
-  'BITMEX': $icon-BITMEX,
-  'BINANCE': $icon-BINANCE,
-  'BINANCE_FUTURES': $icon-BINANCE_FUTURES,
-  'BINANCE_US': $icon-BINANCE,
-  'BITFINEX': $icon-BITFINEX,
-  'OKEX': $icon-OKEX,
-  'HUOBI': $icon-HUOBI,
-  'BITSTAMP': $icon-BITSTAMP,
-  'COINBASE': $icon-COINBASE,
-  'HITBTC': $icon-HITBTC,
-  'POLONIEX': $icon-POLONIEX,
-  'KRAKEN': $icon-KRAKEN,
-  'DERIBIT': $icon-DERIBIT,
-  'BYBIT': $icon-BYBIT,
-  'PHEMEX': $icon-PHEMEX,
-  'DYDX': $icon-DYDX,
-  'UNISWAP': $icon-UNISWAP,
-  'KUCOIN': $icon-KUCOIN,
-  'BITGET': $icon-BITGET,
-  'MEXC': $icon-MEXC,
-  'GATEIO': $icon-GATEIO
-);
-
 @function unicode($str) {
   @return unquote('"') + $str + unquote('"');
 }
