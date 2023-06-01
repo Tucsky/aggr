@@ -410,3 +410,33 @@ $iconpath: '../fonts';
     content: $icon-switch;
   }
 }
+.icon-AGGR {
+  &:before {
+    content: $icon-lab;
+  }
+}
+.icon-UNISWAP {
+  &:before {
+    content: $icon-UNISWAP;
+  }
+}
+.icon-KUCOIN {
+  &:before {
+    content: $icon-KUCOIN;
+  }
+}
+.icon-BITGET {
+  &:before {
+    content: $icon-BITGET;
+  }
+}
+.icon-MEXC {
+  &:before {
+    content: $icon-MEXC;
+  }
+}
+.icon-GATEIO {
+  &:before {
+    content: $icon-GATEIO;
+  }
+}

@@ -28,6 +28,7 @@ import DropdownButton from '@/components/framework/DropdownButton.vue'
   }
 })
 export default class DonoDropdown extends Vue {
+  label: string
   donationMenu = [
     {
       label: 'with Bitcoin',

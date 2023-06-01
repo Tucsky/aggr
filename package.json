@@ -49,6 +49,7 @@
     "sass": "^1.26.11",
     "svgtofont": "^3.24.0",
     "tslib": "^2.4.0",
+    "ttf2woff": "^3.0.0",
     "typescript": "~3.9.3",
     "vite-plugin-pwa": "^0.15.1",
     "vite-svg-loader": "^4.0.0",

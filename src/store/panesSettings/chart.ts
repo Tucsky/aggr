@@ -525,6 +525,13 @@ const mutations = {
       return
     }
 
+    for (const indicatorId in state.indicators) {
+      const options = state.indicators[indicatorId].options as any
+      if (options && options.priceScaleId === id) {
+        options.scaleMargins = priceScale.scaleMargins
+      }
+    }
+
     state.priceScales[id] = priceScale
   },
   SET_BAR_SPACING(state, value) {

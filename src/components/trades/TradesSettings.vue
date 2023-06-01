@@ -618,7 +618,7 @@ export default class TradesSettings extends Vue {
 
     this._secondsAgoExampleTimeout = setInterval(() => {
       this.secondsAgoExample = `${ago(time)} ago`
-    }, 1000)  as unknown as number
+    }, 1000) as unknown as number
   }
 
   beforeDestroy() {
