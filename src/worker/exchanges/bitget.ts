@@ -39,7 +39,13 @@ export default class extends Exchange {
       ]
 
       for (const product of response.data) {
-        const symbol = product.symbolName || product.symbol
+        let symbol
+
+        if (type === 'spot') {
+          symbol = product.symbolName
+        } else {
+          symbol = product.symbol
+        }
 
         products.push(symbol)
 
