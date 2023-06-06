@@ -28,138 +28,129 @@ $checkerboard: linear-gradient(45deg, $accent 25%, transparent 25%),
 $border-radius-base: 6px;
 $border-radius-small: 3px;
 
-$icon-bitcoin: "\e900";
-$icon-btc: "\e901";
-$icon-dollar: "\e902";
-$icon-down: "\e903";
-$icon-eth: "\e904";
-$icon-euro: "\e905";
-$icon-volume-off: "\e906";
-$icon-monero: "\e907";
-$icon-pound: "\e908";
-$icon-merge: "\e909";
-$icon-up: "\e90a";
-$icon-warning: "\e90b";
-$icon-yen: "\e90c";
-$icon-cog: "\e90d";
-$icon-check: "\e90e";
-$icon-coin: "\e90f";
-$icon-flash: "\e910";
-$icon-volume-medium: "\e911";
-$icon-info: "\e912";
-$icon-resize: "\e913";
-$icon-download: "\e914";
-$icon-external-link-square-alt: "\e915";
-$icon-upload: "\e917";
-$icon-cross: "\e918";
-$icon-down-thin: "\e91d";
-$icon-skull: "\e91e";
-$icon-edit: "\e91f";
-$icon-plus: "\e920";
-$icon-minus: "\e916";
-$icon-visible: "\e922";
-$icon-hidden: "\e923";
-$icon-up-thin: "\e924";
-$icon-volume-high: "\e925";
-$icon-xrp: "\e92c";
-$icon-ada: "\e92d";
-$icon-trx: "\e92e";
-$icon-neo: "\e92f";
-$icon-ltc: "\e930";
-$icon-xmr: "\e931";
-$icon-iota: "\e932";
-$icon-eos: "\e933";
-$icon-bear: "\e934";
-$icon-bps: "\e935";
-$icon-ms: "\e936";
-$icon-pile: "\e937";
-$icon-search: "\e939";
-$icon-dropper: "\e93a";
-$icon-trash: "\e93d";
-$icon-click: "\e93e";
-$icon-menu: "\e943";
-$icon-stamp: "\e945";
-$icon-copy-paste: "\e947";
-$icon-dashboard: "\e948";
-$icon-more: "\e949";
-$icon-bull: "\e94a";
-$icon-resize-height: "\e94b";
-$icon-add-photo: "\e94c";
-$icon-candlestick: "\e94d";
-$icon-refresh: "\e94e";
-$icon-music-note: "\e94f";
-$icon-eraser: "\e953";
-$icon-github: "\e954";
-$icon-enlarge: "\e955";
-$icon-locked: "\e956";
-$icon-unlocked: "\e957";
-$icon-move: "\e958";
-$icon-star: "\e959";
-$icon-star-filled: "\e95a";
-$icon-save: "\e95b";
-$icon-gauge: "\e95d";
-$icon-flip: "\e919";
-$icon-switch: "\e91a";
-$icon-lab: "\e941";
-$icon-UNISWAP: "\e944";
-$icon-KUCOIN: "\e946";
-$icon-BITGET: "\e950";
-$icon-MEXC: "\e952";
-$icon-GATEIO: "\e960";
+/* AUTO VAR INJECTION HEADER !! DO NOT MOVE !! */
 
-@function unicode($str) {
-  @return unquote('"') + $str + unquote('"');
-}
-/**
-* EXCHANGES HEADER
-* DO NOT CHANGE OR REMOVE
-**/
-$exchanges-BINANCE: "\e960";
-$exchanges-BINANCE_FUTURES: "\e961";
-$exchanges-BINANCE_US: "\e962";
-$exchanges-BITFINEX: "\e963";
-$exchanges-BITGET: "\e964";
-$exchanges-BITMEX: "\e965";
-$exchanges-BITSTAMP: "\e966";
-$exchanges-BYBIT: "\e967";
-$exchanges-COINBASE: "\e968";
-$exchanges-DERIBIT: "\e969";
-$exchanges-DYDX: "\e96a";
-$exchanges-GATEIO: "\e96b";
-$exchanges-HITBTC: "\e96c";
-$exchanges-HUOBI: "\e96d";
-$exchanges-KRAKEN: "\e96e";
-$exchanges-KUCOIN: "\e96f";
-$exchanges-MEXC: "\e970";
-$exchanges-OKEX: "\e971";
-$exchanges-PHEMEX: "\e972";
-$exchanges-POLONIEX: "\e973";
-$exchanges-UNISWAP: "\e974";
+$icon-ada: "\ea01";
+$icon-add-photo: "\ea02";
+$icon-AGGR: "\ea03";
+$icon-bear: "\ea04";
+$icon-BINANCE: "\ea05";
+$icon-BINANCE_FUTURES: "\ea06";
+$icon-BINANCE_US: "\ea07";
+$icon-bitcoin: "\ea08";
+$icon-BITFINEX: "\ea09";
+$icon-BITGET: "\ea0a";
+$icon-BITMEX: "\ea0b";
+$icon-BITSTAMP: "\ea0c";
+$icon-bps: "\ea0d";
+$icon-btc: "\ea0e";
+$icon-bull: "\ea0f";
+$icon-BYBIT: "\ea10";
+$icon-candlestick: "\ea11";
+$icon-check: "\ea12";
+$icon-click: "\ea13";
+$icon-cog: "\ea14";
+$icon-coin: "\ea15";
+$icon-COINBASE: "\ea16";
+$icon-COINEX: "\ea17";
+$icon-copy-paste: "\ea18";
+$icon-cross: "\ea19";
+$icon-dashboard: "\ea1a";
+$icon-DERIBIT: "\ea1b";
+$icon-dollar: "\ea1c";
+$icon-down-thin: "\ea1d";
+$icon-down: "\ea1e";
+$icon-download: "\ea1f";
+$icon-dropper: "\ea20";
+$icon-DYDX: "\ea21";
+$icon-edit: "\ea22";
+$icon-enlarge: "\ea23";
+$icon-eos: "\ea24";
+$icon-eraser: "\ea25";
+$icon-eth: "\ea26";
+$icon-euro: "\ea27";
+$icon-external-link-square-alt: "\ea28";
+$icon-flash: "\ea29";
+$icon-flip: "\ea2a";
+$icon-FTX: "\ea2b";
+$icon-GATEIO: "\ea2c";
+$icon-gauge: "\ea2d";
+$icon-github: "\ea2e";
+$icon-hidden: "\ea2f";
+$icon-HITBTC: "\ea30";
+$icon-HUOBI: "\ea31";
+$icon-info: "\ea32";
+$icon-iota: "\ea33";
+$icon-KRAKEN: "\ea34";
+$icon-KUCOIN: "\ea35";
+$icon-lab: "\ea36";
+$icon-locked: "\ea37";
+$icon-ltc: "\ea38";
+$icon-menu: "\ea39";
+$icon-merge: "\ea3a";
+$icon-MEXC: "\ea3b";
+$icon-minus-1: "\ea3c";
+$icon-monero: "\ea3d";
+$icon-more: "\ea3e";
+$icon-move: "\ea3f";
+$icon-ms: "\ea40";
+$icon-music-note: "\ea41";
+$icon-neo: "\ea42";
+$icon-OKEX: "\ea43";
+$icon-PHEMEX: "\ea44";
+$icon-pile: "\ea45";
+$icon-plus: "\ea46";
+$icon-POLONIEX: "\ea47";
+$icon-pound: "\ea48";
+$icon-refresh: "\ea49";
+$icon-resize-height: "\ea4a";
+$icon-resize: "\ea4b";
+$icon-save: "\ea4c";
+$icon-search: "\ea4d";
+$icon-skull: "\ea4e";
+$icon-stamp: "\ea4f";
+$icon-star-filled: "\ea50";
+$icon-star: "\ea51";
+$icon-switch: "\ea52";
+$icon-trash: "\ea53";
+$icon-trx: "\ea54";
+$icon-UNISWAP: "\ea55";
+$icon-unlocked: "\ea56";
+$icon-up-thin: "\ea57";
+$icon-up: "\ea58";
+$icon-upload: "\ea59";
+$icon-visible: "\ea5a";
+$icon-volume-high: "\ea5b";
+$icon-volume-medium: "\ea5c";
+$icon-volume-off: "\ea5d";
+$icon-warning: "\ea5e";
+$icon-xmr: "\ea5f";
+$icon-xrp: "\ea60";
+$icon-yen: "\ea61";
+
+/* AUTO VAR INJECTION FOOTER !! DO NOT MOVE !! */
 
 $exchange-list: (
-	'BINANCE': $exchanges-BINANCE,
-	'BINANCE_FUTURES': $exchanges-BINANCE_FUTURES,
-	'BINANCE_US': $exchanges-BINANCE_US,
-	'BITFINEX': $exchanges-BITFINEX,
-	'BITGET': $exchanges-BITGET,
-	'BITMEX': $exchanges-BITMEX,
-	'BITSTAMP': $exchanges-BITSTAMP,
-	'BYBIT': $exchanges-BYBIT,
-	'COINBASE': $exchanges-COINBASE,
-	'DERIBIT': $exchanges-DERIBIT,
-	'DYDX': $exchanges-DYDX,
-	'GATEIO': $exchanges-GATEIO,
-	'HITBTC': $exchanges-HITBTC,
-	'HUOBI': $exchanges-HUOBI,
-	'KRAKEN': $exchanges-KRAKEN,
-	'KUCOIN': $exchanges-KUCOIN,
-	'MEXC': $exchanges-MEXC,
-	'OKEX': $exchanges-OKEX,
-	'PHEMEX': $exchanges-PHEMEX,
-	'POLONIEX': $exchanges-POLONIEX,
-	'UNISWAP': $exchanges-UNISWAP
+	'AGGR': $icon-AGGR,
+	'BINANCE': $icon-BINANCE,
+	'BINANCE_FUTURES': $icon-BINANCE_FUTURES,
+	'BINANCE_US': $icon-BINANCE_US,
+	'BITFINEX': $icon-BITFINEX,
+	'BITGET': $icon-BITGET,
+	'BITMEX': $icon-BITMEX,
+	'BITSTAMP': $icon-BITSTAMP,
+	'BYBIT': $icon-BYBIT,
+	'COINBASE': $icon-COINBASE,
+	'DERIBIT': $icon-DERIBIT,
+	'DYDX': $icon-DYDX,
+	'GATEIO': $icon-GATEIO,
+	'HITBTC': $icon-HITBTC,
+	'HUOBI': $icon-HUOBI,
+	'KRAKEN': $icon-KRAKEN,
+	'KUCOIN': $icon-KUCOIN,
+	'MEXC': $icon-MEXC,
+	'OKEX': $icon-OKEX,
+	'PHEMEX': $icon-PHEMEX,
+	'POLONIEX': $icon-POLONIEX,
+	'UNISWAP': $icon-UNISWAP
 );
-/**
-* EXCHANGES FOOTER
-* DO NOT CHANGE OR REMOVE
-**/

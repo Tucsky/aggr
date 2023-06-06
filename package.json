@@ -3,9 +3,9 @@
   "version": "3.3.2",
   "private": true,
   "scripts": {
-    "cors": "node cors-proxy/cors-server.js",
-    "svg2ttf": "node svg2ttf/convert-svg-to-ttf.js",
-    "ttf2woff": "node ttf2woff/convert-ttf-to-woff.js",
+    "cors": "node scripts/cors-server.js",
+    "svg2ttf": "node scripts/convert-svg-to-ttf.js",
+    "ttf2woff": "node scripts/convert-ttf-to-woff.js",
     "serve": "vue-cli-service serve",
     "prod": "vue-cli-service build --dest ./temp && rm -rf ./dist && mv ./temp ./dist",
     "build": "vue-cli-service build",

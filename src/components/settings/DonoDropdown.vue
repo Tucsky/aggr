@@ -43,7 +43,7 @@ export default class extends Vue {
     },
     {
       label: 'with other coin',
-      icon: 'exchanges-COINBASE',
+      icon: 'icon-COINBASE',
       click: () =>
         window.open(
           'https://commerce.coinbase.com/checkout/c58bd003-5e47-4cfb-ae25-5292f0a0e1e8'

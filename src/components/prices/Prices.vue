@@ -426,7 +426,7 @@ export default class extends Mixins(PaneMixin) {
 
   @each $exchange, $icon in $exchange-list {
     .market__exchange.#{$exchange} {
-      background-image: url('../../assets/exchanges/svg/#{$exchange}.svg');
+      background-image: url('../../assets/exchanges/#{$exchange}.svg');
     }
   }
 

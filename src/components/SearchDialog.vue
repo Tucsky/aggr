@@ -81,7 +81,7 @@
               :checked="searchExchanges[id] !== false"
               @click="toggleExchange($event, id)"
             />
-            <div :class="'exchanges-' + id"></div>
+            <div :class="'icon-' + id"></div>
             <span>
               <span v-text="id"></span>
               <a
@@ -312,7 +312,7 @@
                     v-for="(pairs, exchange) of group.exchanges"
                     :key="exchange"
                     class="pr4 search-dialog__exchange-logo"
-                    :class="'exchanges-' + exchange"
+                    :class="'icon-' + exchange"
                     :title="pairs.join(', ')"
                   ></i>
                 </td>
@@ -330,7 +330,7 @@
               >
                 <td
                   class="icon search-dialog__exchange text-center text-color-base"
-                  :class="'exchanges-' + market.exchange"
+                  :class="'icon-' + market.exchange"
                 ></td>
                 <td v-text="market.exchange"></td>
                 <td v-text="market.pair"></td>

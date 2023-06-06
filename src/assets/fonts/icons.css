@@ -1,0 +1,115 @@
+@font-face {
+  font-family: "icons";
+  src: url('icons.eot?t=1686042841317'); /* IE9*/
+  src: url('icons.eot?t=1686042841317#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url("icons.woff2?t=1686042841317") format("woff2"),
+  url("icons.woff?t=1686042841317") format("woff"),
+  url('icons.ttf?t=1686042841317') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('icons.svg?t=1686042841317#icons') format('svg'); /* iOS 4.1- */
+}
+
+[class^="icons-"], [class*=" icons-"] {
+  font-family: 'icons' !important;
+  font-size:16px;
+  font-style:normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+.icons-ada:before { content: "\ea01"; }
+.icons-add-photo:before { content: "\ea02"; }
+.icons-bear:before { content: "\ea03"; }
+.icons-BINANCE:before { content: "\ea04"; }
+.icons-BINANCE_FUTURES:before { content: "\ea05"; }
+.icons-BINANCE_US:before { content: "\ea06"; }
+.icons-bitcoin:before { content: "\ea07"; }
+.icons-BITFINEX:before { content: "\ea08"; }
+.icons-BITGET:before { content: "\ea09"; }
+.icons-BITMEX:before { content: "\ea0a"; }
+.icons-BITSTAMP:before { content: "\ea0b"; }
+.icons-bps:before { content: "\ea0c"; }
+.icons-btc:before { content: "\ea0d"; }
+.icons-bull:before { content: "\ea0e"; }
+.icons-BYBIT:before { content: "\ea0f"; }
+.icons-candlestick:before { content: "\ea10"; }
+.icons-check:before { content: "\ea11"; }
+.icons-click:before { content: "\ea12"; }
+.icons-cog:before { content: "\ea13"; }
+.icons-coin:before { content: "\ea14"; }
+.icons-COINBASE:before { content: "\ea15"; }
+.icons-COINEX:before { content: "\ea16"; }
+.icons-copy-paste:before { content: "\ea17"; }
+.icons-cross:before { content: "\ea18"; }
+.icons-dashboard:before { content: "\ea19"; }
+.icons-DERIBIT:before { content: "\ea1a"; }
+.icons-dollar:before { content: "\ea1b"; }
+.icons-down-thin:before { content: "\ea1c"; }
+.icons-down:before { content: "\ea1d"; }
+.icons-download:before { content: "\ea1e"; }
+.icons-dropper:before { content: "\ea1f"; }
+.icons-DYDX:before { content: "\ea20"; }
+.icons-edit:before { content: "\ea21"; }
+.icons-enlarge:before { content: "\ea22"; }
+.icons-eos:before { content: "\ea23"; }
+.icons-eraser:before { content: "\ea24"; }
+.icons-eth:before { content: "\ea25"; }
+.icons-euro:before { content: "\ea26"; }
+.icons-external-link-square-alt:before { content: "\ea27"; }
+.icons-flash:before { content: "\ea28"; }
+.icons-flip:before { content: "\ea29"; }
+.icons-FTX:before { content: "\ea2a"; }
+.icons-gauge:before { content: "\ea2b"; }
+.icons-github:before { content: "\ea2c"; }
+.icons-hidden:before { content: "\ea2d"; }
+.icons-HITBTC:before { content: "\ea2e"; }
+.icons-HUOBI:before { content: "\ea2f"; }
+.icons-info:before { content: "\ea30"; }
+.icons-iota:before { content: "\ea31"; }
+.icons-KRAKEN:before { content: "\ea32"; }
+.icons-KUCOIN:before { content: "\ea33"; }
+.icons-lab:before { content: "\ea34"; }
+.icons-locked:before { content: "\ea35"; }
+.icons-ltc:before { content: "\ea36"; }
+.icons-menu:before { content: "\ea37"; }
+.icons-merge:before { content: "\ea38"; }
+.icons-MEXC:before { content: "\ea39"; }
+.icons-minus-1:before { content: "\ea3a"; }
+.icons-monero:before { content: "\ea3b"; }
+.icons-more:before { content: "\ea3c"; }
+.icons-move:before { content: "\ea3d"; }
+.icons-ms:before { content: "\ea3e"; }
+.icons-music-note:before { content: "\ea3f"; }
+.icons-neo:before { content: "\ea40"; }
+.icons-OKEX:before { content: "\ea41"; }
+.icons-PHEMEX:before { content: "\ea42"; }
+.icons-pile:before { content: "\ea43"; }
+.icons-plus:before { content: "\ea44"; }
+.icons-POLONIEX:before { content: "\ea45"; }
+.icons-pound:before { content: "\ea46"; }
+.icons-refresh:before { content: "\ea47"; }
+.icons-resize-height:before { content: "\ea48"; }
+.icons-resize:before { content: "\ea49"; }
+.icons-save:before { content: "\ea4a"; }
+.icons-search:before { content: "\ea4b"; }
+.icons-skull:before { content: "\ea4c"; }
+.icons-stamp:before { content: "\ea4d"; }
+.icons-star-filled:before { content: "\ea4e"; }
+.icons-star:before { content: "\ea4f"; }
+.icons-switch:before { content: "\ea50"; }
+.icons-trash:before { content: "\ea51"; }
+.icons-trx:before { content: "\ea52"; }
+.icons-UNISWAP:before { content: "\ea53"; }
+.icons-unlocked:before { content: "\ea54"; }
+.icons-up-thin:before { content: "\ea55"; }
+.icons-up:before { content: "\ea56"; }
+.icons-upload:before { content: "\ea57"; }
+.icons-visible:before { content: "\ea58"; }
+.icons-volume-high:before { content: "\ea59"; }
+.icons-volume-medium:before { content: "\ea5a"; }
+.icons-volume-off:before { content: "\ea5b"; }
+.icons-warning:before { content: "\ea5c"; }
+.icons-xmr:before { content: "\ea5d"; }
+.icons-xrp:before { content: "\ea5e"; }
+.icons-yen:before { content: "\ea5f"; }
+

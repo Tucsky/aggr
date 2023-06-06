@@ -9,7 +9,7 @@
   >
     <div class="settings-exchange__header" @click="toggleExchange">
       <div class="settings-exchange__name">
-        <i :class="'exchanges-' + name"></i>
+        <i :class="'icon-' + name"></i>
         <span class="ml4">{{ name }}</span>
       </div>
       <div v-if="markets.length" class="settings-exchange__controls">
@@ -142,7 +142,7 @@ export default class extends Vue {
 
   &.-expanded {
     .settings-exchange__more i:before {
-      content: unicode($icon-up-thin);
+      content: $icon-up-thin;
     }
   }
 }
