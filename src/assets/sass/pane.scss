@@ -41,7 +41,7 @@
       margin: 0;
 
       &:before {
-        font-family: 'exchanges', 'icon';
+        font-family: 'icon';
         content: $icon-up-thin;
         transform: rotateZ(-225deg) scale(1);
         display: block;

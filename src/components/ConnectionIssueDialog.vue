@@ -131,12 +131,14 @@
                 <template #title> Proxy install </template>
                 <p class="mt0">
                   Since
-                  <i class="-lower" :class="`icon-${exchangeId}`"></i
-                  >&nbsp;{{ exchangeId }} is blocking your IP you may want to
-                  get realtime data from that exchange through a proxy located
-                  in an authorized country.<br /><br />At the moment you will
-                  have to set it up yourself using a simple NodeJS script that
-                  you can download below.
+                  <i class="-lower" :class="`icon-${exchangeId}`"></i>&nbsp;{{
+                    exchangeId
+                  }}
+                  is blocking your IP you may want to get realtime data from
+                  that exchange through a proxy located in an authorized
+                  country.<br /><br />At the moment you will have to set it up
+                  yourself using a simple NodeJS script that you can download
+                  below.
                 </p>
                 <a
                   target="_blank"

@@ -1,11 +1,20 @@
 $iconpath: '../fonts/';
 @font-face {font-family: "icon";
+<<<<<<< HEAD
   src: url('#{$iconpath}icon.eot?t=1686706012716'); /* IE9*/
   src: url('#{$iconpath}icon.eot?t=1686706012716#iefix') format('embedded-opentype'), /* IE6-IE8 */
   url("#{$iconpath}icon.woff2?t=1686706012716") format("woff2"),
   url("#{$iconpath}icon.woff?t=1686706012716") format("woff"),
   url('#{$iconpath}icon.ttf?t=1686706012716') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
   url('#{$iconpath}icon.svg?t=1686706012716#icon') format('svg'); /* iOS 4.1- */
+=======
+  src: url('#{$iconpath}icon.eot?t=1686045007892'); /* IE9*/
+  src: url('#{$iconpath}icon.eot?t=1686045007892#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url("#{$iconpath}icon.woff2?t=1686045007892") format("woff2"),
+  url("#{$iconpath}icon.woff?t=1686045007892") format("woff"),
+  url('#{$iconpath}icon.ttf?t=1686045007892') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('#{$iconpath}icon.svg?t=1686045007892#icon') format('svg'); /* iOS 4.1- */
+>>>>>>> 6b35e90... merge all svgs (icon + exchanges) into 1 font
 }
 
 [class^="icon-"], [class*=" icon-"] {

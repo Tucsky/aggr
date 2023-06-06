@@ -239,7 +239,7 @@ export default class Editor extends Vue {
       background: 0;
 
       &:before {
-        font-family: 'exchanges', 'icon';
+        font-family: 'icon';
         font-size: 0.75em;
         content: $icon-down-thin;
         display: block;

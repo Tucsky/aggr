@@ -318,7 +318,7 @@ textarea.form-control {
 
     &:before,
     &:after {
-      font-family: 'exchanges', 'icon';
+      font-family: 'icon';
       font-size: 1em;
       position: absolute;
       left: 0;
@@ -334,6 +334,11 @@ textarea.form-control {
       line-height: 0;
       pointer-events: none;
     }
+
+    &:not([class^='icon-']):before {
+      content: $icon-check;
+    }
+
 
     &:after {
       opacity: 1;
