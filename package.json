@@ -1,6 +1,6 @@
 {
   "name": "aggr",
-  "version": "3.3.2",
+  "version": "3.3.3",
   "private": true,
   "scripts": {
     "cors": "node scripts/cors-server.js",

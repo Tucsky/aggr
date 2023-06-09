@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented here.
 
+## [3.3.3] - 2023-06-08
+### Added
+- Gate.io
+- source() script function
+
 ## [3.3.2] - 2023-03-24
 ### Added
 - Kucoin perp

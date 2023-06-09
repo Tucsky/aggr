@@ -54,8 +54,10 @@
           ></i>
           <i
             v-else
-            class="icon-star"
-            :class="{ 'icon-star-filled': favoriteTimeframes[timeframe.value] }"
+            :class="[
+              favoriteTimeframes[timeframe.value] && 'icon-star-filled',
+              !favoriteTimeframes[timeframe.value] && 'icon-star'
+            ]"
             @click.stop="toggleFavoriteTimeframe(timeframe.value)"
           ></i>
         </button>
