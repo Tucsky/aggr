@@ -77,8 +77,14 @@ class AudioService {
   static savedAudioBuffers = {}
 
   filtersOptions = {
+    PingPongDelay: {
+      wetLevel: 0.5, //0 to 1
+      feedback: 0.01, //0 to 1
+      delayTimeLeft: 175, //1 to 10000 (milliseconds)
+      delayTimeRight: 100 //1 to 10000 (milliseconds)
+    },
     HighPassFilter: {
-      frequency: 800, //20 to 22050
+      frequency: 700, //20 to 22050
       Q: 10, //0.001 to 100
       gain: -10, //-40 to 40 (in decibels)
       filterType: 'highpass', //lowpass, highpass, bandpass, lowshelf, highshelf, peaking, notch, allpass
@@ -104,12 +110,6 @@ class AudioService {
     Delay: {
       feedback: 0.33, //0 to 1+
       delayTime: 400 //1 to 10000 milliseconds
-    },
-    PingPongDelay: {
-      wetLevel: 0.6, //0 to 1
-      feedback: 0.01, //0 to 1
-      delayTimeLeft: 175, //1 to 10000 (milliseconds)
-      delayTimeRight: 100 //1 to 10000 (milliseconds)
     },
     Chorus: {
       rate: 1.5, //0.01 to 8+
@@ -461,7 +461,7 @@ class AudioService {
       source.start(time)
     }
 
-    source.stop(time + fadeIn + holdDuration + fadeOut)
+    source.stop(time + fadeIn + holdDuration + fadeOut * 1.1)
   }
 
   getNextTime(delay) {
@@ -481,6 +481,10 @@ class AudioService {
               : 0.04
             : 0.08
       }
+    }
+
+    if (!cueTime && !delay) {
+      cueTime = 0.08
     }
 
     const time = this.minTime + cueTime + delay

@@ -436,6 +436,7 @@ export default class extends Mixins(PaneMixin) {
   .icon-quote,
   .icon-base {
     line-height: 0;
+    font-size: 0.875em;
   }
 
   .trade__pair {

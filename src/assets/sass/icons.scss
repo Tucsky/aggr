@@ -10,7 +10,7 @@ $iconpath: '../fonts/';
 
 [class^="icon-"], [class*=" icon-"] {
   font-family: 'icon' !important;
-  font-size: 16px;
+  font-size: 1em;
   font-style:normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -75,7 +75,7 @@ $iconpath: '../fonts/';
 .icon-menu:before { content: "\ea39"; }
 .icon-merge:before { content: "\ea3a"; }
 .icon-MEXC:before { content: "\ea3b"; }
-.icon-minus-1:before { content: "\ea3c"; }
+.icon-minus:before { content: "\ea3c"; }
 .icon-monero:before { content: "\ea3d"; }
 .icon-more:before { content: "\ea3e"; }
 .icon-move:before { content: "\ea3f"; }
