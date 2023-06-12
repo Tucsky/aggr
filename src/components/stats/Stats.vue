@@ -24,7 +24,6 @@ import { Component, Mixins } from 'vue-property-decorator'
 import * as TV from 'lightweight-charts'
 import aggregatorService from '@/services/aggregatorService'
 import Bucket from '../../utils/bucket'
-import type { StatBucket } from '@/store/panesSettings/stats'
 import {
   defaultStatsChartOptions,
   getChartOptions,
@@ -33,8 +32,8 @@ import {
 
 import StatDialog from './StatDialog.vue'
 import dialogService from '@/services/dialogService'
-import { getBucketId } from '@/utils/helpers'
 
+import { getBucketId } from '@/utils/helpers'
 import { formatAmount } from '@/services/productsService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
@@ -44,12 +43,8 @@ import PaneHeader from '../panes/PaneHeader.vue'
   name: 'Stats'
 })
 export default class extends Mixins(PaneMixin) {
-  data: {
-    [id: string]: {
-      name: string
-      value: any
-    }
-  }
+  data = {}
+
   $refs!: {
     chart: HTMLElement
   }
@@ -300,7 +295,7 @@ export default class extends Mixins(PaneMixin) {
     this._buckets[id].createSerie(this._chart)
   }
 
-  createBucket(statBucket: StatBucket): void {
+  createBucket(statBucket) {
     if (statBucket.enabled && typeof this.data[statBucket.id] === 'undefined') {
       const bucket = new Bucket(statBucket.input, statBucket, this.paneId)
 
