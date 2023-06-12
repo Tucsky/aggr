@@ -158,6 +158,7 @@ export default class extends Vue {
   font-size: 0.875em;
   padding-left: 0.75em;
   flex-grow: 1;
+  line-height: 1;
 
   > span {
     position: relative;
