@@ -2,7 +2,8 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue2'
 import visualizer from 'rollup-plugin-visualizer'
 import { VitePWA } from 'vite-plugin-pwa';
-import svgLoader from 'vite-svg-loader'
+// import svgLoader from 'vite-svg-loader' // vue 3
+import { createSvgPlugin } from "vite-plugin-vue2-svg"; //vue 2
 
 const fs = require('fs')
 const path = require('path')
@@ -55,7 +56,8 @@ process.env.VITE_APP_PUBLIC_PATH = process.env.PUBLIC_PATH || '/'
 module.exports = defineConfig({
   plugins: [
     vue(),
-    svgLoader(),
+    // svgLoader(), // vue 3
+    createSvgPlugin(), // vue 2
     visualizer(),
     VitePWA({
       srcDir: "src",
