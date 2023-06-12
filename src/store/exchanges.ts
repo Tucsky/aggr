@@ -20,7 +20,9 @@ const state = supportedExchanges.reduce(
   (exchangesState: ExchangesState, id: string) => {
     exchangesState[id] = {
       disabled:
-        /AGGR|UNISWAP|HITBTC|PHEMEX|BINANCE_US|SERUM|HUOBI|POLONIEX/.test(id)
+        /AGGR|UNISWAP|HITBTC|PHEMEX|BINANCE_US|SERUM|HUOBI|POLONIEX|GATEIO/.test(
+          id
+        )
     }
 
     return exchangesState

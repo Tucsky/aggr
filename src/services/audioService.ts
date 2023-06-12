@@ -359,7 +359,7 @@ class AudioService {
         startGain,
         fadeIn,
         holdDuration,
-        fadeOut,
+        fadeOut * 1.1,
         endGain,
         startTime
       )
@@ -461,7 +461,7 @@ class AudioService {
       source.start(time)
     }
 
-    source.stop(time + fadeIn + holdDuration + fadeOut * 1.1)
+    source.stop(time + fadeIn + holdDuration + fadeOut)
   }
 
   getNextTime(delay) {
