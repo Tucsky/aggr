@@ -74,7 +74,7 @@ export default class extends Vue {
   get markets() {
     return (Object as any)
       .values(this.$store.state.panes.marketsListeners)
-      .filter(a => a.exchange === this.id)
+      .filter(a => a.listeners > 0 && a.exchange === this.id)
   }
 
   get active() {
@@ -83,6 +83,7 @@ export default class extends Vue {
 
   async toggleExchange() {
     await this.$store.dispatch('exchanges/toggleExchange', this.id)
+    await this.$store.dispatch('panes/refreshMarketsListeners')
   }
 
   formatAmount(amount) {

@@ -177,7 +177,10 @@ const actions = {
       commit('REMOVE_GRID_ITEM', index)
     }
   },
-  async refreshMarketsListeners({ commit, state }, { markets, id } = {}) {
+  async refreshMarketsListeners(
+    { rootState, commit, state },
+    { markets, id } = {}
+  ) {
     // cache original listeners (market: n listeners)
     const originalListeners: { [marketKey: string]: number } = Object.keys(
       state.marketsListeners
@@ -224,6 +227,12 @@ const actions = {
 
             marketsListeners[marketKey].listeners = 0
           }
+        }
+
+        if (
+          rootState.exchanges[marketsListeners[marketKey].exchange].disabled
+        ) {
+          continue
         }
 
         if (typeof marketsListeners[marketKey] !== 'undefined') {
