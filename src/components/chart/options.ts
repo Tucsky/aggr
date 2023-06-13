@@ -180,17 +180,29 @@ export const defaultPlotsOptions = {
   histogram: defaultHistogramOptions
 }
 
-export function getChartLayoutOptions() {
+export function getChartFontSize(paneId) {
+  let fontSize
+  if (paneId) {
+    const zoomMultiplier = store.state.panes.panes[paneId].zoom || 1
+    const typeMultipler =
+      store.state.panes.panes[paneId].type === 'chart' ? 1 : 0.75
+    fontSize = 14 * zoomMultiplier * typeMultipler
+  }
+  return fontSize
+}
+
+export function getChartLayoutOptions(paneId?: string) {
   const styles = getComputedStyle(document.documentElement)
   const textColor = styles.getPropertyValue('--theme-color-100')
   const transColor = styles.getPropertyValue('--theme-background-100')
+
   const customColorsOptions = {
     layout: {
       textColor: textColor,
-      borderColor: transColor
+      borderColor: transColor,
+      fontSize: getChartFontSize(paneId)
     }
   }
-
   return customColorsOptions
 }
 
@@ -331,7 +343,7 @@ export function getChartOptions(
 
   return merge(
     baseChartOptions,
-    getChartLayoutOptions(),
+    getChartLayoutOptions(paneId),
     getChartCrosshairOptions(),
     getChartBorderOptions(paneId)
   )
