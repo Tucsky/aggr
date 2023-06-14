@@ -52,6 +52,7 @@ module.exports = {
   productionSourceMap: false,
   publicPath: process.env.VUE_APP_PUBLIC_PATH,
   configureWebpack: {
+    devtool: 'source-map',
     plugins: [
       new ServiceWorkerWebpackPlugin({
         entry: path.join(__dirname, 'src/sw.js'),

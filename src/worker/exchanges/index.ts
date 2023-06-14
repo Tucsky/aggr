@@ -22,6 +22,7 @@ import Kucoin from './kucoin'
 import Bitget from './bitget'
 import Mexc from './mexc'
 import Gateio from './gateio'
+import CryptoCom from './cryptocom'
 
 export const exchanges = [
   new Aggr(),
@@ -45,10 +46,12 @@ export const exchanges = [
   new Kucoin(),
   new Bitget(),
   new Mexc(),
-  new Gateio()
+  new Gateio(),
+  new CryptoCom()
 ] as Exchange[]
 
 export function getExchangeById(id: string) {
+  console.log(`[getExchangebyId] ${id}`)
   for (const exchange of exchanges) {
     if (exchange.id.toLowerCase() === id.toLowerCase()) {
       return exchange
