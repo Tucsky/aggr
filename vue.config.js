@@ -4,54 +4,74 @@ const ServiceWorkerWebpackPlugin = require('serviceworker-webpack-plugin')
 const WebpackPwaManifest = require('webpack-pwa-manifest')
 const gitprocess = require('child_process')
 
-const date = new Date(
-  gitprocess
-    .execSync('git log -1 --date=format:"%Y/%m/%d %T" --format="%ad"')
-    .toString()
-)
-process.env.VUE_APP_VERSION = require('./package.json').version
-process.env.VUE_APP_BUILD_DATE =
-  date.getDate() +
-  ' ' +
-  date.toLocaleString('en-US', { month: 'short' }).toLowerCase()
-const exchanges = []
+// Make build date
+const makeBuildDate = function () {
+  const date = new Date(
+    gitprocess
+      .execSync('git log -1 --date=format:"%Y/%m/%d %T" --format="%ad"')
+      .toString()
+  )
+  return (
+    `${date.getDate()} ` +
+    `${date.toLocaleString('en-US', { month: 'short' }).toLowerCase()}`
+  )
+}
 
-fs.readdirSync('./src/worker/exchanges/').forEach(file => {
-  if (/\w+\.ts$/.test(file) && file !== 'index.ts') {
-    exchanges.push(file.replace(/\.ts$/, ''))
-  }
-})
+// App version
+const { version: appVersion } = require('./package.json')
 
-process.env.VUE_APP_EXCHANGES = exchanges.join(',')
-process.env.VUE_APP_PROXY_URL =
-  process.env.NODE_ENV === 'production'
-    ? typeof process.env.PROXY_URL !== 'undefined'
-      ? process.env.PROXY_URL
-      : ''
-    : typeof process.env.DEV_PROXY_URL !== 'undefined'
-    ? process.env.DEV_PROXY_URL
-    : ''
-process.env.VUE_APP_API_URL =
-  typeof process.env.API_URL !== 'undefined' ? process.env.API_URL : ''
-process.env.VUE_APP_API_SUPPORTED_PAIRS =
-  typeof process.env.API_SUPPORTED_PAIRS !== 'undefined'
-    ? process.env.API_SUPPORTED_PAIRS
-    : ''
-process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES =
-  typeof process.env.API_SUPPORTED_TIMEFRAMES !== 'undefined'
-    ? process.env.API_SUPPORTED_TIMEFRAMES
-    : ''
-process.env.VUE_APP_PUBLIC_VAPID_KEY =
-  typeof process.env.PUBLIC_VAPID_KEY !== 'undefined'
-    ? process.env.PUBLIC_VAPID_KEY
-    : ''
+// Make string with available exchanges from workers
+const makeExchangeList = () => {
+  const exchanges = []
+  fs.readdirSync('./src/worker/exchanges/').forEach(file => {
+    if (/\w+\.ts$/.test(file) && file !== 'index.ts') {
+      exchanges.push(file.replace(/\.ts$/, ''))
+    }
+  })
+  return exchanges.join(',')
+}
 
-process.env.VUE_APP_PUBLIC_PATH = process.env.PUBLIC_PATH || '/'
+const {
+  NODE_ENV,
+  API_URL,
+  PROXY_URL,
+  DEV_PROXY_URL,
+  API_SUPPORTED_PAIRS,
+  API_SUPPORTED_TIMEFRAMES,
+  PUBLIC_PATH,
+  PUBLIC_VAPID_KEY
+} = process.env
+
+process.env.VUE_APP_VERSION = appVersion
+process.env.VUE_APP_BUILD_DATE = makeBuildDate()
+process.env.VUE_APP_EXCHANGES = makeExchangeList()
+
+switch (NODE_ENV) {
+  case 'production':
+    process.env.VUE_APP_PROXY_URL = PROXY_URL
+    break
+  case 'development':
+    process.env.VUE_APP_PROXY_URL = DEV_PROXY_URL
+    break
+}
+
+process.env.VUE_APP_API_URL = API_URL || ''
+process.env.VUE_APP_API_SUPPORTED_PAIRS = API_SUPPORTED_PAIRS || ''
+process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES = API_SUPPORTED_TIMEFRAMES || ''
+process.env.VUE_APP_PUBLIC_VAPID_KEY = PUBLIC_VAPID_KEY || ''
+process.env.VUE_APP_PUBLIC_PATH = PUBLIC_PATH || '/'
 
 module.exports = {
   productionSourceMap: false,
   publicPath: process.env.VUE_APP_PUBLIC_PATH,
   configureWebpack: {
+    devServer: {
+      watchOptions: {
+        ignored: /node_modules/,
+        aggregateTimeout: 300,
+        poll: 500
+      }
+    },
     devtool: 'source-map',
     plugins: [
       new ServiceWorkerWebpackPlugin({
