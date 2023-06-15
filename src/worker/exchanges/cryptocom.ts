@@ -66,22 +66,22 @@ export default class extends Exchange {
 
   onMessage(event, api) {
     const json = JSON.parse(event.data)
-    const exchange_id = this.id
-
     if (json.result) {
       return this.emitTrades(
         api.id,
-        json.result.data.map(t => {
-          return {
-            exchange: exchange_id,
-            pair: t.i,
-            timestamp: +new Date(t.t),
-            price: +t.p,
-            size: +t.q,
-            side: t.s.toLowerCase()
-          }
-        })
+        json.result.data.map(t => this.formatResponse(t))
       )
+    }
+  }
+
+  formatResponse(t) {
+    return {
+      exchange: this.id,
+      pair: t.i,
+      timestamp: +new Date(t.t),
+      price: +t.p,
+      size: +t.q,
+      side: t.s.toLowerCase()
     }
   }
 }
