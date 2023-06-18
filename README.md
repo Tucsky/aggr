@@ -23,11 +23,17 @@ Checkout [CHANGELOG.md](CHANGELOG.md) for details about the recent updates.
 
 ![](https://i.imgur.com/chxtEwb.png)
 
-The app is written in Vue.js, use the javascript WebSocket interface to connect to the exchanges API and listen to the trades events.
+The application is developed using Vue.js and utilizes the JavaScript WebSocket interface to establish connections with exchange APIs and listen for trade events.
 
-The aggregator are process raw trades in the Worker for each Exchange, whose purpose is to group the trades by time, market and side of trade. The worker regularly send the aggregated trades to the UI along with some statistics about the market activity (sums of volume, counts by sides and liquidations).
+The core functionality involves an aggregator that processes raw trades within a dedicated Worker for each Exchange. The aggregator's main objective is to group trades based on time, market, and trade side. Periodically, the worker sends the aggregated trades to the user interface (UI), accompanied by relevant statistics regarding market activity. These statistics include volume sums, trade counts categorized by sides, and information about liquidations.
 
-## How to install & run locally
+## Local Installation and Execution Instructions
+
+To begin, we highly recommend utilizing Volta, a node and npm version manager. We provide a convenient script to automate its installation process. This script is compatible with the bash shell, which is available on all major operating systems including Windows, macOS, and Linux.
+
+```bash
+	./scripts/install-volta.sh
+```
 
 If you want to use with your own data, edit /.env.local with <code>API_URL=your url</code> and build the app (<code>npm run build</code>).
 

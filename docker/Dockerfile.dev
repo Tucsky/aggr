@@ -1,0 +1,21 @@
+# build stage
+FROM  node:20.2.0-alpine3.17 as builder
+
+WORKDIR '/usr/src/app'
+
+COPY package*.json ./
+RUN apt-get update && \
+	apt-get install -y git && \
+	npm i
+
+FROM  node:20.2.0-slim
+
+RUN apt-get update && \
+	apt-get install -y git
+
+ENV NODE_OPTIONS=--openssl-legacy-provider
+COPY . .
+
+EXPOSE 8080
+
+CMD ["sh", "-c", "npm run serve"]
