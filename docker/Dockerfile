@@ -5,8 +5,7 @@ RUN apk --no-cache add git
 COPY ./package*.json ./
 RUN npm ci
 COPY . .
-RUN export NODE_OPTIONS=--openssl-legacy-provider && \
-	npm run build
+RUN npm run build
 
 # production stage
 FROM nginx:stable-alpine as production-stage
