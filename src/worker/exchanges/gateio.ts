@@ -158,7 +158,7 @@ export default class extends Exchange {
           exchange: this.id,
           pair: contract + '_SPOT',
           timestamp: +new Date(
-            parseInt((trade.time * 100).toString().split('.')[0])
+            parseInt((trade.time * 1000).toString().split('.')[0])
           ),
           price: +trade.price,
           size: +trade.amount,
