@@ -42,15 +42,16 @@ const {
 } = process.env
 
 process.env.VUE_APP_VERSION = appVersion
-process.env.VUE_APP_BUILD_DATE = makeBuildDate()
 process.env.VUE_APP_EXCHANGES = makeExchangeList()
 
 switch (NODE_ENV) {
   case 'production':
     process.env.VUE_APP_PROXY_URL = PROXY_URL
+	process.env.VUE_APP_BUILD_DATE = makeBuildDate ()
     break
   case 'development':
     process.env.VUE_APP_PROXY_URL = PROXY_URL
+	process.env.VUE_APP_BUILD_DATE = new Date().toLocaleDateString
     break
 }
 
