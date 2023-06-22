@@ -9,11 +9,17 @@ import fs from 'fs'
 import path from 'path'
 import gitprocess from 'child_process'
 
-const date = new Date(
-  gitprocess
-    .execSync('git log -1 --date=format:"%Y/%m/%d %T" --format="%ad"')
-    .toString()
-)
+let date
+
+if (typeof gitprocess === 'function') {
+  date = new Date(
+    gitprocess
+      .execSync('git log -1 --date=format:"%Y/%m/%d %T" --format="%ad"')
+      .toString()
+  )
+} else {
+  date = new Date()
+}
 
 process.env.VITE_APP_VERSION = require('./package.json').version
 process.env.VITE_APP_BUILD_DATE =

@@ -14,5 +14,6 @@ services:
     ports:
       - 8080:80
     env_file:
-      - ../.env.github
+      - ../.env
+      - ../.env.production
     restart: always
