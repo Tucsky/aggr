@@ -3,6 +3,7 @@ import Exchange from '../exchange'
 export default class extends Exchange {
   id = 'KRAKEN'
   private specs: { [pair: string]: number }
+  private isPFregex = /^PF_/ //
 
   protected endpoints = {
     PRODUCTS: [
@@ -122,14 +123,13 @@ export default class extends Exchange {
 
     if (json.feed === 'trade' && json.qty) {
       // futures
-
       return this.emitTrades(api.id, [
         {
           exchange: this.id,
           pair: json.product_id,
           timestamp: json.time,
           price: json.price,
-          size: json.product_id.startsWith('PF_') ? json.qty : json.qty / json.price,
+          size: this.isPFregex.test(json.product_id) ? json.qty : (json.qty / json.price),
           side: json.side
         }
       ])
