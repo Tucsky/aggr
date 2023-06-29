@@ -129,7 +129,7 @@ export default class extends Exchange {
           pair: json.product_id,
           timestamp: json.time,
           price: json.price,
-          size: json.qty,
+          size: json.product_id.startsWith('PF_') ? json.qty : json.qty / json.price,
           side: json.side
         }
       ])
