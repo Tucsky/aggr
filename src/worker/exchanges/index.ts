@@ -51,7 +51,6 @@ export const exchanges = [
 ] as Exchange[]
 
 export function getExchangeById(id: string) {
-  console.log(`[getExchangebyId] ${id}`)
   for (const exchange of exchanges) {
     if (exchange.id.toLowerCase() === id.toLowerCase()) {
       return exchange

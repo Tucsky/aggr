@@ -230,6 +230,7 @@ const actions = {
         }
 
         if (
+          !rootState.exchanges[marketsListeners[marketKey].exchange] ||
           rootState.exchanges[marketsListeners[marketKey].exchange].disabled
         ) {
           continue

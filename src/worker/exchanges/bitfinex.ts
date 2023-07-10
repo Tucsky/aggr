@@ -57,8 +57,8 @@ export default class extends Exchange {
     }
 
     if (api._connected.length === 0) {
-      const chanId = Object.keys(this.channels).find(
-        id => this.channels[id].name === 'status'
+      const chanId = Object.keys(this.channels[api._id]).find(
+        id => this.channels[api._id][id].name === 'status'
       )
 
       if (chanId) {
@@ -69,33 +69,33 @@ export default class extends Exchange {
           })
         )
 
-        delete this.channels[chanId]
+        delete this.channels[api._id][chanId]
       }
 
       return true
     }
 
-    const channelsToUnsubscribe = Object.keys(this.channels).filter(
-      id => this.channels[id].pair === pair
+    const channelsToUnsubscribe = Object.keys(this.channels[api._id]).filter(
+      chanId => this.channels[api._id][chanId].pair === pair
     )
 
     if (!channelsToUnsubscribe.length) {
       console.log(
         `[${this}.id}/unsubscribe] no channel to unsubscribe to, but server called unsubscibr(${pair}). Here is the active channels on bitfinex exchange :`,
-        this.channels
+        this.channels[api._id]
       )
       return
     }
 
-    for (const id of channelsToUnsubscribe) {
+    for (const chanId of channelsToUnsubscribe) {
       api.send(
         JSON.stringify({
           event: 'unsubscribe',
-          chanId: id
+          chanId
         })
       )
 
-      delete this.channels[id]
+      delete this.channels[api._id][chanId]
     }
   }
 
@@ -103,21 +103,23 @@ export default class extends Exchange {
     const json = JSON.parse(event.data)
 
     if (json.event === 'subscribed' && json.chanId) {
-      this.channels[json.chanId] = {
+      this.channels[api._id][json.chanId] = {
         name: json.channel,
         pair: json.pair
       }
       return
     }
 
-    if (!this.channels[json[0]] || json[1] === 'hb') {
+    const chanId = json[0]
+
+    if (!this.channels[api._id][chanId] || json[1] === 'hb') {
       if (json[1] !== 'hb' && json.event !== 'info') {
         console.warn(`[${this.id}] received unknown event ${event.data}`)
       }
       return
     }
 
-    const channel = this.channels[json[0]]
+    const channel = this.channels[api._id][chanId]
 
     if (!channel.hasSentInitialMessage) {
       channel.hasSentInitialMessage = true
@@ -125,9 +127,9 @@ export default class extends Exchange {
     }
 
     if (channel.name === 'trades' && json[1] === 'te') {
-      this.prices[api.id + channel.pair] = +json[2][3]
+      this.prices[channel.pair] = +json[2][3]
 
-      return this.emitTrades(api.id, [
+      return this.emitTrades(api._id, [
         {
           exchange: this.id,
           pair: channel.pair,
@@ -139,7 +141,7 @@ export default class extends Exchange {
       ])
     } else if (channel.name === 'status' && json[1]) {
       return this.emitLiquidations(
-        api.id,
+        api._id,
         json[1]
           .filter(
             liquidation =>
@@ -155,7 +157,7 @@ export default class extends Exchange {
               exchange: this.id,
               pair: a[4].substring(1),
               timestamp: parseInt(a[2]),
-              price: this.prices[api.id + pair],
+              price: this.prices[pair],
               size: Math.abs(a[5]),
               side: a[5] > 1 ? 'sell' : 'buy',
               liquidation: true
@@ -163,5 +165,13 @@ export default class extends Exchange {
           })
       )
     }
+  }
+
+  onApiCreated(api: any): void {
+    this.channels[api._id] = {}
+  }
+
+  onApiRemoved(api: any): void {
+    delete this.channels[api._id]
   }
 }
