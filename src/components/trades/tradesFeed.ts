@@ -265,7 +265,9 @@ export default class TradesFeed {
 
       if (!this.showTimeAgo) {
         const date = new Date(+trade.timestamp)
-        timestampText = date.getHours() + ':' + date.getMinutes()
+        timestampText = `${date.getHours()}:${
+          date.getMinutes() < 10 ? '0' : ''
+        }${date.getHours()}`
         timestampClass += ' -fixed'
       }
     }
