@@ -4,6 +4,7 @@ export default class extends Exchange {
   id = 'OKEX'
   private specs: { [pair: string]: number }
   private inversed: { [pair: string]: boolean }
+  private types: { [pair: string]: 'SPOT' | 'SWAP' | 'FUTURE' }
 
   protected endpoints = {
     PRODUCTS: [
@@ -17,11 +18,20 @@ export default class extends Exchange {
     return 'wss://ws.okex.com:8443/ws/v5/public'
   }
 
+  validateProducts(data: any) {
+    if (!data.types) {
+      return false
+    }
+
+    return true
+  }
+
   formatProducts(response) {
     const products = []
     const specs = {}
     const aliases = {}
     const inversed = {}
+    const types = {}
 
     for (const data of response) {
       for (const product of data.data) {
@@ -47,6 +57,7 @@ export default class extends Exchange {
           }
         }
 
+        types[pair] = type
         products.push(pair)
       }
     }
@@ -55,7 +66,8 @@ export default class extends Exchange {
       products,
       specs,
       aliases,
-      inversed
+      inversed,
+      types
     }
   }
 
@@ -80,6 +92,20 @@ export default class extends Exchange {
         ]
       })
     )
+
+    if (this.types[pair] !== 'SPOT') {
+      api.send(
+        JSON.stringify({
+          op: 'subscribe',
+          args: [
+            {
+              channel: 'liquidation-orders',
+              instType: this.types[pair]
+            }
+          ]
+        })
+      )
+    }
 
     return true
   }
@@ -106,6 +132,20 @@ export default class extends Exchange {
       })
     )
 
+    if (this.types[pair] !== 'SPOT') {
+      api.send(
+        JSON.stringify({
+          op: 'subscribe',
+          args: [
+            {
+              channel: 'liquidation-orders',
+              instType: this.types[pair]
+            }
+          ]
+        })
+      )
+    }
+
     return true
   }
 
@@ -130,11 +170,44 @@ export default class extends Exchange {
     }
   }
 
+  formatLiquidation(liquidation, pair) {
+    const size =
+      (liquidation.sz * this.specs[pair]) /
+      (this.inversed[pair] ? liquidation.bkPx : 1)
+
+    return {
+      exchange: this.id,
+      pair: pair,
+      timestamp: +liquidation.ts,
+      price: +liquidation.bkPx,
+      size: size,
+      side: liquidation.side,
+      liquidation: true
+    }
+  }
+
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
     if (!json || !json.data) {
       return
+    }
+
+    if (json.arg.channel === 'liquidation-orders') {
+      return this.emitLiquidations(
+        api.id,
+        json.data.reduce((acc, pairData) => {
+          if (api._connected.indexOf(pairData.instId) === -1) {
+            return acc
+          }
+
+          return acc.concat(
+            pairData.details.map(liquidation =>
+              this.formatLiquidation(liquidation, pairData.instId)
+            )
+          )
+        }, [])
+      )
     }
 
     return this.emitTrades(
