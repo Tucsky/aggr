@@ -174,12 +174,15 @@ export default class extends Exchange {
   }
 
   formatLiquidation(trade, pair) {
+    const size = +trade.amount
+    const price = this.prices[pair] || trade.price
+
     return {
       exchange: this.id,
       pair: pair,
       timestamp: +new Date(),
-      price: this.prices[pair] || trade.price,
-      size: trade.amount,
+      price,
+      size,
       side: trade.direction,
       liquidation: true
     }
@@ -250,7 +253,8 @@ export default class extends Exchange {
             /public.(.*).liquidation_orders/,
             '$1'
           )
-          this.emitTrades(
+
+          this.emitLiquidations(
             api.id,
             json.data.map(trade => this.formatLiquidation(trade, pair))
           )
