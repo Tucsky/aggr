@@ -5,12 +5,12 @@
   "scripts": {
     "cors": "node scripts/cors-server.js",
     "svg2font": "node scripts/svg2font.js",
-	"serve": "vue-cli-service serve",
+    "serve": "vue-cli-service serve",
     "prod": "vue-cli-service build --dest ./temp && rm -rf ./dist && mv ./temp ./dist",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "deploy": "node scripts/gh-pages-deploy.js",
-	"clean": "rm -rf node_modules && npm cache clean --force"
+    "clean": "rm -rf node_modules && npm cache clean --force"
   },
   "dependencies": {
     "@mdi/font": "^5.6.55",
