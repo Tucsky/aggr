@@ -38,6 +38,7 @@ export default class Editable extends Vue {
   @Watch('value')
   onValueChange() {
     if ((this.$el as HTMLElement).innerText !== this.value) {
+      // eslint-disable-next-line @typescript-eslint/no-extra-semi
       ;(this.$el as HTMLElement).innerText = this.value
     }
   }
@@ -82,6 +83,7 @@ export default class Editable extends Vue {
     if (window.getSelection) {
       window.getSelection().removeAllRanges()
     } else if ((document as any).selection) {
+      // eslint-disable-next-line @typescript-eslint/no-extra-semi
       ;(document as any).selection.empty()
     }
   }
@@ -180,7 +182,7 @@ export default class Editable extends Vue {
         this.position = null
       }, 100) as unknown as number
     }
-
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
     ;(this.$el as HTMLElement).innerText = text
 
     if (this._emitTimeout) {
