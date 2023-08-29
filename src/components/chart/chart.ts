@@ -2068,12 +2068,13 @@ export default class Chart {
   }
 
   /**
-   * create empty renderer
+   * Create empty renderer
    * this is called on first realtime trade or when indicator(s) are rendered from start to finish
-   * @param {number} timestamp create at time
-   * @param {string[]} indicatorsIds id of indicators to bind (if null all indicators are binded)
+   * @param {number} firstBarTimestamp  - create at time
+   * @param {string[]} indicatorsIds    - id of indicators to bind (if null all indicators are binded)
+   * @return {Renderer}      
    */
-  createRenderer(firstBarTimestamp, indicatorsIds?: string[]) {
+  createRenderer(firstBarTimestamp: number, indicatorsIds?: string[]): Renderer {
     firstBarTimestamp = floorTimestampToTimeframe(
       firstBarTimestamp,
       this.timeframe
