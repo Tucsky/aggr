@@ -5,7 +5,7 @@ import './assets/sass/app.scss'
 import store from './store'
 
 import Editable from '@/components/framework/Editable.vue'
-import Dropdown from '@/components/framework/Dropdown.vue'
+import DropdownComponent from '@/components/framework/Dropdown.vue'
 import Presets from '@/components/framework/Presets.vue'
 import autofocus from '@/directives/autofocusDirective'
 import draggableMarket from '@/directives/draggableMarketDirective'
@@ -21,10 +21,10 @@ Vue.use(VueTippy, {
   boundary: 'window'
 })
 
-Vue.component('TippyComponent', TippyComponent)
-Vue.component('DropdownComponent', Dropdown)
-Vue.component('EditableComponent', Editable)
-Vue.component('PresetsComponent', Presets)
+Vue.component('tippy', TippyComponent)
+Vue.component('dropdown', DropdownComponent)
+Vue.component('editable', Editable)
+Vue.component('presets', Presets)
 Vue.directive('autofocus', autofocus)
 Vue.directive('draggable-market', draggableMarket)
 
