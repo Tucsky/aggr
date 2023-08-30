@@ -2,6 +2,7 @@
 node_modules
 /dist
 src-tauri
+stats.html
 
 # local env files
 .env.local
