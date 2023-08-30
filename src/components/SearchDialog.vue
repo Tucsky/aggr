@@ -81,7 +81,7 @@
               :checked="searchExchanges[id] !== false"
               @click="toggleExchange($event, id)"
             />
-            <div :class="'exchanges-' + id"></div>
+            <div :class="'icon-' + id"></div>
             <span>
               <span v-text="id"></span>
               <a
@@ -160,13 +160,11 @@
           <input
             type="checkbox"
             class="form-control"
-            :checked="
-              searchQuotes[quote] === true || searchQuotes[quote] === undefined
-            "
+            :checked="searchQuotes[quote] === true || searchQuotes[quote] === undefined"
             @change="
               $store.commit('settings/TOGGLE_SEARCH_QUOTE', {
                 key: quote,
-                value: $event.target.checked
+                value: $event.target.checked,
               })
             "
           />
@@ -236,7 +234,7 @@
           type="text"
           placeholder="Search"
           :value="query"
-          @input=";(page = 0), (query = $event.target.value)"
+          @input="(page = 0), (query = $event.target.value);"
         />
       </div>
       <div class="search-dialog__results">
@@ -248,20 +246,13 @@
           </div>
           <table
             class="table mt8 search-dialog-recents table--inset"
-            v-if="
-              searchTypes.recent &&
-              previousSearchSelections.length &&
-              !query.length
-            "
+            v-if="searchTypes.recent && previousSearchSelections.length && !query.length"
           >
             <thead>
               <tr>
                 <th colspan="100%">
                   Search history
-                  <button
-                    class="btn -small -text"
-                    @click="toggleType('recent')"
-                  >
+                  <button class="btn -small -text" @click="toggleType('recent')">
                     <i class="icon-cross"></i>
                   </button>
                 </th>
@@ -283,10 +274,8 @@
                     v-text="savedSelection.markets.length"
                   ></span>
                 </td>
-                <td
-                  class="search-dialog-recents__markets table-ellipsis text-nowrap"
-                >
-                  <small>{{ savedSelection.markets.join(', ') }}</small>
+                <td class="search-dialog-recents__markets table-ellipsis text-nowrap">
+                  <small>{{ savedSelection.markets.join(", ") }}</small>
                 </td>
               </tr>
             </tbody>
@@ -312,7 +301,7 @@
                     v-for="(pairs, exchange) of group.exchanges"
                     :key="exchange"
                     class="pr4 search-dialog__exchange-logo"
-                    :class="'exchanges-' + exchange"
+                    :class="'icon-' + exchange"
                     :title="pairs.join(', ')"
                   ></i>
                 </td>
@@ -330,7 +319,7 @@
               >
                 <td
                   class="icon search-dialog__exchange text-center text-color-base"
-                  :class="'exchanges-' + market.exchange"
+                  :class="'icon-' + market.exchange"
                 ></td>
                 <td v-text="market.exchange"></td>
                 <td v-text="market.pair"></td>
@@ -382,11 +371,7 @@
         <i class="icon-cog"></i>
       </btn>
       <a href="javascript:void(0);" class="btn -text" @click="hide">Cancel</a>
-      <btn
-        class="-large -green ml8"
-        @click.native="submit"
-        :loading="isLoading"
-      >
+      <btn class="-large -green ml8" @click.native="submit" :loading="isLoading">
         {{ submitLabel }}
       </btn>
     </template>
@@ -394,24 +379,24 @@
 </template>
 
 <script>
-import Loader from '@/components/framework/Loader.vue'
-import Btn from '@/components/framework/Btn.vue'
-import Dialog from '@/components/framework/Dialog.vue'
-import DialogMixin from '@/mixins/dialogMixin'
-import { copyTextToClipboard, getBucketId } from '@/utils/helpers'
-import dialogService from '@/services/dialogService'
-import workspacesService from '@/services/workspacesService'
+import Loader from "@/components/framework/Loader.vue";
+import Btn from "@/components/framework/Btn.vue";
+import Dialog from "@/components/framework/Dialog.vue";
+import DialogMixin from "@/mixins/dialogMixin";
+import { copyTextToClipboard, getBucketId } from "@/utils/helpers";
+import dialogService from "@/services/dialogService";
+import workspacesService from "@/services/workspacesService";
 import {
   indexedProducts,
   indexProducts,
   getExchangeSymbols,
   ensureIndexedProducts,
   parseMarket,
-  stripStableQuote
-} from '@/services/productsService'
-import ToggableSection from '@/components/framework/ToggableSection.vue'
+  stripStableQuote,
+} from "@/services/productsService";
+import ToggableSection from "@/components/framework/ToggableSection.vue";
 
-const RESULTS_PER_PAGE = 25
+const RESULTS_PER_PAGE = 25;
 
 export default {
   mixins: [DialogMixin],
@@ -419,24 +404,24 @@ export default {
     ToggableSection,
     Dialog,
     Btn,
-    Loader
+    Loader,
   },
   props: {
     paneId: {
-      required: false
+      required: false,
     },
     pristine: {
       type: Boolean,
-      default: false
+      default: false,
     },
     input: {
       type: String,
-      default: null
-    }
+      default: null,
+    },
   },
   data: () => ({
     page: 0,
-    query: '',
+    query: "",
     markets: [],
     isLoading: false,
     isPreloading: false,
@@ -448,606 +433,586 @@ export default {
     canRefreshProducts: true,
     flattenedProducts: [],
     quoteCurrencies: [
-      'USD',
-      'USDT',
-      'UST',
-      'USDC',
-      'USDD',
-      'BUSD',
-      'TUSD',
-      'ETH',
-      'BTC',
-      'BNB',
-      'EUR',
-      'AUD',
-      'GBP',
-      'OTHERS'
-    ]
+      "USD",
+      "USDT",
+      "UST",
+      "USDC",
+      "USDD",
+      "BUSD",
+      "TUSD",
+      "ETH",
+      "BTC",
+      "BNB",
+      "EUR",
+      "AUD",
+      "GBP",
+      "OTHERS",
+    ],
   }),
   computed: {
     previousSearchSelections() {
-      return this.$store.state.settings.previousSearchSelections
+      return this.$store.state.settings.previousSearchSelections;
     },
     resultsPerPage() {
-      return RESULTS_PER_PAGE
+      return RESULTS_PER_PAGE;
     },
     otherPanes() {
       return Object.keys(this.$store.state.panes.panes)
-        .filter(a => a !== this.paneId)
-        .map(a => this.$store.state.panes.panes[a])
+        .filter((a) => a !== this.paneId)
+        .map((a) => this.$store.state.panes.panes[a]);
     },
     paneName() {
       if (this.paneId) {
-        return this.$store.state.panes.panes[this.paneId].name || this.paneId
+        return this.$store.state.panes.panes[this.paneId].name || this.paneId;
       } else {
-        return null
+        return null;
       }
     },
     activeMarkets() {
-      return Object.keys(this.$store.state.panes.marketsListeners)
+      return Object.keys(this.$store.state.panes.marketsListeners);
     },
     paneMarkets() {
       if (!this.paneId) {
-        return []
+        return [];
       }
 
-      return this.$store.state.panes.panes[this.paneId].markets
+      return this.$store.state.panes.panes[this.paneId].markets;
     },
     toConnect() {
       if (this.paneId) {
-        return this.selection.filter(a => this.paneMarkets.indexOf(a) === -1)
-          .length
+        return this.selection.filter((a) => this.paneMarkets.indexOf(a) === -1).length;
       } else {
-        return this.selection.filter(a => this.activeMarkets.indexOf(a) === -1)
-          .length
+        return this.selection.filter((a) => this.activeMarkets.indexOf(a) === -1).length;
       }
     },
     toDisconnect() {
-      return this.originalSelection.filter(
-        a => this.selection.indexOf(a) === -1
-      ).length
+      return this.originalSelection.filter((a) => this.selection.indexOf(a) === -1)
+        .length;
     },
     submitLabel() {
-      const toConnect = +this.toConnect
-      const toDisconnect = +this.toDisconnect
+      const toConnect = +this.toConnect;
+      const toDisconnect = +this.toDisconnect;
 
       if (!this.selection.length && toDisconnect) {
-        return `disconnect (${toDisconnect})`
+        return `disconnect (${toDisconnect})`;
       } else if (toConnect) {
-        return `connect (${toConnect})`
+        return `connect (${toConnect})`;
       }
 
-      return 'refresh'
+      return "refresh";
     },
     searchTypes() {
-      return this.$store.state.settings.searchTypes
+      return this.$store.state.settings.searchTypes;
     },
     searchQuotes() {
-      const searchQuotesPreferences = this.$store.state.settings.searchQuotes
+      const searchQuotesPreferences = this.$store.state.settings.searchQuotes;
 
       return this.quoteCurrencies.reduce((acc, quote) => {
         acc[quote] =
-          typeof searchQuotesPreferences[quote] === 'undefined'
+          typeof searchQuotesPreferences[quote] === "undefined"
             ? false
-            : searchQuotesPreferences[quote]
+            : searchQuotesPreferences[quote];
 
-        return acc
-      }, {})
+        return acc;
+      }, {});
     },
     quotesCount() {
-      return Object.values(this.searchQuotes).filter(a => !!a)
+      return Object.values(this.searchQuotes).filter((a) => !!a);
     },
     allQuotes() {
-      return !this.quotesCount.length
+      return !this.quotesCount.length;
     },
     exchanges() {
-      return this.$store.getters['exchanges/getExchanges']
+      return this.$store.getters["exchanges/getExchanges"];
     },
     searchExchanges() {
-      const searchExchanges = this.$store.state.settings.searchExchanges
+      const searchExchanges = this.$store.state.settings.searchExchanges;
 
       return Object.keys(this.$store.state.exchanges).reduce((output, id) => {
         if (this.$store.state.exchanges[id].disabled) {
-          return output
+          return output;
         }
 
         output[id] =
-          typeof searchExchanges[id] === 'undefined'
-            ? true
-            : searchExchanges[id]
+          typeof searchExchanges[id] === "undefined" ? true : searchExchanges[id];
 
-        return output
-      }, {})
+        return output;
+      }, {});
     },
     allExchangesEnabled() {
       return (
-        typeof Object.values(this.searchExchanges).find(a => a === false) ===
-        'undefined'
-      )
+        typeof Object.values(this.searchExchanges).find((a) => a === false) ===
+        "undefined"
+      );
     },
     hasFilters() {
-      const hasHistorical = this.searchTypes.historical
-      const hasSpot = this.searchTypes.spots
-      const hasPerpetuals = this.searchTypes.perpetuals
-      const hasFutures = this.searchTypes.futures
-      const isMergeStables = this.searchTypes.mergeUsdt
-      return (
-        isMergeStables ||
-        hasHistorical ||
-        hasSpot ||
-        hasPerpetuals ||
-        hasFutures
-      )
+      const hasHistorical = this.searchTypes.historical;
+      const hasSpot = this.searchTypes.spots;
+      const hasPerpetuals = this.searchTypes.perpetuals;
+      const hasFutures = this.searchTypes.futures;
+      const isMergeStables = this.searchTypes.mergeUsdt;
+      return isMergeStables || hasHistorical || hasSpot || hasPerpetuals || hasFutures;
     },
     historicalMarkets() {
-      return this.$store.state.app.historicalMarkets
+      return this.$store.state.app.historicalMarkets;
     },
     queryFilter: function () {
       const multiQuery = this.query
-        .replace(/[ ,]/g, '|')
-        .replace(/(^|\w|\s)\*(\w|\s|$)/g, '$1.*$2')
+        .replace(/[ ,]/g, "|")
+        .replace(/(^|\w|\s)\*(\w|\s|$)/g, "$1.*$2");
 
       if (this.searchTypes.normalize) {
-        return new RegExp('^' + multiQuery, 'i')
+        return new RegExp("^" + multiQuery, "i");
       } else {
-        return new RegExp(multiQuery, 'i')
+        return new RegExp(multiQuery, "i");
       }
     },
     filteredProducts() {
-      const hasHistorical = this.searchTypes.historical
-      const hasSpot = this.searchTypes.spots
-      const hasPerpetuals = this.searchTypes.perpetuals
-      const hasFutures = this.searchTypes.futures
+      const hasHistorical = this.searchTypes.historical;
+      const hasSpot = this.searchTypes.spots;
+      const hasPerpetuals = this.searchTypes.perpetuals;
+      const hasFutures = this.searchTypes.futures;
 
-      const exchanges = this.searchExchanges
-      const hasTypeFilters = hasSpot || hasPerpetuals || hasFutures
+      const exchanges = this.searchExchanges;
+      const hasTypeFilters = hasSpot || hasPerpetuals || hasFutures;
 
-      const searchQuotes = this.searchQuotes
-      const allQuotes = this.allQuotes
+      const searchQuotes = this.searchQuotes;
+      const allQuotes = this.allQuotes;
 
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-      this.page = 0
+      this.page = 0;
 
-      return this.flattenedProducts.filter(a => {
+      return this.flattenedProducts.filter((a) => {
         if (hasHistorical && this.historicalMarkets.indexOf(a.id) === -1) {
-          return false
+          return false;
         }
 
         if (
           !allQuotes &&
-          ((typeof searchQuotes[a.quote] === 'boolean' &&
+          ((typeof searchQuotes[a.quote] === "boolean" &&
             searchQuotes[a.quote] === false) ||
-            (typeof searchQuotes[a.quote] !== 'boolean' &&
-              !searchQuotes.OTHERS))
+            (typeof searchQuotes[a.quote] !== "boolean" && !searchQuotes.OTHERS))
         ) {
-          return false
+          return false;
         }
 
         if (!exchanges[a.exchange]) {
-          return false
+          return false;
         }
 
         if (
           hasTypeFilters &&
-          ((!hasFutures && a.type === 'future') ||
-            (!hasPerpetuals && a.type === 'perp') ||
-            (!hasSpot && a.type === 'spot'))
+          ((!hasFutures && a.type === "future") ||
+            (!hasPerpetuals && a.type === "perp") ||
+            (!hasSpot && a.type === "spot"))
         ) {
-          return false
+          return false;
         }
 
-        return true
-      })
+        return true;
+      });
     },
     results: function () {
-      const offset = this.page * RESULTS_PER_PAGE
+      const offset = this.page * RESULTS_PER_PAGE;
       if (this.searchTypes.normalize) {
         const marketsByPair = this.filteredProducts
           .filter(
-            product =>
+            (product) =>
               this.selection.indexOf(product.id) === -1 &&
               this.queryFilter.test(product.local)
           )
           .reduce((groups, product) => {
-            let localPair
+            let localPair;
 
             if (product && this.searchTypes.mergeUsdt) {
-              localPair = product.base + stripStableQuote(product.quote)
+              localPair = product.base + stripStableQuote(product.quote);
             } else {
-              localPair = product.base + product.quote
+              localPair = product.base + product.quote;
             }
 
             if (!groups[localPair]) {
-              groups[localPair] = []
+              groups[localPair] = [];
             }
 
-            groups[localPair].push(product.id)
+            groups[localPair].push(product.id);
 
-            return groups
-          }, {})
+            return groups;
+          }, {});
 
         return Object.keys(marketsByPair)
           .slice(offset, offset + RESULTS_PER_PAGE)
-          .map(localPair => ({
+          .map((localPair) => ({
             localPair,
             markets: marketsByPair[localPair],
             exchanges: marketsByPair[localPair].reduce((acc, market) => {
-              const [exchange, pair] = parseMarket(market)
+              const [exchange, pair] = parseMarket(market);
 
-              const normalizedExchange = exchange.replace(/_.*/, '')
+              const normalizedExchange = exchange.replace(/_.*/, "");
 
               if (!acc[normalizedExchange]) {
-                acc[normalizedExchange] = []
+                acc[normalizedExchange] = [];
               }
 
-              acc[normalizedExchange].push(pair)
+              acc[normalizedExchange].push(pair);
 
-              return acc
-            }, {})
-          }))
+              return acc;
+            }, {}),
+          }));
       } else {
         return this.filteredProducts
           .filter(
-            product =>
+            (product) =>
               this.selection.indexOf(product.id) === -1 &&
               this.queryFilter.test(product.id)
           )
-          .slice(offset, offset + RESULTS_PER_PAGE)
+          .slice(offset, offset + RESULTS_PER_PAGE);
       }
     },
     groupedSelection: function () {
       if (!this.productsReady) {
-        return {}
+        return {};
       }
 
       return this.selection.reduce((groups, market) => {
-        const [exchange] = market.split(':')
+        const [exchange] = market.split(":");
 
         if (!indexedProducts[exchange]) {
-          return groups
+          return groups;
         }
 
         const indexedProduct = indexedProducts[exchange].find(
-          product => product.id === market
-        )
+          (product) => product.id === market
+        );
 
-        let localPair = market
+        let localPair = market;
 
         if (indexedProduct) {
           if (indexedProduct && this.searchTypes.mergeUsdt) {
-            localPair =
-              indexedProduct.base + stripStableQuote(indexedProduct.quote)
+            localPair = indexedProduct.base + stripStableQuote(indexedProduct.quote);
           } else {
-            localPair = indexedProduct.base + indexedProduct.quote
+            localPair = indexedProduct.base + indexedProduct.quote;
           }
         }
 
         if (!groups[localPair]) {
-          groups[localPair] = []
+          groups[localPair] = [];
         }
 
-        groups[localPair].push(market)
+        groups[localPair].push(market);
 
-        return groups
-      }, {})
+        return groups;
+      }, {});
     },
     groupsCount() {
-      return Object.keys(this.groupedSelection).length
-    }
+      return Object.keys(this.groupedSelection).length;
+    },
   },
 
   watch: {
-    '$store.state.app.showSearch': function (value) {
+    "$store.state.app.showSearch": function (value) {
       if (!value) {
-        this.close(false)
+        this.close(false);
       }
     },
     async searchExchanges() {
       if (await this.ensureIndexedProducts()) {
-        this.cacheProducts()
+        this.cacheProducts();
       }
-    }
+    },
   },
   async created() {
-    this.initSelection()
+    this.initSelection();
 
-    this.isPreloading = true
-    await this.ensureIndexedProducts()
-    this.isPreloading = false
+    this.isPreloading = true;
+    await this.ensureIndexedProducts();
+    this.isPreloading = false;
 
-    this.cacheProducts()
+    this.cacheProducts();
   },
   async mounted() {
-    document.addEventListener('paste', this.onPaste)
-    document.addEventListener('keydown', this.onKeydown)
+    document.addEventListener("paste", this.onPaste);
+    document.addEventListener("keydown", this.onKeydown);
 
-    await this.$nextTick()
+    await this.$nextTick();
 
     if (!this.$refs.input) {
-      return
+      return;
     }
 
-    this.$refs.input.focus()
+    this.$refs.input.focus();
 
-    if (
-      this.input &&
-      !window.event &&
-      this.$refs.input.value.indexOf(this.input) !== 0
-    ) {
-      this.query = this.input + this.query
+    if (this.input && !window.event && this.$refs.input.value.indexOf(this.input) !== 0) {
+      this.query = this.input + this.query;
     }
   },
   beforeDestroy() {
-    document.removeEventListener('paste', this.onPaste)
-    document.removeEventListener('keydown', this.onKeydown)
+    document.removeEventListener("paste", this.onPaste);
+    document.removeEventListener("keydown", this.onKeydown);
 
     if (this._hideHistoryTimeout) {
-      clearTimeout(this._hideHistoryTimeout)
+      clearTimeout(this._hideHistoryTimeout);
     }
   },
   methods: {
     async ensureIndexedProducts() {
       const selectedExchanges = this.selection.reduce((acc, market) => {
-        const [exchangeId] = parseMarket(market)
+        const [exchangeId] = parseMarket(market);
 
         if (!acc[exchangeId]) {
-          acc[exchangeId] = true
+          acc[exchangeId] = true;
         }
 
-        return acc
-      }, {})
+        return acc;
+      }, {});
 
       const requiredExchanges = {
         ...this.searchExchanges,
-        ...selectedExchanges
-      }
+        ...selectedExchanges,
+      };
 
-      const indexChanged = await ensureIndexedProducts(requiredExchanges)
+      const indexChanged = await ensureIndexedProducts(requiredExchanges);
 
-      this.productsReady = true
+      this.productsReady = true;
 
       if (indexChanged) {
-        return true
+        return true;
       }
 
-      return false
+      return false;
     },
     detargetPane() {
-      this.$store.commit('app/SET_FOCUSED_PANE', null)
-      this.paneId = null
-      this.initSelection()
+      this.$store.commit("app/SET_FOCUSED_PANE", null);
+      this.paneId = null;
+      this.initSelection();
     },
     initSelection() {
       if (this.pristine) {
-        return
+        return;
       }
 
       if (this.paneId) {
-        this.selection =
-          this.$store.state.panes.panes[this.paneId].markets.slice()
+        this.selection = this.$store.state.panes.panes[this.paneId].markets.slice();
       } else {
-        this.selection = this.activeMarkets.slice()
+        this.selection = this.activeMarkets.slice();
       }
 
-      this.originalSelection = this.selection.slice()
+      this.originalSelection = this.selection.slice();
     },
     containMultipleMarketsConfigurations() {
       return (
         Object.keys(this.$store.state.panes.panes)
-          .map(id => getBucketId(this.$store.state.panes.panes[id].markets))
+          .map((id) => getBucketId(this.$store.state.panes.panes[id].markets))
           .filter((v, i, a) => a.indexOf(v) === i).length > 1
-      )
+      );
     },
     async toggleMarkets(markets, removeFromHistory) {
-      const scrollTop = this.$refs.selection.scrollTop
+      const scrollTop = this.$refs.selection.scrollTop;
 
       if (!Array.isArray(markets)) {
-        markets = [markets]
+        markets = [markets];
       }
       if (removeFromHistory) {
-        this.$store.commit('settings/REMOVE_SEARCH_HISTORY', markets)
-        clearTimeout(this._hideHistoryTimeout)
-        return
+        this.$store.commit("settings/REMOVE_SEARCH_HISTORY", markets);
+        clearTimeout(this._hideHistoryTimeout);
+        return;
       }
       for (const market of markets) {
-        this.toggleMarket(market)
+        this.toggleMarket(market);
       }
 
-      await this.$nextTick()
+      await this.$nextTick();
 
-      this.$refs.input.focus()
+      this.$refs.input.focus();
 
-      this.$refs.selection.scrollTop = scrollTop
+      this.$refs.selection.scrollTop = scrollTop;
     },
     toggleMarket(market) {
-      const index = this.selection.indexOf(market)
+      const index = this.selection.indexOf(market);
 
       if (index === -1) {
-        this.selection.push(market)
+        this.selection.push(market);
       } else {
-        this.selection.splice(index, 1)
+        this.selection.splice(index, 1);
       }
     },
     async submit() {
       if (this.selection.length) {
-        this.$store.dispatch('settings/saveSearchSelection', this.selection)
+        this.$store.dispatch("settings/saveSearchSelection", this.selection);
       }
 
       if (!this.paneId) {
         if (
           this.containMultipleMarketsConfigurations() &&
-          !(await dialogService.confirm(
-            `Override the other panes market filters`
-          ))
+          !(await dialogService.confirm(`Override the other panes market filters`))
         ) {
-          return
+          return;
         }
 
-        this.isLoading = true
+        this.isLoading = true;
 
         if (!Object.keys(this.$store.state.panes.panes).length) {
-          await this.$store.dispatch('panes/addPane', { type: 'trades' })
+          await this.$store.dispatch("panes/addPane", { type: "trades" });
         }
 
-        await this.$store.dispatch('panes/setMarketsForAll', this.selection)
+        await this.$store.dispatch("panes/setMarketsForAll", this.selection);
       } else {
-        this.isLoading = true
+        this.isLoading = true;
 
-        this.$store.dispatch('panes/setMarketsForPane', {
+        this.$store.dispatch("panes/setMarketsForPane", {
           id: this.paneId,
-          markets: this.selection
-        })
+          markets: this.selection,
+        });
       }
 
-      this.isLoading = false
+      this.isLoading = false;
 
-      this.hide()
+      this.hide();
     },
     hide() {
-      this.$store.dispatch('app/hideSearch')
+      this.$store.dispatch("app/hideSearch");
     },
     toggleType(key) {
-      this.$store.commit('settings/TOGGLE_SEARCH_TYPE', key)
+      this.$store.commit("settings/TOGGLE_SEARCH_TYPE", key);
     },
     toggleExchange(event, id) {
       if (event.shiftKey) {
-        this.toggleAll(false)
+        this.toggleAll(false);
 
         if (!event.target.checked) {
-          event.target.checked = true
+          event.target.checked = true;
         }
       }
 
-      this.$store.commit('settings/TOGGLE_SEARCH_EXCHANGE', id)
+      this.$store.commit("settings/TOGGLE_SEARCH_EXCHANGE", id);
     },
 
     clearSelection() {
-      this.selection.splice(0, this.selection.length)
+      this.selection.splice(0, this.selection.length);
 
-      this.query = ''
+      this.query = "";
 
-      this.$refs.input.focus()
+      this.$refs.input.focus();
     },
 
     copySelection() {
-      copyTextToClipboard(this.selection.join(','))
+      copyTextToClipboard(this.selection.join(","));
 
-      this.$store.dispatch('app/showNotice', {
-        id: 'products-clipboard',
-        title: `Copied ${this.selection.length} product(s) to clipboard`
-      })
+      this.$store.dispatch("app/showNotice", {
+        id: "products-clipboard",
+        title: `Copied ${this.selection.length} product(s) to clipboard`,
+      });
     },
 
     clearFilters() {
-      this.$store.commit('settings/CLEAR_SEARCH_FILTERS')
-      this.toggleAll(true)
+      this.$store.commit("settings/CLEAR_SEARCH_FILTERS");
+      this.toggleAll(true);
     },
 
     onPaste(event) {
       if (document.activeElement) {
-        if (document.activeElement.tagName === 'INPUT') {
-          return
+        if (document.activeElement.tagName === "INPUT") {
+          return;
         }
       }
 
-      const raw = event.clipboardData.getData('text/plain')
-      const markets = raw.split(',').filter(a => /^.{3,}:.{4,32}$/.test(a))
+      const raw = event.clipboardData.getData("text/plain");
+      const markets = raw.split(",").filter((a) => /^.{3,}:.{4,32}$/.test(a));
 
       if (!markets.length) {
-        return
+        return;
       }
 
-      this.selection = markets
+      this.selection = markets;
     },
 
     onKeydown(event) {
       switch (event.key) {
-        case 'Enter':
-          event.preventDefault()
+        case "Enter":
+          event.preventDefault();
           if (this.results[this.activeIndex]) {
             if (this.searchTypes.normalize) {
-              this.toggleMarkets([this.results[this.activeIndex].markets])
+              this.toggleMarkets([this.results[this.activeIndex].markets]);
             } else {
-              this.toggleMarkets([this.results[this.activeIndex].id])
+              this.toggleMarkets([this.results[this.activeIndex].id]);
             }
           }
-          break
+          break;
 
-        case 'ArrowDown':
-        case 'ArrowUp':
+        case "ArrowDown":
+        case "ArrowUp":
           if (this.results.length) {
-            if (event.key === 'ArrowUp') {
-              this.activeIndex = Math.max(0, this.activeIndex - 1)
+            if (event.key === "ArrowUp") {
+              this.activeIndex = Math.max(0, this.activeIndex - 1);
             } else {
               if (this.activeIndex === null) {
-                this.activeIndex = 0
+                this.activeIndex = 0;
               } else {
                 this.activeIndex = Math.min(
                   this.results.length - 1,
                   this.activeIndex + 1
-                )
+                );
               }
             }
           }
-          break
+          break;
 
-        case 'Backspace':
-        case 'Delete':
-          this.deleteLast()
-          break
+        case "Backspace":
+        case "Delete":
+          this.deleteLast();
+          break;
 
-        case 'c':
+        case "c":
           if (
             (event.ctrlKey || event.metaKey) &&
             !window.getSelection().toString().length
           ) {
-            this.copySelection()
+            this.copySelection();
           }
-          break
+          break;
       }
     },
 
     deleteLast() {
       if (!this.query.length && this.selection.length) {
         if (this.searchTypes.normalize) {
-          const lastPair = Object.keys(this.groupedSelection).pop()
-          this.toggleMarkets(this.groupedSelection[lastPair])
+          const lastPair = Object.keys(this.groupedSelection).pop();
+          this.toggleMarkets(this.groupedSelection[lastPair]);
         } else {
-          this.selection.splice(this.selection.length - 1, 1)
+          this.selection.splice(this.selection.length - 1, 1);
         }
       }
     },
 
     addAll() {
-      const normalized = this.searchTypes.normalize
-      const markets = []
+      const normalized = this.searchTypes.normalize;
+      const markets = [];
 
       for (let i = 0; i < this.results.length; i++) {
         if (normalized) {
           for (const market of this.results[i].markets) {
-            markets.push(market)
+            markets.push(market);
           }
         } else {
-          markets.push(this.results[i].id)
+          markets.push(this.results[i].id);
         }
       }
 
-      this.toggleMarkets(markets)
+      this.toggleMarkets(markets);
     },
 
     toggleAll(selectAll) {
-      if (typeof selectAll !== 'boolean') {
-        selectAll = Boolean(!this.allExchangesEnabled)
+      if (typeof selectAll !== "boolean") {
+        selectAll = Boolean(!this.allExchangesEnabled);
       }
 
       this.$set(
         this.$store.state.settings,
-        'searchExchanges',
+        "searchExchanges",
         this.exchanges.reduce((output, id) => {
-          output[id] = selectAll ? true : false
-          return output
+          output[id] = selectAll ? true : false;
+          return output;
         }, {})
-      )
+      );
     },
 
     async refreshExchangeProducts(exchangeId) {
@@ -1058,68 +1023,63 @@ export default {
           )
         ) {
           for (const exchange of this.exchanges) {
-            await this.refreshExchangeProducts(exchange)
+            await this.refreshExchangeProducts(exchange);
           }
         }
 
-        return
+        return;
       }
 
       if (this._refreshProductsTimeout) {
-        clearTimeout(this._refreshProductsTimeout)
+        clearTimeout(this._refreshProductsTimeout);
       }
 
-      this.canRefreshProducts = false
+      this.canRefreshProducts = false;
 
-      this.$store.dispatch('app/showNotice', {
+      this.$store.dispatch("app/showNotice", {
         id: exchangeId,
-        title: `Refreshing ${exchangeId}'s products...`
-      })
+        title: `Refreshing ${exchangeId}'s products...`,
+      });
 
-      await workspacesService.deleteProducts(exchangeId)
+      await workspacesService.deleteProducts(exchangeId);
 
       const count = (
-        await indexProducts(
-          exchangeId,
-          await getExchangeSymbols(exchangeId, true)
-        )
-      ).length
+        await indexProducts(exchangeId, await getExchangeSymbols(exchangeId, true))
+      ).length;
 
-      this.$store.dispatch('app/showNotice', {
+      this.$store.dispatch("app/showNotice", {
         id: exchangeId,
-        title: `Saved ${count} ${exchangeId}'s products`
-      })
+        title: `Saved ${count} ${exchangeId}'s products`,
+      });
 
-      await this.$store.dispatch('exchanges/disconnect', exchangeId)
-      await this.$store.dispatch('exchanges/connect', exchangeId)
+      await this.$store.dispatch("exchanges/disconnect", exchangeId);
+      await this.$store.dispatch("exchanges/connect", exchangeId);
 
       this._refreshProductsTimeout = setTimeout(() => {
-        this._refreshProductsTimeout = null
-        this.canRefreshProducts = true
-      }, 10000)
+        this._refreshProductsTimeout = null;
+        this.canRefreshProducts = true;
+      }, 10000);
 
-      this.cacheProducts()
+      this.cacheProducts();
     },
 
     async showMore() {
-      this.page++
-      await this.$nextTick()
-      this.$refs.scroller.scrollTop = 0
+      this.page++;
+      await this.$nextTick();
+      this.$refs.scroller.scrollTop = 0;
     },
 
     async showLess() {
-      this.page = Math.max(this.page - 1, 0)
-      await this.$nextTick()
-      this.$refs.scroller.scrollTop = this.$refs.scroller.offsetHeight
+      this.page = Math.max(this.page - 1, 0);
+      await this.$nextTick();
+      this.$refs.scroller.scrollTop = this.$refs.scroller.offsetHeight;
     },
 
     cacheProducts() {
-      this.flattenedProducts = Array.prototype.concat(
-        ...Object.values(indexedProducts)
-      )
-    }
-  }
-}
+      this.flattenedProducts = Array.prototype.concat(...Object.values(indexedProducts));
+    },
+  },
+};
 </script>
 <style lang="scss" scoped>
 .search-dialog {
