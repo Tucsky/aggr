@@ -180,7 +180,7 @@ export default class Website extends Mixins(PaneMixin) {
       this.reload()
 
       this.setupReloadTimer()
-    }, delay)  as unknown as number
+    }, delay) as unknown as number
   }
 
   async reload(focus?: boolean) {

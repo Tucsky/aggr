@@ -74,7 +74,7 @@ export default class Exchange extends Vue {
   get markets() {
     return (Object as any)
       .values(this.$store.state.panes.marketsListeners)
-      .filter(a => a.exchange === this.id)
+      .filter(a => a.listeners > 0 && a.exchange === this.id)
   }
 
   get active() {
@@ -83,6 +83,7 @@ export default class Exchange extends Vue {
 
   async toggleExchange() {
     await this.$store.dispatch('exchanges/toggleExchange', this.id)
+    await this.$store.dispatch('panes/refreshMarketsListeners')
   }
 
   formatAmount(amount) {
@@ -142,7 +143,7 @@ export default class Exchange extends Vue {
 
   &.-expanded {
     .settings-exchange__more i:before {
-      content: unicode($icon-up-thin);
+      content: $icon-up-thin;
     }
   }
 }
@@ -158,6 +159,7 @@ export default class Exchange extends Vue {
   font-size: 0.875em;
   padding-left: 0.75em;
   flex-grow: 1;
+  line-height: 1;
 
   > span {
     position: relative;

@@ -20,6 +20,7 @@ import { toPlainString } from '@/utils/helpers'
   props: ['value', 'step', 'min', 'max', 'editable', 'disabled']
 })
 export default class Editable extends Vue {
+  editable: boolean
   private value: string
   private min: number
   private max: number
@@ -37,6 +38,7 @@ export default class Editable extends Vue {
   @Watch('value')
   onValueChange() {
     if ((this.$el as HTMLElement).innerText !== this.value) {
+      // eslint-disable-next-line @typescript-eslint/no-extra-semi
       ;(this.$el as HTMLElement).innerText = this.value
     }
   }
@@ -81,6 +83,7 @@ export default class Editable extends Vue {
     if (window.getSelection) {
       window.getSelection().removeAllRanges()
     } else if ((document as any).selection) {
+      // eslint-disable-next-line @typescript-eslint/no-extra-semi
       ;(document as any).selection.empty()
     }
   }
@@ -177,10 +180,10 @@ export default class Editable extends Vue {
         }
 
         this.position = null
-      }, 100)  as unknown as number
+      }, 100) as unknown as number
     }
-
-    ;(this.$el as any).innerText = text
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;(this.$el as HTMLElement).innerText = text
 
     if (this._emitTimeout) {
       clearTimeout(this._emitTimeout)
@@ -188,10 +191,9 @@ export default class Editable extends Vue {
     this._emitTimeout = setTimeout(() => {
       this._emitTimeout = null
       this.$emit('input', text)
-    }, 50)  as unknown as number
+    }, 50) as unknown as number
   }
-
-  onWheel(event) {
+  onWheel(event: WheelEvent) {
     const focusedElement = document.activeElement as HTMLElement
 
     if (focusedElement !== event.target || !focusedElement.isContentEditable) {

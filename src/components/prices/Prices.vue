@@ -360,7 +360,7 @@ export default class Prices extends Mixins(PaneMixin) {
     this._resetTimeout = setTimeout(
       this.periodReset.bind(this),
       this.getTimeToNextReset()
-    )  as unknown as number
+    ) as unknown as number
   }
 
   periodReset() {

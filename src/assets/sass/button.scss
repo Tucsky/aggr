@@ -5,8 +5,8 @@ button {
 
   &.-arrow {
     &:after {
-      content: unicode($icon-down-thin);
-      font-family: 'exchanges', 'icon';
+      content: $icon-down-thin;
+      font-family: 'icon';
       position: relative;
       line-height: 0;
       transition: transform 0.2s cubic-bezier(0, 1.4, 1, 1);

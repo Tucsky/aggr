@@ -362,11 +362,11 @@ export default class Trades extends Mixins(PaneMixin) {
     }
 
     &.-buy .icon-side:before {
-      content: unicode($icon-bear);
+      content: $icon-bear;
     }
 
     &.-sell .icon-side:before {
-      content: unicode($icon-bull);
+      content: $icon-bull;
     }
   }
 
@@ -375,7 +375,7 @@ export default class Trades extends Mixins(PaneMixin) {
     color: $red;
 
     .icon-side:before {
-      content: unicode($icon-down);
+      content: $icon-down;
     }
   }
 
@@ -384,7 +384,7 @@ export default class Trades extends Mixins(PaneMixin) {
     color: $green;
 
     .icon-side:before {
-      content: unicode($icon-up);
+      content: $icon-up;
     }
   }
 
@@ -436,6 +436,7 @@ export default class Trades extends Mixins(PaneMixin) {
   .icon-quote,
   .icon-base {
     line-height: 0;
+    font-size: 0.875em;
   }
 
   .trade__pair {

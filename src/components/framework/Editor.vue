@@ -189,6 +189,14 @@ export default class Editor extends Vue {
       border-radius: 8px;
     }
 
+    .ace_marker-layer .ace_selected-word {
+      border-radius: 4px;
+      outline: 2px var(--theme-buy-100);
+      outline-style: solid;
+      outline-offset: 1px;
+      border: 0;
+    }
+
     .ace_scrollbar::-webkit-scrollbar {
       width: 1rem;
       height: 1rem;

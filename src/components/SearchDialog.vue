@@ -379,8 +379,8 @@
         class="btn -text mrauto search-dialog__side-toggle"
         @click="mobileShowFilters = !mobileShowFilters"
       >
-        <i class="icon-cog"></i
-      ></btn>
+        <i class="icon-cog"></i>
+      </btn>
       <a href="javascript:void(0);" class="btn -text" @click="hide">Cancel</a>
       <btn
         class="-large -green ml8"
@@ -454,6 +454,7 @@ export default {
       'USDC',
       'USDD',
       'BUSD',
+      'TUSD',
       'ETH',
       'BTC',
       'BNB',

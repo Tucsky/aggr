@@ -1,9 +1,9 @@
 
 # SignificantTrade
 
-Cryptocurrency market trades aggregator.\
+Cryptocurrency market trades aggregator./
 
-Currently supporting Kucoin, BitMEX, Bitfinex, Binance, Coinbase, Bitstamp, Deribit, Huobi, Okex, Hitbtc, Poloniex, Bybit, Bitget and Mexc ([see src/exchanges/](src/exchanges) for detail)
+Currently supporting Kucoin, BitMEX, Bitfinex, Binance, Coinbase, Bitstamp, Deribit, Huobi, Okex, Hitbtc, Poloniex, Bybit, Bitget, Mexc, Gate.io and Crypto.com ([see src/exchanges/](src/exchanges) for detail)
 
 ![screenshot](https://i.imgur.com/nHJxsdL.gif)
 
@@ -82,6 +82,7 @@ docker build -t aggr-chart .
 you need to set the API_URL as environment variable for your own installation, if you want to use that.
 
 ## Configuration
+
 SignificantTrades is now using Vue Cli which allows you to configure the client using .env file.
 
 Create a <code>.env.local</code> or <code>.env.development</code> or <code>.env.production</code> (.env.local if you don't know) file inside root folder.
@@ -103,11 +104,13 @@ Let's say you have a server instance running on port 3000, start the client with
 
 ## Community
 
-Discord: https://discord.gg/ZA6CFMkq
+Discord: https://discord.com/invite/MYMUEgMABs
 
 ## Disclaimer
+
 If you plan to use real money with this, USE AT YOUR OWN RISK.
 
-## Support this project !
+## Support this project!
+
 ETH 0x83bBC120a998cF7dFcBa1518CDDCb68Aa0D0c158<br>
 COINBASE https://commerce.coinbase.com/checkout/c58bd003-5e47-4cfb-ae25-5292f0a0e1e8

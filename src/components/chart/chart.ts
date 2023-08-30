@@ -85,6 +85,15 @@ export type IndicatorMarkets = {
   [marketId: string]: string[]
 }
 
+export interface IndicatorSource {
+  prop: string
+  filters: {
+    quote: string
+    exchange: string
+    type: string
+  }
+}
+
 export interface TimeRange {
   from: number
   to: number
@@ -121,6 +130,7 @@ export interface IndicatorTranspilationResult {
   plots: IndicatorPlot[]
   markets?: IndicatorMarkets
   references?: IndicatorReference[]
+  sources?: IndicatorSource[]
 }
 export interface IndicatorFunction {
   name: string
@@ -178,7 +188,7 @@ interface RendererIndicatorData {
   minLength?: number
 }
 
-type MarketsFilters = {
+export type MarketsFilters = {
   [identifier: string]: boolean
 }
 
@@ -843,7 +853,10 @@ export default class Chart {
 
       // create function ready to calculate (& render) everything for this indicator
       try {
-        indicator.adapter = this.serieBuilder.getAdapter(indicator.model.output)
+        indicator.adapter = this.serieBuilder.getAdapter(
+          indicator.model,
+          this.marketsFilters
+        )
       } catch (error) {
         this.unbindIndicator(indicator, renderer)
 
@@ -2055,12 +2068,13 @@ export default class Chart {
   }
 
   /**
-   * create empty renderer
+   * Create empty renderer
    * this is called on first realtime trade or when indicator(s) are rendered from start to finish
-   * @param {number} timestamp create at time
-   * @param {string[]} indicatorsIds id of indicators to bind (if null all indicators are binded)
+   * @param {number} firstBarTimestamp  - create at time
+   * @param {string[]} indicatorsIds    - id of indicators to bind (if null all indicators are binded)
+   * @return {Renderer}      
    */
-  createRenderer(firstBarTimestamp, indicatorsIds?: string[]) {
+  createRenderer(firstBarTimestamp: number, indicatorsIds?: string[]): Renderer {
     firstBarTimestamp = floorTimestampToTimeframe(
       firstBarTimestamp,
       this.timeframe
@@ -2232,8 +2246,19 @@ export default class Chart {
     return bar
   }
 
+  /**
+   *
+   * @param indicator
+   * @param renderer
+   */
   prepareRendererForIndicators(indicator: LoadedIndicator, renderer: Renderer) {
-    const markets = Object.keys(indicator.model.markets)
+    let markets = Object.keys(indicator.model.markets)
+
+    if (indicator.model.sources.length) {
+      markets = Object.keys(this.marketsFilters)
+        .concat(markets)
+        .filter((t, index, self) => self.indexOf(t) === index)
+    }
 
     for (let j = 0; j < markets.length; j++) {
       if (!renderer.sources[markets[j]]) {
@@ -2245,7 +2270,14 @@ export default class Chart {
         }
       }
 
-      const keys = indicator.model.markets[markets[j]]
+      let keys = indicator.model.markets[markets[j]] || []
+
+      if (indicator.model.sources.length) {
+        keys = indicator.model.sources
+          .map(a => a.prop)
+          .concat(keys)
+          .filter((t, index, self) => self.indexOf(t) === index)
+      }
 
       if (keys.length) {
         for (let k = 0; k < keys.length; k++) {
@@ -2552,41 +2584,43 @@ export default class Chart {
 
     offsetY += textPadding * 2
 
-    Object.values(
-      (store.state[this.paneId] as ChartPaneState).indicators
-    ).forEach(indicator => {
-      const options = indicator.options as any
+    if (store.state[this.paneId].showIndicators) {
+      Object.values(
+        (store.state[this.paneId] as ChartPaneState).indicators
+      ).forEach(indicator => {
+        const options = indicator.options as any
 
-      if (options.visible === false) {
-        return
-      }
-
-      let color = options.color || options.upColor || textColor
-
-      try {
-        color = splitColorCode(color)
-
-        if (typeof color[3] !== 'undefined') {
-          color[3] = 1
+        if (options.visible === false) {
+          return
         }
 
-        color = joinRgba(color)
-      } catch (error) {
-        // not rgb(a)
-      }
+        let color = options.color || options.upColor || textColor
 
-      const text = indicator.displayName || indicator.name
+        try {
+          color = splitColorCode(color)
 
-      ctx.fillStyle = textColor
-      ctx.strokeStyle = themeColor
-      ctx.lineWidth = 4 * pxRatio
-      ctx.fillStyle = color
-      ctx.lineJoin = 'round'
-      ctx.strokeText(text, textPadding, offsetY)
-      ctx.fillText(text, textPadding, offsetY)
+          if (typeof color[3] !== 'undefined') {
+            color[3] = 1
+          }
 
-      offsetY += lineHeight * 1.2
-    })
+          color = joinRgba(color)
+        } catch (error) {
+          // not rgb(a)
+        }
+
+        const text = indicator.displayName || indicator.name
+
+        ctx.fillStyle = textColor
+        ctx.strokeStyle = themeColor
+        ctx.lineWidth = 4 * pxRatio
+        ctx.fillStyle = color
+        ctx.lineJoin = 'round'
+        ctx.strokeText(text, textPadding, offsetY)
+        ctx.fillText(text, textPadding, offsetY)
+
+        offsetY += lineHeight * 1.2
+      })
+    }
 
     const dataURL = canvas.toDataURL('image/png')
     const startIndex = dataURL.indexOf('base64,') + 7

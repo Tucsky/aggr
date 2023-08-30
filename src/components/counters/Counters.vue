@@ -97,7 +97,7 @@ export default class Counters extends Mixins(PaneMixin) {
   }
 
   get activeSteps() {
-    return this.steps
+    return this.steps.filter(a => a.hasData)
   }
 
   created() {
@@ -392,6 +392,33 @@ export default class Counters extends Mixins(PaneMixin) {
     }
     &.-sell {
       background-color: var(--sell-color-5);
+    }
+  }
+
+  &:nth-child(6) .counter__side {
+    &.-buy {
+      background-color: var(--buy-color-6);
+    }
+    &.-sell {
+      background-color: var(--sell-color-6);
+    }
+  }
+
+  &:nth-child(7) .counter__side {
+    &.-buy {
+      background-color: var(--buy-color-7);
+    }
+    &.-sell {
+      background-color: var(--sell-color-7);
+    }
+  }
+
+  &:nth-child(8) .counter__side {
+    &.-buy {
+      background-color: var(--buy-color-8);
+    }
+    &.-sell {
+      background-color: var(--sell-color-8);
     }
   }
 

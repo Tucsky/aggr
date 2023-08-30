@@ -416,8 +416,8 @@ export default class AlertsList extends Vue {
       white-space: nowrap;
 
       &:before {
-        content: unicode($icon-dollar);
-        font-family: 'exchanges', 'icon';
+        content: $icon-dollar;
+        font-family: 'icon';
         opacity: 0.5;
         font-size: 0.75em;
         margin-right: 0.25rem;

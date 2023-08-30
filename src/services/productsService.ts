@@ -15,12 +15,41 @@ const stablecoins = [
   'USDP',
   'UST'
 ]
-const currencies = ['EUR', 'USD', 'GBP', 'AUD', 'CAD', 'CHF']
+
+const normalStablecoinLookup = /^U/
+
+const normalStablecoins = stablecoins.filter(s =>
+  normalStablecoinLookup.test(s)
+)
+
+const reverseStablecoins = stablecoins.filter(
+  s => !normalStablecoinLookup.test(s)
+)
+
+const currencies = ['EUR', 'USD', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNH']
+
+const genericQuoteCurrencyLookup = new RegExp(
+  `[a-z]?(${currencies.join('|')})[a-z]?$`,
+  'i'
+)
+const reverseStablecoinPairLookup = new RegExp(
+  `(\\w{3,})(${reverseStablecoins.join('|')})$`,
+  'i'
+)
+const standardCurrencyPairLookup = new RegExp(
+  `(\\w{3})?(${currencies.join('|')})[a-z]?$`,
+  'i'
+)
 const currencyPairLookup = new RegExp(
   `^([A-Z0-9]{2,})[-/:]?(${currencies.join('|')})$`
 )
+
+// use 2+ caracters symbol for normal stablecoins, and 3+ for reversed
+// not infallible but avoids coin with symbol finishing with T or B to be labeled as TUSD or BUSD quoted markets
 const stablecoinPairLookup = new RegExp(
-  `^([A-Z0-9]{2,})[-/:_]?(${stablecoins.join('|')})$`
+  `^([A-Z0-9]{2,})[-/:_]?(${normalStablecoins.join(
+    '|'
+  )})$|^([A-Z0-9]{3,})[-/:_]?(${reverseStablecoins.join('|')})$`
 )
 const simplePairLookup = new RegExp(`^([A-Z0-9]{2,})[-/_]?([A-Z0-9]{3,})$`)
 
@@ -212,12 +241,12 @@ export async function getStoredProductsOrFetch(
 
 export function stripStablePair(pair) {
   return pair
-    .replace(/(\w{3,})BUSD$/i, '$1USD')
-    .replace(/(\w{3})?(usd|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?$/i, '$1$2')
+    .replace(reverseStablecoinPairLookup, '$1USD')
+    .replace(standardCurrencyPairLookup, '$1$2')
 }
 
 export function stripStableQuote(quote) {
-  return quote.replace(/[a-z]?(usd|eur|jpy|gbp|aud|cad|chf|cnh)[a-z]?$/i, '$1')
+  return quote.replace(genericQuoteCurrencyLookup, '$1')
 }
 
 export async function getExchangeSymbols(

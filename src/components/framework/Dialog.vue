@@ -84,7 +84,6 @@ import { getEventCords } from '../../utils/helpers'
     }
   }
 })
-
 export default class Dialog extends Vue {
   size: string
   closeOnEscape: boolean
@@ -230,7 +229,7 @@ export default class Dialog extends Vue {
       this._deinteractionTimeout = setTimeout(() => {
         dialogService.isInteracting = false
         this._deinteractionTimeout = null
-      }, 100)  as unknown as number
+      }, 100) as unknown as number
     }
 
     document.addEventListener('mouseup', handler)
@@ -359,7 +358,7 @@ export default class Dialog extends Vue {
       this._windowResizeTimeout = setTimeout(() => {
         this.detectSize(this.$refs.content.clientWidth)
         this._windowResizeTimeout = null
-      })  as unknown as number
+      }) as unknown as number
     }
 
     window.addEventListener('resize', this._handleWindowResize)

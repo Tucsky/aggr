@@ -230,7 +230,7 @@ export default {
   },
   created() {
     if (!this.threshold) {
-      return this.$nextTick(() => this.close(false))
+      return this.$nextTick().then(() => this.close(false))
     }
 
     this.buyAudio = this.threshold.buyAudio || ''

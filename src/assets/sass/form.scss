@@ -158,40 +158,40 @@ textarea.form-control {
   &.-slippage input ~ div {
     &:before,
     &:after {
-      content: unicode($icon-flash);
+      content: $icon-flash;
     }
   }
 
   &.-rip input ~ div {
     &:before,
     &:after {
-      content: unicode($icon-skull);
+      content: $icon-skull;
     }
   }
 
   &.-aggr input ~ div {
     &:before {
-      content: unicode($icon-ms);
+      content: $icon-ms;
     }
 
     &:after {
-      content: unicode($icon-cross);
+      content: $icon-cross;
     }
   }
 
   &.-sort input ~ div {
     &:before {
-      content: unicode($icon-up);
+      content: $icon-up;
     }
 
     &:after {
-      content: unicode($icon-down);
+      content: $icon-down;
     }
   }
 
   &.-click input ~ div {
     &:before {
-      content: unicode($icon-click);
+      content: $icon-click;
     }
   }
 
@@ -335,13 +335,7 @@ textarea.form-control {
       pointer-events: none;
     }
 
-    &:not([class^='exchanges-']):not([class^='icon-']):before {
-      content: unicode($icon-check);
-    }
-
-
     &:after {
-      transform: none;
       opacity: 1;
     }
 

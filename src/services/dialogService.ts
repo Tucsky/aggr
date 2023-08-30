@@ -65,7 +65,7 @@ class DialogService {
     })
   }
 
-  open(component, props = {}, dialogId?: string, onClose?: Function): Vue {
+  open(component, props = {}, dialogId?: string, onClose?: () => void): Vue {
     component = this.createComponent(component, props, onClose, dialogId)
 
     this.mountDialog(component)

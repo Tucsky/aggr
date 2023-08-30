@@ -293,7 +293,7 @@ class WorkspacesService {
     if (this.urlStrategy === 'hash') {
       urlWorkspaceId = location.hash.substring(1)
     } else {
-      ;[, urlWorkspaceId, urlPairs] = decodeURIComponent(
+      [, urlWorkspaceId, urlPairs] = decodeURIComponent(
         location.pathname
       ).split('/')
     }

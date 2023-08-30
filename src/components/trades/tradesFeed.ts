@@ -265,7 +265,12 @@ export default class TradesFeed {
 
       if (!this.showTimeAgo) {
         const date = new Date(+trade.timestamp)
-        timestampText = date.getHours() + ':' + date.getMinutes()
+        const minutes = date.getMinutes()
+
+        timestampText = `${date.getHours()}:${
+          minutes < 10 ? '0' : ''
+        }${minutes}`
+
         timestampClass += ' -fixed'
       }
     }
@@ -605,7 +610,7 @@ export default class TradesFeed {
 
         previousRowTimeAgo = txt
       }
-    }, 1000)  as unknown as number
+    }, 1000) as unknown as number
   }
 
   setMaxCount(maxCount: number) {

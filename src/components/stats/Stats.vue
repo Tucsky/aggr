@@ -27,7 +27,8 @@ import Bucket from '../../utils/bucket'
 import {
   defaultStatsChartOptions,
   getChartOptions,
-  getChartCustomColorsOptions
+  getChartCustomColorsOptions,
+  getChartFontSize
 } from '../chart/options'
 
 import StatDialog from './StatDialog.vue'
@@ -104,6 +105,11 @@ export default class Stats extends Mixins(PaneMixin) {
             this.removeBucket(mutation.payload.id)
           }
           break
+        case 'panes/SET_PANE_ZOOM':
+          if (mutation.payload.id === this.paneId) {
+            this.updateFontSize()
+          }
+          break
         case this.paneId + '/REMOVE_BUCKET':
           this.removeBucket(mutation.payload)
           break
@@ -141,7 +147,10 @@ export default class Stats extends Mixins(PaneMixin) {
   async createChart() {
     await this.$nextTick()
 
-    const chartOptions = getChartOptions(defaultStatsChartOptions as any)
+    const chartOptions = getChartOptions(
+      defaultStatsChartOptions as any,
+      this.paneId
+    )
 
     this._chart = TV.createChart(this.$refs.chart, chartOptions)
 
@@ -150,6 +159,18 @@ export default class Stats extends Mixins(PaneMixin) {
     }
 
     this.refreshChartDimensions(0)
+  }
+
+  updateFontSize() {
+    if (!this._chart) {
+      return
+    }
+
+    this._chart.applyOptions({
+      layout: {
+        fontSize: getChartFontSize(this.paneId)
+      }
+    })
   }
 
   removeChart() {
@@ -194,7 +215,7 @@ export default class Stats extends Mixins(PaneMixin) {
     this._refreshChartDimensionsTimeout = setTimeout(() => {
       this._chart &&
         this._chart.resize(this.$el.clientWidth, this.$el.clientHeight)
-    }, debounceTime)  as unknown as number
+    }, debounceTime) as unknown as number
   }
   prepareBuckets() {
     if (this._feed) {
