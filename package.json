@@ -6,7 +6,7 @@
   "scripts": {
     "cors": "node cors-proxy/cors-server.js",
     "svg2font": "node scripts/svg2font.js",
-    "serve": "vite -d",
+    "serve": "vite",
     "prod": "vue-tsc --noEmit && vite build --dest ./temp && rimraf ./dist && mv ./temp ./dist",
     "build": "vite build",
     "lint": "eslint",

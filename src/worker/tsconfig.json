@@ -1,3 +1,4 @@
+// ts-check-disable
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
