@@ -12,7 +12,7 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "clean": "rm -rf node_modules && npm cache clean -f",
-    "deploy": "node scripts/gh-pages-deploy.js"
+    "deploy": "node scripts/gh-pages-deploy.mjs"
   },
   "dependencies": {
     "@mdi/font": "^5.6.55",
