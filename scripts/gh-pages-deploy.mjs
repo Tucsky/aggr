@@ -7,7 +7,7 @@ import fs from 'fs'
     const branch = (await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD']))
       .stdout
     console.log('Building started...', branch)
-    await execa('npm', ['run', 'build', '--', '--mode', 'github'])
+    await execa('npm', ['run', 'build', '--', '--mode', 'github', '--base', '/aggr/'])
     await execa('git', ['checkout', '--orphan', 'gh-pages'])
     // Understand if it's dist or build folder
     const folderName = fs.existsSync('dist') ? 'dist' : 'build'

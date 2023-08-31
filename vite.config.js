@@ -51,6 +51,7 @@ export default defineConfig(({ mode }) => {
     define: {
       ...processEnvValues,
     },
+    base: mode === 'github' ?  env.VITE_APP_BASE_URL : '',
     plugins: [
       vue(),
       // svgLoader(), // vue 3
