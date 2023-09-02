@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "cors": "node cors-proxy/cors-server.js",
+    "cors": "node scripts/cors-server.mjs",
     "svg2font": "node scripts/svg2font.js",
     "serve": "vite",
     "prod": "vue-tsc --noEmit && vite build --dest ./temp && rimraf ./dist && mv ./temp ./dist",
