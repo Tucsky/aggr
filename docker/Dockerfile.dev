@@ -1,20 +1,16 @@
-# build stage
-FROM  node:20.2.0-alpine3.17 as builder
+FROM  node:20.2.0-alpine3.17
 
+# set app path within the container
+# use value set in docker-compose
 WORKDIR '/usr/src/app'
 
-COPY package*.json ./
-RUN apt-get update && \
-	apt-get install -y git && \
-	npm i
-
-FROM  node:20.2.0-slim
-
-RUN apt-get update && \
-	apt-get install -y git
-
+# copy the whole development repo
 COPY . .
+
+# run app as non-root
+USER node
 
 EXPOSE 8080
 
+# run vite server
 CMD ["sh", "-c", "npm run serve"]
