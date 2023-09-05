@@ -862,6 +862,9 @@ export default class SerieBuilder {
       const filters = model.sources[i].filters
 
       for (const marketId in marketFilters) {
+        if (marketFilters[marketId] === false) {
+          continue
+        }
         if (filters.type && products[marketId].type !== filters.type) {
           continue
         }

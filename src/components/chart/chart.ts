@@ -852,21 +852,31 @@ export default class Chart {
       }
 
       // create function ready to calculate (& render) everything for this indicator
-      try {
-        indicator.adapter = this.serieBuilder.getAdapter(
-          indicator.model,
-          this.marketsFilters
-        )
-      } catch (error) {
-        this.unbindIndicator(indicator, renderer)
-
-        throw error
-      }
+      this.refreshIndicatorAdapter(indicator, renderer)
     }
 
     this.prepareRendererForIndicators(indicator, renderer)
 
     return indicator
+  }
+
+  refreshIndicatorAdapter(indicator, renderer) {
+    try {
+      indicator.adapter = this.serieBuilder.getAdapter(
+        indicator.model,
+        this.marketsFilters
+      )
+    } catch (error) {
+      this.unbindIndicator(indicator, renderer)
+
+      throw error
+    }
+  }
+
+  refreshAllIndicatorAdapters() {
+    for (const indicator of this.loadedIndicators) {
+      this.refreshIndicatorAdapter(indicator, this.activeRenderer)
+    }
   }
 
   /**
@@ -2527,7 +2537,11 @@ export default class Chart {
 
     const pxRatio = window.devicePixelRatio || 1
     const textPadding = 16 * zoom * pxRatio
-    const textFontsize = 12 * zoom * pxRatio
+    let textFontsize = 12 * zoom * pxRatio
+    if (chartCanvas.width * chartCanvas.height < 40000) {
+      textFontsize = 6
+    }
+
     canvas.width = chartCanvas.width
     ctx.font = `${textFontsize}px Share Tech Mono`
     ctx.textAlign = 'left'

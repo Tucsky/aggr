@@ -174,7 +174,6 @@ export default class HUOBI extends Exchange {
   }
 
   formatLiquidation(trade, pair) {
-    const size = +trade.amount
     const price = this.prices[pair] || trade.price
 
     return {
@@ -182,7 +181,7 @@ export default class HUOBI extends Exchange {
       pair: pair,
       timestamp: +new Date(),
       price,
-      size,
+      size: +trade.amount,
       side: trade.direction,
       liquidation: true
     }

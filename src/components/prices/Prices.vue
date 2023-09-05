@@ -42,7 +42,7 @@
             {{ formatAmount(market.volume) }}
           </div>
           <div v-if="showVolumeDelta" class="market__volume">
-            {{ formatAmount(market.volumeDelta) }}
+            {{ market.volumeDelta }}%
           </div>
         </div>
       </component>
@@ -226,8 +226,14 @@ export default class Prices extends Mixins(PaneMixin) {
       }
 
       market.volume = marketStats.volume - this._initialValues[market.id].volume
-      market.volumeDelta =
-        marketStats.volumeDelta - this._initialValues[market.id].volumeDelta
+      market.volumeDelta = market.volume
+        ? Math.round(
+            ((marketStats.volumeDelta -
+              this._initialValues[market.id].volumeDelta) /
+              market.volume) *
+              100
+          )
+        : 0
 
       if (showChange && marketStats.price) {
         const change =

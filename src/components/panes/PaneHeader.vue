@@ -7,10 +7,17 @@
     <div
       v-if="showName && name"
       class="pane-header__name pane-overlay"
-      @dblclick="renamePane"
+      @dblclick="maximizePane"
     >
       <slot name="title">
         {{ name }}
+        <btn
+          type="button"
+          @click="renamePane"
+          class="pane-header__edit btn -text -small"
+        >
+          <i class="icon-edit"></i>
+        </btn>
       </slot>
     </div>
     <div class="toolbar pane-overlay">
@@ -230,9 +237,9 @@ export default class PaneHeader extends Vue {
 
     window.dispatchEvent(new cls('resize'))
 
-    this.$store.dispatch('panes/refreshZoom', {
+    this.$store.dispatch('panes/setZoom', {
       id: this.paneId,
-      zoom: isMaximized ? 2 : this.zoom
+      zoom: isMaximized ? this.zoom * 2 : this.zoom * 0.5
     })
   }
 

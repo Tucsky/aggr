@@ -166,6 +166,7 @@ export default class ChartControl {
         case 'app/EXCHANGE_UPDATED':
         case this.chart.paneId + '/TOGGLE_MARKET':
           this.chart.refreshMarkets()
+          this.chart.refreshAllIndicatorAdapters()
           this.chart.renderAll()
           break
         case this.chart.paneId + '/SET_REFRESH_RATE':
