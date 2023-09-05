@@ -79,6 +79,7 @@ export const defaultSerieOptions = {
   crosshairMarkerVisible: false,
   lastValueVisible: false,
   priceLineVisible: false,
+  baseLineVisible: false, 
   priceFormat: {
     type: 'price',
     minMove: '0.01',

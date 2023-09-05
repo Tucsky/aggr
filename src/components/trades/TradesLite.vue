@@ -106,6 +106,7 @@ export default class TradesLite extends Mixins(PaneMixin) {
   private lineHeight: number
   private fontSize: number
   private padding: number
+  private margin: number
   private logoWidth: number
   private pxRatio: number
   private maxLines: number
@@ -740,12 +741,13 @@ export default class TradesLite extends Mixins(PaneMixin) {
     const zoom = this.$store.state.panes.panes[this.paneId].zoom || 1
 
     this.width = canvas.width = this.$el.clientWidth * this.pxRatio
-    this.maxWidth = this.width / 3
     this.height = canvas.height =
       (this.$el.clientHeight - headerHeight) * this.pxRatio
     this.padding = Math.round(
-      (zoom < 1 ? 1 : zoom < 1.5 ? 2 : 4) * zoom * this.pxRatio
+      Math.min(this.width * 0.01, 4) * zoom * this.pxRatio
     )
+    this.maxWidth = this.width / 3 - this.padding
+    this.margin = Math.round(this.width * 0.01 * zoom * this.pxRatio)
 
     this.fontSize = Math.round(12 * zoom * this.pxRatio)
     this.logoWidth = this.fontSize
@@ -879,7 +881,7 @@ export default class TradesLite extends Mixins(PaneMixin) {
 
     this.drawLogo(
       trade.exchange,
-      this.padding * 2,
+      this.margin,
       this.drawOffset + height / 2 - this.logoWidth / 2
     )
 
@@ -899,9 +901,9 @@ export default class TradesLite extends Mixins(PaneMixin) {
   drawTime(trade, height) {
     this.ctx.fillText(
       trade.time,
-      this.width - this.padding,
+      this.width - this.margin,
       this.drawOffset + height / 2 + 1,
-      this.maxWidth * 0.66
+      this.maxWidth * 0.5
     )
   }
 
@@ -919,9 +921,9 @@ export default class TradesLite extends Mixins(PaneMixin) {
     this.ctx.textAlign = 'left'
     this.ctx.fillText(
       trade.pair,
-      this.padding + this.logoWidth * 1.5,
+      this.padding + this.logoWidth + this.margin,
       this.drawOffset + height / 2 + 1,
-      this.maxWidth
+      this.maxWidth * 0.8
     )
   }
 
@@ -929,20 +931,30 @@ export default class TradesLite extends Mixins(PaneMixin) {
     this.ctx.textAlign = 'left'
     this.ctx.fillText(
       formatMarketPrice(trade.price, market),
-      this.padding + this.logoWidth * 1.5,
+      this.padding + this.logoWidth + this.margin,
       this.drawOffset + height / 2 + 1,
-      this.maxWidth * 0.75
+      this.maxWidth * 0.8
     )
   }
 
   drawAmount(trade: Trade, height, liquidation) {
+    const isFirstColumn = !this.showPairs && !this.showPrices
+
+    let x
+
+    if (isFirstColumn) {
+      x = this.width / 1.5
+    } else if (!isFirstColumn) {
+      x = this.width - this.maxWidth * 0.75 - this.padding
+    }
+
     this.ctx.textAlign = 'right'
     this.ctx.fillText(
       formatAmount(trade.amount) +
         (liquidation ? (trade.side === 'buy' ? '🐻' : '🐂') : ''),
-      this.width / (!this.showPrices && !this.showPairs ? 1.8 : 1.4),
+      x,
       this.drawOffset + height / 2 + 1,
-      this.maxWidth / 2
+      this.maxWidth
     )
   }
 

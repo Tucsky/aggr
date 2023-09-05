@@ -163,16 +163,16 @@
   }
 
   &--selected {
-    animation: pulse-white 2s;
-}
+    animation: pulse 1s $ease-out-expo;
+  }
 
-  @keyframes pulse-white {
+  @keyframes pulse {
     0% {
       box-shadow: 0 0 0 0 var(--theme-buy-base);
     }
     
     100% {
-      box-shadow: 0 0 0 1rem rgba(255, 255, 255, 0);
+      box-shadow: 0 0 0 0.5rem rgba(255, 255, 255, 0);
     }
   }
 }

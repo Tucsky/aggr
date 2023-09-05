@@ -17,7 +17,7 @@ svgtofont({
   const baseIconScss = fs.readFileSync(
     __dirname + '/../src/assets/fonts/icon.scss',
     'utf-8'
-  ).replace()
+  )
 
   const iconVariablesScss = baseIconScss.slice(
     baseIconScss.indexOf('$'),
