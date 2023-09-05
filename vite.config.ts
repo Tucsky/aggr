@@ -62,7 +62,9 @@ export default defineConfig(({ command, mode }) => {
 	  eslint(),
       vue(),
       // createVuePlugin(), // Vue <= 2.6
-      svgLoader(),
+      svgLoader({
+        defaultImport: 'url', // 👈
+      }),
       visualizer(),
       VitePWA({
         srcDir: 'src',

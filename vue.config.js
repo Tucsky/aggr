@@ -124,6 +124,19 @@ module.exports = {
         worker: 'Worker'
       }))
       .end()
+
+    const svgRule = config.module.rule('svg')
+
+    svgRule.uses.clear()
+
+    svgRule
+      .use('url-loader')
+      .loader('url-loader')
+      .options({
+        limit: 1024,
+        esModule: false
+      })
+      .end()
   },
   css: {
     loaderOptions: {

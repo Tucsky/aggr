@@ -180,7 +180,7 @@ const actions = {
 
     commit('TOGGLE_SEARCH', true)
 
-    if (typeof paneId === 'undefined' && state.focusedPaneId) {
+    if (typeof paneId === 'undefined' && input && state.focusedPaneId) {
       paneId = state.focusedPaneId
     }
 
@@ -271,6 +271,16 @@ const mutations = {
     state.quoteCurrencySymbol = currencies.quoteSymbol
   },
   SET_FOCUSED_PANE(state, id: string) {
+    if (id !== state.focusedPaneId) {
+      const paneElement = document.getElementById(id)
+
+      if (paneElement) {
+        paneElement.classList.remove('pane--selected')
+        paneElement.offsetHeight;
+        paneElement.classList.add('pane--selected')
+      }
+    }
+
     state.focusedPaneId = id
   }
 } as MutationTree<AppState>

@@ -161,6 +161,20 @@
   &.-large .pane-header + div {
     font-weight: 500;
   }
+
+  &--selected {
+    animation: pulse-white 2s;
+}
+
+  @keyframes pulse-white {
+    0% {
+      box-shadow: 0 0 0 0 var(--theme-buy-base);
+    }
+    
+    100% {
+      box-shadow: 0 0 0 1rem rgba(255, 255, 255, 0);
+    }
+  }
 }
 
 .pane-header {

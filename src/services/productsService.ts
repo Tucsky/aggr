@@ -289,6 +289,8 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     type = 'perp'
   } else if (exchangeId === 'HUOBI' && /_(CW|CQ|NW|NQ)$/.test(symbol)) {
     type = 'future'
+  } else if (exchangeId === 'BITMART' && !/_/.test(symbol)) {
+    type = 'perp'
   } else if (exchangeId === 'HUOBI' && /-/.test(symbol)) {
     type = 'perp'
   } else if (exchangeId === 'BYBIT' && !/-SPOT$/.test(symbol)) {

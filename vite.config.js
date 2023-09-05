@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue2'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { VitePWA } from 'vite-plugin-pwa'
-// import svgLoader from 'vite-svg-loader' // vue 3
+import svgLoader from 'vite-svg-loader'
 import { createSvgPlugin } from 'vite-plugin-vue2-svg' //vue 2
 
 import fs from 'fs'
@@ -60,8 +60,9 @@ export default defineConfig(({ mode }) => {
     base: mode === 'github' ?  env.VITE_APP_BASE_URL : '',
     plugins: [
       vue(),
-      // svgLoader(), // vue 3
-      createSvgPlugin(), // vue 2
+      svgLoader({
+        defaultImport: 'url', // 👈
+      }),
       visualizer(),
       VitePWA({
         srcDir: 'src',

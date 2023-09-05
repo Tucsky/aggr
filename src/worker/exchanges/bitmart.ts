@@ -1,3 +1,4 @@
+import { directive } from 'vue/types/umd'
 import Exchange from '../exchange'
 import { inflateRaw } from 'pako'
 
@@ -11,57 +12,40 @@ export default class extends Exchange {
   }
 
   private types: { [pair: string]: string } = {}
-  private multipliers: { [pair: string]: number } = {}
+  private specs: { [pair: string]: number } = {}
 
   async getUrl(pair: string) {
-    if (this.types[pair] === 'spot')
-      return 'wss://ws-manager-compress.bitmart.com/api?protocol=1.1'
-    if (this.types[pair] === 'futures')
+    if (this.specs[pair]) {
       return 'wss://openapi-ws.bitmart.com/api?protocol=1.1'
+    }
+    
+    return 'wss://ws-manager-compress.bitmart.com/api?protocol=1.1'
+  }
+
+  validateProducts(data) {
+    if (!data.specs) {
+      return false
+    }
+
+    return true
   }
 
   formatProducts(responses) {
     const products = []
-    const multipliers = {}
+    const specs = {}
     const types = {}
 
-    responses.forEach(
-      (
-        response: {
-          message: string
-          code: number
-          data: { symbols: Array<any> }
-        },
-        index: number
-      ) => {
-        const type = ['spot', 'futures'][index]
+    for (const response of responses) {
+      for (const product of response.data.symbols) {
+        products.push(product.symbol)
 
-        response.data.symbols.forEach((product: any) => {
-          let pair: string
-          switch (type) {
-            case 'spot':
-              pair = product.symbol + '_SPOT'
-              // multipliers[pair] = parseFloat(product.min_base_amount)
-              break
-            case 'futures':
-              pair = product.symbol + '_FUTURES'
-              multipliers[pair] = parseFloat(product.contract_size)
-              break
-          }
-
-          if (products.find(a => a.toLowerCase() === pair.toLowerCase())) {
-            throw new Error(
-              'Duplicate pair detected on gateio exchange (' + pair + ')'
-            )
-          }
-
-          types[pair] = type
-          products.push(pair)
-        })
+        if (product.contract_size) {
+          specs[product.symbol] = +product.contract_size
+        }
       }
-    )
+    }
 
-    return { products, multipliers, types }
+    return { products, specs, types }
   }
 
   /**
@@ -74,34 +58,24 @@ export default class extends Exchange {
       return
     }
 
-    const pairSplit = pair.split('_')
+    const isContract = !!this.specs[pair]
 
-    if (this.types[pair] === 'spot') {
-      api.send(
-        JSON.stringify({
-          op: `subscribe`,
-          args: [
-            this.types[pair] +
-              '/trade:' +
-              pairSplit.slice(0, pairSplit.length - 1).join('_')
-          ]
-        })
-      )
-    } else if (this.types[pair] === 'futures') {
-      api.send(
-        JSON.stringify({
-          action: 'subscribe',
-          args: [
-            this.types[pair] +
-              '/trade:' +
-              pair
-                .split('_')
-                .slice(0, pairSplit.length - 1)
-                .join('_')
-          ]
-        })
-      )
+    const typeImpl = isContract ? { 
+      prefix: 'futures',
+      arg: 'action'
+    } : {
+      prefix: 'spot',
+      arg: 'op',
     }
+
+    api.send(
+      JSON.stringify({
+        [typeImpl.arg]: `subscribe`,
+        args: [
+          `${typeImpl.prefix}/trade:${pair}`
+        ]
+      })
+    )
 
     return true
   }
@@ -116,119 +90,65 @@ export default class extends Exchange {
       return
     }
 
-    const pairSplit = pair.split('_')
+    const isContract = !!this.specs[pair]
 
-    if (this.types[pair] === 'spot') {
-      api.send(
-        JSON.stringify({
-          op: `unsubscribe`,
-          args: [
-            this.types[pair] +
-              '/trade:' +
-              pairSplit.slice(0, pairSplit.length - 1).join('_')
-          ]
-        })
-      )
-    } else if (this.types[pair] === 'futures') {
-      api.send(
-        JSON.stringify({
-          action: 'unsubscribe',
-          args: [
-            this.types[pair] +
-              '/trade:' +
-              pair
-                .split('_')
-                .slice(0, pairSplit.length - 1)
-                .join('_')
-          ]
-        })
-      )
+    const typeImpl = isContract ? { 
+      prefix: 'futures',
+      arg: 'action'
+    } : {
+      prefix: 'spot',
+      arg: 'op',
     }
+
+    api.send(
+      JSON.stringify({
+        [typeImpl.arg]: `unsubscribe`,
+        args: [
+          `${typeImpl.prefix}/trade:${pair}`
+        ]
+      })
+    )
 
     return true
   }
 
-  // TODO: confirm value with Bitmart
-  findSideFromWayValue(way: number) {
-    if (1 <= way && way <= 4) {
-      return 'buy'
-    } else if (5 <= way && way <= 8) {
-      return 'sell'
+  formatTrade(trade) {
+    if (this.specs[trade.symbol]) {
+      return {
+        exchange: this.id,
+        pair: trade.symbol,
+        timestamp: trade.create_time_mill,
+        price: +trade.deal_price,
+        size: (trade.deal_vol * this.specs[trade.symbol]) / (this.specs[trade.symbol] > 1 ? trade.deal_price : 1),
+        side: trade.way < 4 ? 'buy' : 'sell'
+      }
+    } else {
+      return {
+        exchange: this.id,
+        pair: trade.symbol,
+        timestamp: trade.s_t * 1000,
+        price: +trade.price,
+        size: +trade.size,
+        side: trade.side
+      }
     }
-  }
-
-  isCoinMarginedFutures(symbol: string) {
-    // CoinMargin contracts and Futures
-    return this.multipliers[symbol + '_FUTURES'] > 1
-  }
-
-  calculateFuturesSize(symbol: string, price: number, size: number) {
-    let minContractSize = this.multipliers[symbol + '_FUTURES']
-      ? this.multipliers[symbol + '_FUTURES']
-      : 1
-
-    if (this.isCoinMarginedFutures(symbol)) {
-      return +((size * minContractSize) / price)
-    }
-    return +(size * minContractSize)
   }
 
   onMessage(event: any, api: any) {
     let data = event.data
-    if (typeof data !== 'string')
+
+    if (typeof data !== 'string') {
       data = inflateRaw(event.data, { to: 'string' })
-    if (!data.startsWith('{')) return
+    }
+
     const json = JSON.parse(data)
 
-    if (!json) {
+    if (!json || !json.data) {
       return
     }
-
-    let trades = []
-
-    if (
-      json.group &&
-      json.group.includes('futures/trade:') &&
-      json.data &&
-      Array.isArray(json.data)
-    ) {
-      trades = json.data.map((trade: any) => {
-        trade = {
-          exchange: this.id,
-          pair: trade.symbol + '_FUTURES',
-          timestamp: +new Date(trade.created_at),
-          price: +parseFloat(trade.deal_price),
-          size: this.calculateFuturesSize(
-            trade.symbol,
-            parseFloat(trade.deal_price),
-            parseFloat(trade.deal_vol)
-          ),
-          side: this.findSideFromWayValue(parseInt(trade.way))
-        }
-        return trade
-      })
-    } else if (
-      json.table &&
-      json.table === 'spot/trade' &&
-      json.data &&
-      Array.isArray(json.data)
-    ) {
-      trades = json.data.map((trade: any) => {
-        return {
-          exchange: this.id,
-          pair: trade.symbol + '_SPOT',
-          timestamp: +new Date(trade.s_t * 1000),
-          price: +parseFloat(trade.price),
-          size:
-            +parseFloat(trade.size) *
-            (this.multipliers[trade.symbol + '_SPOT']
-              ? this.multipliers[trade.symbol + '_SPOT']
-              : 1),
-          side: trade.side
-        }
-      })
-    }
-    // console.log(trades)
-    return this.emitTrades(api.id, trades)
+    
+    return this.emitTrades(api.id,
+      json.data.map(trade => this.formatTrade(trade))
+    )
   }
 }

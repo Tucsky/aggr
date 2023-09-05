@@ -17,7 +17,7 @@ svgtofont({
   const baseIconScss = fs.readFileSync(
     __dirname + '/../src/assets/fonts/icon.scss',
     'utf-8'
-  )
+  ).replace()
 
   const iconVariablesScss = baseIconScss.slice(
     baseIconScss.indexOf('$'),
@@ -29,6 +29,7 @@ svgtofont({
     baseIconScss
       .replaceAll('url("icon', 'url("#{$iconpath}icon')
       .replaceAll("url('icon", "url('#{$iconpath}icon")
+      .replace('font-size: 16px;\n', '')
   fs.writeFileSync(
     __dirname + '/../src/assets/sass/icons.scss',
     iconScss.replace(iconVariablesScss, '')

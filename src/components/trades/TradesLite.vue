@@ -900,7 +900,8 @@ export default class TradesLite extends Mixins(PaneMixin) {
     this.ctx.fillText(
       trade.time,
       this.width - this.padding,
-      this.drawOffset + height / 2 + 1
+      this.drawOffset + height / 2 + 1,
+      this.maxWidth * 0.66
     )
   }
 
@@ -930,7 +931,7 @@ export default class TradesLite extends Mixins(PaneMixin) {
       formatMarketPrice(trade.price, market),
       this.padding + this.logoWidth * 1.5,
       this.drawOffset + height / 2 + 1,
-      this.maxWidth
+      this.maxWidth * 0.75
     )
   }
 
@@ -941,7 +942,7 @@ export default class TradesLite extends Mixins(PaneMixin) {
         (liquidation ? (trade.side === 'buy' ? '🐻' : '🐂') : ''),
       this.width / (!this.showPrices && !this.showPairs ? 1.8 : 1.4),
       this.drawOffset + height / 2 + 1,
-      this.maxWidth
+      this.maxWidth / 2
     )
   }
 

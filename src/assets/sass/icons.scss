@@ -1,17 +1,16 @@
 $iconpath: '../fonts/';
 @font-face {font-family: "icon";
-  src: url('#{$iconpath}icon.eot?t=1693765553327'); /* IE9*/
-  src: url('#{$iconpath}icon.eot?t=1693765553327#iefix') format('embedded-opentype'), /* IE6-IE8 */
-  url("#{$iconpath}icon.woff2?t=1693765553327") format("woff2"),
-  url("#{$iconpath}icon.woff?t=1693765553327") format("woff"),
-  url('#{$iconpath}icon.ttf?t=1693765553327') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
-  url('#{$iconpath}icon.svg?t=1693765553327#icon') format('svg'); /* iOS 4.1- */
+  src: url('#{$iconpath}icon.eot?t=1693913412092'); /* IE9*/
+  src: url('#{$iconpath}icon.eot?t=1693913412092#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url("#{$iconpath}icon.woff2?t=1693913412092") format("woff2"),
+  url("#{$iconpath}icon.woff?t=1693913412092") format("woff"),
+  url('#{$iconpath}icon.ttf?t=1693913412092') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('#{$iconpath}icon.svg?t=1693913412092#icon') format('svg'); /* iOS 4.1- */
 }
 
 [class^="icon-"], [class*=" icon-"] {
   font-family: 'icon' !important;
-  font-size: 16px;
-  font-style:normal;
+    font-style:normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

@@ -335,7 +335,7 @@ export default class TradesFeed {
       </span>
       <span class="trade__amount__base">
         <span class="icon-base"></span>
-        <span>${formatAmount(trade.size)}</span>
+        <span>${(trade.size)}</span>
       </span>
     </div>
     <div class="trade__time ${timestampClass}" data-timestamp="${trade.timestamp.toString()}">${timestampText}</div>
