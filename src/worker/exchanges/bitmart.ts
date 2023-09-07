@@ -1,4 +1,3 @@
-import { directive } from 'vue/types/umd'
 import Exchange from '../exchange'
 import { inflateRaw } from 'pako'
 
@@ -11,7 +10,6 @@ export default class extends Exchange {
     ]
   }
 
-  private types: { [pair: string]: string } = {}
   private specs: { [pair: string]: number } = {}
 
   async getUrl(pair: string) {

@@ -259,16 +259,18 @@ export default class PaneHeader extends Vue {
   }
 
   async downloadPane() {
+    const id = `${this.type}:${this.paneId}`
+
     downloadAnything(
       {
-        name: `${this.type}:${this.paneId}`,
+        name: id,
         type: this.type,
         data: this.$store.state[this.paneId],
         markets: this.$store.state.panes.panes[this.paneId].markets,
         createdAt: Date.now(),
         updatedAt: null
       },
-      slugify(this.paneId)
+      slugify(`${this.type} ${this.name}`)
     )
   }
 

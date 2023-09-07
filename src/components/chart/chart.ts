@@ -611,7 +611,7 @@ export default class Chart {
   updateWatermark(marketsUpdate?: string[]) {
     if (marketsUpdate) {
       if (store.state.settings.normalizeWatermarks) {
-        this.watermark = marketsUpdate.join(' | ')
+        this.watermark = marketsUpdate.join('|')
       } else {
         const othersCount = marketsUpdate.length - 3
         this.watermark =
@@ -633,7 +633,7 @@ export default class Chart {
       watermark: {
         text: `\u00A0\u00A0\u00A0\u00A0${
           this.watermark +
-          ' | ' +
+          '|' +
           getTimeframeForHuman(store.state[this.paneId].timeframe)
         }\u00A0\u00A0\u00A0\u00A0`,
         ...getChartWatermarkOptions(this.paneId).watermark
@@ -2082,9 +2082,12 @@ export default class Chart {
    * this is called on first realtime trade or when indicator(s) are rendered from start to finish
    * @param {number} firstBarTimestamp  - create at time
    * @param {string[]} indicatorsIds    - id of indicators to bind (if null all indicators are binded)
-   * @return {Renderer}      
+   * @return {Renderer}
    */
-  createRenderer(firstBarTimestamp: number, indicatorsIds?: string[]): Renderer {
+  createRenderer(
+    firstBarTimestamp: number,
+    indicatorsIds?: string[]
+  ): Renderer {
     firstBarTimestamp = floorTimestampToTimeframe(
       firstBarTimestamp,
       this.timeframe
@@ -2543,7 +2546,7 @@ export default class Chart {
     }
 
     canvas.width = chartCanvas.width
-    ctx.font = `${textFontsize}px Share Tech Mono`
+    ctx.font = `${textFontsize}px Spline Sans Mono`
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
 
@@ -2562,6 +2565,13 @@ export default class Chart {
 
     const styles = getComputedStyle(document.documentElement)
     const themeColor = styles.getPropertyValue('--theme-base')
+    const themeColorRgba = splitColorCode(themeColor)
+    const themeColorO75 = joinRgba([
+      themeColorRgba[0],
+      themeColorRgba[1],
+      themeColorRgba[2],
+      0.75
+    ])
     const textColor = styles.getPropertyValue('--theme-color-base')
     const backgroundColor = store.state.settings.backgroundColor
 
@@ -2580,14 +2590,14 @@ export default class Chart {
     ctx.drawImage(chartCanvas, 0, 0)
 
     ctx.fillStyle = textColor
-    ctx.font = `${textFontsize}px Share Tech Mono`
+    ctx.font = `${textFontsize}px Spline Sans Mono`
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
 
     let offsetY = 0
 
     for (let i = 0; i < lines.length; i++) {
-      ctx.strokeStyle = themeColor
+      ctx.strokeStyle = themeColorO75
       ctx.lineWidth = 4 * pxRatio
       ctx.lineJoin = 'round'
       ctx.strokeText(lines[i], textPadding, textPadding + offsetY)
@@ -2625,7 +2635,7 @@ export default class Chart {
         const text = indicator.displayName || indicator.name
 
         ctx.fillStyle = textColor
-        ctx.strokeStyle = themeColor
+        ctx.strokeStyle = themeColorO75
         ctx.lineWidth = 4 * pxRatio
         ctx.fillStyle = color
         ctx.lineJoin = 'round'

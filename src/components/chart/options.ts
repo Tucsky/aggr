@@ -36,7 +36,9 @@ export const defaultChartOptions: DeepPartial<ChartOptions> = {
     visible: false,
     text: '',
     horzAlign: 'center',
-    vertAlign: 'center'
+    vertAlign: 'center',
+    fontFamily: 'Spline Sans Mono',
+    fontStyle: '500'
   },
   layout: {
     background: {
@@ -67,11 +69,19 @@ export const defaultChartOptions: DeepPartial<ChartOptions> = {
   },
   rightPriceScale: {
     borderColor: 'rgba(255, 255, 255, .2)',
-    visible: true
+    visible: true,
+    scaleMargins: {
+      top: 0.1,
+      bottom: 0.1
+    }
   },
   leftPriceScale: {
     borderColor: 'rgba(255, 255, 255, .2)',
-    visible: true
+    visible: true,
+    scaleMargins: {
+      top: 0.1,
+      bottom: 0.1
+    }
   }
 }
 
@@ -79,7 +89,7 @@ export const defaultSerieOptions = {
   crosshairMarkerVisible: false,
   lastValueVisible: false,
   priceLineVisible: false,
-  baseLineVisible: false, 
+  baseLineVisible: false,
   priceFormat: {
     type: 'price',
     minMove: '0.01',

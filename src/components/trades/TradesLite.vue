@@ -102,12 +102,17 @@ export default class TradesLite extends Mixins(PaneMixin) {
   private ctx: CanvasRenderingContext2D
   private width: number
   private maxWidth: number
+  private pairOffset: number
+  private priceOffset: number
+  private amountOffset: number
   private height: number
   private lineHeight: number
   private fontSize: number
-  private padding: number
+  private paddingTop: number
+  private paddingLeft: number
   private margin: number
   private logoWidth: number
+  private timeWidth: number
   private pxRatio: number
   private maxLines: number
   private maxHistory: number
@@ -220,6 +225,7 @@ export default class TradesLite extends Mixins(PaneMixin) {
         case this.paneId + '/TOGGLE_PREFERENCE':
           this.prepareTypeFilter(true)
           this.prepareDisplaySettings()
+          this.refreshColumnsWidth()
           this.renderHistory()
           break
         case this.paneId + '/SET_THRESHOLD_AUDIO':
@@ -717,6 +723,8 @@ export default class TradesLite extends Mixins(PaneMixin) {
     this.showPrices = pane.showPrices
     this.offset = 0
     this.drawOffset = this.showHistograms ? this.lineHeight : 0
+
+    this.refreshColumnsWidth()
   }
 
   onResize(width, height, isMounting) {
@@ -743,16 +751,12 @@ export default class TradesLite extends Mixins(PaneMixin) {
     this.width = canvas.width = this.$el.clientWidth * this.pxRatio
     this.height = canvas.height =
       (this.$el.clientHeight - headerHeight) * this.pxRatio
-    this.padding = Math.round(
-      Math.min(this.width * 0.01, 4) * zoom * this.pxRatio
-    )
-    this.maxWidth = this.width / 3 - this.padding
-    this.margin = Math.round(this.width * 0.01 * zoom * this.pxRatio)
-
     this.fontSize = Math.round(12 * zoom * this.pxRatio)
     this.logoWidth = this.fontSize
-    this.lineHeight = Math.round(this.fontSize + this.padding)
-
+    this.paddingTop = Math.round(
+      Math.max(this.width * 0.005 * zoom, 2) * this.pxRatio
+    )
+    this.lineHeight = Math.round(this.fontSize + this.paddingTop)
     this.drawOffset = this.showHistograms ? this.lineHeight : 0
     this.maxLines = Math.ceil(this.height / this.lineHeight)
     this.renderTrades =
@@ -761,10 +765,39 @@ export default class TradesLite extends Mixins(PaneMixin) {
     this.offset = this.offset || 0
     this.limit = this.offset + this.maxLines
 
-    this.ctx.font = `${zoom > 1.25 ? 'bold ' : ''}${
+    this.ctx.font = `${zoom > 1.25 ? '600 ' : ''}${
       this.fontSize
-    }px Share Tech Mono`
+    }px Spline Sans Mono`
     this.ctx.textBaseline = 'middle'
+
+    this.refreshColumnsWidth()
+  }
+
+  refreshColumnsWidth() {
+    if (typeof this.showPairs === 'undefined') {
+      return
+    }
+
+    const zoom = this.$store.state.panes.panes[this.paneId].zoom || 1
+    const count = (this.showPairs ? 1 : 0) + (this.showPrices ? 1 : 0) + 2
+
+    this.paddingLeft = Math.round(
+      Math.max(this.width * 0.01 * zoom, 2) * this.pxRatio
+    ) * (count < 3 ? 4 : 1)
+    this.margin = Math.round(
+      Math.max(this.width * 0.01 * zoom, 4) * this.pxRatio
+    )
+
+    const contentWidth =
+      this.width - this.margin * 2 - this.logoWidth - this.paddingLeft * count
+    this.timeWidth = contentWidth * (0.75 / count)
+    this.maxWidth = (contentWidth - this.timeWidth) / (count - 1)
+    this.amountOffset =
+      this.width - this.timeWidth - this.margin - this.paddingLeft
+    this.priceOffset = this.margin + this.logoWidth + this.paddingLeft
+    this.pairOffset =
+      this.priceOffset +
+      (this.showPrices ? this.paddingLeft + this.maxWidth : 0)
   }
 
   getColors(amount, side, type) {
@@ -869,7 +902,7 @@ export default class TradesLite extends Mixins(PaneMixin) {
     const market = trade.exchange + ':' + trade.pair
 
     const paddingTop =
-      this.padding + Math.round((trade.step / 2) * this.pxRatio)
+      this.paddingTop + Math.round((trade.step / 2) * this.pxRatio)
     const height = this.lineHeight + paddingTop * 2
 
     this.ctx.drawImage(this.ctx.canvas, 0, height)
@@ -887,7 +920,9 @@ export default class TradesLite extends Mixins(PaneMixin) {
 
     if (this.showPairs) {
       this.drawPair(trade, height)
-    } else if (this.showPrices) {
+    }
+
+    if (this.showPrices) {
       this.drawPrice(trade, market, height)
     }
 
@@ -903,7 +938,7 @@ export default class TradesLite extends Mixins(PaneMixin) {
       trade.time,
       this.width - this.margin,
       this.drawOffset + height / 2 + 1,
-      this.maxWidth * 0.5
+      this.timeWidth
     )
   }
 
@@ -921,9 +956,9 @@ export default class TradesLite extends Mixins(PaneMixin) {
     this.ctx.textAlign = 'left'
     this.ctx.fillText(
       trade.pair,
-      this.padding + this.logoWidth + this.margin,
+      this.pairOffset,
       this.drawOffset + height / 2 + 1,
-      this.maxWidth * 0.8
+      this.maxWidth
     )
   }
 
@@ -931,31 +966,28 @@ export default class TradesLite extends Mixins(PaneMixin) {
     this.ctx.textAlign = 'left'
     this.ctx.fillText(
       formatMarketPrice(trade.price, market),
-      this.padding + this.logoWidth + this.margin,
+      this.priceOffset,
       this.drawOffset + height / 2 + 1,
-      this.maxWidth * 0.8
+      this.maxWidth
     )
   }
 
   drawAmount(trade: Trade, height, liquidation) {
-    const isFirstColumn = !this.showPairs && !this.showPrices
-
-    let x
-
-    if (isFirstColumn) {
-      x = this.width / 1.5
-    } else if (!isFirstColumn) {
-      x = this.width - this.maxWidth * 0.75 - this.padding
-    }
-
     this.ctx.textAlign = 'right'
+    const backupFont = this.ctx.font
+    this.ctx.font = this.ctx.font.replace(
+      new RegExp(`^(${this.fontSize}px)`),
+      'bold $1'
+    )
     this.ctx.fillText(
       formatAmount(trade.amount) +
         (liquidation ? (trade.side === 'buy' ? '🐻' : '🐂') : ''),
-      x,
+      this.amountOffset,
       this.drawOffset + height / 2 + 1,
       this.maxWidth
     )
+
+    this.ctx.font = backupFont
   }
 
   renderHistory() {

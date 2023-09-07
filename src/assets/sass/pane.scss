@@ -314,13 +314,17 @@
     gap: 0.25em;
     line-height: 1;
 
+    > button {
+      display: none;
+    }
+
+    &:hover > button {
+      display: block;
+    }
+
     .pane.-small &,
     .pane.-extra-small & {
       padding: 1px;
-    }
-
-    .btn.badge {
-      display: block;
     }
 
     &:first-child {
