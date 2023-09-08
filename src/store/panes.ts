@@ -66,7 +66,20 @@ const layoutMobile = [
 
 const state: PanesState = JSON.parse(JSON.stringify(defaultPanes))
 
-const getters = {} as GetterTree<PanesState, ModulesState>
+const getters = {
+  getName: state => (id: string) => {
+    const name = state.panes[id].name
+    const market = state.marketsListeners[state.panes[id].markets[0]]
+
+    if (name) {
+      return name.trim()
+    } else if (market) {
+      return market.local
+    } else {
+      return state.panes[id].type
+    }
+  }
+} as GetterTree<PanesState, ModulesState>
 
 const actions = {
   async boot({ state, dispatch }) {

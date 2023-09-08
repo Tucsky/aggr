@@ -178,12 +178,12 @@
       <button
         v-if="!useAudio"
         type="button"
-        class="btn -text -small -green"
+        class="btn -text -small -cases"
         @click="$store.commit('settings/TOGGLE_AUDIO', true)"
         title="Click to enable audio"
         v-tippy
       >
-        <i class="icon-info mr8 -lower"></i>Audio is disabled
+        <i class="icon-info mr8 -lower"></i>Audio is currently disabled
       </button>
     </ToggableSection>
 

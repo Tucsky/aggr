@@ -7,11 +7,8 @@
       :show-search="false"
       :show-name="false"
     >
-      <Btn
-        type="button"
-        class="toolbar__label -text"
-        @click="$refs.list.getAlerts()"
-      >
+      <hr />
+      <Btn type="button" class="-text" @click="$refs.list.getAlerts()">
         <i class="icon-refresh"></i>
       </Btn>
     </pane-header>
@@ -64,10 +61,6 @@ export default class Alerts extends Mixins(PaneMixin) {
 
   &__header {
     background: 0;
-
-    ::v-deep .toolbar__label {
-      z-index: 1;
-    }
   }
 }
 </style>

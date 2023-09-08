@@ -8,8 +8,8 @@ import {
   floorTimestampToTimeframe,
   isOddTimeframe,
   sleep,
-  openBase64InNewTab,
-  formatBytes
+  formatBytes,
+  displayCanvasInPopup
 } from '@/utils/helpers'
 import { waitForStateMutation } from '@/utils/store'
 import { joinRgba, splitColorCode } from '@/utils/colors'
@@ -87,11 +87,13 @@ export type IndicatorMarkets = {
 
 export interface IndicatorSource {
   prop: string
-  filters: {
-    quote: string
-    exchange: string
-    type: string
-  }
+  filters: IndicatorSourceFilters
+}
+
+export interface IndicatorSourceFilters {
+  quote: string
+  exchange: string
+  type: string
 }
 
 export interface TimeRange {
@@ -137,7 +139,7 @@ export interface IndicatorFunction {
   args?: any[]
   length?: number
   state?: any
-  next?: Function
+  next?: () => void
 }
 export interface IndicatorVariable {
   length?: number
@@ -476,6 +478,11 @@ export default class Chart {
     if (this.optionRequiresRedraw(key)) {
       this.redrawIndicator(id)
     }
+
+    if (/src/.test(key)) {
+      this.refreshIndicatorAdapter(indicator, this.activeRenderer)
+      this.redrawIndicator(id)
+    }
   }
 
   toggleIndicatorVisibility(indicator: LoadedIndicator, value: boolean) {
@@ -498,7 +505,7 @@ export default class Chart {
    */
   optionRequiresRedraw(key: string) {
     const redrawOptions =
-      /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor|compositeOperation/i
+      /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor|compositeOperation|src/i
 
     if (redrawOptions.test(key)) {
       return true
@@ -860,11 +867,12 @@ export default class Chart {
     return indicator
   }
 
-  refreshIndicatorAdapter(indicator, renderer) {
+  refreshIndicatorAdapter(indicator: LoadedIndicator, renderer) {
     try {
       indicator.adapter = this.serieBuilder.getAdapter(
         indicator.model,
-        this.marketsFilters
+        this.marketsFilters,
+        indicator.options
       )
     } catch (error) {
       this.unbindIndicator(indicator, renderer)
@@ -2553,12 +2561,15 @@ export default class Chart {
     const lines = []
     const [date, time] = new Date().toISOString().split('T')
 
-    lines.push(date + ' ' + time.split('.')[0] + ' UTC')
-    lines.push(
-      this.watermark +
-        ' | ' +
-        getTimeframeForHuman(store.state[this.paneId].timeframe)
-    )
+    const fullDate = date + ' ' + time.split('.')[0] + ' UTC'
+    const symbol = this.watermark
+    const timeframe = getTimeframeForHuman(store.state[this.paneId].timeframe)
+    if (chartCanvas.width > 500) {
+      lines.push([symbol, timeframe, fullDate].join(' | '))
+    } else {
+      lines.push(fullDate)
+      lines.push([symbol, timeframe].join(' | '))
+    }
 
     const lineHeight = Math.round(textFontsize)
     canvas.height = chartCanvas.height
@@ -2646,11 +2657,7 @@ export default class Chart {
       })
     }
 
-    const dataURL = canvas.toDataURL('image/png')
-    const startIndex = dataURL.indexOf('base64,') + 7
-    const b64 = dataURL.substr(startIndex)
-
-    openBase64InNewTab(b64, 'image/png')
+    displayCanvasInPopup(canvas)
   }
 
   restart() {
@@ -2941,12 +2948,11 @@ export default class Chart {
       return
     }
 
-    await sleep(10)
-
     let headerHeight = 0
 
     if (!store.state.settings.autoHideHeaders) {
-      headerHeight = (store.state.panes.panes[this.paneId].zoom || 1) * 2 * 16
+      const zoom = store.state.panes.panes[this.paneId].zoom || 1
+      headerHeight = 1.375 * zoom * 16
     }
 
     const paneElement = this.chartElement.parentElement

@@ -518,3 +518,52 @@ export function mountComponent(cmp: Vue, container?: HTMLElement): void {
   const mounted = cmp.$mount()
   container.appendChild(mounted.$el)
 }
+
+let popupWindow
+
+export function displayCanvasInPopup(canvas) {
+  // Calculate the width and height for the popup window
+  const canvasWidth = canvas.width
+  const canvasHeight = canvas.height
+  const maxWidth = 1400
+  const maxHeight = 700
+  let popupWidth = canvasWidth + 32
+  let popupHeight = canvasHeight + 56
+
+  // Ensure the popup size does not exceed the maximum dimensions
+  if (popupWidth > maxWidth) {
+    popupWidth = maxWidth
+    popupHeight = (canvasHeight * maxWidth) / canvasWidth
+  }
+
+  if (popupHeight > maxHeight) {
+    popupHeight = maxHeight
+    popupWidth = (canvasWidth * maxHeight) / canvasHeight
+  }
+
+  // If the popup window is closed or doesn't exist, create a new one
+  if (!popupWindow || popupWindow.closed) {
+    // Create a new popup window with minimal features
+    const popupFeatures = `width=${popupWidth},height=${popupHeight},toolbar=no,location=no,status=no,menubar=no`
+
+    popupWindow = window.open('', '', popupFeatures)
+  }
+
+  // Check if the popup window was successfully created
+  if (popupWindow) {
+    // Get the canvas content as a data URL
+    const dataURL = canvas.toDataURL()
+
+    // Create an image element in the popup window
+    const img = popupWindow.document.createElement('img')
+
+    // Set the src attribute of the image to the canvas data URL
+    img.src = dataURL
+
+    // Append the image to the popup window's document body
+    popupWindow.document.body.appendChild(img)
+  } else {
+    // Handle popup window creation failure
+    alert('Popup window creation failed. Please check your browser settings.')
+  }
+}

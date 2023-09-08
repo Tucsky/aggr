@@ -6,6 +6,7 @@
       :settings="() => import('@/components/trades/TradesDialog.vue')"
       @zoom="onResize"
     >
+      <hr />
       <dropdown
         v-if="market"
         v-model="sliderDropdownTrigger"
@@ -41,8 +42,8 @@
         </slider>
       </dropdown>
       <button
+        class="btn"
         :name="paneId"
-        class="toolbar__label"
         @click="
           sliderDropdownTrigger = sliderDropdownTrigger
             ? null
@@ -781,9 +782,9 @@ export default class TradesLite extends Mixins(PaneMixin) {
     const zoom = this.$store.state.panes.panes[this.paneId].zoom || 1
     const count = (this.showPairs ? 1 : 0) + (this.showPrices ? 1 : 0) + 2
 
-    this.paddingLeft = Math.round(
-      Math.max(this.width * 0.01 * zoom, 2) * this.pxRatio
-    ) * (count < 3 ? 4 : 1)
+    this.paddingLeft =
+      Math.round(Math.max(this.width * 0.01 * zoom, 2) * this.pxRatio) *
+      (count < 3 ? 4 : 1)
     this.margin = Math.round(
       Math.max(this.width * 0.01 * zoom, 4) * this.pxRatio
     )

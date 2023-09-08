@@ -5,6 +5,7 @@
       ref="paneHeader"
       :settings="() => import('@/components/trades/TradesDialog.vue')"
     >
+      <hr />
       <dropdown v-model="sliderDropdownTrigger" interactive no-scroll>
         <slider
           style="width: 100px"
@@ -31,8 +32,7 @@
         />
       </dropdown>
       <button
-        :name="paneId"
-        class="toolbar__label"
+        class="btn"
         @click="
           sliderDropdownTrigger = sliderDropdownTrigger
             ? null

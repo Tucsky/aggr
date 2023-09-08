@@ -41,7 +41,7 @@
           <i class="icon-volume-high"></i>
         </button>
         <textarea
-          class="hide-scrollbar form-control"
+          class="form-control"
           v-model="buyAudio"
           :class="[dropping === 'buy' && '-dropping']"
           @blur="liveAnnotation = null"
@@ -104,7 +104,7 @@
           <i class="icon-volume-high"></i>
         </button>
         <textarea
-          class="hide-scrollbar form-control"
+          class="form-control"
           v-model="sellAudio"
           :class="[dropping === 'sell' && '-dropping']"
           @blur="liveAnnotation = null"

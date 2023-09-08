@@ -1,16 +1,38 @@
 $iconpath: '../fonts/';
 @font-face {font-family: "icon";
-  src: url('#{$iconpath}icon.eot?t=1693913412092'); /* IE9*/
-  src: url('#{$iconpath}icon.eot?t=1693913412092#iefix') format('embedded-opentype'), /* IE6-IE8 */
-  url("#{$iconpath}icon.woff2?t=1693913412092") format("woff2"),
-  url("#{$iconpath}icon.woff?t=1693913412092") format("woff"),
-  url('#{$iconpath}icon.ttf?t=1693913412092') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
-  url('#{$iconpath}icon.svg?t=1693913412092#icon') format('svg'); /* iOS 4.1- */
+  src: url('#{$iconpath}icon.eot?t=1694212744087'); /* IE9*/
+  src: url('#{$iconpath}icon.eot?t=1694212744087#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url("#{$iconpath}icon.woff2?t=1694212744087") format("woff2"),
+  url("#{$iconpath}icon.woff?t=1694212744087") format("woff"),
+  url('#{$iconpath}icon.ttf?t=1694212744087') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('#{$iconpath}icon.svg?t=1694212744087#icon') format('svg'); /* iOS 4.1- */
 }
 
 [class^="icon-"], [class*=" icon-"] {
   font-family: 'icon' !important;
-  font-style: normal;
+  
+  &.-lower {
+    position: relative;
+    top: 1px;
+  }
+
+  &.-higher {
+    position: relative;
+    top: -1px;
+  }
+
+  &.-large {
+    font-size: 1.5rem;
+  }
+
+  &.-small {
+    font-size: 0.75em;
+  }
+
+  &.-inline {
+    line-height: 1.4;
+  }
+  font-style:normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

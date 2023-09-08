@@ -48,6 +48,10 @@
         width: 2rem;
         height: 2rem;
       }
+
+      #app.-light &:hover {
+        background-color: var(--theme-background-o20);
+      }
     }
 
     &:hover {
@@ -78,85 +82,20 @@
   }
 }
 
-#app.-auto-hide-headers {
-  .pane {
-
-    .pane-header {
-      position: absolute;
-
-      &--split {
-        position: absolute;
-        top: 0;
-        right: 0;
-
-        .pane-header__name {
-          flex-grow: 0;
-        }
-
-        .toolbar {
-          flex-grow: 0 !important;
-          margin-left: auto;
-        }
-      }
-
-      .toolbar {
-        display: none;
-        flex-grow: 1;
-      }
-    }
-
-    &:hover {
-      .toolbar {
-        display: flex;
-      }
-    }
-  }
-
-  &.-auto-hide-names {
-    .pane {
-
-      .pane-header {
-        display: none;
-
-        .toolbar {
-          display: flex;
-        }
-      }
-
-      &:hover .pane-header {
-        display: flex;
-      }
-    }
-  }
-}
-
-.pane-overlay {
-  background-color: rgba(black, 0.5);
-}
-
-#app.-light {
-  .vue-grid-item {
-    > .vue-resizable-handle:hover {
-      background-color: var(--theme-background-o20);
-    }
-  }
-
-  .pane {
-    background-color: rgba(white, 0.1);
-
-    .pane-overlay {
-      background-color: var(--theme-background-o75);
-    }
-  }
-}
-
 .pane {
+  --pane-overlay-background: rgba(0, 0, 0, 0.75);
+  $pane: &;
   position: relative;
   background-color: rgba(black, 0.1);
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
+
+  #app.-light & {
+    --pane-overlay-background: var(--theme-background-o75);
+    background-color: rgba(white, 0.1);
+  }
 
   &.-large .pane-header + div {
     font-weight: 500;
@@ -175,66 +114,104 @@
       box-shadow: 0 0 0 0.5rem rgba(255, 255, 255, 0);
     }
   }
-}
 
-.pane-header {
-  position: relative;
-  display: flex;
-  align-items: stretch;
-  z-index: 4;
-  height: 1.375em;
-  background: 0;
-  flex-shrink: 0;
-  width: 100%;
-  cursor: move;
-  pointer-events: none;
-
-  > div {
-    pointer-events: all;
+  &-overlay {
+    background-color: var(--pane-overlay-background);
   }
 
-  .pane.-small & {
-    height: 1.429em;
-  }
+  &-header {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    z-index: 4;
+    height: 1.375em;
+    background: 0;
+    flex-shrink: 0;
+    width: 100%;
+    cursor: move;
+    pointer-events: none;
+    background-color: var(--theme-background-75);
 
-  .pane.-extra-small & {
-    height: 1em;
-  }
+    #app.-auto-hide-headers & {
+      position: absolute;
+      background: 0;
 
-  .toolbar {
-    display: none;
-  }
+      hr {
+        flex-grow: 0;
+      }
+    }
 
-  &__name {
-    font-family: $font-condensed;
-    align-self: stretch;
-    display: inline-flex;
-    font-size: 0.875em;
-    padding: 0 0.375em;
-    align-items: center;
-    flex-grow: 1;
+    > * {
+      pointer-events: all;
+    }
+
+    hr {
+      margin: 0 auto;
+      border: 0;
+      flex-grow: 1;
+    }
+
+    > .btn {
+      padding: 0.25em 0.25em;
+      border-radius: 0;
+      display: none;
+      color: var(--theme-color-50);
+
+      > .btn {
+        padding: 0.25em;
+      }
+
+      .pane:hover & {
+        display: inline-flex;
+      }
+
+      &,
+      &:hover
+      &:focus {
+        background-color: var(--pane-overlay-background) !important;
+      }
+
+      &:hover,
+      &:focus {
+        color: var(--theme-color-base);
+      }
+
+      i {
+        font-size: 0.875em;
+      }
+
+      .btn:last-child,
+      &:after {
+        margin-right: -0.25em;
+        padding: 0.25em;
+        font-size: 0.75em;
+        display: none;
+
+        #{$pane}:hover & {
+          display: inline-flex;
+        }
+      }
+    }
 
     .pane.-small & {
-      font-size: 1em;
-      line-height: 1rem;
-      padding: 0 0 0 0.25em;
+      height: 1.429em;
     }
 
-    .pane-header__edit {
-      display: none;
-      margin-right: -0.5em;
-      padding: 0.375em;
+    .pane.-extra-small & {
+      height: 1em;
     }
 
-    &:hover .pane-header__edit {
-      display: block;
-    }
-  }
+    &__highlight.btn {
+      display: inline-flex;
 
-  &__divider {
-    width: 1px;
-    background-color: var(--theme-color-o75);
-    margin: 0.4em 0.4em;
+      #app.-auto-hide-names & {
+        display: none;
+      }
+
+      #app.-auto-hide-names .pane:hover & {
+        display: inline-flex;
+      }
+    }
   }
 }
 
@@ -313,13 +290,18 @@
     align-items: center;
     gap: 0.25em;
     line-height: 1;
+    color: var(--theme-color-50);
 
     > button {
       display: none;
     }
 
-    &:hover > button {
-      display: block;
+    &:hover {
+      color: var(--theme-color-base);
+
+      > button {
+        display: block;
+      }
     }
 
     .pane.-small &,
@@ -339,10 +321,6 @@
     font-size: 0.875em;
     margin-left: 0.125em;
   }
-}
-
-body.-unselectable #app.-auto-hide-headers .toolbar {
-  display: none !important;
 }
 
 body.-dragging-market .pane * {

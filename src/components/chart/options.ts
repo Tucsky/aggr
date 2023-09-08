@@ -38,7 +38,7 @@ export const defaultChartOptions: DeepPartial<ChartOptions> = {
     horzAlign: 'center',
     vertAlign: 'center',
     fontFamily: 'Spline Sans Mono',
-    fontStyle: '500'
+    fontStyle: '600'
   },
   layout: {
     background: {

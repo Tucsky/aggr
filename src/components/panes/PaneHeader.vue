@@ -6,118 +6,118 @@
   >
     <div
       v-if="showName && name"
-      class="pane-header__name pane-overlay"
+      class="btn pane-header__highlight"
       @dblclick="maximizePane"
     >
       <slot name="title">
         {{ name }}
         <btn
           type="button"
-          @click="renamePane"
+          @click="onEditHandler"
           class="pane-header__edit btn -text -small"
         >
           <i class="icon-edit"></i>
         </btn>
       </slot>
     </div>
-    <div class="toolbar pane-overlay">
-      <slot />
+    <slot>
+      <hr />
+    </slot>
+    <button
+      v-if="showSearch"
+      type="button"
+      @click="openSearch"
+      class="btn -text"
+    >
+      <i class="icon-search"></i>
+    </button>
+    <btn
+      v-if="settings"
+      type="button"
+      @click="openSettings"
+      class="pane-overlay -text"
+      :loading="isLoading"
+    >
+      <i class="icon-cog"></i>
+    </btn>
+    <button
+      type="button"
+      @click="toggleDropdown"
+      class="pane-overlay btn -text"
+    >
+      <i class="icon-more"></i>
+    </button>
+
+    <dropdown v-model="paneDropdownTrigger">
+      <div class="d-flex btn-group">
+        <button
+          type="button"
+          class="btn -green"
+          @click.stop="changeZoom($event, -1)"
+        >
+          <i class="icon-minus"></i>
+        </button>
+        <button
+          type="button"
+          class="btn -green text-monospace flex-grow-1 text-center"
+          @click.stop="resetZoom"
+        >
+          × {{ zoom.toFixed(2) }}
+        </button>
+        <button
+          type="button"
+          class="btn -green"
+          @click.stop="changeZoom($event, 1)"
+        >
+          <i class="icon-plus"></i>
+        </button>
+      </div>
+      <button
+        v-if="settings !== null"
+        type="button"
+        class="dropdown-item"
+        @click="openSettings"
+      >
+        <i class="icon-cog"></i>
+        <span>Settings</span>
+      </button>
       <button
         v-if="showSearch"
         type="button"
+        class="dropdown-item"
         @click="openSearch"
-        class="btn toolbar__label toolbar__label--768 -text"
       >
         <i class="icon-search"></i>
+        <span>Sources</span>
       </button>
-      <btn
-        v-if="settings"
-        type="button"
-        @click="openSettings"
-        class="toolbar__label toolbar__label--768 -text"
-        :loading="isLoading"
-      >
-        <i class="icon-cog"></i>
-      </btn>
-      <button
-        type="button"
-        @click="toggleDropdown"
-        class="btn -text toolbar__label"
-      >
-        <i class="icon-more"></i>
+      <div
+        v-if="$slots.menu"
+        class="dropdown-divider"
+        :data-label="`${paneId} options`"
+      ></div>
+      <slot name="menu"></slot>
+      <div class="dropdown-divider" data-label="utilities"></div>
+      <button type="button" class="dropdown-item" @click="maximizePane">
+        <i class="icon-enlarge"></i>
+        <span>Maximize</span>
       </button>
-
-      <dropdown v-model="paneDropdownTrigger">
-        <div class="d-flex btn-group">
-          <button
-            type="button"
-            class="btn -green"
-            @click.stop="changeZoom($event, -1)"
-          >
-            <i class="icon-minus"></i>
-          </button>
-          <button
-            type="button"
-            class="btn -green text-monospace flex-grow-1 text-center"
-            @click.stop="resetZoom"
-          >
-            × {{ zoom.toFixed(2) }}
-          </button>
-          <button
-            type="button"
-            class="btn -green"
-            @click.stop="changeZoom($event, 1)"
-          >
-            <i class="icon-plus"></i>
-          </button>
-        </div>
-        <button
-          v-if="settings !== null"
-          type="button"
-          class="dropdown-item"
-          @click="openSettings"
-        >
-          <i class="icon-cog"></i>
-          <span>Settings</span>
-        </button>
-        <button
-          v-if="showSearch"
-          type="button"
-          class="dropdown-item"
-          @click="openSearch"
-        >
-          <i class="icon-search"></i>
-          <span>Sources</span>
-        </button>
-        <div
-          v-if="$slots.menu"
-          class="dropdown-divider"
-          :data-label="`${paneId} options`"
-        ></div>
-        <slot name="menu"></slot>
-        <div class="dropdown-divider" data-label="utilities"></div>
-        <button type="button" class="dropdown-item" @click="maximizePane">
-          <i class="icon-enlarge"></i>
-          <span>Maximize</span>
-        </button>
-        <button type="button" class="dropdown-item" @click="duplicatePane">
-          <i class="icon-copy-paste"></i>
-          <span>Duplicate</span>
-        </button>
-        <button type="button" class="dropdown-item" @click="downloadPane">
-          <i class="icon-download"></i>
-          <span>Download</span>
-        </button>
-        <button type="button" class="dropdown-item" @click="renamePane">
-          <i class="icon-edit"></i>
-          <span>Rename</span>
-        </button>
-        <button type="button" class="dropdown-item" @click="removePane">
-          <i class="icon-trash"></i>
-          <span>Remove</span>
-        </button>
-      </dropdown>
-    </div>
+      <button type="button" class="dropdown-item" @click="duplicatePane">
+        <i class="icon-copy-paste"></i>
+        <span>Duplicate</span>
+      </button>
+      <button type="button" class="dropdown-item" @click="downloadPane">
+        <i class="icon-download"></i>
+        <span>Download</span>
+      </button>
+      <button type="button" class="dropdown-item" @click="renamePane">
+        <i class="icon-edit"></i>
+        <span>Rename</span>
+      </button>
+      <button type="button" class="dropdown-item" @click="removePane">
+        <i class="icon-trash"></i>
+        <span>Remove</span>
+      </button>
+    </dropdown>
   </div>
 </template>
 
@@ -150,6 +150,10 @@ import dialogService from '@/services/dialogService'
     split: {
       type: Boolean,
       default: true
+    },
+    onEdit: {
+      type: Function,
+      default: null
     }
   },
   components: {
@@ -157,6 +161,7 @@ import dialogService from '@/services/dialogService'
   }
 })
 export default class PaneHeader extends Vue {
+  private onEdit: (event) => void
   private settings?: () => Promise<any>
   paneId: string
   paneDropdownTrigger = null
@@ -292,6 +297,15 @@ export default class PaneHeader extends Vue {
       paneId: this.paneId
     })
     this.isLoading = false
+  }
+
+  onEditHandler(event) {
+    if (typeof this.onEdit === 'function') {
+      this.onEdit(event)
+      return
+    }
+
+    this.renamePane(event)
   }
 }
 </script>

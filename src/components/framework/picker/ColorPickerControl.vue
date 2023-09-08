@@ -8,11 +8,7 @@
     }"
   >
     <div class="color-picker-control__color"></div>
-    <div class="color-picker-control__wrapper">
-      <slot>
-        <i class="icon-dropper"></i>
-      </slot>
-    </div>
+    <div class="color-picker-control__wrapper"></div>
   </button>
 </template>
 
@@ -85,7 +81,11 @@ export default {
   background-color: transparent !important;
   background-image: $checkerboard;
   background-size: 14px 14px;
-  background-position: 0 0, 7px -7px, 0 7px, -7px 0px;
+  background-position:
+    0 0,
+    7px -7px,
+    0 7px,
+    -7px 0px;
   position: relative;
   overflow: hidden;
   padding: 0;
@@ -96,7 +96,8 @@ export default {
 
   &__wrapper {
     position: relative;
-    padding: 0.5em;
+    width: 2em;
+    height: 2em;
     border: 1px solid var(--background-color);
     border-radius: 0.25rem;
     outline: 1px solid #0000000f;
