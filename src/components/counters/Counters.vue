@@ -350,75 +350,15 @@ export default class Counters extends Mixins(PaneMixin) {
     opacity: 1;
   }
 
-  &:nth-child(1) .counter__side {
-    &.-buy {
-      background-color: var(--buy-color-1);
-    }
-    &.-sell {
-      background-color: var(--sell-color-1);
-    }
-  }
-
-  &:nth-child(2) .counter__side {
-    &.-buy {
-      background-color: var(--buy-color-2);
-    }
-    &.-sell {
-      background-color: var(--sell-color-2);
-    }
-  }
-
-  &:nth-child(3) .counter__side {
-    &.-buy {
-      background-color: var(--buy-color-3);
-    }
-    &.-sell {
-      background-color: var(--sell-color-3);
-    }
-  }
-
-  &:nth-child(4) .counter__side {
-    &.-buy {
-      background-color: var(--buy-color-4);
-    }
-    &.-sell {
-      background-color: var(--sell-color-4);
-    }
-  }
-
-  &:nth-child(5) .counter__side {
-    &.-buy {
-      background-color: var(--buy-color-5);
-    }
-    &.-sell {
-      background-color: var(--sell-color-5);
-    }
-  }
-
-  &:nth-child(6) .counter__side {
-    &.-buy {
-      background-color: var(--buy-color-6);
-    }
-    &.-sell {
-      background-color: var(--sell-color-6);
-    }
-  }
-
-  &:nth-child(7) .counter__side {
-    &.-buy {
-      background-color: var(--buy-color-7);
-    }
-    &.-sell {
-      background-color: var(--sell-color-7);
-    }
-  }
-
-  &:nth-child(8) .counter__side {
-    &.-buy {
-      background-color: var(--buy-color-8);
-    }
-    &.-sell {
-      background-color: var(--sell-color-8);
+  // The `@for` loop iterates through each counter and applies background colors based on their index.
+  @for $i from 1 through 8 {
+    &:nth-child(#{$i}) .counter__side {
+      &.-buy {
+        background-color: var(--buy-color-#{$i});
+      }
+      &.-sell {
+        background-color: var(--sell-color-#{$i});
+      }
     }
   }
 
