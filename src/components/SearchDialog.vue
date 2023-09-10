@@ -1,7 +1,7 @@
 <template>
   <Dialog @clickOutside="hide" class="search-dialog" ref="dialog">
     <template v-slot:header>
-      <div v-if="paneId">
+      <div v-if="selectedPaneId">
         <div class="dialog__title">
           Connect
           <code class="-filled -green">
@@ -485,16 +485,26 @@ export default {
       return RESULTS_PER_PAGE
     },
     otherPanes() {
+      if (!this.selectedPaneId) {
+        return []
+      }
+
       return Object.keys(this.$store.state.panes.panes)
         .filter(a => a !== this.selectedPaneId)
         .map(a => this.$store.state.panes.panes[a])
     },
     paneName() {
-      if (this.selectedPaneId) {
-        return this.$store.getters['panes/getName'](this.selectedPaneId)
+      if (!this.selectedPaneId) {
+        return 'n/a'
       }
 
-      return ''
+      const name = this.$store.getters['panes/getName'](this.selectedPaneId)
+
+      if (!name.trim().length) {
+        return '👻'
+      }
+
+      return name
     },
     activeMarkets() {
       return Object.keys(this.$store.state.panes.marketsListeners)

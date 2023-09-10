@@ -160,7 +160,10 @@
           <i class="icon-cross"></i>
         </button>
       </div>
-      <div v-if="optionsQuery.length" class="indicator-search__results">
+      <div
+        v-if="optionsQuery.length"
+        class="indicator-options__list indicator-search__results"
+      >
         <indicator-option
           v-for="key in queryOptionsKeys"
           :key="key"
@@ -179,16 +182,18 @@
           title="Colors"
           id="indicator-right-colors"
         >
-          <indicator-option
-            v-for="key in colorOptionsKeys"
-            :key="key"
-            :name="key"
-            :pane-id="paneId"
-            :indicator-id="indicatorId"
-            :plot-types="plotTypes"
-            inline
-            @change="setIndicatorOption"
-          />
+          <div class="indicator-options__list">
+            <indicator-option
+              v-for="key in colorOptionsKeys"
+              :key="key"
+              :name="key"
+              :pane-id="paneId"
+              :indicator-id="indicatorId"
+              :plot-types="plotTypes"
+              inline
+              @change="setIndicatorOption"
+            />
+          </div>
         </ToggableSection>
 
         <ToggableSection
@@ -197,16 +202,18 @@
           title="Script"
           id="indicator-right-script"
         >
-          <indicator-option
-            v-for="key in scriptOptionsKeys"
-            :key="key"
-            :name="key"
-            :pane-id="paneId"
-            :indicator-id="indicatorId"
-            :plot-types="plotTypes"
-            ensure
-            @change="setIndicatorOption"
-          />
+          <div class="indicator-options__list">
+            <indicator-option
+              v-for="key in scriptOptionsKeys"
+              :key="key"
+              :name="key"
+              :pane-id="paneId"
+              :indicator-id="indicatorId"
+              :plot-types="plotTypes"
+              ensure
+              @change="setIndicatorOption"
+            />
+          </div>
         </ToggableSection>
 
         <ToggableSection
@@ -215,15 +222,17 @@
           title="Other"
           id="indicator-right-default"
         >
-          <indicator-option
-            v-for="key in defaultOptionsKeys"
-            :key="key"
-            :name="key"
-            :pane-id="paneId"
-            :indicator-id="indicatorId"
-            :plot-types="plotTypes"
-            @change="setIndicatorOption"
-          />
+          <div class="indicator-options__list">
+            <indicator-option
+              v-for="key in defaultOptionsKeys"
+              :key="key"
+              :name="key"
+              :pane-id="paneId"
+              :indicator-id="indicatorId"
+              :plot-types="plotTypes"
+              @change="setIndicatorOption"
+            />
+          </div>
         </ToggableSection>
 
         <ToggableSection title="Scale" id="indicator-right-scale">
@@ -327,6 +336,8 @@
 </template>
 
 <script lang="ts">
+/* eslint-disable vue/no-unused-components */
+
 import DialogMixin from '../../mixins/dialogMixin'
 import Tabs from '@/components/framework/Tabs.vue'
 import Tab from '@/components/framework/Tab.vue'
@@ -486,7 +497,7 @@ export default {
     }
   },
   created() {
-    this.restoreNavigationState()
+    this.restoreNavigation()
 
     this.$nextTick(() => {
       this.getPlotTypes()
@@ -496,11 +507,11 @@ export default {
     this.originalIndicator = JSON.parse(JSON.stringify(this.indicator))
   },
   beforeDestroy() {
-    this.saveNavigationState()
+    this.saveNavigation()
   },
   methods: {
-    restoreNavigationState() {
-      const navigationState = this.$store.state[this.paneId].navigationState
+    restoreNavigation() {
+      const navigationState = this.$store.state.app.indicatorDialogNavigation
 
       if (navigationState) {
         this.tab = navigationState.tab || 'options'
@@ -509,8 +520,8 @@ export default {
           navigationState.fontSizePx || (window.devicePixelRatio > 1 ? 12 : 14)
       }
     },
-    saveNavigationState() {
-      this.$store.commit(this.paneId + '/SET_NAVIGATION_STATE', {
+    saveNavigation() {
+      this.$store.commit('app/SET_INDICATOR_DIALOG_NAVIGATION', {
         tab: this.tab,
         optionsQuery: this.optionsQuery,
         fontSizePx: this.editorFontSize
@@ -534,13 +545,18 @@ export default {
       this.getOptionsKeys()
     },
     getScriptOptions(script) {
-      const keys = []
-      const reg = /options\.([a-zA-Z0-9_]+)/g
+      const keys = Object.keys(this.indicator.optionsDefinitions || {})
+      const reg =
+        /options\.([a-zA-Z0-9_]+)|[\s\n]*(\w[\d\w]+)[\s\n]*=[\s\n]*option\(/g
 
       let match
 
       do {
-        if ((match = reg.exec(script))) {
+        if (
+          (match = reg.exec(script)) &&
+          match[1] &&
+          keys.indexOf(match[1]) === -1
+        ) {
           keys.push(match[1])
         }
       } while (match)
@@ -999,6 +1015,12 @@ hr.-vertical {
         width: calc(25% - 0.75rem);
       }
     }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 }
 
