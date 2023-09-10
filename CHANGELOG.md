@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented here.
 
+## [3.4.0] - 2023-09-10
+
+### Added
+
+- New exchange: Bitmart
+- Double-click on pane's name to maximize
+- TradesLite: Show price and pair simultaneously
+- Chart:Keep timeframe visible next to chart name
+- Add .npmrc file to skip Puppetteer installation by default causing the `npm install` to fail
+- A dist-server to test production build locally
+- An installation script for volta
+
+### Changed
+
+- Upgrade docker base images Node version to 20.2
+- Add Dockerfile and docker-compose for development 
+- Replace Webpack with Vite
+- Add dist-server to render dist folder
+- Fix npm installation script for smooth installation 
+- Add .npmrc file
+- Fix bunch of lint issues
+- Perf/refactor: merge svg fonts into one file
+- Trades: Fix dynamic co
+- Merge svg fonts into one file
+
 ## [3.3.3] - 2023-06-08
 ### Added
 - Gate.io
@@ -232,6 +257,7 @@ All notable changes to this project will be documented here.
 - Stats panel is back
 - Counters and stats are only updated after 1s to reduce lag
 - Expose candle border colors (borderUpColor + borderDownColor) in price serie settings
+
 ### Changed
 
 - Loading indicator now working again
