@@ -90,6 +90,8 @@ export interface IndicatorSource {
   filters: IndicatorSourceFilters
 }
 
+export type IndicatorOption = { [key: string]: any }
+
 export interface IndicatorSourceFilters {
   quote: string
   exchange: string
@@ -132,6 +134,7 @@ export interface IndicatorTranspilationResult {
   plots: IndicatorPlot[]
   markets?: IndicatorMarkets
   references?: IndicatorReference[]
+  options?: { [key: string]: IndicatorOption }
   sources?: IndicatorSource[]
 }
 export interface IndicatorFunction {
@@ -228,6 +231,7 @@ export default class Chart {
   private queuedTrades: Trade[] = []
   private serieBuilder: SerieBuilder
   private seriesIndicatorsMap: { [serieId: string]: IndicatorReference } = {}
+  private previousLogicalRange: string
 
   private _releaseQueueInterval: number
   private _releasePanTimeout: number
@@ -475,12 +479,10 @@ export default class Chart {
       })
     }
 
-    if (this.optionRequiresRedraw(key)) {
-      this.redrawIndicator(id)
-    }
-
-    if (/src/.test(key)) {
+    if (indicator.model.options[key] && indicator.model.options[key].rebuild) {
       this.refreshIndicatorAdapter(indicator, this.activeRenderer)
+      this.redrawIndicator(id)
+    } else if (this.optionRequiresRedraw(key)) {
       this.redrawIndicator(id)
     }
   }
@@ -807,6 +809,15 @@ export default class Chart {
       }
 
       indicator.model = result
+      indicator.options = Object.keys(result.options).reduce((acc, key) => {
+        acc[key] = indicator.options[key] || result.options[key].default
+        return acc
+      }, indicator.options)
+
+      store.commit(this.paneId + '/SET_INDICATOR_OPTIONS_DEFINITIONS', {
+        id: indicator.id,
+        optionsDefinitions: result.options
+      })
 
       if (indicator.options.visible !== false) {
         this.createIndicatorSeries(indicator)
@@ -1622,10 +1633,6 @@ export default class Chart {
         ...(defaultPlotsOptions[plot.type] || {}),
         ...indicator.options,
         ...customPlotOptions
-      }
-
-      if (serieOptions.scaleMargins) {
-        delete serieOptions.scaleMargins
       }
 
       const api = this.chartInstance[apiMethodName](
@@ -2800,14 +2807,20 @@ export default class Chart {
   }
 
   async fetchMore(visibleLogicalRange) {
+    const logicalRangeId = `${visibleLogicalRange.from},${visibleLogicalRange.to}`
+
     if (
       this.isLoading ||
       this.hasReachedEnd ||
       !visibleLogicalRange ||
-      visibleLogicalRange.from > 0
+      visibleLogicalRange.from > 0 ||
+      (this.previousLogicalRange &&
+        this.previousLogicalRange === logicalRangeId)
     ) {
       return
     }
+
+    this.previousLogicalRange = logicalRangeId
 
     let indicatorLength = 0
 
