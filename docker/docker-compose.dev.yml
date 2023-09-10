@@ -1,0 +1,56 @@
+version: '3.7'
+
+name: aggr-ui
+
+networks:
+  backend:
+    name: aggr_backend
+  frontend:
+    name: aggr_frontend
+
+services:
+  front:
+    container_name: aggr-ui-dev
+    image: aggr-ui-dev
+    build:
+      context: ../.
+      dockerfile: ./docker/Dockerfile.dev
+    volumes:
+        - ..:/usr/src/app
+    ports:
+      - 8080:8080
+    env_file:
+      - ../.env
+      - ../.env.development
+    networks:
+      - backend
+      - frontend
+    restart: always
+    deploy:
+        resources:
+            limits:
+              cpus: '0.5'
+              memory: 1028M
+            reservations:
+              cpus: '0.25'
+              memory: 720M
+
+  cors:
+    container_name: aggr-cors
+    image: testcab/cors-anywhere
+    environment:
+      - NODE_ENV=development
+      - PORT=8070
+    ports:
+      - 8070:8070
+    networks:
+      - frontend
+    restart: always
+    deploy:
+        resources:
+            limits:
+              cpus: '0.1'
+              memory: 128M
+            reservations:
+              cpus: '0.05'
+              memory: 72M

@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class MEXC extends Exchange {
   id = 'MEXC'
 
   protected endpoints = {

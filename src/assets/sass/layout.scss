@@ -212,6 +212,10 @@ p {
   &.-nl {
     white-space: pre-line;
   }
+
+  > i {
+    vertical-align: bottom;
+  }
 }
 
 .mobile-dir-col-desktop-dir-row {

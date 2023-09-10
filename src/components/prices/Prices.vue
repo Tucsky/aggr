@@ -8,10 +8,8 @@
       :paneId="paneId"
       :settings="() => import('@/components/prices/PricesDialog.vue')"
     >
-      <prices-sort-dropdown
-        :pane-id="paneId"
-        class="toolbar__label -arrow -text"
-      />
+      <hr />
+      <prices-sort-dropdown :pane-id="paneId" class="pane-overlay -text" />
     </pane-header>
     <div class="markets-bar__wrapper hide-scrollbar">
       <component
@@ -42,7 +40,7 @@
             {{ formatAmount(market.volume) }}
           </div>
           <div v-if="showVolumeDelta" class="market__volume">
-            {{ formatAmount(market.volumeDelta) }}
+            {{ market.volumeDelta }}%
           </div>
         </div>
       </component>
@@ -79,7 +77,7 @@ type MarketStats = Market & {
   components: { PaneHeader, PricesSortDropdown },
   name: 'Prices'
 })
-export default class extends Mixins(PaneMixin) {
+export default class Prices extends Mixins(PaneMixin) {
   mode = 'vertical'
   pauseSort = false
   markets: MarketStats[] = []
@@ -226,8 +224,14 @@ export default class extends Mixins(PaneMixin) {
       }
 
       market.volume = marketStats.volume - this._initialValues[market.id].volume
-      market.volumeDelta =
-        marketStats.volumeDelta - this._initialValues[market.id].volumeDelta
+      market.volumeDelta = market.volume
+        ? Math.round(
+            ((marketStats.volumeDelta -
+              this._initialValues[market.id].volumeDelta) /
+              market.volume) *
+              100
+          )
+        : 0
 
       if (showChange && marketStats.price) {
         const change =
@@ -469,12 +473,12 @@ export default class extends Mixins(PaneMixin) {
 
     &.-up {
       background-color: transparent;
-      color: var(--theme-buy-100);
+      color: var(--theme-buy-base);
     }
 
     &.-down {
       background-color: transparent;
-      color: var(--theme-sell-100);
+      color: var(--theme-sell-base);
     }
 
     &.-neutral {
@@ -493,7 +497,7 @@ export default class extends Mixins(PaneMixin) {
       padding: 0;
       background-repeat: no-repeat;
       background-size: 1em;
-      width: 1.25rem;
+      width: 1rem;
       align-self: stretch;
       flex-shrink: 0;
       background-position: center;

@@ -90,7 +90,7 @@ class WorkspacesService {
     this.previousAppVersion = parseVersion(
       localStorage.getItem('version') || '-1'
     )
-    this.latestAppVersion = parseVersion(process.env.VUE_APP_VERSION)
+    this.latestAppVersion = parseVersion(import.meta.env.VITE_APP_VERSION)
   }
 
   async initialize() {
@@ -207,7 +207,7 @@ class WorkspacesService {
     await this.insertDefaultIndicators(db)
     await this.insertDefaultPresets(db)
 
-    localStorage.setItem('version', process.env.VUE_APP_VERSION)
+    localStorage.setItem('version', import.meta.env.VITE_APP_VERSION)
   }
 
   async insertDefaultIndicators(db: IDBPDatabase<AggrDB>) {
@@ -293,7 +293,7 @@ class WorkspacesService {
     if (this.urlStrategy === 'hash') {
       urlWorkspaceId = location.hash.substring(1)
     } else {
-      ;[, urlWorkspaceId, urlPairs] = decodeURIComponent(
+      [, urlWorkspaceId, urlPairs] = decodeURIComponent(
         location.pathname
       ).split('/')
     }
@@ -802,7 +802,7 @@ class WorkspacesService {
   async showLegacyNotice() {
     const stay = await dialogService.confirm({
       title: 'Update notice',
-      message: `Welcome to aggr.trade ${process.env.VUE_APP_VERSION}.<br>We are replacing the old version with the new on the main app.<br><br>If for some reasons you don't like it,<br>legacy app can still be found on <a href="https://legacy.aggr.trade">legacy.aggr.trade</a> ☺️`,
+      message: `Welcome to aggr.trade ${import.meta.env.VITE_APP_VERSION}.<br>We are replacing the old version with the new on the main app.<br><br>If for some reasons you don't like it,<br>legacy app can still be found on <a href="https://legacy.aggr.trade">legacy.aggr.trade</a> ☺️`,
       ok: 'Stay ',
       cancel: 'Go back',
       html: true

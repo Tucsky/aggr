@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class KRAKEN extends Exchange {
   id = 'KRAKEN'
   private specs: { [pair: string]: number }
   private isPFregex = /^PF_/

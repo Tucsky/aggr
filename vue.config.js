@@ -35,7 +35,6 @@ const {
   NODE_ENV,
   API_URL,
   PROXY_URL,
-  DEV_PROXY_URL,
   API_SUPPORTED_PAIRS,
   API_SUPPORTED_TIMEFRAMES,
   PUBLIC_PATH,
@@ -43,15 +42,16 @@ const {
 } = process.env
 
 process.env.VUE_APP_VERSION = appVersion
-process.env.VUE_APP_BUILD_DATE = makeBuildDate()
 process.env.VUE_APP_EXCHANGES = makeExchangeList()
 
 switch (NODE_ENV) {
   case 'production':
     process.env.VUE_APP_PROXY_URL = PROXY_URL
+	process.env.VUE_APP_BUILD_DATE = makeBuildDate ()
     break
   case 'development':
-    process.env.VUE_APP_PROXY_URL = DEV_PROXY_URL
+    process.env.VUE_APP_PROXY_URL = PROXY_URL
+	process.env.VUE_APP_BUILD_DATE = new Date().toLocaleDateString
     break
 }
 
@@ -123,6 +123,19 @@ module.exports = {
         ...options,
         worker: 'Worker'
       }))
+      .end()
+
+    const svgRule = config.module.rule('svg')
+
+    svgRule.uses.clear()
+
+    svgRule
+      .use('url-loader')
+      .loader('url-loader')
+      .options({
+        limit: 1024,
+        esModule: false
+      })
       .end()
   },
   css: {

@@ -74,7 +74,7 @@ import importService from '@/services/importService'
     }
   }
 })
-export default class extends Vue {
+export default class App extends Vue {
   price: string = null
   showStuck = false
 

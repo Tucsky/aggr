@@ -61,7 +61,7 @@ export default class ChartControl {
     const canvas = this.chart.chartElement
 
     // bind click
-    if (process.env.VUE_APP_PUBLIC_VAPID_KEY) {
+    if (import.meta.env.VITE_APP_PUBLIC_VAPID_KEY) {
       this.clickHandler = this.onClick.bind(this)
       canvas.addEventListener(
         isTouchSupported() ? 'touchstart' : 'mousedown',
@@ -98,7 +98,7 @@ export default class ChartControl {
       .unsubscribeVisibleLogicalRangeChange(this.onPan)
 
     // unbind click / context menu
-    if (process.env.VUE_APP_PUBLIC_VAPID_KEY) {
+    if (import.meta.env.VITE_APP_PUBLIC_VAPID_KEY) {
       const canvas = this.chart.chartElement
       const clickEventName = isTouchSupported() ? 'touchstart' : 'mousedown'
       canvas.removeEventListener(clickEventName, this.clickHandler)
@@ -166,6 +166,7 @@ export default class ChartControl {
         case 'app/EXCHANGE_UPDATED':
         case this.chart.paneId + '/TOGGLE_MARKET':
           this.chart.refreshMarkets()
+          this.chart.refreshAllIndicatorAdapters()
           this.chart.renderAll()
           break
         case this.chart.paneId + '/SET_REFRESH_RATE':

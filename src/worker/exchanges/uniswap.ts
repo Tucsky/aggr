@@ -13,7 +13,7 @@ interface Swap {
   sqrtPriceX96: string
 }
 
-export default class extends Exchange {
+export default class UNISWAP extends Exchange {
   id = 'UNISWAP'
 
   protected endpoints = {

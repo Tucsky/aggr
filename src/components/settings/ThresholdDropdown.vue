@@ -109,7 +109,7 @@ import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
     }
   }
 })
-export default class extends Vue {
+export default class ThresholdDropdown extends Vue {
   private paneId: string
   private threshold: Threshold
   private canDelete: boolean

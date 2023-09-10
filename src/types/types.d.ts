@@ -1,3 +1,5 @@
+import 'vite/client'
+
 import { PaneType } from '@/store/panes'
 
 export type SlippageMode = false | 'price' | 'bps'

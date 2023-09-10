@@ -46,7 +46,7 @@ import { formatAmount } from '@/services/productsService'
   },
   props: ['id']
 })
-export default class extends Vue {
+export default class Exchange extends Vue {
   id: string
   expanded = false
   prices: { [identifier: string]: number } = {}

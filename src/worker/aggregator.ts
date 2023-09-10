@@ -1,6 +1,5 @@
 import {
   AggregatedTrade,
-  AggregatorPayload,
   Connection,
   Trade,
   Volumes
@@ -9,9 +8,8 @@ import { exchanges, getExchangeById } from './exchanges'
 import { getHms, parseMarket } from './helpers/utils'
 import settings from './settings'
 
-const ctx: Worker = self as any
-
 class Aggregator {
+  ctx: Worker
   connections: { [name: string]: Connection } = {}
 
   activeBuckets: string[] = []
@@ -35,11 +33,11 @@ class Aggregator {
   } = {}
   private _connectionChangeNoticeTimeout: number
 
-  constructor() {
+  constructor(worker: Worker) {
     this.bindExchanges()
     this.startPriceInterval()
-
-    ctx.postMessage({
+    this.ctx = worker
+    this.ctx.postMessage({
       op: 'hello'
     })
   }
@@ -189,7 +187,7 @@ class Aggregator {
       this.processTrade(trade)
     }
 
-    ctx.postMessage({
+    this.ctx.postMessage({
       op: 'trades',
       data: trades
     })
@@ -242,7 +240,7 @@ class Aggregator {
       this.processLiquidation(trade)
     }
 
-    ctx.postMessage({
+    this.ctx.postMessage({
       op: 'trades',
       data: trades
     })
@@ -367,7 +365,7 @@ class Aggregator {
   emitInitialPrice(marketKey: string, price: number) {
     this.marketsStats[marketKey].initialPrice = price
 
-    ctx.postMessage({
+    this.ctx.postMessage({
       op: 'price',
       data: {
         market: marketKey,
@@ -382,7 +380,7 @@ class Aggregator {
     }
 
     if (this.pendingTrades.length) {
-      ctx.postMessage({ op: 'trades', data: this.pendingTrades })
+      this.ctx.postMessage({ op: 'trades', data: this.pendingTrades })
 
       this.pendingTrades.splice(0, this.pendingTrades.length)
     }
@@ -407,7 +405,7 @@ class Aggregator {
 
       this.buckets[bucketId].timestamp = timestamp
 
-      ctx.postMessage({
+      this.ctx.postMessage({
         op: 'bucket-' + bucketId,
         data: this.buckets[bucketId]
       })
@@ -426,7 +424,7 @@ class Aggregator {
 
   emitPrices() {
     if (this.connectionsCount) {
-      ctx.postMessage({ op: 'prices', data: this.marketsStats })
+      this.ctx.postMessage({ op: 'prices', data: this.marketsStats })
     }
 
     this['_priceInterval'] = self.setTimeout(
@@ -466,7 +464,7 @@ class Aggregator {
       }
     }
 
-    ctx.postMessage({
+    this.ctx.postMessage({
       op: 'connection',
       data: {
         pair,
@@ -493,7 +491,7 @@ class Aggregator {
 
       this.connectionsCount = Object.keys(this.connections).length
 
-      ctx.postMessage({
+      this.ctx.postMessage({
         op: 'disconnection',
         data: {
           pair,
@@ -518,7 +516,7 @@ class Aggregator {
       this._connectionChangeNoticeTimeout = null
 
       if (this.connectionChange) {
-        ctx.postMessage({
+        this.ctx.postMessage({
           op: 'notice',
           data: {
             id: 'connections',
@@ -569,7 +567,7 @@ class Aggregator {
     }
 
     if (message) {
-      ctx.postMessage({
+      this.ctx.postMessage({
         op: 'notice',
         data: {
           id: exchangeId + '-error',
@@ -581,7 +579,7 @@ class Aggregator {
 
     const api = event && event.target
 
-    ctx.postMessage({
+    this.ctx.postMessage({
       op: 'error',
       data: {
         exchangeId,
@@ -637,7 +635,7 @@ class Aggregator {
           )
 
         if (estimatedTimeToConnectThemAll > 1000 * 20) {
-          ctx.postMessage({
+          this.ctx.postMessage({
             op: 'notice',
             data: {
               id: exchangeId + '-connection-delay',
@@ -673,7 +671,7 @@ class Aggregator {
     await Promise.all(promises)
 
     if (trackingId) {
-      ctx.postMessage({
+      this.ctx.postMessage({
         op: 'connect',
         trackingId
       })
@@ -726,7 +724,7 @@ class Aggregator {
     await Promise.all(promises)
 
     if (trackingId) {
-      ctx.postMessage({
+      this.ctx.postMessage({
         op: 'connect',
         trackingId
       })
@@ -772,7 +770,7 @@ class Aggregator {
       forceFetch
     )
 
-    ctx.postMessage({
+    this.ctx.postMessage({
       op: 'fetchExchangeProducts',
       data: productsData,
       trackingId: trackingId
@@ -787,7 +785,7 @@ class Aggregator {
     } catch (error) {
       console.error(error.message)
 
-      ctx.postMessage({
+      this.ctx.postMessage({
         op: 'notice',
         data: {
           id: exchangeId + '-products',
@@ -797,7 +795,7 @@ class Aggregator {
       })
     }
 
-    ctx.postMessage({
+    this.ctx.postMessage({
       op: 'formatExchangeProducts',
       data: productsData,
       trackingId: trackingId
@@ -819,7 +817,7 @@ class Aggregator {
   }
 
   getHits(data, trackingId: string) {
-    ctx.postMessage({
+    this.ctx.postMessage({
       op: 'getHits',
       trackingId: trackingId,
       data: exchanges.reduce((hits, exchanges) => hits + exchanges.count, 0)
@@ -834,14 +832,12 @@ class Aggregator {
   }
 }
 
-const aggregator = new Aggregator()
+// addEventListener('message', (event: any) => {
+//   const payload = event.data as AggregatorPayload
 
-self.addEventListener('message', (event: any) => {
-  const payload = event.data as AggregatorPayload
+//   if (typeof aggregator[payload.op] === 'function') {
+//     aggregator[payload.op](payload.data, payload.trackingId)
+//   }
+// })
 
-  if (typeof aggregator[payload.op] === 'function') {
-    aggregator[payload.op](payload.data, payload.trackingId)
-  }
-})
-
-export default null
+export default Aggregator

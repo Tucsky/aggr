@@ -49,7 +49,7 @@ import Component from 'vue-class-component'
     }
   }
 })
-export default class extends Vue {
+export default class IndicatorControl extends Vue {
   private paneId: string
   private indicatorId: string
 

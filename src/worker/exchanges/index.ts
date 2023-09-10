@@ -23,6 +23,7 @@ import Bitget from './bitget'
 import Mexc from './mexc'
 import Gateio from './gateio'
 import CryptoCom from './cryptocom'
+import Bitmart from './bitmart'
 
 export const exchanges = [
   new Aggr(),
@@ -47,7 +48,8 @@ export const exchanges = [
   new Bitget(),
   new Mexc(),
   new Gateio(),
-  new CryptoCom()
+  new CryptoCom(),
+  new Bitmart()
 ] as Exchange[]
 
 export function getExchangeById(id: string) {

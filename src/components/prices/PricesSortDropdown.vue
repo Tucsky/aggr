@@ -26,7 +26,7 @@ import DropdownButton from '@/components/framework/DropdownButton.vue'
     }
   }
 })
-export default class extends Vue {
+export default class PricesSortDropdown extends Vue {
   paneId: string
 
   get sortType() {

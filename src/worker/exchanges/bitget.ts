@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class BITGET extends Exchange {
   id = 'BITGET'
 
   protected endpoints = {

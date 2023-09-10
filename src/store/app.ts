@@ -86,10 +86,10 @@ const actions = {
     await dispatch('getApiSupportedPairs')
     commit(
       'SET_API_SUPPORTED_TIMEFRAMES',
-      process.env.VUE_APP_API_SUPPORTED_TIMEFRAMES
+      import.meta.env.VITE_APP_API_SUPPORTED_TIMEFRAMES
     )
-    commit('SET_VERSION', process.env.VUE_APP_VERSION)
-    commit('SET_BUILD_DATE', process.env.VUE_APP_BUILD_DATE)
+    commit('SET_VERSION', import.meta.env.VITE_APP_VERSION)
+    commit('SET_BUILD_DATE', import.meta.env.VITE_APP_BUILD_DATE)
   },
   setBooted({ commit }, value = true) {
     commit('SET_BOOTED', value)
@@ -180,7 +180,7 @@ const actions = {
 
     commit('TOGGLE_SEARCH', true)
 
-    if (typeof paneId === 'undefined' && state.focusedPaneId) {
+    if (typeof paneId === 'undefined' && input && state.focusedPaneId) {
       paneId = state.focusedPaneId
     }
 
@@ -271,6 +271,16 @@ const mutations = {
     state.quoteCurrencySymbol = currencies.quoteSymbol
   },
   SET_FOCUSED_PANE(state, id: string) {
+    if (id !== state.focusedPaneId) {
+      const paneElement = document.getElementById(id)
+
+      if (paneElement) {
+        paneElement.classList.remove('pane--selected')
+        paneElement.offsetHeight;
+        paneElement.classList.add('pane--selected')
+      }
+    }
+
     state.focusedPaneId = id
   }
 } as MutationTree<AppState>

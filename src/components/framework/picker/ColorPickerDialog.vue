@@ -496,7 +496,7 @@ export default {
 .color-picker-dialog {
   .dialog__content {
     background-color: transparent;
-    width: 250px;
+    width: 275px;
 
     .dialog__body {
       padding: 0;
@@ -557,7 +557,7 @@ export default {
   }
 
   &-colors {
-    padding: 0 8px 4px;
+    padding: 0 12px 4px;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
@@ -567,7 +567,7 @@ export default {
       background-color: white;
       overflow: hidden;
       margin: 2px;
-      width: 19px;
+      width: 21px;
       height: 12px;
       padding: 0;
       background-color: currentColor;

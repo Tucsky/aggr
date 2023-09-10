@@ -315,9 +315,8 @@ class AudioService {
       return false
     }
 
-    AudioService.savedAudioBuffers[url] = await this.context.decodeAudioData(
-      arrayBuffer
-    )
+    AudioService.savedAudioBuffers[url] =
+      await this.context.decodeAudioData(arrayBuffer)
 
     return true
   }
@@ -342,28 +341,31 @@ class AudioService {
 
     const time = this.getNextTime(delay)
 
-    setTimeout(() => {
-      const gainNode = this.context.createGain()
-      const source = this.context.createBufferSource()
+    setTimeout(
+      () => {
+        const gainNode = this.context.createGain()
+        const source = this.context.createBufferSource()
 
-      source.buffer = AudioService.savedAudioBuffers[url]
+        source.buffer = AudioService.savedAudioBuffers[url]
 
-      source.connect(gainNode)
-      gainNode.connect(this.output)
+        source.connect(gainNode)
+        gainNode.connect(this.output)
 
-      this.fade(
-        source,
-        gainNode,
-        time,
-        gain,
-        startGain,
-        fadeIn,
-        holdDuration,
-        fadeOut * 1.1,
-        endGain,
-        startTime
-      )
-    }, (time - this.context.currentTime) * 1000)
+        this.fade(
+          source,
+          gainNode,
+          time,
+          gain,
+          startGain,
+          fadeIn,
+          holdDuration,
+          fadeOut * 1.1,
+          endGain,
+          startTime
+        )
+      },
+      (time - this.context.currentTime) * 1000
+    )
   }
 
   async play(
@@ -383,33 +385,36 @@ class AudioService {
 
     let time = this.getNextTime(delay)
 
-    setTimeout(() => {
-      if (!this.context) {
-        return
-      }
+    setTimeout(
+      () => {
+        if (!this.context) {
+          return
+        }
 
-      time = this.context.currentTime
+        time = this.context.currentTime
 
-      const source = this.context.createOscillator()
-      const gainNode = this.context.createGain()
-      source.frequency.value = frequency
-      source.type = osc
+        const source = this.context.createOscillator()
+        const gainNode = this.context.createGain()
+        source.frequency.value = frequency
+        source.type = osc
 
-      gainNode.connect(this.output)
-      source.connect(gainNode)
+        gainNode.connect(this.output)
+        source.connect(gainNode)
 
-      this.fade(
-        source,
-        gainNode,
-        time,
-        gain,
-        startGain,
-        fadeIn,
-        holdDuration,
-        fadeOut,
-        endGain
-      )
-    }, (time - this.context.currentTime) * 1000)
+        this.fade(
+          source,
+          gainNode,
+          time,
+          gain,
+          startGain,
+          fadeIn,
+          holdDuration,
+          fadeOut,
+          endGain
+        )
+      },
+      (time - this.context.currentTime) * 1000
+    )
   }
 
   fade(
@@ -437,12 +442,15 @@ class AudioService {
       if (fadeOut) {
         gainNode.gain.setValueAtTime(gain, time + fadeIn + holdDuration)
 
-        setTimeout(() => {
-          gainNode.gain.exponentialRampToValueAtTime(
-            endGain,
-            time + fadeIn + holdDuration + fadeOut
-          )
-        }, (fadeIn + holdDuration) * 1000)
+        setTimeout(
+          () => {
+            gainNode.gain.exponentialRampToValueAtTime(
+              endGain,
+              time + fadeIn + holdDuration + fadeOut
+            )
+          },
+          (fadeIn + holdDuration) * 1000
+        )
       }
     } else {
       gainNode.gain.setValueAtTime(gain, time)

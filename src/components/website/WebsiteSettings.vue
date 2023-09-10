@@ -104,7 +104,7 @@ import DropdownButton from '@/components/framework/DropdownButton.vue'
     }
   }
 })
-export default class extends Vue {
+export default class WebsiteSettings extends Vue {
   paneId: string
   originalUrl: string
 

@@ -160,10 +160,10 @@ async function fetchExchangeProducts(
 
     if (
       endpoint.proxy !== false &&
-      process.env.VUE_APP_PROXY_URL &&
+      import.meta.env.VITE_APP_PROXY_URL &&
       !/^https:\/\/raw.githubusercontent.com\//.test(endpoint.url)
     ) {
-      endpoint.url = process.env.VUE_APP_PROXY_URL + endpoint.url
+      endpoint.url = import.meta.env.VITE_APP_PROXY_URL + endpoint.url
     }
 
     try {
@@ -289,6 +289,8 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     type = 'perp'
   } else if (exchangeId === 'HUOBI' && /_(CW|CQ|NW|NQ)$/.test(symbol)) {
     type = 'future'
+  } else if (exchangeId === 'BITMART' && !/_/.test(symbol)) {
+    type = 'perp'
   } else if (exchangeId === 'HUOBI' && /-/.test(symbol)) {
     type = 'perp'
   } else if (exchangeId === 'BYBIT' && !/-SPOT$/.test(symbol)) {
@@ -404,14 +406,14 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
 }
 
 export async function getApiSupportedMarkets() {
-  let products = process.env.VUE_APP_API_SUPPORTED_PAIRS as string | string[]
+  let products = import.meta.env.VITE_APP_API_SUPPORTED_PAIRS as string | string[]
   if (products && products.length) {
     products = (products as string).split(',').map(market => market.trim())
   } else {
     products = []
   }
 
-  if (!process.env.VUE_APP_API_URL) {
+  if (!import.meta.env.VITE_APP_API_URL) {
     return products
   }
 

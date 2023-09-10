@@ -11,9 +11,7 @@
           label="Buy color"
           class="-small"
           @input="regenerateSwatch('buy', $event)"
-        >
-          <i class="icon-up -small"></i>
-        </color-picker-control>
+        />
       </label>
       <label class="column mrauto mlauto -center">
         <color-picker-control
@@ -21,9 +19,7 @@
           label="Sell color"
           class="-small"
           @input="regenerateSwatch('sell', $event)"
-        >
-          <i class="icon-down -small"></i
-        ></color-picker-control>
+        />
         <small class="-fill -center ml8">Sell color</small>
       </label>
     </div>
@@ -45,7 +41,7 @@
         <tr v-for="(threshold, index) in thresholds" :key="threshold.id">
           <td class="table-input table-min">
             <label
-              class="checkbox-control -small mb4"
+              class="checkbox-control -extra-small mb4"
               v-if="index === thresholds.length - 1"
               title="Set as maximum amount"
               v-tippy
@@ -212,7 +208,7 @@ import { Preset } from '@/types/types'
     }
   }
 })
-export default class extends Vue {
+export default class Thresholds extends Vue {
   paneId: string
   thresholds: Threshold[]
   type: string
@@ -803,7 +799,9 @@ export default class extends Vue {
     margin-left: -0.75em;
     padding: 0.25em;
     border-radius: 50%;
-    transition: box-shadow 0.2s $ease-elastic, transform 0.2s $ease-out-expo;
+    transition:
+      box-shadow 0.2s $ease-elastic,
+      transform 0.2s $ease-out-expo;
     box-shadow: 0 1px 0 1px rgba(black, 0.2);
     cursor: grab;
 

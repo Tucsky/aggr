@@ -131,7 +131,7 @@ let notificationsPermission
   },
   name: 'AlertsSettings'
 })
-export default class extends Vue {
+export default class AlertsSettings extends Vue {
   helps = {
     'notifications-disabled': 'Push notification are disabled.',
     'notifications-grant': 'Enable notifications for this site in your browser.'

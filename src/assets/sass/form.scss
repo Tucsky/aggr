@@ -10,12 +10,10 @@
 
     .icon-info {
       margin-left: 2px;
-      line-height: 0;
-      top: 1px;
-      position: relative;
       opacity: 0.5;
       transition: opacity 0.2s $ease-out-expo;
       cursor: help;
+      vertical-align: bottom;
 
       &:hover {
         opacity: 1;
@@ -61,8 +59,7 @@
 
 textarea.form-control {
   font-family: $font-monospace;
-  line-height: 1;
-  letter-spacing: -1px;
+  line-height: 1.4;
   height: auto;
   width: 100%;
   max-width: 100%;
@@ -71,11 +68,7 @@ textarea.form-control {
   background-color: var(--theme-color-o10);
   border-color: rgba(black, 0.25);
   border-radius: 4px;
-  font-size: 14px;
-
-  @media (-webkit-min-device-pixel-ratio: 2) {
-    font-size: 12px;
-  }
+  font-size: 12px;
 
   &:focus {
     border-color: var(--theme-buy-base);
@@ -301,6 +294,10 @@ textarea.form-control {
   &.-extra-small {
     > div {
       padding: 0.125em;
+
+      &:before {
+        font-size: 0.75em;
+      }
     }
   }
 
@@ -341,7 +338,6 @@ textarea.form-control {
 
 
     &:after {
-      transform: none;
       opacity: 1;
     }
 
@@ -367,6 +363,8 @@ textarea.form-control {
   display: inline-block;
   cursor: text;
   font-family: $font-monospace;
+  line-height: 1.25;
+  font-size: 0.875em;
   color: var(--theme-color-base);
 
   -webkit-touch-callout: auto;

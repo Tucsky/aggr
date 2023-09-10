@@ -5,6 +5,7 @@
       ref="paneHeader"
       :settings="() => import('@/components/trades/TradesDialog.vue')"
     >
+      <hr />
       <dropdown v-model="sliderDropdownTrigger" interactive no-scroll>
         <slider
           style="width: 100px"
@@ -31,8 +32,7 @@
         />
       </dropdown>
       <button
-        :name="paneId"
-        class="toolbar__label"
+        class="btn"
         @click="
           sliderDropdownTrigger = sliderDropdownTrigger
             ? null
@@ -76,7 +76,7 @@ import Slider from '@/components/framework/picker/Slider.vue'
   components: { PaneHeader, TradesPlaceholder, Slider },
   name: 'Trades'
 })
-export default class extends Mixins(PaneMixin) {
+export default class Trades extends Mixins(PaneMixin) {
   showPlaceholder = true
   sliderDropdownTrigger = null
 

@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class HITBTC extends Exchange {
   id = 'HITBTC'
   protected endpoints = {
     PRODUCTS: 'https://api.hitbtc.com/api/2/public/symbol'

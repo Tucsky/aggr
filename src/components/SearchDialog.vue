@@ -3,12 +3,24 @@
     <template v-slot:header>
       <div v-if="paneId">
         <div class="dialog__title">
-          Connect <code class="-filled -green">{{ paneName }}</code>
+          Connect
+          <code class="-filled -green">
+            <span>{{ paneName }}</span>
+            <button
+              type="button"
+              class="btn -small -text"
+              v-tippy
+              title="Rename pane"
+              @click="renamePane"
+            >
+              <i class="icon-edit"></i>
+            </button>
+          </code>
           <button
             type="button"
             class="btn -small ml4 -text"
             v-tippy
-            title="Target all instead"
+            title="Connect to all"
             @click="detargetPane"
           >
             <i class="icon-cross"></i>
@@ -441,6 +453,7 @@ export default {
     isLoading: false,
     isPreloading: false,
     productsReady: false,
+    selectedPaneId: null,
     selection: [],
     originalSelection: [],
     activeIndex: null,
@@ -473,28 +486,28 @@ export default {
     },
     otherPanes() {
       return Object.keys(this.$store.state.panes.panes)
-        .filter(a => a !== this.paneId)
+        .filter(a => a !== this.selectedPaneId)
         .map(a => this.$store.state.panes.panes[a])
     },
     paneName() {
-      if (this.paneId) {
-        return this.$store.state.panes.panes[this.paneId].name || this.paneId
-      } else {
-        return null
+      if (this.selectedPaneId) {
+        return this.$store.getters['panes/getName'](this.selectedPaneId)
       }
+
+      return ''
     },
     activeMarkets() {
       return Object.keys(this.$store.state.panes.marketsListeners)
     },
     paneMarkets() {
-      if (!this.paneId) {
+      if (!this.selectedPaneId) {
         return []
       }
 
-      return this.$store.state.panes.panes[this.paneId].markets
+      return this.$store.state.panes.panes[this.selectedPaneId].markets
     },
     toConnect() {
-      if (this.paneId) {
+      if (this.selectedPaneId) {
         return this.selection.filter(a => this.paneMarkets.indexOf(a) === -1)
           .length
       } else {
@@ -749,6 +762,8 @@ export default {
     }
   },
   async created() {
+    this.selectedPaneId = this.paneId
+
     this.initSelection()
 
     this.isPreloading = true
@@ -767,8 +782,6 @@ export default {
       return
     }
 
-    this.$refs.input.focus()
-
     if (
       this.input &&
       !window.event &&
@@ -776,6 +789,8 @@ export default {
     ) {
       this.query = this.input + this.query
     }
+
+    this.$refs.input.focus()
   },
   beforeDestroy() {
     document.removeEventListener('paste', this.onPaste)
@@ -786,6 +801,19 @@ export default {
     }
   },
   methods: {
+    async renamePane() {
+      const name = await dialogService.prompt({
+        action: 'Rename',
+        input: this.paneName
+      })
+
+      if (name !== null && name !== this.paneName) {
+        this.$store.commit('panes/SET_PANE_NAME', {
+          id: this.selectedPaneId,
+          name
+        })
+      }
+    },
     async ensureIndexedProducts() {
       const selectedExchanges = this.selection.reduce((acc, market) => {
         const [exchangeId] = parseMarket(market)
@@ -814,7 +842,7 @@ export default {
     },
     detargetPane() {
       this.$store.commit('app/SET_FOCUSED_PANE', null)
-      this.paneId = null
+      this.selectedPaneId = null
       this.initSelection()
     },
     initSelection() {
@@ -822,9 +850,9 @@ export default {
         return
       }
 
-      if (this.paneId) {
+      if (this.selectedPaneId) {
         this.selection =
-          this.$store.state.panes.panes[this.paneId].markets.slice()
+          this.$store.state.panes.panes[this.selectedPaneId].markets.slice()
       } else {
         this.selection = this.activeMarkets.slice()
       }
@@ -873,7 +901,7 @@ export default {
         this.$store.dispatch('settings/saveSearchSelection', this.selection)
       }
 
-      if (!this.paneId) {
+      if (!this.selectedPaneId) {
         if (
           this.containMultipleMarketsConfigurations() &&
           !(await dialogService.confirm(
@@ -894,7 +922,7 @@ export default {
         this.isLoading = true
 
         this.$store.dispatch('panes/setMarketsForPane', {
-          id: this.paneId,
+          id: this.selectedPaneId,
           markets: this.selection
         })
       }
@@ -1234,6 +1262,7 @@ export default {
       }
     }
   }
+
   &-selection {
     position: relative;
     min-width: 19em;

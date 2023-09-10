@@ -10,7 +10,8 @@ import {
   IndicatorReference,
   IndicatorMarkets,
   IndicatorSource,
-  MarketsFilters
+  MarketsFilters,
+  IndicatorSourceFilters
 } from './chart'
 import store from '@/store'
 import {
@@ -846,7 +847,8 @@ export default class SerieBuilder {
 
   getSourcedOutput(
     model: IndicatorTranspilationResult,
-    marketFilters: MarketsFilters
+    marketFilters: MarketsFilters,
+    options: any
   ) {
     const products = store.state.panes.marketsListeners
     let output = model.output
@@ -859,9 +861,27 @@ export default class SerieBuilder {
       const sourceId = `#SOURCE${i}#`
 
       const prop = model.sources[i].prop
-      const filters = model.sources[i].filters
+      const filters = Object.keys(model.sources[i].filters).reduce(
+        (acc, key) => {
+          const value = model.sources[i].filters[key]
+
+          const [optionVar, optionKey] = value.split('.')
+
+          if (optionVar === 'options' && optionKey) {
+            acc[key] = options[optionKey]
+          } else {
+            acc[key] = value
+          }
+
+          return acc
+        },
+        {} as IndicatorSourceFilters
+      )
 
       for (const marketId in marketFilters) {
+        if (marketFilters[marketId] === false) {
+          continue
+        }
         if (filters.type && products[marketId].type !== filters.type) {
           continue
         }
@@ -930,12 +950,13 @@ export default class SerieBuilder {
 
   getAdapter(
     model: IndicatorTranspilationResult,
-    marketFilters: MarketsFilters
+    marketFilters: MarketsFilters,
+    options: any
   ) {
     let sourcedOutput = model.output
 
     if (model.sources.length) {
-      sourcedOutput = this.getSourcedOutput(model, marketFilters)
+      sourcedOutput = this.getSourcedOutput(model, marketFilters, options)
     }
 
     return (function () {

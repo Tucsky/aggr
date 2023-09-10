@@ -153,7 +153,7 @@ import DropdownButton from '@/components/framework/DropdownButton.vue'
     }
   }
 })
-export default class extends Vue {
+export default class PricesSettings extends Vue {
   paneId: string
 
   get showPairs() {

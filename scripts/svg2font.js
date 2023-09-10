@@ -1,5 +1,9 @@
-const svgtofont = require('svgtofont')
-const fs = require('fs')
+import svgtofont from 'svgtofont'
+import fs from 'fs'
+import path from 'path'
+
+const __filename = new URL(import.meta.url).pathname
+const __dirname = path.dirname(__filename)
 
 const HEADER = `/* AUTO VAR INJECTION HEADER !! DO NOT MOVE !! */`
 const FOOTER = `/* AUTO VAR INJECTION FOOTER !! DO NOT MOVE !! */`
@@ -8,7 +12,9 @@ svgtofont({
   src: __dirname + '/../src/assets/svg',
   dist: __dirname + '/../src/assets/fonts',
   fontName: 'icon',
-  css: true
+  css: {
+    include: /\.scss$/
+  }
 }).then(() => {
   const baseIconScss = fs.readFileSync(
     __dirname + '/../src/assets/fonts/icon.scss',
@@ -25,6 +31,31 @@ svgtofont({
     baseIconScss
       .replaceAll('url("icon', 'url("#{$iconpath}icon')
       .replaceAll("url('icon", "url('#{$iconpath}icon")
+      .replace(
+        'font-size: 16px;\n',
+        `
+  &.-lower {
+    position: relative;
+    top: 1px;
+  }
+
+  &.-higher {
+    position: relative;
+    top: -1px;
+  }
+
+  &.-large {
+    font-size: 1.5rem;
+  }
+
+  &.-small {
+    font-size: 0.75em;
+  }
+
+  &.-inline {
+    line-height: 1.4;
+  }\n`
+      )
   fs.writeFileSync(
     __dirname + '/../src/assets/sass/icons.scss',
     iconScss.replace(iconVariablesScss, '')

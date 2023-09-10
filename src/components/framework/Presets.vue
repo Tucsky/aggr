@@ -167,7 +167,7 @@ interface PresetSummary {
     Btn
   }
 })
-export default class extends Vue {
+export default class Presets extends Vue {
   type: PresetType
   adapter: Function
   placeholder: string

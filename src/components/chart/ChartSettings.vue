@@ -239,7 +239,7 @@ import AlertsSettings from '@/components/alerts/AlertsSettings.vue'
     }
   }
 })
-export default class extends Vue {
+export default class ChartSettings extends Vue {
   paneId: string
 
   get showLegend() {

@@ -33,7 +33,7 @@ import TransitionHeight from './TransitionHeight.vue'
   components: { TransitionHeight },
   name: 'Notices'
 })
-export default class extends Vue {
+export default class Notices extends Vue {
   get notices(): Notice[] {
     return this.$store.state.app.notices
   }

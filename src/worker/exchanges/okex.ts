@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class OKEX extends Exchange {
   id = 'OKEX'
   private specs: { [pair: string]: number }
   private inversed: { [pair: string]: boolean }

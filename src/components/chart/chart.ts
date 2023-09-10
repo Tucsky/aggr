@@ -8,8 +8,8 @@ import {
   floorTimestampToTimeframe,
   isOddTimeframe,
   sleep,
-  openBase64InNewTab,
-  formatBytes
+  formatBytes,
+  displayCanvasInPopup
 } from '@/utils/helpers'
 import { waitForStateMutation } from '@/utils/store'
 import { joinRgba, splitColorCode } from '@/utils/colors'
@@ -87,11 +87,13 @@ export type IndicatorMarkets = {
 
 export interface IndicatorSource {
   prop: string
-  filters: {
-    quote: string
-    exchange: string
-    type: string
-  }
+  filters: IndicatorSourceFilters
+}
+
+export interface IndicatorSourceFilters {
+  quote: string
+  exchange: string
+  type: string
 }
 
 export interface TimeRange {
@@ -137,7 +139,7 @@ export interface IndicatorFunction {
   args?: any[]
   length?: number
   state?: any
-  next?: Function
+  next?: () => void
 }
 export interface IndicatorVariable {
   length?: number
@@ -476,6 +478,11 @@ export default class Chart {
     if (this.optionRequiresRedraw(key)) {
       this.redrawIndicator(id)
     }
+
+    if (/src/.test(key)) {
+      this.refreshIndicatorAdapter(indicator, this.activeRenderer)
+      this.redrawIndicator(id)
+    }
   }
 
   toggleIndicatorVisibility(indicator: LoadedIndicator, value: boolean) {
@@ -498,7 +505,7 @@ export default class Chart {
    */
   optionRequiresRedraw(key: string) {
     const redrawOptions =
-      /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor|compositeOperation/i
+      /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor|compositeOperation|src/i
 
     if (redrawOptions.test(key)) {
       return true
@@ -611,7 +618,7 @@ export default class Chart {
   updateWatermark(marketsUpdate?: string[]) {
     if (marketsUpdate) {
       if (store.state.settings.normalizeWatermarks) {
-        this.watermark = marketsUpdate.join(' | ')
+        this.watermark = marketsUpdate.join('|')
       } else {
         const othersCount = marketsUpdate.length - 3
         this.watermark =
@@ -633,7 +640,7 @@ export default class Chart {
       watermark: {
         text: `\u00A0\u00A0\u00A0\u00A0${
           this.watermark +
-          ' | ' +
+          '|' +
           getTimeframeForHuman(store.state[this.paneId].timeframe)
         }\u00A0\u00A0\u00A0\u00A0`,
         ...getChartWatermarkOptions(this.paneId).watermark
@@ -852,21 +859,32 @@ export default class Chart {
       }
 
       // create function ready to calculate (& render) everything for this indicator
-      try {
-        indicator.adapter = this.serieBuilder.getAdapter(
-          indicator.model,
-          this.marketsFilters
-        )
-      } catch (error) {
-        this.unbindIndicator(indicator, renderer)
-
-        throw error
-      }
+      this.refreshIndicatorAdapter(indicator, renderer)
     }
 
     this.prepareRendererForIndicators(indicator, renderer)
 
     return indicator
+  }
+
+  refreshIndicatorAdapter(indicator: LoadedIndicator, renderer) {
+    try {
+      indicator.adapter = this.serieBuilder.getAdapter(
+        indicator.model,
+        this.marketsFilters,
+        indicator.options
+      )
+    } catch (error) {
+      this.unbindIndicator(indicator, renderer)
+
+      throw error
+    }
+  }
+
+  refreshAllIndicatorAdapters() {
+    for (const indicator of this.loadedIndicators) {
+      this.refreshIndicatorAdapter(indicator, this.activeRenderer)
+    }
   }
 
   /**
@@ -2068,12 +2086,16 @@ export default class Chart {
   }
 
   /**
-   * create empty renderer
+   * Create empty renderer
    * this is called on first realtime trade or when indicator(s) are rendered from start to finish
-   * @param {number} timestamp create at time
-   * @param {string[]} indicatorsIds id of indicators to bind (if null all indicators are binded)
+   * @param {number} firstBarTimestamp  - create at time
+   * @param {string[]} indicatorsIds    - id of indicators to bind (if null all indicators are binded)
+   * @return {Renderer}
    */
-  createRenderer(firstBarTimestamp, indicatorsIds?: string[]) {
+  createRenderer(
+    firstBarTimestamp: number,
+    indicatorsIds?: string[]
+  ): Renderer {
     firstBarTimestamp = floorTimestampToTimeframe(
       firstBarTimestamp,
       this.timeframe
@@ -2526,27 +2548,41 @@ export default class Chart {
 
     const pxRatio = window.devicePixelRatio || 1
     const textPadding = 16 * zoom * pxRatio
-    const textFontsize = 12 * zoom * pxRatio
+    let textFontsize = 12 * zoom * pxRatio
+    if (chartCanvas.width * chartCanvas.height < 40000) {
+      textFontsize = 6
+    }
+
     canvas.width = chartCanvas.width
-    ctx.font = `${textFontsize}px Share Tech Mono`
+    ctx.font = `${textFontsize}px Spline Sans Mono`
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
 
     const lines = []
     const [date, time] = new Date().toISOString().split('T')
 
-    lines.push(date + ' ' + time.split('.')[0] + ' UTC')
-    lines.push(
-      this.watermark +
-        ' | ' +
-        getTimeframeForHuman(store.state[this.paneId].timeframe)
-    )
+    const fullDate = date + ' ' + time.split('.')[0] + ' UTC'
+    const symbol = this.watermark
+    const timeframe = getTimeframeForHuman(store.state[this.paneId].timeframe)
+    if (chartCanvas.width > 500) {
+      lines.push([symbol, timeframe, fullDate].join(' | '))
+    } else {
+      lines.push(fullDate)
+      lines.push([symbol, timeframe].join(' | '))
+    }
 
     const lineHeight = Math.round(textFontsize)
     canvas.height = chartCanvas.height
 
     const styles = getComputedStyle(document.documentElement)
     const themeColor = styles.getPropertyValue('--theme-base')
+    const themeColorRgba = splitColorCode(themeColor)
+    const themeColorO75 = joinRgba([
+      themeColorRgba[0],
+      themeColorRgba[1],
+      themeColorRgba[2],
+      0.75
+    ])
     const textColor = styles.getPropertyValue('--theme-color-base')
     const backgroundColor = store.state.settings.backgroundColor
 
@@ -2565,14 +2601,14 @@ export default class Chart {
     ctx.drawImage(chartCanvas, 0, 0)
 
     ctx.fillStyle = textColor
-    ctx.font = `${textFontsize}px Share Tech Mono`
+    ctx.font = `${textFontsize}px Spline Sans Mono`
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
 
     let offsetY = 0
 
     for (let i = 0; i < lines.length; i++) {
-      ctx.strokeStyle = themeColor
+      ctx.strokeStyle = themeColorO75
       ctx.lineWidth = 4 * pxRatio
       ctx.lineJoin = 'round'
       ctx.strokeText(lines[i], textPadding, textPadding + offsetY)
@@ -2610,7 +2646,7 @@ export default class Chart {
         const text = indicator.displayName || indicator.name
 
         ctx.fillStyle = textColor
-        ctx.strokeStyle = themeColor
+        ctx.strokeStyle = themeColorO75
         ctx.lineWidth = 4 * pxRatio
         ctx.fillStyle = color
         ctx.lineJoin = 'round'
@@ -2621,11 +2657,7 @@ export default class Chart {
       })
     }
 
-    const dataURL = canvas.toDataURL('image/png')
-    const startIndex = dataURL.indexOf('base64,') + 7
-    const b64 = dataURL.substr(startIndex)
-
-    openBase64InNewTab(b64, 'image/png')
+    displayCanvasInPopup(canvas)
   }
 
   restart() {
@@ -2916,12 +2948,11 @@ export default class Chart {
       return
     }
 
-    await sleep(10)
-
     let headerHeight = 0
 
     if (!store.state.settings.autoHideHeaders) {
-      headerHeight = (store.state.panes.panes[this.paneId].zoom || 1) * 2 * 16
+      const zoom = store.state.panes.panes[this.paneId].zoom || 1
+      headerHeight = 1.375 * zoom * 16
     }
 
     const paneElement = this.chartElement.parentElement

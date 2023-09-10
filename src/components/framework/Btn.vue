@@ -25,7 +25,7 @@ import Loader from '@/components/framework/Loader.vue'
     }
   }
 })
-export default class extends Vue {
+export default class Btn extends Vue {
   loading: boolean
 
   onClick(event) {

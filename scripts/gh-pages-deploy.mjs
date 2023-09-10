@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
-const execa = require('execa')
-const fs = require('fs')
+import execa from 'execa'
+import fs from 'fs'
+
 ;(async () => {
   try {
     const branch = (await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD']))
       .stdout
     console.log('Building started...', branch)
-    await execa('npm', ['run', 'build', '--', '--mode', 'github'])
     await execa('npm', ['run', 'build', '--', '--mode', 'github'])
     await execa('git', ['checkout', '--orphan', 'gh-pages'])
     // Understand if it's dist or build folder

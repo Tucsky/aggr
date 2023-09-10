@@ -12,6 +12,7 @@ button {
       transition: transform 0.2s cubic-bezier(0, 1.4, 1, 1);
       margin-left: auto;
       padding: 0 0.25em;
+      margin-right: -0.25em;
     }
 
     &.dropdown-trigger:after {

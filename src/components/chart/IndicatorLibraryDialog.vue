@@ -199,7 +199,6 @@ export default {
   },
   data: () => ({
     name: '',
-    priceScaleId: 'right',
     query: '',
     indicators: [],
     selectedIndicator: null,
@@ -392,7 +391,7 @@ export default {
       if (!indicator.priceScaleId) {
         const slug = slugify(indicator.name)
 
-        indicator.priceScaleId = this.priceScaleId || slug
+        indicator.priceScaleId = slug
       }
 
       this.$store.dispatch(this.paneId + '/addIndicator', indicator)

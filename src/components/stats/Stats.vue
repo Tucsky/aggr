@@ -43,7 +43,7 @@ import PaneHeader from '../panes/PaneHeader.vue'
   components: { PaneHeader },
   name: 'Stats'
 })
-export default class extends Mixins(PaneMixin) {
+export default class Stats extends Mixins(PaneMixin) {
   data = {}
 
   $refs!: {

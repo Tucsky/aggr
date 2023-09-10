@@ -1,6 +1,6 @@
 import Exchange from '../exchange'
 
-export default class extends Exchange {
+export default class BITFINEX extends Exchange {
   id = 'BITFINEX'
   protected maxConnectionsPerApi = 24
   private channels = {}

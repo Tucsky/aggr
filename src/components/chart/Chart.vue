@@ -3,6 +3,7 @@
     <pane-header
       ref="paneHeader"
       :paneId="paneId"
+      :onEdit="() => $store.dispatch('app/showSearch', { paneId: this.paneId })"
       :settings="() => import('@/components/chart/ChartDialog.vue')"
     >
       <template v-slot:menu>
@@ -24,17 +25,22 @@
         :key="timeframe"
         @click="$store.dispatch(`${paneId}/setTimeframe`, timeframe)"
         title="Maintain shift key to change timeframe on all panes"
-        class="toolbar__label timeframe -text"
+        class="btn pane-chart__timeframe -text -cases"
+        :class="[
+          timeframeForHuman === timeframeLabel &&
+            'pane-header__highlight'
+        ]"
       >
         <span>{{ timeframeLabel }}</span>
       </button>
       <Btn
         ref="timeframeButton"
         @click="toggleTimeframeDropdown($event, $refs.timeframeButton)"
-        class="-arrow toolbar__label -text"
+        class="-arrow -cases pane-header__highlight pane-chart__timeframe-selector"
       >
-        {{ timeframeForHuman }}
+        {{ !isKnownTimeframe ? timeframeForHuman : '' }}
       </Btn>
+      <hr />
     </pane-header>
     <div
       class="chart-overlay hide-scrollbar"
@@ -87,7 +93,7 @@ import { Trade } from '@/types/types'
     Btn
   }
 })
-export default class extends Mixins(PaneMixin) {
+export default class ChartComponent extends Mixins(PaneMixin) {
   axis = {
     top: 0,
     left: 0,
@@ -116,6 +122,10 @@ export default class extends Mixins(PaneMixin) {
 
   get timeframe() {
     return this.$store.state[this.paneId].timeframe
+  }
+
+  get isKnownTimeframe() {
+    return Object.keys(this.favoriteTimeframes).indexOf(this.timeframe) !== -1
   }
 
   get showIndicators() {
@@ -255,6 +265,62 @@ export default class extends Mixins(PaneMixin) {
   &:hover .chart-overlay {
     display: flex;
   }
+
+  &__timeframe {
+    $timeframe: &;
+    opacity: 0.5;
+    padding-inline: 0.125em;
+
+    &.pane-header__highlight {
+      opacity: 1;
+
+      ~ #{$timeframe}-selector {
+        opacity: 0.5;
+
+        .pane:not(:hover) & {
+          padding-inline: 0.0625em;
+        }
+
+        &:after {
+          margin-inline: -0.25em;
+        }
+
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+
+    &:hover {
+      opacity: 1;
+    }
+
+    &__title {
+      flex-grow: 1;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.5;
+      font-size: 0.875em;
+      align-self: flex-end;
+      margin-top: 1rem;
+
+      ~ * {
+        margin-top: 3rem;
+      }
+    }
+
+    &__favorite {
+      &:hover {
+        background-color: var(--theme-color-o20);
+      }
+
+      &.icon-star-filled {
+        background-color: $red;
+        color: white;
+        font-weight: 600;
+      }
+    }
+  }
 }
 
 .chart__container {
@@ -268,40 +334,6 @@ export default class extends Mixins(PaneMixin) {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-}
-
-.timeframe {
-  opacity: 0.5;
-
-  &:hover {
-    opacity: 1;
-  }
-
-  &__title {
-    flex-grow: 1;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    opacity: 0.5;
-    font-size: 0.875em;
-    align-self: flex-end;
-    margin-top: 1rem;
-
-    ~ * {
-      margin-top: 3rem;
-    }
-  }
-
-  &__favorite {
-    &:hover {
-      background-color: var(--theme-color-o20);
-    }
-
-    &.icon-star-filled {
-      background-color: $red;
-      color: white;
-      font-weight: 600;
-    }
-  }
 }
 
 body.-unselectable .chart-overlay {

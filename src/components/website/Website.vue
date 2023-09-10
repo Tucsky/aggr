@@ -70,7 +70,7 @@ import PaneHeader from '../panes/PaneHeader.vue'
   components: { PaneHeader },
   name: 'Website'
 })
-export default class extends Mixins(PaneMixin) {
+export default class Website extends Mixins(PaneMixin) {
   customId = ''
   private _reloadTimeout: number
 

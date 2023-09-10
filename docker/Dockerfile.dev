@@ -1,0 +1,16 @@
+FROM  node:20.2.0-alpine3.17
+
+# set app path within the container
+# use value set in docker-compose
+WORKDIR '/usr/src/app'
+
+# copy the whole development repo
+COPY . .
+
+# run app as non-root
+USER node
+
+EXPOSE 8080
+
+# run vite server
+CMD ["sh", "-c", "npm run serve"]
