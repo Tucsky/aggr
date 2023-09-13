@@ -355,7 +355,7 @@ const ignoredOptionsKeys = [
 import ToggableSection from '@/components/framework/ToggableSection.vue'
 import IndicatorOption from '@/components/chart/IndicatorOption.vue'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
-import Editor from '@/components/framework/Editor.vue'
+import Editor from '@/components/framework/editor/Editor.vue'
 import { Preset } from '@/types/types'
 export default {
   components: {
@@ -866,6 +866,7 @@ hr.-vertical {
 .indicator-dialog {
   ::v-deep .dialog__content {
     width: 755px;
+    overflow: visible;
 
     .dialog__body {
       padding: 0;
@@ -891,7 +892,8 @@ hr.-vertical {
   }
 
   &__action {
-    .dialog--small & span {
+    .dialog--small & span,
+    .dialog--medium & span {
       display: none;
     }
   }
