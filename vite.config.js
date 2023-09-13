@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue2'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { VitePWA } from 'vite-plugin-pwa'
 import svgLoader from 'vite-svg-loader'
-import { createSvgPlugin } from 'vite-plugin-vue2-svg' //vue 2
+import monacoEditorPlugin from 'vite-plugin-monaco-editor'
 
 import fs from 'fs'
 import path from 'path'
@@ -42,7 +42,10 @@ function makeExchangeList() {
 process.env.VITE_APP_EXCHANGES = makeExchangeList()
 
 export default defineConfig(({ mode }) => {
-  const env = {...process.env, ...loadEnv(mode, process.cwd(), '')}
+  const env = {
+    ...process.env,
+    ...loadEnv(mode, process.cwd(), '')
+  }
 
   const processEnvValues = {
     'process.env': Object.entries(env).reduce((prev, [key, val]) => {
@@ -92,7 +95,8 @@ export default defineConfig(({ mode }) => {
             }
           ]
         }
-      })
+      }),
+      monacoEditorPlugin.default({})
     ],
     server: {
       port: 8080

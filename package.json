@@ -12,13 +12,12 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "clean": "rm -rf node_modules && npm cache clean -f",
-    "deploy": "node scripts/gh-pages-deploy.mjs",
-    "serve:dist": "node ./dist-server/index.mjs"
+    "serve:dist": "node ./dist-server/index.mjs",
+    "deploy": "node scripts/gh-pages-deploy.mjs"
   },
   "dependencies": {
     "@mdi/font": "^5.6.55",
     "@vue/eslint-config-typescript": "^11.0.3",
-    "ace-builds": "^1.13.1",
     "axios": "^1.4.0",
     "color-fns": "^0.1.1",
     "eslint-plugin-prettier": "^5.0.0",
@@ -26,6 +25,7 @@
     "idb": "^6.0.0",
     "lightweight-charts": "git+https://github.com/Tucsky/lightweight-charts.git#a36ce5589f82e3d40f36ffcf08bdd1d67956f15a",
     "lodash.merge": "^4.6.2",
+    "monaco-editor": "0.41.0",
     "pako": "^1.0.6",
     "tunajs": "^1.0.13",
     "vite": "^4.4.9",
@@ -62,6 +62,7 @@
     "ttf2woff": "^3.0.0",
     "typescript": "~3.9.3",
     "vite-plugin-eslint": "^1.8.1",
+    "vite-plugin-monaco-editor": "^1.1.0",
     "vite-plugin-pwa": "^0.15.1",
     "vite-plugin-vue2-svg": "^0.4.0",
     "vite-svg-loader": "^4.0.0",

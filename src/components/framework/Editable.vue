@@ -151,8 +151,8 @@ export default class Editable extends Vue {
       return
     }
 
-    const max = typeof this.max === 'undefined' ? Infinity : this.max
-    const min = typeof this.min === 'undefined' ? -Infinity : this.min
+    const max = typeof this.max !== 'number' ? Infinity : this.max
+    const min = typeof this.min !== 'number' ? -Infinity : this.min
     const precision = countDecimals(text)
     const step = 1 / Math.pow(10, precision)
     const change = step * direction * -1
