@@ -113,7 +113,7 @@ export default class IndicatorControl extends Vue {
   color: var(--theme-color-100);
 
   i {
-    line-height: 1.35;
+    vertical-align: bottom;
   }
 
   &.-error {

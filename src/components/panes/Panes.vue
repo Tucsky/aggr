@@ -52,28 +52,14 @@ import { GridItem } from '@/store/panes'
   components: {
     GridLayout: VueGridLayout.GridLayout,
     GridItem: VueGridLayout.GridItem,
-    Chart: () =>
-      import(/* webpackChunkName: "Chart"*/ '@/components/chart/Chart.vue'),
-    Trades: () =>
-      import(/* webpackChunkName: "Trades"*/ '@/components/trades/Trades.vue'),
-    Stats: () =>
-      import(/* webpackChunkName: "Stats"*/ '@/components/stats/Stats.vue'),
-    Counters: () =>
-      import(
-        /* webpackChunkName: "Counters"*/ '@/components/counters/Counters.vue'
-      ),
-    Prices: () =>
-      import(/* webpackChunkName: "Prices"*/ '@/components/prices/Prices.vue'),
-    Website: () =>
-      import(
-        /* webpackChunkName: "Website"*/ '@/components/website/Website.vue'
-      ),
-    TradesLite: () =>
-      import(
-        /* webpackChunkName: "TradesLite"*/ '@/components/trades/TradesLite.vue'
-      ),
-    Alerts: () =>
-      import(/* webpackChunkName: "Alerts"*/ '@/components/alerts/Alerts.vue')
+    Chart: () => import('@/components/chart/Chart.vue'),
+    Trades: () => import('@/components/trades/Trades.vue'),
+    Stats: () => import('@/components/stats/Stats.vue'),
+    Counters: () => import('@/components/counters/Counters.vue'),
+    Prices: () => import('@/components/prices/Prices.vue'),
+    Website: () => import('@/components/website/Website.vue'),
+    TradesLite: () => import('@/components/trades/TradesLite.vue'),
+    Alerts: () => import('@/components/alerts/Alerts.vue')
   }
 })
 export default class Panes extends Vue {

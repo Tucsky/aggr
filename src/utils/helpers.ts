@@ -559,6 +559,7 @@ export function displayCanvasInPopup(canvas) {
 
     // Set the src attribute of the image to the canvas data URL
     img.src = dataURL
+    img.style.width = '100%'
 
     // Append the image to the popup window's document body
     popupWindow.document.body.appendChild(img)
