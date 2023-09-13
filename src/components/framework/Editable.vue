@@ -1,5 +1,6 @@
 <template>
-  <div
+  <component
+    :is="tag || 'div'"
     :contenteditable="editable !== false"
     :disabled="editable === false"
     @keydown="onKeyDown"
@@ -7,7 +8,7 @@
     @focus="onFocus"
     @blur="onBlur"
     @wheel="onWheel"
-  ></div>
+  ></component>
 </template>
 
 <script lang="ts">
@@ -17,7 +18,7 @@ import { toPlainString } from '@/utils/helpers'
 
 @Component({
   name: 'Editable',
-  props: ['value', 'step', 'min', 'max', 'editable', 'disabled']
+  props: ['value', 'step', 'min', 'max', 'editable', 'disabled', 'tag']
 })
 export default class Editable extends Vue {
   editable: boolean

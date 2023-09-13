@@ -5,6 +5,7 @@ import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
 import TimeframeDialog from '../components/TimeframeDialog.vue'
 import { getApiSupportedMarkets } from '../services/productsService'
+import { IndicatorNavigationState } from './panesSettings/chart'
 
 export interface Notice {
   id?: string
@@ -24,7 +25,7 @@ interface BaseQuoteCurrencies {
 interface NoticeButton {
   text: string
   icon?: string
-  click?: Function
+  click?: () => void
 }
 
 export interface NoticesState {
@@ -61,6 +62,7 @@ export interface AppState {
   quoteCurrency: string
   quoteCurrencySymbol: string
   focusedPaneId: string
+  indicatorDialogNavigation?: IndicatorNavigationState
 }
 
 const state = {
@@ -276,12 +278,15 @@ const mutations = {
 
       if (paneElement) {
         paneElement.classList.remove('pane--selected')
-        paneElement.offsetHeight;
+        paneElement.offsetHeight
         paneElement.classList.add('pane--selected')
       }
     }
 
     state.focusedPaneId = id
+  },
+  SET_INDICATOR_DIALOG_NAVIGATION(state, value) {
+    state.indicatorDialogNavigation = value
   }
 } as MutationTree<AppState>
 
