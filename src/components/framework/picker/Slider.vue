@@ -35,7 +35,7 @@ const CURSOR_PADDING = 4
 export default {
   name: 'VerteSlider',
   props: {
-    gradient: Array,
+    gradient: { type: Array, default: null },
     colorCode: { type: Boolean, default: false },
     label: { type: Boolean, default: false },
     disabled: { type: Boolean, default: false },
@@ -44,7 +44,16 @@ export default {
     step: { type: Number, default: 1 },
     value: { type: Number, default: 0 },
     handlesValue: { type: Array, default: () => [0] },
-    showCompletion: { type: Boolean, default: true },
+    showCompletion: {
+      type: Boolean,
+      default() {
+        if (this.gradient) {
+          return false
+        }
+
+        return true
+      }
+    },
     log: { type: Boolean, default: false }
   },
   data: () => ({
@@ -57,7 +66,16 @@ export default {
     handles: [],
     values: []
   }),
+  computed: {
+    sizeRelatedOptions() {
+      return [this.log, this.min, this.max, this.step]
+    }
+  },
   watch: {
+    sizeRelatedOptions() {
+      this.updateSize()
+      this.updateValue(this.currentValue, true)
+    },
     gradient(val) {
       this.initGradient(val)
       this.reloadHandlesColor()
@@ -249,7 +267,9 @@ export default {
         width = trackRect.width
       }
 
-      this.width = width - CURSOR_PADDING * 2
+      if (width) {
+        this.width = width - CURSOR_PADDING * 2
+      }
 
       this.stepWidth = (this.width / (this.max - this.min)) * this.step
     },
@@ -398,7 +418,11 @@ export default {
     .slider__track {
       background-image: $checkerboard;
       background-size: 6px 6px;
-      background-position: 0 0, 3px -3px, 0 3px, -3px 0px;
+      background-position:
+        0 0,
+        3px -3px,
+        0 3px,
+        -3px 0px;
     }
   }
 
