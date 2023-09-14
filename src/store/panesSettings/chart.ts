@@ -12,6 +12,7 @@ import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '..'
 import merge from 'lodash.merge'
+import { IndicatorOption } from '@/components/chart/chart'
 
 export interface PriceScaleSettings {
   scaleMargins?: PriceScaleMargins
@@ -29,8 +30,8 @@ export interface IndicatorSettings {
   name?: string
   displayName?: string
   description?: string
-  navigationState?: IndicatorNavigationState
   script?: string
+  optionsDefinitions?: { [key: string]: IndicatorOption }
   options?: SeriesOptions<SeriesType>
   createdAt?: number
   updatedAt?: number
@@ -65,7 +66,6 @@ export interface ChartPaneState {
   showTimeScale: boolean
   hiddenMarkets: { [indicatorId: string]: boolean }
   barSpacing: number
-  navigationState: IndicatorNavigationState
 }
 
 const getters = {} as GetterTree<ChartPaneState, ModulesState>
@@ -101,8 +101,7 @@ const state = {
   showRightScale: true,
   showTimeScale: true,
   hiddenMarkets: {},
-  barSpacing: null,
-  navigationState: null
+  barSpacing: null
 } as ChartPaneState
 
 const actions = {
@@ -308,13 +307,6 @@ const actions = {
       }
     }
   },
-  async setIndicatorNavigationState(
-    { commit },
-    navigationState: IndicatorNavigationState
-  ) {
-    state.navigationState = navigationState
-    commit('SET_NAVIGATION_STATE', navigationState)
-  },
   async undoIndicator({ state, commit }, indicatorId) {
     const savedIndicator = await workspacesService.getIndicator(indicatorId)
 
@@ -450,6 +442,9 @@ const mutations = {
       Vue.set(state.indicatorsErrors, id, null)
     }
   },
+  SET_INDICATOR_OPTIONS_DEFINITIONS(state, { id, optionsDefinitions }) {
+    state.indicators[id].optionsDefinitions = optionsDefinitions
+  },
   SET_TIMEFRAME(state, value) {
     state.timeframe = value
   },
@@ -536,9 +531,6 @@ const mutations = {
   },
   SET_BAR_SPACING(state, value) {
     state.barSpacing = value
-  },
-  SET_NAVIGATION_STATE(state, value) {
-    state.navigationState = value
   }
 } as MutationTree<ChartPaneState>
 

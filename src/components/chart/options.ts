@@ -424,7 +424,7 @@ export function getIndicatorOptionType(
     value = getDefaultIndicatorOptionValue(key, plotTypes, forceCompute)
   }
 
-  let type = 'string'
+  let type = 'text'
 
   let typedValue
 
@@ -439,7 +439,7 @@ export function getIndicatorOptionType(
     typeof typedValue === 'boolean' ||
     /^(show|toggle|set|use)[A-Z]/.test(key)
   ) {
-    type = 'boolean'
+    type = 'checkbox'
   } else if (
     /color/i.test(key) ||
     /^rgba?/.test(typedValue) ||

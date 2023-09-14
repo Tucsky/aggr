@@ -27,8 +27,7 @@
         title="Maintain shift key to change timeframe on all panes"
         class="btn pane-chart__timeframe -text -cases"
         :class="[
-          timeframeForHuman === timeframeLabel &&
-            'pane-header__highlight'
+          timeframeForHuman === timeframeLabel && 'pane-header__highlight'
         ]"
       >
         <span>{{ timeframeLabel }}</span>
