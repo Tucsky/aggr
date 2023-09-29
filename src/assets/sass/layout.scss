@@ -218,29 +218,6 @@ p {
   }
 }
 
-.mobile-dir-col-desktop-dir-row {
-  flex-direction: column;
-
-  .divider.-vertical,
-  hr.-vertical {
-    display: none;
-  }
-
-  @media screen and (min-width: 768px) {
-    flex-direction: row;
-
-    .divider.-horizontal,
-    hr.-horizontal {
-      display: none;
-    }
-
-    .divider.-vertical,
-    hr.-vertical {
-      display: flex;
-    }
-  }
-}
-
 @keyframes highlight {
   0% {
     opacity: 0.75;

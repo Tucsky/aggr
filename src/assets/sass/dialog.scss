@@ -45,20 +45,6 @@
       line-height: 1.4;
     }
 
-    hr {
-      margin: 1rem 0;
-      border: 0;
-      height: 1px;
-      background: var(--theme-background-150);
-      flex-shrink: 0;
-
-      &.-vertical {
-        margin: 0 1rem;
-        height: auto;
-        width: 1px;
-      }
-    }
-
     @media screen and (min-width: 580px) {
       max-width: 61.8vw;
     }

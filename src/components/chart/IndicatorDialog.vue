@@ -1,6 +1,10 @@
 <template>
   <Dialog
     class="indicator-dialog"
+    :class="[
+      !columnWidth && 'indicator-dialog--collapsed-column',
+      resizingColumn && 'indicator-dialog--resizing-column'
+    ]"
     size="large"
     :mask="false"
     :close-on-escape="false"
@@ -139,8 +143,23 @@
         </div>
       </ToggableSection>
     </div>
-    <hr class="-vertical" />
-    <div class="indicator-options indicator-options--column hide-scrollbar">
+    <div class="indicator-delimiter">
+      <div
+        class="indicator-delimiter__resizer"
+        @mousedown="handleColumnResize"
+        @touchstart="handleColumnResize"
+      />
+      <button
+        class="btn indicator-delimiter__collapser -text"
+        @click="toggleCollapseColum"
+      >
+        <i class="icon-up-thin" />
+      </button>
+    </div>
+    <div
+      class="indicator-options indicator-options--column hide-scrollbar"
+      :style="{ width: columnWidth + 'px' }"
+    >
       <div
         class="indicator-search input-group"
         :class="[optionsQuery && 'indicator-search--active']"
@@ -353,7 +372,7 @@ import {
 import dialogService from '../../services/dialogService'
 import merge from 'lodash.merge'
 import IndicatorPresetDialog from './IndicatorPresetDialog.vue'
-import { copyTextToClipboard } from '@/utils/helpers'
+import { copyTextToClipboard, getEventCords } from '@/utils/helpers'
 
 const ignoredOptionsKeys = [
   'crosshairMarkerVisible',
@@ -382,6 +401,8 @@ export default {
   data: () => ({
     code: '',
     editorFontSize: 14,
+    columnWidth: 240,
+    resizingColumn: false,
     plotTypes: [],
     optionsQuery: '',
     tab: 'options',
@@ -510,6 +531,53 @@ export default {
     this.saveNavigation()
   },
   methods: {
+    toggleCollapseColum() {
+      if (this.columnWidth > 50) {
+        this.columnWidth = 0
+      } else {
+        this.columnWidth = 240
+      }
+
+      this.resizeEditor()
+    },
+    handleColumnResize(startEvent: MouseEvent | TouchEvent) {
+      this.resizingColumn = true
+
+      let refX = getEventCords(startEvent).x
+
+      const moveHandler = moveEvent => {
+        const endX = getEventCords(moveEvent).x
+
+        this.columnWidth += refX - endX
+        console.log(this.columnWidth)
+        refX = endX
+      }
+
+      const endHandler = endEvent => {
+        if (endEvent instanceof MouseEvent) {
+          document.removeEventListener('mousemove', moveHandler)
+          document.removeEventListener('mouseup', endHandler)
+        } else {
+          document.removeEventListener('touchmove', moveHandler)
+          document.removeEventListener('touchend', endHandler)
+        }
+
+        if (this.columnWidth < 50) {
+          this.columnWidth = 0
+        }
+
+        this.resizeEditor()
+        this.resizingColumn = false
+      }
+
+      if (startEvent instanceof MouseEvent) {
+        document.addEventListener('mousemove', moveHandler)
+        document.addEventListener('mouseup', endHandler)
+      } else {
+        document.addEventListener('touchmove', moveHandler)
+        document.addEventListener('touchend', endHandler)
+      }
+    },
     restoreNavigation() {
       const navigationState = this.$store.state.app.indicatorDialogNavigation
 
@@ -518,13 +586,18 @@ export default {
         this.optionsQuery = navigationState.optionsQuery
         this.editorFontSize =
           navigationState.fontSizePx || (window.devicePixelRatio > 1 ? 12 : 14)
+        this.columnWidth =
+          typeof navigationState.columnWidth === 'number'
+            ? navigationState.columnWidth
+            : 240
       }
     },
     saveNavigation() {
       this.$store.commit('app/SET_INDICATOR_DIALOG_NAVIGATION', {
         tab: this.tab,
         optionsQuery: this.optionsQuery,
-        fontSizePx: this.editorFontSize
+        fontSizePx: this.editorFontSize,
+        columnWidth: this.columnWidth
       })
     },
     setPriceScale(id) {
@@ -657,7 +730,9 @@ export default {
       const payload = await dialogService.openAsPromise(IndicatorPresetDialog, {
         keys: optionsKeys,
         plotTypes: this.plotTypes,
-        originalKeys: originalPreset && Object.keys(originalPreset.data.options)
+        originalKeys: originalPreset
+          ? Object.keys(originalPreset.data.options)
+          : this.scriptOptionsKeys
       })
 
       if (payload) {
@@ -865,11 +940,20 @@ export default {
 }
 </script>
 <style lang="scss" scoped>
-hr.-vertical {
-  margin: 0;
-}
-
 .indicator-dialog {
+  &--resizing-column {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    .indicator-editor {
+      overflow: hidden;
+    }
+  }
+
   ::v-deep .dialog__content {
     width: 755px;
     overflow: visible;
@@ -1013,6 +1097,71 @@ hr.-vertical {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+}
+
+.indicator-delimiter {
+  position: relative;
+
+  &__resizer {
+    position: relative;
+    z-index: 2;
+    overflow: visible;
+    height: 100%;
+    width: 1px;
+    background-color: var(--theme-background-150);
+
+    .indicator-dialog--collapsed-column & {
+      width: 0px;
+    }
+
+    &:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      cursor: ew-resize;
+      left: -0.25rem;
+      right: -0.25rem;
+    }
+  }
+
+  &__collapser {
+    background-color: var(--theme-background-150);
+    border: 1px solid var(--theme-background-300);
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.125rem;
+    position: absolute;
+    z-index: 10;
+    right: -0.5rem;
+    top: 0.25rem;
+    font-size: 0.75rem;
+    transition: right 0.2s cubic-bezier(0, 1.4, 1, 1);
+    z-index: 20;
+    display: none;
+
+    .dialog--small & {
+      display: none;
+    }
+
+    @media screen and (min-width: 768px) {
+      display: inline-flex;
+    }
+
+    i {
+      transform: rotateZ(90deg);
+      transition: transform 0.2s cubic-bezier(0, 1.4, 1, 1);
+      display: block;
+
+      .indicator-dialog--collapsed-column & {
+        transform: rotateZ(-90deg);
+      }
+    }
+
+    .indicator-dialog--collapsed-column & {
+      right: -1px;
+      border-radius: 0.25rem 0 0 0.25rem;
+    }
   }
 }
 

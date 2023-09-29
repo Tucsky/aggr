@@ -360,6 +360,7 @@ export default class Chart {
 
     this.timeframe = parseFloat(timeframe)
     this.isOddTimeframe = isOddTimeframe(this.timeframe)
+    this.previousLogicalRange = null
 
     this.updateWatermark()
   }

@@ -218,6 +218,7 @@ export default class IndicatorOption extends Vue {
 
   .form-control {
     min-width: 100px;
+    max-width: 100%;
   }
 }
 </style>
