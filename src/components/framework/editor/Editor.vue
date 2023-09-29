@@ -94,7 +94,7 @@ export default class Editor extends Vue {
       style.getPropertyValue('--theme-background-100')
     )
 
-    monaco.editor.defineTheme('my-dark', {
+    monaco.defineTheme('my-dark', {
       base: 'vs-dark',
       inherit: true,
       rules: [],
@@ -107,7 +107,7 @@ export default class Editor extends Vue {
   }
 
   async createEditor() {
-    this.editorInstance = monaco.editor.create(this.$el as HTMLElement, {
+    this.editorInstance = monaco.create(this.$el as HTMLElement, {
       value: this.value,
       language: 'javascript',
       fontSize: this.fontSize,

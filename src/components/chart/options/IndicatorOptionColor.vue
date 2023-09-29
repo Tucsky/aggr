@@ -24,14 +24,8 @@ import ColorPickerControl from '@/components/framework/picker/ColorPickerControl
   }
 })
 export default class IndicatorOptionColor extends Vue {
-  private value
   private paneId
   private indicatorId
-  private definition
-
-  mounted() {
-    console.log('color input', this.value, this.definition)
-  }
 
   reloadIndicator() {
     this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', {

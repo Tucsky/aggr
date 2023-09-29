@@ -192,7 +192,7 @@
         </label>
       </div>
     </div>
-    <hr />
+    <div class="divider" />
     <div class="form-group mb8">
       <div class="form-group column">
         <label
@@ -209,7 +209,7 @@
         </label>
       </div>
     </div>
-    <hr />
+    <div class="divider" />
     <AlertsSettings />
   </div>
 </template>

@@ -88,12 +88,7 @@
         Cancel
       </a>
 
-      <button
-        :disabled="!count"
-        type="button"
-        @click="submit"
-        class="btn -pill"
-      >
+      <button type="button" @click="submit" class="btn -pill">
         <span
           v-if="count > 0"
           class="badge -red ml8"
@@ -138,7 +133,7 @@ export default {
       }, {}),
       form: {
         colors: false,
-        values: false,
+        values: true,
         script: false
       }
     }
