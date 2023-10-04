@@ -300,18 +300,6 @@ export default class SerieBuilder {
 
     const lines = input.trim().split(/\n/)
 
-    for (let i = 0; i < lines.length; i++) {
-      const sourcesMatches = lines[i].match(
-        /renderer.sources\['[\w/:_-]+']\.\w+/g
-      )
-
-      if (sourcesMatches && sourcesMatches.length === 1) {
-        lines[i] = `if (${sourcesMatches[0]}) {
-          ${lines[i]}
-        }`
-      }
-    }
-
     return lines.join('\n').replace(/\n\n/g, '\n')
   }
 

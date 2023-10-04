@@ -28,33 +28,10 @@ Vue.component('presets', Presets)
 Vue.directive('autofocus', autofocus)
 Vue.directive('draggable-market', draggableMarket)
 
-Vue.config.errorHandler = function (err) {
-  if (err.message.includes('Failed to fetch dynamically imported module')) {
-    console.error('Vue detected an error due to component load failure:', err)
-    store.dispatch('app/showNotice', {
-      id: 'cache-issue',
-      type: 'error',
-      title: `Your app isn't up to date.<br>Click here to refresh !`,
-      html: true,
-      icon: 'warning',
-      action: () => {
-        // If you're using a service worker, you'll want to ensure it's unregistered
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(registrations => {
-            for (const registration of registrations) {
-              registration.unregister()
-            }
-            window.location.reload()
-          })
-        } else {
-          window.location.reload()
-        }
-      }
-    })
-
-    // Handle the error
-  }
-  // Handle other errors or re-throw them if necessary
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+  })
 }
 
 new Vue({
