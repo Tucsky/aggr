@@ -219,7 +219,7 @@ export default class Stats extends Mixins(PaneMixin) {
   }
   prepareBuckets() {
     if (this._feed) {
-      console.log(`[stats/${this.paneId}] unsubscribe from feed`, this._feed)
+      console.debug(`[stats/${this.paneId}] unsubscribe from feed`, this._feed)
       aggregatorService.off(this._feed, this.onVolume)
     }
 
@@ -230,12 +230,12 @@ export default class Stats extends Mixins(PaneMixin) {
     }
 
     this._feed = 'bucket-' + getBucketId(this.pane.markets)
-    console.log(`[stats/${this.paneId}] subscribe to feed`, this._feed)
+    console.debug(`[stats/${this.paneId}] subscribe to feed`, this._feed)
 
     if (this._feed.length) {
       aggregatorService.on(this._feed, this.onVolume)
     } else {
-      console.log(`[stats/${this.paneId}] error feed empty...`)
+      console.debug(`[stats/${this.paneId}] error feed empty...`)
     }
   }
   onVolume(sums) {

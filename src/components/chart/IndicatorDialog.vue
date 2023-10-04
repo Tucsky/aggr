@@ -9,7 +9,7 @@
     :mask="false"
     :close-on-escape="false"
     @clickOutside="close"
-    @resize="resizeEditor"
+    @resize="onResize"
   >
     <template #header>
       <div class="d-flex">
@@ -61,7 +61,7 @@
         <tab name="options">Options</tab>
       </tabs>
     </template>
-    <div v-show="tab === 'script'" class="indicator-editor">
+    <div v-if="loadedEditor" v-show="tab === 'script'" class="indicator-editor">
       <p v-if="error" class="form-feedback ml16">
         <i class="icon-warning mr4"></i> {{ error }}
       </p>
@@ -385,7 +385,6 @@ const ignoredOptionsKeys = [
 import ToggableSection from '@/components/framework/ToggableSection.vue'
 import IndicatorOption from '@/components/chart/IndicatorOption.vue'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
-import Editor from '@/components/framework/editor/Editor.vue'
 import { Preset } from '@/types/types'
 export default {
   components: {
@@ -394,7 +393,7 @@ export default {
     Tab,
     DropdownButton,
     ToggableSection,
-    Editor
+    Editor: () => import('@/components/framework/editor/Editor.vue')
   },
   props: ['paneId', 'indicatorId'],
   mixins: [DialogMixin],
@@ -403,6 +402,7 @@ export default {
     editorFontSize: 14,
     columnWidth: 240,
     resizingColumn: false,
+    loadedEditor: false,
     plotTypes: [],
     optionsQuery: '',
     tab: 'options',
@@ -511,10 +511,15 @@ export default {
       },
       immediate: true
     },
-    async tab() {
+    async tab(value) {
+      if (value === 'script') {
+        this.loadedEditor = true
+      }
+
       await this.$nextTick()
 
       this.resizeEditor()
+      this.saveNavigation()
     }
   },
   created() {
@@ -549,7 +554,6 @@ export default {
         const endX = getEventCords(moveEvent).x
 
         this.columnWidth += refX - endX
-        console.log(this.columnWidth)
         refX = endX
       }
 
@@ -931,6 +935,9 @@ export default {
         this.$refs.editor.resize()
       }
     },
+    onResize() {
+      this.resizeEditor()
+    },
     revertChanges() {
       this.applyIndicatorPreset({
         data: this.originalIndicator
@@ -1127,18 +1134,22 @@ export default {
   }
 
   &__collapser {
-    background-color: var(--theme-background-150);
     border: 1px solid var(--theme-background-300);
     border-radius: 0.25rem;
     padding: 0.25rem 0.125rem;
     position: absolute;
     z-index: 10;
     right: -0.5rem;
-    top: 0.25rem;
+    top: 0.75rem;
     font-size: 0.75rem;
     transition: right 0.2s cubic-bezier(0, 1.4, 1, 1);
     z-index: 20;
     display: none;
+    height: 2rem;
+
+    &.btn {
+      background-color: var(--theme-background-150);
+    }
 
     .dialog--small & {
       display: none;
@@ -1171,14 +1182,24 @@ export default {
   position: relative;
   flex-grow: 1;
   min-height: 50px;
+  --vscode-scrollbar-shadow: white;
 
   &__zoom {
     position: absolute;
     font-size: 1rem;
     z-index: 6;
     pointer-events: none;
-    top: 1.5rem;
+    top: 0.925rem;
     right: 1.5rem;
+    text-shadow:
+      -1px -1px 0 #000,
+      0 -1px 0 #000,
+      1px -1px 0 #000,
+      1px 0 0 #000,
+      1px 1px 0 #000,
+      0 1px 0 #000,
+      -1px 1px 0 #000,
+      -1px 0 0 #000;
 
     .btn {
       display: block;
