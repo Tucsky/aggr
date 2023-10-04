@@ -1,4 +1,6 @@
 {
+  "swDest": "build/sw.js",
+  "swSrc": "src/sw.js",
   "start_url": "/",
   "name": "AGGR",
   "short_name": "AGGR",

@@ -58,26 +58,34 @@ export default defineConfig(({ mode }) => {
 
   return {
     define: {
-      ...processEnvValues,
+      ...processEnvValues
     },
-    base: mode === 'github' ?  env.VITE_APP_BASE_URL : '',
+    base: mode === 'github' ? env.VITE_APP_BASE_URL : '',
     plugins: [
       vue(),
       svgLoader({
-        defaultImport: 'url', // 👈
+        defaultImport: 'url' // 👈
       }),
       visualizer(),
       VitePWA({
-        srcDir: 'src',
+        srcDir: path.join(__dirname, 'src'),
         filename: 'sw.js',
         registerType: 'autoUpdate',
+        strategies: 'injectManifest',
+        injectRegister: false,
         includeAssets: [
           'favicon-32x32.png',
           'favicon-16x16.png',
           'apple-touch-icon.png',
           'safari-pinned-tab.svg'
         ],
+        workbox: {
+          swDest: 'dist/sw.js',
+          swSrc: 'src/sw.js',
+        },
         manifest: {
+          swDest: 'dist/sw.js',
+          swSrc: 'src/sw.js',
           name: 'SignificantTrades',
           short_name: 'AGGR',
           description: 'Cryptocurrency market trades aggregator',
