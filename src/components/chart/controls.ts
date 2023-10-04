@@ -122,7 +122,8 @@ export default class ChartControl {
     this.unsubscribeStore = store.subscribe(mutation => {
       switch (mutation.type) {
         case this.chart.paneId + '/FLAG_INDICATOR_AS_SAVED':
-          this.chart.saveIndicatorPreview(mutation.payload)
+          // disabled until fixed
+          // this.chart.saveIndicatorPreview(mutation.payload)
           break
         case 'settings/SET_CHART_THEME':
         case 'settings/SET_TEXT_COLOR':

@@ -2465,9 +2465,10 @@ export default class Chart {
         indicator.id,
         this.chartCache.cacheRange.to - this.timeframe * 400
       )
-      await sleep(1)
+      await sleep(10)
       chartCanvas = this.chartInstance.takeScreenshot()
     } catch (error) {
+      console.log(error)
       //
     }
 

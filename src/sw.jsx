@@ -1,13 +1,38 @@
 /* eslint-disable */
-self.addEventListener('fetch', () => {})
+const CACHE_NAME = 'airhorner';
 
-self.addEventListener('install', function(event) {
-  event.waitUntil(
-    caches.open('airhorner').then(function(cache) {
-      return cache.addAll(global.serviceWorkerOption.assets)
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      const fetchPromise = fetch(event.request).then(networkResponse => {
+        // Update cache if new version is fetched
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResponse.clone()));
+        return networkResponse;
+      }).catch(() => cachedResponse); // If network fails, try to serve from cache
+
+      return cachedResponse || fetchPromise; // Serve from cache if available, else from network
     })
-  )
-})
+  );
+});
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(global.serviceWorkerOption.assets);
+    })
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.filter((cacheName) => cacheName !== CACHE_NAME)
+                  .map((cacheName) => caches.delete(cacheName))  // Delete old caches
+      );
+    })
+  );
+});
 
 self.addEventListener('push', event => {
   const data = event.data.json()

@@ -23,7 +23,7 @@
       <button
         v-for="(timeframeLabel, timeframe) of favoriteTimeframes"
         :key="timeframe"
-        @click="$store.dispatch(`${paneId}/setTimeframe`, timeframe)"
+        @click="selectTimeframe($event, timeframe)"
         title="Maintain shift key to change timeframe on all panes"
         class="btn pane-chart__timeframe -text -cases"
         :class="[
@@ -146,6 +146,7 @@ export default class ChartComponent extends Mixins(PaneMixin) {
   $refs!: {
     chartContainer: HTMLElement
     paneHeader: PaneHeader
+    timeframeButton: HTMLElement
   }
 
   mounted() {
@@ -253,6 +254,14 @@ export default class ChartComponent extends Mixins(PaneMixin) {
 
   takeScreenshot(event) {
     this.chart.takeScreenshot(event)
+  }
+
+  selectTimeframe(event, timeframe) {
+    if (timeframe === this.timeframe) {
+      this.toggleTimeframeDropdown(event, this.$refs.timeframeButton)
+      return
+    }
+    this.$store.dispatch(`${this.paneId}/setTimeframe`, timeframe)
   }
 }
 </script>

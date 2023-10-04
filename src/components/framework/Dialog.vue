@@ -107,6 +107,7 @@ export default class Dialog extends Vue {
     body: HTMLElement
   }
   position: DialogPosition = {}
+  private _persistTimeout: NodeJS.Timeout
 
   created() {
     if (this.size) {
@@ -134,19 +135,8 @@ export default class Dialog extends Vue {
 
     this.$emit('mounted')
   }
-
   beforeDestroy() {
-    const dialogPosition = this.position
-    const parentDialog = this.$parent as any
-
-    if (parentDialog && parentDialog.dialogId) {
-      dialogService.dialogPositions[parentDialog.dialogId] = {
-        x: dialogPosition.x,
-        y: dialogPosition.y,
-        w: dialogPosition.w,
-        h: dialogPosition.h
-      }
-    }
+    this.persistPosition()
 
     if (this._handleTranslateRelease) {
       this._handleTranslateRelease()
@@ -162,6 +152,20 @@ export default class Dialog extends Vue {
 
     if (this._handleWindowResize) {
       window.removeEventListener('resize', this._handleWindowResize)
+    }
+  }
+
+  persistPosition() {
+    const dialogPosition = this.position
+    const parentDialog = this.$parent as any
+
+    if (parentDialog && parentDialog.dialogId) {
+      dialogService.dialogPositions[parentDialog.dialogId] = {
+        x: dialogPosition.x,
+        y: dialogPosition.y,
+        w: dialogPosition.w,
+        h: dialogPosition.h
+      }
     }
   }
 
@@ -325,6 +329,12 @@ export default class Dialog extends Vue {
       this.savePosition(position)
 
       this.$emit('resize')
+    }
+
+    if (this._persistTimeout) {
+      clearTimeout(this._persistTimeout)
+
+      this._persistTimeout = setTimeout(() => this.persistPosition(), 100)
     }
   }
 

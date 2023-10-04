@@ -27,6 +27,7 @@ import monaco from './editor'
 export default class Editor extends Vue {
   private value: string
   private fontSize: number
+  private preventOverride: boolean
 
   private editorInstance: any
 
@@ -40,7 +41,9 @@ export default class Editor extends Vue {
 
   @Watch('value')
   onValueChange(value) {
-    this.editorInstance.setValue(value)
+    if (!this.preventOverride) {
+      this.editorInstance.setValue(value)
+    }
   }
 
   async mounted() {
@@ -53,7 +56,7 @@ export default class Editor extends Vue {
     this.editorInstance.dispose()
 
     if (this._blurTimeout) {
-      this.onBlur()
+      this.onBlur(true)
     }
   }
 
@@ -64,12 +67,20 @@ export default class Editor extends Vue {
     this.editorInstance.layout()
   }
 
-  onBlur() {
+  async onBlur(silent = false) {
     if (this._beforeUnloadHandler) {
       window.removeEventListener('beforeunload', this._beforeUnloadHandler)
       this._beforeUnloadHandler = null
     }
-    this.$emit('blur', this.editorInstance.getValue())
+
+    if (!silent) {
+      this.preventOverride = true
+      this.$emit('blur', this.editorInstance.getValue())
+
+      await this.$nextTick()
+
+      this.preventOverride = false
+    }
   }
 
   onFocus() {
@@ -111,6 +122,10 @@ export default class Editor extends Vue {
       value: this.value,
       language: 'javascript',
       fontSize: this.fontSize,
+      scrollbar: {
+        vertical: 'hidden'
+      },
+      overviewRulerBorder: false,
       theme:
         this.$store.state.settings.theme === 'light' ? 'vs-light' : 'my-dark'
     })
@@ -140,5 +155,9 @@ export default class Editor extends Vue {
 .editor {
   height: 100%;
   min-height: 50px;
+
+  .monaco-editor .minimap-shadow-visible {
+    box-shadow: rgb(0 0 0 / 33%) -6px 0 6px -6px inset;
+  }
 }
 </style>
