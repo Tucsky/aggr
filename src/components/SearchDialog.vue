@@ -463,6 +463,7 @@ export default {
     quoteCurrencies: [
       'USD',
       'USDT',
+      'FDUSD',
       'UST',
       'USDC',
       'USDD',
