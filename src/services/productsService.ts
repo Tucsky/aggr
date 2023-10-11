@@ -13,6 +13,7 @@ const stablecoins = [
   'USDD',
   'USDK',
   'USDP',
+  'FDUSD',
   'UST'
 ]
 
@@ -29,7 +30,7 @@ const reverseStablecoins = stablecoins.filter(
 const currencies = ['EUR', 'USD', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNH']
 
 const genericQuoteCurrencyLookup = new RegExp(
-  `[a-z]?(${currencies.join('|')})[a-z]?$`,
+  `[a-z]*(${currencies.join('|')})[a-z]?$`,
   'i'
 )
 const reverseStablecoinPairLookup = new RegExp(
