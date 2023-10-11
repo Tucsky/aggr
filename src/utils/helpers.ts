@@ -365,9 +365,10 @@ export function getTimeframeForHuman(timeframe, full?: boolean) {
   if (normalized[normalized.length - 1] === 't') {
     return parseInt(normalized) + '\u2009ticks'
   } else if (normalized[normalized.length - 1] === 'b') {
-      return (parseInt(normalized)) + '\u2009bps'
+    const bps = parseFloat(normalized)
+    return bps < 1 ? `${bps * 1000}\u2009mbps` : `${bps}\u2009bps`
   } else if (normalized[normalized.length - 1] === 'v') {
-      return formatAmount(parseInt(normalized))
+      return formatAmount(parseFloat(normalized))
   } else if (!isNaN(normalized) && normalized > 0) {
     return full ? getHmsFull(normalized * 1000) : getHms(normalized * 1000)
   }

@@ -1798,7 +1798,6 @@ export default class Chart {
     close,
     active
   ) {
-    console.log('registerInitialBar', identifier, close)
     this.activeRenderer.sources[identifier] = {
       pair: pair,
       exchange: exchange,

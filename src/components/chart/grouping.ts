@@ -2,7 +2,7 @@ import { floorTimestampToTimeframe } from "@/utils/helpers"
 
 export default {
   time({ trade, timeframe, isOdd }) {
-    floorTimestampToTimeframe(
+    return floorTimestampToTimeframe(
       trade.timestamp / 1000,
       timeframe,
       isOdd
@@ -33,11 +33,7 @@ export default {
       if (!marketsFilters[identifier] || renderer.sources[identifier].open === null) {
         return acc
       }
-      if (market === identifier) {
-        acc.sum += trade.price
-      } else {
-        acc.sum += renderer.sources[identifier].close
-      }
+      acc.sum += renderer.sources[identifier].close
       acc.count++
       return acc
     }, {
@@ -46,10 +42,9 @@ export default {
     })
 
     const avg = sum / count
-    const absBps = Math.abs(((avg - renderer.bar.close) / renderer.bar.close) * 100) * 100
-
+    const absBps = ((avg - renderer.bar.close) / renderer.bar.close) * 100 * 100
     if (
-      !renderer.bar.close || absBps > timeframe
+      !renderer.bar.close || Math.abs(absBps) > timeframe
     ) {
       renderer.bar.close = avg
       return Math.max(
