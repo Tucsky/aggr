@@ -332,6 +332,29 @@ export function copyTextToClipboard(text) {
   return navigator.clipboard.writeText(text)
 }
 
+function formatAmount(amount, decimals?: number) {
+  const negative = amount < 0
+
+  amount = Math.abs(amount)
+
+  if (amount >= 1000000000) {
+    amount =
+      +(amount / 1000000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' B'
+  } else if (amount >= 1000000) {
+    amount = +(amount / 1000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' M'
+  } else if (amount >= 1000) {
+    amount = +(amount / 1000).toFixed(isNaN(decimals) ? 1 : decimals) + ' K'
+  } else {
+    amount = +amount.toFixed(isNaN(decimals) ? 2 : decimals)
+  }
+
+  if (negative) {
+    return '-' + amount
+  } else {
+    return amount
+  }
+}
+
 export function getTimeframeForHuman(timeframe, full?: boolean) {
   if (timeframe === null) {
     return 'ERR'
@@ -340,7 +363,11 @@ export function getTimeframeForHuman(timeframe, full?: boolean) {
   const normalized = timeframe.toString().trim()
 
   if (normalized[normalized.length - 1] === 't') {
-    return parseInt(normalized) + ' ticks'
+    return parseInt(normalized) + '\u2009ticks'
+  } else if (normalized[normalized.length - 1] === 'b') {
+      return (parseInt(normalized)) + '\u2009bps'
+  } else if (normalized[normalized.length - 1] === 'v') {
+      return formatAmount(parseInt(normalized))
   } else if (!isNaN(normalized) && normalized > 0) {
     return full ? getHmsFull(normalized * 1000) : getHms(normalized * 1000)
   }

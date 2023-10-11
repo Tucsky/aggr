@@ -1,4 +1,5 @@
 import Exchange from '../exchange'
+import settings from '../settings'
 
 export default class BINANCE extends Exchange {
   id = 'BINANCE'
@@ -35,8 +36,8 @@ export default class BINANCE extends Exchange {
     }
 
     this.subscriptions[pair] = ++this.lastSubscriptionId
-
-    const params = [pair + '@aggTrade']
+    const channel = settings.aggregationLength === -1 ? 'trade' : 'aggTrade'
+    const params = [pair + '@' + channel]
 
     api.send(
       JSON.stringify({
@@ -59,7 +60,8 @@ export default class BINANCE extends Exchange {
       return
     }
 
-    const params = [pair + '@aggTrade']
+    const channel = settings.aggregationLength === -1 ? 'trade' : 'aggTrade'
+    const params = [pair + '@' + channel]
 
     api.send(
       JSON.stringify({

@@ -385,7 +385,7 @@ export default class ChartControl {
       !visibleLogicalRange ||
       this.chart.panPrevented ||
       this.chart.isLoading ||
-      this.chart.type === 'tick'
+      this.chart.type !== 'time'
     ) {
       return
     }

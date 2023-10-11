@@ -162,9 +162,9 @@
             :checked="true"
             @click.prevent="$store.commit('settings/TOGGLE_AGGREGATION')"
           />
-          <div :on="aggregationLength + 'ms'" off="No aggregation"></div>
+          <div :on="aggregationLengthLabel" off="No aggregation"></div>
           <span v-if="aggregationLength"
-            >{{ aggregationLength }}ms aggregation</span
+            >{{ aggregationLengthLabel }} {{ aggregationLength < 0 ? 'trades' : 'aggregation' }}</span
           >
           <span v-else>No aggregation</span>
         </label>
@@ -447,6 +447,14 @@ export default {
 
     aggregationLength() {
       return this.$store.state.settings.aggregationLength
+    },
+
+    aggregationLengthLabel() {
+      if (this.aggregationLength < 0) {
+        return 'RAW'
+      }
+
+      return this.aggregationLength + 'ms'
     },
 
     preferQuoteCurrencySize() {

@@ -1,5 +1,90 @@
 export default [
   {
+    label: 'avg_ohlc',
+    detail: '[AGGR] avg OHLC (open = prev. close)',
+    insertText: `avg_ohlc(bar)`
+  },
+  {
+    label: 'avg_ohlc_with_gaps',
+    detail: '[AGGR] avg OHLC',
+    insertText: `avg_ohlc_with_gaps(bar)`
+  },
+  {
+    label: 'avg_heikinashi',
+    detail: '[AGGR] avg HEIKINASHI',
+    insertText: `avg_heikinashi(bar)`
+  },
+  {
+    label: 'cum',
+    detail: '[AGGR] cumulative',
+    insertText: `cum(value)`
+  },
+  {
+    label: 'pivot_high',
+    detail: '[AGGR] find pivot HIGH',
+    insertText: `pivot_high(14, 14)`
+  },
+  {
+    label: 'pivot_low',
+    detail: '[AGGR] find pivot LOW',
+    insertText: `pivot_low(14, 14)`
+  },
+  {
+    label: 'highest',
+    detail: '[AGGR] highest of the last n bars',
+    insertText: `highest(14)`
+  },
+  {
+    label: 'lowest',
+    detail: '[AGGR] lowest of the last n bars',
+    insertText: `lowest(14)`
+  },
+  {
+    label: 'linreg',
+    detail: '[AGGR] linreg of the last n bars',
+    insertText: `linreg(14)`
+  },
+  {
+    label: 'sum',
+    detail: '[AGGR] sum of the last n bars',
+    insertText: `sum(14)`
+  },
+  {
+    label: 'cma',
+    detail: '[AGGR] bad sma',
+    insertText: `cma(14)`
+  },
+  {
+    label: 'sma',
+    detail: '[AGGR] sma',
+    insertText: `sma(14)`
+  },
+  {
+    label: 'ema',
+    detail: '[AGGR] ema',
+    insertText: `ema(14)`
+  },
+  {
+    label: 'last',
+    detail: '[AGGR] equivalent of n[14] (but dynamic)',
+    insertText: `last(options.offset)`
+  },
+  {
+    label: 'rma',
+    detail: '[AGGR] rma',
+    insertText: `rma(14)`
+  },
+  {
+    label: 'stoch',
+    detail: '[AGGR] stoch',
+    insertText: `stoch(14)`
+  },
+  {
+    label: 'na',
+    detail: '[AGGR] 0 if falsy',
+    insertText: `na(value)`
+  },
+  {
     label: 'number',
     detail: '[AGGR] number option',
     insertText: `MyNumber = option(

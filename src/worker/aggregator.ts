@@ -805,9 +805,8 @@ class Aggregator {
     settings[key] = value
 
     if (key === 'aggregationLength') {
-      const signChange = (this.baseAggregationTimeout || 1) * (value || 1) < 0
+      const signChange = ((this.baseAggregationTimeout || 1) * (value || 1)) < 0
       this.baseAggregationTimeout = value
-      // update trades event handler (if 0 mean simple trade emit else group inc trades)
       this.bindTradesEvent()
 
       if (signChange) {

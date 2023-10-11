@@ -28,7 +28,7 @@ import dialogService from '@/services/dialogService'
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
-import { stripStablePair, marketDecimals } from '@/services/productsService'
+import { stripStablePair, marketDecimals, parseMarket } from '@/services/productsService'
 import audioService from '@/services/audioService'
 import alertService, {
   MarketAlert,
@@ -57,6 +57,7 @@ import {
 } from 'lightweight-charts'
 import { Trade } from '@/types/types'
 import ChartControl from './controls'
+import grouping from './grouping'
 
 export interface Bar {
   vbuy?: number
@@ -160,7 +161,7 @@ export interface IndicatorReference {
   plotIndex: number
 }
 export interface Renderer {
-  type: 'time' | 'tick'
+  type: 'time' | 'tick' | 'bps' | 'vol'
   timeframe: number
   timestamp: number
   localTimestamp: number
@@ -171,6 +172,7 @@ export interface Renderer {
   indicators: { [id: string]: RendererIndicatorData }
   empty?: boolean
   price?: number
+  prependedBars: any
 }
 
 interface RendererIndicatorData {
@@ -222,7 +224,7 @@ export default class Chart {
   fillGapsWithEmpty = true
   timeframe: number
   isOddTimeframe: boolean
-  type: 'time' | 'tick'
+  type: 'time' | 'tick' | 'bps' | 'vol'
   priceScales: string[] = []
   isLoading = false
   hasReachedEnd = false
@@ -237,6 +239,7 @@ export default class Chart {
   private _releasePanTimeout: number
   private _queueHandler = this.releaseQueue.bind(this)
   private _refreshDecimalsHandler = this.refreshAutoDecimals.bind(this)
+  private _promiseOfPrependedBars: Promise<void>
   private _promiseOfMarkets: Promise<void>
   private _promiseOfMarketsRender: Promise<void>
   private _priceIndicatorId: string
@@ -352,8 +355,13 @@ export default class Chart {
    * @param timeframe
    */
   setTimeframe(timeframe) {
-    if (/t$/.test(timeframe)) {
+    const modifier = timeframe[timeframe.length - 1]
+    if (modifier === 't') {
       this.type = 'tick'
+    } else if (modifier === 'b') {
+      this.type = 'bps'
+    } else if (modifier === 'v') {
+      this.type = 'vol'
     } else {
       this.type = 'time'
     }
@@ -621,13 +629,13 @@ export default class Chart {
   updateWatermark(marketsUpdate?: string[]) {
     if (marketsUpdate) {
       if (store.state.settings.normalizeWatermarks) {
-        this.watermark = marketsUpdate.join('|')
+        this.watermark = marketsUpdate.join('\u2009|\u2009')
       } else {
         const othersCount = marketsUpdate.length - 3
         this.watermark =
-          marketsUpdate.slice(0, 3).join(' + ') +
+          marketsUpdate.slice(0, 3).join('\u2009+\u2009') +
           (othersCount > 0
-            ? ' + ' + othersCount + ' other' + (othersCount > 1 ? 's' : '')
+            ? '\u2009+\u2009' + othersCount + '\u2009other' + (othersCount > 1 ? 's' : '')
             : '')
       }
     }
@@ -641,11 +649,10 @@ export default class Chart {
      */
     this.chartInstance.applyOptions({
       watermark: {
-        text: `\u00A0\u00A0\u00A0\u00A0${
-          this.watermark +
-          '|' +
+        text: `\u00A0\u00A0\u00A0\u00A0${this.watermark +
+          '\u2009|\u2009' +
           getTimeframeForHuman(store.state[this.paneId].timeframe)
-        }\u00A0\u00A0\u00A0\u00A0`,
+          }\u00A0\u00A0\u00A0\u00A0`,
         ...getChartWatermarkOptions(this.paneId).watermark
       }
     })
@@ -1183,6 +1190,8 @@ export default class Chart {
       return
     }
 
+    let redrawAll = false
+
     for (let i = 0; i < trades.length; i++) {
       const trade = trades[i]
       const identifier = trade.exchange + ':' + trade.pair
@@ -1193,25 +1202,14 @@ export default class Chart {
 
       let timestamp
       if (this.activeRenderer) {
-        if (this.activeRenderer.type === 'time') {
-          timestamp = floorTimestampToTimeframe(
-            trade.timestamp / 1000,
-            this.timeframe,
-            this.isOddTimeframe
-          )
-        } else {
-          if (
-            this.activeRenderer.bar.cbuy + this.activeRenderer.bar.csell >=
-            this.timeframe
-          ) {
-            timestamp = Math.max(
-              this.activeRenderer.timestamp + 0.001,
-              Math.round(trade.timestamp / 1000)
-            )
-          } else {
-            timestamp = this.activeRenderer.timestamp
-          }
-        }
+        timestamp = grouping[this.activeRenderer.type]({
+          renderer: this.activeRenderer, 
+          market: identifier,
+          timeframe: this.timeframe, 
+          trade, 
+          isOdd: this.isOddTimeframe,
+          marketsFilters: this.marketsFilters
+        })
       } else {
         timestamp = trade.timestamp / 1000
       }
@@ -1262,14 +1260,14 @@ export default class Chart {
         !this.activeRenderer.sources[identifier] ||
         typeof this.activeRenderer.sources[identifier].pair === 'undefined'
       ) {
-        this.activeRenderer.sources[identifier] = {
-          pair: trade.pair,
-          exchange: trade.exchange,
-          close: +trade.price,
-          active: this.marketsFilters[identifier]
-        }
-
-        this.resetBar(this.activeRenderer.sources[identifier])
+        this.registerInitialBar(
+          identifier,
+          trade.pair,
+          trade.exchange,
+          +trade.price,
+          this.marketsFilters[identifier]
+        )
+        redrawAll = true
       }
 
       const isActive = this.marketsFilters[identifier]
@@ -1292,7 +1290,7 @@ export default class Chart {
         this.activeRenderer.sources[identifier].open =
           this.activeRenderer.sources[identifier].high =
           this.activeRenderer.sources[identifier].low =
-            this.activeRenderer.sources[identifier].close
+          this.activeRenderer.sources[identifier].close
       } else {
         this.activeRenderer.sources[identifier].high = Math.max(
           this.activeRenderer.sources[identifier].high,
@@ -1317,16 +1315,21 @@ export default class Chart {
       }
     }
 
-    if (!this.activeRenderer) {
+    if (
+      !this.activeRenderer
+      || this.activeRenderer.bar.empty
+      || redrawAll
+    ) {
+      if (redrawAll) {
+        this.renderAll()
+      }
       return
     }
 
-    if (!this.activeRenderer.bar.empty) {
-      this.updateBar(this.activeRenderer)
+    this.updateBar(this.activeRenderer)
 
-      if (this.renderedRange.to < this.activeRenderer.timestamp) {
-        this.renderedRange.to = this.activeRenderer.timestamp
-      }
+    if (this.renderedRange.to < this.activeRenderer.timestamp) {
+      this.renderedRange.to = this.activeRenderer.timestamp
     }
   }
 
@@ -1533,6 +1536,10 @@ export default class Chart {
             bar.time || this.activeRenderer.timestamp,
             indicatorsIds
           )
+          Array.prototype.unshift.apply(
+            bars,
+            temporaryRenderer.prependedBars
+          )
         }
       }
 
@@ -1696,7 +1703,7 @@ export default class Chart {
   /**
    * Renders all chunks
    */
-  renderAll(triggerPan?: boolean) {
+  async renderAll(triggerPan?: boolean) {
     if (!this.chartInstance) {
       return
     }
@@ -1714,13 +1721,12 @@ export default class Chart {
 
     const scrollPosition = this.chartInstance.timeScale().scrollPosition()
     this.clearChart(triggerPan)
-
     this.renderBars(
       this.chartCache.chunks.length
         ? this.chartCache.chunks.reduce(
-            (bars, chunk) => bars.concat(chunk.bars),
-            []
-          )
+          (bars, chunk) => bars.concat(chunk.bars),
+          []
+        )
         : [],
       null,
       !triggerPan
@@ -1729,6 +1735,87 @@ export default class Chart {
     if (scrollPosition) {
       this.chartInstance.timeScale().scrollToPosition(scrollPosition, false)
     }
+  }
+
+  getPrependedBars(timestamp) {
+    if (this.activeRenderer && this.activeRenderer.prependedBars && this.activeRenderer.prependedBars.length) {
+      if (this.activeRenderer.prependedBars[0].time !== timestamp) {
+        this.activeRenderer.prependedBars = this.activeRenderer.prependedBars.map(bar => ({
+          ...bar,
+          time: timestamp,
+        }))
+      }
+      return this.activeRenderer.prependedBars
+    }
+
+    if (this._promiseOfPrependedBars) {
+      return []
+    }
+
+    this._promiseOfPrependedBars = alertService.getPrice().then(markets => {
+      this._promiseOfPrependedBars = null
+
+      if (this.activeRenderer) {
+        this.activeRenderer.prependedBars = Object.keys(markets).reduce((acc, key) => {
+          const price = markets[key].price
+          if (!price) {
+            return acc
+          }
+
+          const [exchange, pair] = parseMarket(key)
+
+          acc.push({
+            "time": timestamp,
+            "cbuy": null,
+            "close": price,
+            "csell": null,
+            "high": price,
+            "lbuy": null,
+            "low": price,
+            "lsell": null,
+            "market": key,
+            "open": price,
+            "vbuy": null,
+            "vsell": null,
+            "exchange": exchange,
+            "pair": pair
+          })
+
+          return acc
+        }, this.activeRenderer.prependedBars)
+
+        this.renderAll()
+      }
+    })
+
+    return []
+  }
+
+  async registerInitialBar(
+    identifier,
+    pair,
+    exchange,
+    close,
+    active
+  ) {
+    console.log('registerInitialBar', identifier, close)
+    this.activeRenderer.sources[identifier] = {
+      pair: pair,
+      exchange: exchange,
+      close: close,
+      active
+    }
+
+    this.resetBar(this.activeRenderer.sources[identifier])
+    this.activeRenderer.prependedBars.push({
+      ...this.resetBar({
+        close: close
+      }),
+      pair: pair,
+      exchange: exchange,
+      cbuy: 1,
+      csell: 1,
+    })
   }
 
   async renderAlerts() {
@@ -1984,7 +2071,6 @@ export default class Chart {
             ) {
               continue
             }
-
             toUpdate.push([indicator.apis[j], serieData.series[j]])
           }
         }
@@ -2117,6 +2203,7 @@ export default class Chart {
       length: 1,
       indicators: {},
       sources: {},
+      prependedBars: this.getPrependedBars(firstBarTimestamp),
 
       bar: {
         vbuy: 0,
@@ -2155,6 +2242,10 @@ export default class Chart {
    * @param {Renderer?} renderer bar to use as reference
    */
   nextBar(timestamp, renderer?: Renderer) {
+    if (renderer === this.activeRenderer && renderer.bar.empty) {
+      return
+    }
+
     if (
       this.fillGapsWithEmpty &&
       renderer === this.activeRenderer &&
@@ -2167,13 +2258,11 @@ export default class Chart {
           this.activeRenderer.timestamp) /
         this.activeRenderer.timeframe
 
-      for (let i = 0; i < this.loadedIndicators.length; i++) {
-        for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
-          for (let k = 0; k < missingBars; k++) {
-            if (i === 0 && j === 0) {
-              this.incrementRendererBar(renderer)
-            }
+      for (let k = 0; k < missingBars; k++) {
+        this.incrementRendererBar(renderer)
 
+        for (let i = 0; i < this.loadedIndicators.length; i++) {
+          for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
             this.loadedIndicators[i].apis[j].update({
               time: renderer.localTimestamp
             })
@@ -2237,6 +2326,7 @@ export default class Chart {
    */
   resetRendererBar(renderer: Renderer) {
     renderer.bar = {
+      ...renderer.bar,
       vbuy: 0,
       vsell: 0,
       cbuy: 0,
@@ -2350,8 +2440,8 @@ export default class Chart {
         typeof precision === 'number'
           ? precision
           : typeof priceFormat.precision === 'number'
-          ? priceFormat.precision
-          : 2
+            ? priceFormat.precision
+            : 2
 
       if (
         !priceFormat.auto ||
@@ -2381,7 +2471,7 @@ export default class Chart {
 
       const priceScale =
         store.state[this.paneId].priceScales[
-          this.loadedIndicators[i].options.priceScaleId
+        this.loadedIndicators[i].options.priceScaleId
         ]
 
       store.commit(this.paneId + '/SET_PRICE_SCALE', {
@@ -2757,9 +2847,8 @@ export default class Chart {
     store.dispatch('app/showNotice', {
       id: 'fetching-' + this.paneId,
       timeout: 15000,
-      title: `Fetching ${
-        barsCount * historicalMarkets.length
-      } bars (~${estimatedSize})`,
+      title: `Fetching ${barsCount * historicalMarkets.length
+        } bars (~${estimatedSize})`,
       type: 'info'
     })
 

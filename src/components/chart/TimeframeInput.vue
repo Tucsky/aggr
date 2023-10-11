@@ -70,7 +70,14 @@ export default class TimeframeInput extends Vue {
 
     let output
 
-    if (/t$|ticks?$/i.test(trimmed)) {
+    if (/b$|bps?$/i.test(trimmed)) {
+      return (output = parseInt(trimmed) + 'b')
+    } else if (/v$|k$|vol?$/i.test(trimmed)) {
+      if (trimmed[trimmed.length - 1] === 'k') {
+        return (output = parseInt(trimmed) * 1000 + 'v')
+      }
+      return (output = parseInt(trimmed) + 'v')
+    } else if (/t$|ticks?$/i.test(trimmed)) {
       return (output = parseInt(trimmed) + 't')
     } else {
       if (/d$/i.test(trimmed)) {
