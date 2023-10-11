@@ -367,7 +367,7 @@ const mutations = {
     })
   },
   TOGGLE_AGGREGATION(state) {
-    const values: AggregationLength[] = [0, 1, 10, 100, 1000]
+    const values: AggregationLength[] = [0, 1, 10, 50, 100, 500, 1000, -1]
 
     const index = Math.max(0, values.indexOf(state.aggregationLength))
 
