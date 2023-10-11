@@ -16,6 +16,11 @@ import { Component, Vue } from 'vue-property-decorator'
 import { getTimeframeForHuman } from '../../utils/helpers'
 import EditableVue from '../framework/Editable.vue'
 
+const TIMEFRAME_VOL = /v$|k$|vol$/i
+const TIMEFRAME_BPS = /b$|bps?$/i
+const TIMEFRAME_MBPS = /mbps$/i
+const TIMEFRAME_TICK = /t$|ticks?$/i
+
 @Component({
   name: 'TimeframeInput',
   props: {
@@ -70,14 +75,17 @@ export default class TimeframeInput extends Vue {
 
     let output
 
-    if (/b$|bps?$/i.test(trimmed)) {
-      return (output = parseInt(trimmed) + 'b')
-    } else if (/v$|k$|vol?$/i.test(trimmed)) {
-      if (trimmed[trimmed.length - 1] === 'k') {
-        return (output = parseInt(trimmed) * 1000 + 'v')
+    if (TIMEFRAME_BPS.test(trimmed)) {
+      if (TIMEFRAME_MBPS.test(trimmed)) {
+        return parseFloat(trimmed) / 1000 + 'b'
       }
-      return (output = parseInt(trimmed) + 'v')
-    } else if (/t$|ticks?$/i.test(trimmed)) {
+      return parseFloat(trimmed) + 'b'
+    } else if (TIMEFRAME_VOL.test(trimmed)) {
+      if (trimmed[trimmed.length - 1] === 'k') {
+        return (output = parseFloat(trimmed) * 1000 + 'v')
+      }
+      return (output = parseFloat(trimmed) + 'v')
+    } else if (TIMEFRAME_TICK.test(trimmed)) {
       return (output = parseInt(trimmed) + 't')
     } else {
       if (/d$/i.test(trimmed)) {
