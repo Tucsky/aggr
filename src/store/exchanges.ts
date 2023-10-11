@@ -19,10 +19,7 @@ const supportedExchanges = import.meta.env.VITE_APP_EXCHANGES.split(',').map(
 const state = supportedExchanges.reduce(
   (exchangesState: ExchangesState, id: string) => {
     exchangesState[id] = {
-      disabled:
-        /AGGR|CRYPTOCOM|BITGET|BITMART|UNISWAP|HITBTC|PHEMEX|BINANCE_US|SERUM|HUOBI|POLONIEX|GATEIO/.test(
-          id
-        )
+      disabled: false
     }
 
     return exchangesState

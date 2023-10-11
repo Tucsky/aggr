@@ -262,6 +262,7 @@ class Aggregator {
         const aggTrade = this.onGoingAggregations[tradeKey]
 
         if (
+          settings.aggregationLength > 0 && 
           aggTrade.timestamp + settings.aggregationLength > trade.timestamp &&
           aggTrade.side === trade.side
         ) {
@@ -810,9 +811,16 @@ class Aggregator {
     settings[key] = value
 
     if (key === 'aggregationLength') {
+      const signChange = ((this.baseAggregationTimeout || 1) * (value || 1)) < 0
       this.baseAggregationTimeout = value
-      // update trades event handler (if 0 mean simple trade emit else group inc trades)
       this.bindTradesEvent()
+
+      if (signChange) {
+        exchanges.forEach(exchange => 
+            (exchange.id === 'BINANCE' || exchange.id === 'BINANCE_FUTURES') 
+              && exchange.apis.forEach(api => api.close())
+        )
+      }
     }
   }
 
