@@ -84,8 +84,8 @@ export default {
     hide() {
       this.$store.dispatch('app/hideSearch')
     },
-    onTimeframe({ value }) {
-      this.newTimeframe = value
+    onTimeframe(timeframe) {
+      this.newTimeframe = timeframe ? timeframe.value : null
     },
     submit() {
       if (!this.valid) {
