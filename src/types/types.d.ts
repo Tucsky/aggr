@@ -120,3 +120,11 @@ export interface PreviousSearchSelection {
   count: number
   markets: string[]
 }
+
+export interface Ticker {
+  updated?: boolean
+  initialPrice?: number
+  price: number
+  volume?: number
+  volumeDelta?: number
+}

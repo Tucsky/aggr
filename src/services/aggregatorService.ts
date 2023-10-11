@@ -1,5 +1,5 @@
 import store from '@/store'
-import { AggregatorPayload } from '@/types/types'
+import { AggregatorPayload, Ticker } from '@/types/types'
 import { randomString } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
@@ -205,6 +205,19 @@ class AggregatorService extends EventEmitter {
       op: 'disconnect',
       data: markets
     })
+  }
+
+  getAllTickers(): Promise<Ticker[]> {
+    return this.dispatchAsync({
+      op: 'getAllTickers'
+    }) as Promise<Ticker[]>
+  }
+
+  getTicker(market: string): Promise<Ticker | null> {
+    return this.dispatchAsync({
+      op: 'getTicker',
+      data: market
+    }) as Promise<Ticker | null>
   }
 
   normalizeDecimals() {
