@@ -306,7 +306,7 @@
   },
   "macd": {
     "name": "MACD",
-    "version": "1.0.0",
+    "version": "3.4.0",
     "description": "A trend-following momentum indicator that shows the relationship between two exponential moving averages (EMAs) of a security's price",
     "options": {
         "priceScaleId": "macd",
