@@ -555,8 +555,8 @@ export function displayCanvasInPopup(canvas) {
   const canvasHeight = canvas.height
   const maxWidth = 1400
   const maxHeight = 700
-  let popupWidth = canvasWidth + 32
-  let popupHeight = canvasHeight + 56
+  let popupWidth = canvasWidth
+  let popupHeight = canvasHeight
 
   // Ensure the popup size does not exceed the maximum dimensions
   if (popupWidth > maxWidth) {
@@ -568,6 +568,9 @@ export function displayCanvasInPopup(canvas) {
     popupHeight = maxHeight
     popupWidth = (canvasWidth * maxHeight) / canvasHeight
   }
+
+  popupWidth += 32
+  popupHeight += 28
 
   // If the popup window is closed or doesn't exist, create a new one
   if (!popupWindow || popupWindow.closed) {
