@@ -347,7 +347,7 @@ export default class Chart {
 
         return acc
       }, [])
-      .sort((a, b) => b.count - a.count)[0].index
+      .sort((a, b) => b.count - a.count)[0]?.index
 
     this.updateWatermark(marketsForWatermark)
     this.resetPriceScales()
@@ -632,7 +632,9 @@ export default class Chart {
    */
   updateWatermark(marketsUpdate?: string[]) {
     if (marketsUpdate) {
-      if (store.state.settings.normalizeWatermarks) {
+      if (!marketsUpdate.length) {
+        this.watermark = 'Nothing'
+      } else if (store.state.settings.normalizeWatermarks) {
         this.watermark = marketsUpdate.join('\u2009|\u2009')
       } else {
         const othersCount = marketsUpdate.length - 3
@@ -2227,12 +2229,6 @@ export default class Chart {
         lsell: 0,
         empty: true
       }
-    }
-
-    if (renderer.prependedBars) {
-      console.info('initialized renderer with prepend')
-    } else {
-      console.info('initialized without prepend')
     }
 
     this.loadedIndicators = this.loadedIndicators.sort((a, b) => {
