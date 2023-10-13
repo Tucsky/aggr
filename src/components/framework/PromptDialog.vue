@@ -13,6 +13,7 @@
           :placeholder="placeholder"
           v-model="value"
           v-autofocus
+          v-on:keyup.enter="submit"
         />
       </div>
     </form>
