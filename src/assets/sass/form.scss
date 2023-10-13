@@ -148,13 +148,6 @@ textarea.form-control {
   cursor: pointer;
   margin-right: auto;
 
-  &.-slippage input ~ div {
-    &:before,
-    &:after {
-      content: $icon-flash;
-    }
-  }
-
   &.-rip input ~ div {
     &:before,
     &:after {
@@ -182,12 +175,6 @@ textarea.form-control {
     }
   }
 
-  &.-click input ~ div {
-    &:before {
-      content: $icon-click;
-    }
-  }
-
   &.-auto input {
     ~ div {
       width: auto;
@@ -199,6 +186,7 @@ textarea.form-control {
         font-family: inherit;
         position: relative;
         line-height: 1;
+        transform: none;
       }
 
       i {
@@ -224,27 +212,6 @@ textarea.form-control {
       &:after {
         display: none;
       }
-    }
-  }
-
-  &.-cml-abs input {
-    ~ div {
-      &:before,
-      &:after {
-        font-family: inherit;
-      }
-
-      &:before {
-        content: 'CML';
-      }
-
-      &:after {
-        content: 'ABS';
-      }
-    }
-
-    &:not(:checked) ~ div {
-      background-color: $blue;
     }
   }
 
@@ -343,6 +310,10 @@ textarea.form-control {
 
     span {
       line-height: 1;
+
+      > i {
+        vertical-align: text-bottom;
+      }
     }
   }
 

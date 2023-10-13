@@ -38,6 +38,7 @@ export default {
   border: 0.25rem solid var(--theme-color-o20);
   border-top-color: currentColor;
   animation: spin 1s infinite linear;
+  cursor: progress;
 
   &-wrapper {
     position: fixed;
@@ -50,8 +51,8 @@ export default {
   }
 
   &--small {
-    width: 1em;
-    height: 1em;
+    width: 0.75rem;
+    height: 0.75rem;
   }
 }
 </style>

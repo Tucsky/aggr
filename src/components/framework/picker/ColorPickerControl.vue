@@ -102,6 +102,7 @@ export default {
     border-radius: 0.25rem;
     outline: 1px solid #0000000f;
     background-color: var(--background-color);
+    box-sizing: border-box;
 
     i {
       display: block;
