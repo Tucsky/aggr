@@ -228,9 +228,11 @@ export default class Chart {
   priceScales: string[] = []
   isLoading = false
   hasReachedEnd = false
+  hasMixedSourceHistory = false
 
   private activeChunk: Chunk
   private queuedTrades: Trade[] = []
+  private historicalMarkets: string[]
   private serieBuilder: SerieBuilder
   private seriesIndicatorsMap: { [serieId: string]: IndicatorReference } = {}
   private previousLogicalRange: string
@@ -334,6 +336,8 @@ export default class Chart {
 
     this.marketsFilters = marketsFilters
     this.marketsIndexes = Object.keys(marketsIndexes)
+    this.historicalMarkets = historicalService.filterOutUnavailableMarkets(markets)
+    this.hasMixedSourceHistory = this.historicalMarkets.length !== markets.length
     this.mainIndex = this.marketsIndexes
       .reduce((acc, index) => {
         acc.push({
@@ -1536,10 +1540,13 @@ export default class Chart {
             bar.time || this.activeRenderer.timestamp,
             indicatorsIds
           )
-          Array.prototype.unshift.apply(
-            bars,
-            temporaryRenderer.prependedBars
-          )
+
+          if (temporaryRenderer.prependedBars) {
+            Array.prototype.unshift.apply(
+              bars,
+              temporaryRenderer.prependedBars
+            )
+          }
         }
       }
 
@@ -1738,6 +1745,10 @@ export default class Chart {
   }
 
   getPrependedBars(timestamp) {
+    if (!this.hasMixedSourceHistory) {
+      return null
+    }
+
     if (this.activeRenderer && this.activeRenderer.prependedBars && this.activeRenderer.prependedBars.length) {
       if (this.activeRenderer.prependedBars[0].time !== timestamp) {
         this.activeRenderer.prependedBars = this.activeRenderer.prependedBars.map(bar => ({
@@ -1806,15 +1817,18 @@ export default class Chart {
     }
 
     this.resetBar(this.activeRenderer.sources[identifier])
-    this.activeRenderer.prependedBars.push({
-      ...this.resetBar({
-        close: close
-      }),
-      pair: pair,
-      exchange: exchange,
-      cbuy: 1,
-      csell: 1,
-    })
+
+    if (this.activeRenderer.prependedBars) {
+      this.activeRenderer.prependedBars.push({
+        ...this.resetBar({
+          close: close
+        }),
+        pair: pair,
+        exchange: exchange,
+        cbuy: 1,
+        csell: 1,
+      })
+    }
   }
 
   async renderAlerts() {
@@ -2213,6 +2227,12 @@ export default class Chart {
         lsell: 0,
         empty: true
       }
+    }
+
+    if (renderer.prependedBars) {
+      console.info('initialized renderer with prepend')
+    } else {
+      console.info('initialized without prepend')
     }
 
     this.loadedIndicators = this.loadedIndicators.sort((a, b) => {
@@ -2774,11 +2794,7 @@ export default class Chart {
     const alreadyHasData =
       this.chartCache.cacheRange && this.chartCache.cacheRange.from
 
-    const historicalMarkets = historicalService.filterOutUnavailableMarkets(
-      store.state.panes.panes[this.paneId].markets
-    )
-
-    if (!historicalMarkets.length) {
+    if (!this.historicalMarkets.length) {
       return
     }
 
@@ -2840,13 +2856,13 @@ export default class Chart {
     )
     const bytesPerBar = 112
     const estimatedSize = formatBytes(
-      barsCount * historicalMarkets.length * bytesPerBar
+      barsCount * this.historicalMarkets.length * bytesPerBar
     )
 
     store.dispatch('app/showNotice', {
       id: 'fetching-' + this.paneId,
       timeout: 15000,
-      title: `Fetching ${barsCount * historicalMarkets.length
+      title: `Fetching ${barsCount * this.historicalMarkets.length
         } bars (~${estimatedSize})`,
       type: 'info'
     })
@@ -2858,7 +2874,7 @@ export default class Chart {
         rangeToFetch.from * 1000,
         rangeToFetch.to * 1000,
         timeframe,
-        historicalMarkets
+        this.historicalMarkets
       )
       .then(results => this.onHistorical(results))
       .catch(err => {

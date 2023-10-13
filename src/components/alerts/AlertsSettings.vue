@@ -20,7 +20,7 @@
         <label>Line style</label>
         <dropdown-button
           class="-outline form-control -arrow flex-grow-1 w-100"
-          v-model="alertsLineStyle"
+          :value="alertsLineStyle"
           :options="{
             0: 'Solid',
             1: 'Dotted',
@@ -58,18 +58,16 @@
       <div class="form-group mb16 mt16">
         <label><i class="icon-click mr4"></i> Control</label>
         <label
-          class="checkbox-control -click d-flex -wrap -auto"
+          class="checkbox-control d-flex -aggr -auto -auto"
           @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
           title="Place alerts faster ⚡️"
           v-tippy
         >
           <input type="checkbox" class="form-control" :checked="alertsClick" />
-          <div v-if="alertsClick" class="mr4">
-            <code>1 CLICK</code>&nbsp;⚡️
-          </div>
-          <div v-else class="mr4">
-            <code>ALT</code> + <code>CLICK</code><br />
-          </div>
+          <div 
+            on="1 CLICK ⚡️"
+            off="ALT+CLICK"
+          ></div>
         </label>
       </div>
       <div class="form-group mt16 mb16">
@@ -77,7 +75,7 @@
           ><i class="icon-music-note mr4"></i> Alert sound</label
         >
         <button
-          class="btn -file -blue -large -cases"
+          class="btn -file -blue -cases"
           @change="handleAlertSoundFile"
         >
           <i class="icon-upload mr8"></i> {{ alertSound || 'Browse' }}

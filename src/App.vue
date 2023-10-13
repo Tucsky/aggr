@@ -150,7 +150,6 @@ export default class App extends Vue {
     aggregatorService.on('prices', this.updatePrice)
 
     document.addEventListener('keydown', this.onDocumentKeyPress)
-    window.addEventListener('blur', this.onBlur)
   }
 
   beforeDestroy() {
@@ -251,10 +250,6 @@ export default class App extends Vue {
     } else if (/^[0-9]$/i.test(event.key)) {
       this.$store.dispatch('app/showTimeframe')
     }
-  }
-
-  onBlur() {
-    this.$store.commit('app/SET_FOCUSED_PANE', null)
   }
 
   async resetAndReload() {
