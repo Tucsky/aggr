@@ -171,7 +171,7 @@ class DialogService {
       return
     }
 
-    return this.openAsPromise(PromptDialog, options)
+    return this.openAsPromise(PromptDialog, options, 'prompt')
   }
 }
 
