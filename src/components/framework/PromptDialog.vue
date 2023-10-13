@@ -19,7 +19,7 @@
     </form>
 
     <template v-slot:footer>
-      <a href="javascript:void(0);" class="btn -text" @click="close(false)"
+      <a href="javascript:void(0);" class="btn -text" @click="close()"
         >Cancel</a
       >
       <button type="button" class="btn -green ml8 -large" @click="submit">
