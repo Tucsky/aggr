@@ -999,6 +999,10 @@ export default {
     },
 
     onKeydown(event) {
+      if (dialogService.isDialogOpened('prompt')) {
+         return false;
+      }
+
       switch (event.key) {
         case 'Enter':
           event.preventDefault()
