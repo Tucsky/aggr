@@ -222,11 +222,6 @@ export default class App extends Vue {
 
     const activeElement = document.activeElement as HTMLElement
 
-    if (event.keyCode === 27) {
-      this.$store.dispatch('app/hideSearch')
-      return
-    }
-
     if (
       this.$store.state.app.showSearch ||
       event.metaKey ||
