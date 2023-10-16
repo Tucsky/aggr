@@ -353,6 +353,16 @@ const mutations = {
         value: state.preferQuoteCurrencySize
       }
     })
+
+    this.dispatch('app/showNotice', {
+      type: 'error',
+      icon: 'icon-warning -large pt0',
+      html: true,
+      title: `<div class="ml8"><strong>Reload required</strong><br>A reload is required to change the preferred currency.</div>`,
+      action() {
+        window.location.reload()
+      }
+    })
   },
   TOGGLE_SLIPPAGE(state) {
     const values: SlippageMode[] = [false, 'bps', 'price']

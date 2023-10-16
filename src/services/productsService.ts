@@ -327,7 +327,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   if (exchangeId === 'BYBIT') {
     localSymbol = localSymbol.replace(/-SPOT$/, '')
   } else if (exchangeId === 'KRAKEN') {
-    localSymbol = localSymbol.replace(/PI_/, '').replace(/FI_/, '')
+    localSymbol = localSymbol.replace(/(PI|FI|PF)_/, '')
   } else if (exchangeId === 'BITFINEX') {
     localSymbol = localSymbol
       .replace(/(.*)F0:(\w+)F0/, '$1-$2')

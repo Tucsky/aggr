@@ -150,12 +150,16 @@
     <ToggableSection
       v-if="currentWorkspace"
       id="settings-trades"
-      title="Trades"
+      title="Data"
       description="aggregation, slippage, currency"
       inset
     >
-      <div class="form-group column mb8">
-        <label class="checkbox-control -aggr -auto flex-grow-1">
+      <div class="form-group column">
+        <label 
+          class="checkbox-control -aggr -auto flex-grow-1"
+          title="Granularity preference"
+          v-tippy="{ placement: 'left', boundary: 'window' }"
+        >
           <input
             type="checkbox"
             class="form-control"
@@ -163,14 +167,35 @@
             @click.prevent="$store.commit('settings/TOGGLE_AGGREGATION')"
           />
           <div :on="aggregationLengthLabel" off="No aggregation"></div>
-          <span v-if="aggregationLength"
-            >{{ aggregationLengthLabel }} {{ aggregationLength < 0 ? 'trades' : 'aggregation' }}</span
-          >
-          <span v-else>No aggregation</span>
+          <span v-if="aggregationLength < 0">
+            <strong>RAW</strong> trades <i
+              class="icon-info"
+              v-tippy="{ followCursor: true, distance: 32 }"
+              title="Will pull Binance tick data"
+            ></i>
+          </span>
+          <span v-else-if="aggregationLength">
+            {{ aggregationLengthLabel }} aggregation <i 
+              class="icon-info"
+              v-tippy="{ followCursor: true, distance: 32 }"
+              :title="`Will pull aggregated data <br>so that 1 tick = ${aggregationLength}ms`"
+            ></i>
+          </span>
+          <span v-else>
+            No aggregation
+            <i 
+              class="icon-info"
+              v-tippy="{ followCursor: true, distance: 32 }"
+              title="Will pull aggregated Binance data but won't aggregate on top of it"
+            ></i>
+          </span>
         </label>
       </div>
+      <p v-if="aggregationLength < 0" class="form-feedback mt4">
+        <i class="icon-warning"></i> Processing raw data eats up CPU power
+      </p>
 
-      <div class="form-group mb8">
+      <div class="form-group mt8 mb8">
         <label
           class="checkbox-control -auto"
           :title="
@@ -180,7 +205,7 @@
               ? 'Show slippage in basis point (bps)'
               : 'Slippage disabled'
           "
-          v-tippy="{ placement: 'top', boundary: 'window' }"
+          v-tippy="{ placement: 'left', boundary: 'window' }"
         >
           <input
             type="checkbox"
@@ -203,7 +228,7 @@
       <div class="form-group">
         <label
           class="checkbox-control checkbox-control-input -auto"
-          v-tippy="{ placement: 'top', boundary: 'window' }"
+          v-tippy="{ placement: 'left', boundary: 'window' }"
           title="Size display preference"
         >
           <input
@@ -221,10 +246,7 @@
           <div on="quote currency" off="base currency"></div>
           <span>
             <span class="text-success">
-              (<i
-                :class="preferQuoteCurrencySize ? 'icon-quote' : 'icon-base'"
-              ></i
-              >)
+              (<i class="icon-currency"></i>)
             </span>
           </span>
         </label>

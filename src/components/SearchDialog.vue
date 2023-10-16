@@ -3,7 +3,7 @@
     <template v-slot:header>
       <div v-if="selectedPaneId">
         <div class="dialog__title">
-          Connect
+          Connect →
           <code class="-filled -green">
             <span>{{ paneName }}</span>
             <button
@@ -216,7 +216,7 @@
             :key="market.id"
             class="search-dialog__tags-item btn -theme"
             :class="{ '-green': activeMarkets.indexOf(market.id) !== -1 }"
-            title="Click to remove"
+            :title="`Click to remove ${market.id}`"
             @click.stop.prevent="toggleMarkets(market.id)"
           >
             <template v-if="!market.exchange">
@@ -237,7 +237,6 @@
           @input="onInput"
         />
         <button
-          v-if="selection.length"
           class="btn search-dialog__tags-delete -text -small"
           @click="clearSelection"
           title="Clear"
@@ -344,15 +343,28 @@
             </tr>
           </tbody>
         </table>
-
-        <div class="search-dialog__results-footer mt8 d-flex">
+        
+        <transition name="fade-scale">
+          <div 
+            v-if="!isPreloading && !pagesCount" 
+            class="search-dialog__results-empty" 
+            :style="{ backgroundImage: `url(${noResultsPng})` }"
+          >
+            <p
+              class="shake-horizontal" 
+              v-html="noResultsMessage" 
+              @click="$event.target.tagName === 'BUTTON' && clearSelection()"
+            ></p>
+          </div>
+        </transition>
+        <div v-if="pagesCount" class="search-dialog__results-footer mt8 d-flex">
           <button class="btn -text mrauto" @click="addAll">
             <i class="icon-plus mr8"></i> add all
           </button>
           <button
             v-for="(i, index) in pagination"
             :key="index"
-            class="btn -text search-dialog__results-page"
+            class="btn -text search-dialog__results-footer-page"
             :class="[page === i && '-active -theme']"
             @click="goPage(i)"
           >
@@ -398,6 +410,7 @@ import {
   stripStableQuote
 } from '@/services/productsService'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
+import noResultsPng from '@/assets/noresults.png';
 
 const RESULTS_PER_PAGE = 25
 
@@ -432,6 +445,8 @@ export default {
     maxPages: 5,
     selection: [],
     isLoading: false,
+    noResultsPng,
+    noResultsMessage: null,
     isPreloading: false,
     productsReady: false,
     selectedPaneId: null,
@@ -766,6 +781,9 @@ export default {
     },
     groupsCount() {
       return Object.keys(this.groupedSelection).length
+    },
+    showNoResults() {
+      return !this.isPreloading && !this.pagesCount
     }
   },
 
@@ -778,6 +796,11 @@ export default {
     async searchExchanges() {
       if (await this.ensureIndexedProducts()) {
         this.cacheProducts()
+      }
+    },
+    showNoResults(value) {
+      if (value) {
+        this.noResultsMessage = this.getNoResultsMessage()
       }
     }
   },
@@ -839,7 +862,6 @@ export default {
         action: 'Rename',
         input: this.paneName
       })
-
       if (name !== null && name !== this.paneName) {
         this.$store.commit('panes/SET_PANE_NAME', {
           id: this.selectedPaneId,
@@ -873,9 +895,16 @@ export default {
 
       return false
     },
-    detargetPane() {
+    async detargetPane() {
       this.$store.commit('app/SET_FOCUSED_PANE', null)
       this.selectedPaneId = null
+      if (this.selection.join('') !== this.originalSelection.join('') && !(await dialogService.confirm({
+        title: `Override selection ?`,
+        message: `Replace the existing selection<br>with the app's current active connections ?`,
+        html: true
+      }))) {
+        return
+      }
       this.initSelection()
     },
     initSelection() {
@@ -1039,6 +1068,10 @@ export default {
             } else {
               this.toggleMarkets([this.slicedResults[this.activeIndex].id])
             }
+
+            if (this.activeIndex === 0) {
+              this.activeIndex = -1
+            }
           } else if (this.activeIndex === -1) {
             this.submit()
           }
@@ -1046,7 +1079,7 @@ export default {
 
         case 'ArrowDown':
         case 'ArrowUp':
-          if (this.slicedResults.length) {
+          if (this.pagesCount) {
             if (event.key === 'ArrowUp') {
               this.activeIndex = Math.max(-1, this.activeIndex - 1)
             } else {
@@ -1206,6 +1239,23 @@ export default {
           break;
         }
       }
+    },
+    getNoResultsMessage() {
+      const options = [
+        "Oops! Looks like the market's playing hide and seek. <button>Try searching again</button>! 🐮🐻💰",
+        "Bulls and bears are puzzled! No coins found.",
+        "The market's taking a breather. <button>Try another search</button>!",
+        "Even our bullish friend couldn't find that coin!",
+        "Bear with us! No coins matched your search.",
+        "Lost in the crypto maze? <button>Let's search again</button>!",
+        "Coins in limbo! Adjust your filters or <button>try a new term</button>.",
+        "Our bear's got the blues, no results found!",
+        "Tales of the missing coins! <button>Refine your search</button>.",
+        "Crypto hideout! Nothing turned up, <button>try again</button>.",
+        "Coins playing hard to get? <button>Let's give it another shot</button>!"
+      ];
+
+      return options[Math.floor(Math.random()*options.length)];
     }
   }
 }
@@ -1229,9 +1279,10 @@ export default {
   }
 
   &__side {
-    width: 12.5em;
-    min-width: 12.5em;
+    width: 14rem;
+    min-width: 14rem;
     overflow: auto;
+    border-right: 1px solid var(--theme-background-150);
 
     .dialog--small & {
       display: none;
@@ -1253,16 +1304,15 @@ export default {
     overflow: auto;
     display: flex;
     flex-direction: column;
-
-    @media screen and (min-width: 551px) {
-      padding-left: 0;
-    }
+    background-color: var(--theme-base-o25);
   }
 
   &__results {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+    min-height: 1px;
+    position: relative;
 
     table {
       border: 0;
@@ -1271,11 +1321,18 @@ export default {
       width: 100%;
     }
 
-    tr.-action {
+    tr {
       color: var(--theme-color-300);
 
-      padding-top: 1px;
+      + tr:not(:last-child) > td {
+        border-top: 1px solid var(--theme-background-100);
+      }
 
+      &:hover {
+        background-color: transparent;
+      }
+
+      &.-active,
       &:hover {
         color: var(--theme-color-base);
 
@@ -1283,38 +1340,73 @@ export default {
           color: var(--theme-color-200);
         }
       }
-    }
 
-    tr.-active {
-      background-color: var(--theme-color-o20);
+      &.-active {
+        background-color: var(--theme-background-100);
+      }
     }
 
     td {
-      padding: 0.375em 0.5rem;
+      padding: 0.5rem;
+      line-height: 1;
+      white-space: nowrap;
     }
 
     &-footer {
       position: sticky;
-      bottom: -1px;
-      backdrop-filter: blur(0.25em);
+      bottom: 0;
+      backdrop-filter: blur(0.25rem);
       background-color: var(--theme-background-o75);
       position: sticky;
-      border-top: 1px solid var(--theme-background-150);
+      border-top: 1px solid var(--theme-background-100);
       align-items: center;
       padding: 0.5rem;
       gap: 0.25rem;
       margin-top: auto;
+
+      &-page {
+        opacity: 0.5;
+        width: 1.75rem;
+        justify-content: center;
+        
+        &.-active,
+        &:hover {
+          opacity: 1;
+          background-color: var(--theme-background-150) !important;
+        }
+      }
     }
 
-    &-page {
-      opacity: 0.5;
-      width: 1.75rem;
+    &-empty {
+      display: flex;
+      flex-direction: column;
       justify-content: center;
+      align-items: center;
+      font-size: 1.125rem;
+      flex-grow: 1;
+      gap: 1rem;
+      max-height: 100%;
+      position: relative;
+      background-color: var(--theme-background-50);
+      background-blend-mode: lighten;
+      background-size: cover;
+      background-position: center center;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 0;
       
-      &.-active,
-      &:hover {
-        opacity: 1;
-        background-color: var(--theme-background-150) !important;
+      p {
+        max-width: 75%;
+        text-align: center;
+        margin: 0;
+      }
+
+      ::v-deep button {
+        text-decoration: underline;
+        cursor: pointer;
       }
     }
   }
@@ -1322,21 +1414,23 @@ export default {
   &__tags {
 
     &-item {
-      padding: 0.25em;
+      padding: 0.25rem;
 
       .dialog--small & {
-        padding: 0.125em;
+        padding: 0.125rem;
       }
 
       .dialog--large & {
-        padding: 0.375em;
+        padding: 0.375rem;
       }
     }
 
     &-delete {
       position: absolute;
-      top: 0;
+      top: 50%;
       right: 0;
+      margin: 0 0.5rem 0;
+      transform: translateY(-50%);
     }
 
     input {
@@ -1344,9 +1438,9 @@ export default {
       background: 0;
       color: inherit;
       font-family: inherit;
-      padding: 0.25em;
+      padding: 0.25rem;
       flex-grow: 1;
-      font-size: 1em;
+      font-size: 1rem;
     }
   }
 
@@ -1366,23 +1460,23 @@ export default {
 
   &-selection {
     position: relative;
-    min-width: 19em;
+    min-width: 19rem;
     border: 0;
     max-height: 50%;
     overflow: auto;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25em;
+    gap: 0.25rem;
     align-items: flex-start;
     justify-content: flex-start;
     flex-shrink: 0;
-    padding-right: 1em;
+    padding-right: 1rem;
 
     &.-sticky {
       @media screen and (min-width: 550px) {
-        backdrop-filter: blur(0.25em);
+        backdrop-filter: blur(0.25rem);
         background-color: var(--theme-background-o75);
-        border-bottom: 1px solid var(--theme-background-150);
+        border-bottom: 1px solid var(--theme-background-100);
         position: sticky;
         top: 0;
         z-index: 2;
@@ -1395,27 +1489,28 @@ export default {
       top: 0;
       right: 0;
       display: flex;
-      gap: 0.25em;
-      padding: 0.25em;
+      gap: 0.25rem;
+      padding: 0.25rem;
     }
   }
 
   &__group-count {
-    width: 2em;
+    width: 2rem;
     display: inline-flex;
     justify-content: center;
+
     .badge {
       font-weight: 400;
       text-align: center;
       color: var(--theme-color-base);
-      font-size: 1em;
+      font-size: 1rem;
       line-height: 0;
       margin: 0;
     }
   }
 
   &__exchange-logo {
-    font-size: 0.75em;
+    font-size: 1rem;
     color: var(--theme-background-300);
   }
 

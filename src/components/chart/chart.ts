@@ -165,7 +165,6 @@ export interface Renderer {
   timeframe: number
   timestamp: number
   localTimestamp: number
-  renderedTimestamp?: number
   length: number
   bar: Bar
   sources: { [name: string]: Bar }
@@ -249,6 +248,7 @@ export default class Chart {
   private _alertsRendered: boolean
   private _timeToRecycle: number
   private _recycleTimeout: number
+  renderedTimestamp: any
 
   constructor(id: string, chartElement: HTMLElement) {
     this.paneId = id
@@ -482,8 +482,6 @@ export default class Chart {
       if (value.auto) {
         setTimeout(() => this.refreshAutoDecimals(null, id))
       }
-    } else if (key === 'priceScaleId') {
-      this.ensurePriceScale(value, indicator)
     }
 
     for (let i = 0; i < indicator.apis.length; i++) {
@@ -520,7 +518,7 @@ export default class Chart {
    */
   optionRequiresRedraw(key: string) {
     const redrawOptions =
-      /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor|compositeOperation|src/i
+      /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor|compositeOperation|src|priceScaleId/i
 
     if (redrawOptions.test(key)) {
       return true
@@ -925,11 +923,9 @@ export default class Chart {
     delete renderer.indicators[indicator.id]
   }
 
-  ensurePriceScale(priceScaleId: string, indicator: LoadedIndicator) {
-    if (this.priceScales.indexOf(priceScaleId) !== -1) {
-      // chart already knows about that price scale (and doesn't need update)
-      return
-    } else {
+  ensurePriceScale(serieOptions: IndicatorOption) {
+    const { priceScaleId, scaleMargins } = serieOptions
+    if (this.priceScales.indexOf(priceScaleId) === -1) {
       // register pricescale
       this.priceScales.push(priceScaleId)
     }
@@ -937,13 +933,23 @@ export default class Chart {
     let priceScale: PriceScaleOptions | any =
       store.state[this.paneId].priceScales[priceScaleId]
 
-    if (!priceScale) {
-      // create default price scale
-      priceScale = {}
+    if (
+      !priceScale || 
+      (scaleMargins && 
+        (!priceScale.scaleMargins 
+          || (scaleMargins.top !== priceScale.scaleMargins.top || 
+            scaleMargins.bottom !== priceScale.scaleMargins.bottom
+          )
+        )
+    )) {
+      if (!priceScale) {
+        // create default price scale
+        priceScale = {}
+      }
 
-      if (indicator && indicator.options.scaleMargins) {
+      if (scaleMargins) {
         // use indicator priceScale
-        priceScale.scaleMargins = indicator.options.scaleMargins
+        priceScale.scaleMargins = scaleMargins
       } else {
         priceScale.scaleMargins = {
           top: 0.1,
@@ -963,9 +969,13 @@ export default class Chart {
 
   resetPriceScales() {
     for (let i = 0; i < this.priceScales.length; i++) {
-      this.chartInstance.priceScale(this.priceScales[i]).applyOptions({
-        autoScale: true
-      })
+      try {
+        this.chartInstance.priceScale(this.priceScales[i]).applyOptions({
+          autoScale: true
+        })
+      } catch (error) {
+        // priceScale might not exist with this id anymore
+      }
     }
   }
 
@@ -1260,8 +1270,6 @@ export default class Chart {
         }
       }
 
-      const amount = trade.price * trade.size
-
       if (
         !this.activeRenderer.sources[identifier] ||
         typeof this.activeRenderer.sources[identifier].pair === 'undefined'
@@ -1279,12 +1287,12 @@ export default class Chart {
       const isActive = this.marketsFilters[identifier]
 
       if (trade.liquidation) {
-        this.activeRenderer.sources[identifier]['l' + trade.side] += amount
+        this.activeRenderer.sources[identifier]['l' + trade.side] += trade.amount
 
         this.activeRenderer.bar.empty = false
 
         if (isActive) {
-          this.activeRenderer.bar['l' + trade.side] += amount
+          this.activeRenderer.bar['l' + trade.side] += trade.amount
         }
 
         continue
@@ -1309,12 +1317,12 @@ export default class Chart {
       }
 
       this.activeRenderer.sources[identifier]['c' + trade.side] += trade.count
-      this.activeRenderer.sources[identifier]['v' + trade.side] += amount
+      this.activeRenderer.sources[identifier]['v' + trade.side] += trade.amount
 
       this.activeRenderer.sources[identifier].empty = false
 
       if (isActive) {
-        this.activeRenderer.bar['v' + trade.side] += amount
+        this.activeRenderer.bar['v' + trade.side] += trade.amount
         this.activeRenderer.bar['c' + trade.side] += trade.count
 
         this.activeRenderer.bar.empty = false
@@ -1364,52 +1372,24 @@ export default class Chart {
   }
 
   /**
-   * then render indicatorsIds (or all if not specified) from new set of bars
-   * this replace data of series, erasing current data on chart
-   * if no indicatorsId is specified, all indicators on chart are rendered from start to finish
-   * then merge indicator's states from temporary renderer used to render all thoses bars into activeRenderer
-   *
-   * @param {Bar[]} bars
-   * @param {string} indicatorId
-   * @param {boolean} silent
+   * Prepare the bars for render
+   * Takes a bars array (from cache)
+   * Merge with bar from activeRenderer
+   * So that 1 bar = 1 source at 1 timestamp
+   * @param bars cached bars
+   * @returns {void} only bars content changes
    */
-  renderBars(bars: Bar[], indicatorId, silent?: boolean) {
-    let indicatorsIds
-    let drawReferences = false
-
-    if (indicatorId) {
-      const indicator = this.getLoadedIndicator(indicatorId)
-      if (
-        indicator.options.priceScaleId === 'left' ||
-        indicator.options.priceScaleId === 'right'
-      ) {
-        drawReferences = true
-      }
-      indicatorsIds = [...this.getReferencedIndicators(indicator), indicatorId]
-    }
-
-    this.clearPriceLines(indicatorsIds)
-
-    const computedSeries = {}
-    let from = null
-    let to = null
-
-    let temporaryRenderer: Renderer
-    let computedBar: any
-
+  mergeBarsWithActiveBars(bars) {
     if (!bars.length) {
       if (
         this.activeRenderer &&
         this.activeRenderer.bar &&
         !this.activeRenderer.bar.empty
       ) {
-        bars = Object.values(this.activeRenderer.sources).filter(
+        Array.prototype.push.apply(bars, 
+          Object.values(this.activeRenderer.sources).filter(
           bar => bar.empty === false
-        )
-      }
-
-      if (!bars.length) {
-        return
+        ))
       }
     } else if (
       this.activeRenderer &&
@@ -1454,6 +1434,46 @@ export default class Chart {
         }
       }
     }
+  }
+
+  /**
+   * then render indicatorsIds (or all if not specified) from new set of bars
+   * this replace data of series, erasing current data on chart
+   * if no indicatorsId is specified, all indicators on chart are rendered from start to finish
+   * then merge indicator's states from temporary renderer used to render all thoses bars into activeRenderer
+   *
+   * @param {Bar[]} bars
+   * @param {string} indicatorId
+   * @param {boolean} silent
+   */
+  renderBars(bars: Bar[], indicatorId, silent?: boolean) {
+    let indicatorsIds
+    let drawReferences = false
+
+    if (indicatorId) {
+      const indicator = this.getLoadedIndicator(indicatorId)
+      if (
+        indicator.options.priceScaleId === 'left' ||
+        indicator.options.priceScaleId === 'right'
+      ) {
+        drawReferences = true
+      }
+      indicatorsIds = [...this.getReferencedIndicators(indicator), indicatorId]
+    }
+
+    this.clearPriceLines(indicatorsIds)
+    this.mergeBarsWithActiveBars(bars)
+
+    if (!bars.length) {
+      return
+    }
+
+    const computedSeries = {}
+    let from = null
+    let to = null
+
+    // new renderer (will replace activeRenderer)
+    let temporaryRenderer: Renderer
 
     let barCount = 0
 
@@ -1477,7 +1497,7 @@ export default class Chart {
 
           to = temporaryRenderer.timestamp
 
-          computedBar = this.computeBar(temporaryRenderer, indicatorsIds)
+          const computedBar = this.computeBar(temporaryRenderer, indicatorsIds)
 
           for (const id in computedBar) {
             if (
@@ -1515,24 +1535,13 @@ export default class Chart {
               for (let j = 0; j < missingBars; j++) {
                 this.incrementRendererBar(temporaryRenderer)
 
-                for (const id in computedBar) {
-                  if (
-                    !drawReferences &&
-                    indicatorsIds &&
-                    indicatorId !== id &&
-                    indicatorsIds.indexOf(id) !== -1
-                  ) {
-                    continue
-                  }
-
-                  if (typeof computedSeries[id] === 'undefined') {
-                    computedSeries[id] = []
-                  }
-
+                for (const id in computedSeries) {
                   computedSeries[id].push({
                     time: temporaryRenderer.localTimestamp
                   })
                 }
+
+                barCount++
               }
             }
           }
@@ -1571,7 +1580,6 @@ export default class Chart {
       temporaryRenderer.sources[marketKey].active = isActive
     }
     if (this.activeRenderer) {
-      this.activeRenderer.bar = temporaryRenderer.bar
       for (const id in temporaryRenderer.indicators) {
         this.activeRenderer.indicators[id] = temporaryRenderer.indicators[id]
       }
@@ -1645,10 +1653,17 @@ export default class Chart {
         indicator,
         plot
       )
+
       const serieOptions = {
         ...defaultSerieOptions,
         ...(defaultPlotsOptions[plot.type] || {}),
         ...indicator.options,
+        ...(priceScale && priceScale.scaleMargins ? {
+          scaleMargins: {
+            top: priceScale.scaleMargins.top, 
+            bottom: priceScale.scaleMargins.bottom 
+          }
+        } : {}),
         ...customPlotOptions
       }
 
@@ -1665,15 +1680,15 @@ export default class Chart {
       series.push(plot.id)
 
       indicator.apis.push(api)
+
+      // ensure chart is aware of pricescale used by this indicator
+      this.ensurePriceScale(serieOptions)
     }
 
     store.commit(this.paneId + '/SET_INDICATOR_SERIES', {
       id: indicator.id,
       series
     })
-
-    // ensure chart is aware of pricescale used by this indicator
-    this.ensurePriceScale(indicator.options.priceScaleId, indicator)
 
     // attach indicator to active renderer
     this.bindIndicator(indicator, this.activeRenderer)
@@ -1682,6 +1697,7 @@ export default class Chart {
   refreshPriceScale(priceScaleId: string) {
     const priceScale: PriceScaleSettings =
       store.state[this.paneId].priceScales[priceScaleId]
+      
     this.chartInstance.priceScale(priceScaleId).applyOptions({
       scaleMargins: priceScale.scaleMargins,
       mode: priceScale.mode
@@ -2257,10 +2273,6 @@ export default class Chart {
    * @param {Renderer?} renderer bar to use as reference
    */
   nextBar(timestamp, renderer?: Renderer) {
-    if (renderer === this.activeRenderer && renderer.bar.empty) {
-      return
-    }
-
     if (
       this.fillGapsWithEmpty &&
       renderer === this.activeRenderer &&
@@ -2484,10 +2496,7 @@ export default class Chart {
         silent: true
       })
 
-      const priceScale =
-        store.state[this.paneId].priceScales[
-        this.loadedIndicators[i].options.priceScaleId
-        ]
+      const priceScale = store.state[this.paneId].priceScales[this.loadedIndicators[i].options.priceScaleId]
 
       store.commit(this.paneId + '/SET_PRICE_SCALE', {
         id: this.loadedIndicators[i].options.priceScaleId,
