@@ -34,8 +34,8 @@
             key="step-0"
           >
             <p class="form-feedback mt0 mb0">
-              Can't connect to {{ restrictedUrl }}.&nbsp;<i
-                class="icon-info -lower"
+              Can't connect to {{ restrictedUrl }}<i
+                class="icon-info -lower ml4"
                 :title="`Exchange API refused to connect<br>or blocked connection.`"
                 v-tippy="{ boundary: 'window', distance: 24 }"
               ></i>
@@ -46,18 +46,18 @@
             class="connection-issue-dialog__step"
             key="step-1"
           >
-            <div>
+            <!--<div>
               <ToggableSection :model="sections" outline auto-close>
-                <template #title> Potential causes </template>
+                <template #title> Potential causes </template>-->
 
                 <p class="-inline mb0 mt0">
                   The exchange API is unreachable due to
-                  <span
-                    title="Since the end of November
-              2022, Binance started rejecting API calls from US IPs."
+                  <u
+                    title="Beginning in late November 2022, Binance began declining API requests originating from US IP addresses."
                     v-tippy
-                    >geo restriction</span
                   >
+                    geo restriction
+                  </u>
                   or something else.
                 </p>
                 <ol class="mb0">
@@ -77,7 +77,7 @@
                   </li>
                   <li>
                     <p>
-                      Disable all binance pairs so you won't see the issue
+                      Disable all {{ exchangeId }}'s pairs so you won't see the issue
                       anymore
                     </p>
 
@@ -108,7 +108,7 @@
                     </button>
                   </li>
 
-                  <li>
+                  <!--<li>
                     <p>Connect through a proxy instead</p>
 
                     <button
@@ -119,14 +119,15 @@
                     >
                       I setup a proxy →
                     </button>
-                  </li>
+                  </li>-->
                 </ol>
-              </ToggableSection>
+              <!--</ToggableSection>
               <ToggableSection
                 :model="sections"
                 class="mb16"
                 outline
                 auto-close
+                disabled
               >
                 <template #title> Proxy install </template>
                 <p class="mt0">
@@ -147,18 +148,17 @@
                   <i class="icon-download"></i>
                   <span class="ml8">Download server code</span>
                 </a>
-              </ToggableSection>
+              </ToggableSection>-->
             </div>
-            <button
+            <!--<button
               type="button"
               class="btn -red -cases -large w-100"
               @click="disableExchange"
               :disable="selectedAction"
             >
-              <i class="icon-cross"></i>&nbsp;
-              <i class="mrauto" :class="'icon-' + exchangeId"></i>
-              Disable&nbsp;
-              <span>{{ exchangeId }}</span>
+              <i class="icon-cross mrauto"></i>
+              Disable&nbsp;<span>{{ exchangeId }}</span>
+              <i class="ml4" :class="'icon-' + exchangeId"></i>
             </button>
             <div class="divider -horizontal" style="display: flex">Or</div>
             <div class="form-group">
@@ -171,8 +171,9 @@
                 placeholder="ws://localhost:3000"
                 v-model="proxyUrl"
                 ref="input"
+                disabled
               />
-            </div>
+            </div>-->
           </div>
           <div
             v-else-if="stepIndex === 2"
@@ -199,7 +200,7 @@
           >
             Back
           </button>
-          <button
+          <!--<button
             v-if="stepIndex"
             :disabled="(stepIndex === 1 && !valid) || isTesting"
             type="button"
@@ -207,7 +208,7 @@
             @click="next"
           >
             Next →
-          </button>
+          </button>-->
         </template>
         <template v-else>
           <button type="button" class="btn -text mrauto" @click="dismiss">

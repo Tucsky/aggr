@@ -180,7 +180,14 @@ const actions = {
         }
       }
     }
-  }
+  },
+  upgradeToLite({ state }) {
+    this.dispatch('panes/resetPane', {
+      id: state._id,
+      data: state,
+      type: 'trades-lite'
+    })
+  },
 } as ActionTree<TradesPaneState, ModulesState>
 
 const mutations = {

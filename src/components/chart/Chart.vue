@@ -3,8 +3,8 @@
     <pane-header
       ref="paneHeader"
       :paneId="paneId"
-      :onEdit="() => $store.dispatch('app/showSearch', { paneId: this.paneId })"
       :settings="() => import('@/components/chart/ChartDialog.vue')"
+      name-action="search"
     >
       <template v-slot:menu>
         <button type="button" class="dropdown-item" @click="toggleLayout">

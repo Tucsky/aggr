@@ -331,15 +331,15 @@ const actions = {
   },
   async resetPane(
     { state, rootState },
-    { id, data }: { id: string; data?: any }
+    { id, data, type }: { id: string; data?: any, type?: string }
   ) {
     const pane = JSON.parse(JSON.stringify(state.panes[id]))
 
-    let currentPaneState
-
-    if (data && typeof data === 'object') {
-      currentPaneState = Object.assign({}, rootState[id], data)
-    }
+    const currentPaneState = Object.assign(
+      {}, 
+      rootState[id], 
+      data && typeof data === 'object' ? data : {}
+    )
 
     const layoutItem = state.layout.find(a => a.i === id)
 
@@ -357,7 +357,7 @@ const actions = {
 
     await registerModule(id, {}, true, pane)
 
-    layoutItem.type = originalPaneType
+    layoutItem.type = type || originalPaneType
   },
   setZoom({ commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
     commit('SET_PANE_ZOOM', { id, zoom })

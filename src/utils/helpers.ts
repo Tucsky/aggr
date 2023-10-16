@@ -298,9 +298,7 @@ export function fallbackCopyTextToClipboard(text) {
   textArea.select()
 
   try {
-    const successful = document.execCommand('copy')
-    const msg = successful ? 'successful' : 'unsuccessful'
-    console.log('Fallback: Copying text command was ' + msg)
+    document.execCommand('copy')
   } catch (err) {
     console.error('Fallback: Oops, unable to copy', err)
   }
@@ -357,7 +355,7 @@ function formatAmount(amount, decimals?: number) {
 
 export function getTimeframeForHuman(timeframe, full?: boolean) {
   if (timeframe === null) {
-    return 'ERR'
+    return 'ERR!'
   }
 
   const normalized = timeframe.toString().trim()
@@ -368,7 +366,7 @@ export function getTimeframeForHuman(timeframe, full?: boolean) {
     const bps = parseFloat(normalized)
     return bps < 1 ? `${bps * 1000}\u2009mbps` : `${bps}\u2009bps`
   } else if (normalized[normalized.length - 1] === 'v') {
-      return formatAmount(parseFloat(normalized))
+      return formatAmount(parseFloat(normalized)) + '\u2009$'
   } else if (!isNaN(normalized) && normalized > 0) {
     return full ? getHmsFull(normalized * 1000) : getHms(normalized * 1000)
   }

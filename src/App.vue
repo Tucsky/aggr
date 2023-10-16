@@ -3,10 +3,6 @@
     v-if="isBooted"
     id="app"
     :data-prefered-sizing-currency="preferedSizingCurrency"
-    :data-base="baseCurrency"
-    :data-base-symbol="baseCurrencySymbol"
-    :data-quote="quoteCurrency"
-    :data-quote-symbol="quoteCurrencySymbol"
     :class="{
       '-no-animations': disableAnimations,
       '-auto-hide-headers': autoHideHeaders,
@@ -120,22 +116,6 @@ export default class App extends Vue {
 
   get preferedSizingCurrency() {
     return this.$store.state.settings.preferQuoteCurrencySize ? 'quote' : 'base'
-  }
-
-  get baseCurrency() {
-    return this.$store.state.app.baseCurrency
-  }
-
-  get baseCurrencySymbol() {
-    return this.$store.state.app.baseCurrencySymbol
-  }
-
-  get quoteCurrency() {
-    return this.$store.state.app.quoteCurrency
-  }
-
-  get quoteCurrencySymbol() {
-    return this.$store.state.app.quoteCurrencySymbol
   }
 
   get disableAnimations() {

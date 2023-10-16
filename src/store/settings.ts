@@ -353,6 +353,16 @@ const mutations = {
         value: state.preferQuoteCurrencySize
       }
     })
+
+    this.dispatch('app/showNotice', {
+      type: 'error',
+      icon: 'icon-warning -large pt0',
+      html: true,
+      title: `<div class="ml8"><strong>Reload required</strong><br>A reload is required to change the preferred currency.</div>`,
+      action() {
+        window.location.reload()
+      }
+    })
   },
   TOGGLE_SLIPPAGE(state) {
     const values: SlippageMode[] = [false, 'bps', 'price']
@@ -367,7 +377,7 @@ const mutations = {
     })
   },
   TOGGLE_AGGREGATION(state) {
-    const values: AggregationLength[] = [0, 1, 10, 50, 100, 500, 1000, -1]
+    const values: AggregationLength[] = [0, 1, 10, 100, 1000, -1]
 
     const index = Math.max(0, values.indexOf(state.aggregationLength))
 

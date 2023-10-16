@@ -898,14 +898,31 @@ export default {
         precision = 2
       }
 
+      const priceFormat = {
+        type,
+        precision: precision,
+        minMove: 1 / Math.pow(10, precision),
+        auto
+      }
+
+      // updates the indicator now
       this.$store.dispatch(this.paneId + '/setIndicatorOption', {
         id: this.indicatorId,
         key: 'priceFormat',
-        value: {
-          type,
-          precision: precision,
-          minMove: 1 / Math.pow(10, precision),
-          auto
+        value: priceFormat
+      })
+      
+      // persist preference at the priceScale level
+      this.$store.commit(this.paneId + '/SET_PRICE_SCALE', {
+        id: this.indicator.options.priceScaleId,
+        priceScale: {
+          ...this.$store.state[this.paneId].priceScales[this.indicator.options.priceScaleId],
+          priceFormat: {
+            type,
+            precision: precision,
+            minMove: 1 / Math.pow(10, precision),
+            auto
+          }
         }
       })
     },

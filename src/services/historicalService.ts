@@ -126,6 +126,7 @@ class HistoricalService extends EventEmitter {
     const refs = {}
 
     const isOdd = isOddTimeframe(timeframe)
+    const preferQuoteCurrencySize = store.state.settings.preferQuoteCurrencySize
 
     for (let i = 0; i < data.length; i++) {
       if (!data[i].time && data[i][0]) {
@@ -197,6 +198,11 @@ class HistoricalService extends EventEmitter {
           isOdd
         )
 
+        if (!preferQuoteCurrencySize && (data[i].vbuy || data[i].vsell) && data[i].close) {
+          data[i].vbuy = data[i].vbuy / data[i].close
+          data[i].vsell = data[i].vsell / data[i].close
+        }
+
         if (
           !lastClosedBars[data[i].market] ||
           lastClosedBars[data[i].market].time < data[i].time
@@ -226,8 +232,9 @@ class HistoricalService extends EventEmitter {
         }
       }
 
-      if (typeof refs[data[i].market] !== 'number') {
-        refs[data[i].market] = data[i].open
+      if (!preferQuoteCurrencySize && (data[i].vbuy || data[i].vsell) && data[i].close) {
+        data[i].vbuy = data[i].vbuy / data[i].close
+        data[i].vsell = data[i].vsell / data[i].close
       }
 
       if (data[i].time === firstBarTimestamp) {
