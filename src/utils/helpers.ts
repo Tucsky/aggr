@@ -246,13 +246,16 @@ export function parseFunctionArguments(
     throw new Error('Maxiumum parseFunctionArguments iteration reached')
   }
 
-  return str.split(',').map(arg => {
-    if (trimArguments) {
-      arg = arg.trim()
-    }
+  return str
+    .split(',')
+    .map(arg => {
+      if (trimArguments) {
+        arg = arg.trim()
+      }
 
-    return arg.replace(/#COMMA#/g, ',')
-  }).filter(arg => arg.length)
+      return arg.replace(/#COMMA#/g, ',')
+    })
+    .filter(arg => arg.length)
 }
 
 export function camelize(str) {
