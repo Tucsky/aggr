@@ -816,10 +816,21 @@ class Aggregator {
       this.bindTradesEvent()
 
       if (signChange) {
-        exchanges.forEach(exchange => 
-            (exchange.id === 'BINANCE' || exchange.id === 'BINANCE_FUTURES') 
-              && exchange.apis.forEach(api => api.close())
-        )
+        const channel = value === -1 ? 'raw' : 'aggregated'
+        const targetExchanges = []
+        exchanges.forEach(exchange => {
+          if ((exchange.id === 'BINANCE' || exchange.id === 'BINANCE_FUTURES')) {
+            targetExchanges.push(exchange.id)
+            exchange.apis.forEach(api => api.close())
+          }
+        })
+        this.ctx.postMessage({
+          op: 'notice',
+          data: {
+            title: `Switching to → ${channel} trade data${targetExchanges.map(exchangeId => `<div class="d-flex mt4"><i class="icon-${exchangeId} -center mr4"></i> ${exchangeId}</div>`).join('')}`,
+            html: true
+          }
+        })
       }
     }
   }

@@ -37,7 +37,10 @@
           <i class="icon-cross"></i>
         </button>
       </header>
-      <div class="dialog__subheader" v-if="$slots.subheader">
+      <div class="dialog__subheader" 
+        v-if="$slots.subheader" 
+        @mousedown="handleDrag"
+        @touchstart="handleDrag">
         <slot name="subheader" />
       </div>
       <div ref="body" class="dialog__body hide-scrollbar" :class="bodyClass">
@@ -388,9 +391,9 @@ export default class Dialog extends Vue {
   }
 
   detectSize(w) {
-    if (w >= 720) {
+    if (w >= 840) {
       this.currentSize = 'large'
-    } else if (w > 375) {
+    } else if (w > 420) {
       this.currentSize = 'medium'
     } else {
       this.currentSize = 'small'

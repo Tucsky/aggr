@@ -16,9 +16,9 @@ import { Component, Vue } from 'vue-property-decorator'
 import { getTimeframeForHuman } from '../../utils/helpers'
 import EditableVue from '../framework/Editable.vue'
 
-const TIMEFRAME_VOL = /v$|k$|vol$/i
-const TIMEFRAME_BPS = /b$|bps?$/i
-const TIMEFRAME_MBPS = /mbps$/i
+const TIMEFRAME_VOL = /\$$|v$|k$|vol?$/i
+const TIMEFRAME_BPS = /mb$|b$|bps?$/i
+const TIMEFRAME_MBPS = /mb$|mbps$/i
 const TIMEFRAME_TICK = /t$|ticks?$/i
 
 @Component({

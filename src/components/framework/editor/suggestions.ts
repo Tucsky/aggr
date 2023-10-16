@@ -261,7 +261,25 @@ lastIndex = bar.length`
   },
   {
     label: 'rebuild',
-    detail: '[AGGR] rebuild option param',
+    detail: '[AGGR] force a rebuild when that option change option(..., rebuild=true)',
     insertText: `rebuild=true`
+  },
+  {
+    label: 'cvd',
+    detail: '[AGGR] cumulative volume delta',
+    insertText: `spotColor = option(type=color,default="rgb(102,187,106)")
+perpColor = option(type=color,default="rgb(49,121,245)")
+
+line(
+  cum(source(vbuy, type=spot) - source(vsell, type=spot)),
+  title=SPOT,
+  color=spotColor,
+  priceScaleId=overlay
+)
+line(
+  cum(source(vbuy, type=perp) - source(vsell, type=perp)), 
+  title=PERP,
+  color=perpColor
+)`
   }
 ]

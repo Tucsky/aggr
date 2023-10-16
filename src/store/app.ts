@@ -57,10 +57,6 @@ export interface AppState {
   version: string
   buildDate: number | string
   notices: Notice[]
-  baseCurrency: string
-  baseCurrencySymbol: string
-  quoteCurrency: string
-  quoteCurrencySymbol: string
   focusedPaneId: string
   indicatorDialogNavigation?: IndicatorNavigationState
 }
@@ -76,10 +72,6 @@ const state = {
   apiSupportedTimeframes: [],
   version: 'DEV',
   buildDate: 'now',
-  baseCurrency: 'coin',
-  baseCurrencySymbol: '฿',
-  quoteCurrency: 'dollar',
-  quoteCurrencySymbol: '$',
   focusedPaneId: null
 } as AppState
 
@@ -265,12 +257,6 @@ const mutations = {
   },
   SET_BUILD_DATE(state, value) {
     state.buildDate = value
-  },
-  SET_CURRENCIES(state, currencies: BaseQuoteCurrencies) {
-    state.baseCurrency = currencies.base
-    state.baseCurrencySymbol = currencies.baseSymbol
-    state.quoteCurrency = currencies.quote
-    state.quoteCurrencySymbol = currencies.quoteSymbol
   },
   SET_FOCUSED_PANE(state, id: string) {
     if (id !== state.focusedPaneId) {

@@ -95,6 +95,8 @@ export default class MeasurementEventHandler {
   }
 
   onPan() {
+    const api = this.chart.getPriceApi()
+
     const timeScale = this.chart.chartInstance.timeScale()
 
     if (timeScale) {
@@ -102,8 +104,8 @@ export default class MeasurementEventHandler {
       this.b.x = timeScale.timeToCoordinate(this.b.time as Time)
     }
 
-    this.a.y = this.api.priceToCoordinate(this.a.price) as number
-    this.b.y = this.api.priceToCoordinate(this.b.price) as number
+    this.a.y = api.priceToCoordinate(this.a.price) as number
+    this.b.y = api.priceToCoordinate(this.b.price) as number
 
     this.updateComponent()
   }
@@ -131,8 +133,7 @@ export default class MeasurementEventHandler {
     const x = [this.a.x, this.b.x].sort((a, b) => a - b)
     const y = [this.a.y, this.b.y].sort((a, b) => a - b)
     const prices = [this.a.price, this.b.price].sort((a, b) => a - b)
-    const percent = (1 - this.b.price / this.a.price) * -1 * 100
-
+    const percent = ((this.b.price - this.a.price) / Math.abs(this.a.price)) * 100;
     return {
       position: {
         top: y[0],

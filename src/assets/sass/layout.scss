@@ -64,6 +64,9 @@ body {
   min-height: 0px;
 }
 
+/* Flex helpers
+*/
+
 .column {
   display: flex;
   flex-direction: row;
@@ -124,15 +127,59 @@ body {
   }
 }
 
-.-activable {
-  > .form-group {
-    opacity: 0.2;
+blockquote {
+  padding: 0.25rem 0.5rem;
+  margin-left: 0;
+  margin-bottom: 0;
+  border-left: 1px solid white;
+  opacity: 0.6;
+}
+
+code {
+  font-family: $font-monospace;
+
+  &.-filled {
+    background-color: rgba(black, 0.2);
+    color: var(--theme-color-base);
+    border-radius: 4px;
+    padding: 0.25rem;
+  }
+}
+
+p {
+  &.-nl {
+    white-space: pre-line;
   }
 
-  &.active {
-    .form-group {
-      opacity: 1;
-    }
+  > i {
+    vertical-align: bottom;
+  }
+}
+
+/* Transitions
+*/
+
+.fade-scale {
+
+  &-enter-active {
+    transition: all 0.1s $ease-out-expo, transform 0.1s $ease-elastic;
+    pointer-events: none;
+  }
+
+  &-leave-active {
+    transition: all 0.2s $ease-out-expo;
+  }
+
+  &-leave,
+  &-enter-to {
+    opacity: 1;
+    transform: none;
+  }
+
+  &-enter,
+  &-leave-to {
+    opacity: 0;
+    transform: scale(1.2);
   }
 }
 
@@ -141,8 +188,21 @@ body {
 }
 
 #app.-no-animations *.flip-list-move {
-  transition: transform 0.2s linear !important;
+  transition: transform 0.1s linear !important;
 }
+
+@keyframes highlight {
+  0% {
+    opacity: 0.75;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Stylized divider with text
+*/
 
 .divider {
   margin: 1rem 0;
@@ -187,48 +247,4 @@ body {
       margin-top: 1rem;
     }
   }
-}
-
-blockquote {
-  padding: 0.25rem 0.5rem;
-  margin-left: 0;
-  margin-bottom: 0;
-  border-left: 1px solid white;
-  opacity: 0.6;
-}
-
-code {
-  font-family: $font-monospace;
-
-  &.-filled {
-    background-color: rgba(black, 0.2);
-    color: var(--theme-color-base);
-    border-radius: 4px;
-    padding: 0.25rem;
-  }
-}
-
-p {
-  &.-nl {
-    white-space: pre-line;
-  }
-
-  > i {
-    vertical-align: bottom;
-  }
-}
-
-@keyframes highlight {
-  0% {
-    opacity: 0.75;
-  }
-
-  100% {
-    opacity: 0;
-  }
-}
-
-.tv-lightweight-charts.-absolute {
-  position: absolute;
-  top: 0;
 }

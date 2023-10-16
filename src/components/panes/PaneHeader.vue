@@ -13,10 +13,10 @@
         {{ name }}
         <btn
           type="button"
-          @click="onEditHandler"
+          @click="nameActionHandler"
           class="pane-header__edit btn -text -small"
         >
-          <i class="icon-edit"></i>
+          <i :class="nameActionIcon"></i>
         </btn>
       </slot>
     </div>
@@ -129,6 +129,11 @@ import Btn from '@/components/framework/Btn.vue'
 import { downloadAnything, getSiblings, slugify } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 
+const NAME_ACTION_ICONS = {
+  rename: 'icon-edit',
+  search: 'icon-plus',
+}
+
 @Component({
   name: 'PaneHeader',
   props: {
@@ -147,22 +152,22 @@ import dialogService from '@/services/dialogService'
       type: Boolean,
       default: true
     },
+    nameAction: {
+      type: String,
+      default: 'rename'
+    },
     split: {
       type: Boolean,
       default: true
     },
-    onEdit: {
-      type: Function,
-      default: null
-    }
   },
   components: {
     Btn
-  }
+  },
 })
 export default class PaneHeader extends Vue {
-  private onEdit: (event) => void
   private settings?: () => Promise<any>
+  private nameAction: 'rename' | 'search'
   paneId: string
   paneDropdownTrigger = null
   isLoading = false
@@ -189,6 +194,10 @@ export default class PaneHeader extends Vue {
     } else {
       return this.type
     }
+  }
+
+  get nameActionIcon() {
+    return NAME_ACTION_ICONS[this.nameAction]
   }
 
   openSearch() {
@@ -244,7 +253,7 @@ export default class PaneHeader extends Vue {
 
     this.$store.dispatch('panes/setZoom', {
       id: this.paneId,
-      zoom: isMaximized ? this.zoom * 2 : this.zoom * 0.5
+      zoom: isMaximized ? this.zoom * 1.5 : this.zoom * (2/3)
     })
   }
 
@@ -299,13 +308,14 @@ export default class PaneHeader extends Vue {
     this.isLoading = false
   }
 
-  onEditHandler(event) {
-    if (typeof this.onEdit === 'function') {
-      this.onEdit(event)
-      return
+  nameActionHandler(event) {
+    switch (this.nameAction) {
+      case 'search': 
+        this.openSearch()
+      break;
+      default:
+        this.renamePane(event)
     }
-
-    this.renamePane(event)
   }
 }
 </script>

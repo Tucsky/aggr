@@ -5,6 +5,18 @@
       ref="paneHeader"
       :settings="() => import('@/components/trades/TradesDialog.vue')"
     >
+      <template v-slot:menu>
+        <button 
+          type="button" 
+          class="dropdown-item" 
+          @click="upgradeToLite"
+          title="✨ Upgrade to the canvas based feed for better performance ✨"
+          v-tippy="{ placement: 'left', boundary: 'window', followCursor: true, distance: 32 }"
+        >
+          🚀
+          <span class="ml8">Upgrade</span>
+        </button>
+      </template>
       <hr />
       <dropdown v-model="sliderDropdownTrigger" interactive no-scroll>
         <slider
@@ -239,6 +251,10 @@ export default class Trades extends Mixins(PaneMixin) {
     this.feed.clear()
     this.feed.processTradesSilent(trades)
   }
+
+  upgradeToLite() {
+    this.$store.dispatch(`${this.paneId}/upgradeToLite`)
+  }
 }
 </script>
 
@@ -432,7 +448,6 @@ export default class Trades extends Mixins(PaneMixin) {
     font-size: 75%;
   }
 
-  .icon-currency,
   .icon-quote,
   .icon-base {
     line-height: 0;

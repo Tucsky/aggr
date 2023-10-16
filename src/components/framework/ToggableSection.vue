@@ -4,7 +4,8 @@
     :class="[
       small && 'toggable-section--small',
       outline && 'toggable-section--outline',
-      inset && 'toggable-section--inset'
+      inset && 'toggable-section--inset',
+      disabled && 'toggable-section--disabled'
     ]"
   >
     <div class="toggable-section__wrapper">
@@ -56,6 +57,10 @@ export default {
     id: {
       required: false,
       default: null
+    },
+    disabled: {
+      type: Boolean,
+      default: false
     },
     title: {
       type: String,
@@ -153,6 +158,12 @@ export default {
     + .toggable-section {
       margin-top: 1em;
     }
+  }
+
+  &--disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: default;
   }
 
   &--outline {
