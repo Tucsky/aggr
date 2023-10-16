@@ -61,9 +61,7 @@ class AggregatorService extends EventEmitter {
         title: `unable to reach ${event.exchangeId} (${event.originalUrl})`,
         action: async () => {
           const payload = await dialogService.openAsPromise(
-            (
-              await import('@/components/ConnectionIssueDialog.vue')
-            ).default,
+            (await import('@/components/ConnectionIssueDialog.vue')).default,
             {
               exchangeId: event.exchangeId,
               restrictedUrl: event.originalUrl
@@ -106,7 +104,7 @@ class AggregatorService extends EventEmitter {
         this.normalizeDecimalsQueue.timeout = setTimeout(
           this.normalizeDecimals.bind(this),
           1000
-        )  as unknown as number
+        ) as unknown as number
       }
     })
 

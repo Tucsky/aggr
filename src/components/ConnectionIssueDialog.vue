@@ -34,7 +34,8 @@
             key="step-0"
           >
             <p class="form-feedback mt0 mb0">
-              Can't connect to {{ restrictedUrl }}<i
+              Can't connect to {{ restrictedUrl
+              }}<i
                 class="icon-info -lower ml4"
                 :title="`Exchange API refused to connect<br>or blocked connection.`"
                 v-tippy="{ boundary: 'window', distance: 24 }"
@@ -46,66 +47,65 @@
             class="connection-issue-dialog__step"
             key="step-1"
           >
-
-                <p class="-inline mb0 mt0">
-                  The exchange API is unreachable due to
-                  <u
-                    title="Beginning in late November 2022, Binance began declining API requests originating from US IP addresses."
-                    v-tippy
-                  >
-                    geo restriction
-                  </u>
-                  or something else.
+            <p class="-inline mb0 mt0">
+              The exchange API is unreachable due to
+              <u
+                title="Beginning in late November 2022, Binance began declining API requests originating from US IP addresses."
+                v-tippy
+              >
+                geo restriction
+              </u>
+              or something else.
+            </p>
+            <ol class="mb0">
+              <li v-if="currentWsProxyUrl">
+                <p>
+                  The current proxy URL might not be working<br />
+                  Last used : <code>{{ currentWsProxyUrl }}</code>
                 </p>
-                <ol class="mb0">
-                  <li v-if="currentWsProxyUrl">
-                    <p>
-                      The current proxy URL might not be working<br />
-                      Last used : <code>{{ currentWsProxyUrl }}</code>
-                    </p>
-                    <button
-                      type="button"
-                      class="btn -red mrauto -cases"
-                      @click="deleteWsProxyUrl"
-                      :disable="selectedAction"
-                    >
-                      <i class="icon-eraser mr8"></i> Clear proxy URL
-                    </button>
-                  </li>
-                  <li>
-                    <p>
-                      Disable all {{ exchangeId }}'s pairs so you won't see the issue
-                      anymore
-                    </p>
+                <button
+                  type="button"
+                  class="btn -red mrauto -cases"
+                  @click="deleteWsProxyUrl"
+                  :disable="selectedAction"
+                >
+                  <i class="icon-eraser mr8"></i> Clear proxy URL
+                </button>
+              </li>
+              <li>
+                <p>
+                  Disable all {{ exchangeId }}'s pairs so you won't see the
+                  issue anymore
+                </p>
 
-                    <button
-                      type="button"
-                      class="btn -red -cases"
-                      @click="disableExchange"
-                      :disable="selectedAction"
-                    >
-                      <i class="icon-cross mr8"></i> Disable&nbsp;
-                      <span>{{ exchangeId }}</span>
-                      <i class="ml4" :class="'icon-' + exchangeId"></i>
-                    </button>
-                  </li>
+                <button
+                  type="button"
+                  class="btn -red -cases"
+                  @click="disableExchange"
+                  :disable="selectedAction"
+                >
+                  <i class="icon-cross mr8"></i> Disable&nbsp;
+                  <span>{{ exchangeId }}</span>
+                  <i class="ml4" :class="'icon-' + exchangeId"></i>
+                </button>
+              </li>
 
-                  <li>
-                    <p>Use a VPN</p>
+              <li>
+                <p>Use a VPN</p>
 
-                    <button
-                      type="button"
-                      class="btn -green -cases"
-                      @click="refreshExchange"
-                      :disable="selectedAction"
-                      title="Retry connection with exchange"
-                      v-tippy
-                    >
-                      <i class="icon-refresh mr8"></i> I enabled my VPN
-                    </button>
-                  </li>
-                </ol>
-            </div>
+                <button
+                  type="button"
+                  class="btn -green -cases"
+                  @click="refreshExchange"
+                  :disable="selectedAction"
+                  title="Retry connection with exchange"
+                  v-tippy
+                >
+                  <i class="icon-refresh mr8"></i> I enabled my VPN
+                </button>
+              </li>
+            </ol>
+          </div>
           <div
             v-else-if="stepIndex === 2"
             class="connection-issue-dialog__step"
@@ -148,7 +148,6 @@
 <script>
 import DialogMixin from '@/mixins/dialogMixin'
 import TransitionHeight from '@/components/framework/TransitionHeight.vue'
-import ToggableSection from '@/components/framework/ToggableSection.vue'
 import Loader from '@/components/framework/Loader.vue'
 import aggregatorService from '@/services/aggregatorService'
 import notificationService from '@/services/notificationService'
@@ -157,7 +156,6 @@ export default {
   name: 'ConnectionIssueDialog',
   components: {
     TransitionHeight,
-    ToggableSection,
     Loader
   },
   props: {

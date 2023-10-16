@@ -155,7 +155,7 @@
       inset
     >
       <div class="form-group column">
-        <label 
+        <label
           class="checkbox-control -aggr -auto flex-grow-1"
           title="Granularity preference"
           v-tippy="{ placement: 'left', boundary: 'window' }"
@@ -168,14 +168,16 @@
           />
           <div :on="aggregationLengthLabel" off="No aggregation"></div>
           <span v-if="aggregationLength < 0">
-            <strong>RAW</strong> trades <i
+            <strong>RAW</strong> trades
+            <i
               class="icon-info"
               v-tippy="{ followCursor: true, distance: 32 }"
               title="Will pull Binance tick data"
             ></i>
           </span>
           <span v-else-if="aggregationLength">
-            {{ aggregationLengthLabel }} aggregation <i 
+            {{ aggregationLengthLabel }} aggregation
+            <i
               class="icon-info"
               v-tippy="{ followCursor: true, distance: 32 }"
               :title="`Will pull aggregated data <br>so that 1 tick = ${aggregationLength}ms`"
@@ -183,7 +185,7 @@
           </span>
           <span v-else>
             No aggregation
-            <i 
+            <i
               class="icon-info"
               v-tippy="{ followCursor: true, distance: 32 }"
               title="Will pull aggregated Binance data but won't aggregate on top of it"
@@ -245,9 +247,7 @@
           <span>Size in</span>
           <div on="quote currency" off="base currency"></div>
           <span>
-            <span class="text-success">
-              (<i class="icon-currency"></i>)
-            </span>
+            <span class="text-success"> (<i class="icon-currency"></i>) </span>
           </span>
         </label>
       </div>
@@ -417,6 +417,7 @@ import DialogMixin from '@/mixins/dialogMixin'
 export default {
   mixins: [DialogMixin],
   components: {
+    // eslint-disable-next-line vue/no-reserved-component-names
     Dialog,
     Exchange,
     AudioSettings,

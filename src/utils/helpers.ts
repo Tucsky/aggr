@@ -366,7 +366,7 @@ export function getTimeframeForHuman(timeframe, full?: boolean) {
     const bps = parseFloat(normalized)
     return bps < 1 ? `${bps * 1000}\u2009mbps` : `${bps}\u2009bps`
   } else if (normalized[normalized.length - 1] === 'v') {
-      return formatAmount(parseFloat(normalized)) + '\u2009$'
+    return formatAmount(parseFloat(normalized)) + '\u2009$'
   } else if (!isNaN(normalized) && normalized > 0) {
     return full ? getHmsFull(normalized * 1000) : getHms(normalized * 1000)
   }

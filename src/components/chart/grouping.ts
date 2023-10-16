@@ -1,12 +1,8 @@
-import { floorTimestampToTimeframe } from "@/utils/helpers"
+import { floorTimestampToTimeframe } from '@/utils/helpers'
 
 export default {
   time({ trade, timeframe, isOdd }) {
-    return floorTimestampToTimeframe(
-      trade.timestamp / 1000,
-      timeframe,
-      isOdd
-    )
+    return floorTimestampToTimeframe(trade.timestamp / 1000, timeframe, isOdd)
   },
   tick({ renderer, timeframe, trade }) {
     if (renderer.bar.cbuy + renderer.bar.csell >= timeframe) {
@@ -28,24 +24,31 @@ export default {
 
     return renderer.timestamp
   },
-  bps({ renderer, trade, market, marketsFilters, timeframe }) {
-    const { count, sum } = Object.keys(renderer.sources).reduce((acc, identifier) => {
-      if (!marketsFilters[identifier] || renderer.sources[identifier].open === null) {
+  bps({ renderer, trade, marketsFilters, timeframe }) {
+    const { count, sum } = Object.keys(renderer.sources).reduce(
+      (acc, identifier) => {
+        if (
+          !marketsFilters[identifier] ||
+          renderer.sources[identifier].open === null
+        ) {
+          return acc
+        }
+        acc.sum += renderer.sources[identifier].close
+        acc.count++
         return acc
+      },
+      {
+        count: 0,
+        sum: 0
       }
-      acc.sum += renderer.sources[identifier].close
-      acc.count++
-      return acc
-    }, {
-      count: 0,
-      sum: 0
-    })
+    )
 
     const avg = sum / count
     const absBps = ((avg - renderer.bar.close) / renderer.bar.close) * 100 * 100
-    if (
-      !renderer.bar.close || Math.abs(absBps) > timeframe
-    ) {
+    if (!renderer.bar.close || Math.abs(absBps) > timeframe) {
+      if (!renderer.bar.close) {
+        console.log('store last close to renderer bar', avg)
+      }
       renderer.bar.close = avg
       return Math.max(
         renderer.timestamp + 0.001,
@@ -54,5 +57,5 @@ export default {
     } else {
       return renderer.timestamp
     }
-  },
+  }
 }

@@ -407,7 +407,9 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
 }
 
 export async function getApiSupportedMarkets() {
-  let products = import.meta.env.VITE_APP_API_SUPPORTED_PAIRS as string | string[]
+  let products = import.meta.env.VITE_APP_API_SUPPORTED_PAIRS as
+    | string
+    | string[]
   if (products && products.length) {
     products = (products as string).split(',').map(market => market.trim())
   } else {

@@ -44,6 +44,7 @@ import historicalService, {
 } from '@/services/historicalService'
 
 import seriesUtils from '@/components/chart/serieUtils'
+
 import ChartCache, { Chunk } from '@/components/chart/cache'
 
 import {
@@ -102,11 +103,13 @@ export interface IndicatorSource {
 
 export type IndicatorOption = { [key: string]: any }
 
+export type IndicatorSourceFiltersValues = string | RegExp
+
 export interface IndicatorSourceFilters {
-  name: string | RegExp
-  quote: string
-  exchange: string
-  type: string
+  quote: IndicatorSourceFiltersValues
+  exchange: IndicatorSourceFiltersValues
+  type: IndicatorSourceFiltersValues
+  name: IndicatorSourceFiltersValues
 }
 
 export interface TimeRange {
@@ -1215,7 +1218,6 @@ export default class Chart {
       if (this.activeRenderer) {
         timestamp = grouping[this.activeRenderer.type]({
           renderer: this.activeRenderer,
-          market: identifier,
           timeframe: this.timeframe,
           trade,
           isOdd: this.isOddTimeframe,
@@ -1548,8 +1550,6 @@ export default class Chart {
 
           if (temporaryRenderer.prependedBars) {
             Array.prototype.unshift.apply(bars, temporaryRenderer.prependedBars)
-          } else {
-            console.info('no prepended bars!!')
           }
         }
       }
@@ -1592,7 +1592,9 @@ export default class Chart {
     setTimeout(this.renderAlerts.bind(this))
 
     if (!indicatorsIds || !indicatorsIds.length) {
-      this.activeRenderer.length = barCount
+      if (this.activeRenderer) {
+        this.activeRenderer.length = barCount
+      }
       if (!bars.length) {
         this.renderedRange.from = this.renderedRange.to = null
       } else {
@@ -1692,7 +1694,6 @@ export default class Chart {
   refreshPriceScale(priceScaleId: string) {
     const priceScale: PriceScaleSettings =
       store.state[this.paneId].priceScales[priceScaleId]
-
     this.chartInstance.priceScale(priceScaleId).applyOptions({
       scaleMargins: priceScale.scaleMargins,
       mode: priceScale.mode
@@ -1756,7 +1757,6 @@ export default class Chart {
       this.chartInstance.timeScale().scrollToPosition(scrollPosition, false)
     }
   }
-
   getPrependedBars(timestamp) {
     if (this.type === 'time' && !this.hasMixedSourceHistory) {
       return null
@@ -1781,44 +1781,46 @@ export default class Chart {
       return []
     }
 
-    this._promiseOfPrependedBars = alertService.getPrice().then(markets => {
-      this._promiseOfPrependedBars = null
+    this._promiseOfPrependedBars = aggregatorService
+      .getAllTickers()
+      .then(tickers => {
+        this._promiseOfPrependedBars = null
 
-      if (this.activeRenderer) {
-        this.activeRenderer.prependedBars = Object.keys(markets).reduce(
-          (acc, key) => {
-            const price = markets[key].price
-            if (!price) {
+        if (this.activeRenderer) {
+          this.activeRenderer.prependedBars = Object.keys(tickers).reduce(
+            (acc, key) => {
+              const price = tickers[key].price
+              if (!price) {
+                return acc
+              }
+
+              const [exchange, pair] = parseMarket(key)
+
+              acc.push({
+                time: timestamp,
+                cbuy: null,
+                close: price,
+                csell: null,
+                high: price,
+                lbuy: null,
+                low: price,
+                lsell: null,
+                market: key,
+                open: price,
+                vbuy: null,
+                vsell: null,
+                exchange: exchange,
+                pair: pair
+              })
+
               return acc
-            }
+            },
+            this.activeRenderer.prependedBars
+          )
 
-            const [exchange, pair] = parseMarket(key)
-
-            acc.push({
-              time: timestamp,
-              cbuy: null,
-              close: price,
-              csell: null,
-              high: price,
-              lbuy: null,
-              low: price,
-              lsell: null,
-              market: key,
-              open: price,
-              vbuy: null,
-              vsell: null,
-              exchange: exchange,
-              pair: pair
-            })
-
-            return acc
-          },
-          []
-        )
-
-        this.renderAll()
-      }
-    })
+          this.renderAll()
+        }
+      })
 
     return []
   }
