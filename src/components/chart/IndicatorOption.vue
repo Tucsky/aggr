@@ -22,7 +22,7 @@ import {
   getIndicatorOptionType,
   getDefaultIndicatorOptionValue
 } from './options'
-import { ALLOWED_OPTION_TYPES } from './serieBuilder'
+import { ALLOWED_OPTION_TYPES } from './buildUtils'
 
 @Component({
   name: 'IndicatorOptions',
