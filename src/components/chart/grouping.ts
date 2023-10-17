@@ -46,9 +46,6 @@ export default {
     const avg = sum / count
     const absBps = ((avg - renderer.bar.close) / renderer.bar.close) * 100 * 100
     if (!renderer.bar.close || Math.abs(absBps) > timeframe) {
-      if (!renderer.bar.close) {
-        console.log('store last close to renderer bar', avg)
-      }
       renderer.bar.close = avg
       return Math.max(
         renderer.timestamp + 0.001,
