@@ -46,9 +46,6 @@
             class="connection-issue-dialog__step"
             key="step-1"
           >
-            <!--<div>
-              <ToggableSection :model="sections" outline auto-close>
-                <template #title> Potential causes </template>-->
 
                 <p class="-inline mb0 mt0">
                   The exchange API is unreachable due to
@@ -107,74 +104,8 @@
                       <i class="icon-refresh mr8"></i> I enabled my VPN
                     </button>
                   </li>
-
-                  <!--<li>
-                    <p>Connect through a proxy instead</p>
-
-                    <button
-                      type="button"
-                      class="btn -green -cases"
-                      @click="next"
-                      :disable="selectedAction"
-                    >
-                      I setup a proxy →
-                    </button>
-                  </li>-->
                 </ol>
-              <!--</ToggableSection>
-              <ToggableSection
-                :model="sections"
-                class="mb16"
-                outline
-                auto-close
-                disabled
-              >
-                <template #title> Proxy install </template>
-                <p class="mt0">
-                  Since
-                  <i class="-lower" :class="`icon-${exchangeId}`"></i>&nbsp;{{
-                    exchangeId
-                  }}
-                  is blocking your IP you may want to get realtime data from
-                  that exchange through a proxy located in an authorized
-                  country.<br /><br />At the moment you will have to set it up
-                  yourself using a simple NodeJS script that you can download
-                  below.
-                </p>
-                <a
-                  target="_blank"
-                  href="https://gist.github.com/Tucsky/91a9ed6bc6bb436ccf0c3e97b66c43eb"
-                >
-                  <i class="icon-download"></i>
-                  <span class="ml8">Download server code</span>
-                </a>
-              </ToggableSection>-->
             </div>
-            <!--<button
-              type="button"
-              class="btn -red -cases -large w-100"
-              @click="disableExchange"
-              :disable="selectedAction"
-            >
-              <i class="icon-cross mrauto"></i>
-              Disable&nbsp;<span>{{ exchangeId }}</span>
-              <i class="ml4" :class="'icon-' + exchangeId"></i>
-            </button>
-            <div class="divider -horizontal" style="display: flex">Or</div>
-            <div class="form-group">
-              <label for="proxyUrl">Enter a proxy url</label>
-              <input
-                id="proxyUrl"
-                name="proxyUrl"
-                type="text"
-                class="form-control"
-                placeholder="ws://localhost:3000"
-                v-model="proxyUrl"
-                ref="input"
-                disabled
-              />
-            </div>-->
-          </div>
           <div
             v-else-if="stepIndex === 2"
             class="connection-issue-dialog__step"
@@ -200,15 +131,6 @@
           >
             Back
           </button>
-          <!--<button
-            v-if="stepIndex"
-            :disabled="(stepIndex === 1 && !valid) || isTesting"
-            type="button"
-            class="btn -green ml8 -large"
-            @click="next"
-          >
-            Next →
-          </button>-->
         </template>
         <template v-else>
           <button type="button" class="btn -text mrauto" @click="dismiss">
