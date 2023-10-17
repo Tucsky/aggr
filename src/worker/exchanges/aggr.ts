@@ -7,7 +7,7 @@ export default class AGGR extends Exchange {
   products = ['SENTIMENT']
 
   async getUrl() {
-    return `ws://sentiment.aggr.trade`
+    return `wss://sentiment.aggr.trade`
   }
 
   /**
