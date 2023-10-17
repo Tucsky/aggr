@@ -260,7 +260,6 @@ export default class Chart {
   private _alertsRendered: boolean
   private _timeToRecycle: number
   private _recycleTimeout: number
-  renderedTimestamp: any
 
   constructor(id: string, chartElement: HTMLElement) {
     this.paneId = id
