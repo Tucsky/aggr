@@ -4,6 +4,7 @@ import { visualizer } from 'rollup-plugin-visualizer'
 import { VitePWA } from 'vite-plugin-pwa'
 import svgLoader from 'vite-svg-loader'
 import monacoEditorPlugin from 'vite-plugin-monaco-editor'
+import { qrcode } from 'vite-plugin-qrcode'
 
 import fs from 'fs'
 import path from 'path'
@@ -104,10 +105,12 @@ export default defineConfig(({ mode }) => {
           ]
         }
       }),
-      monacoEditorPlugin.default({})
+      monacoEditorPlugin.default({}),
+      qrcode() // only applies in dev mode
     ],
     server: {
-      port: 8080
+      port: 8080,
+      host: '0.0.0.0'
     },
     resolve: {
       alias: [
