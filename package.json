@@ -6,7 +6,7 @@
   "scripts": {
     "cors": "node scripts/cors-server.mjs",
     "svg2font": "node scripts/svg2font.js",
-    "serve": "vite",
+    "serve": "vite --host",
     "prod": "vue-tsc --noEmit && vite build --dest ./temp && rimraf ./dist && mv ./temp ./dist",
     "build": "vite build",
     "lint": "eslint",
@@ -64,6 +64,7 @@
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-monaco-editor": "^1.1.0",
     "vite-plugin-pwa": "^0.15.1",
+    "vite-plugin-qrcode": "^0.2.2",
     "vite-plugin-vue2-svg": "^0.4.0",
     "vite-svg-loader": "^4.0.0",
     "vue-prettier": "^0.2.0",
