@@ -158,6 +158,7 @@ export default class TradesLite extends Mixins(PaneMixin) {
     [type: string]: { buy: AudioFunction; sell: AudioFunction }[]
   }
 
+  private baseSizingCurrency: boolean
   private filters: {
     [key in TradeType]: boolean
   }
@@ -401,6 +402,9 @@ export default class TradesLite extends Mixins(PaneMixin) {
       [TradeType.trade]: this.$store.state[this.paneId].showTrades,
       [TradeType.liquidation]: this.$store.state[this.paneId].showLiquidations
     }
+
+    this.baseSizingCurrency =
+      !this.$store.state.settings.preferQuoteCurrencySize
 
     if (checkRequirements) {
       // check for unused or missing colors / audio
@@ -980,9 +984,12 @@ export default class TradesLite extends Mixins(PaneMixin) {
       new RegExp(`^(${this.fontSize}px)`),
       'bold $1'
     )
+    const amount = this.baseSizingCurrency
+      ? Math.round(trade.amount * 1e6) / 1e6
+      : formatAmount(trade.amount)
+
     this.ctx.fillText(
-      formatAmount(trade.amount) +
-        (liquidation ? (trade.side === 'buy' ? '🐻' : '🐂') : ''),
+      amount + (liquidation ? (trade.side === 'buy' ? '🐻' : '🐂') : ''),
       this.amountOffset,
       this.drawOffset + height / 2 + 1,
       this.maxWidth
