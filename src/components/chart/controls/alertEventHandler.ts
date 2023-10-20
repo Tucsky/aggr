@@ -174,48 +174,52 @@ export default class AlertEventHandler {
       return
     }
 
-    this.isBusy = true
+    try {
+      this.isBusy = true
 
-    if (this.priceline) {
-      const originalAlert = alertService.alerts[this.alert.market].find(
-        a => a.price === this.alert.price
-      )
-      const { price, title: message } = this.priceline.options()
-
-      const movedAlert = {
-        active: false,
-        price,
-        market,
-        message
-      }
-
-      if (this.alert.price !== price && canMove) {
-        await alertService.moveAlert(
-          originalAlert.market,
-          originalAlert.price,
-          movedAlert,
-          this.referencePrice
+      if (this.priceline) {
+        const originalAlert = alertService.alerts[this.alert.market].find(
+          a => a.price === this.alert.price
         )
-        this.api.removePriceLine(this.priceline)
-      } else {
-        await alertService.removeAlert(this.alert)
-      }
-    } else if (canCreate) {
-      const timestamp = this.chart.chartInstance
-        .timeScale()
-        .coordinateToTime(this.offset.x) as number
+        const { price, title: message } = this.priceline.options()
 
-      const alert: MarketAlert = {
-        price: this.alert.price,
-        market: this.alert.market,
-        timestamp,
-        active: false
-      }
+        const movedAlert = {
+          active: false,
+          price,
+          market,
+          message
+        }
 
-      await alertService.createAlert(alert, this.chart.getPrice())
+        if (this.alert.price !== price && canMove) {
+          if (originalAlert) {
+            await alertService.moveAlert(
+              originalAlert.market,
+              originalAlert.price,
+              movedAlert,
+              this.referencePrice
+            )
+          }
+          this.api.removePriceLine(this.priceline)
+        } else {
+          await alertService.removeAlert(this.alert)
+        }
+      } else if (canCreate) {
+        const timestamp = this.chart.chartInstance
+          .timeScale()
+          .coordinateToTime(this.offset.x) as number
+
+        const alert: MarketAlert = {
+          price: this.alert.price,
+          market: this.alert.market,
+          timestamp,
+          active: false
+        }
+
+        await alertService.createAlert(alert, this.chart.getPrice())
+      }
+    } finally {
+      this.isBusy = false
     }
-
-    this.isBusy = false
   }
 
   unbindEvents(event) {
