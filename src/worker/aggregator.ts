@@ -1,9 +1,4 @@
-import {
-  AggregatedTrade,
-  Connection,
-  Trade,
-  Volumes
-} from '@/types/types'
+import { AggregatedTrade, Connection, Trade, Volumes } from '@/types/types'
 import { exchanges, getExchangeById } from './exchanges'
 import { getHms, parseMarket } from './helpers/utils'
 import settings from './settings'
@@ -262,7 +257,7 @@ class Aggregator {
         const aggTrade = this.onGoingAggregations[tradeKey]
 
         if (
-          settings.aggregationLength > 0 && 
+          settings.aggregationLength > 0 &&
           aggTrade.timestamp + settings.aggregationLength > trade.timestamp &&
           aggTrade.side === trade.side
         ) {
@@ -767,9 +762,8 @@ class Aggregator {
     { exchangeId, forceFetch }: { exchangeId: string; forceFetch?: boolean },
     trackingId
   ) {
-    const productsData = await getExchangeById(exchangeId).getProducts(
-      forceFetch
-    )
+    const productsData =
+      await getExchangeById(exchangeId).getProducts(forceFetch)
 
     this.ctx.postMessage({
       op: 'fetchExchangeProducts',
@@ -811,15 +805,37 @@ class Aggregator {
     settings[key] = value
 
     if (key === 'aggregationLength') {
-      const signChange = ((this.baseAggregationTimeout || 1) * (value || 1)) < 0
+      const signChange = (this.baseAggregationTimeout || 1) * (value || 1) < 0
       this.baseAggregationTimeout = value
       this.bindTradesEvent()
 
       if (signChange) {
-        exchanges.forEach(exchange => 
-            (exchange.id === 'BINANCE' || exchange.id === 'BINANCE_FUTURES') 
-              && exchange.apis.forEach(api => api.close())
-        )
+        const channel = value === -1 ? 'raw' : 'aggregated'
+        const targetExchanges = []
+        exchanges.forEach(exchange => {
+          if (
+            (exchange.id === 'BINANCE' || exchange.id === 'BINANCE_FUTURES') &&
+            exchange.apis.length
+          ) {
+            targetExchanges.push(exchange.id)
+            exchange.apis.forEach(api => api.close())
+          }
+        })
+
+        if (targetExchanges.length) {
+          this.ctx.postMessage({
+            op: 'notice',
+            data: {
+              title: `Switching to → ${channel} trade data${targetExchanges
+                .map(
+                  exchangeId =>
+                    `<div class="d-flex mt4"><i class="icon-${exchangeId} -center mr4"></i> ${exchangeId}</div>`
+                )
+                .join('')}`,
+              html: true
+            }
+          })
+        }
       }
     }
   }
@@ -839,13 +855,5 @@ class Aggregator {
     return this.tickerDelay
   }
 }
-
-// addEventListener('message', (event: any) => {
-//   const payload = event.data as AggregatorPayload
-
-//   if (typeof aggregator[payload.op] === 'function') {
-//     aggregator[payload.op](payload.data, payload.trackingId)
-//   }
-// })
 
 export default Aggregator
