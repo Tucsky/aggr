@@ -199,7 +199,8 @@ class AlertService {
     }
 
     if ('serviceWorker' in navigator) {
-      const register = await navigator.serviceWorker.getRegistration('sw.js')
+      const base_url = import.meta.env.VITE_APP_BASE_PATH || './'
+      const register = await navigator.serviceWorker.getRegistration(base_url +'sw.js')
 
       this.pushSubscription = JSON.parse(
         JSON.stringify(
