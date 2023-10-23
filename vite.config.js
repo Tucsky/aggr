@@ -1,14 +1,14 @@
+
 import { defineConfig, loadEnv } from 'vite'
-import vue from '@vitejs/plugin-vue2'
+import { qrcode } from 'vite-plugin-qrcode'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { VitePWA } from 'vite-plugin-pwa'
-import svgLoader from 'vite-svg-loader'
-import monacoEditorPlugin from 'vite-plugin-monaco-editor'
-import { qrcode } from 'vite-plugin-qrcode'
-
 import fs from 'fs'
-import path from 'path'
 import gitprocess from 'child_process'
+import monacoEditorPlugin from 'vite-plugin-monaco-editor'
+import path from 'path'
+import svgLoader from 'vite-svg-loader'
+import vue from '@vitejs/plugin-vue2'
 
 let date
 
@@ -61,7 +61,7 @@ export default defineConfig(({ mode }) => {
     define: {
       ...processEnvValues
     },
-    base: mode === 'github' ? env.VITE_APP_BASE_URL : '',
+    base: mode === 'github' ? env.VITE_APP_BASE_PATH : '/',
     plugins: [
       vue(),
       svgLoader({

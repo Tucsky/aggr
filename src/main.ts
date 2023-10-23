@@ -30,7 +30,8 @@ Vue.directive('draggable-market', draggableMarket)
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    const base_url = import.meta.env.VITE_APP_BASE_PATH || ''
+    navigator.serviceWorker.register(base_url + 'sw.js')
   })
 }
 
