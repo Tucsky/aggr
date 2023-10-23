@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented here.
 
+## [3.5.0] - 2023-10-23
+
+
+### Added:
+
+Added MACD to default indicators list (commit: 153eb62d)
+Added "mbps tf" (commit: 77a5ce01)
+Added "FDUSD" stablecoin (commit: 03c92982)
+Added pane rename input validation on pressing enter (commit: be782eef)
+Added option to unlock raw trades (commit: 39ba778a)
+Added custom script options (commit: 76234165)
+
+### Enhancements:
+
+Overhauled search dialog pagination (commit: 43d16b0d)
+Hid column in indicator window (commit: 81d737c7)
+
+### Bug Fixes:
+
+Fixed an issue with PromptDialog's cancel button (commit: 8bfce9d2)
+Prevented double dialog close after the escape key press (commit: e5a43d2d)
+Fixed push notifications for Service Workers (commit: 9d4631c)
+Fixed editor undo (commit: 4bd175bb)
+Fixed a bug related to search dialog content deletion (commit: 8c744a32)
+
+### Chore/Configuration:
+
+Added QR code Vite plugin (commit: 9136be55)
+Added CSS sourcemap for development (commit: f99135bf)
+Improved bug report GitHub issue template (commit: c47e5097)
+Improved feature request GitHub issue template (commit: 45c72234)
+Changed Prettier configuration file format to .cjs (commit: de4ea7cd)
+Cleaned up vite/vue config files (commit: c3e5d8f9)
+
 ## [3.4.0] - 2023-09-10
 
 ### Added
