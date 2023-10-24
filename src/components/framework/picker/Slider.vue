@@ -8,17 +8,15 @@
         @touchstart="select"
       ></div>
       <div
-        v-if="showCompletion && handles[0]"
+        v-if="showCompletion"
         class="slider__completion"
-        :style="`width: ${handles[0].positionX}px`"
+        :style="`width: ${handle.position}%`"
       ></div>
       <div
         class="slider__handle"
-        v-for="(handle, index) in handles"
-        :key="index"
         @mousedown="select"
         @touchstart="select"
-        :style="`transform: translateX(${handle.positionX}px); background-color: ${handle.color};`"
+        :style="`left: ${handle.position}%; background-color: ${handle.color};`"
         v-tippy="{ followCursor: true, distance: 24 }"
         :title="+handle.value.toFixed(2)"
       />
@@ -28,12 +26,10 @@
 
 <script>
 import { mix } from 'color-fns'
-import { debounce, getClosestValue, getEventCords } from '@/utils/helpers'
-
-const CURSOR_PADDING = 4
+import { getEventCords } from '@/utils/helpers'
 
 export default {
-  name: 'VerteSlider',
+  name: 'Slider',
   props: {
     gradient: { type: Array, default: null },
     colorCode: { type: Boolean, default: false },
@@ -43,29 +39,26 @@ export default {
     max: { type: Number, default: 255 },
     step: { type: Number, default: 1 },
     value: { type: Number, default: 0 },
-    handlesValue: { type: Array, default: () => [0] },
     showCompletion: {
       type: Boolean,
       default() {
         if (this.gradient) {
           return false
         }
-
         return true
       }
     },
     log: { type: Boolean, default: false }
   },
-  data: () => ({
-    fill: {
-      translate: 0,
-      scale: 0
-    },
-    multiple: false,
-    currentValue: 0,
-    handles: [],
-    values: []
-  }),
+  data() {
+    return {
+      handle: {
+        value: Number(this.value),
+        position: 0,
+        color: '#fff'
+      }
+    }
+  },
   computed: {
     sizeRelatedOptions() {
       return [this.log, this.min, this.max, this.step]
@@ -74,55 +67,47 @@ export default {
   watch: {
     sizeRelatedOptions() {
       this.updateSize()
-      this.updateValue(this.currentValue, true)
+      this.updateHandlePosition(true)
     },
-    gradient(val) {
-      this.initGradient(val)
-      this.reloadHandlesColor()
+    gradient(value) {
+      this.initGradient(value)
     },
-    values() {
-      this.multiple = this.values.length > 1
-      this.fill = this.multiple ? false : this.fill || {}
-    },
-    value(val, oldVal) {
-      if (val === oldVal || val === this.currentValue) return
+    value(value) {
+      this.handle.value = value
+      this.updateHandlePosition(true)
+    }
+  },
+  async mounted() {
+    window.addEventListener('resize', this.handleResize)
+    this.initElements()
+    this.updateSize()
 
-      this.updateValue(this.value, true)
+    if (this.gradient) {
+      this.initGradient(this.gradient)
+    }
+
+    this.updateHandlePosition(true)
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.handleResize)
+
+    if (this._dragHandler) {
+      this.release()
+    }
+
+    if (this._emitTimeout) {
+      clearTimeout(this._emitTimeout)
+    }
+
+    if (this._dblClickTimeout) {
+      clearTimeout(this._dblClickTimeout)
     }
   },
   methods: {
-    init() {
-      this.$emitInputEvent = debounce(() => {
-        this.$emit('input', this.currentValue)
-      })
-      this.multiple = this.values.length > 1
-      this.values = this.handlesValue
-      this.handles = this.handlesValue.map(value => {
-        return { value, positionX: 0, color: '#fff' }
-      })
-      if (this.values.length === 1) {
-        this.values[0] = Number(this.value)
-      }
-      this.values.sort()
-
-      this.initElements()
-      if (this.gradient) {
-        this.initGradient(this.gradient)
-      }
-      this.initEvents()
-      this.values.forEach((handle, index) => {
-        this.activeHandle = index
-        this.updateValue(handle, true)
-      })
-    },
     initElements() {
       this.wrapper = this.$refs.wrapper
       this.track = this.$refs.track
       this.fill = this.$refs.fill
-
-      if (this.classes) {
-        this.wrapper.classList.add(...this.classes)
-      }
     },
     initGradient(gradient) {
       if (gradient.length > 1) {
@@ -131,279 +116,127 @@ export default {
       }
       this.fill.style.backgroundImage = ''
       this.fill.style.backgroundColor = gradient[0]
-      this.handles.forEach(handle => {
-        handle.style.color = gradient[0]
-      })
+      this.handle.color = gradient[0]
     },
     handleResize() {
       this.updateSize()
-      this.updateValue(this.currentValue, true)
+      this.updateHandlePosition(true)
     },
-    initEvents() {
-      window.addEventListener('resize', this.handleResize)
-    },
-    beforeDestroy() {
-      window.removeEventListener('resize', this.handleResize)
-    },
-    /**
-     * fire select events
-     */
     select(event) {
       event.preventDefault()
 
-      // check if  left mouse is clicked
       if (event.buttons === 2) return
 
       if (this._dblClickTimeout) {
         clearTimeout(this._dblClickTimeout)
       }
 
-      // check if a double click
       if (this.pendingDblClick) {
         this.pendingDblClick = false
         this.$emit('reset')
         return
       }
 
-      // next click might be double click, for the next 150ms
       this.pendingDblClick = true
 
       this.updateSize()
       this.track.classList.add('slider--dragging')
       this.ticking = false
 
-      const stepValue = this.getStepValue(event)
+      this.updateHandleValue(event)
+      this.updateHandlePosition()
 
-      if (this.multiple) {
-        const closest = getClosestValue(this.values, stepValue)
-        this.activeHandle = this.values.indexOf(closest)
-      }
-      this.updateValue(stepValue)
-
-      this.tempDrag = this.dragging.bind(this)
-      this.tempRelease = this.release.bind(this)
-      document.addEventListener('mousemove', this.tempDrag)
-      document.addEventListener('touchmove', this.tempDrag)
-      document.addEventListener('touchend', this.tempRelease)
-      document.addEventListener('mouseup', this.tempRelease)
+      this._dragHandler = this.dragging.bind(this)
+      this._releaseHandler = this.release.bind(this)
+      document.addEventListener('mousemove', this._dragHandler)
+      document.addEventListener('touchmove', this._dragHandler)
+      document.addEventListener('touchend', this._releaseHandler)
+      document.addEventListener('mouseup', this._releaseHandler)
     },
-    /**
-     * dragging motion
-     */
     dragging(event) {
-      const stepValue = this.getStepValue(event)
+      const stepValue = this.updateHandleValue(event)
       if (!this.ticking) {
         window.requestAnimationFrame(() => {
-          this.updateValue(stepValue)
+          this.updateHandlePosition(stepValue)
           this.ticking = false
         })
-
         this.ticking = true
       }
     },
-    /**
-     * release handler
-     */
     release() {
       this.track.classList.remove('slider--dragging')
-      document.removeEventListener('mousemove', this.tempDrag)
-      document.removeEventListener('touchmove', this.tempDrag)
-      document.removeEventListener('mouseup', this.tempRelease)
-      document.removeEventListener('touchend', this.tempRelease)
+      document.removeEventListener('mousemove', this._dragHandler)
+      document.removeEventListener('touchmove', this._dragHandler)
+      document.removeEventListener('mouseup', this._releaseHandler)
+      document.removeEventListener('touchend', this._releaseHandler)
 
       if (this.pendingDblClick) {
-        this._dblClickTimeout = window.setTimeout(() => {
+        this._dblClickTimeout = setTimeout(() => {
           this.pendingDblClick = false
           this._dblClickTimeout = null
         }, 150)
       }
-    },
-    getStepValue(event) {
-      const { x } = getEventCords(event)
 
+      this._dragHandler = null
+      this._releaseHandler = null
+    },
+    // get the current slider value from the click/move event on the slider (using event.clientX) 
+    updateHandleValue(event) {
+      // x = x coordinate of mouse click / move event
+      const { x } = getEventCords(event)
       let value
 
-      if (this.log) {
-        const minLog = Math.max(0, Math.log(this.min + 1) || 0)
-        const minLeft = (minLog / Math.log(this.max + 1)) * this.width
+      // offsetX = slider offset x
+      // width = slider width
+      const { offsetX, width } = this
 
-        const logPosition = Math.max(
-          (this.width / 3) * -1,
-          Math.min(this.width * 1.5, x - this.left)
-        )
-
-        value = Math.max(
-          0,
-          Math.exp(
-            ((minLeft + (logPosition / this.width) * (this.width - minLeft)) /
-              this.width) *
-              Math.log(this.max + 1)
-          ) - 1
-        )
+      if (!this.log) {
+        // value = current slider value (between min & max)
+        value = ((x - offsetX) / width) * (this.max - this.min) + this.min
       } else {
-        const mouseValue = x - this.left
-        const stepCount = parseInt(mouseValue / this.stepWidth + 0.5, 10)
-        value = stepCount * this.step + this.min
+        // value = same but log scaled (smaller values takes a larger space on the slider)
+        const scale = width / (Math.log(this.max + 1) - Math.log(this.min + 1))
+        value = Math.exp((x - offsetX) / scale + Math.log(this.min + 1)) - 1
       }
 
-      if (!this.decimalsCount) {
-        return value
+      // Constrain value to be between this.min and this.max
+      value = Math.min(this.max, Math.max(this.min, value))
+
+      // make sure the value is rounded to the step prop
+      const stepValue = Math.round(value / this.step) * this.step
+
+      this.handle.value = stepValue
+    },
+    // set the handle position (left: n%) based on the slider value (value between min & max)
+    updateHandlePosition(silent) {
+      const { value } = this.handle
+      if (!this.log) {
+        // this is working fine
+        this.handle.position =
+          ((value - this.min) / (this.max - this.min)) * 100
+      } else {
+        const scale = Math.log(this.max + 1) - Math.log(this.min + 1)
+        this.handle.position = ((Math.log(value + 1) - Math.log(this.min + 1)) / scale) * 100
       }
 
-      return Number(value.toFixed(this.decimalsCount))
+      if (!silent) {
+        if (this._emitTimeout) {
+          clearTimeout(this._emitTimeout)
+        }
+
+        this._emitTimeout = setTimeout(() => {
+          this._emitTimeout = null
+          this.$emit('input', value)
+        }, 100)
+      }
     },
     updateSize() {
-      const trackRect = this.track.getBoundingClientRect()
+      this.width = this.track.offsetWidth
+      this.offsetX = this.track.getBoundingClientRect().left
 
-      this.left = trackRect.left
-
-      let width = this.$el.clientWidth
-
-      if (!width) {
-        width = parseInt(this.track.parentElement.style.width)
-      }
-
-      if (!width && trackRect.width) {
-        width = trackRect.width
-      }
-
-      if (width) {
-        this.width = width - CURSOR_PADDING * 2
-      }
-
-      this.stepWidth = (this.width / (this.max - this.min)) * this.step
-    },
-    /**
-     * get the filled area percentage
-     * @param  {Object} slider
-     * @param  {Number} value
-     * @return {Number}
-     */
-    getPositionPercentage(value) {
-      if (this.log) {
-        return Math.log(value + 1) / Math.log(this.max + 1)
-      } else {
-        return (value - this.min) / (this.max - this.min)
-      }
-    },
-    normalizeValue(value) {
-      if (isNaN(Number(value))) {
-        return this.value
-      }
-      if (this.multiple) {
-        const prevValue = this.values[this.activeHandle - 1] || this.min
-        const nextValue = this.values[this.activeHandle + 1] || this.max
-        value = Math.min(Math.max(Number(value), prevValue), nextValue)
-      }
-      return Math.min(Math.max(Number(value), this.min), this.max)
-    },
-    addHandle(value) {
-      const closest = getClosestValue(this.values, value)
-      const closestIndex = this.values.indexOf(closest)
-      const closestValue = this.values[closestIndex]
-      const newIndex = closestValue <= value ? closestIndex + 1 : closestIndex
-      this.handles.splice(newIndex, 0, {
-        value,
-        positionX: 0,
-        color: '#fff'
-      })
-      this.values.splice(newIndex, 0, value)
-
-      this.activeHandle = newIndex
-      this.currentValue = null
-      this.updateValue(value)
-    },
-    removeHandle(index) {
-      this.handles.splice(index, 1)
-      this.values.splice(index, 1)
-      this.activeHandle = index === 0 ? index + 1 : index - 1
-    },
-    /**
-     * get the handle color
-     * @param  {Number} positionPercentage
-     * @return {Number} handle hex color code
-     */
-    getHandleColor(positionPercentage) {
-      const colorCount = this.gradient.length - 1
-      const region = positionPercentage
-      for (let i = 1; i <= colorCount; i++) {
-        // check the current zone
-        if (region >= (i - 1) / colorCount && region <= i / colorCount) {
-          // get the active color percentage
-          const colorPercentage =
-            (region - (i - 1) / colorCount) / (1 / colorCount)
-          // return the mixed color based on the zone boundary colors
-          return mix(this.gradient[i - 1], this.gradient[i], colorPercentage)
-        }
-      }
-      return 'rgb(0, 0, 0)'
-    },
-    /**
-     * update the slider fill, value and color
-     * @param {Number} value
-     */
-
-    reloadHandlesColor() {
-      this.handles.forEach((handle, index) => {
-        const positionPercentage = this.getPositionPercentage(handle.value)
-        const color = this.getHandleColor(positionPercentage)
-        this.handles[index].color = color.toString()
-      })
-    },
-
-    updateValue(value, muted = false) {
-      // if (Number(value) === this.value) return;
-
-      window.requestAnimationFrame(() => {
-        const normalized = this.normalizeValue(value)
-        const positionPercentage = this.getPositionPercentage(normalized)
-
-        if (this.fill) {
-          this.fill.translate = positionPercentage * this.width
-          this.fill.scale = 1 - positionPercentage
-        }
-
-        this.values[this.activeHandle] = normalized
-        this.handles[this.activeHandle].value = normalized
-
-        this.handles[this.activeHandle].positionX =
-          CURSOR_PADDING + positionPercentage * this.width
-
-        this.currentValue = normalized
-
-        if (this.gradient) {
-          const color = this.getHandleColor(positionPercentage)
-          this.handles[this.activeHandle].color = color.toString()
-          if (this.colorCode) {
-            this.currentValue = color
-          }
-        }
-
-        if (muted) return
-        this.$emitInputEvent()
-      })
+      console.log('update size', this.width, this.offsetX)
     }
   },
-  created() {
-    const stepSplited = this.step.toString().split('.')[1]
-    this.currentValue = this.value
-    this.decimalsCount = stepSplited ? stepSplited.length : 0
-  },
-  mounted() {
-    this.init()
-
-    this.$nextTick(() => {
-      this.updateSize()
-      this.updateValue(undefined, true)
-    })
-  },
-  destroyed() {
-    window.removeEventListener('resize', this.handleResize)
-
-    if (this._updateSizeTimeout) {
-      clearTimeout(this._updateSizeTimeout)
-    }
-  }
 }
 </script>
 
