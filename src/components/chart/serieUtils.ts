@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { joinRgba, mix, splitColorCode } from '@/utils/colors'
 import { IndicatorFunction } from './chart'
 
 /**
@@ -862,5 +863,33 @@ export default {
   },
   na(val) {
     return val || 0
-  }
+  },
+  interpolate: {
+    state: {
+      paletteId: null,
+      colorsRgb: null,
+      ratio: null,
+      output: null,
+    },
+    update(state, ratio, ...colors) {
+      if (!state.paletteId || state.paletteId !== colors.join('')) {
+        try {
+          state.colorsRgb = colors.map(color => splitColorCode(color))
+        } catch (error) {
+          throw new Error(`interpolate(): failed to parse color codes\n\t${colors.join(', ')}`)
+        }
+
+        state.paletteId = colors.join('')
+      }
+
+      if (state.ratio !== ratio) {
+        state.output = joinRgba(
+          mix(ratio, ...state.colorsRgb)
+        )
+        state.ratio = ratio
+      }
+
+      return state.output
+    }
+  },
 }

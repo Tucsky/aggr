@@ -25,6 +25,7 @@
     "idb": "^6.0.0",
     "lightweight-charts": "git+https://github.com/Tucsky/lightweight-charts.git#a36ce5589f82e3d40f36ffcf08bdd1d67956f15a",
     "lodash.merge": "^4.6.2",
+    "marked": "^9.1.2",
     "monaco-editor": "0.41.0",
     "pako": "^1.0.6",
     "tunajs": "^1.0.13",
@@ -40,6 +41,7 @@
     "vuex": "^3.4.0"
   },
   "devDependencies": {
+    "@types/marked": "^6.0.0",
     "@types/node": "20.2.0",
     "@types/pako": "^2.0.0",
     "@types/sharedworker": "0.0.29",

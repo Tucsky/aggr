@@ -516,7 +516,6 @@ export default class SerieBuilder {
     do {
       if ((functionMatch = FUNCTION_LOOKUP_REGEX.exec(output))) {
         const functionName = functionMatch[1]
-
         const isMathFunction = Object.prototype.hasOwnProperty.call(
           Math,
           functionName
@@ -547,7 +546,6 @@ export default class SerieBuilder {
           args: []
         }
 
-        let injectedArgCount = 0
 
         const customArgsStartIndex = functionMatch.index
         const customArgsEndIndex = findClosingBracketMatchIndex(
@@ -565,34 +563,34 @@ export default class SerieBuilder {
           output = `${output.slice(
             0,
             customArgsStartIndex
-          )}utils.${functionName}(${instruction.args
-            .map(a => a.instruction)
+          )}utils.${functionName}(${customArgs
             .join(',')})${output.slice(customArgsEndIndex + 1, output.length)}`
           continue
         }
 
+        let injectedArgCount = 0
         let totalArgsCount =
           (targetFunction.args ? targetFunction.args.length : 0) +
           customArgs.length
 
         for (let i = 0; i < totalArgsCount; i++) {
           const argDefinition =
-            targetFunction.args && targetFunction.args[i]
-              ? targetFunction.args[i]
-              : {}
+            targetFunction.args ? targetFunction.args[i] : null
 
           const arg = {
-            ...argDefinition
+            ...(argDefinition || {})
           }
-
-          if (argDefinition.injected) {
-            injectedArgCount++
-
-            instruction.args.push(arg)
-
-            continue
-          } else {
-            totalArgsCount--
+          
+          if (argDefinition) {
+            if (argDefinition.injected) {
+              injectedArgCount++
+  
+              instruction.args.push(arg)
+  
+              continue
+            } else if (targetFunction.args[i]) {
+              totalArgsCount--
+            }
           }
 
           const customArg = customArgs[i - injectedArgCount]

@@ -108,6 +108,33 @@ export function getColorByWeight(a, b, weight) {
   return rgb
 }
 
+export function mix(ratio, ...colors) {
+  if (colors.length === 1 || ratio <= 0) return colors[0];
+  if (ratio >= 1) return colors[colors.length - 1];
+
+  const segmentLength = 1 / (colors.length - 1);
+  const segmentIndex = Math.floor(ratio / segmentLength);
+
+  const a = colors[segmentIndex];
+  const b = colors[segmentIndex + 1];
+
+  const adjustedRatio = (ratio - segmentLength * segmentIndex) / segmentLength;
+
+  return interpolate(a, b, adjustedRatio);
+}
+
+function interpolate(a, b, weight) {
+  const p = weight;
+  const w = p * 2 - 1;
+  const w1 = (w / 1 + 1) / 2;
+  const w2 = 1 - w1;
+  return [
+    Math.round(a[0] * w2 + b[0] * w1),
+    Math.round(a[1] * w2 + b[1] * w1),
+    Math.round(a[2] * w2 + b[2] * w1)
+  ];
+}
+
 export function rgbaToRgb(color, backgroundColor) {
   const alpha = typeof color[3] === 'number' ? color[3] : 1
   const inverse = 1 - alpha

@@ -57,7 +57,14 @@
     </template>
     <template #subheader>
       <tabs v-model="tab">
-        <tab name="script">Script</tab>
+        <tab name="script">
+          Script
+          <i
+            v-if="tab === 'script'"
+            class="icon-refresh -small ml8"
+            @click="updateScript()"
+          ></i>
+        </tab>
         <tab name="options">Options</tab>
       </tabs>
     </template>
@@ -612,10 +619,14 @@ export default {
       })
     },
     updateScript(script) {
-      script = script.trim()
+      this.$store.dispatch('app/showNotice', {
+        title: 'Rebuilding indicator...',
+        timeout: 1000
+      })
+
       this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', {
         id: this.indicatorId,
-        value: script
+        value: script ? script.trim() : undefined
       })
 
       this.getPlotTypes()
@@ -1182,7 +1193,6 @@ export default {
   position: relative;
   flex-grow: 1;
   min-height: 50px;
-  --vscode-scrollbar-shadow: white;
 
   &__zoom {
     position: absolute;

@@ -1,12 +1,15 @@
 <template>
-  <div class="editor"></div>
+  <div class="editor">
+    <editor-reference v-model="referenceDialogTrigger" />
+  </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import { rgbToHex, splitColorCode } from '@/utils/colors'
 import monaco from './editor'
-
+import { TOKENS } from './references'
+import EditorReference from '@/components/framework/editor/EditorReference.vue'
 @Component({
   name: 'Editor',
   props: {
@@ -22,17 +25,22 @@ import monaco from './editor'
       type: Boolean,
       default: false
     }
+  },
+  components: {
+    EditorReference
   }
 })
 export default class Editor extends Vue {
   private value: string
   private fontSize: number
   private preventOverride: boolean
-
   private editorInstance: any
+
+  referenceDialogTrigger = null
 
   private _blurTimeout: number
   private _beforeUnloadHandler: (event: Event) => void
+  private _referenceTimeout: any
 
   @Watch('fontSize')
   onFontSizeChange() {
@@ -53,11 +61,11 @@ export default class Editor extends Vue {
   }
 
   beforeDestroy() {
-    this.editorInstance.dispose()
-
     if (this._blurTimeout) {
       this.onBlur(true)
     }
+
+    this.editorInstance.dispose()
   }
 
   async resize() {
@@ -117,7 +125,28 @@ export default class Editor extends Vue {
     })
   }
 
+  showReference(token, position) {
+    if (this._referenceTimeout) {
+      clearTimeout(this._referenceTimeout)
+    }
+
+    this._referenceTimeout = setTimeout(() => {
+      this.referenceDialogTrigger = {
+        token,
+        top: position.y,
+        left: position.x,
+        width: 2,
+        height: 2
+      }
+    }, 500)
+  }
+
   async createEditor() {
+    const position = {
+      x: null,
+      y: null
+    }
+
     this.editorInstance = monaco.create(this.$el as HTMLElement, {
       value: this.value,
       language: 'javascript',
@@ -126,8 +155,27 @@ export default class Editor extends Vue {
         vertical: 'hidden'
       },
       overviewRulerBorder: false,
+      contextmenu: false,
       theme:
         this.$store.state.settings.theme === 'light' ? 'vs-light' : 'my-dark'
+    })
+
+    this.editorInstance.getDomNode().addEventListener('mousedown', event => {
+      this.referenceDialogTrigger = null
+      position.x = event.pageX
+      position.y = event.pageY
+    })
+
+    this.editorInstance.onDidChangeCursorSelection(async e => {
+      const selection = e.selection
+      if (!selection.isEmpty()) {
+        const model = this.editorInstance.getModel()
+        const selectedText = model.getValueInRange(selection)
+
+        if (TOKENS.indexOf(selectedText) !== -1) {
+          this.showReference(selectedText, position)
+        }
+      }
     })
     this.editorInstance.onDidBlurEditorText(() => {
       if (this._blurTimeout) {
@@ -158,6 +206,10 @@ export default class Editor extends Vue {
 
   .monaco-editor .minimap-shadow-visible {
     box-shadow: rgb(0 0 0 / 33%) -6px 0 6px -6px inset;
+  }
+
+  .monaco-editor .scroll-decoration {
+    box-shadow: rgb(0 0 0 / 33%) 0 6px 6px -6px inset;
   }
 }
 </style>

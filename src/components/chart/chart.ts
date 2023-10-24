@@ -633,7 +633,7 @@ export default class Chart {
   updateWatermark(marketsUpdate?: string[]) {
     if (marketsUpdate) {
       if (!marketsUpdate.length) {
-        this.watermark = 'Nothing'
+        this.watermark = 'Empty'
       } else if (store.state.settings.normalizeWatermarks) {
         this.watermark = marketsUpdate.join('\u2009|\u2009')
       } else {
