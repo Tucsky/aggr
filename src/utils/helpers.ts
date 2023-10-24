@@ -252,7 +252,7 @@ export function parseFunctionArguments(
     }
 
     return arg.replace(/#COMMA#/g, ',')
-  })
+  }).filter(arg => arg.length)
 }
 
 export function camelize(str) {

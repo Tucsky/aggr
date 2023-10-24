@@ -31,53 +31,53 @@ export default [
   },
   {
     label: 'highest',
-    detail: '[AGGR] highest of the last n bars',
-    insertText: `highest(14)`
+    detail: '[AGGR] highest of the last n (ex: 14) bars',
+    insertText: `highest(value, 14)`
   },
   {
     label: 'lowest',
-    detail: '[AGGR] lowest of the last n bars',
-    insertText: `lowest(14)`
+    detail: '[AGGR] lowest of the last n (ex: 14) bars',
+    insertText: `lowest(value, 14)`
   },
   {
     label: 'linreg',
-    detail: '[AGGR] linreg of the last n bars',
-    insertText: `linreg(14)`
+    detail: '[AGGR] linreg of the last n (ex: 14) bars',
+    insertText: `linreg(value, 14)`
   },
   {
     label: 'sum',
-    detail: '[AGGR] sum of the last n bars',
-    insertText: `sum(14)`
+    detail: '[AGGR] sum of the last n (ex: 14) bars',
+    insertText: `sum(value, 14)`
   },
   {
     label: 'cma',
     detail: '[AGGR] bad sma',
-    insertText: `cma(14)`
+    insertText: `cma(value, 14)`
   },
   {
     label: 'sma',
     detail: '[AGGR] sma',
-    insertText: `sma(14)`
+    insertText: `sma(value, 14)`
   },
   {
     label: 'ema',
     detail: '[AGGR] ema',
-    insertText: `ema(14)`
+    insertText: `ema(value, 14)`
   },
   {
     label: 'last',
     detail: '[AGGR] equivalent of n[14] (but dynamic)',
-    insertText: `last(options.offset)`
+    insertText: `last(value, options.offset)`
   },
   {
     label: 'rma',
     detail: '[AGGR] rma',
-    insertText: `rma(14)`
+    insertText: `rma(value, 14)`
   },
   {
     label: 'stoch',
     detail: '[AGGR] stoch',
-    insertText: `stoch(14)`
+    insertText: `stoch(value, 14)`
   },
   {
     label: 'na',
