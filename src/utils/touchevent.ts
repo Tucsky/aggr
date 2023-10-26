@@ -5,7 +5,7 @@ export function isTouchSupported() {
     return isTouchSupportedCache
   }
 
-  const prefixes = ' -webkit- -moz- -o- -ms- '.split(' ')
+  const prefixes = '-webkit- -moz- -ms-'.split(' ')
   const mq = function (query) {
     return window.matchMedia(query).matches
   }
