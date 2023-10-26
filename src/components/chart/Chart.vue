@@ -338,7 +338,6 @@ export default class ChartComponent extends Mixins(PaneMixin) {
 
   -webkit-touch-callout: none;
   -webkit-user-select: none;
-  -khtml-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
