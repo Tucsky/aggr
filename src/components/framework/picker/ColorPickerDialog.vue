@@ -542,7 +542,7 @@ export default {
     height: 100px;
     -webkit-user-select: none;
     -moz-user-select: none;
-    -o-user-select: none;
+    -ms-user-select: none;
     user-select: none;
 
     &__thumb {
