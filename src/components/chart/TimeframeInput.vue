@@ -11,10 +11,12 @@
 </template>
 
 <script lang="ts">
+import { Component, Vue }  from 'vue-property-decorator'
+
+import EditableVue from '@/framework/Editable.vue'
+
 import { isTouchSupported } from '@/utils/touchevent'
-import { Component, Vue } from 'vue-property-decorator'
-import { getTimeframeForHuman } from '../../utils/helpers'
-import EditableVue from '../framework/Editable.vue'
+import { getTimeframeForHuman } from '@/utils/helpers'
 
 const TIMEFRAME_VOL = /\$$|v$|k$|vol?$/i
 const TIMEFRAME_BPS = /mb$|b$|bps?$/i
@@ -101,7 +103,7 @@ export default class TimeframeInput extends Vue {
       }
     }
 
-    return output
+    return output.toString()
   }
 
   onInput(event) {
@@ -116,7 +118,7 @@ export default class TimeframeInput extends Vue {
     if (!label || !label.length) {
       return this.$emit('input', null)
     }
-
+    
     this.$emit('input', {
       value,
       label
