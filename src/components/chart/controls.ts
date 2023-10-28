@@ -287,7 +287,7 @@ export default class ChartControl {
       Date.now() / 1000,
       this.chart.timeframe
     )
-    const timeframe = store.state[this.chart.paneId].timeframe
+    const timeframe = store.state[this.chart.paneId].timeframe.toString()
     const paneId = this.chart.paneId
 
     this.createContextMenu({
