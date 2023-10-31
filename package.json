@@ -38,7 +38,7 @@
     "vue-template-compiler": "^2.7.13",
     "vue-tippy": "^4.8.0",
     "vue-uuid": "^2.0.2",
-    "vuex": "^3.4.0"
+    "vuex": "^3.6.2"
   },
   "devDependencies": {
     "@types/lodash.merge": "^4.6.8",
