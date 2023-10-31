@@ -30,6 +30,7 @@ export interface IndicatorSettings {
   name?: string
   displayName?: string
   description?: string
+  enabled?: boolean
   script?: string
   optionsDefinitions?: { [key: string]: IndicatorOption }
   options?: SeriesOptions<SeriesType>
