@@ -64,20 +64,14 @@
           v-tippy
         >
           <input type="checkbox" class="form-control" :checked="alertsClick" />
-          <div 
-            on="1 CLICK ⚡️"
-            off="ALT+CLICK"
-          ></div>
+          <div on="1 CLICK ⚡️" off="ALT+CLICK"></div>
         </label>
       </div>
       <div class="form-group mt16 mb16">
         <label for="audio-assistant-source"
           ><i class="icon-music-note mr4"></i> Alert sound</label
         >
-        <button
-          class="btn -file -blue -cases"
-          @change="handleAlertSoundFile"
-        >
+        <button class="btn -file -blue -cases" @change="handleAlertSoundFile">
           <i class="icon-upload mr8"></i> {{ alertSound || 'Browse' }}
           <i
             v-if="alertSound"
