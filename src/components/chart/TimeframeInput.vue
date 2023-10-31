@@ -13,7 +13,7 @@
 <script lang="ts">
 import { Component, Vue }  from 'vue-property-decorator'
 
-import EditableVue from '@/framework/Editable.vue'
+import EditableVue from '@/components/framework/Editable.vue'
 
 import { isTouchSupported } from '@/utils/touchevent'
 import { getTimeframeForHuman } from '@/utils/helpers'
