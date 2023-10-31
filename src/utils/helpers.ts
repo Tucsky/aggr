@@ -467,6 +467,16 @@ export function handleFetchError(err): void {
   }
 }
 
+export function handleFetchSuccess(message): void {
+  if (typeof message === 'string') {
+      store.dispatch('app/showNotice', {
+        title: message,
+        type: 'success',
+        timeout: 3000
+      })
+    } 
+}
+
 export function getApiUrl(path: string): string {
   let base = import.meta.env.VITE_APP_API_URL
 

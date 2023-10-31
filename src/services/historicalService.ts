@@ -3,6 +3,7 @@ import {
   floorTimestampToTimeframe,
   getApiUrl,
   handleFetchError,
+  handleFetchSuccess,
   isOddTimeframe
 } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
@@ -74,12 +75,13 @@ class HistoricalService extends EventEmitter {
           throw new Error(json && json.error ? json.error : 'empty-response')
         }
 
-        if (!json.results.length) {
-          throw new Error('No more data')
-        }
-
         if (json.format !== 'point') {
           throw new Error('Bad data')
+        }
+
+        if (!json.results.length) {
+          handleFetchSuccess('No more data')
+          return true
         }
 
         return this.normalizePoints(
