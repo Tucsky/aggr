@@ -10,6 +10,8 @@ import path from 'path'
 import svgLoader from 'vite-svg-loader'
 import vue from '@vitejs/plugin-vue2'
 
+import crypto from 'crypto'
+
 let date
 
 if (typeof gitprocess === 'function') {
@@ -56,6 +58,8 @@ export default defineConfig(({ mode }) => {
       }
     }, {})
   }
+  
+  const hash = crypto.createHash('md5').update('aggr').digest('hex').substring(0,7)
 
   return {
     define: {
@@ -108,6 +112,15 @@ export default defineConfig(({ mode }) => {
       monacoEditorPlugin.default({}),
       qrcode() // only applies in dev mode
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          entryFileNames: `[name].` + hash + `.js`,
+          chunkFileNames: `[name].` + hash + `.js`,
+          assetFileNames: `[name].` + hash + `.[ext]`
+        }
+      }
+    },
     server: {
       port: 8080,
       host: '0.0.0.0'
