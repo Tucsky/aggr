@@ -3,7 +3,11 @@ importScripts(
   'https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js'
 );
 
-workbox.precaching.precacheAndRoute(self.__WB_MANIFEST);
+const url = new URL(self.location)
+
+if (url.searchParams.get('mode') !== 'development') {
+  workbox.precaching.precacheAndRoute(self.__WB_MANIFEST);
+}
 
 self.addEventListener('fetch', event => {});
 
@@ -42,7 +46,7 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', function (event) {
   event.notification.close()
 
-  let url = 'https://aggr.trade'
+  let url = url.origin
 
   if (event.notification.data.url) {
     url = event.notification.data.url

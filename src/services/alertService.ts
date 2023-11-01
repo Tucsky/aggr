@@ -1,5 +1,5 @@
 import store from '@/store'
-import { getApiUrl, handleFetchError } from '@/utils/helpers'
+import { getApiUrl, getSwUrl, handleFetchError } from '@/utils/helpers'
 import aggregatorService from './aggregatorService'
 import dialogService from './dialogService'
 import { formatMarketPrice } from './productsService'
@@ -199,8 +199,7 @@ class AlertService {
     }
 
     if ('serviceWorker' in navigator) {
-      const base_url = import.meta.env.VITE_APP_BASE_PATH || './'
-      const register = await navigator.serviceWorker.getRegistration(base_url +'sw.js')
+      const register = await navigator.serviceWorker.getRegistration(getSwUrl(import.meta.env.MODE))
 
       this.pushSubscription = JSON.parse(
         JSON.stringify(

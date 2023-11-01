@@ -484,6 +484,26 @@ export function getApiUrl(path: string): string {
   return base + path
 }
 
+
+export function getSwUrl(mode: string) {
+  let swUrl
+  
+  switch(mode) {
+    case 'development':
+      // TODO = 'load
+      // swUrl = `./src/sw.js?mode=${mode}`
+      break
+    case 'github': 
+      swUrl= import.meta.env.VITE_APP_BASE_PATH + 'sw.js' 
+      break
+    case 'production':
+      swUrl = './sw.js'
+      break
+  }
+
+  return swUrl
+}
+
 export function getEventCords(event, page = false) {
   const props = {
     x: page ? 'pageX' : 'clientX',
