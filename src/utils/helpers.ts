@@ -3,13 +3,20 @@ import store from '@/store'
 
 const DAY = 60 * 60 * 24
 
-export function ago(timestamp) {
+/**
+ * Converts a timestamp as a number into a simplified time-based string representation.
+ *
+ * @param {number} timestamp - The timestamp in milliseconds to convert.
+ * @returns {string} A string representing the time elapsed since the provided timestamp.
+ */
+
+export function ago(timestamp: number) : string{
   if (!timestamp) {
     return '0s'
   }
 
   const seconds = Math.floor((Date.now() - timestamp) / 1000)
-  let interval, output
+  let interval: number, output: string
 
   if ((interval = Math.floor(seconds / 31536000)) > 1) {
     output = interval + ' yr.'
@@ -491,7 +498,7 @@ export function getSwUrl(mode: string) {
   switch(mode) {
     case 'development':
       // TODO = 'load
-      // swUrl = `./src/sw.js?mode=${mode}`
+      swUrl = `./src/sw.js?mode=${mode}`
       break
     case 'github': 
       swUrl= import.meta.env.VITE_APP_BASE_PATH + 'sw.js' 
