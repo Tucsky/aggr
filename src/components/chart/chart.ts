@@ -30,11 +30,11 @@ import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
 import { stripStablePair, marketDecimals, parseMarket } from '@/services/productsService'
 import audioService from '@/services/audioService'
-import alertService, {
-  MarketAlert,
-  AlertEvent,
-  AlertEventType
-} from '@/services/alertService'
+
+import { AlertEventType, type types as AlertTypes } from '@/services/market-alerts'
+
+import AlertService from '@/services/market-alerts/alertService'
+
 import historicalService, {
   HistoricalResponse
 } from '@/services/historicalService'
@@ -1779,7 +1779,7 @@ export default class Chart {
       return []
     }
 
-    this._promiseOfPrependedBars = alertService.getPrice().then(markets => {
+    this._promiseOfPrependedBars = AlertService.getPrice().then(markets => {
       this._promiseOfPrependedBars = null
 
       if (this.activeRenderer) {
@@ -1863,7 +1863,7 @@ export default class Chart {
     }
 
     for (const index of this.marketsIndexes) {
-      const alerts = await alertService.getAlerts(index)
+      const alerts = await AlertService.getAlerts(index)
       for (let i = 0; i < alerts.length; i++) {
         this.renderAlert(alerts[i], api)
       }
@@ -1872,12 +1872,12 @@ export default class Chart {
     this._alertsRendered = true
   }
 
-  onAlert({ timestamp, price, market, type, newPrice }: AlertEvent) {
+  onAlert({ timestamp, price, market, type, newPrice }: AlertTypes.AlertEvent) {
     if (this.marketsIndexes.indexOf(market) === -1) {
       return
     }
 
-    const existingAlert = alertService.alerts[market].find(
+    const existingAlert = AlertService.alerts[market].find(
       a => a.price === price
     )
 
@@ -1964,7 +1964,7 @@ export default class Chart {
     }
   }
 
-  renderAlert(alert: MarketAlert, api: ISeriesApi<any>, opacity?: number) {
+  renderAlert(alert: Partial<AlertTypes.MarketAlertEntity>, api: ISeriesApi<any>, opacity?: number) {
     if (!api) {
       return
     }
@@ -3055,14 +3055,14 @@ export default class Chart {
 
     const market = this.mainIndex
 
-    const alert: MarketAlert = {
+    const alert: AlertTypes.MarketAlertEntity = {
       price,
       market,
       timestamp,
       active: false
     }
 
-    alertService.createAlert(alert, this.getPrice())
+    AlertService.createAlert(alert, this.getPrice())
   }
 
   async refreshChartDimensions() {

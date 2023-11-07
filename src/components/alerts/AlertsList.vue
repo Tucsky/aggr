@@ -145,12 +145,9 @@ import ToggableSection from '@/components/framework/ToggableSection.vue'
 
 import workspacesService from '@/services/workspacesService'
 import Btn from '@/components/framework/Btn.vue'
-import alertService, {
-  AlertEvent,
-  AlertEventType,
-  MarketAlert,
-  MarketAlerts
-} from '@/services/alertService'
+import { AlertsTypes, type types as AlertsTypes } from '@/services/market-alerts'
+import AlertService from '@/services/market-alerts/alertService'
+
 import dialogService from '@/services/dialogService'
 import aggregatorService from '@/services/aggregatorService'
 import { sleep } from '@/utils/helpers'
@@ -175,9 +172,9 @@ import { formatMarketPrice } from '@/services/productsService'
   }
 })
 export default class AlertsList extends Vue {
-  dropdownAlert: MarketAlert = null
+  dropdownAlert: AlertsTypes.MarketAlertEntity = null
   alertDropdownTrigger: HTMLElement = null
-  indexes: MarketAlerts[] = []
+  indexes: AlertsTypes.MarketAlerts[] = []
   sections = []
   isLoading = false
   market: string
@@ -242,19 +239,19 @@ export default class AlertsList extends Vue {
     }
   }
 
-  async removeAlert(alert: MarketAlert) {
+  async removeAlert(alert: AlertsTypes.MarketAlertEntity) {
     this.isLoading = true
     await alertService.removeAlert(alert)
     this.isLoading = false
   }
 
-  async createAlert(alert: MarketAlert) {
+  async createAlert(alert: AlertsTypes.MarketAlertEntity) {
     this.isLoading = true
     await alertService.createAlert(alert)
     this.isLoading = false
   }
 
-  async checkStatus(alert: MarketAlert) {
+  async checkStatus(alert: AlertsTypes.MarketAlertEntity) {
     this.isLoading = true
     const status = await alertService.toggleAlert(
       alert.market,
@@ -298,7 +295,7 @@ export default class AlertsList extends Vue {
     }
   }
 
-  onAlert({ price, market, type, newPrice, message }: AlertEvent) {
+  onAlert({ price, market, type, newPrice, message }: AlertsTypes.AlertEvent) {
     let group = this.indexes.find(index => index.market === market)
 
     if (!group) {

@@ -1,52 +1,26 @@
+import { AlertResponse, MarketAlertEntity, MarketAlerts } from './types'
+import { AlertEventType } from './enums'
+
 import store from '@/store'
+
 import { getApiUrl, getSwUrl, handleFetchError } from '@/utils/helpers'
-import aggregatorService from './aggregatorService'
-import dialogService from './dialogService'
-import { formatMarketPrice } from './productsService'
-import workspacesService from './workspacesService'
 
-interface AlertResponse {
-  error?: string
-  markets?: string[]
-  alert?: any
-  priceOffset?: number
+import aggregatorService from '../aggregatorService'
+import dialogService from '../dialogService'
+import { formatMarketPrice } from '../productsService'
+import workspacesService from '../workspacesService'
+
+interface AlertServiceInterface {
+  formatPrice: (price: number) => number;
+  urlBase64ToUint8Array: (base64String: string) => Uint8Array
+  getAlerts: (market: string) => Promise<MarketAlertEntity[] | null >
+  getAlert: (market: string, price: number) => Promise<MarketAlertEntity | null>
 }
 
-export interface MarketAlerts {
-  market: string
-  alerts: MarketAlert[]
-}
+type AlertsCollection = { [market: string]: MarketAlertEntity[] }
 
-export interface MarketAlert {
-  price: number
-  market: string
-  message?: string
-  active?: boolean
-  timestamp?: number
-  triggered?: boolean
-}
-
-export interface AlertEvent {
-  type: AlertEventType
-  price: number
-  market: string
-  message?: string
-  timestamp?: number
-  newPrice?: number
-}
-
-export enum AlertEventType {
-  CREATED,
-  ACTIVATED,
-  DELETED,
-  STATUS,
-  DEACTIVATED,
-  TRIGGERED,
-  UPDATED
-}
-
-class AlertService {
-  alerts: { [market: string]: MarketAlert[] } = {}
+class AlertService implements AlertServiceInterface {
+  alerts: AlertsCollection = {}
 
   private publicVapidKey = import.meta.env.VITE_APP_PUBLIC_VAPID_KEY
   private pushSubscription: PushSubscription
@@ -54,14 +28,20 @@ class AlertService {
   private _promiseOfSync: Promise<void>
 
   constructor() {
+    if (!this.publicVapidKey) {
+       throw Error('AlertService requires a public key to connect with Server')
+    }
+
     this.url = getApiUrl('alert')
   }
 
-  formatPrice(price) {
+  // TODO: replace this with user's preference
+  formatPrice(price: number) {
     return +price.toFixed(8)
   }
 
-  urlBase64ToUint8Array(base64String) {
+  // TODO: should be private, or put in an util library
+  urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
     const base64 = (base64String + padding)
       .replace(/-/g, '+')
@@ -79,10 +59,10 @@ class AlertService {
   /**
    * Query database alerts for given markets
    * Wait for sync to complete before query
-   * @param market
-   * @returns
+   * @param {string} market
+   * @returns {Promise<MarketAlertEntity[] | []>}
    */
-  async getAlerts(market) {
+  async getAlerts(market: string): Promise<MarketAlertEntity[] | []> {
     if (this.alerts[market]) {
       return this.alerts[market]
     }
@@ -98,7 +78,13 @@ class AlertService {
     return this.alerts[market]
   }
 
-  async getAlert(market, price) {
+  /**
+   *  
+   *  @param {string} market
+   *  @param {number} price
+   *  @returns {Promise<MarketAlertEntity | null>} 
+   */
+  async getAlert(market: string, price: number): Promise<MarketAlertEntity | null> {
     if (!this.alerts[market]) {
       await this.getAlerts(market)
     }
@@ -326,12 +312,12 @@ class AlertService {
   }
 
   async createAlert(
-    createdAlert: MarketAlert,
+    createdAlert: MarketAlertEntity,
     referencePrice?: number,
     askMessage?: boolean
   ) {
     if (!this.alerts[createdAlert.market]) {
-      await this.getAlerts(createdAlert.market)
+     // await this.getAlerts(createdAlert.market)
     }
 
     aggregatorService.emit('alert', {
@@ -397,9 +383,9 @@ class AlertService {
   }
 
   async moveAlert(
-    market,
-    price,
-    newAlert: MarketAlert,
+    market: string,
+    price: number,
+    newAlert: MarketAlertEntity,
     currentPrice: number
   ): Promise<void> {
     const subscription = await this.getPushSubscription()
@@ -502,7 +488,7 @@ class AlertService {
     })
   }
 
-  async removeAlert(removedAlert: MarketAlert) {
+  async removeAlert(removedAlert: MarketAlertEntity) {
     aggregatorService.emit('alert', {
       price: removedAlert.price,
       market: removedAlert.market,
@@ -569,3 +555,4 @@ class AlertService {
 }
 
 export default new AlertService()
+  

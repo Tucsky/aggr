@@ -1,4 +1,5 @@
-import alertService, { MarketAlert } from '@/services/alertService'
+import { type types as AlertsTypes } from '@/services/market-alerts'
+import AlertService from '@/services/market-alerts/alertService'
 import store from '@/store'
 import { joinRgba, splitColorCode } from '@/utils/colors'
 import { getEventOffset } from '@/utils/touchevent'
@@ -9,7 +10,7 @@ export default class AlertEventHandler {
   isBusy = false
 
   private api: IndicatorApi
-  private alert: MarketAlert
+  private alert: ReturnType<AlertEventHandler['getAlert']>
   private priceline: IPriceLine
   private timestamp: number
   private chart: ChartController
@@ -83,7 +84,7 @@ export default class AlertEventHandler {
     canvas.addEventListener(this.getEndEvent(event), this.levelDragEndHandler)
   }
 
-  getAlert(price: number) {
+  getAlert(price: number): AlertsTypes.MarketAlertEntity{
     let market
 
     if (this.priceline) {
@@ -104,7 +105,8 @@ export default class AlertEventHandler {
 
     return {
       price,
-      market
+      market,
+      active: null
     }
   }
 
@@ -125,7 +127,7 @@ export default class AlertEventHandler {
         return
       }
 
-      const price = alertService.formatPrice(
+      const price = AlertService.formatPrice(
         this.api.coordinateToPrice(y) as number
       )
 
@@ -178,7 +180,7 @@ export default class AlertEventHandler {
       this.isBusy = true
 
       if (this.priceline) {
-        const originalAlert = alertService.alerts[this.alert.market].find(
+        const originalAlert = AlertService.alerts[this.alert.market].find(
           a => a.price === this.alert.price
         )
         const { price, title: message } = this.priceline.options()
@@ -192,7 +194,7 @@ export default class AlertEventHandler {
 
         if (this.alert.price !== price && canMove) {
           if (originalAlert) {
-            await alertService.moveAlert(
+            await AlertService.moveAlert(
               originalAlert.market,
               originalAlert.price,
               movedAlert,
@@ -201,21 +203,21 @@ export default class AlertEventHandler {
           }
           this.api.removePriceLine(this.priceline)
         } else {
-          await alertService.removeAlert(this.alert)
+          await AlertService.removeAlert(this.alert)
         }
       } else if (canCreate) {
         const timestamp = this.chart.chartInstance
           .timeScale()
           .coordinateToTime(this.offset.x) as number
 
-        const alert: MarketAlert = {
+        const alert: AlertsTypes.MarketAlertEntity = {
           price: this.alert.price,
           market: this.alert.market,
           timestamp,
           active: false
         }
 
-        await alertService.createAlert(alert, this.chart.getPrice())
+        await AlertService.createAlert(alert, this.chart.getPrice())
       }
     } finally {
       this.isBusy = false

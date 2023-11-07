@@ -1,11 +1,11 @@
 import { DBSchema } from "idb"
 import { IndicatorSettings } from "@/store/panesSettings/chart"
-import type { types as AlertsTypes } from '../alerts'
+import type { types as AlertsTypes } from '../market-alerts'
 import type { GifsStorage, ImportedSound, Preset, ProductsStorage, Workspace } from "@/types/types"
 
 interface  AlertsDBSchema extends DBSchema{ 
   alerts: {
-   value: AlertsTypes.MarketAlert
+   value: AlertsTypes.MarketAlertEntity[]
    key: string
   }
  }

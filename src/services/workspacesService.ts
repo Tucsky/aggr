@@ -21,14 +21,17 @@ import {
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import { databaseUpgrades, workspaceUpgrades } from './migrations'
 import { PanesState } from '@/store/panes'
-import { alertService, types }from './alerts/'
+import { type types as AlertsTypes } from './market-alerts'
+import AlertService from '@/services/market-alerts/alertService'
+
+
 import dialogService from './dialogService'
 import { stripStablePair } from './productsService'
 import notificationService from './notificationService'
 
-
+import type { AggrDBSchema } from './database/types'
 class WorkspacesService {
-  db: IDBPDatabase<AggrDB>
+  db: IDBPDatabase<AggrDBSchema>
   workspace: Workspace
   urlStrategy = 'history'
   previousAppVersion: any
@@ -67,7 +70,7 @@ class WorkspacesService {
       }, 3000)
     }
 
-    alertService.syncTriggeredAlerts()
+    AlertService.syncTriggeredAlerts()
 
     const workspace = await this.getCurrentWorkspace()
 
@@ -81,8 +84,8 @@ class WorkspacesService {
 
     let promiseOfUpgrade: Promise<void>
 
-    return new Promise<IDBPDatabase<AggrDB>>(resolve => {
-      openDB<AggrDB>('aggr', this.latestDatabaseVersion, {
+      return new Promise<IDBPDatabase<AggrDBSchema>>(resolve => {
+        openDB<AggrDBSchema>('aggr', this.latestDatabaseVersion, {
         upgrade: (db, oldVersion, newVersion, tx) => {
           console.debug(`[idb] upgrade received`, oldVersion, '->', newVersion)
 
@@ -165,7 +168,7 @@ class WorkspacesService {
     }
   }
 
-  async insertDefault(db: IDBPDatabase<AggrDB>) {
+  async insertDefault(db: IDBPDatabase<AggrDBSchema>) {
     this.defaultInserted = true
 
     await this.insertDefaultIndicators(db)
@@ -174,7 +177,7 @@ class WorkspacesService {
     localStorage.setItem('version', import.meta.env.VITE_APP_VERSION)
   }
 
-  async insertDefaultIndicators(db: IDBPDatabase<AggrDB>) {
+  async insertDefaultIndicators(db: IDBPDatabase<AggrDBSchema>) {
     const now = Date.now()
     const tx = db.transaction('indicators', 'readwrite')
 
@@ -215,7 +218,7 @@ class WorkspacesService {
     await tx.done
   }
 
-  async insertDefaultPresets(db: IDBPDatabase<AggrDB>) {
+  async insertDefaultPresets(db: IDBPDatabase<AggrDBSchema>) {
     const tx = db.transaction('presets', 'readwrite')
 
     const existing = await tx.store.getAllKeys()
@@ -706,22 +709,22 @@ class WorkspacesService {
     return this.db.getAll('alerts')
   }
 
-  async getAlerts(market: string): Promise<MarketAlerts[] | []> {
+  async getAlerts(market: string): Promise<AlertsTypes.MarketAlertEntity[] | []> {
     const marketAlerts = await this.db.get('alerts', market)
-
+    debugger;
     if (marketAlerts) {
-      return marketAlerts.alerts
+      return marketAlerts
     }
 
     return []
   }
 
-  saveAlerts(marketAlerts: MarketAlerts) {
+  saveAlerts(marketAlerts: AlertsTypes.MarketAlerts) {
     if (!marketAlerts.alerts.length) {
       return this.db.delete('alerts', marketAlerts.market)
     }
 
-    return this.db.put('alerts', marketAlerts)
+    return this.db.put('alerts', marketAlerts.alerts)
   }
 
   async reset() {

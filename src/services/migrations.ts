@@ -1,9 +1,10 @@
+import { AggrDBSchema } from './database/types'
+
 import { Workspace } from '@/types/types'
 import { IDBPDatabase, IDBPTransaction } from 'idb'
-import { AggrDB } from './workspacesService'
 import { Threshold, TradesPaneState } from '@/store/panesSettings/trades'
 import { getMarketProduct, parseMarket } from './productsService'
-import { MarketAlert } from './alertService'
+import type { types as AlertsTypes  } from './market-alerts'
 
 export const databaseUpgrades = {
   0: (db: IDBPDatabase<any>) => {
@@ -29,7 +30,7 @@ export const databaseUpgrades = {
       keyPath: 'slug'
     })
   },
-  1: (db: IDBPDatabase<AggrDB>) => {
+  1: (db: IDBPDatabase<AggrDBSchema>) => {
     ;(db as any).deleteObjectStore('series')
 
     const indicatorsStore = db.createObjectStore('indicators', {
@@ -38,12 +39,12 @@ export const databaseUpgrades = {
 
     indicatorsStore.createIndex('name', 'name')
   },
-  2: (db: IDBPDatabase<AggrDB>) => {
+  2: (db: IDBPDatabase<AggrDBSchema>) => {
     db.createObjectStore('presets', {
       keyPath: 'name'
     })
   },
-  3: (db: IDBPDatabase<AggrDB>) => {
+  3: (db: IDBPDatabase<AggrDBSchema>) => {
     db.createObjectStore('sounds', {
       keyPath: 'name'
     })
@@ -51,12 +52,12 @@ export const databaseUpgrades = {
       autoIncrement: true
     })
   },
-  5: async (db: IDBPDatabase<AggrDB>) => {
+  5: async (db: IDBPDatabase<AggrDBSchema>) => {
     db.createObjectStore('alerts', {
       keyPath: 'market'
     })
   },
-  7: async (db: IDBPDatabase<AggrDB>, tx: IDBPTransaction<AggrDB>) => {
+  7: async (db: IDBPDatabase<AggrDBSchema>, tx: IDBPTransaction<AggrDBSchema>) => {
     const objectStore = tx.objectStore('alerts')
     const markets = (await objectStore.getAllKeys()) as any
 
@@ -66,7 +67,7 @@ export const databaseUpgrades = {
 
       const record = (await objectStore.get(market)) as any
 
-      let alerts: MarketAlert[]
+      let alerts: AlertsTypes.MarketAlertEntity[]
 
       if (record.prices) {
         alerts = record.prices.map(price => ({

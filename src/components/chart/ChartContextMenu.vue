@@ -10,10 +10,7 @@
       <i class="icon-search"></i>
       <span>Search</span>
     </button>
-    <button
-      @click="$emit('cmd', ['takeScreenshot', $event])"
-      class="dropdown-item"
-    >
+    <button @click="$emit('cmd', ['takeScreenshot', $event])" class="dropdown-item">
       <i class="icon-add-photo"></i>
       <span>Snapshot</span>
     </button>
@@ -70,11 +67,7 @@
             <span>Label</span>
           </label>
         </button>
-        <button
-          type="button"
-          class="dropdown-item"
-          @click.stop="toggleAlertsDropdown"
-        >
+        <button type="button" class="dropdown-item" @click.stop="toggleAlertsDropdown">
           Manage
           <i class="icon-more mr0"></i>
         </button>
@@ -88,7 +81,10 @@ import AlertsList from '@/components/alerts/AlertsList.vue'
 import { getTimeframeForHuman } from '@/utils/helpers'
 import { formatMarketPrice } from '@/services/productsService'
 import dialogService from '@/services/dialogService'
-import alertService, { MarketAlert } from '@/services/alertService'
+import { type types as AlertsTypes } from '@/services/market-alerts'
+
+import AlertService from '@/services/market-alerts/alertService'
+
 import { ChartPaneState } from '@/store/panesSettings/chart'
 
 export default {
@@ -213,17 +209,17 @@ export default {
         return
       }
 
-      const alert: MarketAlert = {
+      const alert: AlertsTypes.MarketAlertEntity = {
         price: this.price,
         market: this.market,
         timestamp: this.timestamp,
         active: false
       }
 
-      alertService.createAlert(alert, this.getPrice(), true)
+      AlertService.createAlert(alert, this.getPrice(), true)
     },
     removeAlert() {
-      alertService.removeAlert(this.alert)
+      AlertService.removeAlert(this.alert)
     },
     async editAlert() {
       const message = await dialogService.openAsPromise(
@@ -241,7 +237,7 @@ export default {
           price: this.alert.price,
           message: message
         }
-        await alertService.moveAlert(
+        await AlertService.moveAlert(
           this.alert.market,
           this.alert.price,
           newAlert,

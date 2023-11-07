@@ -1,4 +1,6 @@
-import alertService, { MarketAlert } from '@/services/alertService'
+import { type types as AlertsTypes } from '@/services/market-alerts'
+import AlertService from '@/services/market-alerts/alertService'
+
 import dialogService from '@/services/dialogService'
 import { formatAmount, formatPrice } from '@/services/productsService'
 import store from '@/store'
@@ -261,7 +263,7 @@ export default class ChartControl {
       const pricedCoordinate = api.coordinateToPrice(y - top)
 
       if (pricedCoordinate) {
-        price = alertService.formatPrice(pricedCoordinate)
+        price = AlertService.formatPrice(pricedCoordinate)
       }
 
       const timeScale = this.chart.chartInstance.timeScale()
@@ -273,7 +275,7 @@ export default class ChartControl {
 
       if (priceline) {
         const pricelineOptions = priceline.options() as PriceLineOptions &
-          MarketAlert
+          AlertsTypes.MarketAlertEntity
 
         alert = {
           price: pricelineOptions.price,

@@ -1,7 +1,7 @@
 import * as types from './types'
-import alertService from './alertService'
+import { AlertEventType } from './enums'
 
 export {
+  AlertEventType,
   type types,
-  alertService
 }

@@ -26,9 +26,7 @@
         @click="selectTimeframe($event, timeframe)"
         title="Maintain shift key to change timeframe on all panes"
         class="btn pane-chart__timeframe -text -cases"
-        :class="[
-          timeframeForHuman === timeframeLabel && 'pane-header__highlight'
-        ]"
+        :class="[timeframeForHuman === timeframeLabel && 'pane-header__highlight']"
       >
         <span>{{ timeframeLabel }}</span>
       </button>
@@ -37,14 +35,11 @@
         @click="toggleTimeframeDropdown($event, $refs.timeframeButton)"
         class="-arrow -cases pane-header__highlight pane-chart__timeframe-selector"
       >
-        {{ !isKnownTimeframe ? timeframeForHuman : '' }}
+        {{ !isKnownTimeframe ? timeframeForHuman : "" }}
       </Btn>
       <hr />
     </pane-header>
-    <div
-      class="chart-overlay hide-scrollbar"
-      :style="{ left: overlayLeft + 'px' }"
-    >
+    <div class="chart-overlay hide-scrollbar" :style="{ left: overlayLeft + 'px' }">
       <indicators-overlay v-model="showIndicators" :pane-id="paneId" />
       <markets-overlay :pane-id="paneId" />
     </div>
@@ -61,207 +56,207 @@
 </template>
 
 <script lang="ts">
-import { Component, Mixins } from 'vue-property-decorator'
+import { Component, Mixins } from "vue-property-decorator";
 
-import Chart from './chart'
+import Chart from "./chart";
 
-import { getTimeframeForHuman, sleep } from '@/utils/helpers'
-import { ChartPaneState } from '@/store/panesSettings/chart'
+import { getTimeframeForHuman, sleep } from "@/utils/helpers";
+import { ChartPaneState } from "@/store/panesSettings/chart";
 
-import aggregatorService from '@/services/aggregatorService'
-import { AlertEvent } from '@/services/alertService'
+import aggregatorService from "@/services/aggregatorService";
+import { AlertEvent } from "@/services/market-alerts/types";
 
-import PaneMixin from '@/mixins/paneMixin'
-import PaneHeader from '@/components/panes/PaneHeader.vue'
-import ChartLayout from '@/components/chart/Layout.vue'
-import IndicatorsOverlay from '@/components/chart/IndicatorsOverlay.vue'
-import MarketsOverlay from '@/components/chart/MarketsOverlay.vue'
-import AlertsList from '@/components/alerts/AlertsList.vue'
-import Btn from '@/components/framework/Btn.vue'
+import PaneMixin from "@/mixins/paneMixin";
+import PaneHeader from "@/components/panes/PaneHeader.vue";
+import ChartLayout from "@/components/chart/Layout.vue";
+import IndicatorsOverlay from "@/components/chart/IndicatorsOverlay.vue";
+import MarketsOverlay from "@/components/chart/MarketsOverlay.vue";
+import AlertsList from "@/components/alerts/AlertsList.vue";
+import Btn from "@/components/framework/Btn.vue";
 
-import { Trade } from '@/types/types'
+import { Trade } from "@/types/types";
 
 @Component({
-  name: 'Chart',
+  name: "Chart",
   components: {
     ChartLayout,
     PaneHeader,
     IndicatorsOverlay,
     MarketsOverlay,
     AlertsList,
-    Btn
-  }
+    Btn,
+  },
 })
 export default class ChartComponent extends Mixins(PaneMixin) {
   axis = {
     top: 0,
     left: 0,
     right: 0,
-    time: 0
-  }
+    time: 0,
+  };
 
-  private chart: Chart
+  private chart: Chart;
 
   get layouting() {
-    this.refreshAxisSize()
-    return (this.$store.state[this.paneId] as ChartPaneState).layouting
+    this.refreshAxisSize();
+    return (this.$store.state[this.paneId] as ChartPaneState).layouting;
   }
 
   get overlayLeft() {
-    return this.axis.left
+    return this.axis.left;
   }
 
   get overlayTop() {
-    return this.axis.top
+    return this.axis.top;
   }
 
   get favoriteTimeframes() {
-    return this.$store.state.settings.favoriteTimeframes
+    return this.$store.state.settings.favoriteTimeframes;
   }
 
   get timeframe() {
-    return this.$store.state[this.paneId].timeframe
+    return this.$store.state[this.paneId].timeframe;
   }
 
   get isKnownTimeframe() {
-    return Object.keys(this.favoriteTimeframes).indexOf(this.timeframe) !== -1
+    return Object.keys(this.favoriteTimeframes).indexOf(this.timeframe) !== -1;
   }
 
   get showIndicators() {
-    return this.$store.state[this.paneId].showIndicators
+    return this.$store.state[this.paneId].showIndicators;
   }
 
   set showIndicators(value) {
-    this.$store.commit(`${this.paneId}/TOGGLE_INDICATORS`, value)
+    this.$store.commit(`${this.paneId}/TOGGLE_INDICATORS`, value);
   }
 
   get timeframeForHuman() {
     if (!this.timeframe) {
-      return 'ERR'
+      return "ERR";
     }
 
-    return getTimeframeForHuman(this.timeframe)
+    return getTimeframeForHuman(this.timeframe);
   }
 
   $refs!: {
-    chartContainer: HTMLElement
-    paneHeader: PaneHeader
-    timeframeButton: HTMLElement
-  }
+    chartContainer: HTMLElement;
+    paneHeader: PaneHeader;
+    timeframeButton: HTMLElement;
+  };
 
   mounted() {
-    this.chart = new Chart(this.paneId, this.$refs.chartContainer)
+    this.chart = new Chart(this.paneId, this.$refs.chartContainer);
 
-    this.bindAggregator()
-    this.refreshAxisSize()
+    this.bindAggregator();
+    this.refreshAxisSize();
 
     if (this.showIndicators && this.$parent.$el.clientHeight > 420) {
-      this.showIndicators = true
+      this.showIndicators = true;
     }
   }
 
   destroyChart() {
-    this.unbindAggregator()
+    this.unbindAggregator();
 
-    this.chart.destroy()
+    this.chart.destroy();
   }
 
   beforeDestroy() {
-    this.destroyChart()
+    this.destroyChart();
   }
 
   onTrades(trades: Trade[]) {
-    this.chart.queueTrades(trades)
+    this.chart.queueTrades(trades);
   }
 
   onAlert(alertEvent: AlertEvent) {
-    this.chart.onAlert(alertEvent)
+    this.chart.onAlert(alertEvent);
   }
 
   bindAggregator() {
-    aggregatorService.on('trades', this.onTrades)
-    aggregatorService.on('alert', this.onAlert)
+    aggregatorService.on("trades", this.onTrades);
+    aggregatorService.on("alert", this.onAlert);
   }
 
   unbindAggregator() {
-    aggregatorService.off('trades', this.onTrades)
-    aggregatorService.off('alert', this.onAlert)
+    aggregatorService.off("trades", this.onTrades);
+    aggregatorService.off("alert", this.onAlert);
   }
 
   renderChart() {
-    this.chart.renderAll()
+    this.chart.renderAll();
   }
 
   onResize() {
     if (!this.chart) {
-      return
+      return;
     }
 
-    this.chart.refreshChartDimensions()
-    this.chart.updateFontSize()
+    this.chart.refreshChartDimensions();
+    this.chart.updateFontSize();
   }
 
   async refreshAxisSize() {
     if (!this.$refs.chartContainer) {
-      return
+      return;
     }
 
-    await sleep(10)
+    await sleep(10);
 
-    const chartOptions = this.$store.state[this.paneId] as ChartPaneState
+    const chartOptions = this.$store.state[this.paneId] as ChartPaneState;
 
     const axis = {
       top: 0,
       left: 0,
       right: 0,
-      time: 0
-    }
+      time: 0,
+    };
 
     if (chartOptions.showLeftScale) {
       axis.left = this.$refs.chartContainer.querySelector(
-        'tr:first-child td:first-child canvas'
-      ).clientWidth
+        "tr:first-child td:first-child canvas"
+      ).clientWidth;
     }
 
     if (chartOptions.showRightScale) {
       axis.right = this.$refs.chartContainer.querySelector(
-        'tr:first-child td:last-child canvas'
-      ).clientWidth
+        "tr:first-child td:last-child canvas"
+      ).clientWidth;
     }
 
     if (chartOptions.showTimeScale) {
       axis.time = this.$refs.chartContainer.querySelector(
-        'tr:last-child td:nth-child(2) canvas'
-      ).clientHeight
+        "tr:last-child td:nth-child(2) canvas"
+      ).clientHeight;
     }
 
-    this.axis = axis
+    this.axis = axis;
   }
 
   toggleLayout() {
-    this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING')
+    this.$store.commit(this.paneId + "/TOGGLE_LAYOUTING");
   }
 
   async toggleTimeframeDropdown(event, button) {
-    button.isLoading = true
-    await this.chart.toggleTimeframeDropdown(event)
-    button.isLoading = false
+    button.isLoading = true;
+    await this.chart.toggleTimeframeDropdown(event);
+    button.isLoading = false;
   }
 
   restart() {
-    this.chart.restart()
+    this.chart.restart();
   }
 
   takeScreenshot(event) {
-    this.chart.takeScreenshot(event)
+    this.chart.takeScreenshot(event);
   }
 
   selectTimeframe(event, timeframe) {
     if (timeframe === this.timeframe) {
-      this.toggleTimeframeDropdown(event, this.$refs.timeframeButton)
-      return
+      this.toggleTimeframeDropdown(event, this.$refs.timeframeButton);
+      return;
     }
-    this.$store.dispatch(`${this.paneId}/setTimeframe`, timeframe)
+    this.$store.dispatch(`${this.paneId}/setTimeframe`, timeframe);
   }
 }
 </script>

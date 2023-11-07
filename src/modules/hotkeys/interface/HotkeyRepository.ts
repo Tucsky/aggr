@@ -5,4 +5,5 @@ export interface HotkeyRepository {
   removeHotkey(id: string): Promise<void>;
   updateHotkey(id: string, hotkey: Hotkey): Promise<void>;
   listHotkeys(): Promise<Hotkey[]>;
+  getHotkey(id: string): Promise<Hotkey | null>;
 }

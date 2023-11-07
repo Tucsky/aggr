@@ -1,0 +1,9 @@
+export enum AlertEventType {
+ CREATED,
+ ACTIVATED,
+ DELETED,
+ STATUS,
+ DEACTIVATED,
+ TRIGGERED,
+ UPDATED
+}
