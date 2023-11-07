@@ -355,9 +355,9 @@ export default class Chart {
 
   /**
    * set timeframe to chart model and update watermark with litteral
-   * @param timeframe
+   * @param {string} timeframe
    */
-  setTimeframe(timeframe) {
+  setTimeframe(timeframe: string) {
     const modifier = timeframe[timeframe.length - 1]
     if (modifier === 't') {
       this.type = 'tick'
@@ -1219,7 +1219,6 @@ export default class Chart {
       if (this.activeRenderer) {
         timestamp = grouping[this.activeRenderer.type]({
           renderer: this.activeRenderer, 
-          market: identifier,
           timeframe: this.timeframe, 
           trade, 
           isOdd: this.isOddTimeframe,

@@ -21,47 +21,11 @@ import {
 import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import { databaseUpgrades, workspaceUpgrades } from './migrations'
 import { PanesState } from '@/store/panes'
-import alertService, { MarketAlerts } from './alertService'
+import { alertService, types }from './alerts/'
 import dialogService from './dialogService'
 import { stripStablePair } from './productsService'
 import notificationService from './notificationService'
 
-export interface AggrDB extends DBSchema {
-  products: {
-    value: ProductsStorage
-    key: string
-  }
-  gifs: {
-    value: GifsStorage
-    key: string
-  }
-  workspaces: {
-    value: Workspace
-    key: string
-    indexes: { name: string }
-  }
-  indicators: {
-    value: IndicatorSettings
-    key: string
-    indexes: { name: string }
-  }
-  presets: {
-    value: Preset
-    key: string
-  }
-  sounds: {
-    value: ImportedSound
-    key: string
-  }
-  colors: {
-    value: string
-    key: string
-  }
-  alerts: {
-    value: MarketAlerts
-    key: string
-  }
-}
 
 class WorkspacesService {
   db: IDBPDatabase<AggrDB>
@@ -742,7 +706,7 @@ class WorkspacesService {
     return this.db.getAll('alerts')
   }
 
-  async getAlerts(market: string) {
+  async getAlerts(market: string): Promise<MarketAlerts[] | []> {
     const marketAlerts = await this.db.get('alerts', market)
 
     if (marketAlerts) {

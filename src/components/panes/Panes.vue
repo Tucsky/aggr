@@ -39,158 +39,151 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Vue from "vue";
+import Component from "vue-class-component";
 
-import VueGridLayout from 'vue-grid-layout'
-import PaneMixin from '@/mixins/paneMixin'
+import VueGridLayout from "vue-grid-layout";
+import PaneMixin from "@/mixins/paneMixin";
 
-import { GRID_COLS } from '@/utils/constants'
-import { GridItem } from '@/store/panes'
+import { GRID_COLS } from "@/utils/constants";
+import { GridItem } from "@/store/panes";
 
 @Component({
   components: {
     GridLayout: VueGridLayout.GridLayout,
     GridItem: VueGridLayout.GridItem,
-    Chart: () => import('@/components/chart/Chart.vue'),
-    Trades: () => import('@/components/trades/Trades.vue'),
-    Stats: () => import('@/components/stats/Stats.vue'),
-    Counters: () => import('@/components/counters/Counters.vue'),
-    Prices: () => import('@/components/prices/Prices.vue'),
-    Website: () => import('@/components/website/Website.vue'),
-    TradesLite: () => import('@/components/trades/TradesLite.vue'),
-    Alerts: () => import('@/components/alerts/Alerts.vue')
-  }
+    Chart: () => import("@/components/chart/Chart.vue"),
+    Trades: () => import("@/components/trades/Trades.vue"),
+    Stats: () => import("@/components/stats/Stats.vue"),
+    Counters: () => import("@/components/counters/Counters.vue"),
+    Prices: () => import("@/components/prices/Prices.vue"),
+    Website: () => import("@/components/website/Website.vue"),
+    TradesLite: () => import("@/components/trades/TradesLite.vue"),
+    Alerts: () => import("@/components/alerts/Alerts.vue"),
+  },
 })
 export default class Panes extends Vue {
-  draggable = true
-  resizable = true
-  rowHeight = 80
-  cols = null
-  breakpoint = null
-  layoutReady = false
+  draggable = true;
+  resizable = true;
+  rowHeight = 80;
+  cols = null;
+  breakpoint = null;
+  layoutReady = false;
 
-  private _resizeTimeout: number
-  private _maximizedPaneId
+  private _resizeTimeout: number;
+  private _maximizedPaneId;
 
   $refs!: {
-    panes: PaneMixin[]
-    grid: VueGridLayout.GridLayout
-  }
+    panes: PaneMixin[];
+    grid: VueGridLayout.GridLayout;
+  };
 
   protected get panes() {
-    return this.$store.state.panes.panes
+    return this.$store.state.panes.panes;
   }
 
   protected get unlocked() {
-    return !this.$store.state.panes.locked
+    return !this.$store.state.panes.locked;
   }
 
   protected get layout() {
-    return this.$store.state.panes.layout
+    return this.$store.state.panes.layout;
   }
 
   created() {
-    this.cols = GRID_COLS
+    this.cols = GRID_COLS;
 
-    this.updateRowHeight()
+    this.updateRowHeight();
   }
 
   mounted() {
-    window.addEventListener('resize', this.updateRowHeight)
+    window.addEventListener("resize", this.updateRowHeight);
   }
 
   beforeDestroy() {
-    window.addEventListener('resize', this.updateRowHeight)
+    window.addEventListener("resize", this.updateRowHeight);
   }
 
   resizeMaximizedPane() {
-    let maximizedItem: HTMLElement
+    let maximizedItem: HTMLElement;
 
     if (!this._maximizedPaneId) {
-      maximizedItem = document.getElementsByClassName(
-        '-maximized'
-      )[0] as HTMLElement
+      maximizedItem = document.getElementsByClassName("-maximized")[0] as HTMLElement;
     } else {
-      maximizedItem = document.getElementById(
-        this._maximizedPaneId
-      ).parentElement
+      maximizedItem = document.getElementById(this._maximizedPaneId).parentElement;
     }
 
     this.$nextTick(() => {
       if (maximizedItem) {
-        const maximizedPaneId = maximizedItem.children[0].id
-        let width
-        let height
+        const maximizedPaneId = maximizedItem.children[0].id;
+        let width;
+        let height;
 
         if (!this._maximizedPaneId) {
-          width = maximizedItem.clientWidth
-          height = maximizedItem.clientHeight
-          this._maximizedPaneId = maximizedPaneId
+          width = maximizedItem.clientWidth;
+          height = maximizedItem.clientHeight;
+          this._maximizedPaneId = maximizedPaneId;
         } else {
-          width = parseFloat(maximizedItem.style.width)
-          height = parseFloat(maximizedItem.style.height)
-          this._maximizedPaneId = null
+          width = parseFloat(maximizedItem.style.width);
+          height = parseFloat(maximizedItem.style.height);
+          this._maximizedPaneId = null;
         }
-        this.resizePane(maximizedPaneId, height, width)
+        this.resizePane(maximizedPaneId, height, width);
       }
-    })
+    });
   }
 
   resizePane(id, height, width) {
     if (!this.$refs.panes) {
-      return
+      return;
     }
 
-    const pane: PaneMixin = this.$refs.panes.find(pane => pane.paneId === id)
+    const pane: PaneMixin = this.$refs.panes.find((pane) => pane.paneId === id);
 
     if (!pane) {
-      return
+      return;
     }
 
-    if (typeof pane.onResize === 'function') {
+    if (typeof pane.onResize === "function") {
       pane.$nextTick(() => {
-        pane.onResize(width, height)
-      })
+        pane.onResize(width, height);
+      });
     }
   }
 
   onItemResized(id, h, w, hPx, wPx) {
-    this.resizePane(id, +hPx, +wPx)
-    this.$store.commit('panes/UPDATE_LAYOUT', this.layout)
+    this.resizePane(id, +hPx, +wPx);
+    this.$store.commit("panes/UPDATE_LAYOUT", this.layout);
   }
 
   updateItem(id) {
-    const item = this.layout.find(item => item.i === id)
-    this.$store.commit('panes/UPDATE_ITEM', item)
+    const item = this.layout.find((item) => item.i === id);
+    this.$store.commit("panes/UPDATE_ITEM", item);
   }
   onLayoutUpdated(gridItems: GridItem[]) {
-    this.$store.commit('panes/UPDATE_LAYOUT', gridItems)
+    this.$store.commit("panes/UPDATE_LAYOUT", gridItems);
   }
 
   onContainerResized(id, h, w, hPx, wPx) {
-    this.resizePane(id, +hPx, +wPx)
+    this.resizePane(id, +hPx, +wPx);
   }
 
   updateRowHeight(event?: Event) {
     if (event && !event.isTrusted) {
-      this.resizeMaximizedPane()
-      return
+      this.resizeMaximizedPane();
+      return;
     }
 
     if (this._resizeTimeout) {
-      clearTimeout(this._resizeTimeout)
+      clearTimeout(this._resizeTimeout);
     }
 
     if (event) {
-      this._resizeTimeout = window.setTimeout(
-        this.updateRowHeight.bind(this),
-        200
-      )
+      this._resizeTimeout = window.setTimeout(this.updateRowHeight.bind(this), 200);
     } else {
-      this._resizeTimeout = null
+      this._resizeTimeout = null;
 
-      this.rowHeight = window.innerHeight / this.cols
+      this.rowHeight = window.innerHeight / this.cols;
     }
   }
 }

@@ -1,4 +1,11 @@
+import { Trade } from "@/types/types"
 import { floorTimestampToTimeframe } from "@/utils/helpers"
+
+type GroupByTime = {
+  trade: Trade,
+  timeframe: number,
+  isOdd: boolean
+}
 
 export default {
   time({ trade, timeframe, isOdd }) {
@@ -28,7 +35,7 @@ export default {
 
     return renderer.timestamp
   },
-  bps({ renderer, trade, market, marketsFilters, timeframe }) {
+  bps({ renderer, trade, marketsFilters, timeframe }) {
     const { count, sum } = Object.keys(renderer.sources).reduce((acc, identifier) => {
       if (!marketsFilters[identifier] || renderer.sources[identifier].open === null) {
         return acc

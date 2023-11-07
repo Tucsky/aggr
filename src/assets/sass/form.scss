@@ -222,19 +222,12 @@ textarea.form-control {
         border-color: var(--theme-buy-100);
         color: var(--theme-buy-color);
 
-        &:before,
-        &:after {
-          transition: all 0.5s $ease-out-expo;
-        }
-
         &:before {
           opacity: 1;
-          transform: none;
         }
 
         &:after {
-          opacity: 0;
-          transform: translateY(50%) skewY(20deg);
+          opacity: 1;
         }
       }
 
@@ -287,9 +280,7 @@ textarea.form-control {
       top: 0;
       right: 0;
       bottom: 0;
-      transform: translateY(-50%) skewY(-20deg);
       opacity: 0;
-      transition: all 0.2s $ease-out-expo;
       display: flex;
       align-items: center;
       justify-content: center;
