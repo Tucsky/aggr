@@ -10,6 +10,8 @@ import Presets from '@/components/framework/Presets.vue'
 import autofocus from '@/directives/autofocusDirective'
 import draggableMarket from '@/directives/draggableMarketDirective'
 
+import { getSwUrl } from './utils/helpers'
+
 Vue.use(VueTippy, {
   maxWidth: '200px',
   duration: 0,
@@ -21,6 +23,7 @@ Vue.use(VueTippy, {
   boundary: 'window'
 })
 
+/* eslint-disable vue/multi-word-component-names */
 Vue.component('tippy', TippyComponent)
 Vue.component('dropdown', DropdownComponent)
 Vue.component('editable', Editable)
@@ -30,8 +33,10 @@ Vue.directive('draggable-market', draggableMarket)
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    const base_url = import.meta.env.VITE_APP_BASE_PATH || ''
-    navigator.serviceWorker.register(base_url + 'sw.js')
+    navigator.serviceWorker.register(getSwUrl(import.meta.env.MODE), {
+      scope: '/',
+      type: 'classic'
+    })
   })
 }
 

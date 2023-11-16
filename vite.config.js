@@ -1,4 +1,3 @@
-
 import { defineConfig, loadEnv } from 'vite'
 import { qrcode } from 'vite-plugin-qrcode'
 import { visualizer } from 'rollup-plugin-visualizer'
@@ -58,8 +57,12 @@ export default defineConfig(({ mode }) => {
       }
     }, {})
   }
-  
-  const hash = crypto.createHash('md5').update('aggr').digest('hex').substring(0,7)
+
+  const hash = crypto
+    .createHash('md5')
+    .update('aggr')
+    .digest('hex')
+    .substring(0, 7)
 
   return {
     define: {
@@ -77,16 +80,19 @@ export default defineConfig(({ mode }) => {
         filename: 'sw.js',
         registerType: 'autoUpdate',
         strategies: 'injectManifest',
-        injectRegister: false,
+        injectRegister: mode === 'development' ? 'auto' : null,
         includeAssets: [
           'favicon-32x32.png',
           'favicon-16x16.png',
           'apple-touch-icon.png',
           'safari-pinned-tab.svg'
         ],
+        devOptions: {
+          enabled: true
+        },
         workbox: {
           swDest: 'dist/sw.js',
-          swSrc: 'src/sw.js',
+          swSrc: 'src/sw.js'
         },
         manifest: {
           swDest: 'dist/sw.js',

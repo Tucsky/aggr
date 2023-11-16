@@ -469,12 +469,12 @@ export function handleFetchError(err): void {
 
 export function handleFetchSuccess(message): void {
   if (typeof message === 'string') {
-      store.dispatch('app/showNotice', {
-        title: message,
-        type: 'success',
-        timeout: 3000
-      })
-    } 
+    store.dispatch('app/showNotice', {
+      title: message,
+      type: 'success',
+      timeout: 3000
+    })
+  }
 }
 
 export function getApiUrl(path: string): string {
@@ -485,6 +485,25 @@ export function getApiUrl(path: string): string {
   }
 
   return base + path
+}
+
+export function getSwUrl(mode: string) {
+  let swUrl
+
+  switch (mode) {
+    case 'development':
+      // TODO = 'load
+      swUrl = `./dev-sw.js?dev-sw`
+      break
+    case 'github':
+      swUrl = import.meta.env.VITE_APP_BASE_PATH + 'sw.js'
+      break
+    case 'production':
+      swUrl = './sw.js'
+      break
+  }
+
+  return swUrl
 }
 
 export function getEventCords(event, page = false) {

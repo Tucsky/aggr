@@ -1,10 +1,11 @@
 {
-  "swDest": "build/sw.js",
-  "swSrc": "src/sw.js",
-  "start_url": "/",
-  "name": "AGGR",
+  "name": "SignificantTrades",
   "short_name": "AGGR",
-  "icons": [
+  "start_url": "/",
+  "description": "Cryptocurrency market trades aggregator",
+  "display": "standalone",
+  "id":"/",
+  "icons":[
     {
       "src": "/android-chrome-192x192.png",
       "sizes": "192x192",
@@ -18,5 +19,6 @@
   ],
   "theme_color": "#171b29",
   "background_color": "#171b29",
-  "display": "standalone"
+  "swDest": "build/sw.js",
+  "swSrc": "src/sw.js"
 }
