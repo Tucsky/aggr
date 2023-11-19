@@ -1,5 +1,10 @@
 <template>
-  <Dialog @clickOutside="hide" class="search-dialog" ref="dialog" @resize="onResize">
+  <Dialog
+    ref="dialog"
+    class="search-dialog"
+    @resize="onResize"
+    @clickOutside="hide"
+  >
     <template v-slot:header>
       <div v-if="selectedPaneId">
         <div class="dialog__title">
@@ -30,7 +35,13 @@
       <div v-else>
         <div class="dialog__title">Manage connections</div>
       </div>
-      <Loader v-if="isLoading || isPreloading" small class="mtauto mbauto mr0" title="Updating database..." v-tippy />
+      <Loader
+        v-if="isLoading || isPreloading"
+        small
+        class="mtauto mbauto mr0"
+        title="Updating database..."
+        v-tippy
+      />
       <div class="column -center"></div>
     </template>
     <div
@@ -236,15 +247,16 @@
           :value="query"
           @input="onInput"
         />
-        <button
-          class="btn search-dialog__tags-delete -text -small"
-          @click="clearSelection"
-          title="Clear"
-          v-tippy="{ boundary: 'window', placement: 'bottom' }"
-        >
-          <i class="icon-cross"></i>
-        </button>
       </div>
+      <button
+        v-if="query.length || selection.length"
+        class="btn search-dialog__tags-delete -text -small"
+        @click="clearSelection"
+        title="Clear"
+        v-tippy="{ boundary: 'window', placement: 'bottom' }"
+      >
+        <i class="icon-cross"></i>
+      </button>
       <div class="search-dialog__results">
         <table
           class="table mt8 search-dialog-recents table--inset"
@@ -258,10 +270,7 @@
             <tr>
               <th colspan="100%">
                 Search history
-                <button
-                  class="btn -small -text"
-                  @click="toggleType('recent')"
-                >
+                <button class="btn -small -text" @click="toggleType('recent')">
                   <i class="icon-cross"></i>
                 </button>
               </th>
@@ -343,16 +352,16 @@
             </tr>
           </tbody>
         </table>
-        
+
         <transition name="fade-scale">
-          <div 
-            v-if="!isPreloading && !pagesCount" 
-            class="search-dialog__results-empty" 
+          <div
+            v-if="!isPreloading && !pagesCount"
+            class="search-dialog__results-empty"
             :style="{ backgroundImage: `url(${noResultsPng})` }"
           >
             <p
-              class="shake-horizontal" 
-              v-html="noResultsMessage" 
+              class="shake-horizontal"
+              v-html="noResultsMessage"
               @click="$event.target.tagName === 'BUTTON' && clearSelection()"
             ></p>
           </div>
@@ -368,7 +377,7 @@
             :class="[page === i && '-active -theme']"
             @click="goPage(i)"
           >
-            {{ i + 1 }} 
+            {{ i + 1 }}
           </button>
         </div>
       </div>
@@ -410,7 +419,7 @@ import {
   stripStableQuote
 } from '@/services/productsService'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
-import noResultsPng from '@/assets/noresults.png';
+import noResultsPng from '@/assets/noresults.png'
 
 const RESULTS_PER_PAGE = 25
 
@@ -601,7 +610,10 @@ export default {
       }
     },
     filteredProducts() {
+      // force recalculate computed when cacheTimestamp changes
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const id = this.cacheTimestamp
+
       const hasHistorical = this.searchTypes.historical
       const hasSpot = this.searchTypes.spots
       const hasPerpetuals = this.searchTypes.perpetuals
@@ -654,7 +666,7 @@ export default {
       if (!searchTypes.normalize) {
         return {}
       }
-      
+
       return this.filteredProducts
         .filter(
           product =>
@@ -706,12 +718,10 @@ export default {
             }, {})
           }))
       } else {
-        return this.filteredProducts
-          .filter(
-            product =>
-              selection.indexOf(product.id) === -1 &&
-              queryFilter.test(product.id)
-          )
+        return this.filteredProducts.filter(
+          product =>
+            selection.indexOf(product.id) === -1 && queryFilter.test(product.id)
+        )
       }
     },
     slicedResults() {
@@ -721,39 +731,42 @@ export default {
 
       const offset = this.page * RESULTS_PER_PAGE
 
-      return this.results
-          .slice(offset, offset + RESULTS_PER_PAGE)
+      return this.results.slice(offset, offset + RESULTS_PER_PAGE)
     },
     pagesCount() {
       if (this.searchTypes.normalize) {
-        return Math.ceil(Object.keys(this.marketsByPair).length / RESULTS_PER_PAGE)
+        return Math.ceil(
+          Object.keys(this.marketsByPair).length / RESULTS_PER_PAGE
+        )
       }
       return Math.ceil(this.results.length / RESULTS_PER_PAGE)
     },
     pagination() {
-      let start, end;
+      let start, end
 
-      const halfMax = Math.floor(this.maxPages / 2);
+      const halfMax = Math.floor(this.maxPages / 2)
 
       if (this.pagesCount <= this.maxPages) {
-        start = 0;
-        end = this.pagesCount - 1;
+        start = 0
+        end = this.pagesCount - 1
       } else if (this.page < halfMax) {
-        start = 0;
-        end = this.maxPages - 1;
+        start = 0
+        end = this.maxPages - 1
       } else if (this.page >= this.pagesCount - halfMax) {
-        start = this.pagesCount - this.maxPages;
-        end = this.pagesCount - 1;
+        start = this.pagesCount - this.maxPages
+        end = this.pagesCount - 1
       } else {
         // Center the current page
-        start = this.page - halfMax;
-        end = this.page + (this.maxPages - halfMax - 1);
+        start = this.page - halfMax
+        end = this.page + (this.maxPages - halfMax - 1)
       }
 
-      return Array.from({ length: end - start + 1 }, (_, i) => i + start);
+      return Array.from({ length: end - start + 1 }, (_, i) => i + start)
     },
-    selectedProducts: function() {
-      return this.selection.map(market => selectedProducts[market] || { id: market })
+    selectedProducts: function () {
+      return this.selection.map(
+        market => selectedProducts[market] || { id: market }
+      )
     },
     groupedSelection: function () {
       return this.selection.reduce((groups, market) => {
@@ -847,15 +860,19 @@ export default {
   },
   methods: {
     onInput(event) {
-      this.page = 0;
-      this.query = event.target.value;
+      this.page = 0
+      this.query = event.target.value
       this.activeIndex = 0
     },
     onResize() {
       this.maxPages = this.getMaxPages()
     },
     getMaxPages() {
-      return this.$refs.dialog.currentSize === 'small' ? 3 : this.$refs.dialog.currentSize === 'medium' ? 5 : 10
+      return this.$refs.dialog.currentSize === 'small'
+        ? 3
+        : this.$refs.dialog.currentSize === 'medium'
+        ? 5
+        : 10
     },
     async renamePane() {
       const name = await dialogService.prompt({
@@ -898,11 +915,14 @@ export default {
     async detargetPane() {
       this.$store.commit('app/SET_FOCUSED_PANE', null)
       this.selectedPaneId = null
-      if (this.selection.join('') !== this.originalSelection.join('') && !(await dialogService.confirm({
-        title: `Override selection ?`,
-        message: `Replace the existing selection<br>with the app's current active connections ?`,
-        html: true
-      }))) {
+      if (
+        this.selection.join('') !== this.originalSelection.join('') &&
+        !(await dialogService.confirm({
+          title: `Override selection ?`,
+          message: `Replace the existing selection<br>with the app's current active connections ?`,
+          html: true
+        }))
+      ) {
         return
       }
       this.initSelection()
@@ -1056,7 +1076,7 @@ export default {
 
     onKeydown(event) {
       if (dialogService.isDialogOpened('prompt')) {
-         return false;
+        return false
       }
 
       switch (event.key) {
@@ -1232,30 +1252,32 @@ export default {
         }
 
         const [exchange] = parseMarket(market)
-        const product = indexedProducts[exchange].find(product => product.id === market)
+        const product = indexedProducts[exchange].find(
+          product => product.id === market
+        )
         selectedProducts[market] = product
 
         if (id) {
-          break;
+          break
         }
       }
     },
     getNoResultsMessage() {
       const options = [
         "Oops! Looks like the market's playing hide and seek. <button>Try searching again</button>! 🐮🐻💰",
-        "Bulls and bears are puzzled! No coins found.",
+        'Bulls and bears are puzzled! No coins found.',
         "The market's taking a breather. <button>Try another search</button>!",
         "Even our bullish friend couldn't find that coin!",
-        "Bear with us! No coins matched your search.",
+        'Bear with us! No coins matched your search.',
         "Lost in the crypto maze? <button>Let's search again</button>!",
-        "Coins in limbo! Adjust your filters or <button>try a new term</button>.",
+        'Coins in limbo! Adjust your filters or <button>try a new term</button>.',
         "Our bear's got the blues, no results found!",
-        "Tales of the missing coins! <button>Refine your search</button>.",
-        "Crypto hideout! Nothing turned up, <button>try again</button>.",
+        'Tales of the missing coins! <button>Refine your search</button>.',
+        'Crypto hideout! Nothing turned up, <button>try again</button>.',
         "Coins playing hard to get? <button>Let's give it another shot</button>!"
-      ];
+      ]
 
-      return options[Math.floor(Math.random()*options.length)];
+      return options[Math.floor(Math.random() * options.length)]
     }
   }
 }
@@ -1305,6 +1327,7 @@ export default {
     display: flex;
     flex-direction: column;
     background-color: var(--theme-base-o25);
+    position: relative;
   }
 
   &__results {
@@ -1368,7 +1391,7 @@ export default {
         opacity: 0.5;
         width: 1.75rem;
         justify-content: center;
-        
+
         &.-active,
         &:hover {
           opacity: 1;
@@ -1378,6 +1401,10 @@ export default {
     }
 
     &-empty {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -1397,7 +1424,7 @@ export default {
       right: 0;
       bottom: 0;
       z-index: 0;
-      
+
       p {
         max-width: 75%;
         text-align: center;
@@ -1412,7 +1439,6 @@ export default {
   }
 
   &__tags {
-
     &-item {
       padding: 0.25rem;
 
@@ -1427,10 +1453,10 @@ export default {
 
     &-delete {
       position: absolute;
-      top: 50%;
+      top: 0.5rem;
       right: 0;
       margin: 0 0.5rem 0;
-      transform: translateY(-50%);
+      z-index: 2;
     }
 
     input {

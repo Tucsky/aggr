@@ -125,25 +125,28 @@ export default {
 
           return {
             ...timeframe,
-            weight,
+            weight
           }
         })
         .sort((a, b) => {
           if (a.weight !== b.weight) {
-            return a.weight - b.weight;
+            return a.weight - b.weight
           }
-          
-          return parseFloat(a.value) - parseFloat(b.value);
+
+          return parseFloat(a.value) - parseFloat(b.value)
         })
         .reduce((acc, timeframe) => {
           let group = acc[acc.length - 1]
 
           if (!group || group.weight < timeframe.weight) {
-            group = acc[acc.push({
-              title: units[timeframe.weight],
-              weight: timeframe.weight,
-              timeframes: []
-            }) - 1]
+            group =
+              acc[
+                acc.push({
+                  title: units[timeframe.weight],
+                  weight: timeframe.weight,
+                  timeframes: []
+                }) - 1
+              ]
           }
 
           group.timeframes.push(timeframe)

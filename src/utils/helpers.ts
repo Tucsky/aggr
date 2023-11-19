@@ -243,7 +243,9 @@ export function parseFunctionArguments(
   } while (paranthesisMatch && iteration < maxIterations)
 
   if (iteration >= maxIterations) {
-    throw new Error('Maxiumum parseFunctionArguments iteration reached')
+    throw new Error(
+      `Maxiumum parseFunctionArguments iteration reached (${maxIterations})`
+    )
   }
 
   return str

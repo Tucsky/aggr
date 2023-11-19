@@ -869,27 +869,29 @@ export default {
       paletteId: null,
       colorsRgb: null,
       ratio: null,
-      output: null,
+      output: null
     },
     update(state, ratio, ...colors) {
       if (!state.paletteId || state.paletteId !== colors.join('')) {
         try {
-          state.colorsRgb = colors.map(color => splitColorCode(color))
+          state.colorsRgb = colors.map(color =>
+            splitColorCode(color, null, true)
+          )
         } catch (error) {
-          throw new Error(`interpolate(): failed to parse color codes\n\t${colors.join(', ')}`)
+          throw new Error(
+            `interpolate(): failed to parse color codes\n\t${colors.join(', ')}`
+          )
         }
 
         state.paletteId = colors.join('')
       }
 
       if (state.ratio !== ratio) {
-        state.output = joinRgba(
-          mix(ratio, ...state.colorsRgb)
-        )
+        state.output = joinRgba(mix(ratio, ...state.colorsRgb))
         state.ratio = ratio
       }
 
       return state.output
     }
-  },
+  }
 }

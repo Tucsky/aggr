@@ -23,7 +23,7 @@
       :value="value"
       :gradient="gradient"
       @input="$emit('input', $event)"
-      @reset="$emit('input', definition.value)"
+      @reset="$emit('input', definition.default ?? definition.value)"
     />
   </div>
 </template>

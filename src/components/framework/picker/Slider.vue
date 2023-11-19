@@ -95,10 +95,6 @@ export default {
       this.release()
     }
 
-    if (this._emitTimeout) {
-      clearTimeout(this._emitTimeout)
-    }
-
     if (this._dblClickTimeout) {
       clearTimeout(this._dblClickTimeout)
     }
@@ -220,21 +216,12 @@ export default {
       }
 
       if (!silent) {
-        if (this._emitTimeout) {
-          clearTimeout(this._emitTimeout)
-        }
-
-        this._emitTimeout = setTimeout(() => {
-          this._emitTimeout = null
-          this.$emit('input', value)
-        }, 100)
+        this.$emit('input', value)
       }
     },
     updateSize() {
       this.width = this.track.offsetWidth
       this.offsetX = this.track.getBoundingClientRect().left
-
-      console.log('update size', this.width, this.offsetX)
     }
   },
 }

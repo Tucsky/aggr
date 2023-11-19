@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue }  from 'vue-property-decorator'
+import { Component, Vue } from 'vue-property-decorator'
 
 import EditableVue from '@/components/framework/Editable.vue'
 
@@ -118,7 +118,7 @@ export default class TimeframeInput extends Vue {
     if (!label || !label.length) {
       return this.$emit('input', null)
     }
-    
+
     this.$emit('input', {
       value,
       label

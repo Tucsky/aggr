@@ -590,7 +590,8 @@ export default {
       }
     },
     restoreNavigation() {
-      const navigationState = this.$store.state.app.indicatorDialogNavigation
+      const navigationState =
+        this.$store.state.settings.indicatorDialogNavigation
 
       if (navigationState) {
         this.tab = navigationState.tab || 'options'
@@ -604,7 +605,7 @@ export default {
       }
     },
     saveNavigation() {
-      this.$store.commit('app/SET_INDICATOR_DIALOG_NAVIGATION', {
+      this.$store.commit('settings/SET_INDICATOR_DIALOG_NAVIGATION', {
         tab: this.tab,
         optionsQuery: this.optionsQuery,
         fontSizePx: this.editorFontSize,
@@ -619,11 +620,6 @@ export default {
       })
     },
     updateScript(script) {
-      this.$store.dispatch('app/showNotice', {
-        title: 'Rebuilding indicator...',
-        timeout: 1000
-      })
-
       this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', {
         id: this.indicatorId,
         value: script ? script.trim() : undefined
@@ -922,12 +918,14 @@ export default {
         key: 'priceFormat',
         value: priceFormat
       })
-      
+
       // persist preference at the priceScale level
       this.$store.commit(this.paneId + '/SET_PRICE_SCALE', {
         id: this.indicator.options.priceScaleId,
         priceScale: {
-          ...this.$store.state[this.paneId].priceScales[this.indicator.options.priceScaleId],
+          ...this.$store.state[this.paneId].priceScales[
+            this.indicator.options.priceScaleId
+          ],
           priceFormat: {
             type,
             precision: precision,

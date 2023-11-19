@@ -37,10 +37,7 @@
           <i class="icon-cross"></i>
         </button>
       </header>
-      <div class="dialog__subheader" 
-        v-if="$slots.subheader" 
-        @mousedown="handleDrag"
-        @touchstart="handleDrag">
+      <div class="dialog__subheader" v-if="$slots.subheader">
         <slot name="subheader" />
       </div>
       <div ref="body" class="dialog__body hide-scrollbar" :class="bodyClass">

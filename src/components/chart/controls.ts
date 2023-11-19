@@ -208,11 +208,11 @@ export default class ChartControl {
             mutation.payload.silent
           )
           break
-        case this.chart.paneId + '/SET_PRICE_SCALE':
-          if (mutation.payload.priceScale) {
-            this.chart.refreshPriceScale(mutation.payload.id)
-          }
-          break
+          case this.chart.paneId + '/SET_PRICE_SCALE':
+            if (mutation.payload.priceScale) {
+              this.chart.refreshPriceScale(mutation.payload.id)
+            }
+            break
         case this.chart.paneId + '/SET_INDICATOR_SCRIPT':
           this.chart.rebuildIndicator(mutation.payload.id)
           break

@@ -116,7 +116,7 @@ export default class Editable extends Vue {
   }
 
   increment(direction: number) {
-    const parts = (this.$el as HTMLElement).innerText.trim().split(',')
+    const parts = (this.$el as HTMLElement).innerText.trim().split(/[|,]/)
 
     let text
     let partIndex

@@ -19,7 +19,7 @@ export default {
   methods: {
     close(data): Promise<void> {
       if (this._isDestroyed) {
-        console.warn('attempting to close destroyed dialog.')
+        return
       }
 
       if (this.preventClose) {
@@ -36,10 +36,7 @@ export default {
       try {
         this.$el.parentNode.removeChild(this.$el)
       } catch (error) {
-        console.warn(
-          'failed to remove dialog element: was the dialog already destroyed?',
-          error
-        )
+        //
       }
 
       return Promise.resolve()

@@ -109,30 +109,31 @@ export function getColorByWeight(a, b, weight) {
 }
 
 export function mix(ratio, ...colors) {
-  if (colors.length === 1 || ratio <= 0) return colors[0];
-  if (ratio >= 1) return colors[colors.length - 1];
+  if (colors.length === 1 || ratio <= 0) return colors[0]
+  if (ratio >= 1) return colors[colors.length - 1]
 
-  const segmentLength = 1 / (colors.length - 1);
-  const segmentIndex = Math.floor(ratio / segmentLength);
+  const segmentLength = 1 / (colors.length - 1)
+  const segmentIndex = Math.floor(ratio / segmentLength)
 
-  const a = colors[segmentIndex];
-  const b = colors[segmentIndex + 1];
+  const a = colors[segmentIndex]
+  const b = colors[segmentIndex + 1]
 
-  const adjustedRatio = (ratio - segmentLength * segmentIndex) / segmentLength;
+  const adjustedRatio = (ratio - segmentLength * segmentIndex) / segmentLength
 
-  return interpolate(a, b, adjustedRatio);
+  return interpolate(a, b, adjustedRatio)
 }
 
 function interpolate(a, b, weight) {
-  const p = weight;
-  const w = p * 2 - 1;
-  const w1 = (w / 1 + 1) / 2;
-  const w2 = 1 - w1;
+  const p = weight
+  const w = p * 2 - 1
+  const w1 = (w / 1 + 1) / 2
+  const w2 = 1 - w1
   return [
     Math.round(a[0] * w2 + b[0] * w1),
     Math.round(a[1] * w2 + b[1] * w1),
-    Math.round(a[2] * w2 + b[2] * w1)
-  ];
+    Math.round(a[2] * w2 + b[2] * w1),
+    a[3] * w2 + b[3] * w1 // interpolate the alpha values
+  ]
 }
 
 export function rgbaToRgb(color, backgroundColor) {
@@ -211,7 +212,11 @@ export function getColorByName(name) {
   return colorsByName[name]
 }
 
-export function splitColorCode(string, backgroundColor?: number[]) {
+export function splitColorCode(
+  string,
+  backgroundColor?: number[],
+  includeAlpha = false
+) {
   if (string[0] === '#') {
     return hexToRgb(string)
   } else if (!/^rgb/.test(string) && /^[a-z]+$/i.test(string)) {
@@ -233,11 +238,11 @@ export function splitColorCode(string, backgroundColor?: number[]) {
   } catch (error) {
     console.error(error)
 
-    color = [0, 0, 0]
+    return [0, 0, 0]
   }
 
-  if (match && typeof match[4] !== 'undefined') {
-    color.push(+match[4])
+  if (typeof match[4] !== 'undefined' || includeAlpha) {
+    color.push(typeof match[4] !== 'undefined' ? +match[4] : 1)
 
     if (backgroundColor) {
       color = rgbaToRgb(color, backgroundColor)
