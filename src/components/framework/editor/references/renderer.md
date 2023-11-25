@@ -1,6 +1,6 @@
 Current chart state
 
-```
+```ts
 export interface Renderer {
   type: 'time' | 'tick' | 'bps' | 'vol'
   timeframe: number

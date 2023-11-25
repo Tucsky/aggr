@@ -1,208 +1,176 @@
 <template>
-  <div class="editor-reference">
-    <dropdown :value="value" @input="$emit('input', $event)">
-      <button v-if="value" @click="loadMd" class="dropdown-item">
-        <i class="icon-info -lower" title="Show documentation" v-tippy></i>
-        <span>{{ value.token }}</span>
-      </button>
-    </dropdown>
-    <dropdown
-      ref="dropdown"
-      v-model="markdownDropdownElement"
-      class="editor-reference__dropdown"
-      interactive
-      draggable
-      @closed="onReferenceDropdownClose"
-    >
-      <div class="editor-reference__header">
-        <div
-          class="editor-reference__token"
-          @mousedown="bindDragMove"
-          @touchstart="bindDragMove"
-        >
-          {{ token }}
-        </div>
-        <button
-          class="editor-reference__close btn -text"
-          @click="markdownDropdownElement = null"
-        >
-          <i class="icon-cross"></i>
-        </button>
-      </div>
+  <dropdown
+    ref="dropdown"
+    v-model="dropdownTrigger"
+    class="editor-reference__dropdown"
+    interactive
+    draggable
+    @closed="onReferenceDropdownClose"
+  >
+    <div class="editor-reference__header">
       <div
-        ref="markdown"
-        v-html="markdownContent"
-        class="editor-reference__content"
-      ></div>
-    </dropdown>
-  </div>
+        class="editor-reference__token"
+        @mousedown="bindDragMove"
+        @touchstart="bindDragMove"
+      >
+        {{ token }}
+      </div>
+      <button
+        class="editor-reference__close btn -text"
+        @click="dropdownTrigger = null"
+      >
+        <i class="icon-cross"></i>
+      </button>
+    </div>
+    <div
+      ref="markdown"
+      v-html="markupContent"
+      class="editor-reference__content"
+    ></div>
+  </dropdown>
 </template>
 
-<script lang="ts">
+<script>
 import { marked } from 'marked'
-import { Component, Vue, Watch } from 'vue-property-decorator'
 import { editor } from 'monaco-editor/esm/vs/editor/editor.api'
 import { getEventCords } from '@/utils/helpers'
 
-@Component({
+export default {
   name: 'EditorReference',
   props: {
-    value: {
+    token: {
+      type: String,
+      required: true
+    },
+    coordinates: {
       type: Object,
-      default: null
+      required: true
+    },
+    content: {
+      type: String,
+      required: true
     }
-  }
-})
-export default class Presets extends Vue {
-  markdownDropdownElement: HTMLElement = null
-  markdownContent = ''
-  token: string = null
-  monacoInstances: editor.IStandaloneCodeEditor[]
-  dragging: {
-    x: number
-    y: number
-  } = null
-
-  $refs!: {
-    markdown: HTMLDivElement
-    handle: HTMLDivElement
-    dropdown: any
-  }
-
-  @Watch('value')
-  onTokenDropdownChange(value) {
-    if (value) {
-      this.token = value.token
+  },
+  data() {
+    return {
+      dropdownTrigger: null,
+      markupContent: ''
     }
-  }
-
-  mounted() {
+  },
+  async mounted() {
     this.monacoInstances = []
-  }
-
-  async loadMd(event) {
-    let raw
-
-    try {
-      raw = (
-        await import(
-          `@/components/framework/editor/references/${this.token}.md?raw`
-        )
-      ).default
-    } catch (error) {
-      raw = 'No definition found'
-    }
-    this.markdownContent = marked(raw)
-    this.markdownDropdownElement = event.target
+    this.dropdownTrigger = this.coordinates
+    this.markupContent = marked(this.content)
 
     await this.$nextTick()
 
     this.attachMonaco()
-  }
+  },
+  methods: {
+    attachMonaco() {
+      const elements = this.$refs.markdown.querySelectorAll('code')
 
-  attachMonaco() {
-    const elements = this.$refs.markdown.querySelectorAll('code')
+      for (const code of elements) {
+        const content = code.innerText
 
-    for (const code of elements) {
-      const content = code.innerText
-
-      if (content.length > 64) {
-        code.style.display = 'block'
-        code.style.height = '150px'
-        code.style.width = '100%'
-        code.style.minWidth = '250px'
-        code.innerHTML = ''
-        this.monacoInstances.push(
-          editor.create(code as HTMLElement, {
-            value: content,
-            language: 'javascript',
-            theme:
-              this.$store.state.settings.theme === 'light'
-                ? 'vs-light'
-                : 'my-dark',
-            readOnly: true,
-            minimap: {
-              enabled: false
-            },
-            automaticLayout: false,
-            glyphMargin: false,
-            lineNumbers: 'off',
-            tabSize: 2,
-            contextmenu: false,
-            insertSpaces: true,
-            lineDecorationsWidth: 4,
-            renderLineHighlight: 'none',
-            scrollBeyondLastLine: false,
-            folding: false,
-            renderWhitespace: 'none',
-            overviewRulerBorder: false,
-            guides: {
-              highlightActiveIndentation: false,
-              bracketPairsHorizontal: false,
-              indentation: false
-            }
-          })
-        )
-      } else {
-        code.classList.add('-filled')
+        if (content.length > 64) {
+          code.style.display = 'block'
+          code.style.height = '150px'
+          code.style.width = '100%'
+          code.style.minWidth = '250px'
+          code.innerHTML = ''
+          this.monacoInstances.push(
+            editor.create(code, {
+              value: content,
+              language: 'javascript',
+              theme:
+                this.$store.state.settings.theme === 'light'
+                  ? 'vs-light'
+                  : 'my-dark',
+              readOnly: true,
+              minimap: {
+                enabled: false
+              },
+              automaticLayout: false,
+              glyphMargin: false,
+              lineNumbers: 'off',
+              tabSize: 2,
+              contextmenu: false,
+              insertSpaces: true,
+              lineDecorationsWidth: 4,
+              renderLineHighlight: 'none',
+              scrollBeyondLastLine: false,
+              folding: false,
+              renderWhitespace: 'none',
+              overviewRulerBorder: false,
+              guides: {
+                highlightActiveIndentation: false,
+                bracketPairsHorizontal: false,
+                indentation: false
+              }
+            })
+          )
+        } else {
+          code.classList.add('-filled')
+        }
       }
+    },
+
+    detachMonaco() {
+      for (let i = 0; i < this.monacoInstances.length; i++) {
+        this.monacoInstances[i].dispose()
+        this.monacoInstances.splice(i--, 1)
+      }
+    },
+
+    beforeDestroy() {
+      this.detachMonaco()
+    },
+
+    bindDragMove(event) {
+      if (event.button === 2 || this.dragging) {
+        return
+      }
+
+      document.addEventListener('mousemove', this.handleDragMove)
+      document.addEventListener('mouseup', this.unbindDragMove)
+      document.addEventListener('touchmove', this.handleDragMove)
+      document.addEventListener('touchend', this.unbindDragMove)
+
+      const { x, y } = getEventCords(event)
+      this.dragging = {
+        x,
+        y
+      }
+    },
+
+    unbindDragMove() {
+      if (!this.dragging) {
+        return
+      }
+
+      document.removeEventListener('mousemove', this.handleDragMove)
+      document.removeEventListener('mouseup', this.unbindDragMove)
+      document.removeEventListener('touchmove', this.handleDragMove)
+      document.removeEventListener('touchend', this.unbindDragMove)
+
+      this.dragging = null
+    },
+
+    handleDragMove(event) {
+      const { x, y } = getEventCords(event)
+
+      this.$refs.dropdown.top += y - this.dragging.y
+      this.$refs.dropdown.left += x - this.dragging.x
+
+      this.dragging.x = x
+      this.dragging.y = y
+    },
+
+    onReferenceDropdownClose() {
+      this.unbindDragMove()
+      this.detachMonaco()
     }
-  }
-
-  detachMonaco() {
-    for (let i = 0; i < this.monacoInstances.length; i++) {
-      this.monacoInstances[i].dispose()
-      this.monacoInstances.splice(i--, 1)
-    }
-  }
-
-  beforeDestroy() {
-    this.detachMonaco()
-  }
-
-  bindDragMove(event) {
-    if (event.button === 2 || this.dragging) {
-      return
-    }
-
-    document.addEventListener('mousemove', this.handleDragMove)
-    document.addEventListener('mouseup', this.unbindDragMove)
-    document.addEventListener('touchmove', this.handleDragMove)
-    document.addEventListener('touchend', this.unbindDragMove)
-
-    const { x, y } = getEventCords(event)
-    this.dragging = {
-      x,
-      y
-    }
-  }
-
-  unbindDragMove() {
-    if (!this.dragging) {
-      return
-    }
-
-    document.removeEventListener('mousemove', this.handleDragMove)
-    document.removeEventListener('mouseup', this.unbindDragMove)
-    document.removeEventListener('touchmove', this.handleDragMove)
-    document.removeEventListener('touchend', this.unbindDragMove)
-
-    this.dragging = null
-  }
-
-  handleDragMove(event) {
-    const { x, y } = getEventCords(event)
-
-    this.$refs.dropdown.top += y - this.dragging.y
-    this.$refs.dropdown.left += x - this.dragging.x
-
-    this.dragging.x = x
-    this.dragging.y = y
-  }
-
-  onReferenceDropdownClose() {
-    this.unbindDragMove()
-    this.detachMonaco()
   }
 }
 </script>

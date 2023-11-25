@@ -199,6 +199,7 @@ export default class ChartComponent extends Mixins(PaneMixin) {
 
     this.chart.refreshChartDimensions()
     this.chart.updateFontSize()
+    this.refreshAxisSize()
   }
 
   async refreshAxisSize() {

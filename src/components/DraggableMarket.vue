@@ -83,7 +83,9 @@ export default {
   z-index: 10;
 
   &-enter-active {
-    transition: all 0.2s $ease-out-expo, transform 0.2s $ease-elastic;
+    transition:
+      all 0.2s $ease-out-expo,
+      transform 0.2s $ease-elastic;
     pointer-events: none;
   }
 

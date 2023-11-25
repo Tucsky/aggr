@@ -1,15 +1,11 @@
 <template>
-  <div class="editor">
-    <editor-reference v-model="referenceDialogTrigger" />
-  </div>
+  <div class="editor"></div>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import { rgbToHex, splitColorCode } from '@/utils/colors'
 import monaco from './editor'
-import { TOKENS } from './references'
-import EditorReference from '@/components/framework/editor/EditorReference.vue'
 @Component({
   name: 'Editor',
   props: {
@@ -25,9 +21,6 @@ import EditorReference from '@/components/framework/editor/EditorReference.vue'
       type: Boolean,
       default: false
     }
-  },
-  components: {
-    EditorReference
   }
 })
 export default class Editor extends Vue {
@@ -36,11 +29,8 @@ export default class Editor extends Vue {
   private preventOverride: boolean
   private editorInstance: any
 
-  referenceDialogTrigger = null
-
   private _blurTimeout: number
   private _beforeUnloadHandler: (event: Event) => void
-  private _referenceTimeout: any
 
   @Watch('fontSize')
   onFontSizeChange() {
@@ -125,28 +115,7 @@ export default class Editor extends Vue {
     })
   }
 
-  showReference(token, position) {
-    if (this._referenceTimeout) {
-      clearTimeout(this._referenceTimeout)
-    }
-
-    this._referenceTimeout = setTimeout(() => {
-      this.referenceDialogTrigger = {
-        token,
-        top: position.y,
-        left: position.x,
-        width: 2,
-        height: 2
-      }
-    }, 500)
-  }
-
   async createEditor() {
-    const position = {
-      x: null,
-      y: null
-    }
-
     this.editorInstance = monaco.create(this.$el as HTMLElement, {
       value: this.value,
       language: 'javascript',
@@ -160,23 +129,6 @@ export default class Editor extends Vue {
         this.$store.state.settings.theme === 'light' ? 'vs-light' : 'my-dark'
     })
 
-    this.editorInstance.getDomNode().addEventListener('mousedown', event => {
-      this.referenceDialogTrigger = null
-      position.x = event.pageX
-      position.y = event.pageY
-    })
-
-    this.editorInstance.onDidChangeCursorSelection(async e => {
-      const selection = e.selection
-      if (!selection.isEmpty()) {
-        const model = this.editorInstance.getModel()
-        const selectedText = model.getValueInRange(selection)
-
-        if (TOKENS.indexOf(selectedText) !== -1) {
-          this.showReference(selectedText, position)
-        }
-      }
-    })
     this.editorInstance.onDidBlurEditorText(() => {
       if (this._blurTimeout) {
         clearTimeout(this._blurTimeout)

@@ -2,8 +2,13 @@ import 'monaco-editor/esm/vs/editor/editor.all.js'
 import 'monaco-editor/esm/vs/language/typescript/monaco.contribution'
 import 'monaco-editor/esm/vs/basic-languages/monaco.contribution'
 
-import { editor, languages } from 'monaco-editor/esm/vs/editor/editor.api'
+import {
+  editor,
+  languages,
+  Range
+} from 'monaco-editor/esm/vs/editor/editor.api'
 import AGGR_SUGGESTIONS from './suggestions'
+import { loadMd, showReference, TOKENS } from './references'
 
 languages.typescript.javascriptDefaults.setCompilerOptions({
   noLib: true,
@@ -36,6 +41,61 @@ languages.registerCompletionItemProvider('javascript', {
         kind: languages.CompletionItemKind.Function,
         range
       }))
+    }
+  }
+})
+
+languages.registerHoverProvider('javascript', {
+  provideHover: async function (model, position) {
+    // Get the word at the current position
+    const word = model.getWordAtPosition(position)
+
+    // Check if the word is one of the specific tokens
+    if (word && TOKENS.indexOf(word.word) !== -1) {
+      const md = await loadMd(word.word)
+      let contents
+      if (md) {
+        contents = md
+          .split(/\n\n/)
+          .slice(0, 2)
+          .map(row => ({
+            value: row
+          }))
+          .concat({
+            value: `[Learn more](${word.word})`
+          })
+
+        setTimeout(() => {
+          const linkElement = document.querySelector(
+            `a[data-href="${word.word}"]`
+          )
+
+          if (!linkElement) {
+            return
+          }
+
+          linkElement.addEventListener('click', (event: MouseEvent) => {
+            event.preventDefault()
+
+            showReference(word.word, md, {
+              x: event.clientX,
+              y: event.clientY
+            })
+          })
+        }, 1000)
+      } else {
+        contents = [{ value: 'no definition found' }]
+      }
+
+      return {
+        range: new Range(
+          position.lineNumber,
+          word.startColumn,
+          position.lineNumber,
+          word.endColumn
+        ),
+        contents
+      }
     }
   }
 })

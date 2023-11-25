@@ -123,6 +123,11 @@ export default class Prices extends Mixins(PaneMixin) {
     }
   }
 
+  @Watch('shortSymbols')
+  private shortSymbolsChange() {
+    this.refreshMarkets()
+  }
+
   get exchanges() {
     return this.$store.state.exchanges
   }
@@ -165,6 +170,10 @@ export default class Prices extends Mixins(PaneMixin) {
 
   get period() {
     return this.$store.state[this.paneId].period
+  }
+
+  get shortSymbols() {
+    return this.$store.state[this.paneId].shortSymbols
   }
 
   get transitionGroupName() {
@@ -288,7 +297,9 @@ export default class Prices extends Mixins(PaneMixin) {
 
     this.markets.push({
       ...market,
-      local: product.local + (product.type === 'perp' ? 'PERP' : ''),
+      local: this.shortSymbols
+        ? product.base
+        : product.local + (product.type === 'perp' ? 'PERP' : ''),
       status: '-pending',
       price: null,
       change: 0,

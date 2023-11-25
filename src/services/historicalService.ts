@@ -125,8 +125,6 @@ class HistoricalService extends EventEmitter {
 
     markets = [...markets]
 
-    const refs = {}
-
     const isOdd = isOddTimeframe(timeframe)
     const preferQuoteCurrencySize = store.state.settings.preferQuoteCurrencySize
 
@@ -200,7 +198,11 @@ class HistoricalService extends EventEmitter {
           isOdd
         )
 
-        if (!preferQuoteCurrencySize && (data[i].vbuy || data[i].vsell) && data[i].close) {
+        if (
+          !preferQuoteCurrencySize &&
+          (data[i].vbuy || data[i].vsell) &&
+          data[i].close
+        ) {
           data[i].vbuy = data[i].vbuy / data[i].close
           data[i].vsell = data[i].vsell / data[i].close
         }
@@ -234,7 +236,11 @@ class HistoricalService extends EventEmitter {
         }
       }
 
-      if (!preferQuoteCurrencySize && (data[i].vbuy || data[i].vsell) && data[i].close) {
+      if (
+        !preferQuoteCurrencySize &&
+        (data[i].vbuy || data[i].vsell) &&
+        data[i].close
+      ) {
         data[i].vbuy = data[i].vbuy / data[i].close
         data[i].vsell = data[i].vsell / data[i].close
       }

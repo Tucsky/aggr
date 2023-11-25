@@ -82,6 +82,19 @@
           <span>Animation</span>
         </label>
       </div>
+
+      <div class="form-group mb8">
+        <label class="checkbox-control">
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="shortSymbols"
+            @change="$store.commit(paneId + '/TOGGLE_SHORT_SYMBOLS')"
+          />
+          <div></div>
+          <span>Short symbols</span>
+        </label>
+      </div>
     </div>
     <div>
       <div class="form-group mb8">
@@ -190,6 +203,10 @@ export default class PricesSettings extends Vue {
 
   get sortOrder() {
     return this.$store.state[this.paneId].sortOrder
+  }
+
+  get shortSymbols() {
+    return this.$store.state[this.paneId].shortSymbols
   }
 
   selectSortType(option) {
