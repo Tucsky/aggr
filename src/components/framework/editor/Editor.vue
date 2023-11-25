@@ -1,11 +1,16 @@
 <template>
-  <div class="editor"></div>
+  <div class="editor" @contextmenu="onContextMenu"></div>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import { rgbToHex, splitColorCode } from '@/utils/colors'
 import monaco from './editor'
+import { createComponent, getEventCords, mountComponent } from '@/utils/helpers'
+import {
+  IndicatorEditorOptions,
+  IndicatorEditorWordWrapOption
+} from '@/store/panesSettings/chart'
 @Component({
   name: 'Editor',
   props: {
@@ -13,28 +18,32 @@ import monaco from './editor'
       type: String,
       default: ''
     },
-    fontSize: {
-      type: Number,
-      default: () => (window.devicePixelRatio > 1 ? 12 : 14)
-    },
-    minimal: {
-      type: Boolean,
-      default: false
+    editorOptions: {
+      type: Object,
+      default: {}
     }
   }
 })
 export default class Editor extends Vue {
   private value: string
-  private fontSize: number
+  private editorOptions: IndicatorEditorOptions
   private preventOverride: boolean
   private editorInstance: any
 
   private _blurTimeout: number
   private _beforeUnloadHandler: (event: Event) => void
+  private contextMenuComponent: any
 
-  @Watch('fontSize')
-  onFontSizeChange() {
-    this.editorInstance.updateOptions({ fontSize: this.fontSize })
+  currentEditorOptions = {
+    fontSize: window.devicePixelRatio > 1 ? 12 : 14,
+    wordWrap: 'off' as IndicatorEditorWordWrapOption
+  }
+
+  @Watch('editorOptions', {
+    deep: true
+  })
+  onEditorOptionsChange(options) {
+    this.editorInstance.updateOptions(options)
   }
 
   @Watch('value')
@@ -45,6 +54,12 @@ export default class Editor extends Vue {
   }
 
   async mounted() {
+    for (const key in this.editorOptions) {
+      if (this.editorOptions[key]) {
+        this.currentEditorOptions[key] = this.editorOptions[key]
+      }
+    }
+
     this.createTheme()
 
     this.createEditor()
@@ -119,7 +134,8 @@ export default class Editor extends Vue {
     this.editorInstance = monaco.create(this.$el as HTMLElement, {
       value: this.value,
       language: 'javascript',
-      fontSize: this.fontSize,
+      fontSize: this.currentEditorOptions.fontSize,
+      wordWrap: this.currentEditorOptions.wordWrap,
       scrollbar: {
         vertical: 'hidden'
       },
@@ -127,6 +143,12 @@ export default class Editor extends Vue {
       contextmenu: false,
       theme:
         this.$store.state.settings.theme === 'light' ? 'vs-light' : 'my-dark'
+    })
+
+    this.editorInstance.getDomNode().addEventListener('mousedown', () => {
+      if (this.contextMenuComponent && this.contextMenuComponent.value) {
+        this.contextMenuComponent.value = null
+      }
     })
 
     this.editorInstance.onDidBlurEditorText(() => {
@@ -147,6 +169,59 @@ export default class Editor extends Vue {
 
       this.onFocus()
     })
+  }
+
+  async onContextMenu(event) {
+    if (window.innerWidth < 375) {
+      return
+    }
+
+    event.preventDefault()
+    const { x, y } = getEventCords(event, true)
+
+    const propsData = {
+      value: {
+        top: y,
+        left: x,
+        width: 2,
+        height: 2
+      },
+      editorOptions: this.currentEditorOptions
+    }
+
+    if (this.contextMenuComponent) {
+      this.contextMenuComponent.$off('cmd')
+      for (const key in propsData) {
+        this.contextMenuComponent[key] = propsData[key]
+      }
+    } else {
+      document.body.style.cursor = 'progress'
+      const module = await import(
+        `@/components/framework/editor/EditorContextMenu.vue`
+      )
+      document.body.style.cursor = ''
+
+      this.contextMenuComponent = createComponent(module.default, propsData)
+      mountComponent(this.contextMenuComponent)
+    }
+
+    this.contextMenuComponent.$on('cmd', args => {
+      if (this[args[0]] instanceof Function) {
+        this[args[0]](...args.slice(1))
+      } else {
+        throw new Error(`[editor] ContextMenu-->${args[0]} is not a function`)
+      }
+    })
+  }
+
+  zoom(value) {
+    this.currentEditorOptions.fontSize += value
+    this.$emit('options', this.currentEditorOptions)
+  }
+
+  toggleWordWrap(value) {
+    this.currentEditorOptions.wordWrap = !value ? 'on' : 'off'
+    this.$emit('options', this.currentEditorOptions)
   }
 }
 </script>

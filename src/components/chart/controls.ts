@@ -141,8 +141,7 @@ export default class ChartControl {
           break
         case 'panes/SET_PANE_MARKETS':
           if (mutation.payload.id === this.chart.paneId) {
-            ;(store.state[this.chart.paneId] as ChartPaneState).hiddenMarkets =
-              {}
+            store.state[this.chart.paneId].hiddenMarkets = {}
             this.chart.refreshMarkets()
 
             this.chart.clear()
@@ -208,11 +207,11 @@ export default class ChartControl {
             mutation.payload.silent
           )
           break
-          case this.chart.paneId + '/SET_PRICE_SCALE':
-            if (mutation.payload.priceScale) {
-              this.chart.refreshPriceScale(mutation.payload.id)
-            }
-            break
+        case this.chart.paneId + '/SET_PRICE_SCALE':
+          if (mutation.payload.priceScale) {
+            this.chart.refreshPriceScale(mutation.payload.id)
+          }
+          break
         case this.chart.paneId + '/SET_INDICATOR_SCRIPT':
           this.chart.rebuildIndicator(mutation.payload.id)
           break

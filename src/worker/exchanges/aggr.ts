@@ -4,10 +4,14 @@ export default class AGGR extends Exchange {
   id = 'AGGR'
 
   protected endpoints = {}
-  products = ['SENTIMENTTV', 'SENTIMENTMEX']
+  products = []
 
   async getUrl() {
     return `wss://sentiment.aggr.trade`
+  }
+
+  isMatching() {
+    return true
   }
 
   /**

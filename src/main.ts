@@ -10,8 +10,6 @@ import Presets from '@/components/framework/Presets.vue'
 import autofocus from '@/directives/autofocusDirective'
 import draggableMarket from '@/directives/draggableMarketDirective'
 
-import { getSwUrl } from './utils/helpers'
-
 Vue.use(VueTippy, {
   maxWidth: '200px',
   duration: 0,
@@ -33,10 +31,8 @@ Vue.directive('draggable-market', draggableMarket)
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(getSwUrl(import.meta.env.MODE), {
-      scope: '/',
-      type: 'classic'
-    })
+    const base_url = import.meta.env.VITE_APP_BASE_PATH || '/'
+    navigator.serviceWorker.register(`${base_url}sw.js`)
   })
 }
 

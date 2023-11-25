@@ -1,15 +1,6 @@
 /* eslint-disable */
-importScripts(
-  'https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js'
-);
 
-const url = new URL(self.location)
-
-if (url.searchParams.get('mode') !== 'development') {
-  workbox.precaching.precacheAndRoute(self.__WB_MANIFEST);
-}
-
-self.addEventListener('fetch', event => {});
+self.addEventListener('fetch', event => {})
 
 self.addEventListener('push', event => {
   const data = event.data.json()

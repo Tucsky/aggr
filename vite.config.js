@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import { qrcode } from 'vite-plugin-qrcode'
 import { visualizer } from 'rollup-plugin-visualizer'
-import { VitePWA } from 'vite-plugin-pwa'
 import fs from 'fs'
 import gitprocess from 'child_process'
 import monacoEditorPlugin from 'vite-plugin-monaco-editor'
@@ -75,46 +74,6 @@ export default defineConfig(({ mode }) => {
         defaultImport: 'url' // 👈
       }),
       visualizer(),
-      VitePWA({
-        srcDir: path.join(__dirname, 'src'),
-        filename: 'sw.js',
-        registerType: 'autoUpdate',
-        strategies: 'injectManifest',
-        injectRegister: mode === 'development' ? 'auto' : null,
-        includeAssets: [
-          'favicon-32x32.png',
-          'favicon-16x16.png',
-          'apple-touch-icon.png',
-          'safari-pinned-tab.svg'
-        ],
-        devOptions: {
-          enabled: true
-        },
-        workbox: {
-          swDest: 'dist/sw.js',
-          swSrc: 'src/sw.js'
-        },
-        manifest: {
-          swDest: 'dist/sw.js',
-          swSrc: 'src/sw.js',
-          name: 'SignificantTrades',
-          short_name: 'AGGR',
-          description: 'Cryptocurrency market trades aggregator',
-          theme_color: '#171b29',
-          icons: [
-            {
-              src: 'android-chrome-192x192.png',
-              sizes: '192x192',
-              type: 'image/png'
-            },
-            {
-              src: 'android-chrome-512x512.png',
-              sizes: '512x512',
-              type: 'image/png'
-            }
-          ]
-        }
-      }),
       monacoEditorPlugin.default({}),
       qrcode() // only applies in dev mode
     ],

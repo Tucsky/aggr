@@ -22,7 +22,6 @@ import audioService from '@/services/audioService'
 import { getTimeframeForHuman } from '@/utils/helpers'
 import { isTouchSupported } from '@/utils/touchevent'
 import { getMarketProduct, parseMarket } from '../services/productsService'
-import { IndicatorNavigationState } from './panesSettings/chart'
 
 export type AudioFilters = { [id: string]: boolean }
 export interface SettingsState {
@@ -58,7 +57,7 @@ export interface SettingsState {
   alertsClick: boolean
   alertSound: string
   showThresholdsAsTable: boolean
-  indicatorDialogNavigation?: IndicatorNavigationState
+  indicatorDialogNavigation?: string
 }
 
 const state = Object.assign(
@@ -566,7 +565,7 @@ const mutations = {
     state.showThresholdsAsTable = !state.showThresholdsAsTable
   },
   SET_INDICATOR_DIALOG_NAVIGATION(state, value) {
-    state.indicatorDialogNavigation = value
+    state.indicatorDialogNavigation = JSON.stringify(value)
   }
 } as MutationTree<SettingsState>
 

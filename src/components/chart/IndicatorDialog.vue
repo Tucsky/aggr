@@ -2,7 +2,7 @@
   <Dialog
     class="indicator-dialog"
     :class="[
-      !columnWidth && 'indicator-dialog--collapsed-column',
+      !navigation.columnWidth && 'indicator-dialog--collapsed-column',
       resizingColumn && 'indicator-dialog--resizing-column'
     ]"
     size="large"
@@ -56,39 +56,29 @@
       </button>
     </template>
     <template #subheader>
-      <tabs v-model="tab">
-        <tab name="script">
-          Script
-          <i
-            v-if="tab === 'script'"
-            class="icon-refresh -small ml8"
-            @click="updateScript()"
-          ></i>
-        </tab>
+      <tabs :value="navigation.tab" @input="setTab">
+        <tab name="script">Script</tab>
         <tab name="options">Options</tab>
       </tabs>
     </template>
-    <div v-if="loadedEditor" v-show="tab === 'script'" class="indicator-editor">
+    <div
+      v-if="loadedEditor"
+      v-show="navigation.tab === 'script'"
+      class="indicator-editor"
+    >
       <p v-if="error" class="form-feedback ml16">
         <i class="icon-warning mr4"></i> {{ error }}
       </p>
       <editor
         ref="editor"
         :value="code"
-        :font-size="editorFontSize"
+        :editor-options="navigation.editorOptions"
         @blur="updateScript"
+        @options="updateIndicatorOptions"
       />
-      <div class="indicator-editor__zoom">
-        <div class="btn -text -small" @click="updateEditorFontSize(1)">
-          <i class="icon-plus"></i>
-        </div>
-        <div class="btn -text -small" @click="updateEditorFontSize(-1)">
-          <i class="icon-minus"></i>
-        </div>
-      </div>
     </div>
     <div
-      v-show="tab === 'options'"
+      v-show="navigation.tab === 'options'"
       class="indicator-options indicator-options--tab hide-scrollbar"
     >
       <ToggableSection
@@ -165,29 +155,29 @@
     </div>
     <div
       class="indicator-options indicator-options--column hide-scrollbar"
-      :style="{ width: columnWidth + 'px' }"
+      :style="{ width: navigation.columnWidth + 'px' }"
     >
       <div
         class="indicator-search input-group"
-        :class="[optionsQuery && 'indicator-search--active']"
+        :class="[navigation.optionsQuery && 'indicator-search--active']"
       >
         <input
           type="text"
           class="form-control"
           placeholder="search option..."
-          v-model="optionsQuery"
+          v-model="navigation.optionsQuery"
         />
         <button
-          v-if="optionsQuery"
+          v-if="navigation.optionsQuery"
           type="button"
           class="btn -text -small"
-          @click="optionsQuery = ''"
+          @click="navigation.optionsQuery = ''"
         >
           <i class="icon-cross"></i>
         </button>
       </div>
       <div
-        v-if="optionsQuery.length"
+        v-if="navigation.optionsQuery.length"
         class="indicator-options__list indicator-search__results"
       >
         <indicator-option
@@ -404,29 +394,33 @@ export default {
   },
   props: ['paneId', 'indicatorId'],
   mixins: [DialogMixin],
-  data: () => ({
-    code: '',
-    editorFontSize: 14,
-    columnWidth: 240,
-    resizingColumn: false,
-    loadedEditor: false,
-    plotTypes: [],
-    optionsQuery: '',
-    tab: 'options',
-    defaultOptionsKeys: [],
-    scriptOptionsKeys: [],
-    colorOptionsKeys: [],
-    dropdownIndicatorTrigger: null,
-    helps: {
-      priceScaleId: `Use <u>right</u> for binding indicator to main price scale. Otherwise use it as an id to align multiple indicator on same scale (as overlay)`,
-      lastValueVisible: `Show last value on right axis`,
-      priceLineVisible: `Show horizontal line at current value`,
-      borderVisible: `Only for candlestick series, enable borders of candles`,
-      lineWidth: `Only for line and area series`,
-      lineStyle: `Only for line and area series`,
-      lineType: `Only for line and area series`
+  data() {
+    return {
+      code: '',
+      navigation: {
+        optionsQuery: '',
+        editorOptions: {},
+        columnWidth: 240,
+        tab: 'options'
+      },
+      resizingColumn: false,
+      loadedEditor: false,
+      plotTypes: [],
+      defaultOptionsKeys: [],
+      scriptOptionsKeys: [],
+      colorOptionsKeys: [],
+      dropdownIndicatorTrigger: null,
+      helps: {
+        priceScaleId: `Use <u>right</u> for binding indicator to main price scale. Otherwise use it as an id to align multiple indicator on same scale (as overlay)`,
+        lastValueVisible: `Show last value on right axis`,
+        priceLineVisible: `Show horizontal line at current value`,
+        borderVisible: `Only for candlestick series, enable borders of candles`,
+        lineWidth: `Only for line and area series`,
+        lineStyle: `Only for line and area series`,
+        lineType: `Only for line and area series`
+      }
     }
-  }),
+  },
   computed: {
     indicator() {
       return this.$store.state[this.paneId].indicators[this.indicatorId]
@@ -485,11 +479,11 @@ export default {
       )
     },
     queryOptionsKeys() {
-      if (!this.optionsQuery.length) {
+      if (!this.navigation.optionsQuery.length) {
         return []
       }
 
-      const query = new RegExp(this.optionsQuery, 'i')
+      const query = new RegExp(this.navigation.optionsQuery, 'i')
 
       // script + default + colors
       return [
@@ -517,16 +511,6 @@ export default {
         this.code = value
       },
       immediate: true
-    },
-    async tab(value) {
-      if (value === 'script') {
-        this.loadedEditor = true
-      }
-
-      await this.$nextTick()
-
-      this.resizeEditor()
-      this.saveNavigation()
     }
   },
   created() {
@@ -544,10 +528,10 @@ export default {
   },
   methods: {
     toggleCollapseColum() {
-      if (this.columnWidth > 50) {
-        this.columnWidth = 0
+      if (this.navigation.columnWidth > 50) {
+        this.navigation.columnWidth = 0
       } else {
-        this.columnWidth = 240
+        this.navigation.columnWidth = 240
       }
 
       this.resizeEditor()
@@ -560,7 +544,7 @@ export default {
       const moveHandler = moveEvent => {
         const endX = getEventCords(moveEvent).x
 
-        this.columnWidth += refX - endX
+        this.navigation.columnWidth += refX - endX
         refX = endX
       }
 
@@ -573,8 +557,8 @@ export default {
           document.removeEventListener('touchend', endHandler)
         }
 
-        if (this.columnWidth < 50) {
-          this.columnWidth = 0
+        if (this.navigation.columnWidth < 50) {
+          this.navigation.columnWidth = 0
         }
 
         this.resizeEditor()
@@ -594,23 +578,23 @@ export default {
         this.$store.state.settings.indicatorDialogNavigation
 
       if (navigationState) {
-        this.tab = navigationState.tab || 'options'
-        this.optionsQuery = navigationState.optionsQuery
-        this.editorFontSize =
-          navigationState.fontSizePx || (window.devicePixelRatio > 1 ? 12 : 14)
-        this.columnWidth =
-          typeof navigationState.columnWidth === 'number'
-            ? navigationState.columnWidth
-            : 240
+        try {
+          const json = JSON.parse(navigationState)
+          for (const key in json) {
+            if (json[key]) {
+              this.navigation[key] = json[key]
+            }
+          }
+        } catch (error) {
+          console.error('Failed to parse navigation state', error)
+        }
       }
     },
     saveNavigation() {
-      this.$store.commit('settings/SET_INDICATOR_DIALOG_NAVIGATION', {
-        tab: this.tab,
-        optionsQuery: this.optionsQuery,
-        fontSizePx: this.editorFontSize,
-        columnWidth: this.columnWidth
-      })
+      this.$store.commit(
+        'settings/SET_INDICATOR_DIALOG_NAVIGATION',
+        this.navigation
+      )
     },
     setPriceScale(id) {
       this.$store.dispatch(this.paneId + '/setIndicatorOption', {
@@ -627,6 +611,9 @@ export default {
 
       this.getPlotTypes()
       this.getOptionsKeys()
+    },
+    updateIndicatorOptions(options) {
+      this.$set(this.navigation, 'editorOptions', options)
     },
     getScriptOptions(script) {
       const keys = Object.keys(this.indicator.optionsDefinitions || {})
@@ -892,9 +879,6 @@ export default {
 
       return this.saveIndicator()
     },
-    updateEditorFontSize(change) {
-      this.editorFontSize += change
-    },
     setPriceFormat(type, precisionInput) {
       let auto = false
 
@@ -968,6 +952,18 @@ export default {
       this.applyIndicatorPreset({
         data: this.originalIndicator
       })
+    },
+    async setTab(value) {
+      this.navigation.tab = value
+
+      if (this.navigation.tab === 'script') {
+        this.loadedEditor = true
+      }
+
+      await this.$nextTick()
+
+      this.resizeEditor()
+      this.saveNavigation()
     }
   }
 }
@@ -994,6 +990,7 @@ export default {
       padding: 0;
       flex-direction: row;
       align-items: stretch;
+      overflow: visible;
     }
 
     .dialog__header {
@@ -1207,28 +1204,5 @@ export default {
   position: relative;
   flex-grow: 1;
   min-height: 50px;
-
-  &__zoom {
-    position: absolute;
-    font-size: 1rem;
-    z-index: 6;
-    pointer-events: none;
-    top: 0.925rem;
-    right: 1.5rem;
-    text-shadow:
-      -1px -1px 0 #000,
-      0 -1px 0 #000,
-      1px -1px 0 #000,
-      1px 0 0 #000,
-      1px 1px 0 #000,
-      0 1px 0 #000,
-      -1px 1px 0 #000,
-      -1px 0 0 #000;
-
-    .btn {
-      display: block;
-      pointer-events: all;
-    }
-  }
 }
 </style>

@@ -1,7 +1,8 @@
+import { SERIE_TYPES } from '@/components/chart/buildUtils'
 import serieUtils from '@/components/chart/serieUtils'
 import { createComponent, mountComponent } from '@/utils/helpers'
 
-export const TOKENS = Object.keys(serieUtils).concat([
+export const TOKENS = Object.keys(serieUtils).concat(Object.keys(SERIE_TYPES), [
   'renderer',
   'bar',
   'options',

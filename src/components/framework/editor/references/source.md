@@ -1,6 +1,6 @@
 `line(source(close, type='spot'))`
 
-Filter chart source
+Filter chart sources<br>
 ⚠️ You still need to add the sources to the pane
 
 

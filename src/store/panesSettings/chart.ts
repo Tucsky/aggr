@@ -6,6 +6,7 @@ import {
   PriceScaleMargins,
   PriceScaleMode,
   SeriesOptions,
+  SeriesOptionsMap,
   SeriesType
 } from 'lightweight-charts'
 import Vue from 'vue'
@@ -19,10 +20,22 @@ export interface PriceScaleSettings {
   mode?: PriceScaleMode
 }
 
+export type IndicatorEditorWordWrapOption =
+  | 'off'
+  | 'on'
+  | 'wordWrapColumn'
+  | 'bounded'
+
+export interface IndicatorEditorOptions {
+  fontSize?: number
+  wordWrap?: IndicatorEditorWordWrapOption
+}
+
 export interface IndicatorNavigationState {
   tab: string
   optionsQuery: string
-  fontSizePx: number
+  columnWidth: number
+  editorOptions: IndicatorEditorOptions
 }
 
 export interface IndicatorSettings {
@@ -464,7 +477,7 @@ const mutations = {
     }
 
     if (!state.indicators[id].options) {
-      ;(state.indicators[id] as any).options = {}
+      state.indicators[id].options = {} as SeriesOptions<keyof SeriesOptionsMap>
     }
 
     Vue.set(state.indicators[id].options, key, value)

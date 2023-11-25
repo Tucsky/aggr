@@ -13,7 +13,7 @@
             <span>{{ paneName }}</span>
             <button
               type="button"
-              class="btn -small -text"
+              class="btn -small -text -no-grab"
               v-tippy
               title="Rename pane"
               @click="renamePane"
@@ -23,7 +23,7 @@
           </code>
           <button
             type="button"
-            class="btn -small ml4 -text"
+            class="btn -small ml4 -text -no-grab"
             v-tippy
             title="Connect to all"
             @click="detargetPane"
@@ -366,20 +366,20 @@
             ></p>
           </div>
         </transition>
-        <div v-if="pagesCount" class="search-dialog__results-footer mt8 d-flex">
-          <button class="btn -text mrauto" @click="addAll">
-            <i class="icon-plus mr8"></i> add all
-          </button>
-          <button
-            v-for="(i, index) in pagination"
-            :key="index"
-            class="btn -text search-dialog__results-footer-page"
-            :class="[page === i && '-active -theme']"
-            @click="goPage(i)"
-          >
-            {{ i + 1 }}
-          </button>
-        </div>
+      </div>
+      <div v-if="pagesCount" class="search-dialog__results-footer mt8 d-flex">
+        <button class="btn -text mrauto" @click="addAll">
+          <i class="icon-plus mr8"></i> add all
+        </button>
+        <button
+          v-for="(i, index) in pagination"
+          :key="index"
+          class="btn -text search-dialog__results-footer-page"
+          :class="[page === i && '-active -theme']"
+          @click="goPage(i)"
+        >
+          {{ i + 1 }}
+        </button>
       </div>
     </div>
 
@@ -1092,7 +1092,7 @@ export default {
             if (this.activeIndex === 0) {
               this.activeIndex = -1
             }
-          } else if (this.activeIndex === -1) {
+          } else if (this.activeIndex === null || this.activeIndex === -1) {
             this.submit()
           }
           break
@@ -1285,8 +1285,6 @@ export default {
 <style lang="scss" scoped>
 .search-dialog {
   ::v-deep .dialog__content {
-    width: 75vw;
-
     .dialog__body {
       padding: 0;
       flex-direction: row;
@@ -1336,6 +1334,7 @@ export default {
     flex-direction: column;
     min-height: 1px;
     position: relative;
+    overflow: auto;
 
     table {
       border: 0;
