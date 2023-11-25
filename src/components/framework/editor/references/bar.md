@@ -1,4 +1,12 @@
-`bar(data: {open: number, high: number, low: number, close: number, [time: number]}, [options])`
+```ts
+bar(data: {
+  open: number,
+  high: number,
+  low: number,
+  close: number,
+  [time: number]
+}, [options])
+```
 
 Renders a bar series for the current bar using the provided OHLC (Open, High, Low, Close) data and optional styling parameters.
 

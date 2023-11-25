@@ -1,4 +1,6 @@
-`sum(value: number): number`
+```ts
+sum(value: number): number
+```
 
 Computes the running total sum by adding the current value to the accumulated sum.
 

@@ -1,4 +1,6 @@
-`highest(value: number, length: number): number`
+```ts
+highest(value: number, length: number): number
+```
 
 Finds the highest value within a specified number of recent bars.
 

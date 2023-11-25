@@ -2,7 +2,7 @@
   "price": {
     "enabled": true,
     "name": "Price",
-    "script": "plotcandlestick(options.useHeikinAshi ? avg_heikinashi(bar) : options.useGaps ? avg_ohlc_with_gaps(bar) : avg_ohlc(bar))",
+    "script": "candlestick(options.useHeikinAshi ? avg_heikinashi(bar) : options.useGaps ? avg_ohlc_with_gaps(bar) : avg_ohlc(bar))",
     "options": {
       "priceScaleId": "right",
       "priceFormat": {
@@ -25,7 +25,7 @@
   "smas": {
     "name": "SMA {fastLength} {mediumLength} {slowLength}",
     "displayName": "SMA 50 100 200",
-    "script": "plotline(sma($price.close, options.fastLength), color=options.fastColor)\nplotline(sma($price.close, options.mediumLength), color=options.mediumColor)\nplotline(sma($price.close, options.slowLength), color=options.slowColor)",
+    "script": "line(sma($price.close, options.fastLength), color=options.fastColor)\nline(sma($price.close, options.mediumLength), color=options.mediumColor)\nline(sma($price.close, options.slowLength), color=options.slowColor)",
     "options": {
       "priceScaleId": "right",
       "fastLength": 50,
@@ -39,7 +39,7 @@
   "emas": {
     "name": "EMA {fastLength} {mediumLength} {slowLength}",
     "displayName": "EMA 50 100 200",
-    "script": "plotline(ema($price.close, options.fastLength), color=options.fastColor)\nplotline(ema($price.close, options.mediumLength), color=options.mediumColor)\nplotline(ema($price.close, options.slowLength), color=options.slowColor)",
+    "script": "line(ema($price.close, options.fastLength), color=options.fastColor)\nline(ema($price.close, options.mediumLength), color=options.mediumColor)\nline(ema($price.close, options.slowLength), color=options.slowColor)",
     "options": {
       "priceScaleId": "right",
       "fastLength": 50,
@@ -54,7 +54,7 @@
     "enabled": true,
     "name": "Volume",
     "description": "Volume + delta",
-    "script": "if (upColor === 0) {\n  if (options.showDelta) {\n    upColor = options.upBgColor\n    downColor = options.downBgColor\n  } else {\n    upColor = options.upColor\n    downColor = options.downColor\n  }\n}\n\nif (options.showDelta) {\n  plothistogram({ time: time, value: Math.abs(vbuy-vsell), color: vbuy - vsell > 0 ? options.upColor : options.downColor})\n}\n\nplothistogram({ time: time, value: vbuy + vsell, color: vbuy > vsell ? upColor : downColor })",
+    "script": "if (upColor === 0) {\n  if (options.showDelta) {\n    upColor = options.upBgColor\n    downColor = options.downBgColor\n  } else {\n    upColor = options.upColor\n    downColor = options.downColor\n  }\n}\n\nif (options.showDelta) {\n  histogram({ time: time, value: Math.abs(vbuy-vsell), color: vbuy - vsell > 0 ? options.upColor : options.downColor})\n}\n\nhistogram({ time: time, value: vbuy + vsell, color: vbuy > vsell ? upColor : downColor })",
     "options": {
       "priceFormat": {
         "type": "volume"
@@ -75,7 +75,7 @@
     "enabled": true,
     "name": "Liquidations",
     "description": "Liquidations by side",
-    "script": "plothistogram(lbuy, color=options.upColor)\nplothistogram(-lsell, color=options.downColor)",
+    "script": "histogram(lbuy, color=options.upColor)\nhistogram(-lsell, color=options.downColor)",
     "options": {
       "priceFormat": {
         "type": "volume"
@@ -93,7 +93,7 @@
     "enabled": true,
     "name": "CVD",
     "description": "Cumulative Volume Delta",
-    "script": "plotline(cum(vbuy - vsell))",
+    "script": "line(cum(vbuy - vsell))",
     "options": {
       "priceScaleId": "cvd",
       "priceFormat": {
@@ -131,7 +131,7 @@
     }
   },
   "ctd": {
-    "script": "plotline(cum(cbuy-csell))",
+    "script": "line(cum(cbuy-csell))",
     "name": "CTD",
     "description": "Cumulative Trades Delta",
     "options": {
@@ -141,7 +141,7 @@
     }
   },
   "cld": {
-    "script": "plotline(cum(lbuy-lsell))",
+    "script": "line(cum(lbuy-lsell))",
     "name": "CLD",
     "description": "Cumulative Liquidations Delta",
     "options": {
@@ -158,7 +158,7 @@
     }
   },
   "allmarkets": {
-    "script": "plotline(BITFINEX:BTCUSD.close, color=#97c554, title=Bitfinex.spot)\nplotline(BINANCE:btcusdt.close, color=#f3ba2f, title=Binance.spot)\nplotline(OKEX:BTC-USDT.close, color=#5894f2, title=Okex.spot)\nplotline(KRAKEN:XBT/USD.close, color=#5841d8, title=Kraken.spot)\nplotline(COINBASE:BTC-USD.close, color=#0e70e2, title=Coinbase.spot)\nplotline(POLONIEX:BTC_USDT.close, color=#858b8f, title=Poloniex.spot)\nplotline(HUOBI:btcusdt.close, color=#2ca6e0, title=Huobi.spot)\nplotline(BITSTAMP:btcusd.close, color=#169f4a, title=Bitstamp.spot)\nplotline(BITMEX:XBTUSD.close, color=#595fb5, title=Bitmex.perp)\nplotline(BITFINEX:BTCF0:USTF0.close, color=#97c554, title=Bitfinex.perp)\nplotline(OKEX:BTC-USD-SWAP.close, color=#5894f2, title=Okex.perp)\nplotline(BINANCE_FUTURES:btcusdt.close, color=#f3ba2f, title=Binance.perp)\nplotline(BINANCE_FUTURES:btcusd_perp.close, color=#f3ba2f, title=Binance.perp)\nplotline(HUOBI:BTC-USD.close, color=#2ca6e0, title=Huobi.perp)\nplotline(KRAKEN:PI_XBTUSD.close, color=#5841d8, title=Kraken.perp)\nplotline(DERIBIT:BTC-PERPETUAL.close, color=#2dae9a, title=Deribit.perp)\nplotline(FTX:BTC-PERP.close, color=#02a6c2, title=Ftx.perp)\nplotline(BYBIT:BTCUSD.close, color=#f9b600, title=Bybit.perp)",
+    "script": "line(BITFINEX:BTCUSD.close, color=#97c554, title=Bitfinex.spot)\nline(BINANCE:btcusdt.close, color=#f3ba2f, title=Binance.spot)\nline(OKEX:BTC-USDT.close, color=#5894f2, title=Okex.spot)\nline(KRAKEN:XBT/USD.close, color=#5841d8, title=Kraken.spot)\nline(COINBASE:BTC-USD.close, color=#0e70e2, title=Coinbase.spot)\nline(POLONIEX:BTC_USDT.close, color=#858b8f, title=Poloniex.spot)\nline(HUOBI:btcusdt.close, color=#2ca6e0, title=Huobi.spot)\nline(BITSTAMP:btcusd.close, color=#169f4a, title=Bitstamp.spot)\nline(BITMEX:XBTUSD.close, color=#595fb5, title=Bitmex.perp)\nline(BITFINEX:BTCF0:USTF0.close, color=#97c554, title=Bitfinex.perp)\nline(OKEX:BTC-USD-SWAP.close, color=#5894f2, title=Okex.perp)\nline(BINANCE_FUTURES:btcusdt.close, color=#f3ba2f, title=Binance.perp)\nline(BINANCE_FUTURES:btcusd_perp.close, color=#f3ba2f, title=Binance.perp)\nline(HUOBI:BTC-USD.close, color=#2ca6e0, title=Huobi.perp)\nline(KRAKEN:PI_XBTUSD.close, color=#5841d8, title=Kraken.perp)\nline(DERIBIT:BTC-PERPETUAL.close, color=#2dae9a, title=Deribit.perp)\nline(FTX:BTC-PERP.close, color=#02a6c2, title=Ftx.perp)\nline(BYBIT:BTCUSD.close, color=#f9b600, title=Bybit.perp)",
     "description": "Multiple markets at once",
     "name": "All markets",
     "options": {
@@ -179,7 +179,7 @@
     }
   },
   "bollinger_bands": {
-    "script": "a = sma(Math.pow($price.close,2),options.length)\nb = Math.pow(sum($price.close,options.length),2)/Math.pow(options.length,2)\nstdev = Math.sqrt(a - b)\nsrc = $price.close\n\nbasis = sma($price.close, options.length)\ndev = options.mult * stdev\nupper = basis + dev\nlower = basis - dev\n\nplotline(basis, color=options.basisColor)\nplotcloudarea(lower, upper)",
+    "script": "a = sma(Math.pow($price.close,2),options.length)\nb = Math.pow(sum($price.close,options.length),2)/Math.pow(options.length,2)\nstdev = Math.sqrt(a - b)\nsrc = $price.close\n\nbasis = sma($price.close, options.length)\ndev = options.mult * stdev\nupper = basis + dev\nlower = basis - dev\n\nline(basis, color=options.basisColor)\nplotcloudarea(lower, upper)",
     "name": "Bollinger Bands",
     "options": {
       "priceScaleId": "right",
@@ -319,6 +319,6 @@
         "negativeColor": "rgb(242,54,69)",
         "positiveColor": "rgba(76,175,80,0.91)"
     },
-    "script": "// source: https://www.investopedia.com/terms/m/macd.asp\n\nconst MACD = ema($price.close, 12) - ema($price.close, 26)\nconst signalLine = ema(MACD, 9)\n\nplotline(signalLine, color=red)\nplotline(MACD, color=blue)\n\nconst histoValue = (MACD - signalLine)\nhistoValue > 0 ? plothistogram(histoValue, color=green) : plothistogram(histoValue, color=red)"
+    "script": "// source: https://www.investopedia.com/terms/m/macd.asp\n\nconst MACD = ema($price.close, 12) - ema($price.close, 26)\nconst signalLine = ema(MACD, 9)\n\nline(signalLine, color=red)\nline(MACD, color=blue)\n\nconst histoValue = (MACD - signalLine)\nhistoValue > 0 ? histogram(histoValue, color=green) : histogram(histoValue, color=red)"
   }
 }

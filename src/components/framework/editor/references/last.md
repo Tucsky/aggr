@@ -1,4 +1,6 @@
-`last(value: number, length: number): number`
+```ts
+last(value: number, length: number): number
+```
 
 Returns the value from the last bar of the specified length, or the current value if there are not enough bars.
 

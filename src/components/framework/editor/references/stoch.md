@@ -1,4 +1,11 @@
-`stoch(close: number, high: number, low: number, length: number): number`
+```ts
+stoch(
+  close: number,
+  high: number,
+  low: number,
+  length: number
+): number
+```
 
 Calculates the stochastic oscillator value, a momentum indicator comparing a particular closing price to a range of its prices over a certain period.
 

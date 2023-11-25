@@ -1,4 +1,12 @@
-`candlestick(data: {open: number, high: number, low: number, close: number, [time: number]}, [options])`
+```ts
+candlestick(data: {
+  open: number,
+  high: number,
+  low: number,
+  close: number,
+  [time: number]
+}, [options])
+```
 
 Renders a candlestick series for the current bar using OHLC (Open, High, Low, Close) data and optional styling parameters.
 
@@ -20,4 +28,4 @@ Renders a candlestick series for the current bar using OHLC (Open, High, Low, Cl
 
 The `candlestick` function integrates with Lightweight Charts' `addCandlestickSeries` to display price movements in the form of candlesticks. Each candlestick's body is formed by the open and close values, while the wicks represent the high and low values for the bar's time interval. This function is essential for financial charting, providing a detailed and visual representation of price action, suitable for various market analysis methods.
 
-*Note: All options are optional. The function can be used with just the `data` parameter, applying default styles if options are not specified. The options must be valid CSS color values for the function to render the series correctly.*
+_Note: All options are optional. The function can be used with just the `data` parameter, applying default styles if options are not specified. The options must be valid CSS color values for the function to render the series correctly._

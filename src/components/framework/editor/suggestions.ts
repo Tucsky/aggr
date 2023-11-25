@@ -152,7 +152,8 @@ export default [
     "USDC": "Coinbase USD",
     "BUSD": "Binance USD"
   },
-  default=USD
+  default=USD,
+  rebuild=true
 )`
   },
   {
@@ -261,7 +262,8 @@ lastIndex = bar.length`
   },
   {
     label: 'rebuild',
-    detail: '[AGGR] force a rebuild when that option change option(..., rebuild=true)',
+    detail:
+      '[AGGR] force a rebuild when that option change option(..., rebuild=true)',
     insertText: `rebuild=true`
   },
   {

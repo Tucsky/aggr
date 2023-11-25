@@ -147,7 +147,7 @@ const actions = {
     indicator.id = uniqueName(indicator.id, ids)
 
     indicator = {
-      script: 'plotline(avg_close(bar))',
+      script: 'line(avg_close(bar))',
       ...indicator,
       options: {
         priceScaleId: indicator.priceScaleId || indicator.id,

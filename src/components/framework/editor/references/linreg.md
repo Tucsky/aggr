@@ -1,4 +1,6 @@
-`linreg(value: number, length: number): number | null`
+```ts
+linreg(value: number, length: number): number | null
+```
 
 Performs linear regression analysis on a series of data points to determine the linear trend line.
 

@@ -1,4 +1,12 @@
-`ohlc(renderer: Renderer, time: number, value: number): { time: number, open: number, high: number, low: number, close: number }`
+```ts
+ohlc(renderer: Renderer, time: number, value: number): {
+    time: number,
+    open: number,
+    high: number,
+    low: number,
+    close: number
+}
+```
 
 Records the Open, High, Low, and Close (OHLC) values for a given time and value input, typically used in financial charting to represent price movements within a specified timeframe.
 

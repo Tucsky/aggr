@@ -1,4 +1,12 @@
-`avg_ohlc(renderer: Renderer): { time: number, open: number, high: number, low: number, close: number }`
+```ts
+avg_ohlc(renderer: Renderer): {
+time: number,
+open: number,
+high: number,
+low: number,
+close: number
+}
+```
 
 Calculates the average Open, High, Low, and Close (OHLC) values of the active sources within the provided renderer's bar. The function ensures that the last close value is equal to the next open value (classic aggregation printing).
 

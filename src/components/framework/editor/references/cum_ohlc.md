@@ -1,4 +1,12 @@
-`cum_ohlc(value: number, time: number): { time: number, open: number, high: number, low: number, close: number }`
+```ts
+cum_ohlc(value: number, time: number): { 
+  time: number, 
+  open: number, 
+  high: number, 
+  low: number, 
+  close: number 
+}
+```
 
 Produces a cumulative OHLC (Open, High, Low, Close) object based on a continuous addition of incoming values over time. The high and low values are determined by the intra-bar fluctuations and depend on the chart's refresh rate.
 

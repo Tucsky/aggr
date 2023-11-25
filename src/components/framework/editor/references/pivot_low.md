@@ -1,4 +1,10 @@
-`pivot_low(value: number, lengthBefore: number, lengthAfter: number): number | null`
+\```ts
+pivot_low(
+    value: number,
+    lengthBefore: number,
+    lengthAfter: number
+): number | null
+\```
 
 Determines the pivot low point in a series of values, which is the lowest value within a specified number of bars before and after the current value.
 

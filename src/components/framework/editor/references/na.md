@@ -1,4 +1,6 @@
-`na(val: any): any | number`
+```ts
+na(val: any): any | number
+```
 
 Evaluates the given value and returns it if it is truthy; otherwise, returns 0.
 

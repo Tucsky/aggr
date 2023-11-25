@@ -1,4 +1,12 @@
-`avg_ohlc_with_gaps(renderer: Renderer): { time: number, open: number, high: number, low: number, close: number }`
+```ts
+avg_ohlc_with_gaps(renderer: Renderer): { 
+  time: number, 
+  open: number, 
+  high: number, 
+  low: number, 
+  close: number 
+}
+```
 
 Computes the average Open, High, Low, and Close (OHLC) values of the active sources within the renderer's bar, taking into account potential gaps in the data. The function also calculates the average open for each candle.
 

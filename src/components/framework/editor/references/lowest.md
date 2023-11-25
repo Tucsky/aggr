@@ -1,4 +1,9 @@
-`lowest(value: number, length: number): number`
+```ts
+lowest(
+    value: number,
+    length: number
+): number
+```
 
 Identifies the lowest value within a specified number of recent bars.
 

@@ -1,4 +1,12 @@
-`area(value: number | {value: number, time: number}, [options])`
+```ts
+area(
+  value: number | { 
+    value: number, 
+    time: number 
+  },
+  [options]
+)
+```
 
 Renders an area series for the current bar using the specified value and optional styling parameters. This function adapts the `addAreaSeries` method from Lightweight Charts for individual bar rendering.
 

@@ -1,4 +1,6 @@
-`avg(values: Array<number>): number`
+```ts
+avg(values: Array<number>): number
+```
 
 Calculates the average of a given array of numerical values, excluding any null entries.
 

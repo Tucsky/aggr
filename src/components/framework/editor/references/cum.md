@@ -1,4 +1,6 @@
-`cum(value: number): number`
+```ts
+cum(value: number): number
+```
 
 Accumulates the given value by adding it to the total from previous calculations.
 

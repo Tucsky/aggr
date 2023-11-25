@@ -49,10 +49,11 @@ languages.registerHoverProvider('javascript', {
   provideHover: async function (model, position) {
     // Get the word at the current position
     const word = model.getWordAtPosition(position)
+    const token = word.word.replace(/^plot/, '')
 
     // Check if the word is one of the specific tokens
-    if (word && TOKENS.indexOf(word.word) !== -1) {
-      const md = await loadMd(word.word)
+    if (TOKENS.indexOf(token) !== -1) {
+      const md = await loadMd(token)
       let contents
       if (md) {
         contents = md
@@ -62,13 +63,11 @@ languages.registerHoverProvider('javascript', {
             value: row
           }))
           .concat({
-            value: `[Learn more](${word.word})`
+            value: `[Learn more](${token})`
           })
 
         setTimeout(() => {
-          const linkElement = document.querySelector(
-            `a[data-href="${word.word}"]`
-          )
+          const linkElement = document.querySelector(`a[data-href="${token}"]`)
 
           if (!linkElement) {
             return
@@ -77,12 +76,12 @@ languages.registerHoverProvider('javascript', {
           linkElement.addEventListener('click', (event: MouseEvent) => {
             event.preventDefault()
 
-            showReference(word.word, md, {
+            showReference(token, md, {
               x: event.clientX,
               y: event.clientY
             })
           })
-        }, 1000)
+        }, 500)
       } else {
         contents = [{ value: 'no definition found' }]
       }

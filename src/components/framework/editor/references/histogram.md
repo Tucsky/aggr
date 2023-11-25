@@ -1,4 +1,13 @@
-`histogram(data: {value: number, [time: number], [color: string]}, [options])`
+```ts
+histogram(
+  data: {
+    value: number,
+    [time: number],
+    [color: string]
+  },
+  [options]
+)
+```
 
 Creates a histogram series to visually represent the distribution of values. The histogram consists of intervals (columns) indicating how many values fall into each column.
 

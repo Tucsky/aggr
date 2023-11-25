@@ -1,4 +1,9 @@
-`baseline(data: number | {value: number, time: number}, [options])`
+```ts
+baseline(data: number | { 
+  value: number, 
+  time: number 
+}, [options])
+```
 
 Creates a baseline series with two colored areas (top and bottom) between the data line and the base value line.
 

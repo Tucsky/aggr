@@ -1,4 +1,6 @@
-`sma(value: number, length: number): number`
+```ts
+sma(value: number, length: number): number
+```
 
 Calculates the Simple Moving Average (SMA) by averaging the given value with the accumulated sum over a specified number of points.
 

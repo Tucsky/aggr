@@ -1,4 +1,10 @@
-`pivot_high(value: number, lengthBefore: number, lengthAfter: number): number | null`
+```ts
+pivot_high(
+    value: number,
+    lengthBefore: number,
+    lengthAfter: number
+): number | null
+```
 
 Identifies the pivot high point in a series of values, defined as the highest value within a specified number of bars before and after the current value.
 

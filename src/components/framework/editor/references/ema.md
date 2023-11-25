@@ -1,4 +1,6 @@
-`ema(value: number, length: number): number`
+```ts
+ema(value: number, length: number): number
+```
 
 Calculates the Exponential Moving Average (EMA) for the given value over a specified number of points.
 

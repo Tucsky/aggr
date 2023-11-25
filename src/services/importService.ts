@@ -5,6 +5,7 @@ import SettingsImportConfirmation from '../components/settings/ImportConfirmatio
 import store from '@/store'
 import { slugify, uniqueName } from '../utils/helpers'
 import { IndicatorSettings } from '../store/panesSettings/chart'
+import notificationService from './notificationService'
 
 class ImportService {
   getJSON(file: File) {
@@ -169,6 +170,30 @@ class ImportService {
     if (file.type === 'application/json' || file.type === 'text/plain') {
       const json = await this.getJSON(file)
 
+      if (!notificationService.hasDismissed('import-security-warning')) {
+        if (
+          !(await dialogService.confirm({
+            title: 'Important Security Warning from AGGR',
+            message: `⚠️ Proceed with <strong>Caution</strong>!<br><br>
+            You are about to import a custom indicator script into AGGR. Please be aware of the following:<br><br>
+            <ul>
+            <li><strong>External Code Execution</strong>: This script contains JavaScript code, which will run within your AGGR environment. Executing code from external sources can pose significant security risks.</li></br>
+            <li><strong>Trust Your Source</strong>: Ensure that you fully trust the source from where you obtained this indicator. AGGR cannot verify the safety or integrity of external scripts.</li></br>
+            <li><strong>No Liability</strong>: AGGR is not responsible for any consequences that may arise from the use of externally sourced scripts. This includes, but is not limited to, potential security vulnerabilities, data loss, or inaccuracies in the indicator's performance.</li></br>
+            <li><strong>Review Before Import</strong>: If you have the expertise, review the script's contents for any suspicious or malicious code before importing.</li></br>
+            <li><strong>Use at Your Own Risk</strong>: By proceeding with the import, you acknowledge and accept the risks associated with running external JavaScript code in your AGGR environment.</li></br>
+            </ul>
+            🔒 Your security is important to us. Be cautious & stay safe.`,
+            ok: `Accept and Proceed`,
+            html: true
+          }))
+        ) {
+          return
+        }
+
+        notificationService.dismiss('import-security-warning')
+      }
+
       if (json.formatName) {
         await this.importDatabase(file)
       } else if (json.type && json.data) {
@@ -201,7 +226,7 @@ class ImportService {
       return
     }
 
-    ;(await import('dexie')) as any
+    await import('dexie')
     const { importDB } = await import('dexie-export-import')
 
     const currentWorkspaceId = workspacesService.workspace.id

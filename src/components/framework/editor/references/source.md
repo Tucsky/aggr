@@ -1,4 +1,6 @@
-`line(source(close, type='spot'))`
+```ts
+line(source(close, type='spot'))
+```
 
 Filter chart sources<br>
 ⚠️ You still need to add the sources to the pane
@@ -17,6 +19,7 @@ line(vbuy, cum(delta))
 var sentiment = source(name=/^SENTIMENT/)
 avg_ohlc(sentiment)
 
+// negative filtering
 var others = source(name=/(?!SENTIMENT/)/)
 avg_ohlc(others)
 ```

@@ -75,9 +75,9 @@ export default {
 
         if (content.length > 64) {
           code.style.display = 'block'
-          code.style.height = '150px'
           code.style.width = '100%'
           code.style.minWidth = '250px'
+          code.style.height = '100px'
           code.innerHTML = ''
           this.monacoInstances.push(
             editor.create(code, {
@@ -92,6 +92,7 @@ export default {
                 enabled: false
               },
               automaticLayout: false,
+              wordBreak: 'on',
               glyphMargin: false,
               lineNumbers: 'off',
               tabSize: 2,
@@ -218,6 +219,7 @@ export default {
     position: sticky;
     backdrop-filter: blur(1rem);
     top: 0;
+    z-index: 1;
   }
 
   &__token {

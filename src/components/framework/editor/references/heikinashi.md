@@ -1,4 +1,17 @@
-`heikinashi(renderer: Renderer, time: number, ohlc: {open: number, high: number, low: number, close: number}): { time: number, open: number, high: number, low: number, close: number }`
+```ts
+heikinashi(renderer: Renderer, time: number, ohlc: {
+    open: number,
+    high: number,
+    low: number,
+    close: number
+}): {
+    time: number,
+    open: number,
+    high: number,
+    low: number,
+    close: number
+}
+```
 
 Computes the Heikin-Ashi values based on the provided OHLC (Open, High, Low, Close) data. Heikin-Ashi is a charting technique that averages price data to create a Japanese candlestick chart that filters out market noise.
 

@@ -1,4 +1,14 @@
-`merge_overlapping_intervals(intervals: Array<{range: [number, number], strength: number, id: any}>, threshold: number, precision: number): Array<{range: [number, number], strength: number, id: any}>`
+```ts
+merge_overlapping_intervals(intervals: Array<{
+    range: [number, number],
+    strength: number,
+    id: any
+}>, threshold: number, precision: number): Array<{
+    range: [number, number],
+    strength: number,
+    id: any
+}>
+```
 
 Merges overlapping intervals within a given set, accounting for the strength of each interval and a specified threshold.
 

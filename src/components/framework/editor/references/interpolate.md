@@ -1,4 +1,6 @@
-`interpolate(ratio: number, ...colors: Array<string>): string`
+```ts
+interpolate(ratio: number, ...colors: Array<string>): string
+```
 
 Interpolates between a set of color codes based on a given ratio, producing a new color code.
 
