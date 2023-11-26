@@ -28,10 +28,6 @@ import TradesSettings from './TradesSettings.vue'
 
 export default {
   components: { TradesSettings },
-  mixins: [DialogMixin, PaneDialogMixin],
-  data: () => ({
-    renaming: false
-  }),
-  methods: {}
+  mixins: [DialogMixin, PaneDialogMixin]
 }
 </script>

@@ -331,13 +331,13 @@ const actions = {
   },
   async resetPane(
     { state, rootState },
-    { id, data, type }: { id: string; data?: any, type?: string }
+    { id, data, type }: { id: string; data?: any; type?: string }
   ) {
     const pane = JSON.parse(JSON.stringify(state.panes[id]))
 
     const currentPaneState = Object.assign(
-      {}, 
-      rootState[id], 
+      {},
+      rootState[id],
       data && typeof data === 'object' ? data : {}
     )
 

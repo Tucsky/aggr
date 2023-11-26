@@ -36,7 +36,6 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import Slider from '@/components/framework/picker/Slider.vue'
-import aggregatorService from '@/services/aggregatorService'
 import { formatAmount } from '@/services/productsService'
 
 @Component({
@@ -49,19 +48,6 @@ import { formatAmount } from '@/services/productsService'
 export default class Exchange extends Vue {
   id: string
   expanded = false
-  prices: { [identifier: string]: number } = {}
-
-  mounted() {
-    aggregatorService.on('prices', this.updateMarketsPrices)
-  }
-
-  beforeDestroy() {
-    aggregatorService.off('prices', this.updateMarketsPrices)
-  }
-
-  updateMarketsPrices(prices) {
-    this.prices = prices
-  }
 
   get name() {
     return this.id.replace(/[\W_]+/g, ' ')

@@ -26,6 +26,8 @@ export enum ALLOWED_OPTION_TYPES {
 
 ## Basic example
 
+![basics](https://i.imgur.com/LHi36wv.png)
+
 ```ts
 // number input with `min`, `max` and `step` attribute
 threshold = option((type = number), (min = 0), (max = 10), (step = 0.1))
@@ -52,7 +54,7 @@ console.log(MyText) // ""
 
 ## Range input
 
-![ranges](https://private-user-images.githubusercontent.com/5738336/267001083-f836add9-dc04-4259-b0c7-ea7b3cdad3e4.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTEiLCJleHAiOjE3MDA5MzIwMjAsIm5iZiI6MTcwMDkzMTcyMCwicGF0aCI6Ii81NzM4MzM2LzI2NzAwMTA4My1mODM2YWRkOS1kYzA0LTQyNTktYjBjNy1lYTdiM2NkYWQzZTQucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQUlXTkpZQVg0Q1NWRUg1M0ElMkYyMDIzMTEyNSUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyMzExMjVUMTcwMjAwWiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9NmRkM2Q1MDIyNGM0YjIzMzk5ZTRhOTJiYTYzZmIyYzFkODUyMGEzOWYxZmNmZDk3MDU1MDE5NjM3M2YyZGI1MCZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QmYWN0b3JfaWQ9MCZrZXlfaWQ9MCZyZXBvX2lkPTAifQ.G5aR9n_8PqjnjrDv9sfBci34pFqBvVEEMX4yQ2sWWoA)
+![ranges](https://i.imgur.com/79A2KYI.png)
 
 ```ts
 smallrange = option(
@@ -75,7 +77,7 @@ bigrange = option(
 ## List option
 
 
-![list](https://private-user-images.githubusercontent.com/5738336/267002237-7569405e-50a8-454d-aa68-a92e6df9109c.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTEiLCJleHAiOjE3MDA5MzIwMjAsIm5iZiI6MTcwMDkzMTcyMCwicGF0aCI6Ii81NzM4MzM2LzI2NzAwMjIzNy03NTY5NDA1ZS01MGE4LTQ1NGQtYWE2OC1hOTJlNmRmOTEwOWMucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQUlXTkpZQVg0Q1NWRUg1M0ElMkYyMDIzMTEyNSUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyMzExMjVUMTcwMjAwWiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9Zjk4ZjBhZThkNTFmMTYyMTY3ZmFiNWJkYzQxYWJkYWFjMGU0MTMzZTcwZTI0ODgxMDdjODg5NDZhMTM1MmJlNyZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QmYWN0b3JfaWQ9MCZrZXlfaWQ9MCZyZXBvX2lkPTAifQ.TZd9fv1X8LvWXtrNnkMC1wIs2XZ4xqTBQ4uzk0ObKgE)
+![list](https://i.imgur.com/otNfKdD.png)
 
 
 ```ts
@@ -104,8 +106,8 @@ quote = option(
 exchange = option(type=exchange, rebuild=true)
 ```
 
-> [!WARNING]  
-> options must be valid JSON format all option values must be wrapped in double-quotes `"`
+> Warning
+> options must be valid JSON format all option values must be wrapped in double-quotes
 
 ## Color input
 
@@ -117,7 +119,7 @@ color = option(type=color,default="red")
 color = option(type=color,default="rgba(0, 255, 0, 0.5)")
 ```
 
-> [!WARNING]  
+> Warning  
 > missing a `,` in the color code, a `"` in the list options, WILL break the whole chart without notice.
 
 

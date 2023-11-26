@@ -59,7 +59,11 @@
     }
 
     .dialog--size-large & {
-      width: 720px;
+      width: 920px;
+
+      @media screen and (min-width: 580px) {
+        max-width: 90vw;
+      }
     }
 
     .dialog--size-medium & {

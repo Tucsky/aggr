@@ -277,6 +277,18 @@ export function toPlainString(num) {
   )
 }
 
+export function parseAmount(amount) {
+  if (typeof amount === 'string' && /m|k$/i.test(amount)) {
+    if (/m$/i.test(amount)) {
+      return parseFloat(amount) * 1000000
+    } else {
+      return parseFloat(amount) * 1000
+    }
+  } else {
+    return +amount
+  }
+}
+
 export function formatBytes(bytes, decimals = 2) {
   if (bytes === 0) return '0 Bytes'
 

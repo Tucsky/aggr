@@ -71,13 +71,14 @@ export default {
       const elements = this.$refs.markdown.querySelectorAll('code')
 
       for (const code of elements) {
-        const content = code.innerText
+        const content = code.innerText.replace(/\n$/, '')
+        const lines = content.split('\n')
 
         if (content.length > 64) {
           code.style.display = 'block'
           code.style.width = '100%'
           code.style.minWidth = '250px'
-          code.style.height = '100px'
+          code.style.height = lines.length * 18 + 'px'
           code.innerHTML = ''
           this.monacoInstances.push(
             editor.create(code, {
@@ -90,6 +91,9 @@ export default {
               readOnly: true,
               minimap: {
                 enabled: false
+              },
+              scrollbar: {
+                alwaysConsumeMouseWheel: false
               },
               automaticLayout: false,
               wordBreak: 'on',
@@ -195,6 +199,25 @@ export default {
 
     h2 {
       margin-block: 1rem;
+      font-size: 1.25rem;
+    }
+
+    blockquote {
+      color: #ffd54f;
+      border-color: #ffd54f;
+
+      #app.-light & {
+        color: #ff9800;
+        border-color: #ff9800;
+      }
+
+      code {
+        color: inherit;
+      }
+
+      p {
+        margin: 0;
+      }
     }
 
     img {

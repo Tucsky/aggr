@@ -1,7 +1,7 @@
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 
 import Vue from 'vue'
-import { randomString } from '@/utils/helpers'
+import { parseAmount, randomString } from '@/utils/helpers'
 import { formatMarketPrice } from '@/services/productsService'
 import { ModulesState } from '..'
 import { getLogShade, joinRgba, splitColorCode } from '@/utils/colors'
@@ -238,15 +238,7 @@ const mutations = {
     const threshold = this.getters[state._id + '/getThreshold'](id)
 
     if (threshold) {
-      if (typeof value === 'string' && /m|k$/i.test(value)) {
-        if (/m$/i.test(value)) {
-          threshold.amount = parseFloat(value) * 1000000
-        } else {
-          threshold.amount = parseFloat(value) * 1000
-        }
-      } else {
-        threshold.amount = +value
-      }
+      threshold.amount = parseAmount(value)
     }
   },
   TOGGLE_THRESHOLD_MAX(state, id) {

@@ -562,7 +562,7 @@ class WorkspacesService {
 
     workspace.name = name
 
-    this.makeUniqueWorkspace(workspace)
+    await this.makeUniqueWorkspace(workspace)
 
     return this.db.add('workspaces', workspace)
   }

@@ -28,7 +28,6 @@ import ChartSettings from './ChartSettings.vue'
 
 export default {
   components: { ChartSettings },
-  mixins: [DialogMixin, PaneDialogMixin],
-  methods: {}
+  mixins: [DialogMixin, PaneDialogMixin]
 }
 </script>

@@ -13,7 +13,7 @@
         <input
           type="checkbox"
           class="form-control"
-          :checked="currentEditorOptions === 'on'"
+          :checked="currentEditorOptions.wordWrap === 'on'"
           @change="$emit('cmd', ['toggleWordWrap', !$event.target.checked])"
         />
         <div></div>

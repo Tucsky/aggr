@@ -19,10 +19,6 @@ import CountersSettings from './CountersSettings.vue'
 
 export default {
   components: { CountersSettings },
-  mixins: [DialogMixin, PaneDialogMixin],
-  data: () => ({
-    renaming: false
-  }),
-  methods: {}
+  mixins: [DialogMixin, PaneDialogMixin]
 }
 </script>

@@ -116,9 +116,7 @@ class AlertService {
       // recover recent triggers
       navigator.serviceWorker.ready.then(async registration => {
         await this.markAlertsAsTriggered(
-          (
-            await registration.getNotifications()
-          ).map(notification => ({
+          (await registration.getNotifications()).map(notification => ({
             price: notification.data.price,
             direction: notification.data.direction,
             message: notification.data.message,
@@ -262,24 +260,6 @@ class AlertService {
     return data
   }
 
-  getPrice(market?: string): Promise<number | unknown> {
-    return new Promise(resolve => {
-      aggregatorService.once('prices', marketsStats => {
-        if (!market) {
-          return resolve(marketsStats)
-        }
-
-        const stats = marketsStats[market]
-
-        if (!stats) {
-          return resolve(null)
-        }
-
-        resolve(marketsStats[market].price)
-      })
-    })
-  }
-
   async toggleAlert(
     market: string,
     price: number,
@@ -345,9 +325,7 @@ class AlertService {
 
     if (askMessage) {
       createdAlert.message = await dialogService.openAsPromise(
-        (
-          await import('@/components/alerts/CreateAlertDialog.vue')
-        ).default,
+        (await import('@/components/alerts/CreateAlertDialog.vue')).default,
         {
           price: +formatMarketPrice(createdAlert.price, createdAlert.market)
         }

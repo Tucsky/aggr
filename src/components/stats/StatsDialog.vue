@@ -19,10 +19,6 @@ import StatsSettings from './StatsSettings.vue'
 
 export default {
   components: { StatsSettings },
-  mixins: [DialogMixin, PaneDialogMixin],
-  data: () => ({
-    renaming: false
-  }),
-  methods: {}
+  mixins: [DialogMixin, PaneDialogMixin]
 }
 </script>

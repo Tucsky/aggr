@@ -25,10 +25,6 @@ import AlertsSettings from './AlertsSettings.vue'
 
 export default {
   components: { AlertsSettings },
-  mixins: [DialogMixin, PaneDialogMixin],
-  data: () => ({
-    renaming: false
-  }),
-  methods: {}
+  mixins: [DialogMixin, PaneDialogMixin]
 }
 </script>

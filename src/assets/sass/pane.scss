@@ -89,6 +89,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  border-radius: 1px;
 
   #app.-light & {
     --pane-overlay-background: var(--theme-background-o75);

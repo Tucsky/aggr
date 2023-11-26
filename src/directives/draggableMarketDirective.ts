@@ -115,6 +115,10 @@ function getMarketContext(el) {
 }
 
 function handleDragStart(event: MouseEvent | TouchEvent) {
+  if (event instanceof MouseEvent && event.button !== 0) {
+    return
+  }
+
   getMarketContext(event.currentTarget)
 
   if (!marketContext) {

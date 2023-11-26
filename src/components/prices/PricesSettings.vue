@@ -1,22 +1,28 @@
 <template>
   <div class="prices-settings">
-    <div>
-      <div class="form-group mb8">
-        <label
-          class="checkbox-control"
-          v-tippy="{ placement: 'left' }"
-          title="ex: BTC-USD"
-        >
-          <input
-            type="checkbox"
-            class="form-control"
-            :checked="showPairs"
-            @change="$store.commit(paneId + '/TOGGLE_PAIRS')"
-          />
-          <div></div>
-          <span>Symbols</span>
-        </label>
-      </div>
+    <ToggableSection title="Columns" id="watchlist-settings-columns" inset>
+      <toggable-group
+        class="mb8 mt16"
+        :value="showPairs"
+        label="Show Symbols"
+        @change="$store.commit(paneId + '/TOGGLE_PAIRS')"
+      >
+        <div class="form-group">
+          <label class="checkbox-control">
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="shortSymbols"
+              @change="$store.commit(paneId + '/TOGGLE_SHORT_SYMBOLS')"
+            />
+            <div></div>
+            <span>
+              Ticker only
+              <i class="icon-info" v-tippy title="BTCUSDT → BTC"></i>
+            </span>
+          </label>
+        </div>
+      </toggable-group>
 
       <div class="form-group mb8">
         <label class="checkbox-control">
@@ -27,7 +33,7 @@
             @change="$store.commit(paneId + '/TOGGLE_VOLUME')"
           />
           <div></div>
-          <span>Volume</span>
+          <span>Show volume</span>
         </label>
       </div>
 
@@ -40,7 +46,7 @@
             @change="$store.commit(paneId + '/TOGGLE_VOLUME_DELTA')"
           />
           <div></div>
-          <span>Volume Δ</span>
+          <span>Show volume Δ</span>
         </label>
       </div>
 
@@ -53,7 +59,7 @@
             @change="$store.commit(paneId + '/TOGGLE_PRICE')"
           />
           <div></div>
-          <span>Price</span>
+          <span>Show price</span>
         </label>
       </div>
 
@@ -66,62 +72,21 @@
             @change="$store.commit(paneId + '/TOGGLE_CHANGE')"
           />
           <div></div>
-          <span>Change %</span>
+          <span>Show price change</span>
         </label>
       </div>
+    </ToggableSection>
 
-      <div class="form-group mb8">
-        <label class="checkbox-control">
-          <input
-            type="checkbox"
-            class="form-control"
-            :checked="animateSort"
-            @change="$store.commit(paneId + '/TOGGLE_SORT_ANIMATION')"
-          />
-          <div></div>
-          <span>Animation</span>
-        </label>
+    <ToggableSection title="Columns" id="watchlist-settings-extra" inset>
+      <div class="form-group mb8 mt16">
+        <label>Volume filter</label>
+        <editable
+          placeholder="Enter amount"
+          class="form-control pl16 w-100"
+          :value="formatAmountHelper(volumeThreshold)"
+          @input="$store.commit(paneId + '/SET_VOLUME_THRESHOLD', $event)"
+        />
       </div>
-
-      <div class="form-group mb8">
-        <label class="checkbox-control">
-          <input
-            type="checkbox"
-            class="form-control"
-            :checked="shortSymbols"
-            @change="$store.commit(paneId + '/TOGGLE_SHORT_SYMBOLS')"
-          />
-          <div></div>
-          <span>Short symbols</span>
-        </label>
-      </div>
-    </div>
-    <div>
-      <div class="form-group mb8">
-        <label
-          >Period
-          <span
-            class="icon-info"
-            title="Reset stats after certain time"
-            v-tippy
-          ></span
-        ></label>
-        <dropdown-button
-          :value="period"
-          :options="{
-            0: 'No period',
-            1: '1m',
-            15: '15m',
-            30: '30m',
-            60: '1h',
-            240: '4h'
-          }"
-          class="-outline form-control -arrow w-100 -cases"
-          placeholder="No period"
-          @input="$store.commit(paneId + '/SET_PERIOD', $event)"
-        ></dropdown-button>
-      </div>
-
       <div class="form-group mb8">
         <label>Sort by</label>
         <div class="column">
@@ -144,19 +109,83 @@
           </label>
         </div>
       </div>
-    </div>
+      <div class="form-group mb8">
+        <label class="checkbox-control">
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="animateSort"
+            @change="$store.commit(paneId + '/TOGGLE_SORT_ANIMATION')"
+          />
+          <div></div>
+          <span>Animation</span>
+        </label>
+      </div>
+    </ToggableSection>
+
+    <ToggableSection title="Period" id="watchlist-settings-period" inset>
+      <div class="form-group mb8 mt16">
+        <label>
+          Period
+          <span
+            class="icon-info"
+            title="Automatically clear the data at predetermined intervals"
+            v-tippy
+          ></span>
+        </label>
+        <dropdown-button
+          :value="period"
+          :options="{
+            0: 'No period',
+            1: '1m',
+            5: '5m',
+            15: '15m',
+            30: '30m',
+            60: '1h',
+            240: '4h'
+          }"
+          class="-outline form-control -arrow w-100 -cases"
+          placeholder="No period"
+          @input="$store.commit(paneId + '/SET_PERIOD', $event)"
+        ></dropdown-button>
+      </div>
+      <div class="form-group mb8">
+        <label class="checkbox-control">
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="avgPeriods"
+            @change="$store.commit(paneId + '/TOGGLE_AVG_PERIODS')"
+          />
+          <div></div>
+          <span>
+            Avg. periods
+            <i
+              class="icon-info"
+              v-tippy
+              title="Average the previous period data into the new"
+            ></i>
+          </span>
+        </label>
+      </div>
+    </ToggableSection>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import PricesSortDropdown from '@/components/prices/PricesSortDropdown.vue'
+import ToggableSection from '@/components/framework/ToggableSection.vue'
+import ToggableGroup from '@/components/framework/ToggableGroup.vue'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
+import { formatAmount } from '@/services/productsService'
 
 @Component({
   components: {
     PricesSortDropdown,
-    DropdownButton
+    DropdownButton,
+    ToggableSection,
+    ToggableGroup
   },
   name: 'PricesSettings',
   props: {
@@ -168,6 +197,7 @@ import DropdownButton from '@/components/framework/DropdownButton.vue'
 })
 export default class PricesSettings extends Vue {
   paneId: string
+  formatAmountHelper = formatAmount
 
   get showPairs() {
     return this.$store.state[this.paneId].showPairs
@@ -209,6 +239,14 @@ export default class PricesSettings extends Vue {
     return this.$store.state[this.paneId].shortSymbols
   }
 
+  get volumeThreshold() {
+    return this.$store.state[this.paneId].volumeThreshold
+  }
+
+  get avgPeriods() {
+    return this.$store.state[this.paneId].avgPeriods
+  }
+
   selectSortType(option) {
     if (option === this.sortType) {
       this.$store.commit(this.paneId + '/TOGGLE_SORT_ORDER')
@@ -218,9 +256,4 @@ export default class PricesSettings extends Vue {
   }
 }
 </script>
-<style lang="scss">
-.prices-settings {
-  display: flex;
-  gap: 1rem;
-}
-</style>
+<style lang="scss"></style>

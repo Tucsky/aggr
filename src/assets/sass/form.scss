@@ -170,6 +170,7 @@ textarea.form-control {
 
     &:after {
       content: $icon-down;
+      transform: none;
     }
   }
 
@@ -300,7 +301,6 @@ textarea.form-control {
     &:not([class^='icon-']):before {
       content: $icon-check;
     }
-
 
     &:after {
       opacity: 1;

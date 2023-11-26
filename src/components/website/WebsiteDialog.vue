@@ -33,10 +33,6 @@ import WebsiteSettings from './WebsiteSettings.vue'
 
 export default {
   components: { WebsiteSettings },
-  mixins: [DialogMixin, PaneDialogMixin],
-  data: () => ({
-    renaming: false
-  }),
-  methods: {}
+  mixins: [DialogMixin, PaneDialogMixin]
 }
 </script>

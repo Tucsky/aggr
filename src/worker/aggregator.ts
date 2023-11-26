@@ -1,4 +1,10 @@
-import { AggregatedTrade, Connection, Trade, Volumes } from '@/types/types'
+import {
+  AggregatedTrade,
+  Connection,
+  Ticker,
+  Trade,
+  Volumes
+} from '@/types/types'
 import { exchanges, getExchangeById } from './exchanges'
 import { getHms, parseMarket } from './helpers/utils'
 import settings from './settings'
@@ -12,25 +18,20 @@ class Aggregator {
   connectionsCount = 0
   connectionChange = 0
 
-  private tickerDelay = 10
+  private tickersDelay = 10
   private baseAggregationTimeout = 50
   private onGoingAggregations: { [identifier: string]: AggregatedTrade } = {}
   private aggregationTimeouts: { [identifier: string]: number } = {}
   private pendingTrades: Trade[] = []
-  private marketsStats: {
-    [marketId: string]: {
-      initialPrice?: number
-      decimals?: number
-      price: number
-      volume?: number
-      volumeDelta?: number
-    }
+  private tickers: {
+    [marketId: string]: Ticker
   } = {}
+
   private _connectionChangeNoticeTimeout: number
 
   constructor(worker: Worker) {
     this.bindExchanges()
-    this.startPriceInterval()
+    this.startTickersInterval()
     this.ctx = worker
     this.ctx.postMessage({
       op: 'hello'
@@ -174,7 +175,7 @@ class Aggregator {
       }
 
       if (settings.calculateSlippage) {
-        trade.originalPrice = this.marketsStats[marketKey].price || trade.price
+        trade.originalPrice = this.tickers[marketKey].price || trade.price
       }
 
       trade.count = trade.count || 1
@@ -215,7 +216,7 @@ class Aggregator {
         }
       }
 
-      trade.originalPrice = this.marketsStats[marketKey].price || trade.price
+      trade.originalPrice = this.tickers[marketKey].price || trade.price
 
       trade.count = trade.count || 1
       this.aggregationTimeouts[marketKey] = now + this.baseAggregationTimeout
@@ -303,13 +304,13 @@ class Aggregator {
     trade.amount =
       (settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
 
-    this.marketsStats[marketKey].volume += trade.amount
-    this.marketsStats[marketKey].volumeDelta +=
+    this.tickers[marketKey].updated = true
+    this.tickers[marketKey].volume += trade.amount
+    this.tickers[marketKey].volumeDelta +=
       trade.amount * (trade.side === 'buy' ? 1 : -1)
+    this.tickers[marketKey].price = trade.price
 
-    this.marketsStats[marketKey].price = trade.price
-
-    if (this.marketsStats[marketKey].initialPrice === null) {
+    if (this.tickers[marketKey].initialPrice === null) {
       this.emitInitialPrice(marketKey, trade.price)
     }
 
@@ -359,7 +360,7 @@ class Aggregator {
   }
 
   emitInitialPrice(marketKey: string, price: number) {
-    this.marketsStats[marketKey].initialPrice = price
+    this.tickers[marketKey].initialPrice = price
 
     this.ctx.postMessage({
       op: 'price',
@@ -418,14 +419,31 @@ class Aggregator {
     }
   }
 
-  emitPrices() {
+  emitTickers() {
     if (this.connectionsCount) {
-      this.ctx.postMessage({ op: 'prices', data: this.marketsStats })
+      const updatedTickers = {}
+      for (const marketKey in this.tickers) {
+        if (!this.tickers[marketKey].updated) {
+          continue
+        }
+
+        updatedTickers[marketKey] = {
+          price: this.tickers[marketKey].price,
+          volume: this.tickers[marketKey].volume,
+          volumeDelta: this.tickers[marketKey].volumeDelta
+        }
+
+        this.tickers[marketKey].updated = false
+        this.tickers[marketKey].volume = 0
+        this.tickers[marketKey].volumeDelta = 0
+      }
+
+      this.ctx.postMessage({ op: 'tickers', data: updatedTickers })
     }
 
-    this['_priceInterval'] = self.setTimeout(
-      () => this.emitPrices(),
-      this.tickerDelay
+    this['_tickersInterval'] = self.setTimeout(
+      () => this.emitTickers(),
+      this.tickersDelay
     )
   }
 
@@ -443,7 +461,7 @@ class Aggregator {
       timestamp: null
     }
 
-    this.marketsStats[marketKey] = {
+    this.tickers[marketKey] = {
       volume: 0,
       volumeDelta: 0,
       initialPrice: null,
@@ -471,7 +489,7 @@ class Aggregator {
 
     this.noticeConnectionChange(1)
 
-    this.refreshTickerDelay()
+    this.refreshTickersDelay()
   }
 
   onUnsubscribed(exchangeId, pair) {
@@ -483,7 +501,7 @@ class Aggregator {
 
     if (this.connections[identifier]) {
       delete this.connections[identifier]
-      delete this.marketsStats[identifier]
+      delete this.tickers[identifier]
 
       this.connectionsCount = Object.keys(this.connections).length
 
@@ -497,7 +515,7 @@ class Aggregator {
 
       this.noticeConnectionChange(-1)
 
-      this.refreshTickerDelay()
+      this.refreshTickersDelay()
     }
   }
 
@@ -727,11 +745,11 @@ class Aggregator {
     }
   }
 
-  startPriceInterval() {
-    if (this['_priceInterval']) {
+  startTickersInterval() {
+    if (this['_tickersInterval']) {
       return
     }
-    this.emitPrices()
+    this.emitTickers()
   }
 
   startAggrInterval() {
@@ -848,11 +866,19 @@ class Aggregator {
     })
   }
 
-  refreshTickerDelay() {
+  refreshTickersDelay() {
     const count = Object.keys(this.connections).length
 
-    this.tickerDelay = Math.log(Math.exp(count / 20 + 1) * 200) * 100
-    return this.tickerDelay
+    this.tickersDelay = Math.log(Math.exp(count / 20 + 1) * 200) * 100
+    return this.tickersDelay
+  }
+
+  getAllTickers(payload, trackingId) {
+    this.ctx.postMessage({
+      op: 'getAllTickers',
+      trackingId: trackingId,
+      data: this.tickers
+    })
   }
 }
 

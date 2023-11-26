@@ -651,6 +651,12 @@ export default {
       if (name) {
         await workspacesService.renameWorkspace(workspace, name)
 
+        history.replaceState(
+          {},
+          '',
+          window.location.href.replace(this.currentWorkspace.id, workspace.id)
+        )
+
         await this.getWorkspaces()
       }
     },

@@ -1,8 +1,8 @@
 <template>
   <div
     class="pane-prices"
-    @mouseenter="pauseSort = true"
-    @mouseleave="pauseSort = false"
+    @mouseenter="toggleSort(false)"
+    @mouseleave="toggleSort(true)"
   >
     <pane-header
       :paneId="paneId"
@@ -20,7 +20,7 @@
         :class="[mode === 'horizontal' && '-horizontal']"
       >
         <div
-          v-for="market in markets"
+          v-for="market in filteredMarkets"
           :key="market.id"
           class="market"
           :class="market.status"
@@ -28,19 +28,29 @@
           :data-market="market.id"
           v-draggable-market
         >
-          <div class="market__exchange" :class="market.exchange"></div>
+          <div
+            class="market__exchange"
+            :class="market.exchange"
+            :style="
+              showCryptosLogos && {
+                backgroundImage: `url(src/assets/cryptos/${market.base}.svg)`
+              }
+            "
+          ></div>
           <div v-if="showPairs" class="market__pair">
             {{ market.local }}
           </div>
           <div class="market__price" v-if="showPrice">{{ market.price }}</div>
           <div class="market__change" v-if="showChange">
-            {{ (market.change >= 0 ? '+' : '') + market.change.toFixed(2) }}%
+            {{
+              (market.avgChange >= 0 ? '+' : '') + market.avgChange.toFixed(2)
+            }}%
           </div>
           <div v-if="showVolume" class="market__volume">
-            {{ formatAmount(market.volume) }}
+            {{ formatAmount(market.avgVolume) }}
           </div>
           <div v-if="showVolumeDelta" class="market__volume">
-            {{ market.volumeDelta }}%
+            {{ market.avgVolumeDelta }}%
           </div>
         </div>
       </component>
@@ -55,7 +65,7 @@ import PricesSortDropdown from '@/components/prices/PricesSortDropdown.vue'
 import aggregatorService from '@/services/aggregatorService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
-import { Market } from '@/types/types'
+import { Market, Ticker } from '@/types/types'
 import {
   formatAmount,
   formatMarketPrice,
@@ -63,14 +73,18 @@ import {
   getMarketProduct
 } from '@/services/productsService'
 
-type MarketsBarMarketStatus = '-pending' | '-up' | '-down' | '-neutral'
-type MarketStats = Market & {
+type TickerStatus = '-pending' | '-up' | '-down' | '-neutral'
+type WatchlistMarket = Market & {
   local: string
+  base: string
   price: string
   change: number
+  avgChange: number
   volume: number
+  avgVolume: number
   volumeDelta: number
-  status: MarketsBarMarketStatus
+  avgVolumeDelta: number
+  status: TickerStatus
 }
 
 @Component({
@@ -80,21 +94,29 @@ type MarketStats = Market & {
 export default class Prices extends Mixins(PaneMixin) {
   mode = 'vertical'
   pauseSort = false
-  markets: MarketStats[] = []
+  showCryptosLogos = false
+  filteredMarkets: WatchlistMarket[] = []
 
-  private _sortFunction: (a: MarketStats, b: MarketStats) => number
+  // cache sort function
+  private sortFunction: (a: WatchlistMarket, b: WatchlistMarket) => number
 
-  private _initialValues: {
-    [id: string]: {
-      volume: number
-      volumeDelta: number
+  // markets storage
+  private markets: WatchlistMarket[]
+
+  // prices event contain cumulative data
+  // keep track of last period ticker's volume & change
+  private lastResetTimestamp: number
+  private lastPeriodTickers: {
+    [id: string]: Ticker & {
       change: number
     }
   }
-  private _resetTimeout: number
+  private periodMs: number
+
+  private resetTimeout: number
 
   @Watch('pane.markets')
-  private marketChange(currentMarket, previousMarkets) {
+  private onMarketChange(currentMarket, previousMarkets) {
     for (const id of previousMarkets) {
       if (currentMarket.indexOf(id) === -1) {
         this.removeMarketFromList(id)
@@ -115,7 +137,7 @@ export default class Prices extends Mixins(PaneMixin) {
   }
 
   @Watch('period', { immediate: true })
-  private periodChange(period) {
+  private onPeriodChange(period) {
     if (period > 0) {
       this.periodReset()
     } else {
@@ -123,9 +145,39 @@ export default class Prices extends Mixins(PaneMixin) {
     }
   }
 
+  @Watch('volumeThreshold')
+  private onVolumeThresholdChange(value) {
+    if (!value) {
+      this.filteredMarkets = this.markets
+    } else {
+      this.filterMarkets()
+    }
+  }
+
   @Watch('shortSymbols')
-  private shortSymbolsChange() {
-    this.refreshMarkets()
+  private onShortSymbolsChange(value) {
+    for (const market of this.markets) {
+      if (value) {
+        const product = getMarketProduct(market.exchange, market.pair)
+
+        if (product) {
+          market.local = this.getSymbol(product)
+          continue
+        }
+      }
+
+      market.local = market.pair
+    }
+  }
+
+  @Watch('sortOrder')
+  private onSortOrderChange() {
+    this.cacheSortFunction()
+  }
+
+  @Watch('sortType')
+  private onSortTypeChange() {
+    this.cacheSortFunction()
   }
 
   get exchanges() {
@@ -176,6 +228,14 @@ export default class Prices extends Mixins(PaneMixin) {
     return this.$store.state[this.paneId].shortSymbols
   }
 
+  get avgPeriods() {
+    return this.$store.state[this.paneId].avgPeriods
+  }
+
+  get volumeThreshold() {
+    return this.$store.state[this.paneId].volumeThreshold
+  }
+
   get transitionGroupName() {
     if (this.animateSort) {
       return 'flip-list'
@@ -185,94 +245,130 @@ export default class Prices extends Mixins(PaneMixin) {
   }
 
   created() {
-    this._initialValues = {}
-    this._onStoreMutation = this.$store.watch(
-      state => [state[this.paneId].sortType, state[this.paneId].sortOrder],
-      this.cacheSortFunction
-    )
-
-    this.cacheSortFunction()
-
+    // non reactive storages
     this.refreshMarkets()
+    this.cacheSortFunction()
   }
 
   mounted() {
-    aggregatorService.on('prices', this.updateMarkets)
+    aggregatorService.on('tickers', this.updateMarkets)
+
+    // start filter interval
+    this.filterMarkets(true)
   }
 
   beforeDestroy() {
-    aggregatorService.off('prices', this.updateMarkets)
+    aggregatorService.off('tickers', this.updateMarkets)
 
-    if (this._resetTimeout) {
-      clearTimeout(this._resetTimeout)
+    if (this.resetTimeout) {
+      // clear periodic reset timeout
+      clearTimeout(this.resetTimeout)
     }
   }
 
   refreshMarkets() {
+    // non reactive storages
     this.markets = []
+    this.lastPeriodTickers = {}
+
+    // active normalized pairs
+    const locals = []
 
     for (const market of this.pane.markets) {
       const [exchange, pair] = parseMarket(market)
 
-      this.addMarketToList({
+      const product = this.addMarketToList({
         id: market,
         pair,
         exchange
       })
+
+      if (locals.indexOf(product.local) === -1) {
+        locals.push(product.local)
+      }
     }
+
+    // only show logos when multiple coins are included
+    this.showCryptosLogos = locals.length > 1
+
+    this.filterMarkets()
   }
 
-  updateMarkets(marketsStats) {
+  updateMarkets(tickers) {
+    // cache setting getters
     const showChange = this.showChange
+    const avgPeriods = this.avgPeriods
+    const periodWeight = this.getPeriodWeight(avgPeriods)
 
     for (const market of this.markets) {
-      const marketStats = marketsStats[market.id]
+      const ticker = tickers[market.id]
 
-      if (!marketStats || marketStats.volume === market.volume) {
+      if (!ticker) {
         continue
       }
 
-      market.volume = marketStats.volume - this._initialValues[market.id].volume
-      market.volumeDelta = market.volume
-        ? Math.round(
-            ((marketStats.volumeDelta -
-              this._initialValues[market.id].volumeDelta) /
-              market.volume) *
-              100
-          )
-        : 0
+      const oldData = this.lastPeriodTickers[market.id]
 
-      if (showChange && marketStats.price) {
-        const change =
-          marketStats.price -
-          marketStats.initialPrice -
-          this._initialValues[market.id].change
+      if (!oldData.price) {
+        oldData.price = ticker.price
+      }
 
-        market.change = (change / marketStats.price) * 100
-        market.status = change > 0 ? '-up' : '-down'
+      market.price = formatMarketPrice(ticker.price, market.id)
+      market.volume += ticker.volume
+      market.volumeDelta += ticker.volumeDelta
+
+      if (avgPeriods) {
+        market.avgVolume =
+          market.volume * periodWeight + oldData.volume * (1 - periodWeight)
+        market.avgVolumeDelta = Math.round(
+          ((market.volumeDelta * periodWeight +
+            oldData.volumeDelta * (1 - periodWeight)) /
+            market.volume) *
+            100
+        )
       } else {
-        if (marketStats.price === null) {
+        market.avgVolume = market.volume
+        market.avgVolumeDelta = Math.round(
+          (market.volumeDelta / market.volume) * 100
+        )
+      }
+
+      if (showChange && ticker.price) {
+        // colorize using price change accross period
+        const change = ticker.price - this.lastPeriodTickers[market.id].price
+
+        market.change = (change / ticker.price) * 100
+
+        if (avgPeriods) {
+          market.avgChange =
+            market.change * periodWeight + oldData.change * (1 - periodWeight)
+        } else {
+          market.avgChange = market.change
+        }
+
+        market.status = market.avgChange > 0 ? '-up' : '-down'
+      } else {
+        // colorize using now vs last value only
+        if (ticker.price === null) {
           market.status = '-pending'
-        } else if (market.price > marketStats.price) {
+        } else if (market.price > ticker.price) {
           market.status = '-down'
-        } else if (market.price < marketStats.price) {
+        } else if (market.price < ticker.price) {
           market.status = '-up'
         } else {
           market.status = '-neutral'
         }
       }
-
-      market.price = formatMarketPrice(marketStats.price, market.id)
     }
 
-    if (!this.pauseSort && this._sortFunction !== null) {
-      this.markets = this.markets.sort(this._sortFunction)
+    if (!this.pauseSort && this.sortFunction !== null) {
+      this.filteredMarkets = this.filteredMarkets.sort(this.sortFunction)
     }
   }
 
   removeMarketFromList(market: string) {
-    if (this._initialValues[market]) {
-      delete this._initialValues[market]
+    if (this.lastPeriodTickers[market]) {
+      delete this.lastPeriodTickers[market]
     }
 
     const index = this.markets.indexOf(this.markets.find(m => m.id === market))
@@ -287,7 +383,8 @@ export default class Prices extends Mixins(PaneMixin) {
   }
 
   addMarketToList(market: Market) {
-    this._initialValues[market.id] = {
+    this.lastPeriodTickers[market.id] = {
+      price: 0,
       change: 0,
       volume: 0,
       volumeDelta: 0
@@ -295,17 +392,23 @@ export default class Prices extends Mixins(PaneMixin) {
 
     const product = getMarketProduct(market.exchange, market.pair)
 
-    this.markets.push({
-      ...market,
-      local: this.shortSymbols
-        ? product.base
-        : product.local + (product.type === 'perp' ? 'PERP' : ''),
-      status: '-pending',
-      price: null,
-      change: 0,
-      volume: 0,
-      volumeDelta: 0
-    })
+    if (product) {
+      this.markets.push({
+        ...market,
+        local: this.getSymbol(product),
+        base: product.base.toLowerCase(),
+        status: '-pending',
+        price: null,
+        change: 0,
+        avgChange: 0,
+        volume: 0,
+        avgVolume: 0,
+        volumeDelta: 0,
+        avgVolumeDelta: 0
+      })
+
+      return product
+    }
   }
 
   cacheSortFunction() {
@@ -318,37 +421,37 @@ export default class Prices extends Mixins(PaneMixin) {
     const by = this.sortType
 
     if (!by || by === 'none') {
-      this._sortFunction = null
+      this.sortFunction = null
       return
     }
 
     if (by === 'price') {
       if (order === 1) {
-        this._sortFunction = (a, b) => (a as any).price - (b as any).price
+        this.sortFunction = (a, b) => (a as any).price - (b as any).price
       } else {
-        this._sortFunction = (a, b) => (b as any).price - (a as any).price
+        this.sortFunction = (a, b) => (b as any).price - (a as any).price
       }
     } else if (by === 'change') {
       if (order === 1) {
-        this._sortFunction = (a, b) => a.change - b.change
+        this.sortFunction = (a, b) => a.avgChange - b.avgChange
       } else {
-        this._sortFunction = (a, b) => b.change - a.change
+        this.sortFunction = (a, b) => b.avgChange - a.avgChange
       }
     } else if (by === 'volume') {
       if (order === 1) {
-        this._sortFunction = (a, b) => a.volume - b.volume
+        this.sortFunction = (a, b) => a.avgVolume - b.avgVolume
       } else {
-        this._sortFunction = (a, b) => b.volume - a.volume
+        this.sortFunction = (a, b) => b.avgVolume - a.avgVolume
       }
     } else if (by === 'delta') {
       if (order === 1) {
-        this._sortFunction = (a, b) => a.volumeDelta - b.volumeDelta
+        this.sortFunction = (a, b) => a.avgVolumeDelta - b.avgVolumeDelta
       } else {
-        this._sortFunction = (a, b) => b.volumeDelta - a.volumeDelta
+        this.sortFunction = (a, b) => b.avgVolumeDelta - a.avgVolumeDelta
       }
     }
 
-    this.markets = this.markets.sort(this._sortFunction)
+    this.filteredMarkets = this.filteredMarkets.sort(this.sortFunction)
   }
 
   formatAmount(amount) {
@@ -368,50 +471,92 @@ export default class Prices extends Mixins(PaneMixin) {
   }
 
   scheduleNextPeriodReset() {
-    if (this._resetTimeout) {
-      clearTimeout(this._resetTimeout)
+    if (this.resetTimeout) {
+      clearTimeout(this.resetTimeout)
     }
 
-    this._resetTimeout = setTimeout(
+    this.resetTimeout = setTimeout(
       this.periodReset.bind(this),
       this.getTimeToNextReset()
     ) as unknown as number
   }
 
   periodReset() {
-    aggregatorService.once('prices', marketsStats => {
-      for (const market of this.markets) {
-        if (!marketsStats[market.id]) {
-          continue
+    if (this.period) {
+      this.periodMs = this.period * 1000 * 60
+      this.lastResetTimestamp = this.resetTimeout ? Date.now() : null
+
+      if (this.markets) {
+        for (const market of this.markets) {
+          this.lastPeriodTickers[market.id].price = +market.price
+          this.lastPeriodTickers[market.id].change = +market.change
+          this.lastPeriodTickers[market.id].volume = market.volume
+          this.lastPeriodTickers[market.id].volumeDelta = market.volumeDelta
+
+          market.volume = 0
+          market.volumeDelta = 0
         }
-
-        this._initialValues[market.id].change =
-          marketsStats[market.id].price - marketsStats[market.id].initialPrice
-        this._initialValues[market.id].volume = marketsStats[market.id].volume
-        this._initialValues[market.id].volumeDelta =
-          marketsStats[market.id].volumeDelta
       }
 
-      this.updateMarkets(marketsStats)
-
-      if (this.period) {
-        this.scheduleNextPeriodReset()
-      }
-    })
+      this.scheduleNextPeriodReset()
+    }
   }
 
   clearPeriodReset() {
-    for (const market in this._initialValues) {
-      this._initialValues[market].change =
-        this._initialValues[market].volume =
-        this._initialValues[market].volumeDelta =
+    for (const market in this.lastPeriodTickers) {
+      this.lastPeriodTickers[market].price =
+        this.lastPeriodTickers[market].volume =
+        this.lastPeriodTickers[market].volumeDelta =
           0
     }
 
-    if (this._resetTimeout) {
-      clearTimeout(this._resetTimeout)
-      this._resetTimeout = null
+    if (this.resetTimeout) {
+      clearTimeout(this.resetTimeout)
+      this.resetTimeout = null
     }
+  }
+
+  filterMarkets(scheduled?) {
+    const threshold = this.volumeThreshold
+
+    if (!this.pauseSort) {
+      if (threshold) {
+        this.filteredMarkets = this.markets.filter(
+          market => market.volume >= threshold
+        )
+
+        this.filteredMarkets = this.filteredMarkets.sort(this.sortFunction)
+      } else {
+        this.filteredMarkets = this.markets
+      }
+    }
+
+    if (scheduled) {
+      // schedule next filter
+      setTimeout(() => {
+        this.filterMarkets(true)
+      }, Math.random() * 10000)
+    }
+  }
+
+  getPeriodWeight(avgPeriods) {
+    if (!avgPeriods || !this.lastResetTimestamp) {
+      return 1
+    }
+
+    return (Date.now() - this.lastResetTimestamp) / this.periodMs
+  }
+
+  toggleSort(value) {
+    this.pauseSort = !value
+  }
+
+  getSymbol(product) {
+    if (this.shortSymbols) {
+      return product.base.replace(/^1000+/, '').slice(0, 8)
+    }
+
+    return product.pair
   }
 }
 </script>
@@ -424,7 +569,7 @@ export default class Prices extends Mixins(PaneMixin) {
 
   &__wrapper {
     overflow-y: auto;
-    height: 100%;
+    max-height: 100%;
     padding: 0;
   }
 
@@ -436,8 +581,6 @@ export default class Prices extends Mixins(PaneMixin) {
       vertical-align: middle;
     }
   }
-
-  height: 100%;
 
   @each $exchange, $icon in $exchange-list {
     .market__exchange.#{$exchange} {

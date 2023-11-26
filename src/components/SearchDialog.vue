@@ -2,6 +2,7 @@
   <Dialog
     ref="dialog"
     class="search-dialog"
+    size="large"
     @resize="onResize"
     @clickOutside="hide"
   >
@@ -243,7 +244,7 @@
           ref="input"
           class="search-dialog__tags-item"
           type="text"
-          placeholder="Search"
+          :placeholder="`Search (${filteredProducts.length})`"
           :value="query"
           @input="onInput"
         />
@@ -1487,7 +1488,7 @@ export default {
     position: relative;
     min-width: 19rem;
     border: 0;
-    max-height: 50%;
+    max-height: 33%;
     overflow: auto;
     display: flex;
     flex-wrap: wrap;
@@ -1495,7 +1496,7 @@ export default {
     align-items: flex-start;
     justify-content: flex-start;
     flex-shrink: 0;
-    padding-right: 1rem;
+    padding-right: 1.5rem;
 
     &.-sticky {
       @media screen and (min-width: 550px) {
