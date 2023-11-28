@@ -2,6 +2,7 @@
   <Dialog
     @clickOutside="close"
     class="pane-dialog"
+    size="small"
     @mousedown="clickOutsideClose = false"
     @mouseup="clickOutsideClose = true"
   >

@@ -6,9 +6,10 @@
         :value="showPairs"
         label="Show Symbols"
         @change="$store.commit(paneId + '/TOGGLE_PAIRS')"
+        small
       >
         <div class="form-group">
-          <label class="checkbox-control">
+          <label class="checkbox-control -small">
             <input
               type="checkbox"
               class="form-control"
@@ -25,7 +26,7 @@
       </toggable-group>
 
       <div class="form-group mb8">
-        <label class="checkbox-control">
+        <label class="checkbox-control -small">
           <input
             type="checkbox"
             class="form-control"
@@ -38,7 +39,7 @@
       </div>
 
       <div class="form-group mb8">
-        <label class="checkbox-control">
+        <label class="checkbox-control -small">
           <input
             type="checkbox"
             class="form-control"
@@ -51,7 +52,7 @@
       </div>
 
       <div class="form-group mb8">
-        <label class="checkbox-control">
+        <label class="checkbox-control -small">
           <input
             type="checkbox"
             class="form-control"
@@ -64,7 +65,7 @@
       </div>
 
       <div class="form-group mb8">
-        <label class="checkbox-control">
+        <label class="checkbox-control -small">
           <input
             type="checkbox"
             class="form-control"
@@ -77,7 +78,15 @@
       </div>
     </ToggableSection>
 
-    <ToggableSection title="Columns" id="watchlist-settings-extra" inset>
+    <ToggableSection id="watchlist-settings-extra" inset>
+      <template v-slot:title>
+        <div class="toggable-section__title">
+          Filter
+          <span v-if="volumeThreshold" class="badge -red ml8 mr8"
+            >> {{ formatAmountHelper(volumeThreshold) }}</span
+          >
+        </div>
+      </template>
       <div class="form-group mb8 mt16">
         <label>Volume filter</label>
         <editable
@@ -110,7 +119,7 @@
         </div>
       </div>
       <div class="form-group mb8">
-        <label class="checkbox-control">
+        <label class="checkbox-control -small">
           <input
             type="checkbox"
             class="form-control"
@@ -118,12 +127,20 @@
             @change="$store.commit(paneId + '/TOGGLE_SORT_ANIMATION')"
           />
           <div></div>
-          <span>Animation</span>
+          <span>Sort animation</span>
         </label>
       </div>
     </ToggableSection>
 
-    <ToggableSection title="Period" id="watchlist-settings-period" inset>
+    <ToggableSection id="watchlist-settings-period" inset>
+      <template v-slot:title>
+        <div class="toggable-section__title">
+          Period
+          <span v-if="period" class="badge -red ml8 mr8">
+            {{ periods[period] }}
+          </span>
+        </div>
+      </template>
       <div class="form-group mb8 mt16">
         <label>
           Period
@@ -135,22 +152,14 @@
         </label>
         <dropdown-button
           :value="period"
-          :options="{
-            0: 'No period',
-            1: '1m',
-            5: '5m',
-            15: '15m',
-            30: '30m',
-            60: '1h',
-            240: '4h'
-          }"
+          :options="periods"
           class="-outline form-control -arrow w-100 -cases"
           placeholder="No period"
           @input="$store.commit(paneId + '/SET_PERIOD', $event)"
         ></dropdown-button>
       </div>
       <div class="form-group mb8">
-        <label class="checkbox-control">
+        <label class="checkbox-control -small">
           <input
             type="checkbox"
             class="form-control"
@@ -198,6 +207,15 @@ import { formatAmount } from '@/services/productsService'
 export default class PricesSettings extends Vue {
   paneId: string
   formatAmountHelper = formatAmount
+  periods = {
+    0: 'No period',
+    1: '1m',
+    5: '5m',
+    15: '15m',
+    30: '30m',
+    60: '1h',
+    240: '4h'
+  }
 
   get showPairs() {
     return this.$store.state[this.paneId].showPairs

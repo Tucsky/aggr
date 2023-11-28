@@ -33,7 +33,7 @@
             :class="market.exchange"
             :style="
               showCryptosLogos && {
-                backgroundImage: `url(src/assets/cryptos/${market.base}.svg)`
+                backgroundImage: market.logo
               }
             "
           ></div>
@@ -76,7 +76,7 @@ import {
 type TickerStatus = '-pending' | '-up' | '-down' | '-neutral'
 type WatchlistMarket = Market & {
   local: string
-  base: string
+  logo: string
   price: string
   change: number
   avgChange: number
@@ -147,6 +147,8 @@ export default class Prices extends Mixins(PaneMixin) {
 
   @Watch('volumeThreshold')
   private onVolumeThresholdChange(value) {
+    this.toggleSort(true)
+
     if (!value) {
       this.filteredMarkets = this.markets
     } else {
@@ -396,7 +398,9 @@ export default class Prices extends Mixins(PaneMixin) {
       this.markets.push({
         ...market,
         local: this.getSymbol(product),
-        base: product.base.toLowerCase(),
+        logo: `${
+          import.meta.env.BASE_URL
+        }src/assets/cryptos/${product.base.toLowerCase()}`,
         status: '-pending',
         price: null,
         change: 0,
