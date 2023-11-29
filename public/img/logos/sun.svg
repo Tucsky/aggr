@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 27.7.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 500 500" style="enable-background:new 0 0 500 500;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:url(#SVGID_1_);}
+	.st1{fill:#FFFFFF;filter:url(#Adobe_OpacityMaskFilter);}
+	.st2{mask:url(#mask0_00000060726428402963303700000011616939466962829491_);}
+	.st3{fill:none;stroke:#FFFFFF;stroke-width:0.7899;}
+	.st4{fill:#F8BA3A;stroke:#FFFFFF;stroke-width:0.677;}
+	
+		.st5{fill:#FFFFFF;filter:url(#Adobe_OpacityMaskFilter_00000034075956419678204060000012561921297924361632_);stroke:#FFFFFF;stroke-width:0.677;}
+	.st6{mask:url(#mask1_00000160875654553515634970000017162260501986818474_);}
+	.st7{fill-rule:evenodd;clip-rule:evenodd;fill:#FFFFFF;}
+	.st8{fill:#01C1AE;stroke:#01C1AE;stroke-width:1.2412;stroke-linecap:round;stroke-linejoin:round;}
+	.st9{fill:#FFFFFF;stroke:#FE9D51;stroke-width:0.5642;stroke-linejoin:round;}
+	.st10{fill:none;stroke:#FE9A54;stroke-width:0.4514;stroke-linecap:round;stroke-linejoin:round;}
+	.st11{stroke:#000000;stroke-width:0.1128;}
+	.st12{fill:#FFFFFF;}
+</style>
+<g>
+	
+		<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="250.6235" y1="454.4074" x2="250.6235" y2="64.96" gradientTransform="matrix(1 0 0 -1 0 500.8898)">
+		<stop  offset="0" style="stop-color:#F5B745"/>
+		<stop  offset="1" style="stop-color:#FC8B47"/>
+	</linearGradient>
+	<circle class="st0" cx="250.6" cy="241.2" r="194.7"/>
+	<defs>
+		<filter id="Adobe_OpacityMaskFilter" filterUnits="userSpaceOnUse" x="0" y="0" width="500" height="500">
+			<feColorMatrix  type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+		</filter>
+	</defs>
+	
+		<mask maskUnits="userSpaceOnUse" x="0" y="0" width="500" height="500" id="mask0_00000060726428402963303700000011616939466962829491_">
+		<circle class="st1" cx="250.6" cy="241.2" r="194.7"/>
+	</mask>
+	<g class="st2">
+		<path class="st3" d="M246.5,0v135.7"/>
+		<path class="st3" d="M226.4,0v135.7"/>
+		<path class="st3" d="M272.9,0v135.7"/>
+		<path class="st3" d="M161.4,26.4l44,82.1V15.1"/>
+		<path class="st3" d="M337.3,23.9l-44,82.1V12.6"/>
+		<path class="st3" d="M253.5,500V364.3"/>
+		<path class="st3" d="M273.6,500V364.3"/>
+		<path class="st3" d="M227.1,500V364.3"/>
+		<path class="st3" d="M339.8,475.3l-44-82.1v93.4"/>
+		<path class="st3" d="M161.4,476.5l44-82.1v93.4"/>
+		<path class="st3" d="M0,253.5h135.7"/>
+		<path class="st3" d="M0,273.6h135.7"/>
+		<path class="st3" d="M0,227.1h135.7"/>
+		<path class="st3" d="M23.3,339.2l82.1-44H11.9"/>
+		<path class="st3" d="M32.1,165.8l82.1,44H20.7"/>
+		<path class="st3" d="M500,246.5H364.3"/>
+		<path class="st3" d="M500,226.4H364.3"/>
+		<path class="st3" d="M500,272.9H364.3"/>
+		<path class="st3" d="M472.1,160.8l-82.1,44h93.4"/>
+		<path class="st3" d="M477.2,338l-82.1-44h93.4"/>
+		<path class="st3" d="M75.7,429.2l95.9-95.9"/>
+		<path class="st3" d="M89.9,443.5l95.9-95.9"/>
+		<path class="st3" d="M57,410.6l95.9-95.9"/>
+		<path class="st3" d="M157.8,473.5l26.9-89.1l-66,66"/>
+		<path class="st3" d="M27.5,344.5l89.1-26.9l-66,66"/>
+		<path class="st3" d="M424.3,70.8l-95.9,95.9"/>
+		<path class="st3" d="M410.1,56.5l-95.9,95.9"/>
+		<path class="st3" d="M443,89.4L347,185.4"/>
+		<path class="st3" d="M345.1,29.4l-26.9,89.1l66-66"/>
+		<path class="st3" d="M471.7,153.5l-89.1,26.9l66-66"/>
+		<path class="st3" d="M429.2,424.3l-95.9-95.9"/>
+		<path class="st3" d="M443.4,410.1l-95.9-95.9"/>
+		<path class="st3" d="M410.6,443L314.6,347"/>
+		<path class="st3" d="M474.2,344.5L385,317.5l66,66"/>
+		<path class="st3" d="M346.3,472.3l-26.9-89.1l66,66"/>
+		<path class="st3" d="M70.8,75.7l95.9,95.9"/>
+		<path class="st3" d="M56.5,89.9l95.9,95.9"/>
+		<path class="st3" d="M89.4,57l95.9,95.9"/>
+		<path class="st3" d="M33.8,159.7l89.1,26.9l-66-66"/>
+		<path class="st3" d="M156.6,33.2l26.9,89.1l-66-66"/>
+	</g>
+	<circle class="st4" cx="250" cy="241.8" r="133"/>
+	<defs>
+		
+			<filter id="Adobe_OpacityMaskFilter_00000070834682628892942940000007027780669960916097_" filterUnits="userSpaceOnUse" x="239.9" y="103" width="162.1" height="271.7">
+			<feColorMatrix  type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+		</filter>
+	</defs>
+	
+		<mask maskUnits="userSpaceOnUse" x="239.9" y="103" width="162.1" height="271.7" id="mask1_00000160875654553515634970000017162260501986818474_">
+		
+			<circle style="fill:#FFFFFF;filter:url(#Adobe_OpacityMaskFilter_00000070834682628892942940000007027780669960916097_);stroke:#FFFFFF;stroke-width:0.677;" cx="251.3" cy="241.8" r="133"/>
+	</mask>
+	<g class="st6">
+		<path class="st7" d="M257.5,103l-17.6,141.3h17.6l-6.9,130.4l128.2-22.9l23.3-179l-56.5-49.7L257.5,103z"/>
+	</g>
+	<path class="st8" d="M126.9,224.1c3,24.6,19.1,50.3,43.7,47.3c83.6-10.3,71.9-64,70.7-81.4c6.1,49.3,43.5,67.4,106.2,59.7
+		c18.7-2.3,26.3-38.8,24.2-55.6c-2.6-21-58.3-24.1-127.7-15.6C174.7,187,123.2,193.3,126.9,224.1z"/>
+	<path class="st9" d="M252,326.4c29.1-2.4,51-25.9,48.8-52.5l-105.5,8.6C197.5,309.1,222.9,328.8,252,326.4z"/>
+	<path class="st10" d="M265.7,297.7h28.9"/>
+	<path class="st11" d="M281.4,238.1c-22.6-8.5-31.6-31.2-33.3-41.5c0-13.8,15.7-15.7,54-15.7s61.6,3.1,63.4,13.2
+		c1.9,17.6-4.4,44-13.2,48.4C343.6,246.9,309.7,248.7,281.4,238.1z"/>
+	<path class="st11" d="M214.9,249.8c18.1-12,27.6-35,21.9-54.5c-3.2-11.1-20.9-8.4-54-3.1c-29.5,4.7-52.1,17.6-49.6,28.9
+		c1.3,18.5,15.5,38.1,23.9,41.5C165.4,265.9,192.2,264.8,214.9,249.8z"/>
+	<path class="st12" d="M371.9,136.9l11,29.8l29.8,11l-29.8,11l-11,29.8l-11-29.8l-29.8-11l29.8-11L371.9,136.9z"/>
+</g>
+</svg>
