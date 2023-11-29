@@ -1,6 +1,10 @@
 <template>
   <div class="prices-settings">
-    <ToggableSection title="Columns" id="watchlist-settings-columns" inset>
+    <ToggableSection
+      title="Customization"
+      id="watchlist-settings-columns"
+      inset
+    >
       <toggable-group
         class="mb8 mt16"
         :value="showPairs"

@@ -185,6 +185,7 @@ class ImportService {
             </ul>
             🔒 Your security is important to us. Be cautious & stay safe.`,
             ok: `Accept and Proceed`,
+            requireScroll: true,
             html: true
           }))
         ) {

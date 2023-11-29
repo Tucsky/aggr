@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="close" size="small" :resizable="false">
+  <Dialog ref="dialog" @clickOutside="close" size="small" :resizable="false">
     <template v-slot:header>
       <div class="dialog__title">{{ title }}</div>
     </template>
@@ -17,32 +17,38 @@
         {{ action.label }}
       </button>
 
-      <button
+      <Btn
         type="button"
-        class="btn -text mr8"
+        class="-text mr8"
         @click="close(false)"
-        @mousedown.prevent
+        @mousedown.native.prevent
         v-if="cancel"
-        v-text="cancel"
-      ></button>
-      <button
+      >
+        {{ cancel }}
+      </Btn>
+      <Btn
         v-if="ok"
         type="button"
-        class="btn -green -large"
+        :disabled="!isSubmitEnabled"
+        class="-green -large"
         v-autofocus
         @click="close(true)"
-        @mousedown.prevent
+        @mousedown.native.prevent
       >
         <i class="icon-check mr4"></i> {{ ok }}
-      </button>
+      </Btn>
     </template>
   </Dialog>
 </template>
 
 <script>
+import Btn from '@/components/framework/Btn.vue'
 import DialogMixin from '@/mixins/dialogMixin'
 
 export default {
+  components: {
+    Btn
+  },
   props: {
     title: {
       type: String,
@@ -67,6 +73,15 @@ export default {
     actions: {
       type: Array,
       default: () => []
+    },
+    requireScroll: {
+      type: Boolean,
+      default: false
+    }
+  },
+  data() {
+    return {
+      isSubmitEnabled: !this.requireScroll
     }
   },
   computed: {
@@ -77,11 +92,65 @@ export default {
   mixins: [DialogMixin],
   mounted() {
     document.querySelector('.app__wrapper').classList.add('-blur')
+
+    if (this.requireScroll) {
+      this.bindScroll()
+    }
   },
   beforeDestroy() {
     document.querySelector('.app__wrapper').classList.remove('-blur')
+
+    this.unbindScroll()
   },
   methods: {
+    async bindScroll() {
+      await this.$nextTick()
+      const bodyElement = this.$refs.dialog.$refs.body
+
+      if (bodyElement) {
+        console.log('bind scroll')
+        this.scrollHandler = this.handleScroll.bind(this)
+
+        bodyElement.addEventListener('scroll', this.handleScroll)
+      } else {
+        console.log('couldnt bind', this.$refs.dialog.$refs)
+      }
+    },
+    handleScroll() {
+      const bodyElement = this.$refs.dialog.$refs.body
+      this.isSubmitEnabled =
+        bodyElement.scrollTop + bodyElement.clientHeight >=
+        bodyElement.scrollHeight - 1
+
+      console.log(
+        'scroll',
+        this.isSubmitEnabled
+          ? 'submit button unlocked'
+          : 'submit button still disabled'
+      )
+
+      if (this.isSubmitEnabled) {
+        this.unbindScroll()
+      }
+    },
+    unbindScroll() {
+      if (!this.scrollHandler) {
+        console.log('scroll already unbinded?')
+        return
+      }
+
+      const bodyElement = this.$refs.dialog.$refs.body
+
+      if (bodyElement) {
+        console.log('unbind scroll')
+
+        bodyElement.removeEventListener('scroll', this.handleScroll)
+        this.handleScroll = null
+      } else {
+        console.log('couldnt unbind', this.$refs.dialog.$refs)
+        this.scrollHandler = null
+      }
+    },
     onClickAction(event, action) {
       if (action.callback) {
         const output = action.callback(event)

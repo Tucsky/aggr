@@ -33,7 +33,7 @@
             :class="market.exchange"
             :style="
               showCryptosLogos && {
-                backgroundImage: market.logo
+                backgroundImage: `url(img/logos/${market.base}.svg)`
               }
             "
           ></div>
@@ -76,7 +76,7 @@ import {
 type TickerStatus = '-pending' | '-up' | '-down' | '-neutral'
 type WatchlistMarket = Market & {
   local: string
-  logo: string
+  base: string
   price: string
   change: number
   avgChange: number
@@ -399,9 +399,7 @@ export default class Prices extends Mixins(PaneMixin) {
       this.markets.push({
         ...market,
         local: this.getSymbol(product),
-        logo: `url(${
-          import.meta.env.BASE_URL
-        }src/assets/cryptos/${product.base.toLowerCase()}.svg)`,
+        base: product.base.toLowerCase(),
         status: '-pending',
         price: null,
         change: 0,
@@ -569,10 +567,10 @@ export default class Prices extends Mixins(PaneMixin) {
       return false
     }
 
-    const logo = this.markets[0].logo
+    const base = this.markets[0].base
 
     for (const market of this.markets) {
-      if (logo !== market.logo) {
+      if (base !== market.base) {
         return true
       }
     }
