@@ -153,7 +153,6 @@ export default class ChartComponent extends Mixins(PaneMixin) {
     this.chart = new Chart(this.paneId, this.$refs.chartContainer)
 
     this.bindAggregator()
-    this.refreshAxisSize()
 
     if (this.showIndicators && this.$parent.$el.clientHeight > 420) {
       this.showIndicators = true
@@ -207,36 +206,9 @@ export default class ChartComponent extends Mixins(PaneMixin) {
       return
     }
 
-    await sleep(10)
+    await sleep(100)
 
-    const chartOptions = this.$store.state[this.paneId] as ChartPaneState
-
-    const axis = {
-      top: 0,
-      left: 0,
-      right: 0,
-      time: 0
-    }
-
-    if (chartOptions.showLeftScale) {
-      axis.left = this.$refs.chartContainer.querySelector(
-        'tr:first-child td:first-child canvas'
-      ).clientWidth
-    }
-
-    if (chartOptions.showRightScale) {
-      axis.right = this.$refs.chartContainer.querySelector(
-        'tr:first-child td:last-child canvas'
-      ).clientWidth
-    }
-
-    if (chartOptions.showTimeScale) {
-      axis.time = this.$refs.chartContainer.querySelector(
-        'tr:last-child td:nth-child(2) canvas'
-      ).clientHeight
-    }
-
-    this.axis = axis
+    this.axis = this.chart.getAxisSize()
   }
 
   toggleLayout() {

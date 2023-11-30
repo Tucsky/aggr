@@ -8,7 +8,7 @@
       ref="preview"
       class="indicator-library-dialog__preview"
       width="420"
-      height="180"
+      height="210"
     />
     <div class="form-group">
       <div class="d-flex mb8">
@@ -473,9 +473,7 @@ export default {
     },
     async promptCreateIndicator() {
       const payload = await dialogService.openAsPromise(
-        (
-          await import('@/components/chart/CreateIndicatorDialog.vue')
-        ).default,
+        (await import('@/components/chart/CreateIndicatorDialog.vue')).default,
         {
           availableScales: this.availableScales
         }

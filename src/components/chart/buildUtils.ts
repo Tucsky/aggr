@@ -25,6 +25,7 @@ import { plotTypesMap } from './options'
 const REGEX_REGEX = /^\/.+\/\w?$/
 const VARIABLES_VAR_NAME = 'vars'
 const FUNCTIONS_VAR_NAME = 'fns'
+export const DATA_PROPS = ['vbuy', 'vsell', 'cbuy', 'csell', 'lbuy', 'lsell']
 export const SERIE_TYPES = {
   candlestick: 'ohlc',
   bar: 'ohlc',

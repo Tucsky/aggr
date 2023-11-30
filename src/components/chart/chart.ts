@@ -7,9 +7,9 @@ import {
   getTimeframeForHuman,
   floorTimestampToTimeframe,
   isOddTimeframe,
-  sleep,
   formatBytes,
-  displayCanvasInPopup
+  displayCanvasInPopup,
+  sleep
 } from '@/utils/helpers'
 import { waitForStateMutation } from '@/utils/store'
 import { joinRgba, splitColorCode } from '@/utils/colors'
@@ -184,7 +184,8 @@ export interface Renderer {
   indicators: { [id: string]: RendererIndicatorData }
   empty?: boolean
   price?: number
-  prependedBars: any
+  firstTimestamp: number
+  prependedBars: { [market: string]: Bar }
 }
 
 interface RendererIndicatorData {
@@ -240,13 +241,19 @@ export default class Chart {
   priceScales: string[] = []
   isLoading = false
   hasReachedEnd = false
-  hasMixedSourceHistory = false
+  isCustomIndex = false
 
   private activeChunk: Chunk
   private queuedTrades: Trade[] = []
   private historicalMarkets: string[]
   private seriesIndicatorsMap: { [serieId: string]: IndicatorReference } = {}
   private previousLogicalRange: string
+  private axis: { top: number; left: number; right: number; time: number } = {
+    top: 0,
+    left: 0,
+    right: 0,
+    time: 0
+  }
 
   private _releaseQueueInterval: number
   private _releasePanTimeout: number
@@ -346,8 +353,7 @@ export default class Chart {
     this.marketsIndexes = Object.keys(marketsIndexes)
     this.historicalMarkets =
       historicalService.filterOutUnavailableMarkets(markets)
-    this.hasMixedSourceHistory =
-      this.historicalMarkets.length !== markets.length
+    this.isCustomIndex = this.marketsIndexes.length > 1
     this.mainIndex = this.marketsIndexes
       .reduce((acc, index) => {
         acc.push({
@@ -362,6 +368,18 @@ export default class Chart {
     this.updateWatermark(marketsForWatermark)
     this.resetPriceScales()
     this.refreshAutoDecimals()
+
+    if (this.activeRenderer && this.activeRenderer.prependedBars) {
+      this.activeRenderer.prependedBars = Object.keys(
+        this.activeRenderer.prependedBars
+      ).reduce((acc, market) => {
+        if (markets.indexOf(market) !== -1) {
+          acc[market] = this.activeRenderer.prependedBars[market]
+        }
+
+        return acc
+      }, {})
+    }
   }
 
   /**
@@ -1549,7 +1567,10 @@ export default class Chart {
           )
 
           if (temporaryRenderer.prependedBars) {
-            Array.prototype.unshift.apply(bars, temporaryRenderer.prependedBars)
+            Array.prototype.unshift.apply(
+              bars,
+              Object.values(temporaryRenderer.prependedBars)
+            )
           }
         }
       }
@@ -1757,72 +1778,78 @@ export default class Chart {
       this.chartInstance.timeScale().scrollToPosition(scrollPosition, false)
     }
   }
-  getPrependedBars(timestamp) {
-    if (this.type === 'time' && !this.hasMixedSourceHistory) {
+
+  /**
+   * Bars to be prepended in renderBar
+   * containing all the sources first prices
+   * @param timestamp first chart timestamp
+   * @returns
+   */
+  getPrependedBars(timestamp): { [market: string]: Bar } | null {
+    if (this.type === 'time' && !this.isCustomIndex) {
       return null
     }
 
-    if (
-      this.activeRenderer &&
-      this.activeRenderer.prependedBars &&
-      this.activeRenderer.prependedBars.length
-    ) {
-      if (this.activeRenderer.prependedBars[0].time !== timestamp) {
-        this.activeRenderer.prependedBars =
-          this.activeRenderer.prependedBars.map(bar => ({
-            ...bar,
+    if (this.activeRenderer && this.activeRenderer.prependedBars) {
+      if (this.activeRenderer.firstTimestamp !== timestamp) {
+        this.activeRenderer.firstTimestamp = timestamp
+        this.activeRenderer.prependedBars = Object.keys(
+          this.activeRenderer.prependedBars
+        ).reduce((acc, market) => {
+          acc[market] = {
+            ...this.activeRenderer.prependedBars[market],
             time: timestamp
-          }))
+          }
+
+          return acc
+        }, {})
       }
       return this.activeRenderer.prependedBars
     }
 
-    if (this._promiseOfPrependedBars) {
-      return []
+    if (!this._promiseOfPrependedBars) {
+      this._promiseOfPrependedBars = aggregatorService
+        .getAllTickers()
+        .then(tickers => {
+          this._promiseOfPrependedBars = null
+
+          if (this.activeRenderer) {
+            this.activeRenderer.prependedBars = Object.keys(tickers).reduce(
+              (acc, key) => {
+                const price = tickers[key].price
+                if (!price) {
+                  return acc
+                }
+
+                const [exchange, pair] = parseMarket(key)
+
+                acc[key] = {
+                  time: timestamp,
+                  cbuy: null,
+                  close: price,
+                  csell: null,
+                  high: price,
+                  lbuy: null,
+                  low: price,
+                  lsell: null,
+                  open: price,
+                  vbuy: null,
+                  vsell: null,
+                  exchange: exchange,
+                  pair: pair
+                }
+
+                return acc
+              },
+              this.activeRenderer.prependedBars
+            )
+
+            this.renderAll()
+          }
+        })
     }
 
-    this._promiseOfPrependedBars = aggregatorService
-      .getAllTickers()
-      .then(tickers => {
-        this._promiseOfPrependedBars = null
-
-        if (this.activeRenderer) {
-          this.activeRenderer.prependedBars = Object.keys(tickers).reduce(
-            (acc, key) => {
-              const price = tickers[key].price
-              if (!price) {
-                return acc
-              }
-
-              const [exchange, pair] = parseMarket(key)
-
-              acc.push({
-                time: timestamp,
-                cbuy: null,
-                close: price,
-                csell: null,
-                high: price,
-                lbuy: null,
-                low: price,
-                lsell: null,
-                market: key,
-                open: price,
-                vbuy: null,
-                vsell: null,
-                exchange: exchange,
-                pair: pair
-              })
-
-              return acc
-            },
-            this.activeRenderer.prependedBars
-          )
-
-          this.renderAll()
-        }
-      })
-
-    return []
+    return {}
   }
 
   async registerInitialBar(identifier, pair, exchange, close, active) {
@@ -1836,7 +1863,7 @@ export default class Chart {
     this.resetBar(this.activeRenderer.sources[identifier])
 
     if (this.activeRenderer.prependedBars) {
-      this.activeRenderer.prependedBars.push({
+      this.activeRenderer.prependedBars[identifier] = {
         ...this.resetBar({
           close: close
         }),
@@ -1844,7 +1871,7 @@ export default class Chart {
         exchange: exchange,
         cbuy: 1,
         csell: 1
-      })
+      }
     }
   }
 
@@ -2238,6 +2265,7 @@ export default class Chart {
       length: 1,
       indicators: {},
       sources: {},
+      firstTimestamp: firstBarTimestamp,
       prependedBars: this.getPrependedBars(firstBarTimestamp),
 
       bar: {
@@ -2519,121 +2547,6 @@ export default class Chart {
         })
       }
     }
-  }
-
-  async screenshotIndicator(indicatorId): Promise<Blob> {
-    const indicator = this.getLoadedIndicator(indicatorId)
-    const originalSize = {
-      width: this.chartElement.clientWidth,
-      height: this.chartElement.clientHeight
-    }
-
-    const timeScale = this.chartInstance.timeScale()
-    const scrollPosition = timeScale.scrollPosition()
-    const timeScaleOptions = timeScale.options()
-    const chartOptions = this.chartInstance.options()
-    const priceScale = this.chartInstance.priceScale(
-      indicator.options.priceScaleId
-    )
-    const leftPriceScale = this.chartInstance.priceScale('left')
-    const rightPriceScale = this.chartInstance.priceScale('right')
-    const leftPriceScaleVisibility = leftPriceScale.options().visible
-    const rightPriceScaleVisibility = rightPriceScale.options().visible
-    const { top: scaleMarginsTop, bottom: scaleMarginsBottom } =
-      priceScale.options().scaleMargins
-    const watermarkVisibility = chartOptions.watermark.visible
-    const timeScaleOriginalOptions = {
-      visible: timeScaleOptions.visible,
-      barSpacing: timeScaleOptions.barSpacing,
-      rightOffset: timeScaleOptions.rightOffset
-    }
-
-    this.chartInstance.resize(420, 180)
-
-    this.chartInstance.applyOptions({
-      watermark: {
-        visible: false
-      }
-    })
-
-    priceScale.applyOptions({
-      scaleMargins: {
-        top: 0,
-        bottom: 0
-      }
-    })
-
-    timeScale.applyOptions({
-      visible: false,
-      barSpacing: 3,
-      rightOffset: 0
-    })
-
-    leftPriceScale.applyOptions({
-      visible: false
-    })
-
-    rightPriceScale.applyOptions({
-      visible: false
-    })
-
-    let chartCanvas
-
-    try {
-      this.clearQueue()
-      this.clearChart()
-      this.redrawIndicator(
-        indicator.id,
-        this.chartCache.cacheRange.to - this.timeframe * 400
-      )
-      await sleep(10)
-      chartCanvas = this.chartInstance.takeScreenshot()
-    } catch (error) {
-      console.log(error)
-      //
-    }
-
-    this.renderAll()
-
-    this.setupQueue()
-    this.chartInstance.resize(originalSize.width, originalSize.height)
-
-    priceScale.applyOptions({
-      scaleMargins: {
-        top: scaleMarginsTop,
-        bottom: scaleMarginsBottom
-      }
-    })
-
-    leftPriceScale.applyOptions({
-      visible: leftPriceScaleVisibility
-    })
-
-    rightPriceScale.applyOptions({
-      visible: rightPriceScaleVisibility
-    })
-
-    timeScale.applyOptions({
-      ...timeScaleOriginalOptions,
-      barSpacing: store.state[this.paneId].barSpacing
-    })
-
-    this.chartInstance.applyOptions({
-      watermark: {
-        visible: watermarkVisibility
-      }
-    })
-    timeScale.scrollToPosition(scrollPosition, false)
-
-    if (!chartCanvas) {
-      return
-    }
-
-    return new Promise(resolve => {
-      chartCanvas.toBlob(blob => {
-        resolve(blob)
-      })
-    })
   }
 
   getPrice() {
@@ -2922,6 +2835,29 @@ export default class Chart {
 
     this.chartCache.saveChunk(chunk)
 
+    if (this.activeRenderer && this.activeRenderer.prependedBars) {
+      for (const market in results.initialPrices) {
+        if (this.activeRenderer.prependedBars[market]) {
+          this.activeRenderer.prependedBars[market] = {
+            ...this.resetBar({
+              close: results.initialPrices[market]
+            })
+          }
+        } else {
+          const [exchange, pair] = parseMarket(market)
+          this.activeRenderer.prependedBars[market] = {
+            ...this.resetBar({
+              close: results.initialPrices[market]
+            }),
+            pair: pair,
+            exchange: exchange,
+            cbuy: 1,
+            csell: 1
+          }
+        }
+      }
+    }
+
     this.renderAll(true)
   }
 
@@ -3096,11 +3032,112 @@ export default class Chart {
   }
 
   async saveIndicatorPreview(indicatorId) {
-    const blob = await this.screenshotIndicator(indicatorId)
+    await sleep(100)
+    const indicator = this.getLoadedIndicator(indicatorId)
+    const priceScale = this.chartInstance.priceScale(
+      indicator.options.priceScaleId
+    )
+
+    this.getAxisSize()
+
+    const pxRatio = window.devicePixelRatio || 1
+
+    let scaleMargins = {
+      top: 0,
+      bottom: 0
+    }
+
+    let chartCanvas = this.chartInstance.takeScreenshot()
+
+    if (priceScale) {
+      const indicatorScaleMargins = priceScale.options().scaleMargins
+
+      if (indicatorScaleMargins) {
+        scaleMargins = indicatorScaleMargins
+      }
+    }
+
+    const originalWidth = chartCanvas.width
+    const originalHeight = chartCanvas.height
+    const right = this.axis.right * pxRatio
+    const left = this.axis.left * pxRatio
+    const time = this.axis.time * pxRatio
+    const effectiveChartWidth = originalWidth - (left + right)
+    const effectiveChartHeight = originalHeight - time
+    const scrollPosition = Math.max(
+      0,
+      this.chartInstance.timeScale().scrollPosition()
+    )
+    const visibleLogicalRange = this.chartInstance
+      .timeScale()
+      .getVisibleLogicalRange()
+    const barSpacing = this.getBarSpacing(visibleLogicalRange)
+    const widthOfPart = scrollPosition * barSpacing * pxRatio
+    const topMargin = scaleMargins.top * effectiveChartHeight
+    const bottomMargin = scaleMargins.bottom * effectiveChartHeight
+    const cropHeight = effectiveChartHeight - topMargin - bottomMargin
+    const tempCanvas = document.createElement('canvas')
+    const sourceWidth = effectiveChartWidth - widthOfPart
+    const sourceHeight = cropHeight
+    tempCanvas.width = 420
+    tempCanvas.height = 210
+    const tempContext = tempCanvas.getContext('2d')
+    tempContext.drawImage(
+      chartCanvas,
+      this.axis.left,
+      topMargin,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      tempCanvas.width,
+      tempCanvas.height
+    )
+
+    chartCanvas = tempCanvas
+    // displayCanvasInPopup(chartCanvas)
+
+    const blob = await new Promise<Blob>(resolve =>
+      chartCanvas.toBlob(blob => resolve(blob))
+    )
+
     workspacesService.saveIndicatorPreview(indicatorId, blob)
   }
 
   toggleTimeframeDropdown(event) {
     return this.chartControl.toggleTimeframeDropdown(event)
+  }
+
+  getAxisSize() {
+    const chartOptions = store.state[this.paneId] as ChartPaneState
+
+    const axis = {
+      top: 0,
+      left: 0,
+      right: 0,
+      time: 0
+    }
+
+    if (chartOptions.showLeftScale) {
+      axis.left = this.chartElement.querySelector(
+        'tr:first-child td:first-child canvas'
+      ).clientWidth
+    }
+
+    if (chartOptions.showRightScale) {
+      axis.right = this.chartElement.querySelector(
+        'tr:first-child td:last-child canvas'
+      ).clientWidth
+    }
+
+    if (chartOptions.showTimeScale) {
+      axis.time = this.chartElement.querySelector(
+        'tr:last-child td:nth-child(2) canvas'
+      ).clientHeight
+    }
+
+    this.axis = axis
+
+    return this.axis
   }
 }

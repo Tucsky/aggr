@@ -14,6 +14,7 @@ export interface HistoricalResponse {
   from: number
   to: number
   data: Bar[]
+  initialPrices: { [market: string]: number }
 }
 
 class HistoricalService extends EventEmitter {
@@ -105,6 +106,7 @@ class HistoricalService extends EventEmitter {
   }
   normalizePoints(data, columns, timeframe, markets: string[]) {
     const lastClosedBars = {}
+    const initialPrices = {}
 
     markets = markets.slice()
 
@@ -234,6 +236,10 @@ class HistoricalService extends EventEmitter {
         }
       }
 
+      if (!initialPrices[data[i].market]) {
+        initialPrices[data[i].market] = data[i].close
+      }
+
       if (
         !preferQuoteCurrencySize &&
         (data[i].vbuy || data[i].vsell) &&
@@ -258,7 +264,8 @@ class HistoricalService extends EventEmitter {
       data,
       markets,
       from: data[0].time,
-      to: data[data.length - 1].time
+      to: data[data.length - 1].time,
+      initialPrices
     }
   }
 }
