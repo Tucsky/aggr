@@ -199,9 +199,9 @@
         </label>
       </ToggableSection>
     </div>
-    <div ref="scroller" class="search-dialog__wrapper hide-scrollbar">
+    <div class="search-dialog__wrapper">
       <div
-        class="search-dialog-selection search-dialog__tags form-control"
+        class="search-dialog-selection search-dialog__tags form-control hide-scrollbar"
         :class="groupsCount < 10 && '-sticky'"
         @click="$refs.input.focus()"
         ref="selection"
@@ -258,7 +258,7 @@
       >
         <i class="icon-cross"></i>
       </button>
-      <div class="search-dialog__results">
+      <div class="search-dialog__results hide-scrollbar">
         <table
           class="table mt8 search-dialog-recents table--inset"
           v-if="
@@ -816,6 +816,9 @@ export default {
       if (value) {
         this.noResultsMessage = this.getNoResultsMessage()
       }
+    },
+    pagesCount() {
+      this.page = 0
     }
   },
   async created() {
@@ -1300,9 +1303,8 @@ export default {
   }
 
   &__side {
-    width: 14rem;
-    min-width: 14rem;
-    overflow: auto;
+    width: 15.5rem;
+    overflow-y: auto;
     border-right: 1px solid var(--theme-background-150);
 
     .dialog--small & {
@@ -1336,6 +1338,10 @@ export default {
     min-height: 1px;
     position: relative;
     overflow: auto;
+
+    .icon-candlestick {
+      display: block;
+    }
 
     table {
       border: 0;
