@@ -581,9 +581,7 @@ export default {
         try {
           const json = JSON.parse(navigationState)
           for (const key in json) {
-            if (json[key]) {
-              this.navigation[key] = json[key]
-            }
+            this.navigation[key] = json[key]
           }
         } catch (error) {
           console.error('Failed to parse navigation state', error)
