@@ -86,9 +86,9 @@
       <template v-slot:title>
         <div class="toggable-section__title">
           Filter
-          <span v-if="volumeThreshold" class="badge -red ml8 mr8"
-            >> {{ formatAmountHelper(volumeThreshold) }}</span
-          >
+          <span v-if="volumeThreshold" class="badge -red ml8">{{
+            formatAmountHelper(volumeThreshold)
+          }}</span>
         </div>
       </template>
       <div class="form-group mb8 mt16">
@@ -140,9 +140,10 @@
       <template v-slot:title>
         <div class="toggable-section__title">
           Period
-          <span v-if="period" class="badge -red ml8 mr8">
+          <span v-if="period" class="badge -red ml8">
             {{ periods[period] }}
           </span>
+          <span v-if="avgPeriods" class="badge -red ml8">AVERAGED</span>
         </div>
       </template>
       <div class="form-group mb8 mt16">
