@@ -57,6 +57,7 @@ export interface IndicatorSettings {
 export interface ChartPaneState {
   _id?: string
   indicators?: { [id: string]: IndicatorSettings }
+  indicatorOrder?: string[]
   priceScales: { [id: string]: PriceScaleSettings }
   layouting: boolean | string
   timeframe: number
@@ -87,6 +88,7 @@ const getters = {} as GetterTree<ChartPaneState, ModulesState>
 const state = {
   indicatorsErrors: {},
   indicators: {},
+  indicatorOrder: [],
   priceScales: {
     right: {
       scaleMargins: {
@@ -139,6 +141,10 @@ const actions = {
       }
 
       scheduleSync(state)
+    }
+
+    if (!state.indicatorOrder.length) {
+      state.indicatorOrder = Object.keys(state.indicators)
     }
   },
   addIndicator({ state, commit }, indicator) {
@@ -464,12 +470,14 @@ const mutations = {
   },
   ADD_INDICATOR(state, indicator) {
     Vue.set(state.indicators, indicator.id, indicator)
+    state.indicatorOrder.push(indicator.id)
   },
   UPDATE_DESCRIPTION(state, { id, description }) {
     Vue.set(state.indicators[id], 'description', description)
   },
   REMOVE_INDICATOR(state, id) {
     Vue.delete(state.indicators, id)
+    state.indicatorOrder.splice(state.indicatorOrder.indexOf(id), 1)
   },
   SET_INDICATOR_OPTION(state, { id, key, value }) {
     if (!state.indicators[id]) {
@@ -545,6 +553,20 @@ const mutations = {
   },
   SET_BAR_SPACING(state, value) {
     state.barSpacing = value
+  },
+  UPDATE_INDICATOR_ORDER(state, { id, position }) {
+    if (!state.indicatorOrder.length) {
+      state.indicatorOrder = Object.keys(state.indicators)
+    }
+
+    const currentIndex = state.indicatorOrder.indexOf(id)
+
+    if (currentIndex !== -1) {
+      state.indicatorOrder.splice(currentIndex, 1)
+    }
+
+    position = Math.min(position, state.indicatorOrder.length)
+    state.indicatorOrder.splice(position, 0, id)
   }
 } as MutationTree<ChartPaneState>
 

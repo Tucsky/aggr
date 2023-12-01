@@ -199,7 +199,7 @@
         </label>
       </ToggableSection>
     </div>
-    <div class="search-dialog__wrapper">
+    <div class="search-dialog__wrapper hide-scrollbar">
       <div
         class="search-dialog-selection search-dialog__tags form-control hide-scrollbar"
         :class="groupsCount < 10 && '-sticky'"

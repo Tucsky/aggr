@@ -163,10 +163,7 @@ export default class IndicatorOption extends Vue {
   getValue() {
     let preferedValue
 
-    if (
-      typeof this.currentIndicatorValue !== 'undefined' &&
-      this.currentIndicatorValue !== null
-    ) {
+    if (typeof this.currentIndicatorValue !== 'undefined') {
       preferedValue = this.currentIndicatorValue
     }
 

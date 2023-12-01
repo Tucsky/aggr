@@ -439,7 +439,7 @@ export default class Chart {
       chartOptions
     ) as IChartApi
 
-    this.addEnabledSeries()
+    this.addPaneIndicators()
     this.updateWatermark()
     this.updateFontSize()
 
@@ -635,8 +635,8 @@ export default class Chart {
   /**
    * add all pane's indicators
    */
-  addEnabledSeries() {
-    for (const id in store.state[this.paneId].indicators) {
+  addPaneIndicators() {
+    for (const id of store.state[this.paneId].indicatorOrder) {
       this.addIndicator(id)
     }
   }
@@ -1011,6 +1011,31 @@ export default class Chart {
 
     // remove from active series model
     this.loadedIndicators.splice(this.loadedIndicators.indexOf(indicator), 1)
+  }
+
+  moveIndicator(indicatorId, position) {
+    const currentIndex = this.loadedIndicators.findIndex(
+      indicator => indicator.id === indicatorId
+    )
+    if (currentIndex === -1) {
+      console.warn(
+        `[${this.paneId}/moveIndicator] indicator with ID ${indicatorId} not found in loadedIndicators`
+      )
+      return
+    }
+
+    const [indicatorToMove] = this.loadedIndicators.splice(currentIndex, 1)
+
+    const newPosition = Math.min(position, this.loadedIndicators.length)
+    this.loadedIndicators.splice(newPosition, 0, indicatorToMove)
+
+    for (const indicator of this.loadedIndicators) {
+      this.removeIndicatorSeries(indicator)
+    }
+    for (const indicator of this.loadedIndicators) {
+      this.createIndicatorSeries(indicator)
+    }
+    this.renderAll()
   }
 
   /**
@@ -3034,6 +3059,7 @@ export default class Chart {
   async saveIndicatorPreview(indicatorId) {
     await sleep(100)
     const indicator = this.getLoadedIndicator(indicatorId)
+    const chartOptions = this.chartInstance.options()
     const priceScale = this.chartInstance.priceScale(
       indicator.options.priceScaleId
     )
@@ -3047,7 +3073,43 @@ export default class Chart {
       bottom: 0
     }
 
+    const hiddenApis: IndicatorApi[] = []
+    for (const indicator of this.loadedIndicators) {
+      if (indicator.id === indicatorId) {
+        continue
+      }
+
+      for (const api of indicator.apis) {
+        const { visible } = api.options()
+        if (visible) {
+          api.applyOptions({
+            visible: false
+          })
+          hiddenApis.push(api)
+        }
+      }
+    }
+
+    const watermarkVisibility = chartOptions.watermark.visible
+    this.chartInstance.applyOptions({
+      watermark: {
+        visible: false
+      }
+    })
+
     let chartCanvas = this.chartInstance.takeScreenshot()
+
+    for (const api of hiddenApis) {
+      api.applyOptions({
+        visible: true
+      })
+    }
+
+    this.chartInstance.applyOptions({
+      watermark: {
+        visible: watermarkVisibility
+      }
+    })
 
     if (priceScale) {
       const indicatorScaleMargins = priceScale.options().scaleMargins
@@ -3079,8 +3141,8 @@ export default class Chart {
     const tempCanvas = document.createElement('canvas')
     const sourceWidth = effectiveChartWidth - widthOfPart
     const sourceHeight = cropHeight
-    tempCanvas.width = 420
-    tempCanvas.height = 210
+    tempCanvas.width = 420 * pxRatio
+    tempCanvas.height = 210 * pxRatio
     const tempContext = tempCanvas.getContext('2d')
     tempContext.drawImage(
       chartCanvas,
@@ -3095,7 +3157,6 @@ export default class Chart {
     )
 
     chartCanvas = tempCanvas
-    // displayCanvasInPopup(chartCanvas)
 
     const blob = await new Promise<Blob>(resolve =>
       chartCanvas.toBlob(blob => resolve(blob))

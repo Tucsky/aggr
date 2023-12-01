@@ -168,7 +168,6 @@ import {
   ago,
   downloadAnything,
   getEventCords,
-  sleep,
   slugify,
   uniqueName
 } from '@/utils/helpers'
@@ -291,7 +290,7 @@ export default {
         if (indicator.preview instanceof Blob) {
           this._previewUrl = URL.createObjectURL(indicator.preview)
           this._previewImageHandler = () => {
-            ctx.drawImage(this._previewImageElement, 0, 0)
+            ctx.drawImage(this._previewImageElement, 0, 0, 420, 210)
             URL.revokeObjectURL(this._previewUrl)
             this._previewImageHandler = null
             this._previewImageElement = null

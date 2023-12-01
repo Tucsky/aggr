@@ -45,11 +45,12 @@
         </button>
       </dropdown>
       <IndicatorControl
-        v-for="(indicator, id) in indicators"
+        v-for="id in indicatorOrder"
         :key="id"
         :indicator-id="id"
         :pane-id="paneId"
         @action="onClickIndicator"
+        @mousedown.native="bindSort(id, $event)"
       />
     </div>
     <div class="chart-overlay__head pane-overlay" @click="toggleOverlay">
@@ -98,9 +99,22 @@ export default class IndicatorsOverlay extends Vue {
 
   dropdownTrigger = null
   selectedIndicator = null
+  sorting: {
+    id: string
+    height: number
+    startY: number
+    maxPosition: number
+    oldPosition: number
+    newPosition: number
+    moved?: boolean
+  }
 
   get indicators() {
     return (this.$store.state[this.paneId] as ChartPaneState).indicators
+  }
+
+  get indicatorOrder() {
+    return (this.$store.state[this.paneId] as ChartPaneState).indicatorOrder
   }
 
   get ids() {
@@ -163,6 +177,10 @@ export default class IndicatorsOverlay extends Vue {
     actionName?: string
     event?: Event
   }) {
+    if (this.sorting && this.sorting.moved) {
+      return
+    }
+
     switch (actionName) {
       case 'menu':
         return this.toggleDropdown(event, indicatorId)
@@ -173,6 +191,76 @@ export default class IndicatorsOverlay extends Vue {
     }
 
     return this.editIndicator(indicatorId)
+  }
+
+  bindSort(indicatorId: string, event: MouseEvent) {
+    if (this.sorting) {
+      return
+    }
+
+    const keys = Object.keys(this.indicators)
+    let position = this.indicatorOrder.indexOf(indicatorId)
+    if (position === -1) {
+      position = keys.indexOf(indicatorId)
+    }
+
+    const element = event.currentTarget as HTMLElement
+    const startY = event.clientY
+
+    this.sorting = {
+      id: indicatorId,
+      height: element.clientHeight,
+      startY,
+      maxPosition: keys.length - 1,
+      oldPosition: position,
+      newPosition: position
+    }
+
+    document.addEventListener('mousemove', this.handleSort)
+    document.addEventListener('mouseup', this.unbindSort)
+  }
+
+  handleSort(event) {
+    if (!this.sorting) {
+      return
+    }
+
+    const offset = event.clientY - this.sorting.startY
+
+    if (!this.sorting.moved) {
+      this.sorting.moved = Math.abs(offset) > 3
+    }
+
+    const newPosition = Math.max(
+      0,
+      Math.min(
+        this.sorting.maxPosition,
+        this.sorting.oldPosition + Math.round(offset / this.sorting.height)
+      )
+    )
+
+    if (newPosition !== this.sorting.newPosition) {
+      this.sorting.newPosition = newPosition
+      this.$store.commit(`${this.paneId}/UPDATE_INDICATOR_ORDER`, {
+        id: this.sorting.id,
+        position: this.sorting.newPosition
+      })
+    }
+  }
+
+  async unbindSort() {
+    if (!this.sorting) {
+      return
+    }
+
+    document.removeEventListener('mousemove', this.handleSort)
+    document.removeEventListener('mouseup', this.unbindSort)
+
+    await this.$nextTick()
+
+    setTimeout(() => {
+      this.sorting = null
+    })
   }
 }
 </script>

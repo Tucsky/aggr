@@ -226,6 +226,12 @@ export default class ChartControl {
             }
           }
           break
+        case this.chart.paneId + '/UPDATE_INDICATOR_ORDER':
+          this.chart.moveIndicator(
+            mutation.payload.id,
+            mutation.payload.position
+          )
+          break
         case this.chart.paneId + '/REMOVE_INDICATOR':
           this.unbindLegend(mutation.payload)
           this.chart.removeIndicator(mutation.payload)
