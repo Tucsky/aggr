@@ -33,7 +33,7 @@
             :class="market.exchange"
             :style="
               showCryptosLogos && {
-                backgroundImage: `url(img/logos/${market.base}.svg)`
+                backgroundImage: `url(${VITE_APP_BASE_PATH}img/logos/${market.base}.svg)`
               }
             "
           ></div>
@@ -96,6 +96,7 @@ export default class Prices extends Mixins(PaneMixin) {
   pauseSort = false
   showCryptosLogos = false
   filteredMarkets: WatchlistMarket[] = []
+  VITE_APP_BASE_PATH = import.meta.env.VITE_APP_BASE_PATH
 
   // cache sort function
   private sortFunction: (a: WatchlistMarket, b: WatchlistMarket) => number
@@ -399,7 +400,7 @@ export default class Prices extends Mixins(PaneMixin) {
       this.markets.push({
         ...market,
         local: this.getSymbol(product),
-        base: product.base.toLowerCase(),
+        base: product.base.replace(/^1000+/, '').toLowerCase(),
         status: '-pending',
         price: null,
         change: 0,
@@ -525,7 +526,7 @@ export default class Prices extends Mixins(PaneMixin) {
     if (!this.pauseSort) {
       if (threshold) {
         this.filteredMarkets = this.markets.filter(
-          market => market.volume >= threshold
+          market => market.avgVolume >= threshold
         )
 
         this.filteredMarkets = this.filteredMarkets.sort(this.sortFunction)
