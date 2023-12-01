@@ -133,14 +133,6 @@
         <i class="icon-download"></i>
         <span>Download</span>
       </button>
-      <button
-        type="button"
-        class="dropdown-item"
-        @click="refreshPreview(selectedIndicator)"
-      >
-        <i class="icon-refresh"></i>
-        <span>Preview</span>
-      </button>
       <div class="dropdown-divider"></div>
       <button
         type="button"
@@ -428,26 +420,6 @@ export default {
         paneId: this.paneId,
         indicatorId: indicator.id
       })
-    },
-    async refreshPreview(indicator = this.selectedIndicator) {
-      const alreadyAdded =
-        this.$store.state[this.paneId].indicators[indicator.id]
-
-      if (!alreadyAdded) {
-        this.$store.dispatch(this.paneId + '/addIndicator', indicator)
-        await sleep(250)
-      }
-
-      await this.$store.dispatch(this.paneId + '/saveIndicator', indicator.id)
-
-      if (!alreadyAdded) {
-        await sleep(250)
-        this.$store.commit(this.paneId + '/REMOVE_INDICATOR', indicator.id)
-      }
-
-      await sleep(250)
-
-      this.getIndicators()
     },
     async downloadIndicator(indicator = this.selectedIndicator) {
       await downloadAnything(
