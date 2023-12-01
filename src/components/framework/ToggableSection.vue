@@ -273,7 +273,8 @@ export default {
     align-items: center;
 
     .badge {
-      margin-left: 0.5em;
+      margin-left: 0.5rem;
+      font-size: 0.75rem;
     }
   }
 
