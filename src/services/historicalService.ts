@@ -1,4 +1,4 @@
-import { Bar } from '@/components/chart/chart'
+import { Bar } from '@/components/chart/chart.d'
 import {
   floorTimestampToTimeframe,
   getApiUrl,
@@ -10,11 +10,13 @@ import EventEmitter from 'eventemitter3'
 import store from '../store'
 import { parseMarket } from './productsService'
 
+export type InitialPrices = { [market: string]: number }
+
 export interface HistoricalResponse {
   from: number
   to: number
   data: Bar[]
-  initialPrices: { [market: string]: number }
+  initialPrices: InitialPrices
 }
 
 class HistoricalService extends EventEmitter {

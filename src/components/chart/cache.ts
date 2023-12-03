@@ -1,4 +1,4 @@
-import { Bar, TimeRange } from './chart'
+import { Bar, TimeRange } from './chart.d'
 
 export interface Chunk {
   from: number

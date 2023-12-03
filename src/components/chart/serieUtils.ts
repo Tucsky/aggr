@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { joinRgba, mix, splitColorCode } from '@/utils/colors'
-import { IndicatorFunction } from './chart'
+import { IndicatorFunction } from './chart.d'
 
 /**
  * Close ohlc bar (all props to close value for smooth transition, but also fake opens)

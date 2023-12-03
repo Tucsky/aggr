@@ -1,5 +1,16 @@
 import store from '@/store'
 
+import {
+  Bar,
+  IndicatorApi,
+  IndicatorOption,
+  IndicatorReference,
+  LoadedIndicator,
+  MarketsFilters,
+  Renderer,
+  TimeRange
+} from './chart.d'
+
 import { MAX_BARS_PER_CHUNKS } from '@/utils/constants'
 import {
   getHms,
@@ -28,11 +39,7 @@ import dialogService from '@/services/dialogService'
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
-import {
-  stripStablePair,
-  marketDecimals,
-  parseMarket
-} from '@/services/productsService'
+import { stripStablePair, marketDecimals } from '@/services/productsService'
 import audioService from '@/services/audioService'
 import alertService, {
   MarketAlert,
@@ -54,7 +61,6 @@ import {
   ISeriesApi,
   LineData,
   PriceScaleOptions,
-  SeriesOptions,
   UTCTimestamp,
   IChartApi,
   Time
@@ -68,149 +74,19 @@ import {
   getCustomPlotOptions,
   getRendererIndicatorData
 } from './buildUtils'
-
-export interface Bar {
-  vbuy?: number
-  vsell?: number
-  cbuy?: number
-  csell?: number
-  lbuy?: number
-  lsell?: number
-  time?: number
-  open?: number
-  high?: number
-  low?: number
-  close?: number
-  empty?: boolean
-  active?: boolean
-  exchange?: string
-  pair?: string
-}
-
-export interface IndicatorApi extends ISeriesApi<any> {
-  id: string
-  precision?: number
-}
-
-export type IndicatorMarkets = {
-  [marketId: string]: string[]
-}
-
-export interface IndicatorSource {
-  prop: string
-  filters: IndicatorSourceFilters
-}
-
-export type IndicatorOption = { [key: string]: any }
-
-export type IndicatorSourceFiltersValues = string | RegExp
-
-export interface IndicatorSourceFilters {
-  quote: IndicatorSourceFiltersValues
-  exchange: IndicatorSourceFiltersValues
-  type: IndicatorSourceFiltersValues
-  name: IndicatorSourceFiltersValues
-}
-
-export interface TimeRange {
-  from: number
-  to: number
-}
-
-export interface OHLC {
-  open: number
-  high: number
-  low: number
-  close: number
-}
-
-export type IndicatorRealtimeAdapter = (
-  renderer: Renderer,
-  functions: IndicatorFunction[],
-  variables: IndicatorVariable[],
-  apis: IndicatorApi[],
-  options: SeriesOptions<any>,
-  seriesUtils: any
-) => void
-export interface LoadedIndicator {
-  id: string
-  options: any
-  script: string
-  model: IndicatorTranspilationResult
-  adapter: IndicatorRealtimeAdapter
-  apis: IndicatorApi[]
-}
-
-export interface IndicatorTranspilationResult {
-  output: string
-  variables: IndicatorVariable[]
-  functions: IndicatorFunction[]
-  plots: IndicatorPlot[]
-  markets?: IndicatorMarkets
-  references?: IndicatorReference[]
-  options?: { [key: string]: IndicatorOption }
-  sources?: IndicatorSource[]
-}
-export interface IndicatorFunction {
-  name: string
-  args?: any[]
-  length?: number
-  state?: any
-  next?: () => void
-}
-export interface IndicatorVariable {
-  length?: number
-  state?: any
-}
-export interface IndicatorPlot {
-  id: string
-  type: string
-  expectedInput: 'number' | 'ohlc' | 'range'
-  options: { [prop: string]: any }
-}
-export interface IndicatorReference {
-  indicatorId: string
-  serieId?: string
-  plotIndex: number
-}
-export interface Renderer {
-  type: 'time' | 'tick' | 'bps' | 'vol'
-  timeframe: number
-  timestamp: number
-  localTimestamp: number
-  length: number
-  bar: Bar
-  sources: { [name: string]: Bar }
-  indicators: { [id: string]: RendererIndicatorData }
-  empty?: boolean
-  price?: number
-  firstTimestamp: number
-  prependedBars: { [market: string]: Bar }
-}
-
-interface RendererIndicatorData {
-  canRender: boolean
-  series: {
-    rendered?: boolean
-    time: number
-    value?: number
-    open?: number
-    high?: number
-    low?: number
-    close?: number
-    color?: string
-    higherValue?: number
-    lowerValue?: number
-  }[]
-  variables: IndicatorVariable[]
-  functions: IndicatorFunction[]
-  plotsOptions?: any[]
-  minLength?: number
-}
-
-export type MarketsFilters = {
-  [identifier: string]: boolean
-}
+import {
+  PrependState,
+  filterPrependedBars,
+  getPrependBars,
+  getPrependFromTickers,
+  registerPrependFromHistorical
+} from './prepend'
+import {
+  cloneSourceBar,
+  mergeBarsWithActiveBars,
+  registerInitialBar,
+  resetRendererBar
+} from './bars'
 
 // @todo: to split into 5 categories of things going on here
 // + chart (create, configure, maintain, destroy)
@@ -241,7 +117,11 @@ export default class Chart {
   priceScales: string[] = []
   isLoading = false
   hasReachedEnd = false
-  isCustomIndex = false
+  isPrepending = false
+  prepend: PrependState = {
+    bars: {},
+    time: null
+  }
 
   private activeChunk: Chunk
   private queuedTrades: Trade[] = []
@@ -259,7 +139,6 @@ export default class Chart {
   private _releasePanTimeout: number
   private _queueHandler = this.releaseQueue.bind(this)
   private _refreshDecimalsHandler = this.refreshAutoDecimals.bind(this)
-  private _promiseOfPrependedBars: Promise<void>
   private _promiseOfMarkets: Promise<void>
   private _promiseOfMarketsRender: Promise<void>
   private _priceIndicatorId: string
@@ -353,7 +232,7 @@ export default class Chart {
     this.marketsIndexes = Object.keys(marketsIndexes)
     this.historicalMarkets =
       historicalService.filterOutUnavailableMarkets(markets)
-    this.isCustomIndex = this.marketsIndexes.length > 1
+    this.isPrepending = this.marketsIndexes.length > 1 || this.type !== 'time'
     this.mainIndex = this.marketsIndexes
       .reduce((acc, index) => {
         acc.push({
@@ -369,16 +248,10 @@ export default class Chart {
     this.resetPriceScales()
     this.refreshAutoDecimals()
 
-    if (this.activeRenderer && this.activeRenderer.prependedBars) {
-      this.activeRenderer.prependedBars = Object.keys(
-        this.activeRenderer.prependedBars
-      ).reduce((acc, market) => {
-        if (markets.indexOf(market) !== -1) {
-          acc[market] = this.activeRenderer.prependedBars[market]
-        }
+    filterPrependedBars(this.prepend, this.marketsFilters)
 
-        return acc
-      }, {})
+    if (this.isPrepending) {
+      getPrependFromTickers(this.prepend, this.marketsFilters)
     }
   }
 
@@ -1289,7 +1162,7 @@ export default class Chart {
           for (const source in this.activeRenderer.sources) {
             if (this.activeRenderer.sources[source].empty === false) {
               this.activeChunk.bars.push(
-                this.cloneSourceBar(
+                cloneSourceBar(
                   this.activeRenderer.sources[source],
                   this.activeRenderer.timestamp
                 )
@@ -1314,12 +1187,14 @@ export default class Chart {
         !this.activeRenderer.sources[identifier] ||
         typeof this.activeRenderer.sources[identifier].pair === 'undefined'
       ) {
-        this.registerInitialBar(
+        registerInitialBar(
+          this.activeRenderer,
           identifier,
           trade.pair,
           trade.exchange,
           +trade.price,
-          this.marketsFilters[identifier]
+          this.marketsFilters[identifier],
+          this.isPrepending && this.prepend
         )
         redrawAll = true
       }
@@ -1385,97 +1260,6 @@ export default class Chart {
   }
 
   /**
-   * create a new object from an existing bar
-   * to avoid reference when storing finished bar data to cache
-   * @param {Bar} sourceBar do copy
-   * @param {number} [timestamp] apply timestamp to returned bar
-   */
-  cloneSourceBar(sourceBar: Bar, timestamp?: number): Bar {
-    return {
-      pair: sourceBar.pair,
-      exchange: sourceBar.exchange,
-      time: timestamp || sourceBar.time,
-      open: sourceBar.open,
-      high: sourceBar.high,
-      low: sourceBar.low,
-      close: sourceBar.close,
-      vbuy: sourceBar.vbuy,
-      vsell: sourceBar.vsell,
-      cbuy: sourceBar.cbuy,
-      csell: sourceBar.csell,
-      lbuy: sourceBar.lbuy,
-      lsell: sourceBar.lsell
-    }
-  }
-
-  /**
-   * Prepare the bars for render
-   * Takes a bars array (from cache)
-   * Merge with bar from activeRenderer
-   * So that 1 bar = 1 source at 1 timestamp
-   * @param bars cached bars
-   * @returns {void} only bars content changes
-   */
-  mergeBarsWithActiveBars(bars) {
-    if (!bars.length) {
-      if (
-        this.activeRenderer &&
-        this.activeRenderer.bar &&
-        !this.activeRenderer.bar.empty
-      ) {
-        Array.prototype.push.apply(
-          bars,
-          Object.values(this.activeRenderer.sources).filter(
-            bar => bar.empty === false
-          )
-        )
-      }
-    } else if (
-      this.activeRenderer &&
-      this.activeRenderer.timestamp > bars[bars.length - 1].time
-    ) {
-      const activeBars = Object.values(this.activeRenderer.sources).filter(
-        bar => bar.empty === false
-      )
-
-      for (let i = 0; i < activeBars.length; i++) {
-        const activeBar = activeBars[i]
-
-        activeBar.time = this.activeRenderer.timestamp
-
-        for (let j = bars.length - 1; j >= 0; j--) {
-          const cachedBar = bars[j]
-
-          if (cachedBar.time < this.activeRenderer.timestamp) {
-            bars.splice(j + 1, 0, activeBar)
-            activeBars.splice(i, 1)
-            i--
-            break
-          } else if (
-            cachedBar.exchange === activeBar.exchange &&
-            cachedBar.pair === activeBar.pair
-          ) {
-            cachedBar.vbuy += activeBar.vbuy
-            cachedBar.vsell += activeBar.vsell
-            cachedBar.cbuy += activeBar.cbuy
-            cachedBar.csell += activeBar.csell
-            cachedBar.lbuy += activeBar.lbuy
-            cachedBar.lsell += activeBar.lsell
-            cachedBar.open = activeBar.open
-            cachedBar.high = activeBar.high
-            cachedBar.low = activeBar.low
-            cachedBar.close = activeBar.close
-            activeBars.splice(i, 1)
-            i--
-
-            break
-          }
-        }
-      }
-    }
-  }
-
-  /**
    * then render indicatorsIds (or all if not specified) from new set of bars
    * this replace data of series, erasing current data on chart
    * if no indicatorsId is specified, all indicators on chart are rendered from start to finish
@@ -1501,7 +1285,7 @@ export default class Chart {
     }
 
     this.clearPriceLines(indicatorsIds)
-    this.mergeBarsWithActiveBars(bars)
+    mergeBarsWithActiveBars(bars, this.activeRenderer)
 
     if (!bars.length) {
       return
@@ -1590,13 +1374,6 @@ export default class Chart {
             bar.time || this.activeRenderer.timestamp,
             indicatorsIds
           )
-
-          if (temporaryRenderer.prependedBars) {
-            Array.prototype.unshift.apply(
-              bars,
-              Object.values(temporaryRenderer.prependedBars)
-            )
-          }
         }
       }
 
@@ -1614,7 +1391,7 @@ export default class Chart {
         temporaryRenderer.bar.lsell += bar.lsell
       }
 
-      temporaryRenderer.sources[marketKey] = this.cloneSourceBar(bar)
+      temporaryRenderer.sources[marketKey] = cloneSourceBar(bar)
       temporaryRenderer.sources[marketKey].empty = false
       temporaryRenderer.sources[marketKey].active = isActive
     }
@@ -1801,102 +1578,6 @@ export default class Chart {
 
     if (scrollPosition) {
       this.chartInstance.timeScale().scrollToPosition(scrollPosition, false)
-    }
-  }
-
-  /**
-   * Bars to be prepended in renderBar
-   * containing all the sources first prices
-   * @param timestamp first chart timestamp
-   * @returns
-   */
-  getPrependedBars(timestamp): { [market: string]: Bar } | null {
-    if (this.type === 'time' && !this.isCustomIndex) {
-      return null
-    }
-
-    if (this.activeRenderer && this.activeRenderer.prependedBars) {
-      if (this.activeRenderer.firstTimestamp !== timestamp) {
-        this.activeRenderer.firstTimestamp = timestamp
-        this.activeRenderer.prependedBars = Object.keys(
-          this.activeRenderer.prependedBars
-        ).reduce((acc, market) => {
-          acc[market] = {
-            ...this.activeRenderer.prependedBars[market],
-            time: timestamp
-          }
-
-          return acc
-        }, {})
-      }
-      return this.activeRenderer.prependedBars
-    }
-
-    if (!this._promiseOfPrependedBars) {
-      this._promiseOfPrependedBars = aggregatorService
-        .getAllTickers()
-        .then(tickers => {
-          this._promiseOfPrependedBars = null
-
-          if (this.activeRenderer) {
-            this.activeRenderer.prependedBars = Object.keys(tickers).reduce(
-              (acc, key) => {
-                const price = tickers[key].price
-                if (!price) {
-                  return acc
-                }
-
-                const [exchange, pair] = parseMarket(key)
-
-                acc[key] = {
-                  time: timestamp,
-                  cbuy: null,
-                  close: price,
-                  csell: null,
-                  high: price,
-                  lbuy: null,
-                  low: price,
-                  lsell: null,
-                  open: price,
-                  vbuy: null,
-                  vsell: null,
-                  exchange: exchange,
-                  pair: pair
-                }
-
-                return acc
-              },
-              this.activeRenderer.prependedBars
-            )
-
-            this.renderAll()
-          }
-        })
-    }
-
-    return {}
-  }
-
-  async registerInitialBar(identifier, pair, exchange, close, active) {
-    this.activeRenderer.sources[identifier] = {
-      pair: pair,
-      exchange: exchange,
-      close: close,
-      active
-    }
-
-    this.resetBar(this.activeRenderer.sources[identifier])
-
-    if (this.activeRenderer.prependedBars) {
-      this.activeRenderer.prependedBars[identifier] = {
-        ...this.resetBar({
-          close: close
-        }),
-        pair: pair,
-        exchange: exchange,
-        cbuy: 1,
-        csell: 1
-      }
     }
   }
 
@@ -2290,8 +1971,6 @@ export default class Chart {
       length: 1,
       indicators: {},
       sources: {},
-      firstTimestamp: firstBarTimestamp,
-      prependedBars: this.getPrependedBars(firstBarTimestamp),
 
       bar: {
         vbuy: 0,
@@ -2301,6 +1980,18 @@ export default class Chart {
         lbuy: 0,
         lsell: 0,
         empty: true
+      }
+    }
+
+    if (this.isPrepending) {
+      const prependBars = getPrependBars(this.prepend, firstBarTimestamp)
+
+      for (const market in prependBars) {
+        console.log('[prepend] inject prepend bar', market, 'into new renderer')
+        renderer.sources[market] = {
+          ...prependBars[market],
+          active: this.marketsFilters[market]
+        }
       }
     }
 
@@ -2356,7 +2047,7 @@ export default class Chart {
     }
 
     this.incrementRendererBar(renderer)
-    this.resetRendererBar(renderer)
+    resetRendererBar(renderer)
 
     renderer.timestamp = timestamp
     renderer.localTimestamp = timestamp + this.timezoneOffset
@@ -2404,56 +2095,6 @@ export default class Chart {
     }
   }
 
-  /**
-   * fresh start for the renderer bar (and all its sources / markets)
-   * @param {Renderer} bar bar to clear for next timestamp
-   */
-  resetRendererBar(renderer: Renderer) {
-    renderer.bar = {
-      ...renderer.bar,
-      vbuy: 0,
-      vsell: 0,
-      cbuy: 0,
-      csell: 0,
-      lbuy: 0,
-      lsell: 0,
-      empty: true
-    }
-
-    if (typeof renderer.sources !== 'undefined') {
-      for (const identifier in renderer.sources) {
-        this.resetBar(renderer.sources[identifier])
-      }
-    }
-  }
-
-  /**
-   * preparing bar for next
-   * @param {Bar} bar
-   */
-  resetBar(bar: Bar) {
-    if (bar.close !== null) {
-      bar.open = bar.close
-      bar.high = bar.close
-      bar.low = bar.close
-    }
-
-    bar.vbuy = 0
-    bar.vsell = 0
-    bar.cbuy = 0
-    bar.csell = 0
-    bar.lbuy = 0
-    bar.lsell = 0
-    bar.empty = true
-
-    return bar
-  }
-
-  /**
-   *
-   * @param indicator
-   * @param renderer
-   */
   prepareRendererForIndicators(indicator: LoadedIndicator, renderer: Renderer) {
     let markets = Object.keys(indicator.model.markets)
 
@@ -2851,36 +2492,17 @@ export default class Chart {
    * Split bars into chunks and add to chartCache
    * Render chart once everything is done
    */
-  onHistorical(results: HistoricalResponse) {
+  onHistorical(response: HistoricalResponse) {
     const chunk: Chunk = {
-      from: results.from,
-      to: results.to,
-      bars: results.data
+      from: response.from,
+      to: response.to,
+      bars: response.data
     }
 
     this.chartCache.saveChunk(chunk)
 
-    if (this.activeRenderer && this.activeRenderer.prependedBars) {
-      for (const market in results.initialPrices) {
-        if (this.activeRenderer.prependedBars[market]) {
-          this.activeRenderer.prependedBars[market] = {
-            ...this.resetBar({
-              close: results.initialPrices[market]
-            })
-          }
-        } else {
-          const [exchange, pair] = parseMarket(market)
-          this.activeRenderer.prependedBars[market] = {
-            ...this.resetBar({
-              close: results.initialPrices[market]
-            }),
-            pair: pair,
-            exchange: exchange,
-            cbuy: 1,
-            csell: 1
-          }
-        }
-      }
+    if (this.isPrepending) {
+      registerPrependFromHistorical(this.prepend, response)
     }
 
     this.renderAll(true)
