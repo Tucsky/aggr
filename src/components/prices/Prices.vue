@@ -327,7 +327,7 @@ export default class Prices extends Mixins(PaneMixin) {
         market.avgVolumeDelta = Math.round(
           ((market.volumeDelta * periodWeight +
             oldData.volumeDelta * (1 - periodWeight)) /
-            market.volume) *
+            market.avgVolume) *
             100
         )
       } else {
