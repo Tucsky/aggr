@@ -131,7 +131,7 @@ import dialogService from '@/services/dialogService'
 
 const NAME_ACTION_ICONS = {
   rename: 'icon-edit',
-  search: 'icon-plus',
+  search: 'icon-plus'
 }
 
 @Component({
@@ -159,11 +159,11 @@ const NAME_ACTION_ICONS = {
     split: {
       type: Boolean,
       default: true
-    },
+    }
   },
   components: {
     Btn
-  },
+  }
 })
 export default class PaneHeader extends Vue {
   private settings?: () => Promise<any>
@@ -253,7 +253,7 @@ export default class PaneHeader extends Vue {
 
     this.$store.dispatch('panes/setZoom', {
       id: this.paneId,
-      zoom: isMaximized ? this.zoom * 1.5 : this.zoom * (2/3)
+      zoom: isMaximized ? this.zoom * 1.5 : this.zoom * (2 / 3)
     })
   }
 
@@ -310,9 +310,9 @@ export default class PaneHeader extends Vue {
 
   nameActionHandler(event) {
     switch (this.nameAction) {
-      case 'search': 
+      case 'search':
         this.openSearch()
-      break;
+        break
       default:
         this.renamePane(event)
     }

@@ -108,12 +108,9 @@ export default {
       const bodyElement = this.$refs.dialog.$refs.body
 
       if (bodyElement) {
-        console.log('bind scroll')
         this.scrollHandler = this.handleScroll.bind(this)
 
         bodyElement.addEventListener('scroll', this.handleScroll)
-      } else {
-        console.log('couldnt bind', this.$refs.dialog.$refs)
       }
     },
     handleScroll() {
@@ -122,32 +119,21 @@ export default {
         bodyElement.scrollTop + bodyElement.clientHeight >=
         bodyElement.scrollHeight - 1
 
-      console.log(
-        'scroll',
-        this.isSubmitEnabled
-          ? 'submit button unlocked'
-          : 'submit button still disabled'
-      )
-
       if (this.isSubmitEnabled) {
         this.unbindScroll()
       }
     },
     unbindScroll() {
       if (!this.scrollHandler) {
-        console.log('scroll already unbinded?')
         return
       }
 
       const bodyElement = this.$refs.dialog.$refs.body
 
       if (bodyElement) {
-        console.log('unbind scroll')
-
         bodyElement.removeEventListener('scroll', this.handleScroll)
         this.handleScroll = null
       } else {
-        console.log('couldnt unbind', this.$refs.dialog.$refs)
         this.scrollHandler = null
       }
     },
