@@ -8,12 +8,22 @@ export const TOKENS = Object.keys(serieUtils).concat(
   ['renderer', 'bar', 'options', 'option', 'source', 'time', 'indicatorId']
 )
 
+const TOKEN_ALIASES = {
+  bar: 'renderer'
+}
+
 export async function loadMd(token) {
+  let name = token
+
+  if (TOKEN_ALIASES[token]) {
+    name = TOKEN_ALIASES[token]
+  }
+
   let raw
 
   try {
     raw = (
-      await import(`@/components/framework/editor/references/${token}.md?raw`)
+      await import(`@/components/framework/editor/references/${name}.md?raw`)
     ).default
   } catch (error) {
     //
