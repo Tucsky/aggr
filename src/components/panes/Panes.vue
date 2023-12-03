@@ -3,11 +3,11 @@
     ref="grid"
     :layout="layout"
     :col-num="cols"
+    :max-rows="cols"
     :row-height="rowHeight"
     :margin="[0, 0]"
     :is-resizable="unlocked"
     :is-draggable="unlocked"
-    :vertical-compact="true"
     :use-css-transforms="true"
     :use-style-cursor="false"
     @layout-ready="layoutReady = true"
@@ -46,7 +46,7 @@ import VueGridLayout from 'vue-grid-layout'
 import PaneMixin from '@/mixins/paneMixin'
 
 import { GRID_COLS } from '@/utils/constants'
-import { GridItem } from '@/store/panes'
+import { GridItem } from '@/utils/grid'
 
 @Component({
   components: {
@@ -63,8 +63,6 @@ import { GridItem } from '@/store/panes'
   }
 })
 export default class Panes extends Vue {
-  draggable = true
-  resizable = true
   rowHeight = 80
   cols = null
   breakpoint = null
@@ -157,13 +155,14 @@ export default class Panes extends Vue {
 
   onItemResized(id, h, w, hPx, wPx) {
     this.resizePane(id, +hPx, +wPx)
-    this.$store.commit('panes/UPDATE_LAYOUT', this.layout)
+    // this.$store.commit('panes/UPDATE_LAYOUT', this.layout)
   }
 
   updateItem(id) {
     const item = this.layout.find(item => item.i === id)
     this.$store.commit('panes/UPDATE_ITEM', item)
   }
+
   onLayoutUpdated(gridItems: GridItem[]) {
     this.$store.commit('panes/UPDATE_LAYOUT', gridItems)
   }
