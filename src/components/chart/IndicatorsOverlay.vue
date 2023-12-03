@@ -34,6 +34,24 @@
           <i class="icon-download"></i>
           <span>Download</span>
         </button>
+        <button
+          type="button"
+          class="dropdown-item"
+          @click="setIndicatorOrder(selectedIndicator, 0)"
+        >
+          <i class="icon-up"></i>
+          <span>Send to back</span>
+        </button>
+        <button
+          type="button"
+          class="dropdown-item"
+          @click="
+            setIndicatorOrder(selectedIndicator, indicatorOrder.length - 1)
+          "
+        >
+          <i class="icon-down -lower"></i>
+          <span>Bring to front</span>
+        </button>
         <div class="dropdown-divider"></div>
         <button
           type="button"
@@ -241,11 +259,15 @@ export default class IndicatorsOverlay extends Vue {
 
     if (newPosition !== this.sorting.newPosition) {
       this.sorting.newPosition = newPosition
-      this.$store.commit(`${this.paneId}/UPDATE_INDICATOR_ORDER`, {
-        id: this.sorting.id,
-        position: this.sorting.newPosition
-      })
+      this.setIndicatorOrder(this.sorting.id, this.sorting.newPosition)
     }
+  }
+
+  setIndicatorOrder(id, position) {
+    this.$store.commit(`${this.paneId}/UPDATE_INDICATOR_ORDER`, {
+      id,
+      position
+    })
   }
 
   async unbindSort() {
