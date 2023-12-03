@@ -1088,7 +1088,7 @@ export default {
           event.preventDefault()
           if (this.slicedResults[this.activeIndex]) {
             if (this.searchTypes.normalize) {
-              this.toggleMarkets([this.slicedResults[this.activeIndex].markets])
+              this.toggleMarkets(this.slicedResults[this.activeIndex].markets)
             } else {
               this.toggleMarkets([this.slicedResults[this.activeIndex].id])
             }
