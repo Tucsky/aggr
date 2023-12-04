@@ -250,9 +250,8 @@ export default class Prices extends Mixins(PaneMixin) {
   }
 
   created() {
-    // non reactive storages
-    this.refreshMarkets()
     this.cacheSortFunction()
+    this.refreshMarkets()
   }
 
   mounted() {
@@ -318,6 +317,7 @@ export default class Prices extends Mixins(PaneMixin) {
       }
 
       market.price = formatMarketPrice(ticker.price, market.id)
+
       market.volume += ticker.volume
       market.volumeDelta += ticker.volumeDelta
 
@@ -494,8 +494,8 @@ export default class Prices extends Mixins(PaneMixin) {
         for (const market of this.markets) {
           this.lastPeriodTickers[market.id].price = +market.price
           this.lastPeriodTickers[market.id].change = +market.change
-          this.lastPeriodTickers[market.id].volume = market.volume
-          this.lastPeriodTickers[market.id].volumeDelta = market.volumeDelta
+          this.lastPeriodTickers[market.id].volume = +market.volume
+          this.lastPeriodTickers[market.id].volumeDelta = +market.volumeDelta
 
           market.volume = 0
           market.volumeDelta = 0
@@ -529,7 +529,9 @@ export default class Prices extends Mixins(PaneMixin) {
           market => market.avgVolume >= threshold
         )
 
-        this.filteredMarkets = this.filteredMarkets.sort(this.sortFunction)
+        if (this.sortFunction) {
+          this.filteredMarkets = this.filteredMarkets.sort(this.sortFunction)
+        }
       } else {
         this.filteredMarkets = this.markets
       }
