@@ -135,7 +135,7 @@ export default [
     detail: '[AGGR] list option',
     insertText: `quote = option(
   type=list,
-  options=[null, "USD", "USDT", "TUSD", "USDC", "BUSD", "FDUSD"],
+  options=[null, "USD", "USDT", "TUSD", "USDC", "FDUSD"],
   rebuild=true // not specifc to list but will trigger a full indi rebuild when change
 )`
   },
@@ -148,9 +148,8 @@ export default [
     "": "Pick something",
     "USD": "United State Dollar",
     "USDT": "Tether",
-    "TUSD": "TrueUSD",
     "USDC": "Coinbase USD",
-    "BUSD": "Binance USD"
+    "TUSD": "TrueUSD"
   },
   default=USD,
   rebuild=true

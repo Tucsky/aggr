@@ -472,7 +472,6 @@ export default {
       'UST',
       'USDC',
       'USDD',
-      'BUSD',
       'TUSD',
       'ETH',
       'BTC',

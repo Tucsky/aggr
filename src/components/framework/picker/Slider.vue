@@ -25,7 +25,6 @@
 </template>
 
 <script>
-import { mix } from 'color-fns'
 import { getEventCords } from '@/utils/helpers'
 
 export default {
@@ -176,7 +175,7 @@ export default {
       this._dragHandler = null
       this._releaseHandler = null
     },
-    // get the current slider value from the click/move event on the slider (using event.clientX) 
+    // get the current slider value from the click/move event on the slider (using event.clientX)
     updateHandleValue(event) {
       // x = x coordinate of mouse click / move event
       const { x } = getEventCords(event)
@@ -212,7 +211,8 @@ export default {
           ((value - this.min) / (this.max - this.min)) * 100
       } else {
         const scale = Math.log(this.max + 1) - Math.log(this.min + 1)
-        this.handle.position = ((Math.log(value + 1) - Math.log(this.min + 1)) / scale) * 100
+        this.handle.position =
+          ((Math.log(value + 1) - Math.log(this.min + 1)) / scale) * 100
       }
 
       if (!silent) {
@@ -223,7 +223,7 @@ export default {
       this.width = this.track.offsetWidth
       this.offsetX = this.track.getBoundingClientRect().left
     }
-  },
+  }
 }
 </script>
 

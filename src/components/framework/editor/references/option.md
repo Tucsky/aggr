@@ -84,7 +84,7 @@ bigrange = option(
 // regular list
 quote = option(
   type=list,
-  options=[null, "USD", "USDT", "TUSD", "USDC", "BUSD"],
+  options=[null, "USD", "USDT", "TUSD", "USDC"],
   rebuild=true // not specifc to list but will trigger a full indi rebuild when change
 )
 
@@ -95,9 +95,8 @@ quote = option(
     "": "Pick something",
     "USD": "United State Dollar",
     "USDT": "Tether",
-    "TUSD": "TrueUSD",
     "USDC": "Coinbase USD",
-    "BUSD": "Binance USD"
+    "TUSD": "TrueUSD"
   },
   default=USD
 )

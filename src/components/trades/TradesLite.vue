@@ -1115,7 +1115,7 @@ export default class TradesLite extends Mixins(PaneMixin) {
   onScroll(event) {
     event.preventDefault()
 
-    const direction = Math.sign(event.deltaY) * (event.shiftKey ? 4 : 2)
+    const direction = Math.sign(event.deltaY) * (event.shiftKey ? 2 : 1)
 
     const offset = Math.max(
       0,
