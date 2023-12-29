@@ -385,6 +385,7 @@ export default class Dialog extends Vue {
     this.$refs.body.style.maxHeight = '100vh'
     this.$refs.content.style.width = position.w + 'px'
     this.$refs.body.style.height = position.h + 'px'
+    this.moved = true
   }
 
   detectSize(w) {

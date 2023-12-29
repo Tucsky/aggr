@@ -11,7 +11,11 @@
       @input="setValue($event)"
     >
       <template v-if="definition.description" #description>
-        <i class="icon-info pl4" v-tippy :title="definition.description"></i>
+        <i
+          class="icon-info pl4"
+          v-tippy="{ followCursor: true, distance: 24 }"
+          :title="definition.description"
+        ></i>
       </template>
     </component>
   </div>

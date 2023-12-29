@@ -38,11 +38,13 @@
           type="button"
           class="dropdown-item"
           @click="setIndicatorOrder(selectedIndicator, 0)"
+          v-if="selectedIndicatorIsFront"
         >
           <i class="icon-up"></i>
           <span>Send to back</span>
         </button>
         <button
+          v-else
           type="button"
           class="dropdown-item"
           @click="
@@ -115,8 +117,9 @@ export default class IndicatorsOverlay extends Vue {
   private paneId: string
   private value: boolean
 
-  dropdownTrigger = null
-  selectedIndicator = null
+  dropdownTrigger: HTMLElement = null
+  selectedIndicator: string = null
+  selectedIndicatorIsFront: boolean = null
   sorting: {
     id: string
     height: number
@@ -148,9 +151,17 @@ export default class IndicatorsOverlay extends Vue {
   }
 
   toggleDropdown(event?: Event, id?: string) {
-    if (event && (!this.dropdownTrigger || this.selectedIndicator !== id)) {
-      this.dropdownTrigger = event.currentTarget
+    if (
+      event &&
+      (!this.dropdownTrigger ||
+        !this.selectedIndicator ||
+        this.selectedIndicator !== id)
+    ) {
+      const triggerElement = event.currentTarget as HTMLElement
+      this.dropdownTrigger = triggerElement
       this.selectedIndicator = id
+      this.selectedIndicatorIsFront =
+        this.indicatorOrder.indexOf(id) === this.indicatorOrder.length - 1
     } else {
       this.dropdownTrigger = null
       this.selectedIndicator = null
