@@ -2,22 +2,23 @@
 
 All notable changes to this project will be documented here.
 
-## [3.5.0] - 2023-10-23
+## [3.5.0] - 2023-12-29
 
 
 ### Added:
 
 Added MACD to default indicators list (commit: 153eb62d)
+Added Liquidity to default indicators list
 Added "mbps tf" (commit: 77a5ce01)
 Added "FDUSD" stablecoin (commit: 03c92982)
 Added pane rename input validation on pressing enter (commit: be782eef)
 Added option to unlock raw trades (commit: 39ba778a)
 Added custom script options (commit: 76234165)
 
-### Enhancements:
+### Changed
 
 Overhauled search dialog pagination (commit: 43d16b0d)
-Hid column in indicator window (commit: 81d737c7)
+Indicator ordering
 
 ### Bug Fixes:
 
