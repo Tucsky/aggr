@@ -13,7 +13,7 @@ import {
   MarketsFilters,
   IndicatorSourceFilters,
   IndicatorOption
-} from './chart'
+} from './chart.d'
 import store from '@/store'
 import {
   findClosingBracketMatchIndex,
@@ -618,16 +618,19 @@ function parseFunctions(
         instruction.args.push(arg)
       }
 
+      const caller = `utils.${functionName}.update`
+      const replacement = `${caller}(${FUNCTIONS_VAR_NAME}[${
+        instructions.length
+      }].state,${instruction.args.map(a => a.instruction).join(',')})`
+
       output = `${output.slice(
         0,
         customArgsStartIndex
-      )}utils.${functionName}.update(${FUNCTIONS_VAR_NAME}[${
-        instructions.length
-      }].state,${instruction.args
-        .map(a => a.instruction)
-        .join(',')})${output.slice(customArgsEndIndex + 1, output.length)}`
+      )}${replacement}${output.slice(customArgsEndIndex + 1, output.length)}`
 
       instructions.push(instruction)
+
+      FUNCTION_LOOKUP_REGEX.lastIndex = functionMatch.index + caller.length
     }
   } while (functionMatch && ++iterations < 1000)
 

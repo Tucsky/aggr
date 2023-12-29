@@ -55,6 +55,10 @@ function accumulatePoints(fn: IndicatorFunction) {
  * @param fn
  */
 function accumulatePointsAverage(fn: IndicatorFunction) {
+  if (typeof fn.state.output === 'undefined') {
+    return
+  }
+
   fn.state.points.push(fn.state.output)
 
   fn.state.sum += fn.state.output
@@ -832,9 +836,9 @@ export default {
   },
   stoch: {
     args: [
-      null,
-      null,
-      null,
+      true,
+      true,
+      true,
       {
         length: true
       }
