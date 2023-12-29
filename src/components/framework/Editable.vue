@@ -38,9 +38,14 @@ export default class Editable extends Vue {
 
   @Watch('value')
   onValueChange() {
-    if ((this.$el as HTMLElement).innerText !== this.value) {
-      // eslint-disable-next-line @typescript-eslint/no-extra-semi
-      ;(this.$el as HTMLElement).innerText = this.value
+    const input = this.$el as HTMLElement
+    const value = input.innerText
+
+    if (
+      +this.value !== +value ||
+      (isNaN(+this.value) && value !== this.value)
+    ) {
+      input.innerText = this.value
     }
   }
 
