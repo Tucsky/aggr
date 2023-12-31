@@ -46,8 +46,7 @@
     >
       <div class="chart-overlay__title">Sources</div>
       <button type="button" class="btn badge -outline" @click="searchMarkets">
-        <span>{{ visibleMarkets }} </span>|
-        <span>Add</span>
+        <span>{{ visibleMarkets }} | Add</span>
       </button>
       <i class="icon-up-thin"></i>
     </div>
