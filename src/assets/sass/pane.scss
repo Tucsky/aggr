@@ -291,16 +291,8 @@
     line-height: 1;
     color: var(--theme-color-50);
 
-    > button {
-      display: none;
-    }
-
     &:hover {
       color: var(--theme-color-base);
-
-      > button {
-        display: block;
-      }
     }
 
     .pane.-small &,
