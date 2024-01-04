@@ -1,6 +1,12 @@
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import { downloadAnything, sleep, slugify, uniqueName } from '@/utils/helpers'
+import {
+  downloadAnything,
+  randomString,
+  sleep,
+  slugify,
+  uniqueName
+} from '@/utils/helpers'
 import { scheduleSync } from '@/utils/store'
 import {
   PriceScaleMargins,
@@ -13,7 +19,6 @@ import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '..'
 import merge from 'lodash.merge'
-import { IndicatorOption } from '@/components/chart/chart'
 
 export interface PriceScaleSettings {
   scaleMargins?: PriceScaleMargins
@@ -40,12 +45,13 @@ export interface IndicatorNavigationState {
 
 export interface IndicatorSettings {
   id?: string
+  libraryId?: string
   name?: string
   displayName?: string
   description?: string
   enabled?: boolean
   script?: string
-  optionsDefinitions?: { [key: string]: IndicatorOption }
+  optionsDefinitions?: { [key: string]: any }
   options?: SeriesOptions<SeriesType>
   createdAt?: number
   updatedAt?: number
@@ -133,11 +139,13 @@ const actions = {
           continue
         }
 
-        if (!indicator.series) {
-          indicator.series = []
-        }
-
-        Vue.set(state.indicators, indicator.id, indicator)
+        const id = `_${randomString()}`
+        Vue.set(state.indicators, id, {
+          ...indicator,
+          id,
+          libraryId: indicator.id,
+          series: []
+        })
       }
 
       scheduleSync(state)
@@ -147,16 +155,17 @@ const actions = {
       state.indicatorOrder = Object.keys(state.indicators)
     }
   },
-  addIndicator({ state, commit }, indicator) {
-    const ids = Object.keys(state.indicators)
-
-    indicator.id = uniqueName(indicator.id, ids)
-
+  addIndicator({ commit }, indicator) {
     indicator = {
-      script: 'line(avg_close(bar))',
-      ...indicator,
+      id: `_${randomString()}`,
+      libraryId: indicator.libraryId,
+      name: indicator.name,
+      description: indicator.description,
+      script: indicator.script || 'line(avg_close(bar))',
+      createdAt: indicator.createdAt,
+      updatedAt: indicator.updatedAt,
       options: {
-        priceScaleId: indicator.priceScaleId || indicator.id,
+        priceScaleId: indicator.priceScaleId || indicator.libraryId,
         ...indicator.options
       }
     }
@@ -176,12 +185,13 @@ const actions = {
       indicator.name,
       indicators.map(indicator => indicator.name)
     )
-
-    indicator.id = slugify(indicator.name)
-
+    delete indicator.libraryId
     delete indicator.updatedAt
     delete indicator.createdAt
     delete indicator.enabled
+    delete indicator.series
+    delete indicator.optionsDefinitions
+    delete indicator.model
 
     dispatch('addIndicator', indicator)
   },
@@ -189,31 +199,21 @@ const actions = {
   async downloadIndicator({ state }, indicatorId) {
     const indicator = state.indicators[indicatorId]
 
-    const priceScale = state.priceScales[indicator.options.priceScaleId] || {}
-
-    const exportableIndicator = Object.assign(
-      {},
-      indicator.options,
-      priceScale
-        ? {
-            scaleMargins: priceScale.scaleMargins
-          }
-        : {}
-    )
-
     await downloadAnything(
       {
         type: 'indicator',
         name: 'indicator:' + indicator.name,
         data: {
-          options: exportableIndicator,
+          libraryId: indicator.libraryId,
+          displayName: indicator.displayName,
+          options: indicator.options,
           description: indicator.description,
           script: indicator.script,
           createdAt: indicator.createdAt,
           updatedAt: indicator.updatedAt
         }
       },
-      'indicator_' + indicatorId
+      'indicator_' + (indicator.displayName || indicator.name)
     )
   },
 
@@ -262,9 +262,12 @@ const actions = {
     if (state.indicators[id].unsavedChanges && confirm) {
       const output = await dialogService.confirm({
         title: 'Save changes ?',
-        message: `Indicator has unsaved&nbsp;changes&nbsp;<i class="icon-warning"></i><br><br>Click <code class="-filled -green">SAVE</code> to save indicator under "${id}"`,
+        message: `Indicator has unsaved&nbsp;changes&nbsp;<i class="icon-warning"></i>`,
         cancel: 'DISCARD',
         ok: 'SAVE',
+        okIcon: 'icon-save',
+        cancelClass: '-red',
+        cancelIcon: 'icon-eraser',
         actions: [
           {
             label: 'Cancel',
@@ -294,19 +297,15 @@ const actions = {
 
     await dispatch('syncIndicator', state.indicators[id])
   },
-  async renameIndicator({ commit, state, dispatch }, { id, name }) {
-    const newId = uniqueName(slugify(name), Object.keys(state.indicators))
+  renameIndicator({ commit, state }, { id, name }) {
+    const indicator = state.indicators[id]
 
-    const indicatorCopy = JSON.parse(JSON.stringify(state.indicators[id]))
-
-    const indicator = { ...indicatorCopy, name, id: newId }
-
-    commit('ADD_INDICATOR', indicator)
-
-    dispatch('removeIndicator', { id, confirm: false })
-    commit('UPDATE_INDICATOR_DISPLAY_NAME', newId)
-
-    return newId
+    indicator.libraryId = uniqueName(
+      slugify(name),
+      Object.values(state.indicators).map(indicator => indicator.libraryId)
+    )
+    indicator.name = name
+    commit('UPDATE_INDICATOR_DISPLAY_NAME', id)
   },
   syncIndicator({ state, rootState }, indicator: IndicatorSettings) {
     for (const paneId in rootState.panes.panes) {
@@ -317,13 +316,19 @@ const actions = {
         continue
       }
 
-      const otherPaneIndicator = rootState[paneId].indicators[
-        indicator.id
-      ] as IndicatorSettings
-      if (otherPaneIndicator && !otherPaneIndicator.unsavedChanges) {
-        otherPaneIndicator.options = indicator.options
+      for (const otherPaneIndicatorId in rootState[paneId].indicators) {
+        const otherPaneIndicator = rootState[paneId].indicators[
+          otherPaneIndicatorId
+        ] as IndicatorSettings
+        if (
+          otherPaneIndicator &&
+          otherPaneIndicator.libraryId === indicator.libraryId &&
+          !otherPaneIndicator.unsavedChanges
+        ) {
+          otherPaneIndicator.options = indicator.options
 
-        this.commit(paneId + '/SET_INDICATOR_SCRIPT', { id: indicator.id })
+          this.commit(paneId + '/SET_INDICATOR_SCRIPT', { id: indicator.id })
+        }
       }
     }
   },
@@ -555,6 +560,8 @@ const mutations = {
     state.barSpacing = value
   },
   UPDATE_INDICATOR_ORDER(state, { id, position }) {
+    state.indicatorOrder = state.indicatorOrder.filter(a => !!a)
+
     if (!state.indicatorOrder.length) {
       state.indicatorOrder = Object.keys(state.indicators)
     }

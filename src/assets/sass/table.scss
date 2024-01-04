@@ -47,6 +47,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 1px;
+    white-space: nowrap;
   }
 
   &-min {
@@ -151,7 +152,7 @@
         padding-left: 1rem;
       }
       &:last-child {
-        padding-left: 1rem;
+        padding-right: 1rem;
       }
     }
 
@@ -160,7 +161,7 @@
         padding-left: 1rem;
       }
       &:last-child {
-        padding-left: 1rem;
+        padding-right: 1rem;
       }
     }
   }

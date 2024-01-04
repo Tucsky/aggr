@@ -36,6 +36,7 @@
 <script>
 import DialogMixin from '@/mixins/dialogMixin'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
+import { getChartScales } from './options'
 
 export default {
   mixins: [DialogMixin],
@@ -43,16 +44,22 @@ export default {
     DropdownButton
   },
   props: {
-    availableScales: {
-      type: Object,
+    paneId: {
+      type: String,
       required: true
     }
   },
   data() {
     return {
+      availableScales: {},
       priceScaleId: 'right',
       name: ''
     }
+  },
+  mounted() {
+    this.availableScales = getChartScales(
+      this.$store.state[this.paneId].indicators
+    )
   },
   methods: {
     submit() {

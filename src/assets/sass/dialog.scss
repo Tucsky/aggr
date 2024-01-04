@@ -48,6 +48,7 @@
 
     @media screen and (min-width: 580px) {
       max-width: 61.8vw;
+      max-height: 90%;
     }
 
     @media screen and (min-width: 1400px) {
@@ -71,7 +72,7 @@
     }
 
     .dialog--size-small & {
-      min-width: 250px;
+      width: 325px;
     }
   }
 
@@ -114,8 +115,14 @@
     padding: 0.75rem;
     background-color: var(--theme-background-100);
     border-bottom: 1px solid var(--theme-background-150);
-    border-radius: 6px 6px 0 0;
+    border-radius: 0.75rem 0.75rem 0 0;
     cursor: grab;
+
+    #{$self}--contrasted & {
+      border-bottom: 0 !important;
+      padding-bottom: 0;
+      background-color: var(--theme-base-o25);
+    }
 
     > .btn {
       align-self: center;
@@ -132,6 +139,14 @@
 
     .checkbox-control > input:not(:checked) + div {
       background: 0;
+    }
+  }
+
+  &__subheader {
+
+    #{$self}--contrasted & {
+      background-color: var(--theme-base-o25);
+      padding-top: 0.5rem;
     }
   }
 
@@ -272,5 +287,11 @@
   &-leave,
   &-leave-to {
     pointer-events: none;
+  }
+
+  &--small {
+    .-dialog-min-m {
+      display: none;
+    }
   }
 }

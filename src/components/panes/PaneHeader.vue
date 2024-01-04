@@ -13,10 +13,10 @@
         {{ name }}
         <btn
           type="button"
-          @click="nameActionHandler"
+          @click="renamePane"
           class="pane-header__edit btn -text -small"
         >
-          <i :class="nameActionIcon"></i>
+          <i class="icon-edit"></i>
         </btn>
       </slot>
     </div>
@@ -129,11 +129,6 @@ import Btn from '@/components/framework/Btn.vue'
 import { downloadAnything, getSiblings, slugify } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 
-const NAME_ACTION_ICONS = {
-  rename: 'icon-edit',
-  search: 'icon-plus'
-}
-
 @Component({
   name: 'PaneHeader',
   props: {
@@ -152,10 +147,6 @@ const NAME_ACTION_ICONS = {
       type: Boolean,
       default: true
     },
-    nameAction: {
-      type: String,
-      default: 'rename'
-    },
     split: {
       type: Boolean,
       default: true
@@ -167,7 +158,6 @@ const NAME_ACTION_ICONS = {
 })
 export default class PaneHeader extends Vue {
   private settings?: () => Promise<any>
-  private nameAction: 'rename' | 'search'
   paneId: string
   paneDropdownTrigger = null
   isLoading = false
@@ -194,10 +184,6 @@ export default class PaneHeader extends Vue {
     } else {
       return this.type
     }
-  }
-
-  get nameActionIcon() {
-    return NAME_ACTION_ICONS[this.nameAction]
   }
 
   openSearch() {
@@ -263,6 +249,7 @@ export default class PaneHeader extends Vue {
     }
 
     const name = await dialogService.prompt({
+      placeholder: `Main pane's market`,
       action: 'Rename',
       input: this.name
     })
@@ -306,16 +293,6 @@ export default class PaneHeader extends Vue {
       paneId: this.paneId
     })
     this.isLoading = false
-  }
-
-  nameActionHandler(event) {
-    switch (this.nameAction) {
-      case 'search':
-        this.openSearch()
-        break
-      default:
-        this.renamePane(event)
-    }
   }
 }
 </script>

@@ -33,8 +33,8 @@ export default {
 .loader {
   margin-inline: auto;
   border-radius: 50%;
-  width: 3em;
-  height: 3em;
+  width: 1.5rem;
+  height: 1.5rem;
   border: 0.25rem solid var(--theme-color-o20);
   border-top-color: currentColor;
   animation: spin 1s infinite linear;

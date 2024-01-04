@@ -54,10 +54,6 @@ export interface Trade {
   slippage?: number
 }
 
-export interface QueuedTrade extends Trade {
-  timeout?: number
-}
-
 export interface Volumes {
   timestamp: number
   vbuy: number

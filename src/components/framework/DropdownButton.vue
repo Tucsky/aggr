@@ -1,10 +1,5 @@
 <template>
-  <button
-    type="button"
-    class="btn"
-    :class="buttonClass"
-    @click="toggleDropdown"
-  >
+  <Btn :loading="loading" :class="buttonClass" @click="toggleDropdown">
     <slot name="selection" :item="value" :placeholder="placeholder">
       <span>{{ label }}</span>
     </slot>
@@ -23,18 +18,26 @@
         </slot>
       </button>
     </dropdown>
-  </button>
+  </Btn>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import Btn from '@/components/framework/Btn.vue'
 
 @Component({
   name: 'DropdownButton',
+  components: {
+    Btn
+  },
   props: {
     value: {
       required: false,
       default: null
+    },
+    loading: {
+      type: Boolean,
+      default: false
     },
     buttonClass: {
       required: false,

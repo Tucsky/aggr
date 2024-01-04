@@ -293,7 +293,8 @@ class WorkspacesService {
     if (this.urlStrategy === 'hash') {
       urlWorkspaceId = location.hash.substring(1)
     } else {
-      [, urlWorkspaceId, urlPairs] = decodeURIComponent(
+      // eslint-disable-next-line @typescript-eslint/no-extra-semi
+      ;[, urlWorkspaceId, urlPairs] = decodeURIComponent(
         location.pathname
       ).split('/')
     }
@@ -608,27 +609,60 @@ class WorkspacesService {
   async saveIndicator(indicator: IndicatorSettings) {
     const now = Date.now()
 
-    const originalIndicator: IndicatorSettings = await this.db.get(
-      'indicators',
-      indicator.id
-    )
-
-    const payload = {
-      ...originalIndicator,
-      ...JSON.parse(JSON.stringify(indicator)),
-      preview: originalIndicator && originalIndicator.preview,
-      unsavedChanges: false
+    if (!indicator.libraryId) {
+      if (indicator.id && indicator.id[0] !== '_') {
+        indicator.libraryId = indicator.id
+      } else {
+        indicator.libraryId = uniqueName(
+          slugify(indicator.name),
+          await this.getIndicatorsIds()
+        )
+      }
     }
 
-    payload.createdAt = payload.createdAt || now
-    payload.updatedAt = now
+    const originalIndicator: IndicatorSettings =
+      (await this.db.get('indicators', indicator.libraryId)) || {}
+
+    indicator.createdAt =
+      indicator.createdAt || originalIndicator.createdAt || now
+    indicator.updatedAt = now
+    indicator.preview = indicator.preview || originalIndicator.preview
+
+    const payload = JSON.parse(
+      JSON.stringify({
+        id: indicator.libraryId,
+        name: indicator.name || originalIndicator.name,
+        options: indicator.options || originalIndicator.options,
+        script: indicator.script || originalIndicator.script,
+        createdAt: indicator.createdAt,
+        updatedAt: indicator.updatedAt,
+        preview: indicator.preview
+      })
+    )
+
+    const optionals = {
+      displayName: indicator.displayName || originalIndicator.displayName,
+      description: indicator.description || originalIndicator.description,
+      preview: indicator.preview || originalIndicator.preview,
+      enabled: indicator.enabled || originalIndicator.enabled
+    }
+
+    for (const key in optionals) {
+      if (optionals[key]) {
+        payload[key] = optionals[key]
+      }
+    }
+
+    await this.db.put('indicators', payload)
 
     store.dispatch('app/showNotice', {
       type: 'info',
-      title: `Saved indicator ${payload.id}`
+      title: `Saved ${
+        payload.createdAt === payload.updatedAt ? 'new indicator' : 'indicator'
+      } ${payload.id}`
     })
 
-    return this.db.put('indicators', payload)
+    return payload
   }
 
   async saveIndicatorPreview(indicatorId: string, blob: Blob) {
@@ -639,7 +673,7 @@ class WorkspacesService {
     await this.db.put('indicators', originalIndicator)
   }
 
-  async incrementIndicatorUsage(id: string): Promise<string> {
+  async incrementIndicatorUsage(id: string): Promise<IndicatorSettings> {
     const indicator = await this.getIndicator(id)
 
     if (!indicator) {
@@ -648,7 +682,9 @@ class WorkspacesService {
 
     indicator.updatedAt = Date.now()
 
-    return this.saveIndicator(indicator)
+    await this.saveIndicator(indicator)
+
+    return indicator
   }
 
   getIndicator(id: string): Promise<IndicatorSettings> {
@@ -802,7 +838,9 @@ class WorkspacesService {
   async showLegacyNotice() {
     const stay = await dialogService.confirm({
       title: 'Update notice',
-      message: `Welcome to aggr.trade ${import.meta.env.VITE_APP_VERSION}.<br>We are replacing the old version with the new on the main app.<br><br>If for some reasons you don't like it,<br>legacy app can still be found on <a href="https://legacy.aggr.trade">legacy.aggr.trade</a> ☺️`,
+      message: `Welcome to aggr.trade ${
+        import.meta.env.VITE_APP_VERSION
+      }.<br>We are replacing the old version with the new on the main app.<br><br>If for some reasons you don't like it,<br>legacy app can still be found on <a href="https://legacy.aggr.trade">legacy.aggr.trade</a> ☺️`,
       ok: 'Stay ',
       cancel: 'Go back',
       html: true

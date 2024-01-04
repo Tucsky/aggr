@@ -189,6 +189,7 @@ export default {
       if (name && name !== this.meta.name) {
         await workspacesService.removePreset(this.preset.name)
 
+        // eslint-disable-next-line vue/no-mutating-props
         this.preset.name =
           this.meta.type +
           ':' +

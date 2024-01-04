@@ -3,8 +3,6 @@ import dialogService from './dialogService'
 import workspacesService from './workspacesService'
 import SettingsImportConfirmation from '../components/settings/ImportConfirmation.vue'
 import store from '@/store'
-import { slugify, uniqueName } from '../utils/helpers'
-import { IndicatorSettings } from '../store/panesSettings/chart'
 import notificationService from './notificationService'
 
 class ImportService {
@@ -126,44 +124,39 @@ class ImportService {
   }
 
   async importIndicator(json) {
-    let chartPaneId
-
-    if (
-      store.state.app.focusedPaneId &&
-      store.state.panes.panes[store.state.app.focusedPaneId].type === 'chart'
-    ) {
-      chartPaneId = store.state.app.focusedPaneId
-    } else {
-      for (const id in store.state.panes.panes) {
-        if (store.state.panes.panes[id].type === 'chart') {
-          chartPaneId = id
-          break
-        }
-      }
-    }
-
-    if (!chartPaneId) {
-      throw new Error('No chart found')
-    }
-
-    const ids = await workspacesService.getIndicatorsIds()
     const name = json.name.split(':').slice(1).join(':')
-    const id = uniqueName(slugify(name), ids)
     const now = Date.now()
-    const indicator: IndicatorSettings = {
-      id: id,
-      name: name,
+
+    const indicator = await workspacesService.saveIndicator({
+      name,
+      displayName: json.data.displayName || name,
       script: json.data.script || '',
       options: json.data.options || {},
       description: json.data.description || null,
       createdAt: json.data.createdAt || now,
-      updatedAt: json.data.updatedAt || now,
-      unsavedChanges: true
+      updatedAt: json.data.updatedAt || json.data.createdAt || now,
+      preview: json.data.preview || null
+    })
+
+    if (!dialogService.isDialogOpened('indicator-library')) {
+      dialogService.open(
+        (await import('@/components/indicators/IndicatorLibraryDialog.vue'))
+          .default,
+        {},
+        'indicator-library'
+      )
     }
 
-    store.dispatch(chartPaneId + '/addIndicator', indicator)
+    const indicatorLibraryDialog =
+      dialogService.mountedComponents['indicator-library']
 
-    dialogService.openIndicator(chartPaneId, indicator.id)
+    store.dispatch('app/showNotice', {
+      title: `indicator "${indicator.id}" imported successfully`
+    })
+
+    if (indicatorLibraryDialog) {
+      indicatorLibraryDialog.setSelection(indicator)
+    }
   }
 
   async importAnything(file: File) {
@@ -173,17 +166,9 @@ class ImportService {
       if (!notificationService.hasDismissed('import-security-warning')) {
         if (
           !(await dialogService.confirm({
-            title: 'Important Security Warning from AGGR',
+            title: 'Security Warning',
             message: `⚠️ Proceed with <strong>Caution</strong>!<br><br>
-            You are about to import a custom indicator script into AGGR. Please be aware of the following:<br><br>
-            <ul>
-            <li><strong>External Code Execution</strong>: This script contains JavaScript code, which will run within your AGGR environment. Executing code from external sources can pose significant security risks.</li></br>
-            <li><strong>Trust Your Source</strong>: Ensure that you fully trust the source from where you obtained this indicator. AGGR cannot verify the safety or integrity of external scripts.</li></br>
-            <li><strong>No Liability</strong>: AGGR is not responsible for any consequences that may arise from the use of externally sourced scripts. This includes, but is not limited to, potential security vulnerabilities, data loss, or inaccuracies in the indicator's performance.</li></br>
-            <li><strong>Review Before Import</strong>: If you have the expertise, review the script's contents for any suspicious or malicious code before importing.</li></br>
-            <li><strong>Use at Your Own Risk</strong>: By proceeding with the import, you acknowledge and accept the risks associated with running external JavaScript code in your AGGR environment.</li></br>
-            </ul>
-            🔒 Your security is important to us. Be cautious & stay safe.`,
+            <p>Importing a custom script into AGGR poses security risks and AGGR is not liable for any consequences; ensure you trust the source and understand the risks before proceeding.</p>`,
             ok: `Accept and Proceed`,
             requireScroll: true,
             html: true

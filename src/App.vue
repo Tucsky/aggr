@@ -53,6 +53,7 @@ import workspacesService from '@/services/workspacesService'
 import { formatMarketPrice } from '@/services/productsService'
 import dialogService from '@/services/dialogService'
 import importService from '@/services/importService'
+import { pathToBase64 } from './utils/helpers'
 
 @Component({
   name: 'App',
@@ -79,6 +80,7 @@ export default class App extends Vue {
   private faviconElement: HTMLLinkElement
   private stuckTimeout: number
   private mainPair: string
+  private favicons: { up?: string; down?: string }
 
   get showSearch() {
     return this.$store.state.app.showSearch
@@ -123,14 +125,14 @@ export default class App extends Vue {
     return this.$store.state.settings.disableAnimations
   }
 
-  mounted() {
-    this.bindDropFile()
+  async mounted() {
     aggregatorService.on('notice', (notice: Notice) => {
       this.$store.dispatch('app/showNotice', notice)
     })
-    aggregatorService.on('tickers', this.updatePrice)
-
     document.addEventListener('keydown', this.onDocumentKeyPress)
+
+    this.bindDropFile()
+    this.startUpdatingPrice()
   }
 
   beforeDestroy() {
@@ -177,6 +179,17 @@ export default class App extends Vue {
     }
   }
 
+  async startUpdatingPrice() {
+    const up = await pathToBase64(upFavicon)
+    const down = await pathToBase64(downFavicon)
+    this.favicons = {
+      up,
+      down
+    }
+
+    aggregatorService.on('tickers', this.updatePrice)
+  }
+
   stopUpdatingPrice() {
     aggregatorService.off('tickers', this.updatePrice)
     this.price = null
@@ -192,9 +205,9 @@ export default class App extends Vue {
     }
 
     if (direction === 'up') {
-      this.faviconElement.href = upFavicon
+      this.faviconElement.href = this.favicons.up
     } else {
-      this.faviconElement.href = downFavicon
+      this.faviconElement.href = this.favicons.down
     }
   }
 
@@ -301,5 +314,7 @@ export default class App extends Vue {
 
     this.mainPrices = {}
   }
+
+  async prepareFavicons() {}
 }
 </script>

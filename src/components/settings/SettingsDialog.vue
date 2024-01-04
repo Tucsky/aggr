@@ -47,7 +47,7 @@
             @click="openWorkspace(workspaceDropdownId, true)"
           >
             <i class="icon-external-link-square-alt"></i>
-            <span>Open in a new tab</span>
+            <span>Open in a tab</span>
           </button>
           <button
             type="button"
@@ -80,7 +80,7 @@
             @click="removeWorkspace(workspaceDropdownId)"
           >
             <i class="icon-cross"></i>
-            <span>Remove workspace</span>
+            <span>Remove</span>
           </button>
         </dropdown>
         <button

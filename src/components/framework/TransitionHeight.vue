@@ -127,18 +127,10 @@ export default {
     },
 
     beforeLeave(element) {
-      if (this.stepper) {
-        return
-      }
-
       element.style.height = `${element.clientHeight}px`
     },
 
     leave(element) {
-      if (this.stepper) {
-        return
-      }
-
       setTimeout(() => {
         element.style.height = '0px'
       })
@@ -199,7 +191,9 @@ export default {
 
 .transition-height-scale {
   &-enter-active {
-    transition: all 0.25s $ease-out-expo 0.15s, height 0.375s $ease-out-expo;
+    transition:
+      all 0.25s $ease-out-expo 0.15s,
+      height 0.375s $ease-out-expo;
   }
 
   &-leave-active {

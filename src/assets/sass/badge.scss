@@ -12,6 +12,11 @@
   cursor: pointer;
   font-weight: 600;
 
+  > i {
+    font-weight: 400;
+    font-size: 0.875em;
+  }
+
   &.-red {
     background-color: var(--theme-sell-50);
     color: var(--theme-sell-color);

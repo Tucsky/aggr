@@ -1,0 +1,23 @@
+
+@mixin shimmer(
+  $width: 100%,
+  $main-color: $ds-color-standard-6,
+  $shining-color: $ds-color-standard-5
+) {
+  background-image: linear-gradient(
+    270deg,
+    $main-color,
+    $shining-color,
+    $main-color
+  );
+  background-size: 600% 600%;
+  animation: shimmer 1s ease infinite;
+  animation-direction: reverse;
+
+  @if ($width != null) {
+    width: $width;
+  }
+  * {
+    visibility: hidden;
+  }
+}

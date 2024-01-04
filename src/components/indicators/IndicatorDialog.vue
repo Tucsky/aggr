@@ -19,7 +19,7 @@
             class="dialog__subtitle indicator-dialog__id -filled"
             @click="copyIndicatorId"
             @dblclick="editDescription"
-            :title="indicatorId"
+            :title="libraryId"
             v-tippy
             >{{ displayId }}</code
           >
@@ -365,10 +365,10 @@ import {
   getIndicatorOptionType,
   getIndicatorOptionValue,
   plotTypesMap
-} from './options'
+} from '../chart/options'
 import dialogService from '../../services/dialogService'
 import merge from 'lodash.merge'
-import IndicatorPresetDialog from './IndicatorPresetDialog.vue'
+import IndicatorPresetDialog from '../chart/IndicatorPresetDialog.vue'
 import { copyTextToClipboard, getEventCords } from '@/utils/helpers'
 
 const ignoredOptionsKeys = [
@@ -425,14 +425,23 @@ export default {
     indicator() {
       return this.$store.state[this.paneId].indicators[this.indicatorId]
     },
+    libraryId() {
+      return this.indicator.libraryId || this.indicatorId
+    },
     displayName() {
       return this.indicator.displayName
     },
     displayId() {
-      if (this.indicatorId.length <= 16) {
-        return this.indicatorId
+      const id = this.libraryId
+
+      if (!id) {
+        return 'n/a'
+      }
+
+      if (id.length <= 16) {
+        return id
       } else {
-        return this.indicatorId.slice(0, 6) + '..' + this.indicatorId.substr(-6)
+        return id.slice(0, 6) + '..' + id.substr(-6)
       }
     },
     presetPlaceholder() {
@@ -674,8 +683,7 @@ export default {
       })
 
       if (typeof name === 'string' && name !== this.name) {
-        await this.close()
-        await this.$store.dispatch(this.paneId + '/renameIndicator', {
+        this.$store.dispatch(this.paneId + '/renameIndicator', {
           id: this.indicatorId,
           name
         })
@@ -1021,6 +1029,7 @@ export default {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    margin: 0;
 
     @media screen and (min-width: 768px) {
       display: block;

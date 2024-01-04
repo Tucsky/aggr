@@ -169,7 +169,7 @@ interface PresetSummary {
 })
 export default class Presets extends Vue {
   type: PresetType
-  adapter: Function
+  adapter: (originalPreset: Preset) => Preset
   placeholder: string
   presets: PresetSummary[] = []
 
@@ -390,8 +390,8 @@ export default class Presets extends Vue {
       return
     }
 
-    if (data._id) {
-      delete data._id
+    if ((data as any)._id) {
+      delete (data as any)._id
     }
 
     return data

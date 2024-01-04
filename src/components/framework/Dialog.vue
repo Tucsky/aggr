@@ -4,6 +4,7 @@
     :class="[
       impliedSize && `dialog--size-${impliedSize}`,
       currentSize && `dialog--${currentSize}`,
+      contrasted && `dialog--contrasted`,
       moved && `dialog--moved`,
       mask && 'dialog--mask'
     ]"
@@ -61,6 +62,10 @@ import { getEventCords } from '../../utils/helpers'
     mask: {
       type: Boolean,
       default: true
+    },
+    contrasted: {
+      type: Boolean,
+      default: false
     },
     resizable: {
       type: Boolean,

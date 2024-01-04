@@ -19,7 +19,9 @@
     </form>
 
     <template v-slot:footer>
-      <a href="javascript:void(0);" class="btn -text" @click="close(null)">Cancel</a>
+      <a href="javascript:void(0);" class="btn -text" @click="close(null)">
+        Cancel
+      </a>
       <button type="button" class="btn -green ml8 -large" @click="submit">
         <i class="icon-check mr8"></i> {{ submitLabel }}
       </button>

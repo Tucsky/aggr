@@ -501,25 +501,6 @@ export function getApiUrl(path: string): string {
   return base + path
 }
 
-export function getSwUrl(mode: string) {
-  let swUrl
-
-  switch (mode) {
-    case 'development':
-      // TODO = 'load
-      swUrl = `./dev-sw.js?dev-sw`
-      break
-    case 'github':
-      swUrl = import.meta.env.VITE_APP_BASE_PATH + 'sw.js'
-      break
-    case 'production':
-      swUrl = './sw.js'
-      break
-  }
-
-  return swUrl
-}
-
 export function getEventCords(event, page = false) {
   const props = {
     x: page ? 'pageX' : 'clientX',
@@ -642,4 +623,16 @@ export function displayCanvasInPopup(canvas) {
     // Handle popup window creation failure
     alert('Popup window creation failed. Please check your browser settings.')
   }
+}
+
+export async function pathToBase64(path): Promise<string> {
+  const response = await fetch(path)
+  const blob = await response.blob()
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
 }

@@ -74,15 +74,12 @@
       />
     </div>
     <div class="chart-overlay__head pane-overlay" @click="toggleOverlay">
-      <span class="chart-overlay__title">Indicators</span>
-      <button
-        type="button"
-        class="btn badge -outline"
-        @click.stop="addIndicator"
-      >
-        Add
+      <span class="chart-overlay__title">
+        {{ label }}
+      </span>
+      <button type="button" class="btn badge -text" @click.stop="addIndicator">
+        <i class="icon-plus"></i>
       </button>
-      <i class="icon-up-thin"></i>
     </div>
   </div>
 </template>
@@ -96,7 +93,6 @@ import { ChartPaneState } from '../../store/panesSettings/chart'
 import dialogService from '../../services/dialogService'
 
 import IndicatorControl from '@/components/chart/IndicatorControl.vue'
-import IndicatorLibraryDialog from '@/components/chart/IndicatorLibraryDialog.vue'
 
 @Component({
   name: 'IndicatorsOverlay',
@@ -138,8 +134,10 @@ export default class IndicatorsOverlay extends Vue {
     return (this.$store.state[this.paneId] as ChartPaneState).indicatorOrder
   }
 
-  get ids() {
-    return Object.values(this.indicators).map(a => a.id)
+  get label() {
+    const count = Object.values(this.indicators).length
+
+    return `${count} indicator${count > 1 ? 's' : ''}`
   }
 
   $refs!: {
@@ -170,7 +168,7 @@ export default class IndicatorsOverlay extends Vue {
 
   async editIndicator(indicatorId: string) {
     dialogService.open(
-      (await import('@/components/chart/IndicatorDialog.vue')).default,
+      (await import('@/components/indicators/IndicatorDialog.vue')).default,
       { paneId: this.paneId, indicatorId: indicatorId },
       'indicator'
     )
@@ -193,8 +191,13 @@ export default class IndicatorsOverlay extends Vue {
     this.$store.dispatch(this.paneId + '/downloadIndicator', indicatorId)
   }
 
-  addIndicator() {
-    dialogService.open(IndicatorLibraryDialog, { paneId: this.paneId })
+  async addIndicator() {
+    dialogService.open(
+      (await import('@/components/indicators/IndicatorLibraryDialog.vue'))
+        .default,
+      {},
+      'indicator-library'
+    )
   }
 
   onClickIndicator({

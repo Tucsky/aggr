@@ -64,8 +64,13 @@ export function build(
   indicator: LoadedIndicator,
   serieIndicatorsMap: { [serieId: string]: IndicatorReference }
 ) {
-  const indicatorId = indicator.id
-  const result = parse(indicator.script, indicatorId, serieIndicatorsMap)
+  const { id: indicatorId, libraryId } = indicator
+  const result = parse(
+    indicator.script,
+    indicatorId,
+    libraryId,
+    serieIndicatorsMap
+  )
 
   // guess the initial state of each function/variable in the code
   for (const instruction of result.functions) {
@@ -152,6 +157,7 @@ function determineVariableState(instruction: IndicatorVariable) {
 function parse(
   input,
   indicatorId,
+  libraryId,
   serieIndicatorsMap
 ): IndicatorTranspilationResult {
   const functions: IndicatorFunction[] = []
@@ -184,6 +190,7 @@ function parse(
     functions,
     plots,
     indicatorId,
+    libraryId,
     serieIndicatorsMap
   )
 
@@ -372,7 +379,8 @@ function parseSerie(
   output: string,
   match: RegExpExecArray,
   plots: IndicatorPlot[],
-  indicatorId,
+  indicatorId: string,
+  libraryId: string,
   serieIndicatorsMap
 ) {
   // absolute serie type eg. plotline -> line)
@@ -457,7 +465,7 @@ function parseSerie(
 
     delete serieOptions.id
   } else if (plots.length === 0) {
-    id = indicatorId
+    id = libraryId
   } else {
     id = randomString(8)
   }
@@ -514,6 +522,7 @@ function parseFunctions(
   instructions: IndicatorFunction[],
   plots: IndicatorPlot[],
   indicatorId: string,
+  libraryId: string,
   serieIndicatorsMap: { [serieId: string]: IndicatorReference }
 ): string {
   const FUNCTION_LOOKUP_REGEX = new RegExp(`([a-zA-Z0_9_]+)\\(`, 'g')
@@ -541,6 +550,7 @@ function parseFunctions(
             functionMatch,
             plots,
             indicatorId,
+            libraryId,
             serieIndicatorsMap
           )
         }

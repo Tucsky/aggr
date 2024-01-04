@@ -28,12 +28,11 @@ import merge from 'lodash.merge'
 
 import {
   defaultChartOptions,
-  defaultPlotsOptions,
-  defaultSerieOptions,
   getChartBarSpacingOptions,
   getChartGridlinesOptions,
   getChartOptions,
-  getChartWatermarkOptions
+  getChartWatermarkOptions,
+  getSerieOptions
 } from '@/components/chart/options'
 import dialogService from '@/services/dialogService'
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
@@ -71,7 +70,6 @@ import grouping from './grouping'
 import {
   build,
   getBuildedIndicator,
-  getCustomPlotOptions,
   getRendererIndicatorData
 } from './buildUtils'
 import {
@@ -604,6 +602,7 @@ export default class Chart {
 
     const indicator: LoadedIndicator = {
       id,
+      libraryId: indicatorSettings.libraryId || id,
       options: JSON.parse(JSON.stringify(indicatorOptions)),
       script: indicatorSettings.script,
       model: null,
@@ -625,8 +624,9 @@ export default class Chart {
         )
       ) {
         dialogService.confirm({
-          message: `"${indicator.id}" indicator need the "${error.serieId}" serie but that one WAS NOT found anywhere in the current indicators.`,
-          ok: 'I see',
+          title: 'Referenced indicator',
+          message: `The <code class="-filled">${indicator.libraryId}</code> indicator you added requires the <code class="-filled">$${error.serieId}</code> series, but it was not located among the added indicators.`,
+          html: true,
           cancel: false
         })
       }
@@ -1270,6 +1270,56 @@ export default class Chart {
    * @param {boolean} silent
    */
   renderBars(bars: Bar[], indicatorId, silent?: boolean) {
+    mergeBarsWithActiveBars(bars, this.activeRenderer)
+
+    if (!bars.length) {
+      return
+    }
+
+    const {
+      barCount,
+      from,
+      to,
+      temporaryRenderer,
+      computedSeries,
+      indicatorsIds
+    } = this.computeBars(bars, indicatorId)
+
+    this.clearPriceLines(indicatorsIds)
+
+    if (this.activeRenderer) {
+      this.activeRenderer.bar = {
+        ...temporaryRenderer.bar,
+        close: this.activeRenderer.bar.close
+      }
+      for (const id in temporaryRenderer.indicators) {
+        this.activeRenderer.indicators[id] = temporaryRenderer.indicators[id]
+      }
+      for (const id in temporaryRenderer.sources) {
+        this.activeRenderer.sources[id] = temporaryRenderer.sources[id]
+      }
+    } else {
+      this.activeRenderer = temporaryRenderer
+    }
+
+    this.replaceData(computedSeries, silent)
+
+    setTimeout(this.renderAlerts.bind(this))
+
+    if (!indicatorsIds || !indicatorsIds.length) {
+      if (this.activeRenderer) {
+        this.activeRenderer.length = barCount
+      }
+      if (!bars.length) {
+        this.renderedRange.from = this.renderedRange.to = null
+      } else {
+        this.renderedRange.from = from
+        this.renderedRange.to = to
+      }
+    }
+  }
+
+  computeBars(bars, indicatorId?) {
     let indicatorsIds
     let drawReferences = false
 
@@ -1282,13 +1332,6 @@ export default class Chart {
         drawReferences = true
       }
       indicatorsIds = [...this.getReferencedIndicators(indicator), indicatorId]
-    }
-
-    this.clearPriceLines(indicatorsIds)
-    mergeBarsWithActiveBars(bars, this.activeRenderer)
-
-    if (!bars.length) {
-      return
     }
 
     const computedSeries = {}
@@ -1309,11 +1352,6 @@ export default class Chart {
         bar.time > temporaryRenderer.timestamp
       ) {
         if (temporaryRenderer) {
-          if (temporaryRenderer.bar.empty && !this.fillGapsWithEmpty && bar) {
-            this.nextBar(bar.time, temporaryRenderer)
-            continue
-          }
-
           if (from === null) {
             from = temporaryRenderer.timestamp
           }
@@ -1395,35 +1433,14 @@ export default class Chart {
       temporaryRenderer.sources[marketKey].empty = false
       temporaryRenderer.sources[marketKey].active = isActive
     }
-    if (this.activeRenderer) {
-      this.activeRenderer.bar = {
-        ...temporaryRenderer.bar,
-        close: this.activeRenderer.bar.close
-      }
-      for (const id in temporaryRenderer.indicators) {
-        this.activeRenderer.indicators[id] = temporaryRenderer.indicators[id]
-      }
-      for (const id in temporaryRenderer.sources) {
-        this.activeRenderer.sources[id] = temporaryRenderer.sources[id]
-      }
-    } else {
-      this.activeRenderer = temporaryRenderer
-    }
 
-    this.replaceData(computedSeries, silent)
-
-    setTimeout(this.renderAlerts.bind(this))
-
-    if (!indicatorsIds || !indicatorsIds.length) {
-      if (this.activeRenderer) {
-        this.activeRenderer.length = barCount
-      }
-      if (!bars.length) {
-        this.renderedRange.from = this.renderedRange.to = null
-      } else {
-        this.renderedRange.from = from
-        this.renderedRange.to = to
-      }
+    return {
+      from,
+      to,
+      barCount,
+      temporaryRenderer,
+      computedSeries,
+      indicatorsIds
     }
   }
 
@@ -1461,35 +1478,16 @@ export default class Chart {
     const priceScale =
       store.state[this.paneId].priceScales[indicator.options.priceScaleId]
 
-    if (priceScale && priceScale.priceFormat) {
-      indicator.options.priceFormat = {
-        ...indicator.options.priceFormat,
-        ...priceScale.priceFormat
-      }
-    }
-
     for (let i = 0; i < indicator.model.plots.length; i++) {
       const plot = indicator.model.plots[i]
       const apiMethodName = camelize('add-' + plot.type + '-series')
-      const customPlotOptions = getCustomPlotOptions(indicator, plot)
-
-      const serieOptions = {
-        ...defaultSerieOptions,
-        ...(defaultPlotsOptions[plot.type] || {}),
-        ...indicator.options,
-        ...(priceScale && priceScale.scaleMargins
-          ? {
-              scaleMargins: {
-                top: priceScale.scaleMargins.top,
-                bottom: priceScale.scaleMargins.bottom
-              }
-            }
-          : {}),
-        ...customPlotOptions
-      }
-
+      const serieOptions = getSerieOptions(
+        indicator,
+        indicator.model.plots[i],
+        priceScale
+      )
       const api = this.chartInstance[apiMethodName](
-        serieOptions
+        getSerieOptions(indicator, indicator.model.plots[i])
       ) as IndicatorApi
 
       api.id = plot.id
@@ -1848,9 +1846,8 @@ export default class Chart {
 
   /**
    * excecute indicators with renderer's data, and return series points
-   * this does not update series on chart (indicator.apisNoop is passed instead of indicator.apis)
    * @param {Renderer} renderer
-   * @param {string[]} indicators id of indicators to execute (all indicators calculated if null)
+   * @param {string[]} indicatorsIds id of indicators to execute (all indicators calculated if null)
    * @returns series points
    */
   computeBar(
@@ -2679,112 +2676,99 @@ export default class Chart {
   }
 
   async saveIndicatorPreview(indicatorId) {
-    await sleep(100)
-    const indicator = this.getLoadedIndicator(indicatorId)
-    const chartOptions = this.chartInstance.options()
-    const priceScale = this.chartInstance.priceScale(
-      indicator.options.priceScaleId
-    )
-
-    this.getAxisSize()
-
-    const pxRatio = window.devicePixelRatio || 1
-
-    let scaleMargins = {
-      top: 0,
-      bottom: 0
-    }
-
-    const hiddenApis: IndicatorApi[] = []
-    for (const indicator of this.loadedIndicators) {
-      if (indicator.id === indicatorId) {
-        continue
-      }
-
-      for (const api of indicator.apis) {
-        const { visible } = api.options()
-        if (visible) {
-          api.applyOptions({
-            visible: false
-          })
-          hiddenApis.push(api)
+    const chartOptions = merge(
+      getChartOptions(defaultChartOptions, this.paneId),
+      getChartBarSpacingOptions(this.paneId, 500),
+      {
+        timeScale: {
+          visible: false,
+          barSpacing: 4,
+          rightOffset: Math.ceil((500 * 0.05) / 4)
+        },
+        rightPriceScale: {
+          visible: false
+        },
+        leftPriceScale: {
+          visible: false
         }
       }
-    }
-
-    const watermarkVisibility = chartOptions.watermark.visible
-    this.chartInstance.applyOptions({
-      watermark: {
-        visible: false
-      }
-    })
-
-    let chartCanvas = this.chartInstance.takeScreenshot()
-
-    for (const api of hiddenApis) {
-      api.applyOptions({
-        visible: true
-      })
-    }
-
-    this.chartInstance.applyOptions({
-      watermark: {
-        visible: watermarkVisibility
-      }
-    })
-
-    if (priceScale) {
-      const indicatorScaleMargins = priceScale.options().scaleMargins
-
-      if (indicatorScaleMargins) {
-        scaleMargins = indicatorScaleMargins
-      }
-    }
-
-    const originalWidth = chartCanvas.width
-    const originalHeight = chartCanvas.height
-    const right = this.axis.right * pxRatio
-    const left = this.axis.left * pxRatio
-    const time = this.axis.time * pxRatio
-    const effectiveChartWidth = originalWidth - (left + right)
-    const effectiveChartHeight = originalHeight - time
-    const scrollPosition = Math.max(
-      0,
-      this.chartInstance.timeScale().scrollPosition()
-    )
-    const visibleLogicalRange = this.chartInstance
-      .timeScale()
-      .getVisibleLogicalRange()
-    const barSpacing = this.getBarSpacing(visibleLogicalRange)
-    const widthOfPart = scrollPosition * barSpacing * pxRatio
-    const topMargin = scaleMargins.top * effectiveChartHeight
-    const bottomMargin = scaleMargins.bottom * effectiveChartHeight
-    const cropHeight = effectiveChartHeight - topMargin - bottomMargin
-    const tempCanvas = document.createElement('canvas')
-    const sourceWidth = effectiveChartWidth - widthOfPart
-    const sourceHeight = cropHeight
-    tempCanvas.width = 420 * pxRatio
-    tempCanvas.height = 210 * pxRatio
-    const tempContext = tempCanvas.getContext('2d')
-    tempContext.drawImage(
-      chartCanvas,
-      this.axis.left,
-      topMargin,
-      sourceWidth,
-      sourceHeight,
-      0,
-      0,
-      tempCanvas.width,
-      tempCanvas.height
     )
 
-    chartCanvas = tempCanvas
+    const chartElement = document.createElement('div')
+    chartElement.style.width = `${500}px`
+    chartElement.style.height = `${100}px`
+    chartElement.style.position = 'fixed'
+    chartElement.style.visibility = 'hidden'
+    document.body.appendChild(chartElement)
 
+    const chartInstance = createTVChart(chartElement, chartOptions) as IChartApi
+
+    const apis = {}
+    for (const loadedIndicator of this.loadedIndicators) {
+      for (let i = 0; i < loadedIndicator.apis.length; i++) {
+        const api = loadedIndicator.apis[i]
+        const { id } = api
+
+        apis[id] = {
+          original: api
+        }
+
+        const serieType = api.seriesType()
+        const options = getSerieOptions(
+          loadedIndicator,
+          loadedIndicator.model.plots[i]
+        )
+
+        apis[id].copy = chartInstance[`add${serieType}Series`](options)
+        apis[id].copy.id = id
+        apis[id].visible = loadedIndicator.id === indicatorId
+        loadedIndicator.apis[i] = apis[id].copy
+      }
+    }
+
+    const { computedSeries } = this.computeBars(
+      this.chartCache.chunks.length
+        ? this.chartCache.chunks.reduce(
+            (bars, chunk) => bars.concat(chunk.bars),
+            []
+          )
+        : []
+    )
+
+    for (const loadedIndicator of this.loadedIndicators) {
+      for (let i = 0; i < loadedIndicator.apis.length; i++) {
+        const { id } = loadedIndicator.apis[i]
+        loadedIndicator.apis[i] = apis[id].original
+      }
+    }
+
+    for (const apiId in computedSeries) {
+      apis[apiId].copy.setData(computedSeries[apiId])
+    }
+
+    await sleep(1)
+
+    for (const apiId in apis) {
+      if (!apis[apiId].visible) {
+        apis[apiId].copy.applyOptions({
+          visible: false
+        })
+      }
+    }
+
+    const chartCanvas = chartInstance.takeScreenshot()
     const blob = await new Promise<Blob>(resolve =>
       chartCanvas.toBlob(blob => resolve(blob))
     )
+    const { libraryId } = store.state[this.paneId].indicators[indicatorId]
+    workspacesService.saveIndicatorPreview(libraryId, blob)
 
-    workspacesService.saveIndicatorPreview(indicatorId, blob)
+    for (const apiId in apis) {
+      chartInstance.removeSeries(apis[apiId].copy)
+    }
+    chartInstance.remove()
+
+    document.body.removeChild(chartElement)
   }
 
   toggleTimeframeDropdown(event) {

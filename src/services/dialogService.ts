@@ -129,7 +129,7 @@ class DialogService {
 
   async openIndicator(paneId: string, indicatorId: string) {
     return this.open(
-      (await import('@/components/chart/IndicatorDialog.vue')).default,
+      (await import('@/components/indicators/IndicatorDialog.vue')).default,
       {
         paneId,
         indicatorId
