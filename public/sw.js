@@ -37,7 +37,7 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', function (event) {
   event.notification.close()
 
-  let url = url.origin
+  let url = 'https://aggr.trade'
 
   if (event.notification.data.url) {
     url = event.notification.data.url
@@ -48,9 +48,9 @@ self.addEventListener('notificationclick', function (event) {
       .matchAll({
         type: 'window'
       })
-      .then(function (clients) {
-        for (let i = 0; i < clients.length; i++) {
-          const client = clients[i]
+      .then(function (clientsArr) {
+        for (let i = 0; i < clientsArr.length; i++) {
+          const client = clientsArr[i]
           if (client.url == url && 'focus' in client) {
             return client.focus()
           }

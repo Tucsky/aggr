@@ -1,5 +1,5 @@
 import store from '@/store'
-import { getApiUrl, getSwUrl, handleFetchError } from '@/utils/helpers'
+import { getApiUrl, handleFetchError } from '@/utils/helpers'
 import aggregatorService from './aggregatorService'
 import dialogService from './dialogService'
 import { formatMarketPrice } from './productsService'
@@ -115,14 +115,15 @@ class AlertService {
     this._promiseOfSync = new Promise<void>(resolve => {
       // recover recent triggers
       navigator.serviceWorker.ready.then(async registration => {
-        await this.markAlertsAsTriggered(
-          (await registration.getNotifications()).map(notification => ({
+        const notifications = (await registration.getNotifications()).map(
+          notification => ({
             price: notification.data.price,
             direction: notification.data.direction,
             message: notification.data.message,
             market: notification.data.market
-          }))
+          })
         )
+        await this.markAlertsAsTriggered(notifications)
 
         resolve()
       })
@@ -197,8 +198,9 @@ class AlertService {
     }
 
     if ('serviceWorker' in navigator) {
+      const base_url = import.meta.env.VITE_APP_BASE_PATH || '/'
       const register = await navigator.serviceWorker.getRegistration(
-        getSwUrl(import.meta.env.MODE)
+        `${base_url}sw.js`
       )
 
       this.pushSubscription = JSON.parse(

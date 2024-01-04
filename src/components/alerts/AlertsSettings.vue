@@ -6,14 +6,7 @@
     @change="toggleAlerts($event)"
   >
     <p class="mt0 text-color-50">
-      <i class="icon-info"></i> Triggers using the
-      <span
-        v-tippy
-        title="for example BTCUSD alerts will use avg. price of 26 markets across 13 exchanges and not the one you have on screen"
-      >
-        average price
-      </span>
-      of a coin.
+      <i class="icon-info"></i> Uses average price of the coin
     </p>
     <div class="column">
       <div class="form-group">

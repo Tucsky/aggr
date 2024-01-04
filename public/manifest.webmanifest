@@ -18,7 +18,5 @@
     }
   ],
   "theme_color": "#171b29",
-  "background_color": "#171b29",
-  "swDest": "build/sw.js",
-  "swSrc": "src/sw.js"
+  "background_color": "#171b29"
 }
