@@ -54,23 +54,23 @@
   &.btn {
     border: 1px solid var(--theme-background-200);
   }
-}
 
-textarea.form-control {
-  font-family: $font-monospace;
-  line-height: 1.4;
-  height: auto;
-  width: 100%;
-  max-width: 100%;
-  flex-grow: 1;
-  padding: 1em;
-  background-color: var(--theme-color-o10);
-  border-color: rgba(black, 0.25);
-  border-radius: 4px;
-  font-size: 12px;
-
-  &:focus {
-    border-color: var(--theme-buy-base);
+  &.-code {
+    font-family: $font-monospace;
+    line-height: 1.4;
+    height: auto;
+    width: 100%;
+    max-width: 100%;
+    flex-grow: 1;
+    padding: 1em;
+    background-color: var(--theme-color-o10);
+    border-color: rgba(black, 0.25);
+    border-radius: 4px;
+    font-size: 12px;
+  
+    &:focus {
+      border-color: var(--theme-buy-base);
+    }
   }
 }
 

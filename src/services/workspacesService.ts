@@ -640,16 +640,20 @@ class WorkspacesService {
       })
     )
 
-    const optionals = {
-      displayName: indicator.displayName || originalIndicator.displayName,
-      description: indicator.description || originalIndicator.description,
-      preview: indicator.preview || originalIndicator.preview,
-      enabled: indicator.enabled || originalIndicator.enabled
-    }
+    const optionals = [
+      'displayName',
+      'description',
+      'preview',
+      'enabled',
+      'author',
+      'pr'
+    ]
 
-    for (const key in optionals) {
-      if (optionals[key]) {
-        payload[key] = optionals[key]
+    for (const key of optionals) {
+      if (typeof indicator[key] !== 'undefined') {
+        payload[key] = indicator[key]
+      } else if (typeof originalIndicator[key] !== 'undefined') {
+        payload[key] = originalIndicator[key]
       }
     }
 

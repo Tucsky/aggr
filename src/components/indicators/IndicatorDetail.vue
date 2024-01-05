@@ -12,20 +12,86 @@
           <img v-if="image" :src="image" />
         </div>
         <div class="indicator-detail__content">
-          <div class="d-flex">
-            <div class="indicator-detail__name">{{ indicator.name }}</div>
+          <div class="indicator-detail__name">
+            <div @dblclick="editName">
+              {{ indicator.displayName || indicator.name }}
+            </div>
+
+            <Btn
+              class="-text -small indicator-detail__toggle"
+              @click="toggleDropdown"
+            >
+              <i class="icon-more"></i>
+            </Btn>
           </div>
-          <p>{{ indicator.description }}</p>
+          <div class="indicator-detail__detail">
+            <p
+              class="indicator-detail__description"
+              @dblclick="editDescription"
+            >
+              {{ indicator.description || 'Add description' }}
+            </p>
+            <ul class="indicator-detail__metadatas">
+              <li
+                v-if="indicator.author"
+                title="Author"
+                v-tippy="{ placement: 'right', distance: 24 }"
+              >
+                <span>By</span>
+                <span class="indicator-detail__metadatas-value">{{
+                  indicator.author
+                }}</span>
+              </li>
+              <li
+                v-if="dates.length"
+                :title="dates[dateIndex].title"
+                v-tippy="{ placement: 'right', distance: 24 }"
+                @click="dateIndex = (dateIndex + 1) % dates.length"
+              >
+                <span>{{ dates[dateIndex].label }}</span>
+                <span class="indicator-detail__metadatas-value">{{
+                  dates[dateIndex].value
+                }}</span>
+              </li>
+              <li
+                v-if="indicator.pr"
+                title="Publish request"
+                v-tippy="{ placement: 'right', distance: 24 }"
+              >
+                <span>Publish</span>
+                <a
+                  target="_blank"
+                  :href="indicator.pr"
+                  class="indicator-detail__metadatas-value"
+                >
+                  #{{ prId }}
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
         <div class="indicator-detail__footer">
           <Btn
             v-if="!isInstalled"
             @click="installIndicator"
-            :loading="isLoading"
+            :loading="isInstalling"
             >Install</Btn
           >
-          <Btn v-else @click="addToChart">Add to chart</Btn>
+          <Btn v-else @click="addToChart"
+            ><i class="icon-plus mr4"></i> Add</Btn
+          >
         </div>
+
+        <dropdown v-model="dropdownTrigger">
+          <Btn
+            :loading="isPublishing"
+            class="dropdown-item -cases"
+            @click="publish"
+          >
+            <i class="icon-external-link-square-alt"></i>
+            <span>Publish</span>
+          </Btn>
+        </dropdown>
       </div>
     </div>
   </transition>
@@ -34,6 +100,9 @@
 <script>
 import Btn from '@/components/framework/Btn.vue'
 import importService from '@/services/importService'
+import { ago } from '@/utils/helpers'
+import dialogService from '@/services/dialogService'
+import workspacesService from '@/services/workspacesService'
 export default {
   props: {
     indicator: {
@@ -47,7 +116,10 @@ export default {
   data() {
     return {
       opened: false,
-      isLoading: false
+      isInstalling: false,
+      isPublishing: false,
+      dropdownTrigger: null,
+      dateIndex: 0
     }
   },
   computed: {
@@ -61,6 +133,48 @@ export default {
 
       if (this.indicator.imagePath) {
         return `${import.meta.env.VITE_APP_LIB_URL}${this.indicator.imagePath}`
+      }
+
+      return null
+    },
+    createdAt() {
+      if (this.indicator.createdAt) {
+        return `${ago(this.indicator.createdAt)} ago`
+      }
+
+      return null
+    },
+    updatedAt() {
+      if (this.indicator.updatedAt) {
+        return `${ago(this.indicator.updatedAt)} ago`
+      }
+
+      return null
+    },
+    dates() {
+      const arr = []
+
+      if (this.indicator.updatedAt) {
+        arr.push({
+          title: 'Updated at',
+          label: 'Updated',
+          value: `${ago(this.indicator.updatedAt)} ago`
+        })
+      }
+
+      if (this.indicator.createdAt) {
+        arr.push({
+          title: 'Created at',
+          label: 'Created',
+          value: `${ago(this.indicator.createdAt)} ago`
+        })
+      }
+
+      return arr
+    },
+    prId() {
+      if (this.indicator.pr) {
+        return this.indicator.pr.split('/').pop()
       }
 
       return null
@@ -86,6 +200,13 @@ export default {
   methods: {
     close() {
       this.opened = false
+    },
+    toggleDropdown(event) {
+      if (event && !this.dropdownTrigger) {
+        this.dropdownTrigger = event.currentTarget
+      } else {
+        this.dropdownTrigger = null
+      }
     },
     onBackdropClick(event) {
       if (event.target === event.currentTarget) {
@@ -133,11 +254,120 @@ export default {
           title: 'Failed to fetch indicator'
         })
       } finally {
-        this.isLoading = false
+        this.isInstalling = false
       }
     },
     addToChart() {
       this.$emit('add', this.indicator)
+    },
+    async editName() {
+      if (!this.isInstalled) {
+        return
+      }
+
+      const name = await dialogService.prompt({
+        label: 'Name',
+        action: 'Rename',
+        placeholder: this.indicator.name
+      })
+
+      if (name && name !== this.indicator.name) {
+        await workspacesService.saveIndicator({
+          ...this.indicator,
+          name
+        })
+
+        this.$emit('reload')
+      }
+    },
+    async editDescription() {
+      if (!this.isInstalled) {
+        return
+      }
+
+      const description = await dialogService.prompt({
+        label: 'Description',
+        action: 'Edit',
+        placeholder: this.indicator.description,
+        input: this.indicator.description,
+        tag: 'textarea'
+      })
+
+      if (description && description !== this.indicator.description) {
+        await workspacesService.saveIndicator({
+          ...this.indicator,
+          description
+        })
+
+        this.$emit('reload')
+      }
+    },
+    async publish() {
+      if (!this.indicator.preview) {
+        dialogService.confirm({
+          cancel: false,
+          message: `Indicator's preview is mandatory for publishing. Just save it once it's added on a chart to generate the thumbnail !`
+        })
+        return
+      }
+
+      this.isPublishing = true
+
+      let author = localStorage.getItem('author')
+
+      if (!author) {
+        author = await dialogService.prompt({
+          action: 'Name yourself',
+          label: 'Username'
+        })
+
+        if (!author) {
+          this.isPublishing = false
+          return
+        }
+
+        localStorage.setItem('author', author)
+      }
+
+      try {
+        const jsonData = {
+          ...this.indicator,
+          preview: undefined,
+          author
+        }
+
+        const formData = new FormData()
+        const jsonBlob = new Blob([JSON.stringify(jsonData)], {
+          type: 'application/json'
+        })
+        formData.append('jsonFile', jsonBlob, 'indicator.json')
+        formData.append('pngFile', this.indicator.preview, 'indicator.png')
+
+        const response = await fetch(
+          `${import.meta.env.VITE_APP_LIB_URL}publish/indicators`,
+          {
+            method: 'POST',
+            body: formData
+          }
+        )
+
+        const { url } = await response.json()
+
+        workspacesService.saveIndicator({
+          ...this.indicator,
+          pr: url
+        })
+
+        this.$emit('reload')
+      } catch (error) {
+        console.error(error)
+        this.$store.dispatch('app/showNotice', {
+          type: 'error',
+          title: 'Failed to publish indicator'
+        })
+      } finally {
+        this.isPublishing = false
+      }
     }
   }
 }
@@ -185,6 +415,14 @@ export default {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--theme-color-base);
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  &__toggle {
+    margin: -0.25rem -0.25rem 0 0;
   }
 
   &__wrapper {
@@ -203,9 +441,41 @@ export default {
     padding: 1rem;
   }
 
+  &__metadatas {
+    $metadatas: &;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    flex-shrink: 0;
+    gap: 1rem;
+    margin: 0.25rem 0 0;
+    font-size: 0.75rem;
+    padding: 0;
+    color: var(--theme-buy-base);
+
+    li {
+      display: flex;
+      align-items: flex-end;
+      flex-direction: column;
+
+      #{$metadatas}-value {
+        font-size: 1rem;
+        color: var(--theme-buy-200);
+      }
+
+      a {
+        text-decoration: underline;
+      }
+    }
+  }
+
   &__footer {
     padding: 1rem;
     text-align: right;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
   }
 
   &-enter-active {
@@ -232,6 +502,16 @@ export default {
     #{$self}__wrapper {
       transform: translateY(100%);
     }
+  }
+
+  &__description {
+    margin: 0;
+    flex-grow: 1;
+  }
+
+  &__detail {
+    display: flex;
+    gap: 1rem;
   }
 }
 </style>

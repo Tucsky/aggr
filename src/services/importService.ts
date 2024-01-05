@@ -130,6 +130,7 @@ class ImportService {
     const indicator = await workspacesService.saveIndicator({
       name,
       displayName: json.data.displayName || name,
+      author: json.data.author || null,
       script: json.data.script || '',
       options: json.data.options || {},
       description: json.data.description || null,

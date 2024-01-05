@@ -8,12 +8,21 @@
       <div class="form-group">
         <label v-if="label">{{ label }}</label>
         <input
+          v-if="tag === 'input'"
           type="text"
           class="form-control w-100"
           :placeholder="placeholder"
           v-model="value"
           v-autofocus
           v-on:keyup.enter="submit"
+        />
+        <textarea
+          v-else
+          type="text"
+          class="form-control w-100"
+          :placeholder="placeholder"
+          v-model="value"
+          v-autofocus
         />
       </div>
     </form>
@@ -34,6 +43,10 @@ import DialogMixin from '@/mixins/dialogMixin'
 
 export default {
   props: {
+    tag: {
+      type: String,
+      default: 'input'
+    },
     question: {
       type: String
     },
@@ -62,7 +75,7 @@ export default {
   data: () => ({
     value: ''
   }),
-  created() {
+  mounted() {
     if (this.input && this.input.length) {
       this.value = this.input
     }

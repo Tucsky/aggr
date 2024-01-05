@@ -37,6 +37,7 @@ import IndicatorLibrarySearchBar from '@/components/indicators/IndicatorLibraryS
 import IndicatorLibraryResults from '@/components/indicators/IndicatorLibraryResults.vue'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
+import importService from '@/services/importService'
 
 export default {
   components: {
@@ -73,7 +74,10 @@ export default {
     },
     async removeIndicator(indicator = this.selectedIndicator) {
       if (
-        await dialogService.confirm(`Delete indicator "${indicator.name}" ?`)
+        await dialogService.confirm({
+          message: `Delete indicator "${indicator.name}" ?<br><br><code class="-filled"><small>#${indicator.id}</small></code>`,
+          html: true
+        })
       ) {
         workspacesService.deleteIndicator(indicator.id)
 
@@ -84,9 +88,10 @@ export default {
       this.$emit('add-to-chart', indicator)
     },
     async duplicateIndicator(indicator = this.selectedIndicator) {
-      this.$store.dispatch(this.paneId + '/duplicateIndicator', {
-        paneId: this.paneId,
-        indicatorId: indicator.id
+      importService.importIndicator({
+        type: 'indicator',
+        name: 'indicator:' + indicator.name,
+        data: indicator
       })
     },
     async downloadIndicator(indicator = this.selectedIndicator) {

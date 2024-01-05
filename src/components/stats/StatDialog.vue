@@ -77,7 +77,7 @@
         ></span
       ></label>
       <textarea
-        class="form-control"
+        class="form-control -code"
         rows="2"
         spellcheck="false"
         :value="color"
@@ -143,7 +143,7 @@
         ></span
       ></label>
       <textarea
-        class="form-control"
+        class="form-control -code"
         rows="5"
         spellcheck="false"
         :value="input"
@@ -204,12 +204,12 @@ export default {
       return store.state[this.paneId].buckets[this.bucketId].color
     },
     conditionnalColor: function () {
-	    const bucket = store.state[this.paneId].buckets[this.bucketId];
-		
-		if (typeof bucket.conditionnalColor === 'undefined') {
-			this.setConditionnalColor(false);
-		}
-		return bucket.conditionnalColor;
+      const bucket = store.state[this.paneId].buckets[this.bucketId]
+
+      if (typeof bucket.conditionnalColor === 'undefined') {
+        this.setConditionnalColor(false)
+      }
+      return bucket.conditionnalColor
     },
     enabled: function () {
       return store.state[this.paneId].buckets[this.bucketId].enabled

@@ -32,7 +32,7 @@
   &__content {
     display: flex;
     flex-direction: column;
-    border-radius: $border-radius-base;
+    border-radius: 0.75rem;
     background-color: var(--theme-background-100);
     box-shadow: rgba(0, 0, 0, 0.2) 0px 18px 50px -10px;
     color: var(--theme-color-100);

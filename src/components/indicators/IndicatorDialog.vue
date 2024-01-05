@@ -293,7 +293,7 @@
 
     <template v-slot:footer>
       <presets
-        :type="'indicator:' + indicatorId"
+        :type="'indicator:' + libraryId"
         class="mr8 -left"
         :adapter="getIndicatorPreset"
         :placeholder="presetPlaceholder"

@@ -48,6 +48,8 @@ export interface IndicatorSettings {
   libraryId?: string
   name?: string
   displayName?: string
+  author?: string
+  pr?: string
   description?: string
   enabled?: boolean
   script?: string

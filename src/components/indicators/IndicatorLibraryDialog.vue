@@ -30,17 +30,18 @@
     >
       <InstalledIndicators
         v-if="tab === 'installed'"
-        key="installed-indicator"
+        key="installed"
+        ref="installed"
         :pane-id="paneId"
         @close="close"
-        @selected="setSelection"
+        @selected="selection = $event"
       />
       <CommunityIndicators
         v-else-if="tab === 'community'"
-        key="community-indicator"
+        key="community"
         :pane-id="paneId"
         @close="close"
-        @selected="setSelection"
+        @selected="selection = $event"
       />
     </TransitionHeight>
 
@@ -49,6 +50,7 @@
       :indicator="selection"
       @close="selection = null"
       @add="addToChart"
+      @reload="reloadSelection"
     />
 
     <template v-slot:footer>
@@ -208,6 +210,17 @@ export default {
     },
     setSelection(indicator) {
       this.selection = indicator
+
+      if (this.$refs.installed) {
+        this.$refs.installed.getIndicators()
+      }
+    },
+    async reloadSelection() {
+      if (!this.selection) {
+        return
+      }
+
+      this.setSelection(await workspacesService.getIndicator(this.selection.id))
     }
   }
 }
