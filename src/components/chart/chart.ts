@@ -389,6 +389,10 @@ export default class Chart {
       })
     }
 
+    if (key === 'priceScaleId') {
+      this.ensurePriceScale(indicator.options)
+    }
+
     if (indicator.model.options[key] && indicator.model.options[key].rebuild) {
       this.refreshIndicatorAdapter(indicator, this.activeRenderer)
       this.redrawIndicator(id)
@@ -1922,10 +1926,12 @@ export default class Chart {
       return this._priceApi
     }
 
-    const price = this.loadedIndicators.find(a => a.id === 'price')
+    const price = this.loadedIndicators.find(
+      a => a.id === 'price' || a.libraryId === 'price'
+    )
 
     if (price && price.options.visible !== false) {
-      this._priceIndicatorId = 'price'
+      this._priceIndicatorId = price.id
       this._priceApi = price.apis[0]
       return this._priceApi
     }

@@ -34,6 +34,7 @@
         ref="installed"
         :pane-id="paneId"
         @close="close"
+        @add="addToChart"
         @selected="selection = $event"
       />
       <CommunityIndicators
@@ -49,12 +50,12 @@
       v-if="selection"
       :indicator="selection"
       @close="selection = null"
-      @add="addToChart"
+      @add="addToChart($event, true)"
       @reload="reloadSelection"
     />
 
     <template v-slot:footer>
-      <button class="btn -blue -large -cases -file">
+      <button class="btn -theme -large -cases -file">
         <input
           type="file"
           class="input-file"
@@ -165,12 +166,15 @@ export default {
         ok: 'Ok'
       })
     },
-    async addToChart(indicator) {
+    async addToChart(indicator, close = false) {
       this.$store.dispatch(
         this.paneId + '/addIndicator',
         await workspacesService.incrementIndicatorUsage(indicator.id)
       )
-      this.close()
+
+      if (close) {
+        this.close()
+      }
     },
     async createIndicator(indicator = {}) {
       if (!this.paneId) {

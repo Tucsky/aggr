@@ -6,17 +6,6 @@
     <p class="mx0 -nl text-color-50" v-if="!html" v-text="message"></p>
     <p class="mx0 text-color-50" v-else v-html="message"></p>
     <template v-if="showFooter" v-slot:footer>
-      <Btn
-        type="button"
-        class="mr8"
-        :class="cancelClass"
-        @click="close(false)"
-        @mousedown.native.prevent
-        v-if="cancel"
-      >
-        <i v-if="cancelIcon" class="mr4" :class="cancelIcon"></i> {{ cancel }}
-      </Btn>
-
       <button
         v-for="action in actions"
         :key="action.label"
@@ -27,6 +16,16 @@
       >
         {{ action.label }}
       </button>
+      <Btn
+        type="button"
+        class="mr8"
+        :class="cancelClass"
+        @click="close(false)"
+        @mousedown.native.prevent
+        v-if="cancel"
+      >
+        <i v-if="cancelIcon" class="mr4" :class="cancelIcon"></i> {{ cancel }}
+      </Btn>
 
       <Btn
         v-if="ok"

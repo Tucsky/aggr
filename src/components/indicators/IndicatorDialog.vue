@@ -18,7 +18,6 @@
           <code
             class="dialog__subtitle indicator-dialog__id -filled"
             @click="copyIndicatorId"
-            @dblclick="editDescription"
             :title="libraryId"
             v-tippy
             >{{ displayId }}</code
@@ -689,19 +688,6 @@ export default {
         })
       }
     },
-    async editDescription() {
-      const description = await dialogService.prompt({
-        action: 'Description',
-        input: this.description
-      })
-
-      if (typeof description === 'string' && description !== this.description) {
-        await this.$store.commit(this.paneId + '/UPDATE_DESCRIPTION', {
-          id: this.indicatorId,
-          description
-        })
-      }
-    },
     async downloadIndicator() {
       this.$store.dispatch(this.paneId + '/downloadIndicator', this.indicatorId)
     },
@@ -723,7 +709,10 @@ export default {
         return
       }
 
-      this.$store.dispatch(this.paneId + '/undoIndicator', this.indicatorId)
+      this.$store.dispatch(this.paneId + '/undoIndicator', {
+        libraryId: this.libraryId,
+        indicatorId: this.indicatorId
+      })
     },
     async getIndicatorPreset(originalPreset: Preset) {
       const optionsKeys = [

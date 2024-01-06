@@ -4,7 +4,6 @@ import {
   downloadAnything,
   randomString,
   sleep,
-  slugify,
   uniqueName
 } from '@/utils/helpers'
 import { scheduleSync } from '@/utils/store'
@@ -242,7 +241,7 @@ const actions = {
 
     commit('SET_INDICATOR_OPTION', { id, key, value, silent })
 
-    if (!state.indicators[id].unsavedChanges) {
+    if (key !== 'priceScaleId' && !state.indicators[id].unsavedChanges) {
       commit('FLAG_INDICATOR_AS_UNSAVED', id)
     }
 
@@ -301,11 +300,6 @@ const actions = {
   },
   renameIndicator({ commit, state }, { id, name }) {
     const indicator = state.indicators[id]
-
-    indicator.libraryId = uniqueName(
-      slugify(name),
-      Object.values(state.indicators).map(indicator => indicator.libraryId)
-    )
     indicator.name = name
     commit('UPDATE_INDICATOR_DISPLAY_NAME', id)
   },
@@ -334,18 +328,31 @@ const actions = {
       }
     }
   },
-  async undoIndicator({ state, commit }, indicatorId) {
-    const savedIndicator = await workspacesService.getIndicator(indicatorId)
+  async undoIndicator({ state, commit }, { libraryId, indicatorId }) {
+    const savedIndicator = await workspacesService.getIndicator(libraryId)
 
     if (!savedIndicator) {
       this.dispatch('app/showNotice', {
-        title: `Indicator ${indicatorId} doesn't exist in your library, nothing to rollback to.`,
+        title: `Indicator ${libraryId} doesn't exist in your library, nothing to rollback to.`,
         type: 'error'
       })
       return
     }
 
-    state.indicators[indicatorId] = savedIndicator
+    const oldOptions = state.indicators[indicatorId].options as any
+    const newOptions = savedIndicator.options as any
+
+    state.indicators[indicatorId] = {
+      ...savedIndicator,
+      id: indicatorId,
+      libraryId,
+      options: {
+        ...newOptions,
+        priceScaleId: oldOptions.priceScaleId,
+        scaleMargins: oldOptions.scaleMargins
+      } as any
+    }
+
     commit('SET_INDICATOR_SCRIPT', { id: indicatorId })
   },
   toggleMarkets(
@@ -478,9 +485,6 @@ const mutations = {
   ADD_INDICATOR(state, indicator) {
     Vue.set(state.indicators, indicator.id, indicator)
     state.indicatorOrder.push(indicator.id)
-  },
-  UPDATE_DESCRIPTION(state, { id, description }) {
-    Vue.set(state.indicators[id], 'description', description)
   },
   REMOVE_INDICATOR(state, id) {
     Vue.delete(state.indicators, id)

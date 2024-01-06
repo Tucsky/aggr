@@ -1,7 +1,7 @@
 <template>
   <div class="installed-indicators">
-    <IndicatorLibrarySearchBar v-model="query" />
-    <IndicatorLibraryResults
+    <SearchBar v-model="query" />
+    <IndicatorTable
       class="table--inset"
       :indicators="indicators"
       :query="query"
@@ -33,22 +33,17 @@
 
 <script>
 import { downloadAnything } from '@/utils/helpers'
-import IndicatorLibrarySearchBar from '@/components/indicators/IndicatorLibrarySearchBar.vue'
-import IndicatorLibraryResults from '@/components/indicators/IndicatorLibraryResults.vue'
+import SearchBar from '@/components/framework/SearchBar.vue'
+import IndicatorTable from '@/components/indicators/IndicatorTable.vue'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import importService from '@/services/importService'
 
 export default {
+  name: 'InstalledIndicators',
   components: {
-    IndicatorLibraryResults,
-    IndicatorLibrarySearchBar
-  },
-  props: {
-    paneId: {
-      type: String,
-      required: true
-    }
+    IndicatorTable,
+    SearchBar
   },
   data: () => ({
     indicators: [],
@@ -85,7 +80,7 @@ export default {
       }
     },
     async selectIndicator(indicator = this.selectedIndicator) {
-      this.$emit('add-to-chart', indicator)
+      this.$emit('add', indicator)
     },
     async duplicateIndicator(indicator = this.selectedIndicator) {
       importService.importIndicator({

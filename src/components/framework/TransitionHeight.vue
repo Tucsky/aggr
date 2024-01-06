@@ -211,7 +211,7 @@ export default {
 .slide-fade-left {
   &-enter-active,
   &-leave-active {
-    transition: all 0.15s $ease-out-expo;
+    transition: all 0.25s $ease-out-expo;
   }
 
   &-enter,
@@ -222,21 +222,21 @@ export default {
 
 .slide-fade-left {
   &-enter {
-    transform: translateX((-1.5rem));
+    transform: translateX(-2rem);
   }
 
   &-leave-to {
-    transform: translateX(1.5rem);
+    transform: translateX(2rem);
   }
 }
 
 .slide-fade-right {
   &-enter {
-    transform: translateX(1.5rem);
+    transform: translateX(2rem);
   }
 
   &-leave-to {
-    transform: translateX((-1.5rem));
+    transform: translateX(-2rem);
   }
 }
 </style>

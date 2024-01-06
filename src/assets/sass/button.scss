@@ -40,22 +40,18 @@ button {
   cursor: pointer;
   background-color: var(--theme-buy-base);
   color: var(--theme-buy-color);
+  text-decoration: none;
 
-  .btn__suffix {
+  &__suffix {
     position: relative;
     z-index: 1;
-    padding: 0.5rem;
-    margin: -0.5rem -0.5rem -0.5rem 0.5rem;
+    padding: calc(0.5em + 1px);
+    margin: calc(-0.5em - 1px) calc(-0.5em - 1px) calc(-0.5em - 1px) 0.5em;
     border-radius: 0 0.25rem 0.25rem 0;
 
     &:hover {
       background-color: rgba(white, 0.2);
     }
-  }
-
-  .lds-spinner {
-    font-size: inherit;
-    margin-left: 0.5em;
   }
   
   &:focus {
@@ -211,7 +207,7 @@ button {
   
   &.-green {
     background-color: var(--theme-buy-50);
-    border: 1px solid var(--theme-buy-base);
+    border: 1px solid var(--theme-buy-100);
     color: var(--theme-buy-color);
 
     &.-text {

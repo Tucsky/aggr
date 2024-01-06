@@ -334,13 +334,15 @@ export function getChartScales(
         indicator.options.priceScaleId &&
         !scales[indicator.options.priceScaleId]
       ) {
-        scales[indicator.options.priceScaleId] = indicator.name || indicator.id
+        scales[indicator.options.priceScaleId] = `${
+          indicator.name
+        } (${indicator.id.slice(0, 8)}${indicator.id.length > 8 ? '...' : ''})`
       }
 
       return scales
     },
     {
-      ...(indicatorId ? { [indicatorId]: `* Indicator's scale (📍)` } : {}),
+      ...(indicatorId ? { [indicatorId]: `Own scale 📍` } : {}),
       left: 'Left ←',
       right: 'Right →'
     }

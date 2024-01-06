@@ -12,17 +12,32 @@
           <img v-if="image" :src="image" />
         </div>
         <div class="indicator-detail__content">
-          <div class="indicator-detail__name">
-            <div @dblclick="editName">
-              {{ indicator.displayName || indicator.name }}
-            </div>
+          <div class="indicator-detail__head">
+            <div class="indicator-detail__name">
+              <div @dblclick="editName">
+                {{ indicator.displayName || indicator.name }}
+              </div>
 
-            <Btn
-              class="-text -small indicator-detail__toggle"
-              @click="toggleDropdown"
-            >
-              <i class="icon-more"></i>
-            </Btn>
+              <Btn
+                class="-text -small indicator-detail__toggle"
+                @click="toggleDropdown"
+              >
+                <i class="icon-more"></i>
+              </Btn>
+            </div>
+            <small class="indicator-detail__subtitle">
+              <span v-if="indicator.author">
+                by
+                <a :href="authorUrl" target="_blank">{{ indicator.author }}</a>
+              </span>
+              <span
+                :title="dates[dateIndex].title"
+                v-tippy="{ placement: 'top', distance: 24 }"
+                @click="dateIndex = (dateIndex + 1) % dates.length"
+              >
+                {{ dates[dateIndex].value }}
+              </span>
+            </small>
           </div>
           <div class="indicator-detail__detail">
             <p
@@ -32,27 +47,6 @@
               {{ indicator.description || 'Add description' }}
             </p>
             <ul class="indicator-detail__metadatas">
-              <li
-                v-if="indicator.author"
-                title="Author"
-                v-tippy="{ placement: 'right', distance: 24 }"
-              >
-                <span>By</span>
-                <span class="indicator-detail__metadatas-value">{{
-                  indicator.author
-                }}</span>
-              </li>
-              <li
-                v-if="dates.length"
-                :title="dates[dateIndex].title"
-                v-tippy="{ placement: 'right', distance: 24 }"
-                @click="dateIndex = (dateIndex + 1) % dates.length"
-              >
-                <span>{{ dates[dateIndex].label }}</span>
-                <span class="indicator-detail__metadatas-value">{{
-                  dates[dateIndex].value
-                }}</span>
-              </li>
               <li
                 v-if="indicator.pr"
                 title="Publish request"
@@ -178,6 +172,11 @@ export default {
       }
 
       return null
+    },
+    authorUrl() {
+      return `${import.meta.env.VITE_APP_LIB_REPO_URL}/tree/main/indicators/${
+        this.indicator.author
+      }`
     }
   },
   watch: {
@@ -358,6 +357,8 @@ export default {
           pr: url
         })
 
+        window.open(url)
+
         this.$emit('reload')
       } catch (error) {
         console.error(error)
@@ -415,10 +416,18 @@ export default {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--theme-color-base);
-    margin-bottom: 1rem;
     display: flex;
     justify-content: space-between;
     gap: 1rem;
+  }
+
+  &__subtitle {
+    display: flex;
+    gap: 0.25rem;
+
+    > span:not(:last-child):after {
+      content: ',';
+    }
   }
 
   &__toggle {
@@ -439,6 +448,9 @@ export default {
 
   &__content {
     padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 
   &__metadatas {
