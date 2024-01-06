@@ -431,6 +431,7 @@ class AudioService {
   ) {
     source.onended = () => {
       gainNode.disconnect()
+      source.onended = null
       this.count--
     }
 
@@ -672,9 +673,46 @@ class AudioService {
     }
   }
 
-  async playOnce(url) {
-    if (await this.loadSoundBuffer(url)) {
-      this.playurl(url, 1, 1, 0, 0, 0, 0, 0.00001, 0.00001)
+  /**
+   * Play a saved audio buffer by it's ID
+   * @param id savedAudioBuffers key
+   * @param duration in ms (optional)
+   */
+  async playOnce(id, duration?) {
+    if (!this.context) {
+      this.connect()
+    }
+
+    try {
+      if (!(await this.loadSoundBuffer(id))) {
+        throw new Error(`Failed to load sound buffer ${id}`)
+      }
+
+      this.count++
+
+      const source = this.context.createBufferSource()
+      source.buffer = AudioService.savedAudioBuffers[id]
+      source.connect(this.output)
+      const currentTime = this.context.currentTime
+      source.start(0)
+
+      if (duration && duration > 0) {
+        const stopTime = currentTime + duration / 1000
+        source.stop(stopTime)
+      }
+
+      await new Promise<void>(resolve => {
+        source.onended = () => {
+          source.disconnect()
+          source.onended = null
+          this.count--
+          resolve()
+        }
+      })
+    } finally {
+      if (!store.state.settings.useAudio && !this.count) {
+        this.disconnect()
+      }
     }
   }
 }

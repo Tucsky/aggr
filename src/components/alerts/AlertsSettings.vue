@@ -64,14 +64,24 @@
         <label for="audio-assistant-source"
           ><i class="icon-music-note mr4"></i> Alert sound</label
         >
-        <button class="btn -file -blue -cases" @change="handleAlertSoundFile">
+        <button class="btn -file -blue -cases">
           <i class="icon-upload mr8"></i> {{ alertSound || 'Browse' }}
+          <i
+            v-if="alertSound"
+            class="icon-volume-high mr8 btn__suffix"
+            @click.stop.prevent="playAlertSound"
+          ></i>
           <i
             v-if="alertSound"
             class="icon-cross mr8 btn__suffix"
             @click.stop.prevent="removeAlertSound"
           ></i>
-          <input type="file" class="input-file" accept="audio/*" />
+          <input
+            type="file"
+            class="input-file"
+            accept="audio/*"
+            @change="handleAlertSoundFile"
+          />
         </button>
       </div>
     </div>
@@ -145,6 +155,10 @@ export default class AlertsSettings extends Vue {
 
   get alertsClick() {
     return this.$store.state.settings.alertsClick
+  }
+
+  get useAudio() {
+    return this.$store.state.settings.useAudio
   }
 
   created() {
@@ -236,6 +250,22 @@ export default class AlertsSettings extends Vue {
     }
 
     this.$store.commit('settings/SET_ALERT_SOUND', null)
+  }
+
+  async playAlertSound() {
+    if (!this.alertSound) {
+      return
+    }
+
+    try {
+      await audioService.playOnce(this.alertSound, 3000)
+    } catch (error) {
+      console.error(error)
+      this.$store.dispatch('app/showNotice', {
+        type: 'error',
+        title: `Failed to play ${this.alertSound}`
+      })
+    }
   }
 }
 </script>
