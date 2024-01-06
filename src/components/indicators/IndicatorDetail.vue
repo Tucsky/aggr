@@ -19,6 +19,7 @@
               </div>
 
               <Btn
+                v-if="isInstalled"
                 class="-text -small indicator-detail__toggle"
                 @click="toggleDropdown"
               >
@@ -302,6 +303,10 @@ export default {
       }
     },
     async publish() {
+      if (!this.isInstalled) {
+        return
+      }
+
       if (!this.indicator.preview) {
         dialogService.confirm({
           cancel: false,

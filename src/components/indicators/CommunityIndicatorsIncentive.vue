@@ -9,7 +9,7 @@
           Introducing Aggr Library
         </h3>
         <Btn
-          v-if="isDismissed"
+          v-if="!isDismissed"
           class="community-indicators-incentive__close -small -text"
           @click="dismiss"
         >
@@ -17,15 +17,13 @@
         </Btn>
       </div>
       <p class="community-indicators-incentive__subtitle">
-        Indicators published to
-        <a href="https://github.com/Tucsky/aggr-lib" target="_blank">
-          aggr-lib
-        </a>
-        will be appear in this list automatically.
+        Indicators that are uploaded to
+        <a :href="repoUrl" target="_blank">aggr-lib</a>
+        will automatically appear in this list.
       </p>
       <Btn
         class="community-indicators-incentive__cta -theme"
-        href="https://github.com/Tucsky/aggr-lib"
+        :href="repoUrl"
         target="_blank"
       >
         <i class="icon-github mr8"></i> Start contributing
@@ -46,7 +44,8 @@ export default {
   data: () => ({
     isDismissed: notificationService.hasDismissed(
       'community-indicators-incentive'
-    )
+    ),
+    repoUrl: import.meta.env.VITE_APP_LIB_REPO_URL
   }),
   methods: {
     dismiss() {
@@ -93,11 +92,16 @@ export default {
     display: flex;
     gap: 1rem;
     justify-content: space-between;
+    align-items: flex-start;
   }
 
   &__title {
     margin: 0;
     color: var(--theme-color-base);
+  }
+
+  &__close {
+    margin: -0.5rem -0.5rem 0 0;
   }
 
   &__subtitle {
