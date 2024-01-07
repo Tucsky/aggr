@@ -171,12 +171,12 @@ export default {
 /* transition-height */
 
 .transition-height {
-  transition: height 0.15s $ease-out-expo;
+  transition: height 0.25s $ease-out-expo;
 
   &-leave-active,
   &-enter-active {
     overflow: hidden;
-    transition: all 0.15s $ease-out-expo;
+    transition: all 0.25s $ease-out-expo;
   }
 
   &-enter,

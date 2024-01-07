@@ -703,8 +703,13 @@ class WorkspacesService {
     return this.db.getAllKeys('indicators')
   }
 
-  deleteIndicator(id: string) {
-    return this.db.delete('indicators', id)
+  async deleteIndicator(id: string) {
+    await this.db.delete('indicators', id)
+
+    store.dispatch('app/showNotice', {
+      type: 'info',
+      title: `Deleted indicator ${id}`
+    })
   }
 
   async savePreset(preset: Preset, type?: string, confirmOverride = true) {

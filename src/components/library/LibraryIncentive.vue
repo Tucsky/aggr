@@ -73,7 +73,7 @@ export default {
     right: 0;
     bottom: 0;
     background-color: var(--theme-background-base);
-    background-image: url(./ideas.webp);
+    background-image: url(./publish-1.png);
     background-size: cover;
     background-position: 0 10%;
     opacity: 0.5;

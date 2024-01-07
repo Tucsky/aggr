@@ -5,7 +5,7 @@
       !navigation.columnWidth && 'indicator-dialog--collapsed-column',
       resizingColumn && 'indicator-dialog--resizing-column'
     ]"
-    size="large"
+    size="wide"
     :mask="false"
     :close-on-escape="false"
     @clickOutside="close"

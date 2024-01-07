@@ -2,7 +2,7 @@
   <Dialog
     ref="dialog"
     class="search-dialog"
-    size="large"
+    size="wide"
     @resize="onResize"
     @clickOutside="hide"
   >
@@ -1302,7 +1302,7 @@ export default {
   }
 
   &__side {
-    width: 15.5rem;
+    width: 13.5rem;
     overflow-y: auto;
     border-right: 1px solid var(--theme-background-150);
     flex-shrink: 0;

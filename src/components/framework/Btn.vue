@@ -1,6 +1,7 @@
 <template>
   <component
     :is="tag"
+    :type="type"
     :href="href"
     :target="target"
     class="btn"

@@ -18,7 +18,8 @@ Vue.use(VueTippy, {
   delay: [200, 0],
   animateFill: false,
   theme: 'dark',
-  boundary: 'window'
+  boundary: 'window',
+  distance: 24
 })
 
 /* eslint-disable vue/multi-word-component-names */

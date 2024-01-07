@@ -5,6 +5,7 @@
       impliedSize && `dialog--size-${impliedSize}`,
       currentSize && `dialog--${currentSize}`,
       contrasted && `dialog--contrasted`,
+      borderless && `dialog--borderless`,
       moved && `dialog--moved`,
       mask && 'dialog--mask'
     ]"
@@ -64,6 +65,10 @@ import { getEventCords } from '../../utils/helpers'
       default: true
     },
     contrasted: {
+      type: Boolean,
+      default: false
+    },
+    borderless: {
       type: Boolean,
       default: false
     },

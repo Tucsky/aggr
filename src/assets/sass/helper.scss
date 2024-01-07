@@ -133,6 +133,18 @@ $unit: 'px';
     flex-wrap: wrap;
   }
 
+  &.-gap4 {
+    gap: 0.25rem;
+  }
+
+  &.-gap8 {
+    gap: 0.5rem;
+  }
+
+  &.-gap16 {
+    gap: 1rem;
+  }
+
   > .-fill {
     flex-basis: 100%;
     max-width: 100%;

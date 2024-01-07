@@ -72,19 +72,24 @@
             :loading="isInstalling"
             >Install</Btn
           >
-          <Btn v-else @click="addToChart"
-            ><i class="icon-plus mr4"></i> Add</Btn
-          >
+          <Btn v-else @click="addToChart">
+            <i class="icon-plus mr4"></i> Add
+          </Btn>
         </div>
 
         <dropdown v-model="dropdownTrigger">
-          <Btn
-            :loading="isPublishing"
+          <btn
+            v-if="communityTabEnabled"
             class="dropdown-item -cases"
+            :loading="isPublishing"
             @click="publish"
           >
             <i class="icon-external-link-square-alt"></i>
             <span>Publish</span>
+          </btn>
+          <Btn class="dropdown-item -cases" @click="edit">
+            <i class="icon-edit"></i>
+            <span>Edit</span>
           </Btn>
         </dropdown>
       </div>
@@ -98,6 +103,9 @@ import importService from '@/services/importService'
 import { ago } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
+import EditResourceDialog from '@/components/library/EditResourceDialog.vue'
+import { openPublishDialog } from '@/components/library/helpers'
+
 export default {
   props: {
     indicator: {
@@ -114,7 +122,8 @@ export default {
       isInstalling: false,
       isPublishing: false,
       dropdownTrigger: null,
-      dateIndex: 0
+      dateIndex: 0,
+      communityTabEnabled: !!import.meta.env.VITE_APP_LIB_URL
     }
   },
   computed: {
@@ -274,7 +283,8 @@ export default {
       if (name && name !== this.indicator.name) {
         await workspacesService.saveIndicator({
           ...this.indicator,
-          name
+          name,
+          displayName: name
         })
 
         this.$emit('reload')
@@ -307,72 +317,37 @@ export default {
         return
       }
 
-      if (!this.indicator.preview) {
-        dialogService.confirm({
-          cancel: false,
-          message: `Indicator's preview is mandatory for publishing. Just save it once it's added on a chart to generate the thumbnail !`
-        })
-        return
-      }
-
-      this.isPublishing = true
-
-      let author = localStorage.getItem('author')
-
-      if (!author) {
-        author = await dialogService.prompt({
-          action: 'Name yourself',
-          label: 'Username'
-        })
-
-        if (!author) {
-          this.isPublishing = false
-          return
-        }
-
-        localStorage.setItem('author', author)
-      }
-
       try {
-        const jsonData = {
-          ...this.indicator,
-          preview: undefined,
-          author
+        const url = await openPublishDialog(this.indicator)
+
+        if (url) {
+          workspacesService.saveIndicator({
+            ...this.indicator,
+            pr: url
+          })
+          this.$emit('reload')
         }
-
-        const formData = new FormData()
-        const jsonBlob = new Blob([JSON.stringify(jsonData)], {
-          type: 'application/json'
-        })
-        formData.append('jsonFile', jsonBlob, 'indicator.json')
-        formData.append('pngFile', this.indicator.preview, 'indicator.png')
-
-        const response = await fetch(
-          `${import.meta.env.VITE_APP_LIB_URL}publish/indicators`,
-          {
-            method: 'POST',
-            body: formData
-          }
-        )
-
-        const { url } = await response.json()
-
-        workspacesService.saveIndicator({
-          ...this.indicator,
-          pr: url
-        })
-
-        window.open(url)
-
-        this.$emit('reload')
       } catch (error) {
         console.error(error)
         this.$store.dispatch('app/showNotice', {
           type: 'error',
           title: 'Failed to publish indicator'
         })
-      } finally {
-        this.isPublishing = false
+      }
+    },
+    async edit() {
+      const indicator = await dialogService.openAsPromise(EditResourceDialog, {
+        item: this.indicator,
+        ids: await workspacesService.getIndicatorsIds()
+      })
+
+      if (indicator) {
+        if (indicator.id !== this.indicator.id) {
+          workspacesService.deleteIndicator(this.indicator.id)
+        }
+
+        workspacesService.saveIndicator(indicator)
+        this.$emit('reload', indicator.id)
       }
     }
   }

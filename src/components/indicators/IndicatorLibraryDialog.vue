@@ -219,12 +219,14 @@ export default {
         this.$refs.installed.getIndicators()
       }
     },
-    async reloadSelection() {
+    async reloadSelection(id) {
       if (!this.selection) {
         return
       }
 
-      this.setSelection(await workspacesService.getIndicator(this.selection.id))
+      this.setSelection(
+        await workspacesService.getIndicator(id || this.selection.id)
+      )
     }
   }
 }

@@ -158,9 +158,10 @@ p {
 */
 
 .fade-scale {
-
   &-enter-active {
-    transition: all 0.1s $ease-out-expo, transform 0.1s $ease-elastic;
+    transition:
+      all 0.1s $ease-out-expo,
+      transform 0.1s $ease-elastic;
     pointer-events: none;
   }
 
@@ -202,12 +203,43 @@ p {
 /* Stylized divider with text
 */
 
+.divider-container {
+  container-type: inline-size;
+
+  .divider--vertical {
+    @container (min-width: 380px) {
+      margin: 0 1rem;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100px;
+      width: auto;
+
+      &:before,
+      &:after {
+        height: auto;
+        width: 1px;
+        margin: 0;
+      }
+
+      &:before {
+        margin-bottom: 1rem;
+      }
+
+      &:after {
+        margin-top: 1rem;
+      }
+    }
+  }
+}
+
 .divider {
+  $self: &;
   margin: 1rem 0;
   display: flex;
   align-items: center;
   text-transform: uppercase;
   color: var(--theme-background-300);
+  width: 100%;
 
   &:before,
   &:after {
@@ -223,26 +255,5 @@ p {
 
   &:after {
     margin-left: 1rem;
-  }
-
-  &.-vertical {
-    margin: 0 1rem;
-    flex-direction: column;
-    align-items: center;
-
-    &:before,
-    &:after {
-      height: auto;
-      width: 1px;
-      margin: 0;
-    }
-
-    &:before {
-      margin-bottom: 1rem;
-    }
-
-    &:after {
-      margin-top: 1rem;
-    }
   }
 }

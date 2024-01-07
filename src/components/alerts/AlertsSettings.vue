@@ -65,7 +65,7 @@
           ><i class="icon-music-note mr4"></i> Alert sound</label
         >
         <button class="btn -file -blue -cases">
-          <i class="icon-upload mr8"></i> {{ alertSound || 'Browse' }}
+          <i class="icon-upload mr8"></i> {{ displayAlertSound || 'Browse' }}
           <i
             v-if="alertSound"
             class="icon-volume-high mr8 btn__suffix"
@@ -157,8 +157,18 @@ export default class AlertsSettings extends Vue {
     return this.$store.state.settings.alertsClick
   }
 
-  get useAudio() {
-    return this.$store.state.settings.useAudio
+  get displayAlertSound() {
+    const id = this.alertSound
+
+    if (!id) {
+      return null
+    }
+
+    if (id.length <= 14) {
+      return id
+    } else {
+      return id.slice(0, 6) + '..' + id.substr(-6)
+    }
   }
 
   created() {

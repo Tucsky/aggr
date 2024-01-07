@@ -3,7 +3,7 @@
     <Loader v-if="isLoading" class="community-indicators__loader" />
     <transition name="transition-height-scale">
       <div v-if="!isLoading" class="community-indicators__wrapper">
-        <CommunityIndicatorsIncentive />
+        <LibraryIncentive />
         <SearchBar v-model="query" class="community-indicators__search-bar">
           <Btn @click="getIndicators" class="-text -small">
             <i class="icon-refresh"></i>
@@ -26,7 +26,7 @@ import Btn from '@/components/framework/Btn.vue'
 import Loader from '@/components/framework/Loader.vue'
 import SearchBar from '@/components/framework/SearchBar.vue'
 import IndicatorTable from '@/components/indicators/IndicatorTable.vue'
-import CommunityIndicatorsIncentive from '@/components/indicators/CommunityIndicatorsIncentive.vue'
+import LibraryIncentive from '@/components/library/LibraryIncentive.vue'
 let CACHE = []
 
 export default {
@@ -34,7 +34,7 @@ export default {
   components: {
     SearchBar,
     IndicatorTable,
-    CommunityIndicatorsIncentive,
+    LibraryIncentive,
     Loader,
     Btn
   },

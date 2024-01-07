@@ -116,16 +116,8 @@ export default {
 </script>
 <style lang="scss" scoped>
 .installed-indicators {
-  &__search {
-    background-color: var(--theme-background-100);
-    margin: -1rem;
-    padding: 0.5rem 1rem;
-    border-bottom: 1px solid var(--theme-background-200);
-
-    &-input {
-      border: 0;
-      padding: 0;
-    }
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 </style>

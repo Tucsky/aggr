@@ -67,7 +67,7 @@
     border-color: rgba(black, 0.25);
     border-radius: 4px;
     font-size: 12px;
-  
+
     &:focus {
       border-color: var(--theme-buy-base);
     }
@@ -248,6 +248,12 @@
       opacity: 0.5;
       pointer-events: none;
       cursor: not-allowed;
+    }
+  }
+
+  &.-large {
+    > div {
+      font-size: 1.375em;
     }
   }
 

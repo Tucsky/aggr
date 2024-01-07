@@ -314,7 +314,5 @@ export default class App extends Vue {
 
     this.mainPrices = {}
   }
-
-  async prepareFavicons() {}
 }
 </script>

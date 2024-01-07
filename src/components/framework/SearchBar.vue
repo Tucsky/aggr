@@ -32,6 +32,7 @@ export default {
     border: 0;
     padding: 0;
     flex-grow: 1;
+    min-height: 0;
   }
 
   > .btn {
