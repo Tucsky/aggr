@@ -1990,7 +1990,7 @@ export default class Chart {
       const prependBars = getPrependBars(this.prepend, firstBarTimestamp)
 
       for (const market in prependBars) {
-        console.log('[prepend] inject prepend bar', market, 'into new renderer')
+        // console.log('[prepend] inject prepend bar', market, 'into new renderer')
         renderer.sources[market] = {
           ...prependBars[market],
           active: this.marketsFilters[market]

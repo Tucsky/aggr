@@ -1302,7 +1302,7 @@ export default {
   }
 
   &__side {
-    width: 13.5rem;
+    width: 15.5rem;
     overflow-y: auto;
     border-right: 1px solid var(--theme-background-150);
     flex-shrink: 0;

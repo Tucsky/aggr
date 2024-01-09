@@ -5,8 +5,10 @@
       class="table--inset"
       :indicators="indicators"
       :query="query"
+      show-enabled
       show-dropdown
       @selected="$emit('selected', $event)"
+      @enabled="toggleEnabled"
       @dropdown="toggleDropdown"
     />
     <dropdown v-model="dropdownTrigger">
@@ -110,6 +112,11 @@ export default {
         this.dropdownTrigger = null
         this.selectedIndicator = null
       }
+    },
+    toggleEnabled(indicator) {
+      indicator.enabled = !indicator.enabled
+
+      workspacesService.saveIndicator(indicator, true)
     }
   }
 }

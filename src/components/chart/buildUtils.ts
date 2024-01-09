@@ -1079,18 +1079,15 @@ export function getBuildedIndicator(
     sourcedOutput = getSourcedOutput(model, marketFilters, options)
   }
 
-  return (function () {
-    'use strict'
-    return new Function(
-      'renderer',
-      FUNCTIONS_VAR_NAME,
-      VARIABLES_VAR_NAME,
-      'series',
-      'options',
-      'utils',
-      '"use strict"; ' + sourcedOutput
-    )
-  })() as IndicatorRealtimeAdapter
+  return new Function(
+    'renderer',
+    FUNCTIONS_VAR_NAME,
+    VARIABLES_VAR_NAME,
+    'series',
+    'options',
+    'utils',
+    '"use strict"; ' + sourcedOutput
+  ) as IndicatorRealtimeAdapter
 }
 
 /**

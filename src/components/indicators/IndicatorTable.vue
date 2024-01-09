@@ -2,6 +2,7 @@
   <table class="table indicator-table__table">
     <thead>
       <tr>
+        <th v-if="showEnabled" class="table-min"></th>
         <th
           class="table-sortable table-min"
           @click="toggleSort('name')"
@@ -60,6 +61,18 @@
         @mouseenter="showPreview(indicator)"
         class="-action"
       >
+        <td
+          v-if="showEnabled"
+          class="table-action table-min"
+          @click.stop="$emit('enabled', indicator)"
+        >
+          <i
+            class="-lower"
+            :class="indicator.enabled ? 'icon-star-filled' : 'icon-star'"
+            title="Enable by default<br>on new charts"
+            v-tippy="{ placement: 'top' }"
+          ></i>
+        </td>
         <td class="table-input text-color-base table-min">
           {{
             (indicator.displayName || indicator.name).replace(/\{[\w_]+\}/g, '')
@@ -71,10 +84,7 @@
         <td v-if="showAuthor" class="table-input table-ellipsis">
           <span class="text-muted">{{ indicator.author }}</span>
         </td>
-        <td
-          class="-dialog-min-m table-input table-min text-right"
-          @click.stop="showIndicatorActivity(indicator)"
-        >
+        <td class="-dialog-min-m table-input table-min text-right">
           <span>{{ ago(indicator.updatedAt) }}</span>
         </td>
         <td
@@ -112,6 +122,10 @@ export default {
       default: false
     },
     showAuthor: {
+      type: Boolean,
+      default: false
+    },
+    showEnabled: {
       type: Boolean,
       default: false
     }
@@ -181,3 +195,8 @@ export default {
   }
 }
 </script>
+<style lang="scss" scoped>
+.icon-star-filled {
+  color: var(--theme-buy-200);
+}
+</style>

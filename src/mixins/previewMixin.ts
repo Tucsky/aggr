@@ -78,14 +78,15 @@ export default class PreviewMixin extends Vue {
   }
 
   onLoad() {
-    const pxRatio = window.devicePixelRatio || 1
     const { width, height } = this.previewImageElement
+    const pxRatio = window.devicePixelRatio || 1
+
     this.previewCtx.drawImage(
       this.previewImageElement,
       width - PREVIEW_SIZE.displayWidth * pxRatio,
-      height / 2 - (PREVIEW_SIZE.displayHeight / 2) * pxRatio,
+      0,
       PREVIEW_SIZE.displayWidth * pxRatio,
-      PREVIEW_SIZE.displayHeight * pxRatio,
+      height,
       0,
       0,
       PREVIEW_SIZE.displayWidth * pxRatio,

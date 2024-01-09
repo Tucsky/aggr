@@ -281,11 +281,14 @@ export default {
       })
 
       if (name && name !== this.indicator.name) {
-        await workspacesService.saveIndicator({
-          ...this.indicator,
-          name,
-          displayName: name
-        })
+        await workspacesService.saveIndicator(
+          {
+            ...this.indicator,
+            name,
+            displayName: name
+          },
+          true
+        )
 
         this.$emit('reload')
       }
@@ -304,10 +307,13 @@ export default {
       })
 
       if (description && description !== this.indicator.description) {
-        await workspacesService.saveIndicator({
-          ...this.indicator,
-          description
-        })
+        await workspacesService.saveIndicator(
+          {
+            ...this.indicator,
+            description
+          },
+          true
+        )
 
         this.$emit('reload')
       }
@@ -321,10 +327,13 @@ export default {
         const url = await openPublishDialog(this.indicator)
 
         if (url) {
-          workspacesService.saveIndicator({
-            ...this.indicator,
-            pr: url
-          })
+          workspacesService.saveIndicator(
+            {
+              ...this.indicator,
+              pr: url
+            },
+            true
+          )
           this.$emit('reload')
         }
       } catch (error) {
@@ -346,7 +355,7 @@ export default {
           workspacesService.deleteIndicator(this.indicator.id)
         }
 
-        workspacesService.saveIndicator(indicator)
+        workspacesService.saveIndicator(indicator, true)
         this.$emit('reload', indicator.id)
       }
     }

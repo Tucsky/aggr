@@ -606,7 +606,7 @@ class WorkspacesService {
     return this.db.delete('gifs', slug)
   }
 
-  async saveIndicator(indicator: IndicatorSettings) {
+  async saveIndicator(indicator: IndicatorSettings, silent = false) {
     const now = Date.now()
 
     if (!indicator.libraryId) {
@@ -625,7 +625,9 @@ class WorkspacesService {
 
     indicator.createdAt =
       indicator.createdAt || originalIndicator.createdAt || now
-    indicator.updatedAt = now
+    indicator.updatedAt = silent
+      ? indicator.updatedAt || originalIndicator.updatedAt || now
+      : now
     indicator.preview = indicator.preview || originalIndicator.preview
 
     const payload = JSON.parse(
@@ -659,12 +661,16 @@ class WorkspacesService {
 
     await this.db.put('indicators', payload)
 
-    store.dispatch('app/showNotice', {
-      type: 'info',
-      title: `Saved ${
-        payload.createdAt === payload.updatedAt ? 'new indicator' : 'indicator'
-      } ${payload.id}`
-    })
+    if (!silent) {
+      store.dispatch('app/showNotice', {
+        type: 'info',
+        title: `Saved ${
+          payload.createdAt === payload.updatedAt
+            ? 'new indicator'
+            : 'indicator'
+        } ${payload.id}`
+      })
+    }
 
     return payload
   }

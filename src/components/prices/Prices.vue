@@ -341,7 +341,7 @@ export default class Prices extends Mixins(PaneMixin) {
         // colorize using price change accross period
         const change = ticker.price - this.lastPeriodTickers[market.id].price
 
-        market.change = (change / ticker.price) * 100
+        market.change = (change / this.lastPeriodTickers[market.id].price) * 100
 
         if (avgPeriods) {
           market.avgChange =

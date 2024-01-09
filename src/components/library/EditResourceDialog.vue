@@ -29,6 +29,7 @@
               type="text"
               class="form-control w-100"
               v-model="name"
+              required
             />
           </div>
           <div class="form-group">
@@ -51,7 +52,11 @@
         </p>
         <div class="form-group">
           <label for="label">Description</label>
-          <textarea class="form-control w-100" v-model="description"></textarea>
+          <textarea
+            class="form-control w-100"
+            v-model="description"
+            required
+          ></textarea>
         </div>
 
         <template v-slot:footer>

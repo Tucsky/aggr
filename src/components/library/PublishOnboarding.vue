@@ -59,7 +59,7 @@
                 class="form-control"
                 v-model="dismissOnSubmit"
               />
-              <div class="mr8" title="Get a new ID" v-tippy></div>
+              <div class="mr8"></div>
               <span>Never see again</span>
             </label>
             <Btn type="submit" class="btn -green ml8 -large">
