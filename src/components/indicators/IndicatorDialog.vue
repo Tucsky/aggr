@@ -10,19 +10,18 @@
     :close-on-escape="false"
     @clickOutside="close"
     @resize="onResize"
+    contrasted
   >
     <template #header>
-      <div class="d-flex">
-        <div class="dialog__title indicator-dialog__title -center">
-          <div @dblclick="renameIndicator">{{ name }}</div>
-          <code
-            class="dialog__subtitle indicator-dialog__id -filled"
-            @click="copyIndicatorId"
-            :title="libraryId"
-            v-tippy
-            >{{ displayId }}</code
-          >
-        </div>
+      <div class="dialog__title indicator-dialog__title -center">
+        <div @dblclick="renameIndicator">{{ name }}</div>
+        <code
+          class="dialog__subtitle indicator-dialog__id -filled"
+          @click="copyIndicatorId"
+          :title="libraryId"
+          v-tippy
+          >{{ displayId }}</code
+        >
       </div>
 
       <a
@@ -987,16 +986,6 @@ export default {
       align-items: stretch;
       overflow: visible;
     }
-
-    .dialog__header {
-      border-bottom: 0 !important;
-      padding-bottom: 0;
-    }
-
-    .dialog__header,
-    .dialog__subheader {
-      background-color: var(--theme-base-o25);
-    }
   }
 
   &__title {
@@ -1188,8 +1177,7 @@ export default {
     }
 
     .indicator-dialog--collapsed-column & {
-      right: -1px;
-      border-radius: 0.25rem 0 0 0.25rem;
+      right: -4px;
     }
   }
 }

@@ -100,6 +100,6 @@ export default class AudioSettings extends Vue {
 </script>
 <style lang="scss" scoped>
 .checkbox-control.-auto > div {
-  padding: 0.25em;
+  padding: 0.25rem;
 }
 </style>

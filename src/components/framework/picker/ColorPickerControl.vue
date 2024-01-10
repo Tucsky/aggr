@@ -7,7 +7,6 @@
       '--background-color': value
     }"
   >
-    <div class="color-picker-control__color"></div>
     <div class="color-picker-control__wrapper"></div>
   </button>
 </template>
@@ -78,7 +77,12 @@ export default {
 </script>
 <style lang="scss" scoped>
 .color-picker-control {
-  background-color: transparent !important;
+  position: relative;
+  padding: 0 !important;
+  border-radius: 0.25rem;
+  outline: 1px solid #0000000f;
+  background-color: transparent;
+  box-sizing: content-box;
   background-image: $checkerboard;
   background-size: 14px 14px;
   background-position:
@@ -86,37 +90,23 @@ export default {
     7px -7px,
     0 7px,
     -7px 0px;
-  position: relative;
-  overflow: hidden;
-  padding: 0;
+
+  &:after {
+    content: '';
+    background-color: var(--background-color);
+    border: 1px solid var(--background-color);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.25rem;
+  }
 
   + label {
     color: var(--theme-color-base);
   }
 
-  &__wrapper {
-    position: relative;
-    width: 2em;
-    height: 2em;
-    border: 1px solid var(--background-color);
-    border-radius: 0.25rem;
-    outline: 1px solid #0000000f;
-    background-color: var(--background-color);
-    box-sizing: border-box;
-
-    i {
-      display: block;
-      color: var(--text-color);
-    }
-  }
-
-  &__color {
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    position: absolute;
-    border-radius: 0.25rem;
+  &:hover {
+    border-color: transparent;
+    background-color: transparent;
   }
 }
 </style>

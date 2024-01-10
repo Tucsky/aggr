@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { getEventCords } from '@/utils/helpers'
+import { isTouchSupported } from '@/utils/touchevent'
 
 const PREVIEW_SIZE = {
   originalWidth: 500,
@@ -44,6 +45,10 @@ export default class PreviewMixin extends Vue {
   }
 
   async showPreview(json) {
+    if (isTouchSupported()) {
+      return
+    }
+
     if (!json.preview) {
       if (json.imagePath) {
         json.preview = await fetch(

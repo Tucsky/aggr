@@ -392,7 +392,9 @@ export default {
   }
 
   &-enter-active {
-    transition: all 0.1s $ease-out-expo, transform 0.1s $ease-elastic;
+    transition:
+      all 0.1s $ease-out-expo,
+      transform 0.1s $ease-elastic;
     pointer-events: none;
   }
 

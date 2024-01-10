@@ -9,7 +9,6 @@
         <color-picker-control
           :value="buyColor"
           label="Buy color"
-          class="-small"
           @input="regenerateSwatch('buy', $event)"
         />
       </label>
@@ -17,7 +16,6 @@
         <color-picker-control
           :value="sellColor"
           label="Sell color"
-          class="-small"
           @input="regenerateSwatch('sell', $event)"
         />
         <small class="-fill -center ml8">Sell color</small>
@@ -56,24 +54,26 @@
             </label>
           </td>
           <td class="table-input">
-            <i class="icon icon-currency"></i>
-            <editable
-              placeholder="Amount*"
-              class="pl16 w-100"
-              :value="formatAmount(threshold.amount)"
-              @input="
-                $store.commit(paneId + '/SET_THRESHOLD_AMOUNT', {
-                  id: threshold.id,
-                  value: $event
-                })
-              "
-            />
-            <small
-              class="pl8 text-danger"
-              v-if="index === thresholds.length - 1 && threshold.max"
-            >
-              <strong>threshold is max</strong>
-            </small>
+            <div class="thresholds-table__threshold">
+              <i class="icon icon-currency"></i>
+              <editable
+                placeholder="Amount*"
+                class="w-100"
+                :value="formatAmount(threshold.amount)"
+                @input="
+                  $store.commit(paneId + '/SET_THRESHOLD_AMOUNT', {
+                    id: threshold.id,
+                    value: $event
+                  })
+                "
+              />
+              <small
+                class="text-danger"
+                v-if="index === thresholds.length - 1 && threshold.max"
+              >
+                <strong>threshold is max</strong>
+              </small>
+            </div>
           </td>
           <td class="table-action">
             <color-picker-control
@@ -146,7 +146,7 @@
         placeholder="Custom thresholds"
         :adapter="getPreset"
         @apply="applyPreset($event)"
-        classes="btn -small -center"
+        classes="btn -green -small -center"
       />
       <button
         type="button"
@@ -767,15 +767,26 @@ export default class Thresholds extends Vue {
     cursor: pointer;
 
     &.-active {
-      box-shadow: 0 0 0 0.5em rgba(white, 0.2);
+      box-shadow: 0 0 0 0.5rem rgba(white, 0.2);
       position: relative;
       z-index: 1;
+    }
+  }
+
+  &__threshold {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    i {
+      color: var(--theme-buy-100);
+      top: 0;
     }
   }
 }
 
 .thresholds-slider {
-  padding: 2em 0 1em;
+  padding: 2rem 0 1rem;
   transition: opacity 0.2s $ease-out-expo;
   position: relative;
 
@@ -783,20 +794,20 @@ export default class Thresholds extends Vue {
     position: absolute;
     z-index: 1;
 
-    padding: 2.75em 0 0;
+    padding: 2.75rem 0 0;
     top: 0;
-    left: 1em;
-    right: 1em;
+    left: 1rem;
+    right: 1rem;
   }
 
   &__handler {
     position: absolute;
-    width: 1em;
-    height: 1em;
+    width: 1rem;
+    height: 1rem;
     background-color: white;
-    margin-top: -0.5em;
-    margin-left: -0.75em;
-    padding: 0.25em;
+    margin-top: -0.5rem;
+    margin-left: -0.75rem;
+    padding: 0.25rem;
     border-radius: 50%;
     transition:
       box-shadow 0.2s $ease-elastic,
@@ -807,10 +818,11 @@ export default class Thresholds extends Vue {
     &:before {
       position: absolute;
       content: attr(data-amount);
-      top: -2em;
+      top: -2rem;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 0.89em;
+      font-size: 0.875rem;
+      white-space: nowrap;
     }
   }
 }
@@ -819,12 +831,12 @@ export default class Thresholds extends Vue {
   width: 100%;
 
   > div {
-    height: 1em;
+    height: 1rem;
     width: 100%;
-    border-radius: 0.75em 0.75em 0 0;
+    border-radius: 0.75rem 0.75rem 0 0;
 
     + div {
-      border-radius: 0 0 0.75em 0.75em;
+      border-radius: 0 0 0.75rem 0.75rem;
     }
   }
 }

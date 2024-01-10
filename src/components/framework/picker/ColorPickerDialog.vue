@@ -531,7 +531,6 @@ export default {
 
     .form-control {
       flex-grow: 1;
-      font-size: 0.875rem;
       white-space: nowrap;
       overflow: auto;
     }
@@ -588,7 +587,11 @@ export default {
         background-color: transparent !important;
         background-image: $checkerboard;
         background-size: 6px 6px;
-        background-position: 0 0, 3px -3px, 0 3px, -3px 0px;
+        background-position:
+          0 0,
+          3px -3px,
+          0 3px,
+          -3px 0px;
       }
 
       &--null {

@@ -4,7 +4,7 @@
       <div class="dialog__title">Configure preset</div>
     </template>
     <form ref="form" @submit.prevent="submit">
-      <p class="mt0">Choose what to include</p>
+      <p class="mt0 mb0">Choose what to include</p>
       <div class="d-flex">
         <div>
           <div class="form-group mb8">
@@ -60,11 +60,10 @@
         </div>
       </div>
 
-      <hr class="-single -horizontal" />
-      <div class="indicator-preset-dialog__grid">
+      <div class="indicator-preset-dialog__grid mt8">
         <button
           type="button"
-          class="btn indicator-preset-dialog__item"
+          class="btn indicator-preset-dialog__item -small"
           :class="[selection[key] ? '-green' : '-text']"
           @click="toggleOption(key)"
           v-for="(key, index) in keys"
@@ -74,7 +73,7 @@
         </button>
         <button
           type="button"
-          class="btn indicator-preset-dialog__item"
+          class="btn indicator-preset-dialog__item -small"
           :class="[form.script ? '-green' : '-text']"
           @click="form.script = !form.script"
         >
@@ -88,7 +87,7 @@
         Cancel
       </a>
 
-      <button type="button" @click="submit" class="btn -pill">
+      <button type="button" @click="submit" class="btn -green -pill">
         <span
           v-if="count > 0"
           class="badge -red ml8"

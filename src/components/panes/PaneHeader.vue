@@ -6,7 +6,7 @@
   >
     <div
       v-if="showName && name"
-      class="btn pane-header__highlight"
+      class="btn -cases pane-header__highlight"
       @dblclick="maximizePane"
     >
       <slot name="title">

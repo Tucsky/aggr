@@ -606,7 +606,7 @@ div.-dropping {
   &__tooltip {
     position: absolute;
     bottom: 0;
-    transform: translate(-50%, -1em);
+    transform: translate(-50%, -1rem);
     left: 50%;
     background-color: var(--theme-background-200);
     border-radius: $border-radius-base;

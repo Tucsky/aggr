@@ -345,8 +345,7 @@ export default class Counters extends Mixins(PaneMixin) {
     pointer-events: none;
     line-height: 1;
     padding-top: 0.33em;
-    color: var(--theme-background-base);
-    opacity: 0.5;
+    text-shadow: 1px 1px 0 black;
   }
 
   &:hover:before {

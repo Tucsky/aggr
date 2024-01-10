@@ -11,10 +11,6 @@
   z-index: 10;
   pointer-events: none;
 
-  @media (-webkit-min-device-pixel-ratio: 1) {
-    font-size: 1.125rem;
-  }
-
   &--mask {
     pointer-events: all;
   }
@@ -118,9 +114,11 @@
   &__header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     position: relative;
     z-index: 1;
     padding: 0.75rem;
+    height: 1rem;
     background-color: var(--theme-background-100);
     border-bottom: 1px solid var(--theme-background-150);
     border-radius: 0.75rem 0.75rem 0 0;
@@ -166,7 +164,7 @@
     text-transform: uppercase;
     margin-bottom: 0;
     letter-spacing: 1px;
-    font-size: 1.125em;
+    font-size: 1.125rem;
     line-height: 1;
     font-family: $font-condensed;
     font-weight: 400;
@@ -209,8 +207,8 @@
     position: absolute;
     font-size: 1rem;
     padding: 1rem 0 0 1rem;
-    right: 0;
-    bottom: 0;
+    right: -0.0625rem;
+    bottom: -0.0625rem;
     z-index: 10;
     top: auto;
     cursor: se-resize;

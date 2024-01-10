@@ -12,15 +12,6 @@
           Connect →
           <code class="-filled -green">
             <span>{{ paneName }}</span>
-            <button
-              type="button"
-              class="btn -small -text -no-grab"
-              v-tippy
-              title="Rename pane"
-              @click="renamePane"
-            >
-              <i class="icon-edit"></i>
-            </button>
           </code>
           <button
             type="button"
@@ -877,18 +868,6 @@ export default {
         ? 5
         : 10
     },
-    async renamePane() {
-      const name = await dialogService.prompt({
-        action: 'Rename',
-        input: this.paneName
-      })
-      if (name !== null && name !== this.paneName) {
-        this.$store.commit('panes/SET_PANE_NAME', {
-          id: this.selectedPaneId,
-          name
-        })
-      }
-    },
     async ensureIndexedProducts() {
       const selectedExchanges = this.selection.reduce((acc, market) => {
         const [exchangeId] = parseMarket(market)
@@ -1294,16 +1273,10 @@ export default {
       align-items: stretch;
       overflow: hidden;
     }
-
-    .dialog__subtitle {
-      color: var(--theme-color-o75);
-      opacity: 1;
-    }
   }
 
   &__side {
-    width: 15.5rem;
-    overflow-y: auto;
+    width: 13.5rem;
     border-right: 1px solid var(--theme-background-150);
     flex-shrink: 0;
 
@@ -1459,10 +1432,18 @@ export default {
 
     &-delete {
       position: absolute;
-      top: 0.5rem;
+      top: 0;
       right: 0;
-      margin: 0 0.5rem 0;
+      margin: 0.375rem;
       z-index: 2;
+
+      .dialog--small & {
+        margin: 0.25rem;
+      }
+
+      .dialog--large & {
+        margin: 0.5rem;
+      }
     }
 
     input {

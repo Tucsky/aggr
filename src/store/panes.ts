@@ -323,10 +323,11 @@ const actions = {
     )
 
     const layoutItem = state.layout.find(a => a.i === id)
-
     const originalPaneType = layoutItem.type
-
     layoutItem.type = 'div'
+
+    const paneItem = state.panes[id]
+    paneItem.type = type || originalPaneType
 
     this.unregisterModule(id)
 

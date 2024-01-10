@@ -1,12 +1,7 @@
 <template>
   <Dialog @clickOutside="hide" class="-timeframe">
     <template v-slot:header>
-      <div>
-        <div class="dialog__title">Timeframe</div>
-        <div class="dialog__subtitle pl0" v-text="paneName"></div>
-      </div>
-
-      <div class="column -center"></div>
+      <div class="dialog__title">Timeframe</div>
     </template>
     <form @submit.prevent="submit" ref="form">
       <div class="text-center">
@@ -108,7 +103,7 @@ export default {
       font-size: 2rem;
       font-family: $font-monospace;
       text-align: center;
-      padding: 0.5em;
+      padding: 0.5rem;
       border: 0;
     }
 

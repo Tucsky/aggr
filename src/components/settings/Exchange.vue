@@ -14,10 +14,10 @@
       </div>
       <div v-if="markets.length" class="settings-exchange__controls">
         <button
-          class="settings-exchange__more"
+          class="settings-exchange__more btn"
           @click.stop.prevent="expanded = !expanded"
         >
-          <i class="icon-down-thin"></i>
+          <i class="icon-down -small"></i>
         </button>
       </div>
     </div>
@@ -129,7 +129,7 @@ export default class Exchange extends Vue {
 
   &.-expanded {
     .settings-exchange__more i:before {
-      content: $icon-up-thin;
+      content: $icon-up;
     }
   }
 }
@@ -142,8 +142,8 @@ export default class Exchange extends Vue {
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  font-size: 0.875em;
-  padding-left: 0.75em;
+  font-size: 0.875rem;
+  padding-left: 0.75rem;
   flex-grow: 1;
   line-height: 1;
 
@@ -174,14 +174,14 @@ export default class Exchange extends Vue {
 .settings-exchange__threshold {
   display: none;
   position: absolute;
-  top: -0.5em;
-  right: -0.5em;
+  top: -0.5rem;
+  right: -0.5rem;
   pointer-events: none;
   font-size: 90%;
   background-color: $blue;
   border-radius: 3px;
   color: white;
-  padding: 0.1em 0.2em;
+  padding: 0.1rem 0.2rem;
   box-shadow: 0 0 0 1px rgba(black, 0.2);
 }
 
@@ -213,11 +213,6 @@ export default class Exchange extends Vue {
     font-size: 1rem;
     display: flex;
     align-items: center;
-
-    .icon-down-thin,
-    .icon-up-thin {
-      font-size: 80%;
-    }
 
     &:hover {
       background-color: rgba(white, 0.1);

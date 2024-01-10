@@ -3,18 +3,18 @@
   align-items: center;
   text-transform: uppercase;
   font-family: $font-condensed;
-  font-size: 0.75em;
-  padding: 0.25em;
+  font-size: 0.75rem;
+  padding: 0.25rem;
   border-radius: 4px;
   color: inherit;
-  line-height: 0.75em;
+  line-height: 0.75rem;
   flex-shrink: 0;
   cursor: pointer;
   font-weight: 600;
 
   > i {
     font-weight: 400;
-    font-size: 0.875em;
+    font-size: 0.875rem;
   }
 
   &.-red {
@@ -35,7 +35,7 @@
 
   &.-outline {
     background: 0;
-    box-shadow: inset 0 0 0 0.0714285714em currentColor;
+    box-shadow: inset 0 0 0 0.0714285714rem currentColor;
     color: currentColor;
     font-weight: 400;
   }
@@ -46,7 +46,7 @@
   }
 
   &.-inline {
-    padding: 0.125em 0.25em;
+    padding: 0.125rem 0.25rem;
     line-height: 1;
     position: relative;
     vertical-align: top;

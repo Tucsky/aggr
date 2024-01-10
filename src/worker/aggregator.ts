@@ -858,14 +858,6 @@ class Aggregator {
     }
   }
 
-  getHits(data, trackingId: string) {
-    this.ctx.postMessage({
-      op: 'getHits',
-      trackingId: trackingId,
-      data: exchanges.reduce((hits, exchanges) => hits + exchanges.count, 0)
-    })
-  }
-
   refreshTickersDelay() {
     const count = Object.keys(this.connections).length
 
