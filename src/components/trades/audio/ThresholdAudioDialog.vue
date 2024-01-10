@@ -5,15 +5,12 @@
     @mousedown="clickOutsideClose = false"
     @mouseup="clickOutsideClose = true"
   >
-    <template v-slot:header>
-      <div>
-        <div class="dialog__title">
-          <div>Threshold</div>
-        </div>
-
-        <div class="dialog__subtitle">
-          {{ thresholdId }} {{ formatAmount(threshold.amount) }}
-        </div>
+    <template #header>
+      <div class="d-flex">
+        <div class="dialog__title -center">Threshold</div>
+        <code class="ml4 -filled">
+          <small>{{ formatAmount(threshold.amount) }}</small>
+        </code>
       </div>
     </template>
     <div class="form-group mb16">

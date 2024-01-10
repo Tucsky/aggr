@@ -251,6 +251,10 @@ export default class ChartControl {
       return
     }
 
+    if (contextMenuComponent) {
+      return
+    }
+
     const canvas = event.currentTarget as HTMLCanvasElement
 
     event.preventDefault()

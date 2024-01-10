@@ -70,8 +70,9 @@
               <small
                 class="text-danger"
                 v-if="index === thresholds.length - 1 && threshold.max"
+                title="Will only show trades below that amount"
               >
-                <strong>threshold is max</strong>
+                <strong>MAX</strong>
               </small>
             </div>
           </td>

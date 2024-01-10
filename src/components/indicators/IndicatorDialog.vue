@@ -16,12 +16,13 @@
       <div class="dialog__title indicator-dialog__title -center">
         <div @dblclick="renameIndicator">{{ name }}</div>
         <code
-          class="dialog__subtitle indicator-dialog__id -filled"
+          class="indicator-dialog__id -filled"
           @click="copyIndicatorId"
           :title="libraryId"
           v-tippy
-          >{{ displayId }}</code
         >
+          <small>{{ displayId }}</small>
+        </code>
       </div>
 
       <a

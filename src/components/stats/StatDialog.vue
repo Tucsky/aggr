@@ -1,14 +1,18 @@
 <template>
   <Dialog @clickOutside="close">
-    <template v-slot:header>
-      <div>
-        <div class="dialog__title">BUCKET</div>
-        <div class="dialog__subtitle">{{ name }}</div>
+    <template #header>
+      <div class="d-flex">
+        <div class="dialog__title -center">BUCKET</div>
+        <code class="-filled ml4">
+          <small>{{ name }}</small>
+        </code>
       </div>
 
       <dropdown-button
         v-model="type"
         :options="availableTypes"
+        class="mlauto"
+        button-class="-text -arrow"
         @input="
           $store.dispatch(paneId + '/updateBucket', {
             id: bucketId,
@@ -159,7 +163,6 @@
         Sum <code>{{ input }}</code> over {{ window }} window
       </p>
     </div>
-    <hr />
     <div class="column">
       <div class="form-group">
         <label

@@ -23,7 +23,7 @@
     "eslint-plugin-prettier": "^5.0.0",
     "eventemitter3": "^4.0.7",
     "idb": "^6.0.0",
-    "lightweight-charts": "git+https://github.com/Tucsky/lightweight-charts.git#a36ce5589f82e3d40f36ffcf08bdd1d67956f15a",
+    "lightweight-charts": "git+https://github.com/Tucsky/lightweight-charts.git#ad5a7a718eb5e84273fc007c211d47c242d79514",
     "lodash.merge": "^4.6.2",
     "marked": "^9.1.2",
     "monaco-editor": "0.41.0",

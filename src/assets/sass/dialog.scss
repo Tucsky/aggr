@@ -170,22 +170,15 @@
     font-weight: 400;
     white-space: nowrap;
     text-overflow: ellipsis;
-    overflow: hidden;
     color: var(--theme-color-base);
 
     &.-editable {
       cursor: text;
     }
-  }
 
-  &__subtitle {
-    display: inline-block;
-    margin-top: 0.25rem;
-    font-size: 80%;
-    opacity: 0.75;
-    white-space: normal;
-    text-transform: none;
-    letter-spacing: 0;
+    code {
+      text-transform: none;
+    }
   }
 
   &__footer {

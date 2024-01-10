@@ -50,9 +50,32 @@
           <code class="-filled">{{ item.id }}</code> →
           <code class="-filled">{{ newId }}</code>
         </p>
-        <div class="form-group">
+        <div class="form-group mb16">
           <label for="label">Description</label>
           <textarea class="form-control w-100" v-model="description"></textarea>
+        </div>
+        <div class="d-flex -gap16">
+          <div class="form-group">
+            <label for="label">Preview</label>
+            <button class="btn -file -blue -cases">
+              <i class="icon-upload mr8"></i>
+              {{ previewName }}
+              <i
+                v-if="newImagePreview"
+                class="icon-cross mr8 btn__suffix"
+                @click.stop.prevent="removePreview"
+              ></i>
+              <input
+                type="file"
+                class="input-file"
+                accept="image/*"
+                @change="handlePreviewFile"
+              />
+            </button>
+          </div>
+          <div class="edit-resource-dialog__preview">
+            <img v-if="imageObjectUrl" :src="imageObjectUrl" />
+          </div>
         </div>
 
         <template v-slot:footer>
@@ -92,7 +115,10 @@ export default {
       dialogOpened: false,
       name: this.item.name || '',
       description: this.item.description || '',
-      updateId: false
+      updateId: false,
+      imageObjectUrl: null,
+      newImagePreview: null,
+      previewDeleted: false
     }
   },
   computed: {
@@ -114,10 +140,21 @@ export default {
     },
     idsExceptCurrent() {
       return this.ids.filter(id => id !== this.item.id)
+    },
+    previewName() {
+      if (this.newImagePreview && this.item.preview) {
+        return this.item.id + '.png'
+      }
+
+      return 'Browse'
     }
   },
   mounted() {
+    this.loadPreview()
     this.show()
+  },
+  beforeDestroy() {
+    this.clearPreview()
   },
   methods: {
     show() {
@@ -137,12 +174,72 @@ export default {
         description: this.description
       }
 
+      if (this.newImagePreview) {
+        this.output.preview = this.newImagePreview
+      } else if (this.previewDeleted) {
+        this.output.preview = null
+      }
+
       if (this.updateId) {
         this.output.id = this.newId
       }
 
       this.hide()
+    },
+    loadPreview() {
+      this.clearPreview()
+
+      const preview = this.newImagePreview || this.item.preview
+      if (preview) {
+        this.imageObjectUrl = URL.createObjectURL(preview)
+      }
+    },
+    clearPreview() {
+      if (this.imageObjectUrl) {
+        URL.revokeObjectURL(this.imageObjectUrl)
+        this.imageObjectUrl = null
+      }
+    },
+    handlePreviewFile() {
+      const file = event.target.files[0]
+
+      if (!file) {
+        return
+      }
+
+      this.newImagePreview = file
+      this.previewDeleted = false
+      this.loadPreview()
+    },
+    removePreview() {
+      if (this.newImagePreview) {
+        this.newImagePreview = null
+        this.previewDeleted = true
+        this.clearPreview()
+      }
     }
   }
 }
 </script>
+<style lang="scss" scoped>
+.edit-resource-dialog {
+  &__preview {
+    position: relative;
+    border-radius: 0.375rem;
+    border: 1px solid var(--theme-background-200);
+    background-color: var(--theme-background-75);
+    flex-grow: 1;
+
+    img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      object-fit: cover;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+</style>
