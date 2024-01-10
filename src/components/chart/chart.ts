@@ -1477,6 +1477,10 @@ export default class Chart {
   }
 
   createIndicatorSeries(indicator) {
+    if (!indicator.model) {
+      return
+    }
+
     const series = []
 
     const priceScale =
