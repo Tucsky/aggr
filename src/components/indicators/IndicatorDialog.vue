@@ -86,7 +86,7 @@
         title="Script options"
         id="indicator-left-script"
       >
-        <div class="indicator-options__grid mt16">
+        <div class="indicator-options__grid">
           <indicator-option
             v-for="key in scriptOptionsKeys"
             :key="key"
@@ -106,7 +106,7 @@
         title="Colors"
         id="indicator-left-colors"
       >
-        <div class="indicator-options__grid mt16">
+        <div class="indicator-options__grid">
           <indicator-option
             v-for="key in colorOptionsKeys"
             :key="key"
@@ -125,7 +125,7 @@
         title="Other options"
         id="indicator-left-other"
       >
-        <div class="indicator-options__grid mt16">
+        <div class="indicator-options__grid">
           <indicator-option
             v-for="key in defaultOptionsKeys"
             :key="key"

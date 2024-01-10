@@ -61,11 +61,14 @@
       </div>
 
       <div v-if="focusedSide === 'buy'" class="mt8 d-flex">
-        <button class="btn -small" @click="openSoundAssistant('play', 'buy')">
+        <button
+          class="btn -green -small"
+          @click="openSoundAssistant('play', 'buy')"
+        >
           <i class="icon-music-note mr8"></i> Synthetize sound
         </button>
         <button
-          class="btn -small ml8 mr8"
+          class="btn -green -small ml8 mr8"
           @click="openSoundAssistant('playurl', 'buy')"
         >
           <i class="icon-upload mr8"></i> Import audio
@@ -123,11 +126,14 @@
       </div>
 
       <div v-if="focusedSide === 'sell'" class="mt8 d-flex">
-        <button class="btn -small" @click="openSoundAssistant('play', 'sell')">
+        <button
+          class="btn -red -small"
+          @click="openSoundAssistant('play', 'sell')"
+        >
           <i class="icon-music-note mr8"></i> Synthetize sound
         </button>
         <button
-          class="btn -small ml8 mr8"
+          class="btn -red -small ml8 mr8"
           @click="openSoundAssistant('playurl', 'sell')"
         >
           <i class="icon-upload mr8"></i> Import audio

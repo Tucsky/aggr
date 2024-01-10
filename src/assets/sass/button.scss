@@ -110,7 +110,7 @@ button {
 
   &.-red {
     background-color: var(--theme-sell-50);
-    border: 1px solid var(--theme-sell-50);
+    border: 1px solid var(--theme-sell-100);
     color: var(--theme-sell-color);
 
     &.-text {
@@ -129,7 +129,7 @@ button {
 
     &:hover {
       background-color: var(--theme-sell-100);
-      border-color: var(--theme-sell-100);
+      border-color: var(--theme-sell-200);
 
       &.-text {
         background: 0;
@@ -226,7 +226,7 @@ button {
 
     &:hover {
       background-color: var(--theme-buy-base);
-      border-color: var(--theme-buy-100);
+      border-color: var(--theme-buy-200);
 
       &.-text {
         background: 0;

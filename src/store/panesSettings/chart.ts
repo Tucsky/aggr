@@ -157,8 +157,9 @@ const actions = {
     }
   },
   addIndicator({ commit }, indicator) {
+    const id = `_${randomString()}`
     indicator = {
-      id: `_${randomString()}`,
+      id,
       libraryId: indicator.libraryId,
       name: indicator.name,
       description: indicator.description,
@@ -166,7 +167,7 @@ const actions = {
       createdAt: indicator.createdAt,
       updatedAt: indicator.updatedAt,
       options: {
-        priceScaleId: indicator.priceScaleId || indicator.libraryId,
+        priceScaleId: indicator.priceScaleId || indicator.libraryId || id,
         ...indicator.options
       }
     }

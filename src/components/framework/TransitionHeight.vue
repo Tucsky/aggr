@@ -51,6 +51,10 @@ export default {
     autoWidth: {
       type: Boolean,
       default: false
+    },
+    fillHeight: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({
@@ -87,6 +91,10 @@ export default {
         element.style.left = '0px'
         element.style.right = '0px'
       }
+
+      if (this.fillHeight) {
+        element.style.bottom = '0px'
+      }
     },
 
     async enter(element) {
@@ -121,6 +129,7 @@ export default {
       element.style.position = ''
       element.style.left = ''
       element.style.right = ''
+      element.style.bottom = ''
       element.style.height = ''
 
       this.$emit('after-enter', element)

@@ -324,7 +324,7 @@ export function getChartScales(
   indicators: {
     [id: string]: IndicatorSettings
   },
-  indicatorId?: string
+  indicatorId = ''
 ) {
   return Object.values(indicators).reduce(
     (scales, indicator) => {
@@ -342,7 +342,7 @@ export function getChartScales(
       return scales
     },
     {
-      ...(indicatorId ? { [indicatorId]: `Own scale 📍` } : {}),
+      ...{ [indicatorId]: `Own scale 📍` },
       left: 'Left ←',
       right: 'Right →'
     }

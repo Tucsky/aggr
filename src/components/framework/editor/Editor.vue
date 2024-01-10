@@ -134,6 +134,8 @@ export default class Editor extends Vue {
     this.editorInstance = monaco.create(this.$el as HTMLElement, {
       value: this.value,
       language: 'javascript',
+      tabSize: 2,
+      insertSpaces: true,
       fontSize: this.currentEditorOptions.fontSize,
       wordWrap: this.currentEditorOptions.wordWrap,
       scrollbar: {

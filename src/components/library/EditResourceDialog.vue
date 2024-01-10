@@ -52,11 +52,7 @@
         </p>
         <div class="form-group">
           <label for="label">Description</label>
-          <textarea
-            class="form-control w-100"
-            v-model="description"
-            required
-          ></textarea>
+          <textarea class="form-control w-100" v-model="description"></textarea>
         </div>
 
         <template v-slot:footer>
@@ -94,8 +90,8 @@ export default {
   data() {
     return {
       dialogOpened: false,
-      name: this.item.name,
-      description: this.item.description,
+      name: this.item.name || '',
+      description: this.item.description || '',
       updateId: false
     }
   },

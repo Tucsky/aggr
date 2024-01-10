@@ -73,7 +73,10 @@
             v-tippy="{ placement: 'top' }"
           ></i>
         </td>
-        <td class="table-input text-color-base table-min">
+        <td
+          class="table-input text-color-base table-ellipsis"
+          style="max-width: 200px"
+        >
           {{
             (indicator.displayName || indicator.name).replace(/\{[\w_]+\}/g, '')
           }}

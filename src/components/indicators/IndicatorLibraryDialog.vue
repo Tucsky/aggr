@@ -185,8 +185,8 @@ export default {
         indicator.name = 'Untitled'
       }
 
-      if (!indicator.priceScaleId) {
-        indicator.priceScaleId = indicator.id
+      if (!indicator.libraryId) {
+        indicator.libraryId = null
       }
 
       dialogService.openIndicator(

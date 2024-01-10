@@ -327,7 +327,7 @@ export default {
         const url = await openPublishDialog(this.indicator)
 
         if (url) {
-          workspacesService.saveIndicator(
+          await workspacesService.saveIndicator(
             {
               ...this.indicator,
               pr: url
@@ -352,10 +352,10 @@ export default {
 
       if (indicator) {
         if (indicator.id !== this.indicator.id) {
-          workspacesService.deleteIndicator(this.indicator.id)
+          await workspacesService.deleteIndicator(this.indicator.id)
         }
 
-        workspacesService.saveIndicator(indicator, true)
+        await workspacesService.saveIndicator(indicator, true)
         this.$emit('reload', indicator.id)
       }
     }
@@ -508,6 +508,7 @@ export default {
   &__description {
     margin: 0;
     flex-grow: 1;
+    white-space: pre-line;
   }
 
   &__detail {

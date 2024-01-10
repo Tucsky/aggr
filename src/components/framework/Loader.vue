@@ -39,6 +39,7 @@ export default {
   border-top-color: currentColor;
   animation: spin 1s infinite linear;
   cursor: progress;
+  flex-shrink: 0;
 
   &-wrapper {
     position: fixed;

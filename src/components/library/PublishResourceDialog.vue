@@ -28,14 +28,19 @@
           stepper
           name="slide-fade-right"
           :duration="500"
+          fill-height
         >
-          <div v-if="isLoading" key="loading" class="d-flex">
-            <loader class="-unshrinkable -center" />
+          <div v-if="isLoading" key="loading" class="publish-resource__loading">
+            <loader class="mx0 -center" />
             <p class="mb0 mt0 ml16 text-color-50 -center">
               Please wait a moment...
             </p>
           </div>
-          <div v-else-if="output" key="completed" class="d-flex -column">
+          <div
+            v-else-if="output"
+            key="completed"
+            class="publish-resource__confirm"
+          >
             <h3 class="mx0">Thank you {{ item.author }} !</h3>
             <p class="mb0">
               You can follow the review process on the
@@ -47,7 +52,7 @@
             <Btn
               :href="output"
               target="_blank"
-              class="mt16 -theme -large mlauto"
+              class="mt16 -theme -large mlauto mtauto"
             >
               Open <i class="icon-external-link-square-alt ml8"></i>
             </Btn>
@@ -161,16 +166,44 @@ export default {
 .publish-resource {
   $self: &;
 
+  ::v-deep {
+    .dialog__content {
+      width: 380px;
+    }
+
+    .dialog__body {
+      height: 210px;
+    }
+  }
+
   &__actions {
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
     gap: 1rem;
+    flex-grow: 1;
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+  }
+
+  &__confirm {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
   }
 
   &__wrapper {
     container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    flex-grow: 1;
 
     @container (min-width: 380px) {
       #{$self}__actions {
