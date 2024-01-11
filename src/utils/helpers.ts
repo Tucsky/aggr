@@ -575,6 +575,10 @@ export function mountComponent(cmp: Vue, container?: HTMLElement): void {
 let popupWindow
 
 export function displayCanvasInPopup(canvas) {
+  if (!canvas) {
+    return
+  }
+
   // Calculate the width and height for the popup window
   const canvasWidth = canvas.width
   const canvasHeight = canvas.height

@@ -26,22 +26,24 @@
       ></i>
       <header
         v-if="$slots.header"
-        class="dialog__header"
+        class="dialog__header-wrapper"
         @mousedown="handleDrag"
         @touchstart="handleDrag"
       >
-        <slot name="header"></slot>
-        <button
-          type="button"
-          class="dialog__close btn -link -text -no-grab"
-          @click="close"
-        >
-          <i class="icon-cross"></i>
-        </button>
+        <div class="dialog__header">
+          <slot name="header"></slot>
+          <button
+            type="button"
+            class="dialog__close btn -link -text -no-grab"
+            @click="close"
+          >
+            <i class="icon-cross"></i>
+          </button>
+        </div>
+        <div class="dialog__subheader" v-if="$slots.subheader">
+          <slot name="subheader" />
+        </div>
       </header>
-      <div class="dialog__subheader" v-if="$slots.subheader">
-        <slot name="subheader" />
-      </div>
       <div ref="body" class="dialog__body hide-scrollbar" :class="bodyClass">
         <slot></slot>
       </div>
@@ -181,6 +183,7 @@ export default class Dialog extends Vue {
 
   handleDrag(event) {
     if (
+      this._handleTranslateRelease || 
       event.button === 2 ||
       event.target.classList.contains('-no-grab') ||
       event.target.parentElement.classList.contains('-no-grab')
@@ -188,7 +191,6 @@ export default class Dialog extends Vue {
       return
     }
 
-    event.preventDefault()
     const lastMove = Object.assign({}, this.delta)
     const startPosition = getEventCords(event)
     const startOffset = this.$refs.content.offsetTop

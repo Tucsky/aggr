@@ -61,7 +61,7 @@
               <i class="icon-upload mr8"></i>
               {{ previewName }}
               <i
-                v-if="newImagePreview"
+                v-if="hasCustomPreview"
                 class="icon-cross mr8 btn__suffix"
                 @click.stop.prevent="removePreview"
               ></i>
@@ -118,7 +118,7 @@ export default {
       updateId: false,
       imageObjectUrl: null,
       newImagePreview: null,
-      previewDeleted: false
+      hasDeletedPreview: false
     }
   },
   computed: {
@@ -141,8 +141,19 @@ export default {
     idsExceptCurrent() {
       return this.ids.filter(id => id !== this.item.id)
     },
+    hasCustomPreview() {
+      if (this.hasDeletedPreview) {
+        return false
+      }
+
+      if (this.newImagePreview || this.item.preview instanceof File) {
+        return true
+      }
+
+      return false
+    },
     previewName() {
-      if (this.newImagePreview && this.item.preview) {
+      if (this.hasCustomPreview) {
         return this.item.id + '.png'
       }
 
@@ -176,7 +187,7 @@ export default {
 
       if (this.newImagePreview) {
         this.output.preview = this.newImagePreview
-      } else if (this.previewDeleted) {
+      } else if (this.hasDeletedPreview) {
         this.output.preview = null
       }
 
@@ -190,7 +201,7 @@ export default {
       this.clearPreview()
 
       const preview = this.newImagePreview || this.item.preview
-      if (preview) {
+      if (preview instanceof File || preview instanceof Blob) {
         this.imageObjectUrl = URL.createObjectURL(preview)
       }
     },
@@ -208,15 +219,16 @@ export default {
       }
 
       this.newImagePreview = file
-      this.previewDeleted = false
+      this.hasDeletedPreview = false
       this.loadPreview()
     },
     removePreview() {
       if (this.newImagePreview) {
         this.newImagePreview = null
-        this.previewDeleted = true
-        this.clearPreview()
       }
+
+      this.clearPreview()
+      this.hasDeletedPreview = true
     }
   }
 }

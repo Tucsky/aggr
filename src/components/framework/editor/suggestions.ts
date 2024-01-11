@@ -142,12 +142,12 @@ export default [
   {
     label: 'option',
     detail: '[AGGR] simple option',
-    insertText: `length = option(default=14,step=1)`
+    insertText: `option(default=14,step=1)`
   },
   {
     label: 'option (range)',
     detail: '[AGGR] simple option (range)',
-    insertText: `length = option(default=14,type=range,step=1,min=0,max=200)`
+    insertText: `option(default=14,type=range,step=1,min=0,max=200)`
   },
   {
     label: 'listname',

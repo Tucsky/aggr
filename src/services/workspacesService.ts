@@ -628,7 +628,6 @@ class WorkspacesService {
     indicator.updatedAt = silent
       ? indicator.updatedAt || originalIndicator.updatedAt || now
       : now
-    indicator.preview = indicator.preview || originalIndicator.preview
 
     const payload = JSON.parse(
       JSON.stringify({
@@ -642,14 +641,7 @@ class WorkspacesService {
       })
     )
 
-    const optionals = [
-      'displayName',
-      'description',
-      'preview',
-      'enabled',
-      'author',
-      'pr'
-    ]
+    const optionals = ['displayName', 'description', 'enabled', 'author', 'pr']
 
     for (const key of optionals) {
       if (typeof indicator[key] !== 'undefined') {
@@ -658,6 +650,11 @@ class WorkspacesService {
         payload[key] = originalIndicator[key]
       }
     }
+
+    payload.preview =
+      typeof indicator.preview !== 'undefined'
+        ? indicator.preview
+        : originalIndicator.preview
 
     await this.db.put('indicators', payload)
 
@@ -677,6 +674,10 @@ class WorkspacesService {
 
   async saveIndicatorPreview(indicatorId: string, blob: Blob) {
     const originalIndicator = await this.db.get('indicators', indicatorId)
+
+    if (originalIndicator.preview instanceof File) {
+      return
+    }
 
     originalIndicator.preview = blob
 

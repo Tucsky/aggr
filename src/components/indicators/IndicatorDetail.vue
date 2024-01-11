@@ -122,6 +122,7 @@ export default {
       isInstalling: false,
       isPublishing: false,
       dropdownTrigger: null,
+      imageObjectUrl: null,
       dateIndex: 0,
       communityTabEnabled: !!import.meta.env.VITE_APP_LIB_URL
     }
@@ -225,8 +226,13 @@ export default {
     loadPreview() {
       this.clearPreview()
 
-      if (this.isInstalled && this.indicator.preview) {
-        this.imageObjectUrl = URL.createObjectURL(this.indicator.preview)
+      const preview = this.indicator.preview
+
+      if (
+        this.isInstalled &&
+        (preview instanceof Blob || preview instanceof File)
+      ) {
+        this.imageObjectUrl = URL.createObjectURL(preview)
       }
     },
     clearPreview() {

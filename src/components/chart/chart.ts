@@ -2256,6 +2256,13 @@ export default class Chart {
   }
 
   takeScreenshot(event) {
+    if (event.shiftKey) {
+      displayCanvasInPopup(
+        this.chartElement.querySelector('tr:first-child td:nth-child(2) canvas')
+      )
+      return
+    }
+
     const chartCanvas = this.chartInstance.takeScreenshot()
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
