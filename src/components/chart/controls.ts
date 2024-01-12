@@ -215,7 +215,7 @@ export default class ChartControl {
           this.chart.rebuildIndicator(mutation.payload.id)
           break
         case this.chart.paneId + '/ADD_INDICATOR':
-          if (this.chart.addIndicator(mutation.payload.id)) {
+          if (this.chart.addIndicators([mutation.payload.id])) {
             this.chart.redrawIndicator(mutation.payload.id)
 
             if (
@@ -227,14 +227,13 @@ export default class ChartControl {
           }
           break
         case this.chart.paneId + '/UPDATE_INDICATOR_ORDER':
-          this.chart.moveIndicator(
-            mutation.payload.id,
-            mutation.payload.position
-          )
+          this.chart.moveIndicator()
           break
         case this.chart.paneId + '/REMOVE_INDICATOR':
           this.unbindLegend(mutation.payload)
-          this.chart.removeIndicator(mutation.payload)
+          this.chart.removeIndicator(
+            this.chart.getLoadedIndicator(mutation.payload)
+          )
           break
         case this.chart.paneId + '/TOGGLE_FILL_GAPS_WITH_EMPTY':
           this.chart.toggleFillGapsWithEmpty()

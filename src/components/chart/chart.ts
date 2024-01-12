@@ -310,7 +310,7 @@ export default class Chart {
       chartOptions
     ) as IChartApi
 
-    this.addPaneIndicators()
+    this.addIndicators(Object.keys(store.state[this.paneId].indicators))
     this.updateWatermark()
     this.updateFontSize()
 
@@ -394,7 +394,7 @@ export default class Chart {
     }
 
     if (indicator.model.options[key] && indicator.model.options[key].rebuild) {
-      this.refreshIndicatorAdapter(indicator, this.activeRenderer)
+      this.refreshIndicatorAdapter(indicator)
       this.redrawIndicator(id)
     } else if (this.optionRequiresRedraw(key)) {
       this.redrawIndicator(id)
@@ -407,9 +407,10 @@ export default class Chart {
     } else {
       if (!indicator.model) {
         this.prepareIndicator(indicator)
-      } else {
-        this.createIndicatorSeries(indicator)
       }
+
+      this.createIndicatorSeries(indicator)
+
       this.redrawIndicator(indicator.id)
     }
   }
@@ -436,14 +437,55 @@ export default class Chart {
     return true
   }
 
+  addIndicators(indicatorIds: string[]) {
+    for (let i = 0; i < indicatorIds.length; i++) {
+      if (!this.addIndicator(indicatorIds[i])) {
+        return false
+      }
+    }
+
+    this.createIndicatorsSeriesOrdered(
+      this.loadedIndicators.filter(
+        indicator =>
+          indicator.options.visible !== false &&
+          indicator.model &&
+          indicator.model.plots.length &&
+          !indicator.apis.length
+      )
+    )
+    return true
+  }
+
+  createIndicatorsSeriesOrdered(indicators) {
+    const indicatorMap = new Map(
+      indicators.map(indicator => [indicator.id, indicator])
+    )
+
+    const orderedIds = store.state[this.paneId].indicatorOrder
+    for (let i = 0; i < orderedIds.length; i++) {
+      const orderedId = orderedIds[i]
+      if (indicatorMap.has(orderedId)) {
+        const indicator = indicatorMap.get(orderedId)
+        this.createIndicatorSeries(indicator)
+        indicatorMap.delete(orderedId)
+      }
+    }
+
+    for (const indicator of indicatorMap.values()) {
+      this.createIndicatorSeries(indicator)
+    }
+  }
+
   /**
    * rebuild the whole serie
    * @param {string} id serie id
    */
   rebuildIndicator(id) {
-    this.removeIndicator(this.getLoadedIndicator(id))
+    const indicator = this.getLoadedIndicator(id)
 
-    if (this.addIndicator(id)) {
+    this.removeIndicator(indicator)
+
+    if (this.addIndicators([id])) {
       this.redrawIndicator(id)
     }
   }
@@ -505,15 +547,6 @@ export default class Chart {
     visibleRange.to -= this.timezoneOffset
 
     return visibleRange
-  }
-
-  /**
-   * add all pane's indicators
-   */
-  addPaneIndicators() {
-    for (const id of store.state[this.paneId].indicatorOrder) {
-      this.addIndicator(id)
-    }
   }
 
   /**
@@ -617,16 +650,26 @@ export default class Chart {
     // build indicator
     try {
       this.prepareIndicator(indicator)
+
+      for (let i = 0; i < indicator.model.plots.length; i++) {
+        this.seriesIndicatorsMap[indicator.model.plots[i].id] = {
+          indicatorId: indicator.id,
+          plotIndex: i
+        }
+      }
     } catch (error) {
       // handle dependency issue (resolveDependency adds required indicator(s) then try add this one again)
-      if (
-        error.status === 'indicator-required' &&
-        !this.resolveDependency(
-          indicator.id,
-          error.serieId,
-          dependencyDepth || 0
-        )
-      ) {
+      if (error.status === 'indicator-required') {
+        if (
+          this.resolveDependency(
+            indicator.id,
+            error.serieId,
+            dependencyDepth || 0
+          )
+        ) {
+          return true
+        }
+
         dialogService.confirm({
           title: 'Referenced indicator',
           message: `The <code class="-filled">${indicator.libraryId}</code> indicator you added requires the <code class="-filled">$${error.serieId}</code> series, but it was not located among the added indicators.`,
@@ -654,7 +697,8 @@ export default class Chart {
     dependencyDepth: number
   ) {
     // serie was not found in active indicators
-    // first we loop through pane indicators, maybe order of add is incorrect
+    // we loop through pane indicators, maybe order of add was incorrect
+    // add order is important as build of one might reference another
     const indicators = (store.state[this.paneId] as ChartPaneState).indicators
 
     for (const otherIndicatorId in indicators) {
@@ -679,18 +723,6 @@ export default class Chart {
           return false
           // too many dependencies
         }
-      }
-    }
-
-    if (indicators[missingSerieId]) {
-      if (
-        this.addIndicator(indicators[missingSerieId].id, dependencyDepth + 1)
-      ) {
-        if (dependencyDepth === 0) {
-          this.addIndicator(originalIndicatorId, dependencyDepth + 1)
-        }
-
-        return true
       }
     }
 
@@ -725,23 +757,9 @@ export default class Chart {
         id: indicator.id,
         optionsDefinitions: result.options
       })
-
-      if (indicator.options.visible !== false) {
-        this.createIndicatorSeries(indicator)
-      }
     } catch (error) {
       if (indicator.options.visible !== false) {
-        console.error(
-          `[chart/${this.paneId}/prepareIndicator] transpilation failed`
-        )
-        console.error(`\t->`, error)
-
-        store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
-          id: indicator.id,
-          error: error.message
-        })
-
-        throw error
+        this.setIndicatorError(indicator, 'build', error)
       }
     }
   }
@@ -776,7 +794,7 @@ export default class Chart {
       }
 
       // create function ready to calculate (& render) everything for this indicator
-      this.refreshIndicatorAdapter(indicator, renderer)
+      this.refreshIndicatorAdapter(indicator)
     }
 
     this.prepareRendererForIndicators(indicator, renderer)
@@ -784,7 +802,7 @@ export default class Chart {
     return indicator
   }
 
-  refreshIndicatorAdapter(indicator: LoadedIndicator, renderer) {
+  refreshIndicatorAdapter(indicator: LoadedIndicator) {
     try {
       indicator.adapter = getBuildedIndicator(
         indicator.model,
@@ -792,15 +810,13 @@ export default class Chart {
         indicator.options
       )
     } catch (error) {
-      this.unbindIndicator(indicator, renderer)
-
-      throw error
+      this.setIndicatorError(indicator, 'adapter', error)
     }
   }
 
   refreshAllIndicatorAdapters() {
     for (const indicator of this.loadedIndicators) {
-      this.refreshIndicatorAdapter(indicator, this.activeRenderer)
+      this.refreshIndicatorAdapter(indicator)
     }
   }
 
@@ -876,42 +892,17 @@ export default class Chart {
    * @param {LoadedIndicator} indicator
    */
   removeIndicator(indicator: LoadedIndicator) {
-    if (typeof indicator === 'string') {
-      indicator = this.getLoadedIndicator(indicator)
-    }
-
-    if (!indicator) {
-      return
-    }
-
     this.removeIndicatorSeries(indicator)
-
-    // remove from active series model
     this.loadedIndicators.splice(this.loadedIndicators.indexOf(indicator), 1)
   }
 
-  moveIndicator(indicatorId, position) {
-    const currentIndex = this.loadedIndicators.findIndex(
-      indicator => indicator.id === indicatorId
-    )
-    if (currentIndex === -1) {
-      console.warn(
-        `[${this.paneId}/moveIndicator] indicator with ID ${indicatorId} not found in loadedIndicators`
-      )
-      return
-    }
-
-    const [indicatorToMove] = this.loadedIndicators.splice(currentIndex, 1)
-
-    const newPosition = Math.min(position, this.loadedIndicators.length)
-    this.loadedIndicators.splice(newPosition, 0, indicatorToMove)
-
+  moveIndicator() {
     for (const indicator of this.loadedIndicators) {
       this.removeIndicatorSeries(indicator)
     }
-    for (const indicator of this.loadedIndicators) {
-      this.createIndicatorSeries(indicator)
-    }
+
+    this.createIndicatorsSeriesOrdered(this.loadedIndicators)
+
     this.renderAll()
   }
 
@@ -1481,6 +1472,8 @@ export default class Chart {
       return
     }
 
+    this.setIndicatorError(indicator, null)
+
     const series = []
 
     const priceScale =
@@ -1500,10 +1493,6 @@ export default class Chart {
 
       api.id = plot.id
 
-      this.seriesIndicatorsMap[plot.id] = {
-        indicatorId: indicator.id,
-        plotIndex: i
-      }
       series.push(plot.id)
 
       indicator.apis.push(api)
@@ -1518,6 +1507,25 @@ export default class Chart {
 
     // attach indicator to active renderer
     this.bindIndicator(indicator, this.activeRenderer)
+
+    if (this.activeRenderer) {
+      // attempt reactivating other indicators currently errored & referencing this one
+      for (const otherIndicator of this.loadedIndicators) {
+        if (otherIndicator.id === indicator.id || !otherIndicator.errored) {
+          continue
+        }
+
+        for (const reference of otherIndicator.model.references) {
+          if (
+            reference.indicatorId === indicator.id &&
+            store.state[this.paneId].indicators[otherIndicator.id].options
+              .visible !== false
+          ) {
+            this.createIndicatorSeries(otherIndicator)
+          }
+        }
+      }
+    }
   }
 
   refreshPriceScale(priceScaleId: string) {
@@ -1782,20 +1790,44 @@ export default class Chart {
           try {
             this.loadedIndicators[i].apis[j].setData(seriesData[serieId])
           } catch (error) {
-            store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
-              id: this.loadedIndicators[i].id,
-              error: error.message
-            })
-
-            this.setIndicatorOption(
-              this.loadedIndicators[i].id,
-              'visible',
-              false
+            this.setIndicatorError(
+              this.loadedIndicators[i],
+              'replaceData',
+              error
             )
           }
         }
       }
     }
+  }
+
+  setIndicatorError(indicator: LoadedIndicator, scope?, error?) {
+    if (!error) {
+      const currentIndicatorError =
+        store.state[this.paneId].indicatorsErrors[indicator.id]
+
+      if (currentIndicatorError) {
+        store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
+          id: indicator.id,
+          error: null
+        })
+
+        indicator.errored = false
+      }
+
+      return
+    }
+
+    console.error(`[chart/${this.paneId}/${scope}]`, error)
+
+    store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
+      id: indicator.id,
+      error: error.message
+    })
+
+    indicator.errored = true
+
+    this.setIndicatorOption(indicator.id, 'visible', false)
   }
 
   /**
@@ -1815,14 +1847,19 @@ export default class Chart {
       const indicator = this.loadedIndicators[i]
       const serieData = renderer.indicators[indicator.id]
 
-      this.loadedIndicators[i].adapter(
-        renderer,
-        serieData.functions,
-        serieData.variables,
-        indicator.apis,
-        indicator.options,
-        seriesUtils
-      )
+      try {
+        this.loadedIndicators[i].adapter(
+          renderer,
+          serieData.functions,
+          serieData.variables,
+          indicator.apis,
+          indicator.options,
+          seriesUtils
+        )
+      } catch (error) {
+        this.setIndicatorError(this.loadedIndicators[i], 'updateBar', error)
+        continue
+      }
 
       if (serieData.canRender) {
         for (let j = 0; j < indicator.apis.length; j++) {
@@ -1888,16 +1925,7 @@ export default class Chart {
           seriesUtils
         )
       } catch (error) {
-        console.error(
-          `[chart/${this.paneId}/computeBar] execution failed\n\t->`,
-          error
-        )
-
-        store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
-          id: indicator.id,
-          error: error.message
-        })
-
+        this.setIndicatorError(indicator, 'computeBar', error)
         continue
       }
 
@@ -2001,12 +2029,6 @@ export default class Chart {
         }
       }
     }
-
-    this.loadedIndicators = this.loadedIndicators.sort((a, b) => {
-      const referencesA = a.model ? a.model.references.length : 0
-      const referencesB = b.model ? b.model.references.length : 0
-      return referencesA - referencesB
-    })
 
     for (const indicator of this.loadedIndicators) {
       if (

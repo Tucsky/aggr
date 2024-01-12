@@ -75,6 +75,7 @@ export interface LoadedIndicator {
   model: IndicatorTranspilationResult
   adapter: IndicatorRealtimeAdapter
   apis: IndicatorApi[]
+  errored?: boolean
 }
 
 export interface IndicatorTranspilationResult {

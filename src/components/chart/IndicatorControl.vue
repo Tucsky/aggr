@@ -126,6 +126,17 @@ export default class IndicatorControl extends Vue {
     vertical-align: bottom;
   }
 
+  &:hover {
+    position: relative;
+    z-index: 1;
+    color: var(--theme-color-base);
+
+    .indicator__controls {
+      display: inline-flex;
+      pointer-events: all;
+    }
+  }
+
   &.-error {
     color: $red;
   }
@@ -203,17 +214,6 @@ export default class IndicatorControl extends Vue {
       &:first-child:last-child {
         border-radius: 0.25em;
       }
-    }
-  }
-
-  &:hover {
-    position: relative;
-    z-index: 1;
-    color: var(--theme-color-base);
-
-    .indicator__controls {
-      display: inline-flex;
-      pointer-events: all;
     }
   }
 }
