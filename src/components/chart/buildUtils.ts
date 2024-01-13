@@ -400,7 +400,9 @@ function parseSerie(
   const rawFunctionInstruction = match[1] + '(' + rawFunctionArguments + ')'
 
   // plot function arguments ['sma($price.close,options.smaLength)','color=red']
-  const args = parseFunctionArguments(rawFunctionArguments)
+  const args = parseFunctionArguments(rawFunctionArguments).filter(
+    arg => arg.length
+  )
 
   // parse and store serie options in dedicated object (eg. color=red in line arguments)
   const serieOptions = parseCustomArguments(args, 1)
@@ -580,7 +582,7 @@ function parseFunctions(
           customArgsStartIndex + functionMatch[1].length + 1,
           customArgsEndIndex
         )
-      )
+      ).filter(arg => arg.length)
 
       if (typeof seriesUtils[functionName] === 'function') {
         output = `${output.slice(
@@ -669,7 +671,7 @@ function parseOptions(output, options) {
             customArgsStartIndex + functionMatch[0].length,
             customArgsEndIndex
           )
-        )
+        ).filter(arg => arg.length)
       )
 
       output = output.replace(
@@ -725,7 +727,7 @@ function parseSources(output, sources) {
           customArgsStartIndex + functionMatch[0].length,
           customArgsEndIndex
         )
-      )
+      ).filter(arg => arg.length)
 
       let prop
 
