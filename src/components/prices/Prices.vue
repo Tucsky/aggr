@@ -469,7 +469,7 @@ export default class Prices extends Mixins(PaneMixin) {
   getTimeToNextReset() {
     const now = Date.now()
     const periodMs = this.period * 1000 * 60
-    const timeOfReset = Math.ceil(now / periodMs) * periodMs
+    const timeOfReset = Math.ceil((now + 10000) / periodMs) * periodMs
 
     return timeOfReset - now
   }
@@ -487,6 +487,7 @@ export default class Prices extends Mixins(PaneMixin) {
 
   periodReset() {
     if (this.period) {
+
       this.periodMs = this.period * 1000 * 60
       this.lastResetTimestamp = this.resetTimeout ? Date.now() : null
 
