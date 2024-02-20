@@ -335,7 +335,7 @@
     </ToggableSection>
 
     <template v-slot:footer>
-      <a
+      <!-- <a
         class="btn -text mrauto"
         href="https://github.com/Tucsky/aggr"
         target="_blank"
@@ -345,7 +345,7 @@
         v{{ version }}&nbsp;<sup class="settings-footer__version">{{
           buildDate
         }}</sup>
-      </a>
+      </a> -->
       <span>
         <dono-dropdown class="-top -text-left" />
       </span>
