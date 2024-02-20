@@ -615,7 +615,9 @@ class WorkspacesService {
       } else {
         indicator.libraryId = uniqueName(
           slugify(indicator.name),
-          await this.getIndicatorsIds()
+          await this.getIndicatorsIds(),
+          true,
+          '2'
         )
       }
     }
@@ -757,6 +759,13 @@ class WorkspacesService {
 
   getPresetsKeysByType(type: PresetType) {
     return this.db.getAllKeys(
+      'presets',
+      IDBKeyRange.bound(type, type + '|', true, true)
+    )
+  }
+
+  getAllPresets(type: string) {
+    return this.db.getAll(
       'presets',
       IDBKeyRange.bound(type, type + '|', true, true)
     )

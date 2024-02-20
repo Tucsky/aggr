@@ -139,6 +139,18 @@ class ImportService {
       preview: json.data.preview || null
     })
 
+    if (json.data.presets) {
+      for (const preset of json.data.presets) {
+        await workspacesService.savePreset({
+          ...preset,
+          name: preset.name.replace(
+            `:${json.data.libraryId}:`,
+            `:${indicator.id}:`
+          )
+        })
+      }
+    }
+
     if (!dialogService.isDialogOpened('indicator-library')) {
       dialogService.open(
         (await import('@/components/indicators/IndicatorLibraryDialog.vue'))

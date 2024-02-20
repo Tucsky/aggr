@@ -208,6 +208,10 @@ const actions = {
   async downloadIndicator({ state }, indicatorId) {
     const indicator = state.indicators[indicatorId]
 
+    const presets = await workspacesService.getAllPresets(
+      `indicator:${indicator.libraryId}`
+    )
+
     await downloadAnything(
       {
         type: 'indicator',
@@ -219,7 +223,8 @@ const actions = {
           description: indicator.description,
           script: indicator.script,
           createdAt: indicator.createdAt,
-          updatedAt: indicator.updatedAt
+          updatedAt: indicator.updatedAt,
+          presets
         }
       },
       'indicator_' + (indicator.displayName || indicator.name)
