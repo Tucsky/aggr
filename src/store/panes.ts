@@ -351,8 +351,8 @@ const actions = {
       typeof zoom === 'number'
         ? zoom
         : state.panes[id].zoom
-        ? Math.max(0.1, state.panes[id].zoom)
-        : 1
+          ? Math.max(0.1, state.panes[id].zoom)
+          : 1
     const el = document.getElementById(id) as HTMLElement
 
     if (el) {

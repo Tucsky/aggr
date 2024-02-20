@@ -704,7 +704,6 @@ export default class Chart {
   prepareIndicator(indicator: LoadedIndicator) {
     try {
       const result = build(indicator, this.seriesIndicatorsMap)
-
       if (store.state[this.paneId].indicatorsErrors[indicator.id]) {
         store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
           id: indicator.id,
@@ -940,10 +939,9 @@ export default class Chart {
    * only use when chart indicators are cleared
    */
   clearData() {
-    console.log(
-      `[chart/${this.paneId}/controller] clear data (activeRenderer+activeChunk+queuedTrades1)`
-    )
+    console.log(`[chart/${this.paneId}/controller] clear data`)
 
+    this.seriesIndicatorsMap = {}
     this.activeRenderer = null
     this.activeChunk = null
     this.queuedTrades.splice(0, this.queuedTrades.length)
@@ -976,9 +974,7 @@ export default class Chart {
    * fresh start : clear cache, renderer and rendered series on chart
    */
   clear() {
-    console.log(
-      `[chart/${this.paneId}/controller] clear all (cache+activedata+chart)`
-    )
+    console.log(`[chart/${this.paneId}/controller] clear`)
 
     this.chartCache.clear()
     this.clearData()
@@ -1075,8 +1071,6 @@ export default class Chart {
     if (!this._releaseQueueInterval) {
       return
     }
-
-    console.log(`[chart/${this.paneId}/controller] clear queue`)
 
     clearInterval(this._releaseQueueInterval)
     cancelAnimationFrame(this._releaseQueueInterval)
@@ -1448,15 +1442,15 @@ export default class Chart {
     }
   }
 
-  removeIndicatorSeries(indicator) {
+  removeIndicatorSeries(indicator: LoadedIndicator) {
     if (this.chartInstance) {
       // remove from chart instance (derender)
       for (let i = 0; i < indicator.apis.length; i++) {
         this.chartInstance.removeSeries(indicator.apis[i])
+        delete this.seriesIndicatorsMap[indicator.apis[i].id]
         indicator.apis.splice(i--, 1)
       }
     }
-
     // unbind from activebar (remove serie meta data like sma memory etc)
     this.unbindIndicator(indicator, this.activeRenderer)
 
@@ -1826,21 +1820,19 @@ export default class Chart {
 
       if (serieData.canRender) {
         for (let j = 0; j < indicator.apis.length; j++) {
-          if (serieData.series[j] && !serieData.series[j].rendered) {
+          const point = renderer.series[indicator.apis[j].id]
+          if (point && !point.rendered) {
             if (
-              (indicator.model.plots[j].type === 'line' &&
-                !serieData.series[j].value) ||
-              (indicator.model.plots[j].type === 'histogram' &&
-                !serieData.series[j].value) ||
+              (indicator.model.plots[j].type === 'line' && !point.value) ||
+              (indicator.model.plots[j].type === 'histogram' && !point.value) ||
               ((indicator.model.plots[j].type === 'cloudarea' ||
                 indicator.model.plots[j].type === 'brokenarea') &&
-                serieData.series[j].lowerValue === null) ||
-              (indicator.model.plots[j].type === 'histogram' &&
-                !serieData.series[j].value)
+                point.lowerValue === null) ||
+              (indicator.model.plots[j].type === 'histogram' && !point.value)
             ) {
               continue
             }
-            toUpdate.push([indicator.apis[j], serieData.series[j]])
+            toUpdate.push([indicator.apis[j], point])
           }
         }
       }
@@ -1863,6 +1855,7 @@ export default class Chart {
     indicatorsIds?: string[]
   ): { [serieId: string]: any } {
     const points = {}
+    renderer.series = {}
 
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       if (
@@ -1875,8 +1868,6 @@ export default class Chart {
 
       const indicator = this.loadedIndicators[i]
       const serieData = renderer.indicators[indicator.id]
-
-      serieData.series = []
 
       try {
         indicator.adapter(
@@ -1898,27 +1889,23 @@ export default class Chart {
           error: error.message
         })
 
-        continue
+        throw new Error('execution failed')
       }
 
-      for (let i = 0; i < serieData.series.length; i++) {
-        if (!indicator.model.plots[i]) {
-          break
-        }
+      for (let j = 0; j < indicator.apis.length; j++) {
+        const point = renderer.series[indicator.apis[j].id]
 
         if (
           renderer.length < serieData.minLength ||
-          !serieData.series[i] ||
-          (typeof serieData.series[i].value !== 'undefined' &&
-            serieData.series[i].value === null) ||
-          (typeof serieData.series[i].lowerValue !== 'undefined' &&
-            serieData.series[i].lowerValue === null) ||
-          (indicator.model.plots[i].type === 'histogram' &&
-            serieData.series[i].value === 0)
+          !point ||
+          (typeof point.value !== 'undefined' && point.value === null) ||
+          (typeof point.lowerValue !== 'undefined' &&
+            point.lowerValue === null) ||
+          (indicator.model.plots[j].type === 'histogram' && point.value === 0)
         ) {
           continue
         }
-        points[indicator.apis[i].id] = serieData.series[i]
+        points[indicator.apis[j].id] = point
       }
     }
 
@@ -1978,7 +1965,7 @@ export default class Chart {
       length: 1,
       indicators: {},
       sources: {},
-
+      series: {},
       bar: {
         vbuy: 0,
         vsell: 0,
@@ -1994,7 +1981,6 @@ export default class Chart {
       const prependBars = getPrependBars(this.prepend, firstBarTimestamp)
 
       for (const market in prependBars) {
-        // console.log('[prepend] inject prepend bar', market, 'into new renderer')
         renderer.sources[market] = {
           ...prependBars[market],
           active: this.marketsFilters[market]
@@ -2172,8 +2158,8 @@ export default class Chart {
         typeof precision === 'number'
           ? precision
           : typeof priceFormat.precision === 'number'
-          ? priceFormat.precision
-          : 2
+            ? priceFormat.precision
+            : 2
 
       if (
         !priceFormat.auto ||

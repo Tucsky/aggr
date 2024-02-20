@@ -567,6 +567,7 @@ export default {
         'https://random-word-api.herokuapp.com/word?number=2'
       )
         .then(response => response.json())
+        .catch(() => [])
         .then(words =>
           words.map(word => word[0].toUpperCase() + word.slice(1)).join('')
         )

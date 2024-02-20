@@ -195,6 +195,9 @@ export default {
       immediate: true,
       handler() {
         this.loadPreview()
+        if (this.isInstalling) {
+          this.addToChart()
+        }
       }
     }
   },
@@ -246,6 +249,8 @@ export default {
         return
       }
 
+      this.isInstalling = true
+
       try {
         const indicator = await (
           await fetch(
@@ -261,7 +266,7 @@ export default {
           indicator.data.preview = await (await fetch(this.image)).blob()
         }
 
-        importService.importIndicator(indicator)
+        await importService.importIndicator(indicator)
       } catch (error) {
         console.error(error)
         this.$store.dispatch('app/showNotice', {

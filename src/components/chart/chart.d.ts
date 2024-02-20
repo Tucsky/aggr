@@ -118,28 +118,30 @@ export interface Renderer {
   bar: Bar
   sources: { [name: string]: Bar }
   indicators: { [id: string]: RendererIndicatorData }
+  series: { [id: string]: IndicatorSeriePoint }
   empty?: boolean
   price?: number
 }
 
 export interface RendererIndicatorData {
   canRender: boolean
-  series: {
-    rendered?: boolean
-    time: number
-    value?: number
-    open?: number
-    high?: number
-    low?: number
-    close?: number
-    color?: string
-    higherValue?: number
-    lowerValue?: number
-  }[]
   variables: IndicatorVariable[]
   functions: IndicatorFunction[]
   plotsOptions?: any[]
   minLength?: number
+}
+
+export interface IndicatorSeriePoint {
+  rendered?: boolean
+  time: number
+  value?: number
+  open?: number
+  high?: number
+  low?: number
+  close?: number
+  color?: string
+  higherValue?: number
+  lowerValue?: number
 }
 
 export type MarketsFilters = {

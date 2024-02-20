@@ -487,7 +487,6 @@ export default class Prices extends Mixins(PaneMixin) {
 
   periodReset() {
     if (this.period) {
-
       this.periodMs = this.period * 1000 * 60
       this.lastResetTimestamp = this.resetTimeout ? Date.now() : null
 

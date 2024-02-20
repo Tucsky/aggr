@@ -30,7 +30,7 @@ export default class ChartCache {
       index = 0
     } else {
       console.warn(`\t-> couldn't push or prepend the chunk -> abort`)
-      return
+      return this.chunks[0]
     }
 
     if (index === 0) {
