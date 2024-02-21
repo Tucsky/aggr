@@ -1,9 +1,9 @@
+import iframeService from '@/services/iframeService'
 import store from '@/store'
 import { ListenedProduct } from '@/store/app'
+import { INFRAME } from '@/utils/constants'
 import { mountComponent, createComponent, getEventCords } from '@/utils/helpers'
 import { isTouchSupported } from '@/utils/touchevent'
-
-const IS_IFRAME = window !== window.top
 
 let marketContext: { el: HTMLElement; market: ListenedProduct; paneId: string }
 let draggableMarketComponent: any
@@ -144,7 +144,7 @@ function emitContext(event: MouseEvent | TouchEvent) {
   const context = getMarketContext(event.currentTarget)
 
   if (context) {
-    window.parent.postMessage(JSON.stringify(context.market), '*')
+    iframeService.send('market', context.market)
   }
 }
 
@@ -190,4 +190,4 @@ const iframeHandlers = {
   }
 }
 
-export default IS_IFRAME ? iframeHandlers : draggableHandlers
+export default INFRAME ? iframeHandlers : draggableHandlers
