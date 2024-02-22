@@ -22,20 +22,19 @@
         </div>
       </div>
 
-      <a
-        href="https://github.com/Tucsky/aggr/wiki/introduction-to-scripting"
-        target="_blank"
-        title="Scripting documentation"
-        v-tippy
-        class="btn -text -white mlauto -center -no-grab indicator-dialog__action"
-        ><i class="icon-info"></i><span class="ml8">Wiki</span></a
-      >
+      <p
+
+
+     
+        class="btn -text -white mlauto -center -no-grab d-none"
+        ></span
+      ></p>
 
       <button
         v-if="unsavedChanges"
         title="Rollback changes"
         v-tippy
-        class="btn ml8 -text -no-grab indicator-dialog__action"
+        class="btn  -text -no-grab indicator-dialog__action"
         @click="undoIndicator"
       >
         <i class="icon-eraser"></i><span class="ml8">Discard</span>
