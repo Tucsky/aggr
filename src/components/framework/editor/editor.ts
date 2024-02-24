@@ -49,6 +49,11 @@ languages.registerHoverProvider('javascript', {
   provideHover: async function (model, position) {
     // Get the word at the current position
     const word = model.getWordAtPosition(position)
+
+    if (!word || !word.word) {
+      return
+    }
+
     const token = word.word.replace(/^plot/, '')
 
     // Check if the word is one of the specific tokens

@@ -116,6 +116,7 @@ export default class Chart {
   isLoading = false
   hasReachedEnd = false
   isPrepending = false
+  isSyncingCrosshair = false
   prepend: PrependState = {
     bars: {},
     time: null
@@ -739,9 +740,9 @@ export default class Chart {
           id: indicator.id,
           error: error.message
         })
-
-        throw error
       }
+
+      throw error
     }
   }
 
@@ -941,7 +942,6 @@ export default class Chart {
   clearData() {
     console.log(`[chart/${this.paneId}/controller] clear data`)
 
-    this.seriesIndicatorsMap = {}
     this.activeRenderer = null
     this.activeChunk = null
     this.queuedTrades.splice(0, this.queuedTrades.length)
@@ -2211,6 +2211,14 @@ export default class Chart {
   getPrice() {
     if (!this.activeRenderer) {
       return null
+    }
+
+    if (this.activeRenderer.series.price.close) {
+      return this.activeRenderer.series.price.close
+    }
+
+    if (this.activeRenderer.series.price.value) {
+      return this.activeRenderer.series.price.value
     }
 
     if (this.activeRenderer.price) {

@@ -120,23 +120,24 @@ const actions = {
           : options.markets || Object.keys(state.marketsListeners)
     }
 
-    const space = await findOrCreateSpace(
-      state.layout,
-      options.originalGridItem
-    )
+    const item = { pane, space: null }
 
-    if (!space) {
+    try {
+      item.space = await findOrCreateSpace(
+        state.layout,
+        options.originalGridItem
+      )
+    } catch (error) {
       dialogService.confirm({
         message: `Please remove one or more existing panes to create space before adding a new pane`,
         cancel: null
       })
-      return
     }
 
     await registerModule(id, {}, true, pane)
 
     commit('ADD_PANE', pane)
-    commit('ADD_GRID_ITEM', { pane, space })
+    commit('ADD_GRID_ITEM', item)
 
     dispatch('refreshMarketsListeners')
   },

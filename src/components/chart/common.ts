@@ -37,6 +37,12 @@ export function syncCrosshair(params, originalPaneId = null) {
       y = priceApi.priceToCoordinate(chartPrice + chartPrice * params.change)
     }
 
-    controlledCharts[i].chartInstance.setCrosshair(x, y, true)
+    if (x && y) {
+      controlledCharts[i].isSyncingCrosshair = true
+      controlledCharts[i].chartInstance.setCrosshair(x, y, true)
+    } else if (controlledCharts[i].isSyncingCrosshair) {
+      controlledCharts[i].isSyncingCrosshair = false
+      controlledCharts[i].chartInstance.setCrosshair(null, null, null)
+    }
   }
 }

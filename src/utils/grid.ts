@@ -58,19 +58,25 @@ export function initializeGrid(layout: GridItem[]) {
 export async function findOrCreateSpace(
   layout: GridItem[],
   originalItem?: GridItem
-) {
+): Promise<GridSpace> {
   const grid = initializeGrid(layout)
 
-  let space: GridSpace = {}
+  let space: GridSpace
 
   if (originalItem && originalItem.w && originalItem.h) {
     space = findAvailableSpace(grid, originalItem.w, originalItem.h)
-  } else {
+  }
+
+  if (!space) {
     space = findLargestAvailableSpace(grid)
   }
 
   if (!space) {
     space = await adjustDimensionsOrRearrange(grid, layout)
+  }
+
+  if (!space) {
+    throw new Error('no space available')
   }
 
   return space

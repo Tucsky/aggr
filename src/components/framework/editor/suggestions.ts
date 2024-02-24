@@ -1,5 +1,14 @@
 export default [
   {
+    label: 'interpolate',
+    detail: '[AGGR] get color gradient value',
+    insertText: `
+colorA = option(type=color,default=yellow)
+colorB = option(type=color,default=red)
+interpolate(ratio, colorA, colorB)
+`
+  },
+  {
     label: 'avg_ohlc',
     detail: '[AGGR] avg OHLC (open = prev. close)',
     insertText: `avg_ohlc(bar)`
