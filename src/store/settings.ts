@@ -138,7 +138,7 @@ const actions = {
   },
   updateCSS({ state }) {
     const theme = state.theme
-    const backgroundScale = theme === 'dark' ? 1 : -1
+    const backgroundScale = theme === 'dark' ? 1 : -0.75
     const themeBase = theme === 'dark' ? [0, 0, 0] : [255, 255, 255]
     const backgroundRgb = splitColorCode(state.backgroundColor)
     backgroundRgb[3] = 1
@@ -159,6 +159,10 @@ const actions = {
     document.documentElement.style.setProperty(
       '--theme-base-o25',
       joinRgba([...themeBase.slice(0, 3), 0.25])
+    )
+    document.documentElement.style.setProperty(
+      '--theme-base-o50',
+      joinRgba([...themeBase.slice(0, 3), 0.50])
     )
     document.documentElement.style.setProperty(
       '--theme-background-75',

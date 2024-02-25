@@ -137,7 +137,7 @@ export const downloadAnything = (data, filename) => {
   }
 
   downloadAnchorNode.setAttribute('href', href)
-  downloadAnchorNode.setAttribute('download', filename + '.txt')
+  downloadAnchorNode.setAttribute('download', filename + '.json')
   document.body.appendChild(downloadAnchorNode)
   downloadAnchorNode.click()
   downloadAnchorNode.remove()

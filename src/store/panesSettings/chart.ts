@@ -83,6 +83,7 @@ export interface ChartPaneState {
   watermarkColor: string
   showBorder: boolean
   borderColor: string
+  textColor: string
   showLeftScale: boolean
   showRightScale: boolean
   showTimeScale: boolean
@@ -120,6 +121,7 @@ const state = {
   watermarkColor: 'rgba(255,255,255,.1)',
   showBorder: true,
   borderColor: null,
+  textColor: null,
   showLeftScale: false,
   showRightScale: true,
   showTimeScale: true,
@@ -189,7 +191,6 @@ const actions = {
     const indicator = merge({}, state.indicators[id])
 
     const indicators = Object.values(state.indicators)
-
     indicator.name = uniqueName(
       indicator.name,
       indicators.map(indicator => indicator.name)
@@ -215,7 +216,7 @@ const actions = {
     await downloadAnything(
       {
         type: 'indicator',
-        name: 'indicator:' + indicator.name,
+        name: indicator.name,
         data: {
           libraryId: indicator.libraryId,
           displayName: indicator.displayName,
@@ -470,6 +471,9 @@ const mutations = {
     } else {
       state.borderColor = value
     }
+  },
+  SET_TEXT_COLOR(state, { value }) {
+    state.textColor = value
   },
   TOGGLE_AXIS(state, side) {
     if (side === 'left') {

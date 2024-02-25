@@ -304,31 +304,6 @@
         Options
       </button>
       <dropdown v-model="dropdownIndicatorTrigger">
-        <div class="dropdown-item">
-          <label class="checkbox-control -small" @mousedown.prevent>
-            <input
-              type="checkbox"
-              class="form-control"
-              :checked="indicator.enabled"
-              @change="toggleIndicatorAsDefault"
-            />
-            <div></div>
-            <span>Use as default</span>
-            <i
-              class="icon-info text-muted ml8"
-              title="New charts to use this indicator"
-              v-tippy
-            />
-          </label>
-        </div>
-        <button type="button" class="dropdown-item" @click="copyIndicatorId">
-          <i class="icon-copy-paste"></i> <span>Copy ID</span>
-          <i
-            class="icon-info text-muted ml8"
-            title="ID can be used to reference in other indicator using $ sign followed by the id ($price)"
-            v-tippy
-          />
-        </button>
         <button type="button" class="dropdown-item" @click="resizeIndicator">
           <i class="icon-resize-height"></i> <span>Resize</span>
         </button>
@@ -339,9 +314,20 @@
           <i class="icon-copy-paste"></i> <span>Duplicate</span>
         </button>
         <div class="dropdown-divider"></div>
-        <button type="button" class="dropdown-item" @click="revertChanges">
-          <i class="icon-refresh"></i> <span>Revert changes</span>
-        </button>
+        <dropdown-button
+          @click.native.stop
+          button-class="dropdown-item"
+          :options="{
+            revert: 'Revert changes',
+            reset: 'Reset to default'
+          }"
+          class="-cases"
+          @input="revertChanges"
+        >
+          <template #selection>
+            <i class="icon-eraser"></i> <span>Reset</span>
+          </template>
+        </dropdown-button>
         <button type="button" class="dropdown-item" @click="removeIndicator">
           <i class="icon-cross"></i> <span>Unload</span>
         </button>
@@ -858,22 +844,6 @@ export default {
         )
       })
     },
-    async toggleIndicatorAsDefault() {
-      if (
-        this.unsavedChanges &&
-        !(await dialogService.confirm(
-          'Indicator has unsaved changes, save it and turn ' +
-            (this.indicator.enabled ? 'off' : 'on') +
-            ' default ?'
-        ))
-      ) {
-        return
-      }
-
-      this.indicator.enabled = !this.indicator.enabled
-
-      return this.saveIndicator()
-    },
     setPriceFormat(type, precisionInput) {
       let auto = false
 
@@ -943,10 +913,24 @@ export default {
     onResize() {
       this.resizeEditor()
     },
-    revertChanges() {
-      this.applyIndicatorPreset({
-        data: this.originalIndicator
-      })
+    async revertChanges(op: 'reset' | 'revert') {
+      if (op === 'reset') {
+        this.indicator.options = {}
+        this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', {
+          id: this.indicatorId
+        })
+      } else if (op === 'revert') {
+        this.applyIndicatorPreset({
+          data: this.originalIndicator
+        })
+      }
+
+      this.scriptOptionsKeys =
+        this.defaultOptionsKeys =
+        this.colorOptionsKeys =
+          []
+      await this.$nextTick()
+      this.getOptionsKeys()
     },
     async setTab(value) {
       this.navigation.tab = value
@@ -993,6 +977,8 @@ export default {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 
   &__action {

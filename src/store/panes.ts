@@ -17,15 +17,16 @@ enum StaticPaneType {
   alerts = 'alerts'
 }
 
-export type PaneType =
-  | 'trades'
-  | 'chart'
-  | 'stats'
-  | 'counters'
-  | 'prices'
-  | 'website'
-  | 'alerts'
-  | 'trades-lite'
+export enum PaneType {
+  trades = 'trades',
+  chart = 'chart',
+  stats = 'stats',
+  counters = 'counters',
+  prices = 'prices',
+  website = 'website',
+  alerts = 'alerts',
+  'trades-list' = 'trades-lite'
+}
 
 export type MarketsListeners = { [market: string]: ListenedProduct }
 
@@ -43,6 +44,7 @@ export interface PanesState {
   layout: GridItem[]
   panes: { [paneId: string]: Pane }
   marketsListeners: MarketsListeners
+  syncedWithParentFrame: string[]
 }
 
 const layoutDesktop = [
@@ -151,6 +153,10 @@ const actions = {
     dispatch('removePaneGridItems', id)
     commit('REMOVE_PANE', id)
     dispatch('refreshMarketsListeners')
+
+    if (state.syncedWithParentFrame.indexOf(id) !== -1) {
+      commit('TOGGLE_SYNC_WITH_PARENT_FRAME', id)
+    }
 
     if (rootState.app.focusedPaneId === id) {
       this.commit('app/SET_FOCUSED_PANE', null)
@@ -447,6 +453,15 @@ const mutations = {
   },
   SET_PANE_ZOOM: (state, { id, zoom }: { id: string; zoom: number }) => {
     Vue.set(state.panes[id], 'zoom', zoom)
+  },
+  TOGGLE_SYNC_WITH_PARENT_FRAME: (state, paneId) => {
+    const index = state.syncedWithParentFrame.indexOf(paneId)
+
+    if (index !== -1) {
+      state.syncedWithParentFrame.splice(index, 1)
+    } else {
+      state.syncedWithParentFrame.push(paneId)
+    }
   }
 } as MutationTree<PanesState>
 

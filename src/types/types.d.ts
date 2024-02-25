@@ -1,7 +1,5 @@
 import 'vite/client'
 
-import { PaneType } from '@/store/panes'
-
 export type SlippageMode = false | 'price' | 'bps'
 export type AggregationLength = 0 | 1 | 10 | 100 | 1000 | -1
 
@@ -93,11 +91,9 @@ export interface Workspace {
   states: { [id: string]: any }
 }
 
-export type PresetType = ('audio' | 'colors' | 'indicator') | PaneType
-
 export interface Preset {
   name: string
-  type: PresetType
+  type: 'preset'
   data: any
   createdAt: number
   updatedAt: number

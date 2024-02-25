@@ -87,7 +87,7 @@ export default {
     async duplicateIndicator(indicator = this.selectedIndicator) {
       importService.importIndicator({
         type: 'indicator',
-        name: 'indicator:' + indicator.name,
+        name: indicator.name,
         data: indicator
       })
     },
@@ -95,7 +95,7 @@ export default {
       await downloadAnything(
         {
           type: 'indicator',
-          name: 'indicator:' + indicator.name,
+          name: indicator.name,
           data: indicator
         },
         'indicator_' + indicator.id

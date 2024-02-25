@@ -59,16 +59,21 @@ class ImportService {
       throw new Error('Preset is empty')
     }
 
+    const type = preset.name.split(':')[0]
+    const isPresetAPane = Object.values(type).includes(type)
+
     await workspacesService.savePreset(preset, presetType)
 
-    store.dispatch('panes/addPane', {
-      type: preset.type,
-      settings: preset.data,
-      markets: preset.markets
-    })
+    if (isPresetAPane) {
+      store.dispatch('panes/addPane', {
+        type: preset.type,
+        settings: preset.data,
+        markets: preset.markets
+      })
+    }
 
     store.dispatch('app/showNotice', {
-      title: `Imported preset ${preset.name}`,
+      title: `Imported ${preset.name} as preset for ${type}`,
       type: 'info'
     })
 

@@ -110,6 +110,7 @@ export default class Editor extends Vue {
   }
 
   createTheme() {
+    const lsLight = this.$store.state.settings.theme === 'light'
     const style = getComputedStyle(document.documentElement)
     const backgroundColor = splitColorCode(
       style.getPropertyValue('--theme-background-base')
@@ -117,17 +118,34 @@ export default class Editor extends Vue {
     const backgroundColor100 = splitColorCode(
       style.getPropertyValue('--theme-background-100')
     )
+    const backgroundColor150 = splitColorCode(
+      style.getPropertyValue('--theme-background-150')
+    )
 
-    monaco.defineTheme('my-dark', {
-      base: 'vs-dark',
-      inherit: true,
-      rules: [],
-      colors: {
-        'editor.background': rgbToHex(backgroundColor100),
-        'editor.lineHighlightBackground': rgbToHex(backgroundColor),
-        'editor.lineHighlightBorder': rgbToHex(backgroundColor)
-      }
-    })
+    if (lsLight) {
+      monaco.defineTheme('my-light', {
+        base: 'vs',
+        inherit: true,
+        rules: [],
+        colors: {
+          'minimap.background': rgbToHex(backgroundColor150),
+          'editor.background': rgbToHex(backgroundColor100),
+          'editor.lineHighlightBackground': rgbToHex(backgroundColor),
+          'editor.lineHighlightBorder': rgbToHex(backgroundColor)
+        }
+      })
+    } else {
+      monaco.defineTheme('my-dark', {
+        base: 'vs-dark',
+        inherit: true,
+        rules: [],
+        colors: {
+          'editor.background': rgbToHex(backgroundColor100),
+          'editor.lineHighlightBackground': rgbToHex(backgroundColor),
+          'editor.lineHighlightBorder': rgbToHex(backgroundColor)
+        }
+      })
+    }
   }
 
   async createEditor() {
@@ -141,10 +159,11 @@ export default class Editor extends Vue {
       scrollbar: {
         vertical: 'hidden'
       },
+      overviewRulerLanes: 0,
       overviewRulerBorder: false,
       contextmenu: false,
       theme:
-        this.$store.state.settings.theme === 'light' ? 'vs-light' : 'my-dark'
+        this.$store.state.settings.theme === 'light' ? 'my-light' : 'my-dark'
     })
 
     this.editorInstance.getDomNode().addEventListener('mousedown', () => {
@@ -233,12 +252,30 @@ export default class Editor extends Vue {
   height: 100%;
   min-height: 50px;
 
-  .monaco-editor .minimap-shadow-visible {
-    box-shadow: rgb(0 0 0 / 33%) -6px 0 6px -6px inset;
-  }
+  .monaco-editor {
+    #app.-light & {
+      --vscode-editor-background: var(--theme-background-100);
+      --vscode-editorStickyScroll-background: var(--theme-background-100);
+      --vscode-editorStickyScrollHover-background: var(--theme-background-100);
+      --vscode-editorGutter-background: var(--theme-background-100);
+    }
 
-  .monaco-editor .scroll-decoration {
-    box-shadow: rgb(0 0 0 / 33%) 0 6px 6px -6px inset;
+    .minimap-shadow-visible {
+      box-shadow: rgb(0 0 0 / 10%) -6px 0 6px -6px inset;
+    }
+
+    .scroll-decoration {
+      box-shadow: rgb(0 0 0 / 10%) 0 6px 6px -6px inset;
+    }
+
+    .view-overlays .current-line {
+      border-color: var(--theme-background-100);
+    }
+
+    .minimap {
+      left: auto !important;
+      right: 0 !important;
+    }
   }
 }
 </style>

@@ -865,8 +865,8 @@ export default {
       return this.$refs.dialog.currentSize === 'small'
         ? 3
         : this.$refs.dialog.currentSize === 'medium'
-        ? 5
-        : 10
+          ? 5
+          : 10
     },
     async ensureIndexedProducts() {
       const selectedExchanges = this.selection.reduce((acc, market) => {
@@ -1404,6 +1404,10 @@ export default {
       right: 0;
       bottom: 0;
       z-index: 0;
+
+      #app.-light & {
+        background-blend-mode: darken;
+      }
 
       p {
         max-width: 75%;

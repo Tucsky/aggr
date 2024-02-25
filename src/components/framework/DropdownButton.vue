@@ -5,7 +5,7 @@
     </slot>
     <dropdown
       v-model="dropdownTrigger"
-      @mousedown.native="selectFromElementRecursive($event.target)"
+      @mousedown.native="selectFromElementRecursive($event)"
     >
       <button
         type="button"
@@ -85,11 +85,15 @@ export default class DropdownButton extends Vue {
     }
   }
 
-  selectFromElementRecursive(element: HTMLElement) {
+  selectFromElementRecursive(event) {
+    let element = event.target
+
     let depth = 0
     while (element && ++depth < 3) {
       if (element.classList && element.classList.contains('dropdown-item')) {
         this.selectOption(element)
+        this.toggleDropdown(event)
+        event.stopPropagation()
 
         break
       }

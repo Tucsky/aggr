@@ -6,6 +6,7 @@
     :resizable="false"
     :mask="false"
     size="small"
+    borderless
   >
     <template v-slot:header>
       <div>

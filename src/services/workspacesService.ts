@@ -660,17 +660,6 @@ class WorkspacesService {
 
     await this.db.put('indicators', payload)
 
-    if (!silent) {
-      store.dispatch('app/showNotice', {
-        type: 'info',
-        title: `Saved ${
-          payload.createdAt === payload.updatedAt
-            ? 'new indicator'
-            : 'indicator'
-        } ${payload.id}`
-      })
-    }
-
     return payload
   }
 
@@ -725,7 +714,7 @@ class WorkspacesService {
     if (type) {
       // ex indicator:price
 
-      const inputType = preset.type.split(':')[0] as PresetType
+      const inputType = preset.name.split(':')[0] as PresetType
       const targetType = type.split(':')[0]
 
       if (targetType !== inputType) {
@@ -734,7 +723,6 @@ class WorkspacesService {
         )
       }
 
-      preset.type = targetType
       preset.name = type + ':' + preset.name.split(':').pop()
     }
 
@@ -750,7 +738,10 @@ class WorkspacesService {
       return
     }
 
-    return this.db.put('presets', preset)
+    return this.db.put('presets', {
+      ...preset,
+      type: 'preset'
+    })
   }
 
   async getPreset(id: string): Promise<Preset> {

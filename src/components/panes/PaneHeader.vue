@@ -90,6 +90,20 @@
         <i class="icon-search"></i>
         <span>Sources</span>
       </button>
+      <div v-if="isInFrame" class="dropdown-item" @click.stop>
+        <label class="checkbox-control -small">
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="syncedWithParent"
+            @change="
+              $store.commit('panes/TOGGLE_SYNC_WITH_PARENT_FRAME', paneId)
+            "
+          />
+          <div></div>
+          <span>Sync</span>
+        </label>
+      </div>
       <div
         v-if="$slots.menu"
         class="dropdown-divider"
@@ -128,6 +142,7 @@ import Component from 'vue-class-component'
 import Btn from '@/components/framework/Btn.vue'
 import { downloadAnything, getSiblings, slugify } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
+import { INFRAME } from '@/utils/constants'
 
 @Component({
   name: 'PaneHeader',
@@ -161,6 +176,7 @@ export default class PaneHeader extends Vue {
   paneId: string
   paneDropdownTrigger = null
   isLoading = false
+  isInFrame = INFRAME
 
   get zoom() {
     return this.$store.state.panes.panes[this.paneId].zoom || 1
@@ -168,6 +184,12 @@ export default class PaneHeader extends Vue {
 
   get type() {
     return this.$store.state.panes.panes[this.paneId].type
+  }
+
+  get syncedWithParent() {
+    return (
+      this.$store.state.panes.syncedWithParentFrame.indexOf(this.paneId) !== -1
+    )
   }
 
   get name() {

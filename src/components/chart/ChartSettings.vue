@@ -150,6 +150,15 @@
             $store.commit(paneId + '/SET_BORDER', { value: $event })
         "
       ></color-picker-control>
+      <color-picker-control
+        class="ml8"
+        :value="textColor"
+        label="Text color"
+        @input="
+          $event !== textColor &&
+            $store.commit(paneId + '/SET_TEXT_COLOR', { value: $event })
+        "
+      ></color-picker-control>
     </div>
     <div class="form-group">
       <label>Scales</label>
@@ -284,6 +293,10 @@ export default class ChartSettings extends Vue {
 
   get borderColor() {
     return this.$store.state[this.paneId].borderColor
+  }
+
+  get textColor() {
+    return this.$store.state[this.paneId].textColor
   }
 
   get showRightScale() {

@@ -530,6 +530,10 @@ export async function resolvePairs(pairs: string[]) {
     for (const symbol of symbols) {
       const product = getMarketProduct(exchangeId, symbol, true)
 
+      if (!product) {
+        continue
+      }
+
       if (historicalOnly && historicalMarkets.indexOf(product.id) === -1) {
         continue
       }
@@ -550,6 +554,29 @@ export async function resolvePairs(pairs: string[]) {
 
   if (!markets.length) {
     return null
+  }
+
+  return markets
+}
+
+export async function resolvePair(base: string, quote: string) {
+  const markets = []
+
+  const stripedStableQuote = stripStableQuote(quote)
+
+  for (const exchangeId in indexedProducts) {
+    if (store.state.exchanges[exchangeId].disabled === true) {
+      continue
+    }
+
+    for (const product of indexedProducts[exchangeId]) {
+      if (
+        product.base === base &&
+        stripStableQuote(product.quote) === stripedStableQuote
+      ) {
+        markets.push(product.id)
+      }
+    }
   }
 
   return markets

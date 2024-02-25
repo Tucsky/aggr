@@ -22,7 +22,8 @@ import MeasurementEventHandler from './controls/measurementEventHandler'
 import {
   getChartCustomColorsOptions,
   getChartGridlinesOptions,
-  getChartBorderOptions
+  getChartBorderOptions,
+  getChartLayoutOptions
 } from './options'
 import { components, controlledCharts, syncCrosshair } from './common'
 import iframeService from '@/services/iframeService'
@@ -188,7 +189,15 @@ export default class ChartControl {
         case this.chart.paneId + '/SET_BORDER':
         case this.chart.paneId + '/TOGGLE_AXIS':
           this.chart.chartInstance.applyOptions(
+            getChartLayoutOptions(this.chart.paneId)
+          )
+          this.chart.chartInstance.applyOptions(
             getChartBorderOptions(this.chart.paneId)
+          )
+          break
+        case this.chart.paneId + '/SET_TEXT_COLOR':
+          this.chart.chartInstance.applyOptions(
+            getChartLayoutOptions(this.chart.paneId)
           )
           break
         case this.chart.paneId + '/SET_WATERMARK':

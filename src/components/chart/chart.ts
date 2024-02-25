@@ -29,6 +29,7 @@ import merge from 'lodash.merge'
 import {
   defaultChartOptions,
   getChartBarSpacingOptions,
+  getChartFontSize,
   getChartGridlinesOptions,
   getChartOptions,
   getChartWatermarkOptions,
@@ -567,21 +568,14 @@ export default class Chart {
       return
     }
 
-    const multiplier = store.state.panes.panes[this.paneId].zoom || 1
-    const watermarkBaseFontSize =
-      this.chartElement.clientWidth *
-      0.05 *
-      (!store.state.settings.normalizeWatermarks ? 0.5 : 1)
+    const baseFontSize = getChartFontSize(this.paneId)
 
     this.chartInstance.applyOptions({
       layout: {
-        fontSize: 14 * multiplier
+        fontSize: baseFontSize
       },
       watermark: {
-        fontSize: Math.max(
-          16,
-          Math.min(144, watermarkBaseFontSize * multiplier)
-        )
+        fontSize: Math.max(16, Math.min(144, baseFontSize * 10))
       }
     })
   }
@@ -2213,12 +2207,14 @@ export default class Chart {
       return null
     }
 
-    if (this.activeRenderer.series.price.close) {
-      return this.activeRenderer.series.price.close
-    }
+    if (this.activeRenderer.series.price) {
+      if (this.activeRenderer.series.price.close) {
+        return this.activeRenderer.series.price.close
+      }
 
-    if (this.activeRenderer.series.price.value) {
-      return this.activeRenderer.series.price.value
+      if (this.activeRenderer.series.price.value) {
+        return this.activeRenderer.series.price.value
+      }
     }
 
     if (this.activeRenderer.price) {

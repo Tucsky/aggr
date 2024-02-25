@@ -78,6 +78,10 @@ export default {
     background-position: 0 10%;
     opacity: 0.5;
     background-blend-mode: overlay;
+
+    #app.-light & {
+      background-blend-mode: darken;
+    }
   }
 
   &__wrapper {

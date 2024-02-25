@@ -1,9 +1,10 @@
-import { syncCrosshair } from '@/components/chart/common'
+import { syncCrosshair, syncMarket } from '@/components/chart/common'
 import { INFRAME } from '@/utils/constants'
 
 class IframeService {
   constructor() {
     this.listen()
+    this.send('ready')
   }
 
   listen() {
@@ -27,11 +28,14 @@ class IframeService {
         case 'crosshair':
           syncCrosshair(json.data)
           break
+        case 'market':
+          syncMarket(json.data)
+          break
       }
     })
   }
 
-  send(op: string, data: any) {
+  send(op: string, data?: any) {
     window.parent.postMessage(
       JSON.stringify({
         op,

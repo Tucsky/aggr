@@ -80,7 +80,7 @@ export default {
   position: relative;
   padding: 0 !important;
   border-radius: 0.25rem;
-  outline: 1px solid #0000000f;
+  outline: 1px solid var(--theme-base-o50);
   background-color: transparent;
   box-sizing: content-box;
   background-image: $checkerboard;

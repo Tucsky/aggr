@@ -1,6 +1,8 @@
 import { floorTimestampToTimeframe } from '@/utils/helpers'
 import Chart from './chart'
 import { Time } from 'lightweight-charts'
+import store from '@/store'
+import { ensureIndexedProducts, resolvePair } from '@/services/productsService'
 
 export const controlledCharts: Chart[] = []
 
@@ -44,5 +46,30 @@ export function syncCrosshair(params, originalPaneId = null) {
       controlledCharts[i].isSyncingCrosshair = false
       controlledCharts[i].chartInstance.setCrosshair(null, null, null)
     }
+  }
+}
+
+/*
+{
+  "currency_code": "USDT",
+  "exchange": "KUCOIN",
+  "base_currency": "JASMY",
+  "type": "spot",
+  "id": "KUCOIN:JASMYUSDT"
+}
+*/
+export async function syncMarket(market) {
+  await ensureIndexedProducts()
+  const markets = await resolvePair(market.base_currency, market.currency_code)
+
+  for (const paneId of store.state.panes.syncedWithParentFrame) {
+    if (!store.state[paneId]) {
+      continue
+    }
+
+    store.dispatch('panes/setMarketsForPane', {
+      id: paneId,
+      markets
+    })
   }
 }
