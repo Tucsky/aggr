@@ -602,7 +602,10 @@ export default class Chart {
     const indicator: LoadedIndicator = {
       id,
       libraryId: indicatorSettings.libraryId || id,
-      options: JSON.parse(JSON.stringify(indicatorOptions)),
+      options: {
+        ...JSON.parse(JSON.stringify(indicatorOptions)),
+        priceScaleId: indicatorOptions.priceScaleId || 'right'
+      },
       script: indicatorSettings.script,
       model: null,
       adapter: null,

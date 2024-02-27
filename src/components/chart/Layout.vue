@@ -209,8 +209,9 @@ export default class Layout extends Vue {
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 3;
 
-  + .tv-lightweight-charts {
+  + .chart__container .tv-lightweight-charts {
     pointer-events: none;
   }
 

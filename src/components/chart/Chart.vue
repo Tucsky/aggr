@@ -48,14 +48,14 @@
       <markets-overlay :pane-id="paneId" />
     </div>
 
-    <div class="chart__container" ref="chartContainer">
-      <chart-layout
-        v-if="layouting"
-        :pane-id="paneId"
-        :layouting="layouting"
-        :axis="axis"
-      ></chart-layout>
-    </div>
+    <chart-layout
+      v-if="layouting"
+      :pane-id="paneId"
+      :layouting="layouting"
+      :axis="axis"
+    ></chart-layout>
+
+    <div class="chart__container" ref="chartContainer"></div>
   </div>
 </template>
 
