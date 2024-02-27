@@ -75,7 +75,8 @@ export default defineConfig(({ mode }) => {
       }),
       visualizer(),
       monacoEditorPlugin.default({}),
-      qrcode() // only applies in dev mode
+      qrcode(), // only applies in dev mode
+      // Add the terser plugin for production builds to remove console.log
     ],
     build: {
       rollupOptions: {
@@ -83,6 +84,11 @@ export default defineConfig(({ mode }) => {
           entryFileNames: `[name].` + hash + `.js`,
           chunkFileNames: `[name].` + hash + `.js`,
           assetFileNames: `[name].` + hash + `.[ext]`
+        }
+      },
+      terserOptions: {
+        compress: {
+          drop_console: true
         }
       }
     },

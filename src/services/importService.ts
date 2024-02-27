@@ -4,6 +4,7 @@ import workspacesService from './workspacesService'
 import SettingsImportConfirmation from '../components/settings/ImportConfirmation.vue'
 import store from '@/store'
 import notificationService from './notificationService'
+import { PaneType } from '../store/panes'
 
 class ImportService {
   getJSON(file: File) {
@@ -60,7 +61,7 @@ class ImportService {
     }
 
     const type = preset.name.split(':')[0]
-    const isPresetAPane = Object.values(type).includes(type)
+    const isPresetAPane = Object.values(PaneType).includes(type)
 
     await workspacesService.savePreset(preset, presetType)
 
