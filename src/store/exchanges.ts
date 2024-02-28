@@ -12,9 +12,9 @@ export type ExchangesState = { [exchangeId: string]: ExchangeSettings } & {
   _exchanges: string[]
 }
 
-const supportedExchanges = import.meta.env.VITE_APP_EXCHANGES.split(',').map(
-  id => id.toUpperCase()
-)
+export const supportedExchanges = import.meta.env.VITE_APP_EXCHANGES.split(
+  ','
+).map(id => id.toUpperCase())
 
 const state = supportedExchanges.reduce(
   (exchangesState: ExchangesState, id: string) => {

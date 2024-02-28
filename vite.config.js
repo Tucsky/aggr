@@ -75,7 +75,7 @@ export default defineConfig(({ mode }) => {
       }),
       visualizer(),
       monacoEditorPlugin.default({}),
-      qrcode(), // only applies in dev mode
+      qrcode() // only applies in dev mode
       // Add the terser plugin for production builds to remove console.log
     ],
     build: {

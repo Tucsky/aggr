@@ -61,7 +61,7 @@ class ImportService {
     }
 
     const type = preset.name.split(':')[0]
-    const isPresetAPane = Object.values(PaneType).includes(type)
+    const isPresetAPane = Object.values(PaneType).includes(type as PaneType)
 
     await workspacesService.savePreset(preset, presetType)
 
