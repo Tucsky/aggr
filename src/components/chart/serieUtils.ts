@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { IndicatorFunction } from './chart'
+import { joinRgba, mix, splitColorCode } from '@/utils/colors'
+import { IndicatorFunction } from './chart.d'
 
 /**
  * Close ohlc bar (all props to close value for smooth transition, but also fake opens)
@@ -54,6 +55,10 @@ function accumulatePoints(fn: IndicatorFunction) {
  * @param fn
  */
 function accumulatePointsAverage(fn: IndicatorFunction) {
+  if (typeof fn.state.output === 'undefined') {
+    return
+  }
+
   fn.state.points.push(fn.state.output)
 
   fn.state.sum += fn.state.output
@@ -831,9 +836,9 @@ export default {
   },
   stoch: {
     args: [
-      null,
-      null,
-      null,
+      true,
+      true,
+      true,
       {
         length: true
       }
@@ -862,5 +867,35 @@ export default {
   },
   na(val) {
     return val || 0
+  },
+  interpolate: {
+    state: {
+      paletteId: null,
+      colorsRgb: null,
+      ratio: null,
+      output: null
+    },
+    update(state, ratio, ...colors) {
+      if (!state.paletteId || state.paletteId !== colors.join('')) {
+        try {
+          state.colorsRgb = colors.map(color =>
+            splitColorCode(color, null, true)
+          )
+        } catch (error) {
+          throw new Error(
+            `interpolate(): failed to parse color codes\n\t${colors.join(', ')}`
+          )
+        }
+
+        state.paletteId = colors.join('')
+      }
+
+      if (state.ratio !== ratio) {
+        state.output = joinRgba(mix(ratio, ...state.colorsRgb))
+        state.ratio = ratio
+      }
+
+      return state.output
+    }
   }
 }

@@ -41,37 +41,36 @@
 .form-control {
   background: 0;
   min-width: 0;
-  color: inherit;
   font-family: inherit;
-  font-size: 1em;
-  line-height: 1;
+  font-size: 1rem;
+  line-height: 1.25;
   margin: 0;
   border: 1px solid var(--theme-background-200);
   border-radius: 4px;
-  padding: 0.5em;
+  padding: 0.375rem;
   box-sizing: border-box;
   color: var(--theme-color-base);
 
   &.btn {
     border: 1px solid var(--theme-background-200);
   }
-}
 
-textarea.form-control {
-  font-family: $font-monospace;
-  line-height: 1.4;
-  height: auto;
-  width: 100%;
-  max-width: 100%;
-  flex-grow: 1;
-  padding: 1em;
-  background-color: var(--theme-color-o10);
-  border-color: rgba(black, 0.25);
-  border-radius: 4px;
-  font-size: 12px;
+  &.-code {
+    font-family: $font-monospace;
+    line-height: 1.4;
+    height: auto;
+    width: 100%;
+    max-width: 100%;
+    flex-grow: 1;
+    padding: 1rem;
+    background-color: var(--theme-color-o10);
+    border-color: rgba(black, 0.25);
+    border-radius: 4px;
+    font-size: 12px;
 
-  &:focus {
-    border-color: var(--theme-buy-base);
+    &:focus {
+      border-color: var(--theme-buy-base);
+    }
   }
 }
 
@@ -141,19 +140,11 @@ textarea.form-control {
   align-items: center;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
-  -khtml-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
   cursor: pointer;
   margin-right: auto;
-
-  &.-slippage input ~ div {
-    &:before,
-    &:after {
-      content: $icon-flash;
-    }
-  }
 
   &.-rip input ~ div {
     &:before,
@@ -179,19 +170,14 @@ textarea.form-control {
 
     &:after {
       content: $icon-down;
-    }
-  }
-
-  &.-click input ~ div {
-    &:before {
-      content: $icon-click;
+      transform: none;
     }
   }
 
   &.-auto input {
     ~ div {
       width: auto;
-      min-width: 1em;
+      min-width: 1rem;
       display: flex;
 
       &:before,
@@ -199,6 +185,7 @@ textarea.form-control {
         font-family: inherit;
         position: relative;
         line-height: 1;
+        transform: none;
       }
 
       i {
@@ -227,33 +214,12 @@ textarea.form-control {
     }
   }
 
-  &.-cml-abs input {
-    ~ div {
-      &:before,
-      &:after {
-        font-family: inherit;
-      }
-
-      &:before {
-        content: 'CML';
-      }
-
-      &:after {
-        content: 'ABS';
-      }
-    }
-
-    &:not(:checked) ~ div {
-      background-color: $blue;
-    }
-  }
-
   input {
     display: none;
 
     &:checked {
       ~ div {
-        background-color: var(--theme-buy-base);
+        background-color: var(--theme-buy-50);
         border-color: var(--theme-buy-100);
         color: var(--theme-buy-color);
 
@@ -285,26 +251,32 @@ textarea.form-control {
     }
   }
 
+  &.-large {
+    > div {
+      font-size: 1.375rem;
+    }
+  }
+
   &.-small {
     > div {
-      padding: 0.25em;
+      padding: 0.25rem;
     }
   }
 
   &.-extra-small {
     > div {
-      padding: 0.125em;
+      padding: 0.125rem;
 
       &:before {
-        font-size: 0.75em;
+        font-size: 0.75rem;
       }
     }
   }
 
   > div {
     padding: 0.5rem;
-    width: 1em;
-    height: 1em;
+    width: 1rem;
+    height: 1rem;
     border-radius: 3px;
     border: 1px solid var(--theme-background-200);
     background-color: var(--theme-background-150);
@@ -316,7 +288,7 @@ textarea.form-control {
     &:before,
     &:after {
       font-family: 'icon';
-      font-size: 1em;
+      font-size: 1rem;
       position: absolute;
       left: 0;
       top: 0;
@@ -336,13 +308,16 @@ textarea.form-control {
       content: $icon-check;
     }
 
-
     &:after {
       opacity: 1;
     }
 
     span {
       line-height: 1;
+
+      > i {
+        vertical-align: text-bottom;
+      }
     }
   }
 
@@ -363,13 +338,12 @@ textarea.form-control {
   display: inline-block;
   cursor: text;
   font-family: $font-monospace;
-  line-height: 1.25;
-  font-size: 0.875em;
   color: var(--theme-color-base);
-
-  -webkit-touch-callout: auto;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  line-height: 1rem;
+  -webkit-touch-callout: none;
   -webkit-user-select: auto;
-  -khtml-user-select: auto;
   -moz-user-select: auto;
   -ms-user-select: auto;
   user-select: auto;

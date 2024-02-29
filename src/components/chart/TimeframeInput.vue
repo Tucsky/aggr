@@ -11,10 +11,17 @@
 </template>
 
 <script lang="ts">
-import { isTouchSupported } from '@/utils/touchevent'
 import { Component, Vue } from 'vue-property-decorator'
-import { getTimeframeForHuman } from '../../utils/helpers'
-import EditableVue from '../framework/Editable.vue'
+
+import EditableVue from '@/components/framework/Editable.vue'
+
+import { isTouchSupported } from '@/utils/touchevent'
+import { getTimeframeForHuman } from '@/utils/helpers'
+
+const TIMEFRAME_VOL = /\$$|v$|k$|vol?$/i
+const TIMEFRAME_BPS = /mb$|b$|bps?$/i
+const TIMEFRAME_MBPS = /mb$|mbps$/i
+const TIMEFRAME_TICK = /t$|ticks?$/i
 
 @Component({
   name: 'TimeframeInput',
@@ -70,7 +77,17 @@ export default class TimeframeInput extends Vue {
 
     let output
 
-    if (/t$|ticks?$/i.test(trimmed)) {
+    if (TIMEFRAME_BPS.test(trimmed)) {
+      if (TIMEFRAME_MBPS.test(trimmed)) {
+        return parseFloat(trimmed) / 1000 + 'b'
+      }
+      return parseFloat(trimmed) + 'b'
+    } else if (TIMEFRAME_VOL.test(trimmed)) {
+      if (trimmed[trimmed.length - 1] === 'k') {
+        return (output = parseFloat(trimmed) * 1000 + 'v')
+      }
+      return (output = parseFloat(trimmed) + 'v')
+    } else if (TIMEFRAME_TICK.test(trimmed)) {
       return (output = parseInt(trimmed) + 't')
     } else {
       if (/d$/i.test(trimmed)) {
@@ -86,7 +103,7 @@ export default class TimeframeInput extends Vue {
       }
     }
 
-    return output
+    return output.toString()
   }
 
   onInput(event) {

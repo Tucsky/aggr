@@ -1,5 +1,10 @@
 <template>
-  <transition name="dropdown" @enter="onEnterStart" @after-enter="onEnterEnd">
+  <transition
+    name="dropdown"
+    @enter="onEnterStart"
+    @after-enter="onEnterEnd"
+    @before-leave="onLeaveStart"
+  >
     <div
       class="dropdown hide-scrollbar"
       :class="[
@@ -58,6 +63,10 @@ export default {
     autoFocus: {
       type: Boolean,
       required: false,
+      default: false
+    },
+    draggable: {
+      type: Boolean,
       default: false
     }
   },
@@ -145,6 +154,10 @@ export default {
 
     onEnterEnd() {
       this.$emit('opened')
+    },
+
+    onLeaveStart() {
+      this.$emit('closed')
     },
 
     /**
@@ -308,7 +321,7 @@ export default {
       }
 
       this.clickOutsideHandler = event => {
-        if (event.defaultPrevented) {
+        if (event.defaultPrevented || event.button === 2) {
           return
         }
 
@@ -379,7 +392,9 @@ export default {
   }
 
   &-enter-active {
-    transition: all 0.1s $ease-out-expo, transform 0.1s $ease-elastic;
+    transition:
+      all 0.1s $ease-out-expo,
+      transform 0.1s $ease-elastic;
     pointer-events: none;
   }
 

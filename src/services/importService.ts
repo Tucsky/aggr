@@ -3,8 +3,8 @@ import dialogService from './dialogService'
 import workspacesService from './workspacesService'
 import SettingsImportConfirmation from '../components/settings/ImportConfirmation.vue'
 import store from '@/store'
-import { slugify, uniqueName } from '../utils/helpers'
-import { IndicatorSettings } from '../store/panesSettings/chart'
+import notificationService from './notificationService'
+import { PaneType } from '../store/panes'
 
 class ImportService {
   getJSON(file: File) {
@@ -60,16 +60,21 @@ class ImportService {
       throw new Error('Preset is empty')
     }
 
+    const type = preset.name.split(':')[0]
+    const isPresetAPane = Object.values(PaneType).includes(type as PaneType)
+
     await workspacesService.savePreset(preset, presetType)
 
-    store.dispatch('panes/addPane', {
-      type: preset.type,
-      settings: preset.data,
-      markets: preset.markets
-    })
+    if (isPresetAPane) {
+      store.dispatch('panes/addPane', {
+        type: preset.type,
+        settings: preset.data,
+        markets: preset.markets
+      })
+    }
 
     store.dispatch('app/showNotice', {
-      title: `Imported preset ${preset.name}`,
+      title: `Imported ${preset.name} as preset for ${type}`,
       type: 'info'
     })
 
@@ -125,49 +130,74 @@ class ImportService {
   }
 
   async importIndicator(json) {
-    let chartPaneId
-
-    if (
-      store.state.app.focusedPaneId &&
-      store.state.panes.panes[store.state.app.focusedPaneId].type === 'chart'
-    ) {
-      chartPaneId = store.state.app.focusedPaneId
-    } else {
-      for (const id in store.state.panes.panes) {
-        if (store.state.panes.panes[id].type === 'chart') {
-          chartPaneId = id
-          break
-        }
-      }
-    }
-
-    if (!chartPaneId) {
-      throw new Error('No chart found')
-    }
-
-    const ids = await workspacesService.getIndicatorsIds()
     const name = json.name.split(':').slice(1).join(':')
-    const id = uniqueName(slugify(name), ids)
     const now = Date.now()
-    const indicator: IndicatorSettings = {
-      id: id,
-      name: name,
+
+    const indicator = await workspacesService.saveIndicator({
+      name,
+      displayName: json.data.displayName || name,
+      author: json.data.author || null,
       script: json.data.script || '',
       options: json.data.options || {},
       description: json.data.description || null,
       createdAt: json.data.createdAt || now,
-      updatedAt: json.data.updatedAt || now,
-      unsavedChanges: true
+      updatedAt: json.data.updatedAt || json.data.createdAt || now,
+      preview: json.data.preview || null
+    })
+
+    if (json.data.presets) {
+      for (const preset of json.data.presets) {
+        await workspacesService.savePreset({
+          ...preset,
+          name: preset.name.replace(
+            `:${json.data.libraryId}:`,
+            `:${indicator.id}:`
+          )
+        })
+      }
     }
 
-    store.dispatch(chartPaneId + '/addIndicator', indicator)
+    if (!dialogService.isDialogOpened('indicator-library')) {
+      dialogService.open(
+        (await import('@/components/indicators/IndicatorLibraryDialog.vue'))
+          .default,
+        {},
+        'indicator-library'
+      )
+    }
 
-    dialogService.openIndicator(chartPaneId, indicator.id)
+    const indicatorLibraryDialog =
+      dialogService.mountedComponents['indicator-library']
+
+    store.dispatch('app/showNotice', {
+      title: `indicator "${indicator.id}" imported successfully`
+    })
+
+    if (indicatorLibraryDialog) {
+      indicatorLibraryDialog.setSelection(indicator)
+    }
   }
 
   async importAnything(file: File) {
     if (file.type === 'application/json' || file.type === 'text/plain') {
       const json = await this.getJSON(file)
+
+      if (!notificationService.hasDismissed('import-security-warning')) {
+        if (
+          !(await dialogService.confirm({
+            title: 'Security Warning',
+            message: `⚠️ Proceed with <strong>Caution</strong>!<br><br>
+            <p>Importing a custom script into AGGR poses security risks and AGGR is not liable for any consequences; ensure you trust the source and understand the risks before proceeding.</p>`,
+            ok: `Accept and Proceed`,
+            requireScroll: true,
+            html: true
+          }))
+        ) {
+          return
+        }
+
+        notificationService.dismiss('import-security-warning')
+      }
 
       if (json.formatName) {
         await this.importDatabase(file)
@@ -201,7 +231,7 @@ class ImportService {
       return
     }
 
-    ;(await import('dexie')) as any
+    await import('dexie')
     const { importDB } = await import('dexie-export-import')
 
     const currentWorkspaceId = workspacesService.workspace.id

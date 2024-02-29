@@ -1,5 +1,5 @@
 module.exports = {
-	root: true,
+  root: true,
   env: {
     node: true
   },
@@ -8,9 +8,7 @@ module.exports = {
     'eslint:recommended',
     '@vue/typescript/recommended'
   ],
-  plugins: [
-    "prettier"
-  ],
+  plugins: ['prettier'],
   parserOptions: {
     ecmaVersion: 2020
   },
@@ -19,6 +17,8 @@ module.exports = {
     'no-debugger': process.env === 'production' ? 'warn' : 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/camelcase': 'off',
+    'no-irregular-whitespace': 'off',
+    'vue/no-reserved-component-names': 'off',
     '@typescript-eslint/no-var-requires': 0,
     camelcase: 'off',
     'prettier/prettier': [

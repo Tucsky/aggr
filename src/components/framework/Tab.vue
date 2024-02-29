@@ -49,7 +49,7 @@ export default class Tab extends Vue {
   cursor: pointer;
   text-transform: none;
   border-radius: 8px 8px 0 0;
-  font-size: 1.125em;
+  font-size: 1.125rem;
   color: var(--theme-color-100);
   font-family: $font-base;
   border: 1px solid transparent;

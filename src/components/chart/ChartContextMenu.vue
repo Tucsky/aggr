@@ -227,9 +227,7 @@ export default {
     },
     async editAlert() {
       const message = await dialogService.openAsPromise(
-        (
-          await import('@/components/alerts/CreateAlertDialog.vue')
-        ).default,
+        (await import('@/components/alerts/CreateAlertDialog.vue')).default,
         {
           price: +formatMarketPrice(this.alert.price, this.alert.market),
           input: this.alert.message,

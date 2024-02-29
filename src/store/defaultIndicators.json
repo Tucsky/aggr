@@ -2,7 +2,7 @@
   "price": {
     "enabled": true,
     "name": "Price",
-    "script": "plotcandlestick(options.useHeikinAshi ? avg_heikinashi(bar) : options.useGaps ? avg_ohlc_with_gaps(bar) : avg_ohlc(bar))",
+    "script": "var ohlc = options.useHeikinAshi ? \n    avg_heikinashi(bar) : \n    options.useGaps ? \n    avg_ohlc_with_gaps(bar) : \n    avg_ohlc(bar)\n\nplotcandlestick(ohlc)",
     "options": {
       "priceScaleId": "right",
       "priceFormat": {
@@ -22,39 +22,11 @@
       "useHeikinAshi": false
     }
   },
-  "smas": {
-    "name": "SMA {fastLength} {mediumLength} {slowLength}",
-    "displayName": "SMA 50 100 200",
-    "script": "plotline(sma($price.close, options.fastLength), color=options.fastColor)\nplotline(sma($price.close, options.mediumLength), color=options.mediumColor)\nplotline(sma($price.close, options.slowLength), color=options.slowColor)",
-    "options": {
-      "priceScaleId": "right",
-      "fastLength": 50,
-      "mediumLength": 100,
-      "slowLength": 200,
-      "fastColor": "#42a5f5",
-      "mediumColor": "#64b5f6",
-      "slowColor": "#90caf9"
-    }
-  },
-  "emas": {
-    "name": "EMA {fastLength} {mediumLength} {slowLength}",
-    "displayName": "EMA 50 100 200",
-    "script": "plotline(ema($price.close, options.fastLength), color=options.fastColor)\nplotline(ema($price.close, options.mediumLength), color=options.mediumColor)\nplotline(ema($price.close, options.slowLength), color=options.slowColor)",
-    "options": {
-      "priceScaleId": "right",
-      "fastLength": 50,
-      "mediumLength": 100,
-      "slowLength": 200,
-      "fastColor": "#42a5f5",
-      "mediumColor": "#64b5f6",
-      "slowColor": "#90caf9"
-    }
-  },
   "volume": {
     "enabled": true,
     "name": "Volume",
     "description": "Volume + delta",
-    "script": "if (upColor === 0) {\n  if (options.showDelta) {\n    upColor = options.upBgColor\n    downColor = options.downBgColor\n  } else {\n    upColor = options.upColor\n    downColor = options.downColor\n  }\n}\n\nif (options.showDelta) {\n  plothistogram({ time: time, value: Math.abs(vbuy-vsell), color: vbuy - vsell > 0 ? options.upColor : options.downColor})\n}\n\nplothistogram({ time: time, value: vbuy + vsell, color: vbuy > vsell ? upColor : downColor })",
+    "script": "if (upColor === 0) {\n  if (options.showDelta) {\n    upColor = options.upBgColor\n    downColor = options.downBgColor\n  } else {\n    upColor = options.upColor\n    downColor = options.downColor\n  }\n}\n\nif (options.showDelta) {\n  histogram({ time: time, value: Math.abs(vbuy-vsell), color: vbuy - vsell > 0 ? options.upColor : options.downColor})\n}\n\nhistogram({ time: time, value: vbuy + vsell, color: vbuy > vsell ? upColor : downColor })",
     "options": {
       "priceFormat": {
         "type": "volume"
@@ -75,7 +47,7 @@
     "enabled": true,
     "name": "Liquidations",
     "description": "Liquidations by side",
-    "script": "plothistogram(lbuy, color=options.upColor)\nplothistogram(-lsell, color=options.downColor)",
+    "script": "histogram(lbuy, color=options.upColor)\nhistogram(-lsell, color=options.downColor)",
     "options": {
       "priceFormat": {
         "type": "volume"
@@ -93,7 +65,7 @@
     "enabled": true,
     "name": "CVD",
     "description": "Cumulative Volume Delta",
-    "script": "plotline(cum(vbuy - vsell))",
+    "script": "line(cum(vbuy - vsell))",
     "options": {
       "priceScaleId": "cvd",
       "priceFormat": {
@@ -105,203 +77,5 @@
         "bottom": 0.00
       }
     }
-  },
-  "btccvdperp": {
-    "name": "CVD (BTC PERP)",
-    "description": "CVD specific markets",
-    "script": "line(cum((BITGET:BTCUSDT_UMCBL.vbuy+BINANCE_FUTURES:btcusdt.vbuy+BINANCE_FUTURES:btcusd_perp.vbuy+BITFINEX:BTCF0:USTF0.vbuy+BITMEX:XBTUSD.vbuy+BYBIT:BTCUSD.vbuy+BYBIT:BTCUSDT.vbuy+DERIBIT:BTC-PERPETUAL.vbuy+FTX:BTC-PERP.vbuy+HUOBI:BTC-USD.vbuy+KRAKEN:PI_XBTUSD.vbuy+OKEX:BTC-USDT-SWAP.vbuy+OKEX:BTC-USD-SWAP.vbuy)- (BITGET:BTCUSDT_UMCBL.vsell+BINANCE_FUTURES:btcusdt.vsell+BINANCE_FUTURES:btcusd_perp.vsell+BITFINEX:BTCF0:USTF0.vsell+BITMEX:XBTUSD.vsell+BYBIT:BTCUSD.vsell+BYBIT:BTCUSDT.vsell+DERIBIT:BTC-PERPETUAL.vsell+FTX:BTC-PERP.vsell+HUOBI:BTC-USD.vsell+KRAKEN:PI_XBTUSD.vsell+OKEX:BTC-USDT-SWAP.vsell+OKEX:BTC-USD-SWAP.vsell)), title=CVD:BTC:PERP)",
-    "options": {
-      "priceFormat": {
-        "type": "volume"
-      },
-      "priceScaleId": "cvdperp",
-      "color": "#42a5f5"
-    }
-  },
-  "btccvdspot": {
-    "name": "CVD (BTC SPOT)",
-    "description": "CVD specific markets",
-    "script": "line(cum((BITGET:BTCUSDT.vbuy+BINANCE:btcusdt.vbuy+BINANCE:btcusdc.vbuy+BITFINEX:BTCUSD.vbuy+BITSTAMP:btcusd.vbuy+BITSTAMP:btcusdt.vbuy+BITSTAMP:btcusdc.vbuy+COINBASE:BTC-USDC.vbuy+COINBASE:BTC-USD.vbuy+COINBASE:BTC-USDT.vbuy+FTX:BTC/USD.vbuy+FTX:BTC/USDT.vbuy+HUOBI:btcusdt.vbuy+HUOBI:btcusdc.vbuy+KRAKEN:XBT/USDC.vbuy+KRAKEN:XBT/USDT.vbuy+KRAKEN:XBT/USD.vbuy+OKEX:BTC-USDT.vbuy+OKEX:BTC-USDC.vbuy+POLONIEX:BTC_USDT.vbuy+POLONIEX:USDC_BTC.vbuy)-(BITGET:BTCUSDT.vsell+BINANCE:btcusdt.vsell+BINANCE:btcusdc.vsell+BITFINEX:BTCUSD.vsell+BITSTAMP:btcusd.vsell+BITSTAMP:btcusdt.vsell+BITSTAMP:btcusdc.vsell+COINBASE:BTC-USDC.vsell+COINBASE:BTC-USD.vsell+COINBASE:BTC-USDT.vsell+FTX:BTC/USD.vsell+FTX:BTC/USDT.vsell+HUOBI:btcusdt.vsell+HUOBI:btcusdc.vsell+KRAKEN:XBT/USDC.vsell+KRAKEN:XBT/USDT.vsell+KRAKEN:XBT/USD.vsell+OKEX:BTC-USDT.vsell+OKEX:BTC-USDC.vsell+POLONIEX:BTC_USDT.vsell+POLONIEX:USDC_BTC.vsell)), title=CVD:BTC:SPOT)",
-    "options": {
-      "priceFormat": {
-        "type": "volume"
-      },
-      "priceScaleId": "cvdspot",
-      "color": "#4caf50"
-    }
-  },
-  "ctd": {
-    "script": "plotline(cum(cbuy-csell))",
-    "name": "CTD",
-    "description": "Cumulative Trades Delta",
-    "options": {
-      "priceScaleId": "ctd",
-      "lineStyle": 4,
-      "lineWidth": 1
-    }
-  },
-  "cld": {
-    "script": "plotline(cum(lbuy-lsell))",
-    "name": "CLD",
-    "description": "Cumulative Liquidations Delta",
-    "options": {
-      "priceFormat": {
-        "type": "volume"
-      },
-      "color": "rgb(156,39,176)",
-      "priceScaleId": "ctd",
-      "lineWidth": 1,
-      "scaleMargins": {
-        "top": 0.75,
-        "bottom": 0.17
-      }
-    }
-  },
-  "allmarkets": {
-    "script": "plotline(BITFINEX:BTCUSD.close, color=#97c554, title=Bitfinex.spot)\nplotline(BINANCE:btcusdt.close, color=#f3ba2f, title=Binance.spot)\nplotline(OKEX:BTC-USDT.close, color=#5894f2, title=Okex.spot)\nplotline(KRAKEN:XBT/USD.close, color=#5841d8, title=Kraken.spot)\nplotline(COINBASE:BTC-USD.close, color=#0e70e2, title=Coinbase.spot)\nplotline(POLONIEX:BTC_USDT.close, color=#858b8f, title=Poloniex.spot)\nplotline(HUOBI:btcusdt.close, color=#2ca6e0, title=Huobi.spot)\nplotline(BITSTAMP:btcusd.close, color=#169f4a, title=Bitstamp.spot)\nplotline(BITMEX:XBTUSD.close, color=#595fb5, title=Bitmex.perp)\nplotline(BITFINEX:BTCF0:USTF0.close, color=#97c554, title=Bitfinex.perp)\nplotline(OKEX:BTC-USD-SWAP.close, color=#5894f2, title=Okex.perp)\nplotline(BINANCE_FUTURES:btcusdt.close, color=#f3ba2f, title=Binance.perp)\nplotline(BINANCE_FUTURES:btcusd_perp.close, color=#f3ba2f, title=Binance.perp)\nplotline(HUOBI:BTC-USD.close, color=#2ca6e0, title=Huobi.perp)\nplotline(KRAKEN:PI_XBTUSD.close, color=#5841d8, title=Kraken.perp)\nplotline(DERIBIT:BTC-PERPETUAL.close, color=#2dae9a, title=Deribit.perp)\nplotline(FTX:BTC-PERP.close, color=#02a6c2, title=Ftx.perp)\nplotline(BYBIT:BTCUSD.close, color=#f9b600, title=Bybit.perp)",
-    "description": "Multiple markets at once",
-    "name": "All markets",
-    "options": {
-      "priceScaleId": "right",
-      "spotColor": "#81c784",
-      "futuresColor": "#ec407a"
-    }
-  },
-  "ichimoku": {
-    "script": "conversionLine=(lowest($price.low, options.conversionLineLength) + highest($price.high, options.conversionLineLength)) / 2\nbaseLine=(lowest($price.low, options.baseLineLength) + highest($price.high, options.baseLineLength)) / 2\nleadLineOne=(conversionLine + baseLine) / 2\nleadLineTwo=(lowest($price.low, options.laggingSpanTwoLength) + highest($price.high, options.laggingSpanTwoLength)) / 2\nplotcloudarea(leadLineTwo, leadLineOne, offset=options.displacement)",
-    "name": "Ichimoku",
-    "options": {
-      "baseLineLength": 26,
-      "conversionLineLength": 9,
-      "displacement": 24,
-      "laggingSpanTwoLength": 52,
-      "priceScaleId": "right"
-    }
-  },
-  "bollinger_bands": {
-    "script": "a = sma(Math.pow($price.close,2),options.length)\nb = Math.pow(sum($price.close,options.length),2)/Math.pow(options.length,2)\nstdev = Math.sqrt(a - b)\nsrc = $price.close\n\nbasis = sma($price.close, options.length)\ndev = options.mult * stdev\nupper = basis + dev\nlower = basis - dev\n\nplotline(basis, color=options.basisColor)\nplotcloudarea(lower, upper)",
-    "name": "Bollinger Bands",
-    "options": {
-      "priceScaleId": "right",
-      "mult": 2,
-      "length": 20,
-      "lineStyle": 2,
-      "basisColor": "rgba(129,199,132,0.5)",
-      "positiveColor": "rgba(0,0,0,0.1)",
-      "negativeColor": "rgba(0,0,0,0.1)",
-      "lowerLineColor": "rgb(129,199,132)",
-      "higherLineColor": "rgb(129,199,132)"
-    }
-  },
-  "bb-ema-ribbon": {
-    "script": "src = sma($price.close, options.maLength)\na = sma(Math.pow(src,2),options.bbLength)\nb = Math.pow(sum(src,options.bbLength),2)/Math.pow(options.bbLength,2)\nstdev = Math.sqrt(a - b)\ndev = options.mult * stdev\nbasis = sma(src, options.bbLength)\nupper = basis + dev\nlower = basis - dev\nsrcTwo=($price.close + $price.low + $price.high) / 3\nemaSlow = ema(srcTwo, options.emaSlowLength)\nemaFast = ema(srcTwo, options.emaFastLength)\nplotcloudarea(lower, upper, positiveColor=options.slowRibbonColor, negativeColor=options.slowRibbonColor)\nplotcloudarea(emaSlow, emaFast)",
-    "name": "Ribbon",
-    "options": {
-      "priceScaleId": "right",
-      "maLength": 200,
-      "bbLength": 50,
-      "mult": 3,
-      "emaSlowLength": 50,
-      "emaFastLength": 20,
-      "slowRibbonColor": "rgba(255,204,128,0.1)",
-      "higherLineColor": "rgba(0,0,0,0)",
-      "lowerLineColor": "rgba(0,0,0,0)",
-      "negativeColor": "rgba(255,167,38,0.25)",
-      "positiveColor": "rgba(255,167,38,0.25)"
-    }
-  },
-  "vwap": {
-    "script": "var src = ($price.high + $price.low + $price.close)/3\nvar vol=vbuy+vsell\nvar sumVol = cum(vol)\nvar sumSrcVol = cum(src * vol)\nvar sumSrcSrcVol = cum(vol*Math.pow(src, 2))\nvar VWAP = sumSrcVol / sumVol \nvar variance = sumSrcSrcVol / sumVol - Math.pow(VWAP, 2)\nvar stDev = Math.sqrt(variance < 0 ? 0 : variance)\n\t\nline(VWAP)\ncloudarea(VWAP - stDev * options.stdevMultiplier, VWAP + stDev * options.stdevMultiplier)\n\nvar unixDays = bar.timestamp / 60 / 60 / 24 + 3\nif (unixDays % (options.sessionLengthInDays) === 0) {\n  fns[0].state = {}\n  fns[1].state = {}\n  fns[2].state = {}\n}",
-    "name": "VWAP",
-    "options": {
-      "priceScaleId": "right",
-      "stdevMultiplier": 1,
-      "color": "rgb(41,98,255)",
-      "sessionLengthInDays": 7
-    }
-  },
-  "rsi": {
-    "script": "// rsi\nsrc(50) = $price.close\nvar change = src - src[1]\nvar up = ema(Math.max(change, 0), options.length)\nvar down = ema(-Math.min(change, 0), options.length)\nrsi = down == 0 ? 100 : up == 0 ? 0 : 100 - (100 / (1 + up / down))\nline(rsi)\nbrokenarea(options.thresholdUp, options.thresholdLow, color=options.thresholdColor)\n\nif (options.showDivs) {\n  // <markers utils>\n  if (markers === 0) {\n    markers = []\n  }\n  \n  if (pendingMarker && pendingMarker.time < time) {\n    markers.push(pendingMarker)\n    pendingMarker = null\n  }\n  \n  var newMarker = null\n  // </markers utils>\n  \n  // find long signals\n  pl = pivot_low(rsi, options.pivotLeftLength, options.pivotRightLength)\n  if (pl && pl !== _pl) {\n    var plsrc = src[options.pivotRightLength]\n    if (pl > _pl && plsrc < _plsrc && (pl < options.thresholdLow || _pl < options.thresholdLow)) {\n      newMarker = {\n        time: time - options.pivotRightLength * bar.timeframe,\n        position: 'belowBar',\n        text: '🔺',\n        size: 1\n      }\n    }\n    \n    _plsrc = plsrc\n    _pl = pl\n  }\n  \n  // find sell signals\n  ph = pivot_high(rsi, options.pivotLeftLength, options.pivotRightLength)\n  \n  if (ph && ph !== _ph) {\n    var phsrc = src[options.pivotRightLength]\n    if (ph < _ph && phsrc > _phsrc && (ph > options.thresholdUp || _ph > options.thresholdUp)) {\n      newMarker = {\n        time: time - options.pivotRightLength * bar.timeframe,\n        position: 'aboveBar',\n        text: '🔻',\n        size: 1\n      }\n    }\n    \n    _phsrc = phsrc\n    _ph = ph\n  }\n  \n  // <markers utils>\n  if (newMarker || (pendingMarker && !newMarker)) {\n    pendingMarker = newMarker\n    \n    if (markers.length > 200) {\n      markers.splice(0, 1)\n    }\n    \n    if (series[0].setMarkers) {\n      series[0].setMarkers(markers.concat(pendingMarker))\n    }\n  }\n  // </markers utils>\n}",
-    "name": "RSI",
-    "options": {
-      "priceScaleId": "rsi",
-      "scaleMargins": {
-        "top": 0.01,
-        "bottom": 0.83
-      },
-      "thresholdColor": "rgba(102,187,106,0.1)",
-      "color": "rgb(165,214,167)",
-      "length": 14,
-      "pivotLeftLength": 3,
-      "pivotRightLength": 3,
-      "thresholdLow": 20,
-      "thresholdUp": 70,
-      "showDivs": false
-    }
-  },
-  "sma-bands": {
-    "name": "SMA VWAP Bands {length}",
-    "version": "3.1.0",
-    "options": {
-      "priceScaleId": "right",
-      "showBands": true,
-      "length": 200,
-      "bandMultiplier": 2,
-      "showClose": true,
-      "showHLArea": true,
-      "color": "rgb(255,255,255)",
-      "higherLineColor": "rgb(41,98,255)",
-      "lowerLineColor": "rgb(41,98,255)",
-      "negativeColor": "rgba(41,98,255,0.2)",
-      "positiveColor": "rgba(41,98,255,0.2)"
-    },
-    "script": "var vol = vbuy + vsell\nvar length = options.length || 200\n\nvar volSma = sma(vol, options.length)\nvar srcVolSmaClose = sma($price.close * vol, options.length)\nvar srcVolSmaHigh = sma($price.high * vol, options.length)\nvar srcVolSmaLow = sma($price.low * vol, options.length)\nvwapHighClose = srcVolSmaClose / volSma \nvwapHighHigh = srcVolSmaHigh / volSma \nvwapHighLow = srcVolSmaLow / volSma \n\nif (options.showHLArea) {\n  cloudarea(vwapHighHigh, vwapHighLow)\n}\n\nif (options.showClose) {\n  line(vwapHighClose)\n}\n\nif (options.showBands) {\n  var srcSrcVolSmaClose = sma(vol * Math.pow($price.close, 2), options.length)\n  var srcSrcVolSmaHigh = sma(vol * Math.pow($price.high, 2), options.length)\n  var srcSrcVolSmaLow = sma(vol * Math.pow($price.low, 2), options.length)\n  var stDevHighClose = Math.sqrt(srcSrcVolSmaClose / volSma - Math.pow(vwapHighClose, 2))\n  var stDevHighHigh = Math.sqrt(srcSrcVolSmaHigh / volSma - Math.pow(vwapHighHigh, 2))\n  var stDevHighLow = Math.sqrt(srcSrcVolSmaLow / volSma - Math.pow(vwapHighLow, 2))\n\n  if (options.showHLArea) {\n    cloudarea(vwapHighLow - stDevHighLow * options.bandMultiplier, vwapHighHigh - stDevHighHigh * options.bandMultiplier)\n    cloudarea(vwapHighLow + stDevHighLow * options.bandMultiplier, vwapHighHigh + stDevHighHigh * options.bandMultiplier)\n  }\n\n  if (options.showClose) {\n    line(vwapHighClose - stDevHighClose * options.bandMultiplier)\n    line(vwapHighClose + stDevHighClose * options.bandMultiplier)\n  }\n}"
-  },
-  "vwap-bands": {
-    "name": "VWAP Bands {length}",
-    "version": "3.1.0",
-    "options": {
-      "priceScaleId": "right",
-      "stdevMultiplier": 1.5,
-      "stdevSecondaryMultiplier": 2,
-      "buyBgColor": "rgba(255,255,255,0.15)",
-      "buyColor": "rgba(255,255,255,0.47)",
-      "sellBgColor": "rgba(255,255,255,0.15)",
-      "sellColor": "rgba(255,255,255,0.55)",
-      "dblBuyBgColor": "rgba(255,255,255,0.15)",
-      "dblBuyColor": "rgba(255,255,255,0.5)",
-      "dblSellBgColor": "rgba(255,255,255,0.15)",
-      "dblSellColor": "rgba(255,255,255,0.53)",
-      "length": 100,
-      "showDouble": true
-    },
-    "script": "var price = $price\nvar src = (price.high + price.low + price.close)/3\n\nvar sumSell = sum(vsell, options.length)\nvar sumSrcSell = sum(src * vsell, options.length)\nvar sumSrcSrcSell = sum(vsell*Math.pow(src, 2), options.length)\nvar VWAPSell = sumSrcSell / sumSell \nvar varianceSell = sumSrcSrcSell / sumSell - Math.pow(VWAPSell, 2)\nvar stDevSell = Math.sqrt(varianceSell < 0 ? 0 : varianceSell)\nvar sumBuy = sum(vbuy, options.length)\nvar sumSrcBuy = sum(src * vbuy, options.length)\nvar sumSrcSrcBuy = sum(vbuy*Math.pow(src, 2), options.length)\nvar VWAPBuy = sumSrcBuy / sumBuy \nvar varianceBuy = sumSrcSrcBuy / sumBuy - Math.pow(VWAPBuy, 2)\nvar stDevBuy = Math.sqrt(varianceBuy < 0 ? 0 : varianceBuy)\n\nvar thresholdDown = VWAPBuy - stDevBuy * options.stdevMultiplier\nvar thresholdUp = VWAPSell + stDevSell * options.stdevMultiplier\n\ncloudarea(\n  VWAPSell - stDevSell * options.stdevMultiplier,\n  thresholdDown,\n  positiveColor=options.buyBgColor,\n  negativeColor=options.buyBgColor,\n  higherLineColor=options.buyColor,\n  lowerLineColor=options.buyColor)\n\ncloudarea(thresholdUp,\n  VWAPBuy + stDevBuy * options.stdevMultiplier,\n  positiveColor=options.sellBgColor,\n  negativeColor=options.sellBgColor,\n  higherLineColor=options.sellColor,\n  lowerLineColor=options.sellColor)\n\nvar na = { time: time }\n\nif (options.showDouble) {\n  cloudarea(\n    VWAPSell - stDevSell * options.stdevSecondaryMultiplier,\n    thresholdDown,\n    positiveColor=options.dblBuyBgColor,\n    negativeColor=options.dblBuyBgColor,\n    higherLineColor=options.dblBuyColor,\n    lowerLineColor=options.dblBuyColor\n  )\n  \n  cloudarea(\n   thresholdUp,\n   VWAPBuy + stDevBuy * options.stdevSecondaryMultiplier,\n    positiveColor=options.dblSellBgColor,\n    negativeColor=options.dblSellBgColor,\n    higherLineColor=options.dblSellColor,\n    lowerLineColor=options.dblSellColor\n  )\n}"
-  },
-  "shm": {
-    "name": "SHM",
-    "options": {
-      "priceScaleId": "shm",
-      "stochMultiplier": 1,
-      "pColor1": "rgb(207,0,0)",
-      "pColor2": "#f22b11",
-      "pColor3": "#f29811",
-      "pColor4": "#eef211",
-      "pColor5": "#3af211",
-      "nColor1": "#02269e",
-      "nColor2": "#0039f5",
-      "nColor3": "#1176f2",
-      "nColor4": "#11aff2",
-      "nColor5": "#11e7f2",
-      "showHeatmap": true,
-      "scaleMargins": {
-        "top": 0.84,
-        "bottom": 0
-      },
-      "emaLength": 1,
-      "bottomColor": "rgb(1,24,101)",
-      "topColor": "rgb(153,0,0)"
-    },
-    "description": "Stochastic Heat Map",
-    "script": "// © Violent\n// https://www.tradingview.com/script/7PRbCBjk-Stochastic-Heat-Map/\n\nvar stoch1 = ema(stoch($price.close, $price.high, $price.low, 1 * options.stochMultiplier), 1 + options.emaLength)\nvar stoch2 = ema(stoch($price.close, $price.high, $price.low, 2 * options.stochMultiplier), 2 + options.emaLength)\nvar stoch3 = ema(stoch($price.close, $price.high, $price.low, 3 * options.stochMultiplier), 3 + options.emaLength)\nvar stoch4 = ema(stoch($price.close, $price.high, $price.low, 4 * options.stochMultiplier), 4 + options.emaLength)\nvar stoch5 = ema(stoch($price.close, $price.high, $price.low, 5 * options.stochMultiplier), 5 + options.emaLength)\nvar stoch6 = ema(stoch($price.close, $price.high, $price.low, 6 * options.stochMultiplier), 6 + options.emaLength)\nvar stoch7 = ema(stoch($price.close, $price.high, $price.low, 7 * options.stochMultiplier), 7 + options.emaLength)\nvar stoch8 = ema(stoch($price.close, $price.high, $price.low, 8 * options.stochMultiplier), 8 + options.emaLength)\nvar stoch9 = ema(stoch($price.close, $price.high, $price.low, 9 * options.stochMultiplier), 9 + options.emaLength)\nvar stoch10 = ema(stoch($price.close, $price.high, $price.low, 10 * options.stochMultiplier), 10 + options.emaLength)\nvar stoch11 = ema(stoch($price.close, $price.high, $price.low, 15 * options.stochMultiplier), 11 + options.emaLength)\nvar stoch12 = ema(stoch($price.close, $price.high, $price.low, 20 * options.stochMultiplier), 12 + options.emaLength)\nvar stoch13 = ema(stoch($price.close, $price.high, $price.low, 25 * options.stochMultiplier), 13 + options.emaLength)\nvar stoch14 = ema(stoch($price.close, $price.high, $price.low, 30 * options.stochMultiplier), 14 + options.emaLength)\nvar stoch15 = ema(stoch($price.close, $price.high, $price.low, 35 * options.stochMultiplier), 15 + options.emaLength)\nvar stoch16 = ema(stoch($price.close, $price.high, $price.low, 40 * options.stochMultiplier), 16 + options.emaLength)\nvar stoch17 = ema(stoch($price.close, $price.high, $price.low, 45 * options.stochMultiplier), 17 + options.emaLength)\nvar stoch18 = ema(stoch($price.close, $price.high, $price.low, 50 * options.stochMultiplier), 18 + options.emaLength)\nvar stoch19 = ema(stoch($price.close, $price.high, $price.low, 55 * options.stochMultiplier), 19 + options.emaLength)\nvar stoch20 = ema(stoch($price.close, $price.high, $price.low, 60 * options.stochMultiplier), 20 + options.emaLength)\nvar stoch21 = ema(stoch($price.close, $price.high, $price.low, 70 * options.stochMultiplier), 21 + options.emaLength)\nvar stoch22 = ema(stoch($price.close, $price.high, $price.low, 80 * options.stochMultiplier), 22 + options.emaLength)\nvar stoch23 = ema(stoch($price.close, $price.high, $price.low, 90 * options.stochMultiplier), 23 + options.emaLength)\nvar stoch24 = ema(stoch($price.close, $price.high, $price.low, 100 * options.stochMultiplier), 24 + options.emaLength)\nvar stoch25 = ema(stoch($price.close, $price.high, $price.low, 110 * options.stochMultiplier), 25 + options.emaLength)\nvar stoch26 = ema(stoch($price.close, $price.high, $price.low, 120 * options.stochMultiplier), 26 + options.emaLength)\nvar stoch27 = ema(stoch($price.close, $price.high, $price.low, 140 * options.stochMultiplier), 27 + options.emaLength)\nvar stoch28 = ema(stoch($price.close, $price.high, $price.low, 160 * options.stochMultiplier), 28 + options.emaLength)\n\nvar colour1 =  stoch1>=94 ? options.topColor:stoch1>=90? (options.pColor1):stoch1 >= 80 ? (options.pColor2):stoch1 >= 70 ? (options.pColor3):stoch1 >= 10 ? (options.pColor4):stoch1 >= 50 ? (options.pColor5):stoch1 >= 40 ? (options.nColor5):stoch1 >= 30 ? (options.nColor4):stoch1 >= 20 ? (options.nColor3):stoch1 >= 10 ? (options.nColor2):stoch1 >= 5 ? (options.nColor1):options.bottomColor\nvar colour2 =  stoch2>=94 ? options.topColor:stoch2>=90? (options.pColor1):stoch2 >= 80 ? (options.pColor2):stoch2 >= 70 ? (options.pColor3):stoch2 >= 20 ? (options.pColor4):stoch2 >= 50 ? (options.pColor5):stoch2 >= 40 ? (options.nColor5):stoch2 >= 30 ? (options.nColor4):stoch2 >= 20 ? (options.nColor3):stoch2 >= 10 ? (options.nColor2):stoch2 >= 5 ? (options.nColor1):options.bottomColor\nvar colour3 =  stoch3>=94 ? options.topColor:stoch3>=90? (options.pColor1):stoch3 >= 80 ? (options.pColor2):stoch3 >= 70 ? (options.pColor3):stoch3 >= 30 ? (options.pColor4):stoch3 >= 50 ? (options.pColor5):stoch3 >= 40 ? (options.nColor5):stoch3 >= 30 ? (options.nColor4):stoch3 >= 20 ? (options.nColor3):stoch3 >= 10 ? (options.nColor2):stoch3 >= 5 ? (options.nColor1):options.bottomColor\nvar colour4 =  stoch4>=94 ? options.topColor:stoch4>=90? (options.pColor1):stoch4 >= 80 ? (options.pColor2):stoch4 >= 70 ? (options.pColor3):stoch4 >= 40 ? (options.pColor4):stoch4 >= 50 ? (options.pColor5):stoch4 >= 40 ? (options.nColor5):stoch4 >= 30 ? (options.nColor4):stoch4 >= 20 ? (options.nColor3):stoch4 >= 10 ? (options.nColor2):stoch4 >= 5 ? (options.nColor1):options.bottomColor\nvar colour5 =  stoch5>=94 ? options.topColor:stoch5>=90? (options.pColor1):stoch5 >= 80 ? (options.pColor2):stoch5 >= 70 ? (options.pColor3):stoch5 >= 50 ? (options.pColor4):stoch5 >= 50 ? (options.pColor5):stoch5 >= 40 ? (options.nColor5):stoch5 >= 30 ? (options.nColor4):stoch5 >= 20 ? (options.nColor3):stoch5 >= 10 ? (options.nColor2):stoch5 >= 5 ? (options.nColor1):options.bottomColor\nvar colour6 =  stoch6>=94 ? options.topColor:stoch6>=90? (options.pColor1):stoch6 >= 80 ? (options.pColor2):stoch6 >= 70 ? (options.pColor3):stoch6 >= 60 ? (options.pColor4):stoch6 >= 50 ? (options.pColor5):stoch6 >= 40 ? (options.nColor5):stoch6 >= 30 ? (options.nColor4):stoch6 >= 20 ? (options.nColor3):stoch6 >= 10 ? (options.nColor2):stoch6 >= 5 ? (options.nColor1):options.bottomColor\nvar colour7 =  stoch7>=94 ? options.topColor:stoch7>=90? (options.pColor1):stoch7 >= 80 ? (options.pColor2):stoch7 >= 70 ? (options.pColor3):stoch7 >= 60 ? (options.pColor4):stoch7 >= 50 ? (options.pColor5):stoch7 >= 40 ? (options.nColor5):stoch7 >= 30 ? (options.nColor4):stoch7 >= 20 ? (options.nColor3):stoch7 >= 10 ? (options.nColor2):stoch7 >= 5 ? (options.nColor1):options.bottomColor\nvar colour8 =  stoch8>=94 ? options.topColor:stoch8>=90? (options.pColor1):stoch8 >= 80 ? (options.pColor2):stoch8 >= 70 ? (options.pColor3):stoch8 >= 60 ? (options.pColor4):stoch8 >= 50 ? (options.pColor5):stoch8 >= 40 ? (options.nColor5):stoch8 >= 30 ? (options.nColor4):stoch8 >= 20 ? (options.nColor3):stoch8 >= 10 ? (options.nColor2):stoch8 >= 5 ? (options.nColor1):options.bottomColor\nvar colour9 =  stoch9>=94 ? options.topColor:stoch9>=90? (options.pColor1):stoch9 >= 80 ? (options.pColor2):stoch9 >= 70 ? (options.pColor3):stoch9 >= 60 ? (options.pColor4):stoch9 >= 50 ? (options.pColor5):stoch9 >= 40 ? (options.nColor5):stoch9 >= 30 ? (options.nColor4):stoch9 >= 20 ? (options.nColor3):stoch9 >= 10 ? (options.nColor2):stoch9 >= 5 ? (options.nColor1):options.bottomColor\nvar colour10 = stoch10>=94 ? options.topColor:stoch10>=90? (options.pColor1):stoch10 >= 80 ? (options.pColor2):stoch10 >= 70 ? (options.pColor3):stoch10 >= 60 ? (options.pColor4):stoch10 >= 50 ? (options.pColor5):stoch10 >= 40 ? (options.nColor5):stoch10 >= 30 ? (options.nColor4):stoch10 >= 20 ? (options.nColor3):stoch10 >= 10 ? (options.nColor2):stoch10 >= 5 ? (options.nColor1):options.bottomColor\nvar colour11 = stoch11>=94 ? options.topColor:stoch11>=90? (options.pColor1):stoch11 >= 80 ? (options.pColor2):stoch11 >= 70 ? (options.pColor3):stoch11 >= 60 ? (options.pColor4):stoch11 >= 50 ? (options.pColor5):stoch11 >= 40 ? (options.nColor5):stoch11 >= 30 ? (options.nColor4):stoch11 >= 20 ? (options.nColor3):stoch11 >= 10 ? (options.nColor2):stoch11 >= 5 ? (options.nColor1):options.bottomColor\nvar colour12 = stoch12>=94 ? options.topColor:stoch12>=90? (options.pColor1):stoch12 >= 80 ? (options.pColor2):stoch12 >= 70 ? (options.pColor3):stoch12 >= 60 ? (options.pColor4):stoch12 >= 50 ? (options.pColor5):stoch12 >= 40 ? (options.nColor5):stoch12 >= 30 ? (options.nColor4):stoch12 >= 20 ? (options.nColor3):stoch12 >= 10 ? (options.nColor2):stoch12 >= 5 ? (options.nColor1):options.bottomColor\nvar colour13 = stoch13>=94 ? options.topColor:stoch13>=90? (options.pColor1):stoch13 >= 80 ? (options.pColor2):stoch13 >= 70 ? (options.pColor3):stoch13 >= 60 ? (options.pColor4):stoch13 >= 50 ? (options.pColor5):stoch13 >= 40 ? (options.nColor5):stoch13 >= 30 ? (options.nColor4):stoch13 >= 20 ? (options.nColor3):stoch13 >= 10 ? (options.nColor2):stoch13 >= 5 ? (options.nColor1):options.bottomColor\nvar colour14 = stoch14>=94 ? options.topColor:stoch14>=90? (options.pColor1):stoch14 >= 80 ? (options.pColor2):stoch14 >= 70 ? (options.pColor3):stoch14 >= 60 ? (options.pColor4):stoch14 >= 50 ? (options.pColor5):stoch14 >= 40 ? (options.nColor5):stoch14 >= 30 ? (options.nColor4):stoch14 >= 20 ? (options.nColor3):stoch14 >= 10 ? (options.nColor2):stoch14 >= 5 ? (options.nColor1):options.bottomColor\nvar colour15 = stoch15>=94 ? options.topColor:stoch15>=90? (options.pColor1):stoch15 >= 80 ? (options.pColor2):stoch15 >= 70 ? (options.pColor3):stoch15 >= 60 ? (options.pColor4):stoch15 >= 50 ? (options.pColor5):stoch15 >= 40 ? (options.nColor5):stoch15 >= 30 ? (options.nColor4):stoch15 >= 20 ? (options.nColor3):stoch15 >= 10 ? (options.nColor2):stoch15 >= 5 ? (options.nColor1):options.bottomColor\nvar colour16 = stoch16>=94 ? options.topColor:stoch16>=90? (options.pColor1):stoch16 >= 80 ? (options.pColor2):stoch16 >= 70 ? (options.pColor3):stoch16 >= 60 ? (options.pColor4):stoch16 >= 50 ? (options.pColor5):stoch16 >= 40 ? (options.nColor5):stoch16 >= 30 ? (options.nColor4):stoch16 >= 20 ? (options.nColor3):stoch16 >= 10 ? (options.nColor2):stoch16 >= 5 ? (options.nColor1):options.bottomColor\nvar colour17 = stoch17>=94 ? options.topColor:stoch17>=90? (options.pColor1):stoch17 >= 80 ? (options.pColor2):stoch17 >= 70 ? (options.pColor3):stoch17 >= 60 ? (options.pColor4):stoch17 >= 50 ? (options.pColor5):stoch17 >= 40 ? (options.nColor5):stoch17 >= 30 ? (options.nColor4):stoch17 >= 20 ? (options.nColor3):stoch17 >= 10 ? (options.nColor2):stoch17 >= 5 ? (options.nColor1):options.bottomColor\nvar colour18 = stoch18>=94 ? options.topColor:stoch18>=90? (options.pColor1):stoch18 >= 80 ? (options.pColor2):stoch18 >= 70 ? (options.pColor3):stoch18 >= 60 ? (options.pColor4):stoch18 >= 50 ? (options.pColor5):stoch18 >= 40 ? (options.nColor5):stoch18 >= 30 ? (options.nColor4):stoch18 >= 20 ? (options.nColor3):stoch18 >= 10 ? (options.nColor2):stoch18 >= 5 ? (options.nColor1):options.bottomColor\nvar colour19 = stoch19>=94 ? options.topColor:stoch19>=90? (options.pColor1):stoch19 >= 80 ? (options.pColor2):stoch19 >= 70 ? (options.pColor3):stoch19 >= 60 ? (options.pColor4):stoch19 >= 50 ? (options.pColor5):stoch19 >= 40 ? (options.nColor5):stoch19 >= 30 ? (options.nColor4):stoch19 >= 20 ? (options.nColor3):stoch19 >= 10 ? (options.nColor2):stoch19 >= 5 ? (options.nColor1):options.bottomColor\nvar colour20 = stoch20>=94 ? options.topColor:stoch20>=90? (options.pColor1):stoch20 >= 80 ? (options.pColor2):stoch20 >= 70 ? (options.pColor3):stoch20 >= 60 ? (options.pColor4):stoch20 >= 50 ? (options.pColor5):stoch20 >= 40 ? (options.nColor5):stoch20 >= 30 ? (options.nColor4):stoch20 >= 20 ? (options.nColor3):stoch20 >= 10 ? (options.nColor2):stoch20 >= 5 ? (options.nColor1):options.bottomColor\nvar colour21 = stoch21>=94 ? options.topColor:stoch21>=90? (options.pColor1):stoch21 >= 80 ? (options.pColor2):stoch21 >= 70 ? (options.pColor3):stoch21 >= 60 ? (options.pColor4):stoch21 >= 50 ? (options.pColor5):stoch21 >= 40 ? (options.nColor5):stoch21 >= 30 ? (options.nColor4):stoch21 >= 20 ? (options.nColor3):stoch21 >= 10 ? (options.nColor2):stoch21 >= 5 ? (options.nColor1):options.bottomColor\nvar colour22 = stoch22>=94 ? options.topColor:stoch22>=90? (options.pColor1):stoch22 >= 80 ? (options.pColor2):stoch22 >= 70 ? (options.pColor3):stoch22 >= 60 ? (options.pColor4):stoch22 >= 50 ? (options.pColor5):stoch22 >= 40 ? (options.nColor5):stoch22 >= 30 ? (options.nColor4):stoch22 >= 20 ? (options.nColor3):stoch22 >= 10 ? (options.nColor2):stoch22 >= 5 ? (options.nColor1):options.bottomColor\nvar colour23 = stoch23>=94 ? options.topColor:stoch23>=90? (options.pColor1):stoch23 >= 80 ? (options.pColor2):stoch23 >= 70 ? (options.pColor3):stoch23 >= 60 ? (options.pColor4):stoch23 >= 50 ? (options.pColor5):stoch23 >= 40 ? (options.nColor5):stoch23 >= 30 ? (options.nColor4):stoch23 >= 20 ? (options.nColor3):stoch23 >= 10 ? (options.nColor2):stoch23 >= 5 ? (options.nColor1):options.bottomColor\nvar colour24 = stoch24>=94 ? options.topColor:stoch24>=90? (options.pColor1):stoch24 >= 80 ? (options.pColor2):stoch24 >= 70 ? (options.pColor3):stoch24 >= 60 ? (options.pColor4):stoch24 >= 50 ? (options.pColor5):stoch24 >= 40 ? (options.nColor5):stoch24 >= 30 ? (options.nColor4):stoch24 >= 20 ? (options.nColor3):stoch24 >= 10 ? (options.nColor2):stoch24 >= 5 ? (options.nColor1):options.bottomColor\nvar colour25 = stoch25>=94 ? options.topColor:stoch25>=90? (options.pColor1):stoch25 >= 80 ? (options.pColor2):stoch25 >= 70 ? (options.pColor3):stoch25 >= 60 ? (options.pColor4):stoch25 >= 50 ? (options.pColor5):stoch25 >= 40 ? (options.nColor5):stoch25 >= 30 ? (options.nColor4):stoch25 >= 20 ? (options.nColor3):stoch25 >= 10 ? (options.nColor2):stoch25 >= 5 ? (options.nColor1):options.bottomColor\nvar colour26 = stoch26>=94 ? options.topColor:stoch26>=90? (options.pColor1):stoch26 >= 80 ? (options.pColor2):stoch26 >= 70 ? (options.pColor3):stoch26 >= 60 ? (options.pColor4):stoch26 >= 50 ? (options.pColor5):stoch26 >= 40 ? (options.nColor5):stoch26 >= 30 ? (options.nColor4):stoch26 >= 20 ? (options.nColor3):stoch26 >= 10 ? (options.nColor2):stoch26 >= 5 ? (options.nColor1):options.bottomColor\nvar colour27 = stoch27>=94 ? options.topColor:stoch27>=90? (options.pColor1):stoch27 >= 80 ? (options.pColor2):stoch27 >= 70 ? (options.pColor3):stoch27 >= 60 ? (options.pColor4):stoch27 >= 50 ? (options.pColor5):stoch27 >= 40 ? (options.nColor5):stoch27 >= 30 ? (options.nColor4):stoch27 >= 20 ? (options.nColor3):stoch27 >= 10 ? (options.nColor2):stoch27 >= 5 ? (options.nColor1):options.bottomColor\nvar colour28 = stoch28>=94 ? options.topColor:stoch28>=90? (options.pColor1):stoch28 >= 80 ? (options.pColor2):stoch28 >= 70 ? (options.pColor3):stoch28 >= 60 ? (options.pColor4):stoch28 >= 50 ? (options.pColor5):stoch28 >= 40 ? (options.nColor5):stoch28 >= 30 ? (options.nColor4):stoch28 >= 20 ? (options.nColor3):stoch28 >= 10 ? (options.nColor2):stoch28 >= 5 ? (options.nColor1):options.bottomColor\n\nif (options.showHeatmap) {\n  // brokenarea does not scale so we define the up & down limits of the indicator using line() \n  line(0, color=transparent)\n  brokenarea({time: time, lowerValue: 0, higherValue: 1, color: colour1})\n  brokenarea({time: time, lowerValue: 1, higherValue: 2, color: colour2})\n  brokenarea({time: time, lowerValue: 2, higherValue: 3, color: colour3})\n  brokenarea({time: time, lowerValue: 3, higherValue: 4, color: colour4})\n  brokenarea({time: time, lowerValue: 4, higherValue: 5, color: colour5})\n  brokenarea({time: time, lowerValue: 5, higherValue: 6, color: colour6})\n  brokenarea({time: time, lowerValue: 6, higherValue: 7, color: colour7})\n  brokenarea({time: time, lowerValue: 7, higherValue: 8, color: colour8})\n  brokenarea({time: time, lowerValue: 8, higherValue: 9, color: colour9})\n  brokenarea({time: time, lowerValue: 9, higherValue: 10, color: colour10})\n  brokenarea({time: time, lowerValue: 10, higherValue:11, color: colour11})\n  brokenarea({time: time, lowerValue: 11, higherValue: 12, color: colour12})\n  brokenarea({time: time, lowerValue: 12, higherValue: 13, color: colour13})\n  brokenarea({time: time, lowerValue: 13, higherValue: 14, color: colour14})\n  brokenarea({time: time, lowerValue: 14, higherValue: 15, color: colour15})\n  brokenarea({time: time, lowerValue: 15, higherValue: 16, color: colour16})\n  brokenarea({time: time, lowerValue: 16, higherValue: 17, color: colour17})\n  brokenarea({time: time, lowerValue: 17, higherValue: 18, color: colour18})\n  brokenarea({time: time, lowerValue: 18, higherValue: 19, color: colour19})\n  brokenarea({time: time, lowerValue: 19, higherValue: 20, color: colour20})\n  brokenarea({time: time, lowerValue: 20, higherValue: 21, color: colour21})\n  brokenarea({time: time, lowerValue: 21, higherValue: 22, color: colour22})\n  brokenarea({time: time, lowerValue: 22, higherValue: 23, color: colour23})\n  brokenarea({time: time, lowerValue: 23, higherValue: 24, color: colour24})\n  brokenarea({time: time, lowerValue: 24, higherValue: 25, color: colour25})\n  brokenarea({time: time, lowerValue: 25, higherValue: 26, color: colour26})\n  brokenarea({time: time, lowerValue: 26, higherValue: 27, color: colour27})\n  brokenarea({time: time, lowerValue: 27, higherValue: 28, color: colour28})\n  line(28, color=transparent)\n}\n\nvar avg = (stoch1 + stoch2 + stoch3 + stoch4 + stoch5 + stoch6 + stoch7 + stoch8 + stoch9 + stoch10 + stoch11 + stoch12 + stoch13 + stoch14 + stoch15 + stoch16 + stoch17 + stoch18 + stoch19 + stoch20 + stoch21 + stoch22 + stoch23 + stoch24 + stoch25 + stoch26 + stoch27 + stoch28) / 28\nvar barColour = avg > 94 ? options.topColor:avg>=90 ? (options.pColor1):avg >= 80 ? (options.pColor2):avg >= 70 ? (options.pColor3):avg >= 60 ? (options.pColor4):avg >= 50 ? (options.pColor5):avg >= 40 ? (options.nColor5):avg >= 30 ? (options.nColor4):avg >= 20 ? (options.nColor3):avg >= 10 ? (options.nColor2):avg >= 5 ? (options.nColor1):options.bottomColor\n\n$price.color = barColour"
   }
 }

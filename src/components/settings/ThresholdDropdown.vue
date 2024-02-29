@@ -141,7 +141,7 @@ export default class ThresholdDropdown extends Vue {
 .threshold-dropdown {
   background-color: var(--theme-background-100);
   border-radius: 4px;
-  padding: 1em;
+  padding: 1rem;
   max-width: 220px;
 
   .form-group {
@@ -161,15 +161,15 @@ export default class ThresholdDropdown extends Vue {
 
   h3 {
     font-weight: 400;
-    margin: 0 0 1em;
+    margin: 0 0 1rem;
     color: var(--theme-color-base);
 
     [contenteditable] {
       color: black;
       background-color: white;
-      padding: 0.25em;
+      padding: 0.25rem;
       border-radius: 1px;
-      font-size: 0.75em;
+      font-size: 0.75rem;
       vertical-align: top;
       font-family: inherit;
     }
@@ -180,8 +180,8 @@ export default class ThresholdDropdown extends Vue {
     opacity: 0.5;
     right: 0;
     top: 0;
-    padding: 1em;
-    font-size: 1.125em;
+    padding: 1rem;
+    font-size: 1.125rem;
     text-decoration: none;
 
     &:hover {
@@ -196,10 +196,10 @@ export default class ThresholdDropdown extends Vue {
       min-width: 1px;
       border: 0;
       font-family: monospace;
-      letter-spacing: -0.1em;
-      font-size: 0.9em;
+      letter-spacing: -0.1rem;
+      font-size: 0.9rem;
       font-weight: 400;
-      padding: 1.25em 1em;
+      padding: 1.25rem 1rem;
     }
   }
 

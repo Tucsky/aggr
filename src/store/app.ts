@@ -14,17 +14,10 @@ export interface Notice {
   _timeoutId?: number
 }
 
-interface BaseQuoteCurrencies {
-  base: string
-  baseSymbol: string
-  quote: string
-  quoteSymbol: string
-}
-
 interface NoticeButton {
   text: string
   icon?: string
-  click?: Function
+  click?: () => void
 }
 
 export interface NoticesState {
@@ -56,10 +49,6 @@ export interface AppState {
   version: string
   buildDate: number | string
   notices: Notice[]
-  baseCurrency: string
-  baseCurrencySymbol: string
-  quoteCurrency: string
-  quoteCurrencySymbol: string
   focusedPaneId: string
 }
 
@@ -74,10 +63,6 @@ const state = {
   apiSupportedTimeframes: [],
   version: 'DEV',
   buildDate: 'now',
-  baseCurrency: 'coin',
-  baseCurrencySymbol: '฿',
-  quoteCurrency: 'dollar',
-  quoteCurrencySymbol: '$',
   focusedPaneId: null
 } as AppState
 
@@ -264,19 +249,13 @@ const mutations = {
   SET_BUILD_DATE(state, value) {
     state.buildDate = value
   },
-  SET_CURRENCIES(state, currencies: BaseQuoteCurrencies) {
-    state.baseCurrency = currencies.base
-    state.baseCurrencySymbol = currencies.baseSymbol
-    state.quoteCurrency = currencies.quote
-    state.quoteCurrencySymbol = currencies.quoteSymbol
-  },
   SET_FOCUSED_PANE(state, id: string) {
     if (id !== state.focusedPaneId) {
       const paneElement = document.getElementById(id)
 
       if (paneElement) {
         paneElement.classList.remove('pane--selected')
-        paneElement.offsetHeight;
+        paneElement.offsetHeight
         paneElement.classList.add('pane--selected')
       }
     }

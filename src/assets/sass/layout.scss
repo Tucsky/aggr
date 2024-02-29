@@ -3,13 +3,13 @@ html {
 }
 
 body {
-  background-color: var(--theme-base);
+  background-color: var(--theme-background-base);
+  color: var(--theme-color-base);
   overflow-x: hidden;
 
   &.-unselectable {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
-    -khtml-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
@@ -34,13 +34,11 @@ body {
 
 #app {
   width: 100%;
+  height: 100%;
   position: relative;
-  min-height: 100%;
   transition: transform 0.3s $ease-out-expo;
-  color: white;
   background-color: var(--theme-background-base);
   color: var(--theme-color-base);
-  overflow: hidden;
 }
 
 .app__loader {
@@ -63,6 +61,9 @@ body {
   flex-grow: 1;
   min-height: 0px;
 }
+
+/* Flex helpers
+*/
 
 .column {
   display: flex;
@@ -124,71 +125,6 @@ body {
   }
 }
 
-.-activable {
-  > .form-group {
-    opacity: 0.2;
-  }
-
-  &.active {
-    .form-group {
-      opacity: 1;
-    }
-  }
-}
-
-.flip-list-move {
-  transition: transform 0.1s linear;
-}
-
-#app.-no-animations *.flip-list-move {
-  transition: transform 0.2s linear !important;
-}
-
-.divider {
-  margin: 1rem 0;
-  display: flex;
-  align-items: center;
-  text-transform: uppercase;
-  color: var(--theme-background-300);
-
-  &:before,
-  &:after {
-    content: '';
-    height: 1px;
-    background-color: var(--theme-background-150);
-    flex-grow: 1;
-  }
-
-  &:before {
-    margin-right: 1rem;
-  }
-
-  &:after {
-    margin-left: 1rem;
-  }
-
-  &.-vertical {
-    margin: 0 1rem;
-    flex-direction: column;
-    align-items: center;
-
-    &:before,
-    &:after {
-      height: auto;
-      width: 1px;
-      margin: 0;
-    }
-
-    &:before {
-      margin-bottom: 1rem;
-    }
-
-    &:after {
-      margin-top: 1rem;
-    }
-  }
-}
-
 blockquote {
   padding: 0.25rem 0.5rem;
   margin-left: 0;
@@ -201,7 +137,7 @@ code {
   font-family: $font-monospace;
 
   &.-filled {
-    background-color: rgba(black, 0.2);
+    background-color: var(--theme-base-o25);
     color: var(--theme-color-base);
     border-radius: 4px;
     padding: 0.25rem;
@@ -218,27 +154,40 @@ p {
   }
 }
 
-.mobile-dir-col-desktop-dir-row {
-  flex-direction: column;
+/* Transitions
+*/
 
-  .divider.-vertical,
-  hr.-vertical {
-    display: none;
+.fade-scale {
+  &-enter-active {
+    transition:
+      all 0.1s $ease-out-expo,
+      transform 0.1s $ease-elastic;
+    pointer-events: none;
   }
 
-  @media screen and (min-width: 768px) {
-    flex-direction: row;
-
-    .divider.-horizontal,
-    hr.-horizontal {
-      display: none;
-    }
-
-    .divider.-vertical,
-    hr.-vertical {
-      display: flex;
-    }
+  &-leave-active {
+    transition: all 0.2s $ease-out-expo;
   }
+
+  &-leave,
+  &-enter-to {
+    opacity: 1;
+    transform: none;
+  }
+
+  &-enter,
+  &-leave-to {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}
+
+.flip-list-move {
+  transition: transform 0.1s linear;
+}
+
+#app.-no-animations *.flip-list-move {
+  transition: transform 0.1s linear !important;
 }
 
 @keyframes highlight {
@@ -251,7 +200,60 @@ p {
   }
 }
 
-.tv-lightweight-charts.-absolute {
-  position: absolute;
-  top: 0;
+/* Stylized divider with text
+*/
+
+.divider-container {
+  container-type: inline-size;
+
+  .divider--vertical {
+    @container (min-width: 380px) {
+      margin: 0 1rem;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100px;
+      width: auto;
+
+      &:before,
+      &:after {
+        height: auto;
+        width: 1px;
+        margin: 0;
+      }
+
+      &:before {
+        margin-bottom: 1rem;
+      }
+
+      &:after {
+        margin-top: 1rem;
+      }
+    }
+  }
+}
+
+.divider {
+  $self: &;
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+  color: var(--theme-background-300);
+  width: 100%;
+
+  &:before,
+  &:after {
+    content: '';
+    height: 1px;
+    background-color: var(--theme-background-150);
+    flex-grow: 1;
+  }
+
+  &:before {
+    margin-right: 1rem;
+  }
+
+  &:after {
+    margin-left: 1rem;
+  }
 }

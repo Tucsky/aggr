@@ -6,21 +6,14 @@
     @change="toggleAlerts($event)"
   >
     <p class="mt0 text-color-50">
-      <i class="icon-info"></i> Triggers using the
-      <span
-        v-tippy
-        title="for example BTCUSD alerts will use avg. price of 26 markets across 13 exchanges and not the one you have on screen"
-      >
-        average price
-      </span>
-      of a coin.
+      <i class="icon-info"></i> Uses average price of the coin
     </p>
     <div class="column">
       <div class="form-group">
         <label>Line style</label>
         <dropdown-button
           class="-outline form-control -arrow flex-grow-1 w-100"
-          v-model="alertsLineStyle"
+          :value="alertsLineStyle"
           :options="{
             0: 'Solid',
             1: 'Dotted',
@@ -58,35 +51,37 @@
       <div class="form-group mb16 mt16">
         <label><i class="icon-click mr4"></i> Control</label>
         <label
-          class="checkbox-control -click d-flex -wrap -auto"
+          class="checkbox-control d-flex -aggr -auto -auto"
           @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
           title="Place alerts faster ⚡️"
           v-tippy
         >
           <input type="checkbox" class="form-control" :checked="alertsClick" />
-          <div v-if="alertsClick" class="mr4">
-            <code>1 CLICK</code>&nbsp;⚡️
-          </div>
-          <div v-else class="mr4">
-            <code>ALT</code> + <code>CLICK</code><br />
-          </div>
+          <div on="1 CLICK ⚡️" off="ALT+CLICK"></div>
         </label>
       </div>
       <div class="form-group mt16 mb16">
         <label for="audio-assistant-source"
           ><i class="icon-music-note mr4"></i> Alert sound</label
         >
-        <button
-          class="btn -file -blue -large -cases"
-          @change="handleAlertSoundFile"
-        >
-          <i class="icon-upload mr8"></i> {{ alertSound || 'Browse' }}
+        <button class="btn -file -blue -cases">
+          <i class="icon-upload mr8"></i> {{ displayAlertSound || 'Browse' }}
+          <i
+            v-if="alertSound"
+            class="icon-volume-high mr8 btn__suffix"
+            @click.stop.prevent="playAlertSound"
+          ></i>
           <i
             v-if="alertSound"
             class="icon-cross mr8 btn__suffix"
             @click.stop.prevent="removeAlertSound"
           ></i>
-          <input type="file" class="input-file" accept="audio/*" />
+          <input
+            type="file"
+            class="input-file"
+            accept="audio/*"
+            @change="handleAlertSoundFile"
+          />
         </button>
       </div>
     </div>
@@ -160,6 +155,20 @@ export default class AlertsSettings extends Vue {
 
   get alertsClick() {
     return this.$store.state.settings.alertsClick
+  }
+
+  get displayAlertSound() {
+    const id = this.alertSound
+
+    if (!id) {
+      return null
+    }
+
+    if (id.length <= 14) {
+      return id
+    } else {
+      return id.slice(0, 6) + '..' + id.substr(-6)
+    }
   }
 
   created() {
@@ -251,6 +260,22 @@ export default class AlertsSettings extends Vue {
     }
 
     this.$store.commit('settings/SET_ALERT_SOUND', null)
+  }
+
+  async playAlertSound() {
+    if (!this.alertSound) {
+      return
+    }
+
+    try {
+      await audioService.playOnce(this.alertSound, 3000)
+    } catch (error) {
+      console.error(error)
+      this.$store.dispatch('app/showNotice', {
+        type: 'error',
+        title: `Failed to play ${this.alertSound}`
+      })
+    }
   }
 }
 </script>

@@ -2,6 +2,7 @@
   <Dialog
     @clickOutside="close"
     class="pane-dialog"
+    size="small"
     @mousedown="clickOutsideClose = false"
     @mouseup="clickOutsideClose = true"
   >
@@ -33,10 +34,6 @@ import PricesSettings from './PricesSettings.vue'
 
 export default {
   components: { PricesSettings },
-  mixins: [DialogMixin, PaneDialogMixin],
-  data: () => ({
-    renaming: false
-  }),
-  methods: {}
+  mixins: [DialogMixin, PaneDialogMixin]
 }
 </script>

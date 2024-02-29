@@ -5,15 +5,12 @@
     @mousedown="clickOutsideClose = false"
     @mouseup="clickOutsideClose = true"
   >
-    <template v-slot:header>
-      <div>
-        <div class="dialog__title">
-          <div>Threshold</div>
-        </div>
-
-        <div class="dialog__subtitle">
-          {{ thresholdId }} {{ formatAmount(threshold.amount) }}
-        </div>
+    <template #header>
+      <div class="d-flex">
+        <div class="dialog__title -center">Threshold</div>
+        <code class="ml4 -filled">
+          <small>{{ formatAmount(threshold.amount) }}</small>
+        </code>
       </div>
     </template>
     <div class="form-group mb16">
@@ -41,7 +38,7 @@
           <i class="icon-volume-high"></i>
         </button>
         <textarea
-          class="form-control"
+          class="form-control -code"
           v-model="buyAudio"
           :class="[dropping === 'buy' && '-dropping']"
           @blur="liveAnnotation = null"
@@ -61,11 +58,14 @@
       </div>
 
       <div v-if="focusedSide === 'buy'" class="mt8 d-flex">
-        <button class="btn -small" @click="openSoundAssistant('play', 'buy')">
+        <button
+          class="btn -green -small"
+          @click="openSoundAssistant('play', 'buy')"
+        >
           <i class="icon-music-note mr8"></i> Synthetize sound
         </button>
         <button
-          class="btn -small ml8 mr8"
+          class="btn -green -small ml8 mr8"
           @click="openSoundAssistant('playurl', 'buy')"
         >
           <i class="icon-upload mr8"></i> Import audio
@@ -104,7 +104,7 @@
           <i class="icon-volume-high"></i>
         </button>
         <textarea
-          class="form-control"
+          class="form-control -code"
           v-model="sellAudio"
           :class="[dropping === 'sell' && '-dropping']"
           @blur="liveAnnotation = null"
@@ -123,11 +123,14 @@
       </div>
 
       <div v-if="focusedSide === 'sell'" class="mt8 d-flex">
-        <button class="btn -small" @click="openSoundAssistant('play', 'sell')">
+        <button
+          class="btn -red -small"
+          @click="openSoundAssistant('play', 'sell')"
+        >
           <i class="icon-music-note mr8"></i> Synthetize sound
         </button>
         <button
-          class="btn -small ml8 mr8"
+          class="btn -red -small ml8 mr8"
           @click="openSoundAssistant('playurl', 'sell')"
         >
           <i class="icon-upload mr8"></i> Import audio
@@ -600,7 +603,7 @@ div.-dropping {
   &__tooltip {
     position: absolute;
     bottom: 0;
-    transform: translate(-50%, -1em);
+    transform: translate(-50%, -1rem);
     left: 50%;
     background-color: var(--theme-background-200);
     border-radius: $border-radius-base;

@@ -1,12 +1,12 @@
 {
   "name": "aggr",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "private": true,
   "type": "module",
   "scripts": {
     "cors": "node scripts/cors-server.mjs",
     "svg2font": "node scripts/svg2font.js",
-    "serve": "vite",
+    "serve": "vite --host",
     "prod": "vue-tsc --noEmit && vite build --dest ./temp && rimraf ./dist && mv ./temp ./dist",
     "build": "vite build",
     "lint": "eslint",
@@ -23,8 +23,9 @@
     "eslint-plugin-prettier": "^5.0.0",
     "eventemitter3": "^4.0.7",
     "idb": "^6.0.0",
-    "lightweight-charts": "git+https://github.com/Tucsky/lightweight-charts.git#a36ce5589f82e3d40f36ffcf08bdd1d67956f15a",
+    "lightweight-charts": "git+https://github.com/Tucsky/lightweight-charts.git#3ac7ebd731452fb0d9967905e10128b20409b7d7",
     "lodash.merge": "^4.6.2",
+    "marked": "^9.1.2",
     "monaco-editor": "0.41.0",
     "pako": "^1.0.6",
     "tunajs": "^1.0.13",
@@ -37,9 +38,11 @@
     "vue-template-compiler": "^2.7.13",
     "vue-tippy": "^4.8.0",
     "vue-uuid": "^2.0.2",
-    "vuex": "^3.4.0"
+    "vuex": "^3.6.2"
   },
   "devDependencies": {
+    "@types/lodash.merge": "^4.6.8",
+    "@types/marked": "^6.0.0",
     "@types/node": "20.2.0",
     "@types/pako": "^2.0.0",
     "@types/sharedworker": "0.0.29",
@@ -63,7 +66,8 @@
     "typescript": "~3.9.3",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-monaco-editor": "^1.1.0",
-    "vite-plugin-pwa": "^0.15.1",
+    "vite-plugin-pwa": "^0.16.0",
+    "vite-plugin-qrcode": "^0.2.2",
     "vite-plugin-vue2-svg": "^0.4.0",
     "vite-svg-loader": "^4.0.0",
     "vue-prettier": "^0.2.0",

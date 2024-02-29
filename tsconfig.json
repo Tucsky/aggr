@@ -1,11 +1,9 @@
 {
   "compilerOptions": {
-    "typeRoots": ["./node_modules/@types", "./src/types", "./node_modules"],
     "target": "esnext",
     "module": "esnext",
     "strict": false,
     "jsx": "preserve",
-    "declaration": true,
     "importHelpers": true,
     "moduleResolution": "node",
     "noImplicitAny": false,
@@ -21,6 +19,6 @@
     },
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/sw.js"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "public/sw.js"],
   "exclude": ["node_modules"]
 }

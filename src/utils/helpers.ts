@@ -137,7 +137,7 @@ export const downloadAnything = (data, filename) => {
   }
 
   downloadAnchorNode.setAttribute('href', href)
-  downloadAnchorNode.setAttribute('download', filename + '.txt')
+  downloadAnchorNode.setAttribute('download', filename + '.json')
   document.body.appendChild(downloadAnchorNode)
   downloadAnchorNode.click()
   downloadAnchorNode.remove()
@@ -243,7 +243,9 @@ export function parseFunctionArguments(
   } while (paranthesisMatch && iteration < maxIterations)
 
   if (iteration >= maxIterations) {
-    throw new Error('Maxiumum parseFunctionArguments iteration reached')
+    throw new Error(
+      `Maxiumum parseFunctionArguments iteration reached (${maxIterations})`
+    )
   }
 
   return str.split(',').map(arg => {
@@ -272,6 +274,18 @@ export function toPlainString(num) {
   )
 }
 
+export function parseAmount(amount) {
+  if (typeof amount === 'string' && /m|k$/i.test(amount)) {
+    if (/m$/i.test(amount)) {
+      return parseFloat(amount) * 1000000
+    } else {
+      return parseFloat(amount) * 1000
+    }
+  } else {
+    return +amount
+  }
+}
+
 export function formatBytes(bytes, decimals = 2) {
   if (bytes === 0) return '0 Bytes'
 
@@ -298,9 +312,7 @@ export function fallbackCopyTextToClipboard(text) {
   textArea.select()
 
   try {
-    const successful = document.execCommand('copy')
-    const msg = successful ? 'successful' : 'unsuccessful'
-    console.log('Fallback: Copying text command was ' + msg)
+    document.execCommand('copy')
   } catch (err) {
     console.error('Fallback: Oops, unable to copy', err)
   }
@@ -332,15 +344,43 @@ export function copyTextToClipboard(text) {
   return navigator.clipboard.writeText(text)
 }
 
+function formatAmount(amount, decimals?: number) {
+  const negative = amount < 0
+
+  amount = Math.abs(amount)
+
+  if (amount >= 1000000000) {
+    amount =
+      +(amount / 1000000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' B'
+  } else if (amount >= 1000000) {
+    amount = +(amount / 1000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' M'
+  } else if (amount >= 1000) {
+    amount = +(amount / 1000).toFixed(isNaN(decimals) ? 1 : decimals) + ' K'
+  } else {
+    amount = +amount.toFixed(isNaN(decimals) ? 2 : decimals)
+  }
+
+  if (negative) {
+    return '-' + amount
+  } else {
+    return amount
+  }
+}
+
 export function getTimeframeForHuman(timeframe, full?: boolean) {
   if (timeframe === null) {
-    return 'ERR'
+    return 'ERR!'
   }
 
   const normalized = timeframe.toString().trim()
 
   if (normalized[normalized.length - 1] === 't') {
-    return parseInt(normalized) + ' ticks'
+    return parseInt(normalized) + '\u2009ticks'
+  } else if (normalized[normalized.length - 1] === 'b') {
+    const bps = parseFloat(normalized)
+    return bps < 1 ? `${bps * 1000}\u2009mbps` : `${bps}\u2009bps`
+  } else if (normalized[normalized.length - 1] === 'v') {
+    return formatAmount(parseFloat(normalized)) + '\u2009$'
   } else if (!isNaN(normalized) && normalized > 0) {
     return full ? getHmsFull(normalized * 1000) : getHms(normalized * 1000)
   }
@@ -438,6 +478,16 @@ export function handleFetchError(err): void {
   }
 }
 
+export function handleFetchSuccess(message): void {
+  if (typeof message === 'string') {
+    store.dispatch('app/showNotice', {
+      title: message,
+      type: 'success',
+      timeout: 3000
+    })
+  }
+}
+
 export function getApiUrl(path: string): string {
   let base = import.meta.env.VITE_APP_API_URL
 
@@ -522,13 +572,17 @@ export function mountComponent(cmp: Vue, container?: HTMLElement): void {
 let popupWindow
 
 export function displayCanvasInPopup(canvas) {
+  if (!canvas) {
+    return
+  }
+
   // Calculate the width and height for the popup window
   const canvasWidth = canvas.width
   const canvasHeight = canvas.height
   const maxWidth = 1400
   const maxHeight = 700
-  let popupWidth = canvasWidth + 32
-  let popupHeight = canvasHeight + 56
+  let popupWidth = canvasWidth
+  let popupHeight = canvasHeight
 
   // Ensure the popup size does not exceed the maximum dimensions
   if (popupWidth > maxWidth) {
@@ -540,6 +594,9 @@ export function displayCanvasInPopup(canvas) {
     popupHeight = maxHeight
     popupWidth = (canvasWidth * maxHeight) / canvasHeight
   }
+
+  popupWidth += 32
+  popupHeight += 28
 
   // If the popup window is closed or doesn't exist, create a new one
   if (!popupWindow || popupWindow.closed) {
@@ -567,4 +624,16 @@ export function displayCanvasInPopup(canvas) {
     // Handle popup window creation failure
     alert('Popup window creation failed. Please check your browser settings.')
   }
+}
+
+export async function pathToBase64(path): Promise<string> {
+  const response = await fetch(path)
+  const blob = await response.blob()
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
 }

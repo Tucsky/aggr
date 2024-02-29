@@ -1,8 +1,11 @@
+import iframeService from '@/services/iframeService'
 import store from '@/store'
+import { ListenedProduct } from '@/store/app'
+import { INFRAME } from '@/utils/constants'
 import { mountComponent, createComponent, getEventCords } from '@/utils/helpers'
 import { isTouchSupported } from '@/utils/touchevent'
 
-let marketContext: { el: HTMLElement; market: string; paneId: string }
+let marketContext: { el: HTMLElement; market: ListenedProduct; paneId: string }
 let draggableMarketComponent: any
 let isLoading = false
 
@@ -110,11 +113,17 @@ function getMarketContext(el) {
   marketContext = {
     el,
     paneId,
-    market: marketData.id
+    market: marketData
   }
+
+  return marketContext
 }
 
 function handleDragStart(event: MouseEvent | TouchEvent) {
+  if (event instanceof MouseEvent && event.button !== 0) {
+    return
+  }
+
   getMarketContext(event.currentTarget)
 
   if (!marketContext) {
@@ -131,7 +140,15 @@ function handleDragStart(event: MouseEvent | TouchEvent) {
   )
 }
 
-export default {
+function emitContext(event: MouseEvent | TouchEvent) {
+  const context = getMarketContext(event.currentTarget)
+
+  if (context) {
+    iframeService.send('market', context.market)
+  }
+}
+
+const draggableHandlers = {
   bind(el) {
     const touchEvents = isTouchSupported()
 
@@ -162,3 +179,15 @@ export default {
     }
   }
 }
+
+const iframeHandlers = {
+  bind(el) {
+    el.addEventListener('click', emitContext)
+  },
+
+  unbind(el) {
+    el.removeEventListener('click', emitContext)
+  }
+}
+
+export default INFRAME ? iframeHandlers : draggableHandlers

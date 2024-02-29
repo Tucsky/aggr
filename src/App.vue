@@ -3,10 +3,6 @@
     v-if="isBooted"
     id="app"
     :data-prefered-sizing-currency="preferedSizingCurrency"
-    :data-base="baseCurrency"
-    :data-base-symbol="baseCurrencySymbol"
-    :data-quote="quoteCurrency"
-    :data-quote-symbol="quoteCurrencySymbol"
     :class="{
       '-no-animations': disableAnimations,
       '-auto-hide-headers': autoHideHeaders,
@@ -57,6 +53,7 @@ import workspacesService from '@/services/workspacesService'
 import { formatMarketPrice } from '@/services/productsService'
 import dialogService from '@/services/dialogService'
 import importService from '@/services/importService'
+import { pathToBase64 } from './utils/helpers'
 
 @Component({
   name: 'App',
@@ -78,10 +75,12 @@ export default class App extends Vue {
   price: string = null
   showStuck = false
 
-  private _mainMarkets: string[]
-  private _faviconElement: HTMLLinkElement
-  private _stuckTimeout: number
-  private _mainPair: string
+  private mainPrices: { [marketKey: string]: number }
+  private mainMarkets: string[]
+  private faviconElement: HTMLLinkElement
+  private stuckTimeout: number
+  private mainPair: string
+  private favicons: { up?: string; down?: string }
 
   get showSearch() {
     return this.$store.state.app.showSearch
@@ -90,11 +89,11 @@ export default class App extends Vue {
   get isBooted() {
     const isBooted = this.$store.state.app && this.$store.state.app.isBooted
 
-    clearTimeout(this._stuckTimeout)
+    clearTimeout(this.stuckTimeout)
 
     if (!isBooted) {
       this.showStuck = false
-      this._stuckTimeout = setTimeout(() => {
+      this.stuckTimeout = setTimeout(() => {
         this.showStuck = true
       }, 15000) as unknown as number
     }
@@ -122,35 +121,18 @@ export default class App extends Vue {
     return this.$store.state.settings.preferQuoteCurrencySize ? 'quote' : 'base'
   }
 
-  get baseCurrency() {
-    return this.$store.state.app.baseCurrency
-  }
-
-  get baseCurrencySymbol() {
-    return this.$store.state.app.baseCurrencySymbol
-  }
-
-  get quoteCurrency() {
-    return this.$store.state.app.quoteCurrency
-  }
-
-  get quoteCurrencySymbol() {
-    return this.$store.state.app.quoteCurrencySymbol
-  }
-
   get disableAnimations() {
     return this.$store.state.settings.disableAnimations
   }
 
-  mounted() {
-    this.bindDropFile()
+  async mounted() {
     aggregatorService.on('notice', (notice: Notice) => {
       this.$store.dispatch('app/showNotice', notice)
     })
-    aggregatorService.on('prices', this.updatePrice)
-
     document.addEventListener('keydown', this.onDocumentKeyPress)
-    window.addEventListener('blur', this.onBlur)
+
+    this.bindDropFile()
+    this.startUpdatingPrice()
   }
 
   beforeDestroy() {
@@ -158,18 +140,20 @@ export default class App extends Vue {
     this.stopUpdatingPrice()
   }
 
-  updatePrice(marketsPrices) {
+  updatePrice(tickers) {
     let price = 0
     let count = 0
 
-    for (const marketKey of this._mainMarkets) {
-      if (
-        !marketsPrices[marketKey] ||
-        marketsPrices[marketKey].price === null
-      ) {
+    for (const marketKey of this.mainMarkets) {
+      if (tickers[marketKey]) {
+        this.mainPrices[marketKey] = tickers[marketKey].price
+      }
+
+      if (!this.mainPrices[marketKey]) {
         continue
       }
-      price += marketsPrices[marketKey].price
+
+      price += this.mainPrices[marketKey]
       count++
     }
 
@@ -184,35 +168,46 @@ export default class App extends Vue {
         }
       }
 
-      this.price = formatMarketPrice(price, this._mainPair)
+      this.price = formatMarketPrice(price, this.mainPair)
 
-      window.document.title = this._mainPair + ' ' + this.price
+      window.document.title = this.mainPair + ' ' + this.price
     } else {
       this.price = null
       this.updateFavicon('neutral')
 
-      window.document.title = this._mainPair ? this._mainPair : 'AGGR'
+      window.document.title = this.mainPair ? this.mainPair : 'AGGR'
     }
   }
 
+  async startUpdatingPrice() {
+    const up = await pathToBase64(upFavicon)
+    const down = await pathToBase64(downFavicon)
+    this.favicons = {
+      up,
+      down
+    }
+
+    aggregatorService.on('tickers', this.updatePrice)
+  }
+
   stopUpdatingPrice() {
-    aggregatorService.off('prices', this.updatePrice)
+    aggregatorService.off('tickers', this.updatePrice)
     this.price = null
   }
 
   updateFavicon(direction: 'up' | 'down' | 'neutral') {
-    if (!this._faviconElement) {
-      this._faviconElement = document.createElement('link')
-      this._faviconElement.id = 'favicon'
-      this._faviconElement.rel = 'shortcut icon'
+    if (!this.faviconElement) {
+      this.faviconElement = document.createElement('link')
+      this.faviconElement.id = 'favicon'
+      this.faviconElement.rel = 'shortcut icon'
 
-      document.head.appendChild(this._faviconElement)
+      document.head.appendChild(this.faviconElement)
     }
 
     if (direction === 'up') {
-      this._faviconElement.href = upFavicon
+      this.faviconElement.href = this.favicons.up
     } else {
-      this._faviconElement.href = downFavicon
+      this.faviconElement.href = this.favicons.down
     }
   }
 
@@ -222,11 +217,6 @@ export default class App extends Vue {
     }
 
     const activeElement = document.activeElement as HTMLElement
-
-    if (event.keyCode === 27) {
-      this.$store.dispatch('app/hideSearch')
-      return
-    }
 
     if (
       this.$store.state.app.showSearch ||
@@ -251,10 +241,6 @@ export default class App extends Vue {
     } else if (/^[0-9]$/i.test(event.key)) {
       this.$store.dispatch('app/showTimeframe')
     }
-  }
-
-  onBlur() {
-    this.$store.commit('app/SET_FOCUSED_PANE', null)
   }
 
   async resetAndReload() {
@@ -318,13 +304,15 @@ export default class App extends Vue {
       marketsByNormalizedPair[pair] += markets[id].listeners
     }
 
-    this._mainPair = Object.keys(marketsByNormalizedPair).sort(
+    this.mainPair = Object.keys(marketsByNormalizedPair).sort(
       (a, b) => marketsByNormalizedPair[b] - marketsByNormalizedPair[a]
     )[0]
 
-    this._mainMarkets = Object.keys(markets)
-      .filter(id => markets[id].local === this._mainPair)
+    this.mainMarkets = Object.keys(markets)
+      .filter(id => markets[id].local === this.mainPair)
       .map(id => markets[id].exchange + ':' + markets[id].pair)
+
+    this.mainPrices = {}
   }
 }
 </script>

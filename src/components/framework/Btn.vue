@@ -1,8 +1,15 @@
 <template>
-  <button type="button" class="btn" @click="onClick">
+  <component
+    :is="tag"
+    :type="type"
+    :href="href"
+    :target="target"
+    class="btn"
+    @click="onClick"
+  >
     <loader v-if="loading" class="btn__loader" small />
     <slot />
-  </button>
+  </component>
 </template>
 
 <script lang="ts">
@@ -22,6 +29,23 @@ import Loader from '@/components/framework/Loader.vue'
     type: {
       type: String,
       default: 'button'
+    },
+    href: {
+      type: String,
+      default: null
+    },
+    target: {
+      type: String,
+      default: null
+    }
+  },
+  computed: {
+    tag() {
+      if (this.href) {
+        return 'a'
+      }
+
+      return 'button'
     }
   }
 })

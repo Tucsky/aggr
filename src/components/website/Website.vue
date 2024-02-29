@@ -31,7 +31,7 @@
         <p>
           Load
           <span
-            class="condensed"
+            class="text-condensed"
             v-text="trimmedUrl"
             title="url"
             v-tippy

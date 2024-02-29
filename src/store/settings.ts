@@ -57,6 +57,7 @@ export interface SettingsState {
   alertsClick: boolean
   alertSound: string
   showThresholdsAsTable: boolean
+  indicatorDialogNavigation?: string
 }
 
 const state = Object.assign(
@@ -137,7 +138,7 @@ const actions = {
   },
   updateCSS({ state }) {
     const theme = state.theme
-    const backgroundScale = theme === 'dark' ? 1 : -1
+    const backgroundScale = theme === 'dark' ? 1 : -0.75
     const themeBase = theme === 'dark' ? [0, 0, 0] : [255, 255, 255]
     const backgroundRgb = splitColorCode(state.backgroundColor)
     backgroundRgb[3] = 1
@@ -158,6 +159,10 @@ const actions = {
     document.documentElement.style.setProperty(
       '--theme-base-o25',
       joinRgba([...themeBase.slice(0, 3), 0.25])
+    )
+    document.documentElement.style.setProperty(
+      '--theme-base-o50',
+      joinRgba([...themeBase.slice(0, 3), 0.50])
     )
     document.documentElement.style.setProperty(
       '--theme-background-75',
@@ -353,6 +358,16 @@ const mutations = {
         value: state.preferQuoteCurrencySize
       }
     })
+
+    this.dispatch('app/showNotice', {
+      type: 'error',
+      icon: 'icon-warning -large pt0',
+      html: true,
+      title: `<div class="ml8"><strong>Reload required</strong><br>A reload is required to change the preferred currency.</div>`,
+      action() {
+        window.location.reload()
+      }
+    })
   },
   TOGGLE_SLIPPAGE(state) {
     const values: SlippageMode[] = [false, 'bps', 'price']
@@ -367,7 +382,7 @@ const mutations = {
     })
   },
   TOGGLE_AGGREGATION(state) {
-    const values: AggregationLength[] = [0, 1, 10, 100, 1000]
+    const values: AggregationLength[] = [0, 1, 10, 100, 1000, -1]
 
     const index = Math.max(0, values.indexOf(state.aggregationLength))
 
@@ -552,6 +567,9 @@ const mutations = {
   },
   TOGGLE_THRESHOLDS_TABLE(state) {
     state.showThresholdsAsTable = !state.showThresholdsAsTable
+  },
+  SET_INDICATOR_DIALOG_NAVIGATION(state, value) {
+    state.indicatorDialogNavigation = JSON.stringify(value)
   }
 } as MutationTree<SettingsState>
 

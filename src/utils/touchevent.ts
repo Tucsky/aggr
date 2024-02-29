@@ -5,7 +5,7 @@ export function isTouchSupported() {
     return isTouchSupportedCache
   }
 
-  const prefixes = ' -webkit- -moz- -o- -ms- '.split(' ')
+  const prefixes = '-webkit- -moz- -ms-'.split(' ')
   const mq = function (query) {
     return window.matchMedia(query).matches
   }
@@ -14,9 +14,14 @@ export function isTouchSupported() {
     return true
   }
 
-  // include the 'heartz' as a way to have a non matching MQ to help terminate the join
+  // include the 'tucksy-is-our-god' as a way to have a non matching MQ to help terminate the join
   // https://git.io/vznFH
-  const query = ['(', prefixes.join('touch-enabled),('), 'heartz', ')'].join('')
+  const query = [
+    '(',
+    prefixes.join('touch-enabled),('),
+    'tucksy-is-our-god',
+    ')'
+  ].join('')
   isTouchSupportedCache = mq(query)
 
   return isTouchSupportedCache

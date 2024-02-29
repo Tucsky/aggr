@@ -1,5 +1,5 @@
 import store from '@/store'
-import { AggregatorPayload } from '@/types/types'
+import { AggregatorPayload, Ticker } from '@/types/types'
 import { randomString } from '@/utils/helpers'
 import EventEmitter from 'eventemitter3'
 
@@ -61,9 +61,7 @@ class AggregatorService extends EventEmitter {
         title: `unable to reach ${event.exchangeId} (${event.originalUrl})`,
         action: async () => {
           const payload = await dialogService.openAsPromise(
-            (
-              await import('@/components/ConnectionIssueDialog.vue')
-            ).default,
+            (await import('@/components/ConnectionIssueDialog.vue')).default,
             {
               exchangeId: event.exchangeId,
               restrictedUrl: event.originalUrl
@@ -106,7 +104,7 @@ class AggregatorService extends EventEmitter {
         this.normalizeDecimalsQueue.timeout = setTimeout(
           this.normalizeDecimals.bind(this),
           1000
-        )  as unknown as number
+        ) as unknown as number
       }
     })
 
@@ -207,6 +205,19 @@ class AggregatorService extends EventEmitter {
       op: 'disconnect',
       data: markets
     })
+  }
+
+  getAllTickers(): Promise<Ticker[]> {
+    return this.dispatchAsync({
+      op: 'getAllTickers'
+    }) as Promise<Ticker[]>
+  }
+
+  getTicker(market: string): Promise<Ticker | null> {
+    return this.dispatchAsync({
+      op: 'getTicker',
+      data: market
+    }) as Promise<Ticker | null>
   }
 
   normalizeDecimals() {

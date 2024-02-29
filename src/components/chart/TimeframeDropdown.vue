@@ -101,54 +101,55 @@ export default {
     },
 
     groups() {
-      const units = ['seconds', 'minutes', 'hours', 'ticks']
-      let unit = -1
       const minute = 60
       const hour = minute * 60
-      const day = hour * 24
+      const units = ['seconds', 'minutes', 'hours', 'ticks', 'bps', 'vol']
 
-      const typeahead = this.typeaheadTimeframe
-
-      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       return this.timeframes
-        .sort((a, b) => {
-          const x = a.value && a.value[a.value.length - 1] === 't'
-          const y = b.value && b.value[b.value.length - 1] === 't'
-          let order = x === y ? 0 : x ? 100000 : -100000
+        .map(timeframe => {
+          const modifier = timeframe.value[timeframe.value.length - 1]
+          let weight
+          if (modifier === 't') {
+            weight = 3
+          } else if (modifier === 'b') {
+            weight = 4
+          } else if (modifier === 'v') {
+            weight = 5
+          } else if (timeframe.value >= hour) {
+            weight = 2
+          } else if (timeframe.value >= minute) {
+            weight = 1
+          } else {
+            weight = 0
+          }
 
-          order += parseFloat(a.value) - parseFloat(b.value)
-          return order
+          return {
+            ...timeframe,
+            weight
+          }
+        })
+        .sort((a, b) => {
+          if (a.weight !== b.weight) {
+            return a.weight - b.weight
+          }
+
+          return parseFloat(a.value) - parseFloat(b.value)
         })
         .reduce((acc, timeframe) => {
-          if (
-            typeahead &&
-            typeahead.value != timeframe.value &&
-            timeframe.label.indexOf(typeahead.label) === -1
-          ) {
-            return acc
+          let group = acc[acc.length - 1]
+
+          if (!group || group.weight < timeframe.weight) {
+            group =
+              acc[
+                acc.push({
+                  title: units[timeframe.weight],
+                  weight: timeframe.weight,
+                  timeframes: []
+                }) - 1
+              ]
           }
 
-          let currentUnit
-          if (+timeframe.value < minute) {
-            currentUnit = 0
-          } else if (+timeframe.value < hour) {
-            currentUnit = 1
-          } else if (+timeframe.value <= day) {
-            currentUnit = 2
-          } else {
-            currentUnit = 3
-          }
-
-          if (currentUnit > unit) {
-            acc.push({
-              title: units[currentUnit],
-              timeframes: []
-            })
-
-            unit = currentUnit
-          }
-
-          acc[acc.length - 1].timeframes.push(timeframe)
+          group.timeframes.push(timeframe)
 
           return acc
         }, [])

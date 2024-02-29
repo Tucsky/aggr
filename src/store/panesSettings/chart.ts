@@ -1,11 +1,17 @@
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
-import { downloadAnything, sleep, slugify, uniqueName } from '@/utils/helpers'
+import {
+  downloadAnything,
+  randomString,
+  sleep,
+  uniqueName
+} from '@/utils/helpers'
 import { scheduleSync } from '@/utils/store'
 import {
   PriceScaleMargins,
   PriceScaleMode,
   SeriesOptions,
+  SeriesOptionsMap,
   SeriesType
 } from 'lightweight-charts'
 import Vue from 'vue'
@@ -18,19 +24,35 @@ export interface PriceScaleSettings {
   mode?: PriceScaleMode
 }
 
+export type IndicatorEditorWordWrapOption =
+  | 'off'
+  | 'on'
+  | 'wordWrapColumn'
+  | 'bounded'
+
+export interface IndicatorEditorOptions {
+  fontSize?: number
+  wordWrap?: IndicatorEditorWordWrapOption
+}
+
 export interface IndicatorNavigationState {
   tab: string
   optionsQuery: string
-  fontSizePx: number
+  columnWidth: number
+  editorOptions: IndicatorEditorOptions
 }
 
 export interface IndicatorSettings {
   id?: string
+  libraryId?: string
   name?: string
   displayName?: string
+  author?: string
+  pr?: string
   description?: string
-  navigationState?: IndicatorNavigationState
+  enabled?: boolean
   script?: string
+  optionsDefinitions?: { [key: string]: any }
   options?: SeriesOptions<SeriesType>
   createdAt?: number
   updatedAt?: number
@@ -42,6 +64,7 @@ export interface IndicatorSettings {
 export interface ChartPaneState {
   _id?: string
   indicators?: { [id: string]: IndicatorSettings }
+  indicatorOrder?: string[]
   priceScales: { [id: string]: PriceScaleSettings }
   layouting: boolean | string
   timeframe: number
@@ -60,12 +83,12 @@ export interface ChartPaneState {
   watermarkColor: string
   showBorder: boolean
   borderColor: string
+  textColor: string
   showLeftScale: boolean
   showRightScale: boolean
   showTimeScale: boolean
   hiddenMarkets: { [indicatorId: string]: boolean }
   barSpacing: number
-  navigationState: IndicatorNavigationState
 }
 
 const getters = {} as GetterTree<ChartPaneState, ModulesState>
@@ -73,6 +96,7 @@ const getters = {} as GetterTree<ChartPaneState, ModulesState>
 const state = {
   indicatorsErrors: {},
   indicators: {},
+  indicatorOrder: [],
   priceScales: {
     right: {
       scaleMargins: {
@@ -97,12 +121,12 @@ const state = {
   watermarkColor: 'rgba(255,255,255,.1)',
   showBorder: true,
   borderColor: null,
+  textColor: null,
   showLeftScale: false,
   showRightScale: true,
   showTimeScale: true,
   hiddenMarkets: {},
-  barSpacing: null,
-  navigationState: null
+  barSpacing: null
 } as ChartPaneState
 
 const actions = {
@@ -118,26 +142,41 @@ const actions = {
           continue
         }
 
-        if (!indicator.series) {
-          indicator.series = []
-        }
-
-        Vue.set(state.indicators, indicator.id, indicator)
+        const id = `_${randomString()}`
+        Vue.set(state.indicators, id, {
+          ...indicator,
+          id,
+          libraryId: indicator.id,
+          series: []
+        })
       }
 
       scheduleSync(state)
     }
+
+    if (!state.indicatorOrder.length) {
+      state.indicatorOrder = Object.keys(state.indicators)
+    }
   },
-  addIndicator({ state, commit }, indicator) {
-    const ids = Object.keys(state.indicators)
-
-    indicator.id = uniqueName(indicator.id, ids)
-
+  addIndicator({ commit, state }, indicator) {
+    const id = `_${randomString()}`
     indicator = {
-      script: 'plotline(avg_close(bar))',
-      ...indicator,
+      id,
+      libraryId: indicator.libraryId,
+      name: uniqueName(
+        indicator.name,
+        Object.keys(state.indicators).map(
+          indicatorId => state.indicators[indicatorId].name
+        ),
+        false,
+        '2'
+      ),
+      description: indicator.description,
+      script: indicator.script || 'line(avg_close(bar))',
+      createdAt: indicator.createdAt,
+      updatedAt: indicator.updatedAt,
       options: {
-        priceScaleId: indicator.priceScaleId || indicator.id,
+        priceScaleId: indicator.priceScaleId || indicator.libraryId || id,
         ...indicator.options
       }
     }
@@ -152,17 +191,17 @@ const actions = {
     const indicator = merge({}, state.indicators[id])
 
     const indicators = Object.values(state.indicators)
-
     indicator.name = uniqueName(
       indicator.name,
       indicators.map(indicator => indicator.name)
     )
-
-    indicator.id = slugify(indicator.name)
-
+    delete indicator.libraryId
     delete indicator.updatedAt
     delete indicator.createdAt
     delete indicator.enabled
+    delete indicator.series
+    delete indicator.optionsDefinitions
+    delete (indicator as any).model // past releases might have included this, force remove
 
     dispatch('addIndicator', indicator)
   },
@@ -170,31 +209,26 @@ const actions = {
   async downloadIndicator({ state }, indicatorId) {
     const indicator = state.indicators[indicatorId]
 
-    const priceScale = state.priceScales[indicator.options.priceScaleId] || {}
-
-    const exportableIndicator = Object.assign(
-      {},
-      indicator.options,
-      priceScale
-        ? {
-            scaleMargins: priceScale.scaleMargins
-          }
-        : {}
+    const presets = await workspacesService.getAllPresets(
+      `indicator:${indicator.libraryId}`
     )
 
     await downloadAnything(
       {
         type: 'indicator',
-        name: 'indicator:' + indicator.name,
+        name: indicator.name,
         data: {
-          options: exportableIndicator,
+          libraryId: indicator.libraryId,
+          displayName: indicator.displayName,
+          options: indicator.options,
           description: indicator.description,
           script: indicator.script,
           createdAt: indicator.createdAt,
-          updatedAt: indicator.updatedAt
+          updatedAt: indicator.updatedAt,
+          presets
         }
       },
-      'indicator_' + indicatorId
+      'indicator_' + (indicator.displayName || indicator.name)
     )
   },
 
@@ -215,13 +249,14 @@ const actions = {
     } catch (error) {
       // empty
     }
+
     if (state.indicators[id] && state.indicators[id].options[key] === value) {
       return
     }
 
     commit('SET_INDICATOR_OPTION', { id, key, value, silent })
 
-    if (!state.indicators[id].unsavedChanges) {
+    if (key !== 'priceScaleId' && !state.indicators[id].unsavedChanges) {
       commit('FLAG_INDICATOR_AS_UNSAVED', id)
     }
 
@@ -243,9 +278,12 @@ const actions = {
     if (state.indicators[id].unsavedChanges && confirm) {
       const output = await dialogService.confirm({
         title: 'Save changes ?',
-        message: `Indicator has unsaved&nbsp;changes&nbsp;<i class="icon-warning"></i><br><br>Click <code class="-filled -green">SAVE</code> to save indicator under "${id}"`,
+        message: `Indicator has unsaved&nbsp;changes&nbsp;<i class="icon-warning"></i>`,
         cancel: 'DISCARD',
         ok: 'SAVE',
+        okIcon: 'icon-save',
+        cancelClass: '-red',
+        cancelIcon: 'icon-eraser',
         actions: [
           {
             label: 'Cancel',
@@ -275,58 +313,61 @@ const actions = {
 
     await dispatch('syncIndicator', state.indicators[id])
   },
-  async renameIndicator({ commit, state, dispatch }, { id, name }) {
-    const newId = uniqueName(slugify(name), Object.keys(state.indicators))
-
-    const indicatorCopy = JSON.parse(JSON.stringify(state.indicators[id]))
-
-    const indicator = { ...indicatorCopy, name, id: newId }
-
-    commit('ADD_INDICATOR', indicator)
-
-    dispatch('removeIndicator', { id, confirm: false })
-    commit('UPDATE_INDICATOR_DISPLAY_NAME', newId)
-
-    return newId
+  renameIndicator({ commit, state }, { id, name }) {
+    const indicator = state.indicators[id]
+    indicator.name = name
+    commit('UPDATE_INDICATOR_DISPLAY_NAME', id)
   },
-  syncIndicator({ state, rootState }, indicator: IndicatorSettings) {
+  syncIndicator({ rootState }, indicator: IndicatorSettings) {
     for (const paneId in rootState.panes.panes) {
-      if (
-        paneId === state._id ||
-        rootState.panes.panes[paneId].type !== 'chart'
-      ) {
-        continue
-      }
+      for (const otherPaneIndicatorId in rootState[paneId].indicators) {
+        if (otherPaneIndicatorId === indicator.id) {
+          continue
+        }
 
-      const otherPaneIndicator = rootState[paneId].indicators[
-        indicator.id
-      ] as IndicatorSettings
-      if (otherPaneIndicator && !otherPaneIndicator.unsavedChanges) {
-        otherPaneIndicator.options = indicator.options
+        const otherPaneIndicator = rootState[paneId].indicators[
+          otherPaneIndicatorId
+        ] as IndicatorSettings
 
-        this.commit(paneId + '/SET_INDICATOR_SCRIPT', { id: indicator.id })
+        if (
+          otherPaneIndicator &&
+          otherPaneIndicator.libraryId === indicator.libraryId &&
+          !otherPaneIndicator.unsavedChanges
+        ) {
+          otherPaneIndicator.options = merge({}, indicator.options)
+
+          this.commit(paneId + '/SET_INDICATOR_SCRIPT', {
+            id: otherPaneIndicator.id
+          })
+        }
       }
     }
   },
-  async setIndicatorNavigationState(
-    { commit },
-    navigationState: IndicatorNavigationState
-  ) {
-    state.navigationState = navigationState
-    commit('SET_NAVIGATION_STATE', navigationState)
-  },
-  async undoIndicator({ state, commit }, indicatorId) {
-    const savedIndicator = await workspacesService.getIndicator(indicatorId)
+  async undoIndicator({ state, commit }, { libraryId, indicatorId }) {
+    const savedIndicator = await workspacesService.getIndicator(libraryId)
 
     if (!savedIndicator) {
       this.dispatch('app/showNotice', {
-        title: `Indicator ${indicatorId} doesn't exist in your library, nothing to rollback to.`,
+        title: `Indicator ${libraryId} doesn't exist in your library, nothing to rollback to.`,
         type: 'error'
       })
       return
     }
 
-    state.indicators[indicatorId] = savedIndicator
+    const oldOptions = state.indicators[indicatorId].options as any
+    const newOptions = savedIndicator.options as any
+
+    state.indicators[indicatorId] = {
+      ...savedIndicator,
+      id: indicatorId,
+      libraryId,
+      options: {
+        ...newOptions,
+        priceScaleId: oldOptions.priceScaleId,
+        scaleMargins: oldOptions.scaleMargins
+      } as any
+    }
+
     commit('SET_INDICATOR_SCRIPT', { id: indicatorId })
   },
   toggleMarkets(
@@ -431,6 +472,9 @@ const mutations = {
       state.borderColor = value
     }
   },
+  SET_TEXT_COLOR(state, { value }) {
+    state.textColor = value
+  },
   TOGGLE_AXIS(state, side) {
     if (side === 'left') {
       state.showLeftScale = !state.showLeftScale
@@ -450,17 +494,19 @@ const mutations = {
       Vue.set(state.indicatorsErrors, id, null)
     }
   },
+  SET_INDICATOR_OPTIONS_DEFINITIONS(state, { id, optionsDefinitions }) {
+    state.indicators[id].optionsDefinitions = optionsDefinitions
+  },
   SET_TIMEFRAME(state, value) {
     state.timeframe = value
   },
   ADD_INDICATOR(state, indicator) {
     Vue.set(state.indicators, indicator.id, indicator)
-  },
-  UPDATE_DESCRIPTION(state, { id, description }) {
-    Vue.set(state.indicators[id], 'description', description)
+    state.indicatorOrder.push(indicator.id)
   },
   REMOVE_INDICATOR(state, id) {
     Vue.delete(state.indicators, id)
+    state.indicatorOrder.splice(state.indicatorOrder.indexOf(id), 1)
   },
   SET_INDICATOR_OPTION(state, { id, key, value }) {
     if (!state.indicators[id]) {
@@ -468,7 +514,7 @@ const mutations = {
     }
 
     if (!state.indicators[id].options) {
-      ;(state.indicators[id] as any).options = {}
+      state.indicators[id].options = {} as SeriesOptions<keyof SeriesOptionsMap>
     }
 
     Vue.set(state.indicators[id].options, key, value)
@@ -537,8 +583,21 @@ const mutations = {
   SET_BAR_SPACING(state, value) {
     state.barSpacing = value
   },
-  SET_NAVIGATION_STATE(state, value) {
-    state.navigationState = value
+  UPDATE_INDICATOR_ORDER(state, { id, position }) {
+    state.indicatorOrder = state.indicatorOrder.filter(a => !!a)
+
+    if (!state.indicatorOrder.length) {
+      state.indicatorOrder = Object.keys(state.indicators)
+    }
+
+    const currentIndex = state.indicatorOrder.indexOf(id)
+
+    if (currentIndex !== -1) {
+      state.indicatorOrder.splice(currentIndex, 1)
+    }
+
+    position = Math.min(position, state.indicatorOrder.length)
+    state.indicatorOrder.splice(position, 0, id)
   }
 } as MutationTree<ChartPaneState>
 

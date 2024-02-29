@@ -18,7 +18,7 @@ a {
 
 $max: 16;
 $offset: 4;
-$unit: 'px'; // Feel free to change the unit.
+$unit: 'px'; 
 @mixin list-loop($className, $styleName) {
   $i: 0;
 
@@ -110,24 +110,12 @@ $unit: 'px'; // Feel free to change the unit.
   text-overflow: ellipsis;
 }
 
-.condensed {
+.text-condensed {
   font-family: $font-condensed;
 }
 
 .text-monospace {
   font-family: $font-monospace !important;
-}
-
-.text-lowercase {
-  text-transform: lowercase;
-}
-
-.text-middle {
-  vertical-align: middle;
-}
-
-.text-top {
-  vertical-align: top;
 }
 
 .d-block {
@@ -143,6 +131,18 @@ $unit: 'px'; // Feel free to change the unit.
 
   &.-wrap {
     flex-wrap: wrap;
+  }
+
+  &.-gap4 {
+    gap: 0.25rem;
+  }
+
+  &.-gap8 {
+    gap: 0.5rem;
+  }
+
+  &.-gap16 {
+    gap: 1rem;
   }
 
   > .-fill {
@@ -171,19 +171,9 @@ $unit: 'px'; // Feel free to change the unit.
   }
 }
 
-@media screen and (min-width: 768px) {
-  .max-767 {
+@media screen and (max-width: 767px) {
+  .min-768 {
     display: none !important;
-  }
-}
-
-.min-280 {
-  display: none !important;
-}
-
-@media screen and (min-width: 280px) {
-  .min-280 {
-    display: inline-block !important;
   }
 }
 
@@ -258,10 +248,6 @@ $unit: 'px'; // Feel free to change the unit.
 
 .text-bold {
   font-weight: 600;
-}
-
-.p-relative {
-  position: relative;
 }
 
 #app.-light .text-muted {

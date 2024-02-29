@@ -361,7 +361,7 @@ export default {
 .dropdown {
   position: fixed;
   z-index: 10;
-  border-radius: 0.75em;
+  border-radius: 0.75rem;
   background-color: var(--theme-background-150);
   box-shadow: rgba(0, 0, 0, 0.2) 0px 18px 50px -10px;
   max-height: 150px;
@@ -405,7 +405,7 @@ export default {
     background-color: var(--theme-background-200);
     height: 1px;
     padding: 0;
-    margin: 0.5em 0;
+    margin: 0.5rem 0;
     position: relative;
 
     &[data-label]:before {
@@ -427,14 +427,14 @@ export default {
   ::v-deep &-item {
     border: 0;
     background: 0;
-    padding: 0.625em;
+    padding: 0.625rem;
     display: flex;
     align-items: center;
     color: var(--theme-color-base);
     font-family: $font-base;
     width: 100%;
     box-sizing: border-box;
-    font-size: 1em;
+    font-size: 1rem;
     border-radius: 0;
     box-shadow: none;
     line-height: 1;
@@ -448,14 +448,14 @@ export default {
       padding: 0;
 
       span {
-        padding: 0.625em;
+        padding: 0.625rem;
       }
     }
 
     &__subtitle {
       opacity: 0.5;
-      font-size: 0.875em;
-      margin-top: 0.25em;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
     }
 
     &--space-between {
@@ -463,11 +463,11 @@ export default {
     }
 
     > i:first-child {
-      margin-right: 0.5em;
+      margin-right: 0.5rem;
     }
 
     > i:last-child {
-      margin-left: 0.5em;
+      margin-left: 0.5rem;
     }
   }
 }

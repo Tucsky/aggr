@@ -6,6 +6,7 @@
     :resizable="false"
     :mask="false"
     size="small"
+    borderless
   >
     <template v-slot:header>
       <div>
@@ -531,7 +532,6 @@ export default {
 
     .form-control {
       flex-grow: 1;
-      font-size: 0.875rem;
       white-space: nowrap;
       overflow: auto;
     }
@@ -541,9 +541,8 @@ export default {
     width: 100%;
     height: 100px;
     -webkit-user-select: none;
-    -khtml-user-select: none;
     -moz-user-select: none;
-    -o-user-select: none;
+    -ms-user-select: none;
     user-select: none;
 
     &__thumb {
@@ -589,7 +588,11 @@ export default {
         background-color: transparent !important;
         background-image: $checkerboard;
         background-size: 6px 6px;
-        background-position: 0 0, 3px -3px, 0 3px, -3px 0px;
+        background-position:
+          0 0,
+          3px -3px,
+          0 3px,
+          -3px 0px;
       }
 
       &--null {

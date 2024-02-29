@@ -14,8 +14,7 @@ import { isTouchSupported } from '@/utils/touchevent'
 import {
   IPriceLine,
   MouseEventParams,
-  PriceLineOptions,
-  Time
+  PriceLineOptions
 } from 'lightweight-charts'
 import Chart from './chart'
 import AlertEventHandler from './controls/alertEventHandler'
@@ -23,12 +22,11 @@ import MeasurementEventHandler from './controls/measurementEventHandler'
 import {
   getChartCustomColorsOptions,
   getChartGridlinesOptions,
-  getChartBorderOptions
+  getChartBorderOptions,
+  getChartLayoutOptions
 } from './options'
-
-const controlledCharts: Chart[] = []
-let contextMenuComponent: any = null
-let timeframeDropdownComponent: any = null
+import { components, controlledCharts, syncCrosshair } from './common'
+import iframeService from '@/services/iframeService'
 
 export default class ChartControl {
   chart: Chart
@@ -140,8 +138,7 @@ export default class ChartControl {
           break
         case 'panes/SET_PANE_MARKETS':
           if (mutation.payload.id === this.chart.paneId) {
-            ;(store.state[this.chart.paneId] as ChartPaneState).hiddenMarkets =
-              {}
+            store.state[this.chart.paneId].hiddenMarkets = {}
             this.chart.refreshMarkets()
 
             this.chart.clear()
@@ -192,7 +189,15 @@ export default class ChartControl {
         case this.chart.paneId + '/SET_BORDER':
         case this.chart.paneId + '/TOGGLE_AXIS':
           this.chart.chartInstance.applyOptions(
+            getChartLayoutOptions(this.chart.paneId)
+          )
+          this.chart.chartInstance.applyOptions(
             getChartBorderOptions(this.chart.paneId)
+          )
+          break
+        case this.chart.paneId + '/SET_TEXT_COLOR':
+          this.chart.chartInstance.applyOptions(
+            getChartLayoutOptions(this.chart.paneId)
           )
           break
         case this.chart.paneId + '/SET_WATERMARK':
@@ -226,6 +231,12 @@ export default class ChartControl {
               this.bindLegend(mutation.payload.id)
             }
           }
+          break
+        case this.chart.paneId + '/UPDATE_INDICATOR_ORDER':
+          this.chart.moveIndicator(
+            mutation.payload.id,
+            mutation.payload.position
+          )
           break
         case this.chart.paneId + '/REMOVE_INDICATOR':
           this.unbindLegend(mutation.payload)
@@ -286,7 +297,7 @@ export default class ChartControl {
       Date.now() / 1000,
       this.chart.timeframe
     )
-    const timeframe = store.state[this.chart.paneId].timeframe
+    const timeframe = store.state[this.chart.paneId].timeframe.toString()
     const paneId = this.chart.paneId
 
     this.createContextMenu({
@@ -307,22 +318,22 @@ export default class ChartControl {
   }
 
   async createContextMenu(propsData) {
-    if (contextMenuComponent) {
-      contextMenuComponent.$off('cmd')
+    if (components.contextMenu) {
+      components.contextMenu.$off('cmd')
       for (const key in propsData) {
-        contextMenuComponent[key] = propsData[key]
+        components.contextMenu[key] = propsData[key]
       }
     } else {
       document.body.style.cursor = 'progress'
       const module = await import(`@/components/chart/ChartContextMenu.vue`)
       document.body.style.cursor = ''
 
-      contextMenuComponent = createComponent(module.default, propsData)
+      components.contextMenu = createComponent(module.default, propsData)
 
-      mountComponent(contextMenuComponent)
+      mountComponent(components.contextMenu)
     }
 
-    contextMenuComponent.$on('cmd', args => {
+    components.contextMenu.$on('cmd', args => {
       if (this.chart[args[0]] instanceof Function) {
         this.chart[args[0]](...args.slice(1))
       } else {
@@ -366,7 +377,29 @@ export default class ChartControl {
       return
     }
 
-    this.syncCrosshair(event)
+    let change
+
+    if (event.point && event.point.y) {
+      const chartPrice = this.chart.getPrice()
+      const priceApi = this.chart.getPriceApi()
+
+      if (chartPrice && priceApi) {
+        const crosshairPrice = priceApi.coordinateToPrice(event.point.y)
+        change = (1 - crosshairPrice / chartPrice) * -1
+      }
+    }
+
+    const params = {
+      timestamp: event.time,
+      change
+    }
+
+    syncCrosshair(params, this.chart.paneId)
+    this.isSyncingCrosshairs = true
+
+    if (iframeService) {
+      iframeService.send('crosshair', params)
+    }
 
     if (this.lastCrosshairX === event.point.x) {
       return
@@ -384,7 +417,7 @@ export default class ChartControl {
       !visibleLogicalRange ||
       this.chart.panPrevented ||
       this.chart.isLoading ||
-      this.chart.type === 'tick'
+      this.chart.type !== 'time'
     ) {
       return
     }
@@ -479,51 +512,6 @@ export default class ChartControl {
     this.isSyncingCrosshairs = false
   }
 
-  syncCrosshair(param: MouseEventParams) {
-    let priceChange
-
-    if (param.point && param.point.y) {
-      const chartPrice = this.chart.getPrice()
-      const priceApi = this.chart.getPriceApi()
-
-      if (chartPrice && priceApi) {
-        const crosshairPrice = priceApi.coordinateToPrice(param.point.y)
-        priceChange = (1 - crosshairPrice / chartPrice) * -1
-      }
-    }
-
-    for (let i = 0; i < controlledCharts.length; i++) {
-      if (controlledCharts[i].paneId === this.chart.paneId) {
-        continue
-      }
-
-      const priceApi = controlledCharts[i].getPriceApi()
-      const timeScale = controlledCharts[i].chartInstance.timeScale()
-
-      let x
-      let y
-
-      if (param.time && timeScale) {
-        x = timeScale.timeToCoordinate(
-          floorTimestampToTimeframe(
-            +param.time,
-            controlledCharts[i].timeframe,
-            controlledCharts[i].isOddTimeframe
-          ) as Time
-        )
-      }
-
-      if (priceApi) {
-        const chartPrice = controlledCharts[i].getPrice()
-
-        y = priceApi.priceToCoordinate(chartPrice + chartPrice * priceChange)
-      }
-
-      controlledCharts[i].chartInstance.setCrosshair(x, y, true)
-
-      this.isSyncingCrosshairs = true
-    }
-  }
   updateLegend(event: MouseEventParams) {
     for (let i = 0; i < this.chart.loadedIndicators.length; i++) {
       const indicator = this.chart.loadedIndicators[i]
@@ -599,17 +587,17 @@ export default class ChartControl {
       paneId: this.chart.paneId
     }
 
-    if (!timeframeDropdownComponent) {
+    if (!components.timeframeDropdown) {
       const module = await import(`@/components/chart/TimeframeDropdown.vue`)
-      timeframeDropdownComponent = createComponent(module.default, propsData)
+      components.timeframeDropdown = createComponent(module.default, propsData)
 
-      mountComponent(timeframeDropdownComponent)
+      mountComponent(components.timeframeDropdown)
     } else {
-      if (timeframeDropdownComponent.value === event.currentTarget) {
-        timeframeDropdownComponent.value = null
+      if (components.timeframeDropdown.value === event.currentTarget) {
+        components.timeframeDropdown.value = null
       } else {
-        timeframeDropdownComponent.paneId = propsData.paneId
-        timeframeDropdownComponent.value = propsData.value
+        components.timeframeDropdown.paneId = propsData.paneId
+        components.timeframeDropdown.value = propsData.value
       }
     }
   }

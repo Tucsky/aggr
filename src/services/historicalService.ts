@@ -1,4 +1,4 @@
-import { Bar } from '@/components/chart/chart'
+import { Bar } from '@/components/chart/chart.d'
 import {
   floorTimestampToTimeframe,
   getApiUrl,
@@ -10,10 +10,13 @@ import EventEmitter from 'eventemitter3'
 import store from '../store'
 import { parseMarket } from './productsService'
 
+export type InitialPrices = { [market: string]: number }
+
 export interface HistoricalResponse {
   from: number
   to: number
   data: Bar[]
+  initialPrices: InitialPrices
 }
 
 class HistoricalService extends EventEmitter {
@@ -74,12 +77,12 @@ class HistoricalService extends EventEmitter {
           throw new Error(json && json.error ? json.error : 'empty-response')
         }
 
-        if (!json.results.length) {
-          throw new Error('No more data')
-        }
-
         if (json.format !== 'point') {
           throw new Error('Bad data')
+        }
+
+        if (!json.results.length) {
+          throw new Error('No more data')
         }
 
         return this.normalizePoints(
@@ -105,6 +108,7 @@ class HistoricalService extends EventEmitter {
   }
   normalizePoints(data, columns, timeframe, markets: string[]) {
     const lastClosedBars = {}
+    const initialPrices = {}
 
     markets = markets.slice()
 
@@ -123,9 +127,8 @@ class HistoricalService extends EventEmitter {
 
     markets = [...markets]
 
-    const refs = {}
-
     const isOdd = isOddTimeframe(timeframe)
+    const preferQuoteCurrencySize = store.state.settings.preferQuoteCurrencySize
 
     for (let i = 0; i < data.length; i++) {
       if (!data[i].time && data[i][0]) {
@@ -198,6 +201,15 @@ class HistoricalService extends EventEmitter {
         )
 
         if (
+          !preferQuoteCurrencySize &&
+          (data[i].vbuy || data[i].vsell) &&
+          data[i].close
+        ) {
+          data[i].vbuy = data[i].vbuy / data[i].close
+          data[i].vsell = data[i].vsell / data[i].close
+        }
+
+        if (
           !lastClosedBars[data[i].market] ||
           lastClosedBars[data[i].market].time < data[i].time
         ) {
@@ -226,8 +238,17 @@ class HistoricalService extends EventEmitter {
         }
       }
 
-      if (typeof refs[data[i].market] !== 'number') {
-        refs[data[i].market] = data[i].open
+      if (!initialPrices[data[i].market]) {
+        initialPrices[data[i].market] = data[i].close
+      }
+
+      if (
+        !preferQuoteCurrencySize &&
+        (data[i].vbuy || data[i].vsell) &&
+        data[i].close
+      ) {
+        data[i].vbuy = data[i].vbuy / data[i].close
+        data[i].vsell = data[i].vsell / data[i].close
       }
 
       if (data[i].time === firstBarTimestamp) {
@@ -245,7 +266,8 @@ class HistoricalService extends EventEmitter {
       data,
       markets,
       from: data[0].time,
-      to: data[data.length - 1].time
+      to: data[data.length - 1].time,
+      initialPrices
     }
   }
 }

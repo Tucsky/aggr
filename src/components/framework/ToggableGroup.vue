@@ -1,6 +1,6 @@
 <template>
   <div class="form-group toggable-group">
-    <label class="checkbox-control">
+    <label class="checkbox-control" :class="[small && '-small']">
       <input
         type="checkbox"
         class="form-control"
@@ -42,6 +42,10 @@ import TransitionHeight from './TransitionHeight.vue'
     label: {
       type: String,
       required: true
+    },
+    small: {
+      type: Boolean,
+      default: false
     },
     value: {
       required: true

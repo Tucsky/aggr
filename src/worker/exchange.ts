@@ -373,7 +373,7 @@ class Exchange extends EventEmitter {
     for (let i = 0; i < this.apis.length; i++) {
       if (
         this.apis[i].readyState < 2 &&
-        this.apis[i].url === url &&
+        this.apis[i]._originalUrl === url &&
         (!this.maxConnectionsPerApi ||
           this.apis[i]._connected.length + this.apis[i]._pending.length <
             this.maxConnectionsPerApi)

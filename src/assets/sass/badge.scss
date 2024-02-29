@@ -10,8 +10,12 @@
   line-height: 0.75em;
   flex-shrink: 0;
   cursor: pointer;
-  color: inherit;
   font-weight: 600;
+
+  > i {
+    font-weight: 400;
+    font-size: 0.875em;
+  }
 
   &.-red {
     background-color: var(--theme-sell-50);

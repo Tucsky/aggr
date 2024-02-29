@@ -1,5 +1,6 @@
 <template>
-  <div
+  <component
+    :is="tag || 'div'"
     :contenteditable="editable !== false"
     :disabled="editable === false"
     @keydown="onKeyDown"
@@ -7,7 +8,7 @@
     @focus="onFocus"
     @blur="onBlur"
     @wheel="onWheel"
-  ></div>
+  ></component>
 </template>
 
 <script lang="ts">
@@ -17,7 +18,7 @@ import { toPlainString } from '@/utils/helpers'
 
 @Component({
   name: 'Editable',
-  props: ['value', 'step', 'min', 'max', 'editable', 'disabled']
+  props: ['value', 'step', 'min', 'max', 'editable', 'disabled', 'tag']
 })
 export default class Editable extends Vue {
   editable: boolean
@@ -37,9 +38,14 @@ export default class Editable extends Vue {
 
   @Watch('value')
   onValueChange() {
-    if ((this.$el as HTMLElement).innerText !== this.value) {
-      // eslint-disable-next-line @typescript-eslint/no-extra-semi
-      ;(this.$el as HTMLElement).innerText = this.value
+    const input = this.$el as HTMLElement
+    const value = input.innerText
+
+    if (
+      +this.value !== +value ||
+      (isNaN(+this.value) && value !== this.value)
+    ) {
+      input.innerText = this.value
     }
   }
 
@@ -115,7 +121,7 @@ export default class Editable extends Vue {
   }
 
   increment(direction: number) {
-    const parts = (this.$el as HTMLElement).innerText.trim().split(',')
+    const parts = (this.$el as HTMLElement).innerText.trim().split(/[|,]/)
 
     let text
     let partIndex

@@ -102,8 +102,6 @@ export default {
   },
   components: {
     Dialog
-  },
-  data: () => ({}),
-  methods: {}
+  }
 }
 </script>

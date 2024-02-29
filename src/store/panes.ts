@@ -8,34 +8,27 @@ import { ModulesState } from '.'
 import panesSettings from './panesSettings'
 import defaultPanes from './defaultPanes.json'
 import { ListenedProduct } from './app'
-import { GRID_COLS } from '@/utils/constants'
 import { getMarketProduct, parseMarket } from '../services/productsService'
+import { GridItem, GridSpace, findOrCreateSpace } from '@/utils/grid'
+import dialogService from '@/services/dialogService'
 
 enum StaticPaneType {
   website = 'website',
   alerts = 'alerts'
 }
 
-export type PaneType =
-  | 'trades'
-  | 'chart'
-  | 'stats'
-  | 'counters'
-  | 'prices'
-  | 'website'
-  | 'alerts'
-  | 'trades-lite'
+export enum PaneType {
+  trades = 'trades',
+  chart = 'chart',
+  stats = 'stats',
+  counters = 'counters',
+  prices = 'prices',
+  website = 'website',
+  alerts = 'alerts',
+  'trades-list' = 'trades-lite'
+}
 
 export type MarketsListeners = { [market: string]: ListenedProduct }
-
-export interface GridItem {
-  x?: number
-  y?: number
-  w?: number
-  h?: number
-  i: string
-  type?: string
-}
 
 export interface Pane {
   type: string
@@ -51,6 +44,7 @@ export interface PanesState {
   layout: GridItem[]
   panes: { [paneId: string]: Pane }
   marketsListeners: MarketsListeners
+  syncedWithParentFrame: string[]
 }
 
 const layoutDesktop = [
@@ -97,7 +91,10 @@ const actions = {
   },
   async addPane(
     { commit, dispatch, state },
-    options: Pane & { settings?: any; originalGridItem?: any }
+    options: Pane & {
+      settings?: any
+      originalGridItem?: any
+    }
   ) {
     if (!panesSettings[options.type] && options.name.indexOf(':') === -1) {
       this.dispatch('app/showNotice', {
@@ -125,19 +122,26 @@ const actions = {
           : options.markets || Object.keys(state.marketsListeners)
     }
 
+    const item = { pane, space: null }
+
+    try {
+      item.space = await findOrCreateSpace(
+        state.layout,
+        options.originalGridItem
+      )
+    } catch (error) {
+      dialogService.confirm({
+        message: `Please remove one or more existing panes to create space before adding a new pane`,
+        cancel: null
+      })
+    }
+
     await registerModule(id, {}, true, pane)
 
     commit('ADD_PANE', pane)
-    dispatch('appendPaneGridItem', {
-      id: pane.id,
-      type: pane.type,
-      originalGridItem: options.originalGridItem
-    })
-    dispatch('refreshMarketsListeners')
+    commit('ADD_GRID_ITEM', item)
 
-    Vue.nextTick(() => {
-      window.scrollTo(0, document.body.scrollHeight)
-    })
+    dispatch('refreshMarketsListeners')
   },
   async removePane({ commit, state, dispatch, rootState }, id: string) {
     const item = state.panes[id]
@@ -150,6 +154,10 @@ const actions = {
     commit('REMOVE_PANE', id)
     dispatch('refreshMarketsListeners')
 
+    if (state.syncedWithParentFrame.indexOf(id) !== -1) {
+      commit('TOGGLE_SYNC_WITH_PARENT_FRAME', id)
+    }
+
     if (rootState.app.focusedPaneId === id) {
       this.commit('app/SET_FOCUSED_PANE', null)
     }
@@ -161,26 +169,6 @@ const actions = {
 
       localStorage.removeItem(id)
     })
-  },
-  appendPaneGridItem(
-    { commit },
-    {
-      id,
-      type,
-      originalGridItem
-    }: { id: string; type: PaneType; originalGridItem?: GridItem }
-  ) {
-    const item: GridItem = {
-      i: id,
-      type
-    }
-
-    if (originalGridItem) {
-      item.w = originalGridItem.w
-      item.h = originalGridItem.h
-    }
-
-    commit('ADD_GRID_ITEM', item)
   },
   removePaneGridItems({ commit, state }, id: string) {
     const item = state.layout.find(item => item.i === id)
@@ -331,21 +319,22 @@ const actions = {
   },
   async resetPane(
     { state, rootState },
-    { id, data }: { id: string; data?: any }
+    { id, data, type }: { id: string; data?: any; type?: string }
   ) {
     const pane = JSON.parse(JSON.stringify(state.panes[id]))
 
-    let currentPaneState
-
-    if (data && typeof data === 'object') {
-      currentPaneState = Object.assign({}, rootState[id], data)
-    }
+    const currentPaneState = Object.assign(
+      {},
+      rootState[id],
+      data && typeof data === 'object' ? data : {}
+    )
 
     const layoutItem = state.layout.find(a => a.i === id)
-
     const originalPaneType = layoutItem.type
-
     layoutItem.type = 'div'
+
+    const paneItem = state.panes[id]
+    paneItem.type = type || originalPaneType
 
     this.unregisterModule(id)
 
@@ -357,7 +346,7 @@ const actions = {
 
     await registerModule(id, {}, true, pane)
 
-    layoutItem.type = originalPaneType
+    layoutItem.type = type || originalPaneType
   },
   setZoom({ commit, dispatch }, { id, zoom }: { id: string; zoom: number }) {
     commit('SET_PANE_ZOOM', { id, zoom })
@@ -369,8 +358,8 @@ const actions = {
       typeof zoom === 'number'
         ? zoom
         : state.panes[id].zoom
-        ? Math.max(0.1, state.panes[id].zoom)
-        : 1
+          ? Math.max(0.1, state.panes[id].zoom)
+          : 1
     const el = document.getElementById(id) as HTMLElement
 
     if (el) {
@@ -429,50 +418,14 @@ const mutations = {
   REMOVE_PANE: (state, id: string) => {
     Vue.delete(state.panes, id)
   },
-  ADD_GRID_ITEM: (state, item) => {
-    if (typeof item.x === 'undefined') {
-      const cols = GRID_COLS
-      const size =
-        window.innerWidth <= 500 ? 16 : window.innerWidth < 768 ? 8 : 4
-      const width = item.w || size
-      const height = item.h || size
-
-      const items = state.layout
-        .slice()
-        .sort((a, b) => a.x + a.y * 2 - (b.x + b.y * 2))
-
-      const columns = []
-
-      for (let x = 0; x < cols; x += width) {
-        let y = 0
-        for (const item of items) {
-          if (
-            (item.x >= x && item.x < x + width) ||
-            (item.x + item.w > x && item.x + item.w < x + width) ||
-            (item.x < x && item.x + item.w >= x + width)
-          ) {
-            y = Math.max(y, item.y + item.h)
-            continue
-          }
-        }
-
-        columns.push(y)
-      }
-
-      item.y = Math.min.apply(null, columns)
-      item.x = columns.indexOf(Math.min.apply(null, columns)) * width
-
-      if (item.y >= cols) {
-        for (const item of state.layout) {
-          item.y += height
-        }
-
-        item.y = 0
-        item.x = 0
-      }
-
-      item.w = width
-      item.h = height
+  ADD_GRID_ITEM: (state, { pane, space }: { pane: Pane; space: GridSpace }) => {
+    const item: GridItem = {
+      i: pane.id,
+      type: pane.type,
+      x: space.x,
+      y: space.y,
+      w: space.w,
+      h: space.h
     }
 
     state.layout.push(item)
@@ -500,6 +453,15 @@ const mutations = {
   },
   SET_PANE_ZOOM: (state, { id, zoom }: { id: string; zoom: number }) => {
     Vue.set(state.panes[id], 'zoom', zoom)
+  },
+  TOGGLE_SYNC_WITH_PARENT_FRAME: (state, paneId) => {
+    const index = state.syncedWithParentFrame.indexOf(paneId)
+
+    if (index !== -1) {
+      state.syncedWithParentFrame.splice(index, 1)
+    } else {
+      state.syncedWithParentFrame.push(paneId)
+    }
   }
 } as MutationTree<PanesState>
 

@@ -1,5 +1,16 @@
 import store from '@/store'
 
+import {
+  Bar,
+  IndicatorApi,
+  IndicatorOption,
+  IndicatorReference,
+  LoadedIndicator,
+  MarketsFilters,
+  Renderer,
+  TimeRange
+} from './chart.d'
+
 import { MAX_BARS_PER_CHUNKS } from '@/utils/constants'
 import {
   getHms,
@@ -7,9 +18,9 @@ import {
   getTimeframeForHuman,
   floorTimestampToTimeframe,
   isOddTimeframe,
-  sleep,
   formatBytes,
-  displayCanvasInPopup
+  displayCanvasInPopup,
+  sleep
 } from '@/utils/helpers'
 import { waitForStateMutation } from '@/utils/store'
 import { joinRgba, splitColorCode } from '@/utils/colors'
@@ -17,12 +28,12 @@ import merge from 'lodash.merge'
 
 import {
   defaultChartOptions,
-  defaultPlotsOptions,
-  defaultSerieOptions,
   getChartBarSpacingOptions,
+  getChartFontSize,
   getChartGridlinesOptions,
   getChartOptions,
-  getChartWatermarkOptions
+  getChartWatermarkOptions,
+  getSerieOptions
 } from '@/components/chart/options'
 import dialogService from '@/services/dialogService'
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
@@ -40,8 +51,8 @@ import historicalService, {
 } from '@/services/historicalService'
 
 import seriesUtils from '@/components/chart/serieUtils'
+
 import ChartCache, { Chunk } from '@/components/chart/cache'
-import SerieBuilder from '@/components/chart/serieBuilder'
 
 import {
   createChart as createTVChart,
@@ -50,149 +61,31 @@ import {
   ISeriesApi,
   LineData,
   PriceScaleOptions,
-  SeriesOptions,
   UTCTimestamp,
   IChartApi,
   Time
 } from 'lightweight-charts'
 import { Trade } from '@/types/types'
 import ChartControl from './controls'
-
-export interface Bar {
-  vbuy?: number
-  vsell?: number
-  cbuy?: number
-  csell?: number
-  lbuy?: number
-  lsell?: number
-  exchange?: string
-  pair?: string
-  time?: number
-  open?: number
-  high?: number
-  low?: number
-  close?: number
-  empty?: boolean
-  active?: boolean
-}
-
-export interface IndicatorApi extends ISeriesApi<any> {
-  id: string
-  precision?: number
-}
-
-export type IndicatorMarkets = {
-  [marketId: string]: string[]
-}
-
-export interface IndicatorSource {
-  prop: string
-  filters: IndicatorSourceFilters
-}
-
-export interface IndicatorSourceFilters {
-  quote: string
-  exchange: string
-  type: string
-}
-
-export interface TimeRange {
-  from: number
-  to: number
-}
-
-export interface OHLC {
-  open: number
-  high: number
-  low: number
-  close: number
-}
-
-export type IndicatorRealtimeAdapter = (
-  renderer: Renderer,
-  functions: IndicatorFunction[],
-  variables: IndicatorVariable[],
-  apis: IndicatorApi[],
-  options: SeriesOptions<any>,
-  seriesUtils: any
-) => void
-export interface LoadedIndicator {
-  id: string
-  options: any
-  script: string
-  model: IndicatorTranspilationResult
-  adapter: IndicatorRealtimeAdapter
-  apis: IndicatorApi[]
-}
-
-export interface IndicatorTranspilationResult {
-  output: string
-  variables: IndicatorVariable[]
-  functions: IndicatorFunction[]
-  plots: IndicatorPlot[]
-  markets?: IndicatorMarkets
-  references?: IndicatorReference[]
-  sources?: IndicatorSource[]
-}
-export interface IndicatorFunction {
-  name: string
-  args?: any[]
-  length?: number
-  state?: any
-  next?: () => void
-}
-export interface IndicatorVariable {
-  length?: number
-  state?: any
-}
-export interface IndicatorPlot {
-  id: string
-  type: string
-  expectedInput: 'number' | 'ohlc' | 'range'
-  options: { [prop: string]: any }
-}
-export interface IndicatorReference {
-  indicatorId: string
-  serieId?: string
-  plotIndex: number
-}
-export interface Renderer {
-  type: 'time' | 'tick'
-  timeframe: number
-  timestamp: number
-  localTimestamp: number
-  renderedTimestamp?: number
-  length: number
-  bar: Bar
-  sources: { [name: string]: Bar }
-  indicators: { [id: string]: RendererIndicatorData }
-  empty?: boolean
-  price?: number
-}
-
-interface RendererIndicatorData {
-  canRender: boolean
-  series: {
-    rendered?: boolean
-    time: number
-    value?: number
-    open?: number
-    high?: number
-    low?: number
-    close?: number
-    color?: string
-    higherValue?: number
-    lowerValue?: number
-  }[]
-  variables: IndicatorVariable[]
-  functions: IndicatorFunction[]
-  plotsOptions?: any[]
-  minLength?: number
-}
-
-export type MarketsFilters = {
-  [identifier: string]: boolean
-}
+import grouping from './grouping'
+import {
+  build,
+  getBuildedIndicator,
+  getRendererIndicatorData
+} from './buildUtils'
+import {
+  PrependState,
+  filterPrependedBars,
+  getPrependBars,
+  getPrependFromTickers,
+  registerPrependFromHistorical
+} from './prepend'
+import {
+  cloneSourceBar,
+  mergeBarsWithActiveBars,
+  registerInitialBar,
+  resetRendererBar
+} from './bars'
 
 // @todo: to split into 5 categories of things going on here
 // + chart (create, configure, maintain, destroy)
@@ -219,15 +112,28 @@ export default class Chart {
   fillGapsWithEmpty = true
   timeframe: number
   isOddTimeframe: boolean
-  type: 'time' | 'tick'
+  type: 'time' | 'tick' | 'bps' | 'vol'
   priceScales: string[] = []
   isLoading = false
   hasReachedEnd = false
+  isPrepending = false
+  isSyncingCrosshair = false
+  prepend: PrependState = {
+    bars: {},
+    time: null
+  }
 
   private activeChunk: Chunk
   private queuedTrades: Trade[] = []
-  private serieBuilder: SerieBuilder
+  private historicalMarkets: string[]
   private seriesIndicatorsMap: { [serieId: string]: IndicatorReference } = {}
+  private previousLogicalRange: string
+  private axis: { top: number; left: number; right: number; time: number } = {
+    top: 0,
+    left: 0,
+    right: 0,
+    time: 0
+  }
 
   private _releaseQueueInterval: number
   private _releasePanTimeout: number
@@ -247,9 +153,6 @@ export default class Chart {
 
     // @todo: refactor as abstract
     this.chartCache = new ChartCache()
-
-    // @todo: refactor as abstract
-    this.serieBuilder = new SerieBuilder()
 
     this.initialize()
   }
@@ -327,6 +230,9 @@ export default class Chart {
 
     this.marketsFilters = marketsFilters
     this.marketsIndexes = Object.keys(marketsIndexes)
+    this.historicalMarkets =
+      historicalService.filterOutUnavailableMarkets(markets)
+    this.isPrepending = this.marketsIndexes.length > 1 || this.type !== 'time'
     this.mainIndex = this.marketsIndexes
       .reduce((acc, index) => {
         acc.push({
@@ -336,11 +242,17 @@ export default class Chart {
 
         return acc
       }, [])
-      .sort((a, b) => b.count - a.count)[0].index
+      .sort((a, b) => b.count - a.count)[0]?.index
 
     this.updateWatermark(marketsForWatermark)
     this.resetPriceScales()
     this.refreshAutoDecimals()
+
+    filterPrependedBars(this.prepend, this.marketsFilters)
+
+    if (this.isPrepending) {
+      getPrependFromTickers(this.prepend, this.marketsFilters)
+    }
   }
 
   /**
@@ -348,14 +260,20 @@ export default class Chart {
    * @param timeframe
    */
   setTimeframe(timeframe) {
-    if (/t$/.test(timeframe)) {
+    const modifier = timeframe[timeframe.length - 1]
+    if (modifier === 't') {
       this.type = 'tick'
+    } else if (modifier === 'b') {
+      this.type = 'bps'
+    } else if (modifier === 'v') {
+      this.type = 'vol'
     } else {
       this.type = 'time'
     }
 
     this.timeframe = parseFloat(timeframe)
     this.isOddTimeframe = isOddTimeframe(this.timeframe)
+    this.previousLogicalRange = null
 
     this.updateWatermark()
   }
@@ -394,7 +312,7 @@ export default class Chart {
       chartOptions
     ) as IChartApi
 
-    this.addEnabledSeries()
+    this.addPaneIndicators()
     this.updateWatermark()
     this.updateFontSize()
 
@@ -465,8 +383,6 @@ export default class Chart {
       if (value.auto) {
         setTimeout(() => this.refreshAutoDecimals(null, id))
       }
-    } else if (key === 'priceScaleId') {
-      this.ensurePriceScale(value, indicator)
     }
 
     for (let i = 0; i < indicator.apis.length; i++) {
@@ -475,12 +391,14 @@ export default class Chart {
       })
     }
 
-    if (this.optionRequiresRedraw(key)) {
-      this.redrawIndicator(id)
+    if (key === 'priceScaleId') {
+      this.ensurePriceScale(indicator.options)
     }
 
-    if (/src/.test(key)) {
+    if (indicator.model.options[key] && indicator.model.options[key].rebuild) {
       this.refreshIndicatorAdapter(indicator, this.activeRenderer)
+      this.redrawIndicator(id)
+    } else if (this.optionRequiresRedraw(key)) {
       this.redrawIndicator(id)
     }
   }
@@ -505,7 +423,7 @@ export default class Chart {
    */
   optionRequiresRedraw(key: string) {
     const redrawOptions =
-      /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor|compositeOperation|src/i
+      /upColor|downColor|wickDownColor|wickUpColor|borderDownColor|borderUpColor|compositeOperation|src|priceScaleId/i
 
     if (redrawOptions.test(key)) {
       return true
@@ -572,17 +490,6 @@ export default class Chart {
     this.renderBars(bars, indicatorId)
   }
 
-  ensureIndicatorVisible(indicatorIds: string[]) {
-    for (const indicatorId of indicatorIds) {
-      if (
-        this.loadedIndicators[indicatorId] &&
-        this.loadedIndicators[indicatorId].options.visible === false
-      ) {
-        this.setIndicatorOption(indicatorId, 'visible', true, true)
-      }
-    }
-  }
-
   /**
    * just a extention of Lightweight Charts getVisibleRange but using timezone offset from the settings
    * @returns
@@ -605,8 +512,8 @@ export default class Chart {
   /**
    * add all pane's indicators
    */
-  addEnabledSeries() {
-    for (const id in store.state[this.paneId].indicators) {
+  addPaneIndicators() {
+    for (const id of store.state[this.paneId].indicatorOrder) {
       this.addIndicator(id)
     }
   }
@@ -617,14 +524,19 @@ export default class Chart {
    */
   updateWatermark(marketsUpdate?: string[]) {
     if (marketsUpdate) {
-      if (store.state.settings.normalizeWatermarks) {
-        this.watermark = marketsUpdate.join('|')
+      if (!marketsUpdate.length) {
+        this.watermark = 'Empty'
+      } else if (store.state.settings.normalizeWatermarks) {
+        this.watermark = marketsUpdate.join('\u2009|\u2009')
       } else {
         const othersCount = marketsUpdate.length - 3
         this.watermark =
-          marketsUpdate.slice(0, 3).join(' + ') +
+          marketsUpdate.slice(0, 3).join('\u2009+\u2009') +
           (othersCount > 0
-            ? ' + ' + othersCount + ' other' + (othersCount > 1 ? 's' : '')
+            ? '\u2009+\u2009' +
+              othersCount +
+              '\u2009other' +
+              (othersCount > 1 ? 's' : '')
             : '')
       }
     }
@@ -640,7 +552,7 @@ export default class Chart {
       watermark: {
         text: `\u00A0\u00A0\u00A0\u00A0${
           this.watermark +
-          '|' +
+          '\u2009|\u2009' +
           getTimeframeForHuman(store.state[this.paneId].timeframe)
         }\u00A0\u00A0\u00A0\u00A0`,
         ...getChartWatermarkOptions(this.paneId).watermark
@@ -656,21 +568,14 @@ export default class Chart {
       return
     }
 
-    const multiplier = store.state.panes.panes[this.paneId].zoom || 1
-    const watermarkBaseFontSize =
-      this.chartElement.clientWidth *
-      0.05 *
-      (!store.state.settings.normalizeWatermarks ? 0.5 : 1)
+    const baseFontSize = getChartFontSize(this.paneId)
 
     this.chartInstance.applyOptions({
       layout: {
-        fontSize: 14 * multiplier
+        fontSize: baseFontSize
       },
       watermark: {
-        fontSize: Math.max(
-          16,
-          Math.min(144, watermarkBaseFontSize * multiplier)
-        )
+        fontSize: Math.max(16, Math.min(144, baseFontSize * 10))
       }
     })
   }
@@ -696,7 +601,11 @@ export default class Chart {
 
     const indicator: LoadedIndicator = {
       id,
-      options: JSON.parse(JSON.stringify(indicatorOptions)),
+      libraryId: indicatorSettings.libraryId || id,
+      options: {
+        ...JSON.parse(JSON.stringify(indicatorOptions)),
+        priceScaleId: indicatorOptions.priceScaleId || 'right'
+      },
       script: indicatorSettings.script,
       model: null,
       adapter: null,
@@ -717,8 +626,9 @@ export default class Chart {
         )
       ) {
         dialogService.confirm({
-          message: `"${indicator.id}" indicator need the "${error.serieId}" serie but that one WAS NOT found anywhere in the current indicators.`,
-          ok: 'I see',
+          title: 'Referenced indicator',
+          message: `The <code class="-filled">${indicator.libraryId}</code> indicator you added requires the <code class="-filled">$${error.serieId}</code> series, but it was not located among the added indicators.`,
+          html: true,
           cancel: false
         })
       }
@@ -756,9 +666,7 @@ export default class Chart {
       if (indicators[otherIndicatorId].series.indexOf(missingSerieId) !== -1) {
         // found missing indicator
         // add missing indicator (otherIndicatorId) that seems to contain the missing serie (missingSerieId)
-        /*if (indicators[otherIndicatorId].options.visible === false) {
-          this.setIndicatorOption(otherIndicatorId, 'visible', true, true)
-        } else*/ if (this.addIndicator(otherIndicatorId, dependencyDepth + 1)) {
+        if (this.addIndicator(otherIndicatorId, dependencyDepth + 1)) {
           if (dependencyDepth === 0) {
             // finaly add original indicator
             this.addIndicator(originalIndicatorId, dependencyDepth + 1)
@@ -793,12 +701,7 @@ export default class Chart {
    */
   prepareIndicator(indicator: LoadedIndicator) {
     try {
-      const result = this.serieBuilder.build(
-        indicator,
-        this.seriesIndicatorsMap,
-        this.paneId
-      )
-
+      const result = build(indicator, this.seriesIndicatorsMap)
       if (store.state[this.paneId].indicatorsErrors[indicator.id]) {
         store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
           id: indicator.id,
@@ -807,6 +710,18 @@ export default class Chart {
       }
 
       indicator.model = result
+      indicator.options = Object.keys(result.options).reduce((acc, key) => {
+        acc[key] =
+          typeof indicator.options[key] !== 'undefined'
+            ? indicator.options[key]
+            : result.options[key].default
+        return acc
+      }, indicator.options)
+
+      store.commit(this.paneId + '/SET_INDICATOR_OPTIONS_DEFINITIONS', {
+        id: indicator.id,
+        optionsDefinitions: result.options
+      })
 
       if (indicator.options.visible !== false) {
         this.createIndicatorSeries(indicator)
@@ -822,9 +737,9 @@ export default class Chart {
           id: indicator.id,
           error: error.message
         })
-
-        throw error
       }
+
+      throw error
     }
   }
 
@@ -843,8 +758,7 @@ export default class Chart {
       return
     }
 
-    renderer.indicators[indicator.id] =
-      this.serieBuilder.getRendererIndicatorData(indicator)
+    renderer.indicators[indicator.id] = getRendererIndicatorData(indicator)
 
     if (!this.activeRenderer || renderer === this.activeRenderer) {
       // update indicator series with plotoptions
@@ -869,7 +783,7 @@ export default class Chart {
 
   refreshIndicatorAdapter(indicator: LoadedIndicator, renderer) {
     try {
-      indicator.adapter = this.serieBuilder.getAdapter(
+      indicator.adapter = getBuildedIndicator(
         indicator.model,
         this.marketsFilters,
         indicator.options
@@ -900,11 +814,9 @@ export default class Chart {
     delete renderer.indicators[indicator.id]
   }
 
-  ensurePriceScale(priceScaleId: string, indicator: LoadedIndicator) {
-    if (this.priceScales.indexOf(priceScaleId) !== -1) {
-      // chart already knows about that price scale (and doesn't need update)
-      return
-    } else {
+  ensurePriceScale(serieOptions: IndicatorOption) {
+    const { priceScaleId, scaleMargins } = serieOptions
+    if (this.priceScales.indexOf(priceScaleId) === -1) {
       // register pricescale
       this.priceScales.push(priceScaleId)
     }
@@ -912,13 +824,21 @@ export default class Chart {
     let priceScale: PriceScaleOptions | any =
       store.state[this.paneId].priceScales[priceScaleId]
 
-    if (!priceScale) {
-      // create default price scale
-      priceScale = {}
+    if (
+      !priceScale ||
+      (scaleMargins &&
+        (!priceScale.scaleMargins ||
+          scaleMargins.top !== priceScale.scaleMargins.top ||
+          scaleMargins.bottom !== priceScale.scaleMargins.bottom))
+    ) {
+      if (!priceScale) {
+        // create default price scale
+        priceScale = {}
+      }
 
-      if (indicator && indicator.options.scaleMargins) {
+      if (scaleMargins) {
         // use indicator priceScale
-        priceScale.scaleMargins = indicator.options.scaleMargins
+        priceScale.scaleMargins = scaleMargins
       } else {
         priceScale.scaleMargins = {
           top: 0.1,
@@ -938,9 +858,13 @@ export default class Chart {
 
   resetPriceScales() {
     for (let i = 0; i < this.priceScales.length; i++) {
-      this.chartInstance.priceScale(this.priceScales[i]).applyOptions({
-        autoScale: true
-      })
+      try {
+        this.chartInstance.priceScale(this.priceScales[i]).applyOptions({
+          autoScale: true
+        })
+      } catch (error) {
+        // priceScale might not exist with this id anymore
+      }
     }
   }
 
@@ -961,6 +885,31 @@ export default class Chart {
 
     // remove from active series model
     this.loadedIndicators.splice(this.loadedIndicators.indexOf(indicator), 1)
+  }
+
+  moveIndicator(indicatorId, position) {
+    const currentIndex = this.loadedIndicators.findIndex(
+      indicator => indicator.id === indicatorId
+    )
+    if (currentIndex === -1) {
+      console.warn(
+        `[${this.paneId}/moveIndicator] indicator with ID ${indicatorId} not found in loadedIndicators`
+      )
+      return
+    }
+
+    const [indicatorToMove] = this.loadedIndicators.splice(currentIndex, 1)
+
+    const newPosition = Math.min(position, this.loadedIndicators.length)
+    this.loadedIndicators.splice(newPosition, 0, indicatorToMove)
+
+    for (const indicator of this.loadedIndicators) {
+      this.removeIndicatorSeries(indicator)
+    }
+    for (const indicator of this.loadedIndicators) {
+      this.createIndicatorSeries(indicator)
+    }
+    this.renderAll()
   }
 
   /**
@@ -988,9 +937,7 @@ export default class Chart {
    * only use when chart indicators are cleared
    */
   clearData() {
-    console.log(
-      `[chart/${this.paneId}/controller] clear data (activeRenderer+activeChunk+queuedTrades1)`
-    )
+    console.log(`[chart/${this.paneId}/controller] clear data`)
 
     this.activeRenderer = null
     this.activeChunk = null
@@ -1024,9 +971,7 @@ export default class Chart {
    * fresh start : clear cache, renderer and rendered series on chart
    */
   clear() {
-    console.log(
-      `[chart/${this.paneId}/controller] clear all (cache+activedata+chart)`
-    )
+    console.log(`[chart/${this.paneId}/controller] clear`)
 
     this.chartCache.clear()
     this.clearData()
@@ -1124,8 +1069,6 @@ export default class Chart {
       return
     }
 
-    console.log(`[chart/${this.paneId}/controller] clear queue`)
-
     clearInterval(this._releaseQueueInterval)
     cancelAnimationFrame(this._releaseQueueInterval)
     delete this._releaseQueueInterval
@@ -1143,9 +1086,10 @@ export default class Chart {
 
     try {
       this.renderRealtimeTrades(this.queuedTrades)
-      this.queuedTrades.splice(0, this.queuedTrades.length)
     } catch (error) {
       console.log(error)
+    } finally {
+      this.queuedTrades.splice(0, this.queuedTrades.length)
     }
   }
 
@@ -1171,6 +1115,8 @@ export default class Chart {
       return
     }
 
+    let redrawAll = false
+
     for (let i = 0; i < trades.length; i++) {
       const trade = trades[i]
       const identifier = trade.exchange + ':' + trade.pair
@@ -1181,25 +1127,13 @@ export default class Chart {
 
       let timestamp
       if (this.activeRenderer) {
-        if (this.activeRenderer.type === 'time') {
-          timestamp = floorTimestampToTimeframe(
-            trade.timestamp / 1000,
-            this.timeframe,
-            this.isOddTimeframe
-          )
-        } else {
-          if (
-            this.activeRenderer.bar.cbuy + this.activeRenderer.bar.csell >=
-            this.timeframe
-          ) {
-            timestamp = Math.max(
-              this.activeRenderer.timestamp + 0.001,
-              Math.round(trade.timestamp / 1000)
-            )
-          } else {
-            timestamp = this.activeRenderer.timestamp
-          }
-        }
+        timestamp = grouping[this.activeRenderer.type]({
+          renderer: this.activeRenderer,
+          timeframe: this.timeframe,
+          trade,
+          isOdd: this.isOddTimeframe,
+          marketsFilters: this.marketsFilters
+        })
       } else {
         timestamp = trade.timestamp / 1000
       }
@@ -1223,7 +1157,7 @@ export default class Chart {
           for (const source in this.activeRenderer.sources) {
             if (this.activeRenderer.sources[source].empty === false) {
               this.activeChunk.bars.push(
-                this.cloneSourceBar(
+                cloneSourceBar(
                   this.activeRenderer.sources[source],
                   this.activeRenderer.timestamp
                 )
@@ -1244,31 +1178,32 @@ export default class Chart {
         }
       }
 
-      const amount = trade.price * trade.size
-
       if (
         !this.activeRenderer.sources[identifier] ||
         typeof this.activeRenderer.sources[identifier].pair === 'undefined'
       ) {
-        this.activeRenderer.sources[identifier] = {
-          pair: trade.pair,
-          exchange: trade.exchange,
-          close: +trade.price,
-          active: this.marketsFilters[identifier]
-        }
-
-        this.resetBar(this.activeRenderer.sources[identifier])
+        registerInitialBar(
+          this.activeRenderer,
+          identifier,
+          trade.pair,
+          trade.exchange,
+          +trade.price,
+          this.marketsFilters[identifier],
+          this.isPrepending && this.prepend
+        )
+        redrawAll = true
       }
 
       const isActive = this.marketsFilters[identifier]
 
       if (trade.liquidation) {
-        this.activeRenderer.sources[identifier]['l' + trade.side] += amount
+        this.activeRenderer.sources[identifier]['l' + trade.side] +=
+          trade.amount
 
         this.activeRenderer.bar.empty = false
 
         if (isActive) {
-          this.activeRenderer.bar['l' + trade.side] += amount
+          this.activeRenderer.bar['l' + trade.side] += trade.amount
         }
 
         continue
@@ -1293,52 +1228,29 @@ export default class Chart {
       }
 
       this.activeRenderer.sources[identifier]['c' + trade.side] += trade.count
-      this.activeRenderer.sources[identifier]['v' + trade.side] += amount
+      this.activeRenderer.sources[identifier]['v' + trade.side] += trade.amount
 
       this.activeRenderer.sources[identifier].empty = false
 
       if (isActive) {
-        this.activeRenderer.bar['v' + trade.side] += amount
+        this.activeRenderer.bar['v' + trade.side] += trade.amount
         this.activeRenderer.bar['c' + trade.side] += trade.count
 
         this.activeRenderer.bar.empty = false
       }
     }
 
-    if (!this.activeRenderer) {
+    if (!this.activeRenderer || this.activeRenderer.bar.empty || redrawAll) {
+      if (redrawAll) {
+        this.renderAll()
+      }
       return
     }
 
-    if (!this.activeRenderer.bar.empty) {
-      this.updateBar(this.activeRenderer)
+    this.updateBar(this.activeRenderer)
 
-      if (this.renderedRange.to < this.activeRenderer.timestamp) {
-        this.renderedRange.to = this.activeRenderer.timestamp
-      }
-    }
-  }
-
-  /**
-   * create a new object from an existing bar
-   * to avoid reference when storing finished bar data to cache
-   * @param {Bar} sourceBar do copy
-   * @param {number} [timestamp] apply timestamp to returned bar
-   */
-  cloneSourceBar(sourceBar: Bar, timestamp?: number): Bar {
-    return {
-      pair: sourceBar.pair,
-      exchange: sourceBar.exchange,
-      time: timestamp || sourceBar.time,
-      open: sourceBar.open,
-      high: sourceBar.high,
-      low: sourceBar.low,
-      close: sourceBar.close,
-      vbuy: sourceBar.vbuy,
-      vsell: sourceBar.vsell,
-      cbuy: sourceBar.cbuy,
-      csell: sourceBar.csell,
-      lbuy: sourceBar.lbuy,
-      lsell: sourceBar.lsell
+    if (this.renderedRange.to < this.activeRenderer.timestamp) {
+      this.renderedRange.to = this.activeRenderer.timestamp
     }
   }
 
@@ -1353,6 +1265,56 @@ export default class Chart {
    * @param {boolean} silent
    */
   renderBars(bars: Bar[], indicatorId, silent?: boolean) {
+    mergeBarsWithActiveBars(bars, this.activeRenderer)
+
+    if (!bars.length) {
+      return
+    }
+
+    const {
+      barCount,
+      from,
+      to,
+      temporaryRenderer,
+      computedSeries,
+      indicatorsIds
+    } = this.computeBars(bars, indicatorId)
+
+    this.clearPriceLines(indicatorsIds)
+
+    if (this.activeRenderer) {
+      this.activeRenderer.bar = {
+        ...temporaryRenderer.bar,
+        close: this.activeRenderer.bar.close
+      }
+      for (const id in temporaryRenderer.indicators) {
+        this.activeRenderer.indicators[id] = temporaryRenderer.indicators[id]
+      }
+      for (const id in temporaryRenderer.sources) {
+        this.activeRenderer.sources[id] = temporaryRenderer.sources[id]
+      }
+    } else {
+      this.activeRenderer = temporaryRenderer
+    }
+
+    this.replaceData(computedSeries, silent)
+
+    setTimeout(this.renderAlerts.bind(this))
+
+    if (!indicatorsIds || !indicatorsIds.length) {
+      if (this.activeRenderer) {
+        this.activeRenderer.length = barCount
+      }
+      if (!bars.length) {
+        this.renderedRange.from = this.renderedRange.to = null
+      } else {
+        this.renderedRange.from = from
+        this.renderedRange.to = to
+      }
+    }
+  }
+
+  computeBars(bars, indicatorId?) {
     let indicatorsIds
     let drawReferences = false
 
@@ -1367,72 +1329,12 @@ export default class Chart {
       indicatorsIds = [...this.getReferencedIndicators(indicator), indicatorId]
     }
 
-    this.clearPriceLines(indicatorsIds)
-
     const computedSeries = {}
     let from = null
     let to = null
 
+    // new renderer (will replace activeRenderer)
     let temporaryRenderer: Renderer
-    let computedBar: any
-
-    if (!bars.length) {
-      if (
-        this.activeRenderer &&
-        this.activeRenderer.bar &&
-        !this.activeRenderer.bar.empty
-      ) {
-        bars = Object.values(this.activeRenderer.sources).filter(
-          bar => bar.empty === false
-        )
-      }
-
-      if (!bars.length) {
-        return
-      }
-    } else if (
-      this.activeRenderer &&
-      this.activeRenderer.timestamp > bars[bars.length - 1].time
-    ) {
-      const activeBars = Object.values(this.activeRenderer.sources).filter(
-        bar => bar.empty === false
-      )
-
-      for (let i = 0; i < activeBars.length; i++) {
-        const activeBar = activeBars[i]
-
-        activeBar.time = this.activeRenderer.timestamp
-
-        for (let j = bars.length - 1; j >= 0; j--) {
-          const cachedBar = bars[j]
-
-          if (cachedBar.time < this.activeRenderer.timestamp) {
-            bars.splice(j + 1, 0, activeBar)
-            activeBars.splice(i, 1)
-            i--
-            break
-          } else if (
-            cachedBar.exchange === activeBar.exchange &&
-            cachedBar.pair === activeBar.pair
-          ) {
-            cachedBar.vbuy += activeBar.vbuy
-            cachedBar.vsell += activeBar.vsell
-            cachedBar.cbuy += activeBar.cbuy
-            cachedBar.csell += activeBar.csell
-            cachedBar.lbuy += activeBar.lbuy
-            cachedBar.lsell += activeBar.lsell
-            cachedBar.open = activeBar.open
-            cachedBar.high = activeBar.high
-            cachedBar.low = activeBar.low
-            cachedBar.close = activeBar.close
-            activeBars.splice(i, 1)
-            i--
-
-            break
-          }
-        }
-      }
-    }
 
     let barCount = 0
 
@@ -1445,18 +1347,13 @@ export default class Chart {
         bar.time > temporaryRenderer.timestamp
       ) {
         if (temporaryRenderer) {
-          if (temporaryRenderer.bar.empty && !this.fillGapsWithEmpty && bar) {
-            this.nextBar(bar.time, temporaryRenderer)
-            continue
-          }
-
           if (from === null) {
             from = temporaryRenderer.timestamp
           }
 
           to = temporaryRenderer.timestamp
 
-          computedBar = this.computeBar(temporaryRenderer, indicatorsIds)
+          const computedBar = this.computeBar(temporaryRenderer, indicatorsIds)
 
           for (const id in computedBar) {
             if (
@@ -1494,24 +1391,13 @@ export default class Chart {
               for (let j = 0; j < missingBars; j++) {
                 this.incrementRendererBar(temporaryRenderer)
 
-                for (const id in computedBar) {
-                  if (
-                    !drawReferences &&
-                    indicatorsIds &&
-                    indicatorId !== id &&
-                    indicatorsIds.indexOf(id) !== -1
-                  ) {
-                    continue
-                  }
-
-                  if (typeof computedSeries[id] === 'undefined') {
-                    computedSeries[id] = []
-                  }
-
+                for (const id in computedSeries) {
                   computedSeries[id].push({
                     time: temporaryRenderer.localTimestamp
                   })
                 }
+
+                barCount++
               }
             }
           }
@@ -1538,46 +1424,30 @@ export default class Chart {
         temporaryRenderer.bar.lsell += bar.lsell
       }
 
-      temporaryRenderer.sources[marketKey] = this.cloneSourceBar(bar)
+      temporaryRenderer.sources[marketKey] = cloneSourceBar(bar)
       temporaryRenderer.sources[marketKey].empty = false
       temporaryRenderer.sources[marketKey].active = isActive
     }
-    if (this.activeRenderer) {
-      this.activeRenderer.bar = temporaryRenderer.bar
-      for (const id in temporaryRenderer.indicators) {
-        this.activeRenderer.indicators[id] = temporaryRenderer.indicators[id]
-      }
-      for (const id in temporaryRenderer.sources) {
-        this.activeRenderer.sources[id] = temporaryRenderer.sources[id]
-      }
-    } else {
-      this.activeRenderer = temporaryRenderer
-    }
 
-    this.replaceData(computedSeries, silent)
-
-    setTimeout(this.renderAlerts.bind(this))
-
-    if (!indicatorsIds || !indicatorsIds.length) {
-      this.activeRenderer.length = barCount
-      if (!bars.length) {
-        this.renderedRange.from = this.renderedRange.to = null
-      } else {
-        this.renderedRange.from = from
-        this.renderedRange.to = to
-      }
+    return {
+      from,
+      to,
+      barCount,
+      temporaryRenderer,
+      computedSeries,
+      indicatorsIds
     }
   }
 
-  removeIndicatorSeries(indicator) {
+  removeIndicatorSeries(indicator: LoadedIndicator) {
     if (this.chartInstance) {
       // remove from chart instance (derender)
       for (let i = 0; i < indicator.apis.length; i++) {
         this.chartInstance.removeSeries(indicator.apis[i])
+        delete this.seriesIndicatorsMap[indicator.apis[i].id]
         indicator.apis.splice(i--, 1)
       }
     }
-
     // unbind from activebar (remove serie meta data like sma memory etc)
     this.unbindIndicator(indicator, this.activeRenderer)
 
@@ -1598,38 +1468,25 @@ export default class Chart {
   }
 
   createIndicatorSeries(indicator) {
+    if (!indicator.model) {
+      return
+    }
+
     const series = []
 
     const priceScale =
       store.state[this.paneId].priceScales[indicator.options.priceScaleId]
 
-    if (priceScale && priceScale.priceFormat) {
-      indicator.options.priceFormat = {
-        ...indicator.options.priceFormat,
-        ...priceScale.priceFormat
-      }
-    }
-
     for (let i = 0; i < indicator.model.plots.length; i++) {
       const plot = indicator.model.plots[i]
       const apiMethodName = camelize('add-' + plot.type + '-series')
-      const customPlotOptions = this.serieBuilder.getCustomPlotOptions(
+      const serieOptions = getSerieOptions(
         indicator,
-        plot
+        indicator.model.plots[i],
+        priceScale
       )
-      const serieOptions = {
-        ...defaultSerieOptions,
-        ...(defaultPlotsOptions[plot.type] || {}),
-        ...indicator.options,
-        ...customPlotOptions
-      }
-
-      if (serieOptions.scaleMargins) {
-        delete serieOptions.scaleMargins
-      }
-
       const api = this.chartInstance[apiMethodName](
-        serieOptions
+        getSerieOptions(indicator, indicator.model.plots[i])
       ) as IndicatorApi
 
       api.id = plot.id
@@ -1641,15 +1498,14 @@ export default class Chart {
       series.push(plot.id)
 
       indicator.apis.push(api)
+
+      this.ensurePriceScale(serieOptions)
     }
 
     store.commit(this.paneId + '/SET_INDICATOR_SERIES', {
       id: indicator.id,
       series
     })
-
-    // ensure chart is aware of pricescale used by this indicator
-    this.ensurePriceScale(indicator.options.priceScaleId, indicator)
 
     // attach indicator to active renderer
     this.bindIndicator(indicator, this.activeRenderer)
@@ -1688,7 +1544,7 @@ export default class Chart {
   /**
    * Renders all chunks
    */
-  renderAll(triggerPan?: boolean) {
+  async renderAll(triggerPan?: boolean) {
     if (!this.chartInstance) {
       return
     }
@@ -1706,7 +1562,6 @@ export default class Chart {
 
     const scrollPosition = this.chartInstance.timeScale().scrollPosition()
     this.clearChart(triggerPan)
-
     this.renderBars(
       this.chartCache.chunks.length
         ? this.chartCache.chunks.reduce(
@@ -1962,22 +1817,19 @@ export default class Chart {
 
       if (serieData.canRender) {
         for (let j = 0; j < indicator.apis.length; j++) {
-          if (serieData.series[j] && !serieData.series[j].rendered) {
+          const point = renderer.series[indicator.apis[j].id]
+          if (point && !point.rendered) {
             if (
-              (indicator.model.plots[j].type === 'line' &&
-                !serieData.series[j].value) ||
-              (indicator.model.plots[j].type === 'histogram' &&
-                !serieData.series[j].value) ||
+              (indicator.model.plots[j].type === 'line' && !point.value) ||
+              (indicator.model.plots[j].type === 'histogram' && !point.value) ||
               ((indicator.model.plots[j].type === 'cloudarea' ||
                 indicator.model.plots[j].type === 'brokenarea') &&
-                serieData.series[j].lowerValue === null) ||
-              (indicator.model.plots[j].type === 'histogram' &&
-                !serieData.series[j].value)
+                point.lowerValue === null) ||
+              (indicator.model.plots[j].type === 'histogram' && !point.value)
             ) {
               continue
             }
-
-            toUpdate.push([indicator.apis[j], serieData.series[j]])
+            toUpdate.push([indicator.apis[j], point])
           }
         }
       }
@@ -1991,9 +1843,8 @@ export default class Chart {
 
   /**
    * excecute indicators with renderer's data, and return series points
-   * this does not update series on chart (indicator.apisNoop is passed instead of indicator.apis)
    * @param {Renderer} renderer
-   * @param {string[]} indicators id of indicators to execute (all indicators calculated if null)
+   * @param {string[]} indicatorsIds id of indicators to execute (all indicators calculated if null)
    * @returns series points
    */
   computeBar(
@@ -2001,6 +1852,7 @@ export default class Chart {
     indicatorsIds?: string[]
   ): { [serieId: string]: any } {
     const points = {}
+    renderer.series = {}
 
     for (let i = 0; i < this.loadedIndicators.length; i++) {
       if (
@@ -2014,8 +1866,6 @@ export default class Chart {
       const indicator = this.loadedIndicators[i]
       const serieData = renderer.indicators[indicator.id]
 
-      serieData.series = []
-
       try {
         indicator.adapter(
           renderer,
@@ -2026,32 +1876,33 @@ export default class Chart {
           seriesUtils
         )
       } catch (error) {
+        console.error(
+          `[chart/${this.paneId}/computeBar] execution failed\n\t->`,
+          error
+        )
+
         store.commit(this.paneId + '/SET_INDICATOR_ERROR', {
           id: indicator.id,
           error: error.message
         })
 
-        continue
+        throw new Error('execution failed')
       }
 
-      for (let i = 0; i < serieData.series.length; i++) {
-        if (!indicator.model.plots[i]) {
-          break
-        }
+      for (let j = 0; j < indicator.apis.length; j++) {
+        const point = renderer.series[indicator.apis[j].id]
 
         if (
           renderer.length < serieData.minLength ||
-          !serieData.series[i] ||
-          (typeof serieData.series[i].value !== 'undefined' &&
-            serieData.series[i].value === null) ||
-          (typeof serieData.series[i].lowerValue !== 'undefined' &&
-            serieData.series[i].lowerValue === null) ||
-          (indicator.model.plots[i].type === 'histogram' &&
-            serieData.series[i].value === 0)
+          !point ||
+          (typeof point.value !== 'undefined' && point.value === null) ||
+          (typeof point.lowerValue !== 'undefined' &&
+            point.lowerValue === null) ||
+          (indicator.model.plots[j].type === 'histogram' && point.value === 0)
         ) {
           continue
         }
-        points[indicator.apis[i].id] = serieData.series[i]
+        points[indicator.apis[j].id] = point
       }
     }
 
@@ -2063,10 +1914,12 @@ export default class Chart {
       return this._priceApi
     }
 
-    const price = this.loadedIndicators.find(a => a.id === 'price')
+    const price = this.loadedIndicators.find(
+      a => a.id === 'price' || a.libraryId === 'price'
+    )
 
     if (price && price.options.visible !== false) {
-      this._priceIndicatorId = 'price'
+      this._priceIndicatorId = price.id
       this._priceApi = price.apis[0]
       return this._priceApi
     }
@@ -2109,7 +1962,7 @@ export default class Chart {
       length: 1,
       indicators: {},
       sources: {},
-
+      series: {},
       bar: {
         vbuy: 0,
         vsell: 0,
@@ -2118,6 +1971,17 @@ export default class Chart {
         lbuy: 0,
         lsell: 0,
         empty: true
+      }
+    }
+
+    if (this.isPrepending) {
+      const prependBars = getPrependBars(this.prepend, firstBarTimestamp)
+
+      for (const market in prependBars) {
+        renderer.sources[market] = {
+          ...prependBars[market],
+          active: this.marketsFilters[market]
+        }
       }
     }
 
@@ -2159,13 +2023,11 @@ export default class Chart {
           this.activeRenderer.timestamp) /
         this.activeRenderer.timeframe
 
-      for (let i = 0; i < this.loadedIndicators.length; i++) {
-        for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
-          for (let k = 0; k < missingBars; k++) {
-            if (i === 0 && j === 0) {
-              this.incrementRendererBar(renderer)
-            }
+      for (let k = 0; k < missingBars; k++) {
+        this.incrementRendererBar(renderer)
 
+        for (let i = 0; i < this.loadedIndicators.length; i++) {
+          for (let j = 0; j < this.loadedIndicators[i].apis.length; j++) {
             this.loadedIndicators[i].apis[j].update({
               time: renderer.localTimestamp
             })
@@ -2175,7 +2037,7 @@ export default class Chart {
     }
 
     this.incrementRendererBar(renderer)
-    this.resetRendererBar(renderer)
+    resetRendererBar(renderer)
 
     renderer.timestamp = timestamp
     renderer.localTimestamp = timestamp + this.timezoneOffset
@@ -2223,55 +2085,6 @@ export default class Chart {
     }
   }
 
-  /**
-   * fresh start for the renderer bar (and all its sources / markets)
-   * @param {Renderer} bar bar to clear for next timestamp
-   */
-  resetRendererBar(renderer: Renderer) {
-    renderer.bar = {
-      vbuy: 0,
-      vsell: 0,
-      cbuy: 0,
-      csell: 0,
-      lbuy: 0,
-      lsell: 0,
-      empty: true
-    }
-
-    if (typeof renderer.sources !== 'undefined') {
-      for (const identifier in renderer.sources) {
-        this.resetBar(renderer.sources[identifier])
-      }
-    }
-  }
-
-  /**
-   * preparing bar for next
-   * @param {Bar} bar
-   */
-  resetBar(bar: Bar) {
-    if (bar.close !== null) {
-      bar.open = bar.close
-      bar.high = bar.close
-      bar.low = bar.close
-    }
-
-    bar.vbuy = 0
-    bar.vsell = 0
-    bar.cbuy = 0
-    bar.csell = 0
-    bar.lbuy = 0
-    bar.lsell = 0
-    bar.empty = true
-
-    return bar
-  }
-
-  /**
-   *
-   * @param indicator
-   * @param renderer
-   */
   prepareRendererForIndicators(indicator: LoadedIndicator, renderer: Renderer) {
     let markets = Object.keys(indicator.model.markets)
 
@@ -2342,8 +2155,8 @@ export default class Chart {
         typeof precision === 'number'
           ? precision
           : typeof priceFormat.precision === 'number'
-          ? priceFormat.precision
-          : 2
+            ? priceFormat.precision
+            : 2
 
       if (
         !priceFormat.auto ||
@@ -2392,123 +2205,19 @@ export default class Chart {
     }
   }
 
-  async screenshotIndicator(indicatorId): Promise<Blob> {
-    const indicator = this.getLoadedIndicator(indicatorId)
-    const originalSize = {
-      width: this.chartElement.clientWidth,
-      height: this.chartElement.clientHeight
-    }
-
-    const timeScale = this.chartInstance.timeScale()
-    const scrollPosition = timeScale.scrollPosition()
-    const timeScaleOptions = timeScale.options()
-    const chartOptions = this.chartInstance.options()
-    const priceScale = this.chartInstance.priceScale(
-      indicator.options.priceScaleId
-    )
-    const leftPriceScale = this.chartInstance.priceScale('left')
-    const rightPriceScale = this.chartInstance.priceScale('right')
-    const leftPriceScaleVisibility = leftPriceScale.options().visible
-    const rightPriceScaleVisibility = rightPriceScale.options().visible
-    const { top: scaleMarginsTop, bottom: scaleMarginsBottom } =
-      priceScale.options().scaleMargins
-    const watermarkVisibility = chartOptions.watermark.visible
-    const timeScaleOriginalOptions = {
-      visible: timeScaleOptions.visible,
-      barSpacing: timeScaleOptions.barSpacing,
-      rightOffset: timeScaleOptions.rightOffset
-    }
-
-    this.chartInstance.resize(420, 180)
-
-    this.chartInstance.applyOptions({
-      watermark: {
-        visible: false
-      }
-    })
-
-    priceScale.applyOptions({
-      scaleMargins: {
-        top: 0,
-        bottom: 0
-      }
-    })
-
-    timeScale.applyOptions({
-      visible: false,
-      barSpacing: 3,
-      rightOffset: 0
-    })
-
-    leftPriceScale.applyOptions({
-      visible: false
-    })
-
-    rightPriceScale.applyOptions({
-      visible: false
-    })
-
-    let chartCanvas
-
-    try {
-      this.clearQueue()
-      this.clearChart()
-      this.redrawIndicator(
-        indicator.id,
-        this.chartCache.cacheRange.to - this.timeframe * 400
-      )
-      await sleep(1)
-      chartCanvas = this.chartInstance.takeScreenshot()
-    } catch (error) {
-      //
-    }
-
-    this.renderAll()
-
-    this.setupQueue()
-    this.chartInstance.resize(originalSize.width, originalSize.height)
-
-    priceScale.applyOptions({
-      scaleMargins: {
-        top: scaleMarginsTop,
-        bottom: scaleMarginsBottom
-      }
-    })
-
-    leftPriceScale.applyOptions({
-      visible: leftPriceScaleVisibility
-    })
-
-    rightPriceScale.applyOptions({
-      visible: rightPriceScaleVisibility
-    })
-
-    timeScale.applyOptions({
-      ...timeScaleOriginalOptions,
-      barSpacing: store.state[this.paneId].barSpacing
-    })
-
-    this.chartInstance.applyOptions({
-      watermark: {
-        visible: watermarkVisibility
-      }
-    })
-    timeScale.scrollToPosition(scrollPosition, false)
-
-    if (!chartCanvas) {
-      return
-    }
-
-    return new Promise(resolve => {
-      chartCanvas.toBlob(blob => {
-        resolve(blob)
-      })
-    })
-  }
-
   getPrice() {
     if (!this.activeRenderer) {
       return null
+    }
+
+    if (this.activeRenderer.series.price) {
+      if (this.activeRenderer.series.price.close) {
+        return this.activeRenderer.series.price.close
+      }
+
+      if (this.activeRenderer.series.price.value) {
+        return this.activeRenderer.series.price.value
+      }
     }
 
     if (this.activeRenderer.price) {
@@ -2540,6 +2249,13 @@ export default class Chart {
   }
 
   takeScreenshot(event) {
+    if (event.shiftKey) {
+      displayCanvasInPopup(
+        this.chartElement.querySelector('tr:first-child td:nth-child(2) canvas')
+      )
+      return
+    }
+
     const chartCanvas = this.chartInstance.takeScreenshot()
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
@@ -2676,11 +2392,7 @@ export default class Chart {
     const alreadyHasData =
       this.chartCache.cacheRange && this.chartCache.cacheRange.from
 
-    const historicalMarkets = historicalService.filterOutUnavailableMarkets(
-      store.state.panes.panes[this.paneId].markets
-    )
-
-    if (!historicalMarkets.length) {
+    if (!this.historicalMarkets.length) {
       return
     }
 
@@ -2742,14 +2454,14 @@ export default class Chart {
     )
     const bytesPerBar = 112
     const estimatedSize = formatBytes(
-      barsCount * historicalMarkets.length * bytesPerBar
+      barsCount * this.historicalMarkets.length * bytesPerBar
     )
 
     store.dispatch('app/showNotice', {
       id: 'fetching-' + this.paneId,
       timeout: 15000,
       title: `Fetching ${
-        barsCount * historicalMarkets.length
+        barsCount * this.historicalMarkets.length
       } bars (~${estimatedSize})`,
       type: 'info'
     })
@@ -2761,7 +2473,7 @@ export default class Chart {
         rangeToFetch.from * 1000,
         rangeToFetch.to * 1000,
         timeframe,
-        historicalMarkets
+        this.historicalMarkets
       )
       .then(results => this.onHistorical(results))
       .catch(err => {
@@ -2787,27 +2499,37 @@ export default class Chart {
    * Split bars into chunks and add to chartCache
    * Render chart once everything is done
    */
-  onHistorical(results: HistoricalResponse) {
+  onHistorical(response: HistoricalResponse) {
     const chunk: Chunk = {
-      from: results.from,
-      to: results.to,
-      bars: results.data
+      from: response.from,
+      to: response.to,
+      bars: response.data
     }
 
     this.chartCache.saveChunk(chunk)
+
+    if (this.isPrepending) {
+      registerPrependFromHistorical(this.prepend, response)
+    }
 
     this.renderAll(true)
   }
 
   async fetchMore(visibleLogicalRange) {
+    const logicalRangeId = `${visibleLogicalRange.from},${visibleLogicalRange.to}`
+
     if (
       this.isLoading ||
       this.hasReachedEnd ||
       !visibleLogicalRange ||
-      visibleLogicalRange.from > 0
+      visibleLogicalRange.from > 0 ||
+      (this.previousLogicalRange &&
+        this.previousLogicalRange === logicalRangeId)
     ) {
       return
     }
+
+    this.previousLogicalRange = logicalRangeId
 
     let indicatorLength = 0
 
@@ -2964,11 +2686,135 @@ export default class Chart {
   }
 
   async saveIndicatorPreview(indicatorId) {
-    const blob = await this.screenshotIndicator(indicatorId)
-    workspacesService.saveIndicatorPreview(indicatorId, blob)
+    const chartOptions = merge(
+      getChartOptions(defaultChartOptions, this.paneId),
+      getChartBarSpacingOptions(this.paneId, 500),
+      {
+        timeScale: {
+          visible: false,
+          barSpacing: 4,
+          rightOffset: Math.ceil((500 * 0.05) / 4)
+        },
+        rightPriceScale: {
+          visible: false
+        },
+        leftPriceScale: {
+          visible: false
+        }
+      }
+    )
+
+    const chartElement = document.createElement('div')
+    chartElement.style.width = `${500}px`
+    chartElement.style.height = `${100}px`
+    chartElement.style.position = 'fixed'
+    chartElement.style.visibility = 'hidden'
+    document.body.appendChild(chartElement)
+
+    const chartInstance = createTVChart(chartElement, chartOptions) as IChartApi
+
+    const apis = {}
+    for (const loadedIndicator of this.loadedIndicators) {
+      for (let i = 0; i < loadedIndicator.apis.length; i++) {
+        const api = loadedIndicator.apis[i]
+        const { id } = api
+
+        apis[id] = {
+          original: api
+        }
+
+        const serieType = api.seriesType()
+        const options = getSerieOptions(
+          loadedIndicator,
+          loadedIndicator.model.plots[i]
+        )
+
+        apis[id].copy = chartInstance[`add${serieType}Series`](options)
+        apis[id].copy.id = id
+        apis[id].visible = loadedIndicator.id === indicatorId
+        loadedIndicator.apis[i] = apis[id].copy
+      }
+    }
+
+    const { computedSeries } = this.computeBars(
+      this.chartCache.chunks.length
+        ? this.chartCache.chunks.reduce(
+            (bars, chunk) => bars.concat(chunk.bars),
+            []
+          )
+        : []
+    )
+
+    for (const loadedIndicator of this.loadedIndicators) {
+      for (let i = 0; i < loadedIndicator.apis.length; i++) {
+        const { id } = loadedIndicator.apis[i]
+        loadedIndicator.apis[i] = apis[id].original
+      }
+    }
+
+    for (const apiId in computedSeries) {
+      apis[apiId].copy.setData(computedSeries[apiId])
+    }
+
+    await sleep(1)
+
+    for (const apiId in apis) {
+      if (!apis[apiId].visible) {
+        apis[apiId].copy.applyOptions({
+          visible: false
+        })
+      }
+    }
+
+    const chartCanvas = chartInstance.takeScreenshot()
+    const blob = await new Promise<Blob>(resolve =>
+      chartCanvas.toBlob(blob => resolve(blob))
+    )
+    const { libraryId } = store.state[this.paneId].indicators[indicatorId]
+    workspacesService.saveIndicatorPreview(libraryId, blob)
+
+    for (const apiId in apis) {
+      chartInstance.removeSeries(apis[apiId].copy)
+    }
+    chartInstance.remove()
+
+    document.body.removeChild(chartElement)
   }
 
   toggleTimeframeDropdown(event) {
     return this.chartControl.toggleTimeframeDropdown(event)
+  }
+
+  getAxisSize() {
+    const chartOptions = store.state[this.paneId] as ChartPaneState
+
+    const axis = {
+      top: 0,
+      left: 0,
+      right: 0,
+      time: 0
+    }
+
+    if (chartOptions.showLeftScale) {
+      axis.left = this.chartElement.querySelector(
+        'tr:first-child td:first-child canvas'
+      ).clientWidth
+    }
+
+    if (chartOptions.showRightScale) {
+      axis.right = this.chartElement.querySelector(
+        'tr:first-child td:last-child canvas'
+      ).clientWidth
+    }
+
+    if (chartOptions.showTimeScale) {
+      axis.time = this.chartElement.querySelector(
+        'tr:last-child td:nth-child(2) canvas'
+      ).clientHeight
+    }
+
+    this.axis = axis
+
+    return this.axis
   }
 }

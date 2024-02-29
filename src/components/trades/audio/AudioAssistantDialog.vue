@@ -232,7 +232,7 @@
       <label for="audio-assistant-output"> Output </label>
       <div class="d-flex">
         <textarea
-          id="audio-assistant-output"
+          id="audio-assistant-output -code"
           cols="20"
           rows="4"
           ref="output"

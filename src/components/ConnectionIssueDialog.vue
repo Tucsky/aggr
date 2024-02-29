@@ -34,8 +34,9 @@
             key="step-0"
           >
             <p class="form-feedback mt0 mb0">
-              Can't connect to {{ restrictedUrl }}.&nbsp;<i
-                class="icon-info -lower"
+              Can't connect to {{ restrictedUrl
+              }}<i
+                class="icon-info -lower ml4"
                 :title="`Exchange API refused to connect<br>or blocked connection.`"
                 v-tippy="{ boundary: 'window', distance: 24 }"
               ></i>
@@ -46,133 +47,64 @@
             class="connection-issue-dialog__step"
             key="step-1"
           >
-            <div>
-              <ToggableSection :model="sections" outline auto-close>
-                <template #title> Potential causes </template>
-
-                <p class="-inline mb0 mt0">
-                  The exchange API is unreachable due to
-                  <span
-                    title="Since the end of November
-              2022, Binance started rejecting API calls from US IPs."
-                    v-tippy
-                    >geo restriction</span
-                  >
-                  or something else.
-                </p>
-                <ol class="mb0">
-                  <li v-if="currentWsProxyUrl">
-                    <p>
-                      The current proxy URL might not be working<br />
-                      Last used : <code>{{ currentWsProxyUrl }}</code>
-                    </p>
-                    <button
-                      type="button"
-                      class="btn -red mrauto -cases"
-                      @click="deleteWsProxyUrl"
-                      :disable="selectedAction"
-                    >
-                      <i class="icon-eraser mr8"></i> Clear proxy URL
-                    </button>
-                  </li>
-                  <li>
-                    <p>
-                      Disable all binance pairs so you won't see the issue
-                      anymore
-                    </p>
-
-                    <button
-                      type="button"
-                      class="btn -red -cases"
-                      @click="disableExchange"
-                      :disable="selectedAction"
-                    >
-                      <i class="icon-cross mr8"></i> Disable&nbsp;
-                      <span>{{ exchangeId }}</span>
-                      <i class="ml4" :class="'icon-' + exchangeId"></i>
-                    </button>
-                  </li>
-
-                  <li>
-                    <p>Use a VPN</p>
-
-                    <button
-                      type="button"
-                      class="btn -green -cases"
-                      @click="refreshExchange"
-                      :disable="selectedAction"
-                      title="Retry connection with exchange"
-                      v-tippy
-                    >
-                      <i class="icon-refresh mr8"></i> I enabled my VPN
-                    </button>
-                  </li>
-
-                  <li>
-                    <p>Connect through a proxy instead</p>
-
-                    <button
-                      type="button"
-                      class="btn -green -cases"
-                      @click="next"
-                      :disable="selectedAction"
-                    >
-                      I setup a proxy →
-                    </button>
-                  </li>
-                </ol>
-              </ToggableSection>
-              <ToggableSection
-                :model="sections"
-                class="mb16"
-                outline
-                auto-close
+            <p class="-inline mb0 mt0">
+              The exchange API is unreachable due to
+              <u
+                title="Beginning in late November 2022, Binance began declining API requests originating from US IP addresses."
+                v-tippy
               >
-                <template #title> Proxy install </template>
-                <p class="mt0">
-                  Since
-                  <i class="-lower" :class="`icon-${exchangeId}`"></i>&nbsp;{{
-                    exchangeId
-                  }}
-                  is blocking your IP you may want to get realtime data from
-                  that exchange through a proxy located in an authorized
-                  country.<br /><br />At the moment you will have to set it up
-                  yourself using a simple NodeJS script that you can download
-                  below.
+                geo restriction
+              </u>
+              or something else.
+            </p>
+            <ol class="mb0">
+              <li v-if="currentWsProxyUrl">
+                <p>
+                  The current proxy URL might not be working<br />
+                  Last used : <code>{{ currentWsProxyUrl }}</code>
                 </p>
-                <a
-                  target="_blank"
-                  href="https://gist.github.com/Tucsky/91a9ed6bc6bb436ccf0c3e97b66c43eb"
+                <button
+                  type="button"
+                  class="btn -red mrauto -cases"
+                  @click="deleteWsProxyUrl"
+                  :disable="selectedAction"
                 >
-                  <i class="icon-download"></i>
-                  <span class="ml8">Download server code</span>
-                </a>
-              </ToggableSection>
-            </div>
-            <button
-              type="button"
-              class="btn -red -cases -large w-100"
-              @click="disableExchange"
-              :disable="selectedAction"
-            >
-              <i class="icon-cross"></i>&nbsp;
-              <i class="mrauto" :class="'icon-' + exchangeId"></i>
-              Disable&nbsp;
-              <span>{{ exchangeId }}</span>
-            </button>
-            <div class="divider -horizontal" style="display: flex">Or</div>
-            <div class="form-group">
-              <label for="proxyUrl">Enter a proxy url</label>
-              <input
-                id="proxyUrl"
-                name="proxyUrl"
-                type="text"
-                class="form-control"
-                placeholder="ws://localhost:3000"
-                v-model="proxyUrl"
-                ref="input"
-              />
-            </div>
+                  <i class="icon-eraser mr8"></i> Clear proxy URL
+                </button>
+              </li>
+              <li>
+                <p>
+                  Disable all {{ exchangeId }}'s pairs so you won't see the
+                  issue anymore
+                </p>
+
+                <button
+                  type="button"
+                  class="btn -red -cases"
+                  @click="disableExchange"
+                  :disable="selectedAction"
+                >
+                  <i class="icon-cross mr8"></i> Disable&nbsp;
+                  <span>{{ exchangeId }}</span>
+                  <i class="ml4" :class="'icon-' + exchangeId"></i>
+                </button>
+              </li>
+
+              <li>
+                <p>Use a VPN</p>
+
+                <button
+                  type="button"
+                  class="btn -green -cases"
+                  @click="refreshExchange"
+                  :disable="selectedAction"
+                  title="Retry connection with exchange"
+                  v-tippy
+                >
+                  <i class="icon-refresh mr8"></i> I enabled my VPN
+                </button>
+              </li>
+            </ol>
           </div>
           <div
             v-else-if="stepIndex === 2"
@@ -199,15 +131,6 @@
           >
             Back
           </button>
-          <button
-            v-if="stepIndex"
-            :disabled="(stepIndex === 1 && !valid) || isTesting"
-            type="button"
-            class="btn -green ml8 -large"
-            @click="next"
-          >
-            Next →
-          </button>
         </template>
         <template v-else>
           <button type="button" class="btn -text mrauto" @click="dismiss">
@@ -225,7 +148,6 @@
 <script>
 import DialogMixin from '@/mixins/dialogMixin'
 import TransitionHeight from '@/components/framework/TransitionHeight.vue'
-import ToggableSection from '@/components/framework/ToggableSection.vue'
 import Loader from '@/components/framework/Loader.vue'
 import aggregatorService from '@/services/aggregatorService'
 import notificationService from '@/services/notificationService'
@@ -234,7 +156,6 @@ export default {
   name: 'ConnectionIssueDialog',
   components: {
     TransitionHeight,
-    ToggableSection,
     Loader
   },
   props: {

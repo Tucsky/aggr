@@ -1,16 +1,11 @@
 <template>
-  <button
-    type="button"
-    class="btn"
-    :class="buttonClass"
-    @click="toggleDropdown"
-  >
+  <Btn :loading="loading" :class="buttonClass" @click="toggleDropdown">
     <slot name="selection" :item="value" :placeholder="placeholder">
       <span>{{ label }}</span>
     </slot>
     <dropdown
       v-model="dropdownTrigger"
-      @mousedown.native="selectFromElementRecursive($event.target)"
+      @mousedown.native="selectFromElementRecursive($event)"
     >
       <button
         type="button"
@@ -23,18 +18,26 @@
         </slot>
       </button>
     </dropdown>
-  </button>
+  </Btn>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import Btn from '@/components/framework/Btn.vue'
 
 @Component({
   name: 'DropdownButton',
+  components: {
+    Btn
+  },
   props: {
     value: {
       required: false,
       default: null
+    },
+    loading: {
+      type: Boolean,
+      default: false
     },
     buttonClass: {
       required: false,
@@ -82,11 +85,15 @@ export default class DropdownButton extends Vue {
     }
   }
 
-  selectFromElementRecursive(element: HTMLElement) {
+  selectFromElementRecursive(event) {
+    let element = event.target
+
     let depth = 0
     while (element && ++depth < 3) {
       if (element.classList && element.classList.contains('dropdown-item')) {
         this.selectOption(element)
+        this.toggleDropdown(event)
+        event.stopPropagation()
 
         break
       }

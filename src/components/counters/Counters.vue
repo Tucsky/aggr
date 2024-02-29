@@ -170,7 +170,10 @@ export default class Counters extends Mixins(PaneMixin) {
   }
   clearCounters() {
     if (this._feed) {
-      console.log(`[counters/${this.paneId}] unsubscribe from feed`, this._feed)
+      console.debug(
+        `[counters/${this.paneId}] unsubscribe from feed`,
+        this._feed
+      )
       aggregatorService.off(this._feed, this.onVolume)
     }
 
@@ -235,12 +238,12 @@ export default class Counters extends Mixins(PaneMixin) {
     }
 
     this._feed = 'bucket-' + getBucketId(this.pane.markets)
-    console.log(`[counters/${this.paneId}] subscribe to feed`, this._feed)
+    console.debug(`[counters/${this.paneId}] subscribe to feed`, this._feed)
 
     if (this._feed.length) {
       aggregatorService.on(this._feed, this.onVolume)
     } else {
-      console.log(`[counters/${this.paneId}] error feed empty...`)
+      console.debug(`[counters/${this.paneId}] error feed empty...`)
     }
   }
   populateCounters() {
@@ -347,6 +350,7 @@ export default class Counters extends Mixins(PaneMixin) {
 
   &:hover:before {
     background-color: black;
+    color: var(--theme-color-base);
     opacity: 1;
   }
 
@@ -426,6 +430,7 @@ export default class Counters extends Mixins(PaneMixin) {
     display: flex;
     align-items: center;
     flex-grow: 1;
+    white-space: nowrap;
 
     span {
       position: relative;

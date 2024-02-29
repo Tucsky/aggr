@@ -1,13 +1,14 @@
 import { defineConfig, loadEnv } from 'vite'
-import vue from '@vitejs/plugin-vue2'
+import { qrcode } from 'vite-plugin-qrcode'
 import { visualizer } from 'rollup-plugin-visualizer'
-import { VitePWA } from 'vite-plugin-pwa'
-import svgLoader from 'vite-svg-loader'
-import monacoEditorPlugin from 'vite-plugin-monaco-editor'
-
 import fs from 'fs'
-import path from 'path'
 import gitprocess from 'child_process'
+import monacoEditorPlugin from 'vite-plugin-monaco-editor'
+import path from 'path'
+import svgLoader from 'vite-svg-loader'
+import vue from '@vitejs/plugin-vue2'
+
+import crypto from 'crypto'
 
 let date
 
@@ -56,50 +57,44 @@ export default defineConfig(({ mode }) => {
     }, {})
   }
 
+  const hash = crypto
+    .createHash('md5')
+    .update('aggr')
+    .digest('hex')
+    .substring(0, 7)
+
   return {
     define: {
-      ...processEnvValues,
+      ...processEnvValues
     },
-    base: mode === 'github' ?  env.VITE_APP_BASE_URL : '',
+    base: mode === 'github' ? env.VITE_APP_BASE_PATH : '/',
     plugins: [
       vue(),
       svgLoader({
-        defaultImport: 'url', // 👈
+        defaultImport: 'url' // 👈
       }),
       visualizer(),
-      VitePWA({
-        srcDir: 'src',
-        filename: 'sw.js',
-        registerType: 'autoUpdate',
-        includeAssets: [
-          'favicon-32x32.png',
-          'favicon-16x16.png',
-          'apple-touch-icon.png',
-          'safari-pinned-tab.svg'
-        ],
-        manifest: {
-          name: 'SignificantTrades',
-          short_name: 'AGGR',
-          description: 'Cryptocurrency market trades aggregator',
-          theme_color: '#171b29',
-          icons: [
-            {
-              src: 'android-chrome-192x192.png',
-              sizes: '192x192',
-              type: 'image/png'
-            },
-            {
-              src: 'android-chrome-512x512.png',
-              sizes: '512x512',
-              type: 'image/png'
-            }
-          ]
-        }
-      }),
-      monacoEditorPlugin.default({})
+      monacoEditorPlugin.default({}),
+      qrcode() // only applies in dev mode
+      // Add the terser plugin for production builds to remove console.log
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          entryFileNames: `[name].` + hash + `.js`,
+          chunkFileNames: `[name].` + hash + `.js`,
+          assetFileNames: `[name].` + hash + `.[ext]`
+        }
+      },
+      terserOptions: {
+        compress: {
+          drop_console: true
+        }
+      }
+    },
     server: {
-      port: 8080
+      port: 8080,
+      host: '0.0.0.0'
     },
     resolve: {
       alias: [
@@ -110,6 +105,7 @@ export default defineConfig(({ mode }) => {
       ]
     },
     css: {
+      devSourcemap: true,
       preprocessorOptions: {
         scss: {
           additionalData: `@import "@/assets/sass/variables.scss";`

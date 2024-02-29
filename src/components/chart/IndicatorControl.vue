@@ -16,6 +16,16 @@
       <button
         class="btn"
         @click="
+          $emit('action', { indicatorId, actionName: 'remove', event: $event })
+        "
+        title="Menu"
+      >
+        <i class="icon-cross"></i>
+      </button>
+
+      <button
+        class="btn"
+        @click="
           $emit('action', { indicatorId, actionName: 'menu', event: $event })
         "
         title="Menu"
@@ -167,7 +177,7 @@ export default class IndicatorControl extends Vue {
 
     > .btn {
       border-radius: 0;
-      padding: 0.25em 0.5em;
+      padding: 0.25em;
       font-size: 1em;
       background-color: var(--theme-buy-50);
       border: 1px solid var(--theme-buy-base);
@@ -177,14 +187,17 @@ export default class IndicatorControl extends Vue {
         border-color: var(--theme-buy-100);
       }
 
+      border-right-width: 0;
+      border-left-width: 0;
+
       &:first-child {
         border-radius: 0.25em 0 0 0.25em;
-        border-right: 0;
+        border-left-width: 1px;
       }
 
       &:last-child {
         border-radius: 0 0.25em 0.25em 0;
-        border-left: 0;
+        border-right-width: 1px;
       }
 
       &:first-child:last-child {

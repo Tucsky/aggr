@@ -11,10 +11,6 @@
   z-index: 10;
   pointer-events: none;
 
-  @media (-webkit-min-device-pixel-ratio: 1) {
-    font-size: 1.125rem;
-  }
-
   &--mask {
     pointer-events: all;
   }
@@ -32,7 +28,7 @@
   &__content {
     display: flex;
     flex-direction: column;
-    border-radius: $border-radius-base;
+    border-radius: 0.75rem;
     background-color: var(--theme-background-100);
     box-shadow: rgba(0, 0, 0, 0.2) 0px 18px 50px -10px;
     color: var(--theme-color-100);
@@ -40,27 +36,15 @@
     pointer-events: all;
     position: relative;
     max-width: 100%;
+    max-height: 100%;
 
     p {
       line-height: 1.4;
     }
 
-    hr {
-      margin: 1rem 0;
-      border: 0;
-      height: 1px;
-      background: var(--theme-background-150);
-      flex-shrink: 0;
-
-      &.-vertical {
-        margin: 0 1rem;
-        height: auto;
-        width: 1px;
-      }
-    }
-
     @media screen and (min-width: 580px) {
       max-width: 61.8vw;
+      max-height: 90%;
     }
 
     @media screen and (min-width: 1400px) {
@@ -72,7 +56,19 @@
     }
 
     .dialog--size-large & {
-      width: 720px;
+      width: 420px;
+
+      @media screen and (min-width: 580px) {
+        max-width: 90vw;
+      }
+    }
+
+    .dialog--size-wide & {
+      width: 920px;
+
+      @media screen and (min-width: 580px) {
+        max-width: 90vw;
+      }
     }
 
     .dialog--size-medium & {
@@ -80,7 +76,7 @@
     }
 
     .dialog--size-small & {
-      min-width: 250px;
+      width: 325px;
     }
   }
 
@@ -118,12 +114,25 @@
   &__header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     position: relative;
     z-index: 1;
     padding: 0.75rem;
+    height: 1rem;
     background-color: var(--theme-background-100);
     border-bottom: 1px solid var(--theme-background-150);
+    border-radius: 0.75rem 0.75rem 0 0;
     cursor: grab;
+
+    #{$self}--contrasted & {
+      border-bottom: 0 !important;
+      padding-bottom: 0;
+      background-color: var(--theme-base-o25);
+    }
+
+    #{$self}--borderless & {
+      border: 0;
+    }
 
     > .btn {
       align-self: center;
@@ -143,33 +152,33 @@
     }
   }
 
+  &__subheader {
+
+    #{$self}--contrasted & {
+      background-color: var(--theme-base-o25);
+      padding-top: 0.5rem;
+    }
+  }
+
   &__title {
     text-transform: uppercase;
-    font-weight: 600;
     margin-bottom: 0;
     letter-spacing: 1px;
-    font-size: 1.125em;
+    font-size: 1.125rem;
     line-height: 1;
     font-family: $font-condensed;
     font-weight: 400;
     white-space: nowrap;
     text-overflow: ellipsis;
-    overflow: hidden;
     color: var(--theme-color-base);
 
     &.-editable {
       cursor: text;
     }
-  }
 
-  &__subtitle {
-    display: inline-block;
-    margin-top: 0.25rem;
-    font-size: 80%;
-    opacity: 0.75;
-    white-space: normal;
-    text-transform: none;
-    letter-spacing: 0;
+    code {
+      text-transform: none;
+    }
   }
 
   &__footer {
@@ -177,7 +186,11 @@
     justify-content: flex-end;
     border-top: 1px solid var(--theme-background-150);
 
-    &--small & {
+    #{$self}--borderless & {
+      border: 0;
+    }
+
+    #{$self}--small & {
       padding: 0.5rem;
     }
   }
@@ -186,9 +199,9 @@
     display: none;
     position: absolute;
     font-size: 1rem;
-    padding: 1rem 0rem 0rem 1rem;
-    right: 0;
-    bottom: 0;
+    padding: 1rem 0 0 1rem;
+    right: -0.0625rem;
+    bottom: -0.0625rem;
     z-index: 10;
     top: auto;
     cursor: se-resize;
@@ -281,5 +294,11 @@
   &-leave,
   &-leave-to {
     pointer-events: none;
+  }
+
+  &--small {
+    .-dialog-min-m {
+      display: none;
+    }
   }
 }

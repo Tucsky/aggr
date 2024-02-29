@@ -28,8 +28,6 @@
 
     > .vue-resizable-handle {
       display: none;
-      width: auto;
-      height: auto;
       font-size: 1.5rem;
       width: 3rem;
       height: 3rem;
@@ -55,7 +53,6 @@
     }
 
     &:hover {
-      z-index: 1;
       > .vue-resizable-handle {
         display: block;
       }
@@ -63,8 +60,6 @@
       .toolbar {
         display: flex;
       }
-
-      overflow: visible;
     }
 
     &.vue-grid-placeholder {
@@ -91,9 +86,10 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  border-radius: 1px;
 
   #app.-light & {
-    --pane-overlay-background: var(--theme-background-o75);
+    --pane-overlay-background: var(--theme-background-100);
     background-color: rgba(white, 0.1);
   }
 
@@ -130,9 +126,9 @@
     width: 100%;
     cursor: move;
     pointer-events: none;
-    background-color: var(--theme-background-75);
 
     #app.-auto-hide-headers & {
+      background-color: var(--theme-background-75);
       position: absolute;
       background: 0;
 
@@ -156,6 +152,7 @@
       border-radius: 0;
       display: none;
       color: var(--theme-color-50);
+      font-size: 1em;
 
       > .btn {
         padding: 0.25em;
@@ -166,7 +163,7 @@
       }
 
       &,
-      &:hover
+      &:hover,
       &:focus {
         background-color: var(--pane-overlay-background) !important;
       }
@@ -197,18 +194,14 @@
       height: 1.429em;
     }
 
-    .pane.-extra-small & {
-      height: 1em;
-    }
-
     &__highlight.btn {
       display: inline-flex;
 
-      #app.-auto-hide-names & {
+      #app.-auto-hide-headers.-auto-hide-names & {
         display: none;
       }
 
-      #app.-auto-hide-names .pane:hover & {
+      #app.-auto-hide-headers.-auto-hide-names .pane:hover & {
         display: inline-flex;
       }
     }
@@ -230,12 +223,6 @@
 
   .pane.-small & {
     top: 1.429em;
-    margin-top: 0.125em;
-    margin-left: 0.125em;
-  }
-
-  .pane.-extra-small & {
-    top: 1em;
     margin-top: 0;
     margin-left: 0;
   }
@@ -277,7 +264,7 @@
 
     .btn {
       padding: 0.25em;
-      font-size: 0.75em;
+      font-size: 0.875em;
     }
   }
 
@@ -285,28 +272,20 @@
     cursor: pointer;
     user-select: none;
     place-self: flex-start;
-    padding: 0.125em;
+    padding: 0.125em 0.25em;
     display: flex;
     align-items: center;
     gap: 0.25em;
     line-height: 1;
     color: var(--theme-color-50);
 
-    > button {
-      display: none;
-    }
-
     &:hover {
       color: var(--theme-color-base);
-
-      > button {
-        display: block;
-      }
     }
 
     .pane.-small &,
     .pane.-extra-small & {
-      padding: 1px;
+      padding: 0.125em 0.125em 0.125em 0.25em;
     }
 
     &:first-child {
@@ -318,8 +297,8 @@
   }
 
   &__title {
-    font-size: 0.875em;
-    margin-left: 0.125em;
+    height: 0.875em;
+    line-height: 0.75em;
   }
 }
 

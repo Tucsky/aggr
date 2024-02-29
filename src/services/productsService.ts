@@ -13,6 +13,7 @@ const stablecoins = [
   'USDD',
   'USDK',
   'USDP',
+  'FDUSD',
   'UST'
 ]
 
@@ -29,7 +30,7 @@ const reverseStablecoins = stablecoins.filter(
 const currencies = ['EUR', 'USD', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNH']
 
 const genericQuoteCurrencyLookup = new RegExp(
-  `[a-z]?(${currencies.join('|')})[a-z]?$`,
+  `[a-z]*(${currencies.join('|')})[a-z]?$`,
   'i'
 )
 const reverseStablecoinPairLookup = new RegExp(
@@ -326,7 +327,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   if (exchangeId === 'BYBIT') {
     localSymbol = localSymbol.replace(/-SPOT$/, '')
   } else if (exchangeId === 'KRAKEN') {
-    localSymbol = localSymbol.replace(/PI_/, '').replace(/FI_/, '')
+    localSymbol = localSymbol.replace(/(PI|FI|PF)_/, '')
   } else if (exchangeId === 'BITFINEX') {
     localSymbol = localSymbol
       .replace(/(.*)F0:(\w+)F0/, '$1-$2')
@@ -406,7 +407,9 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
 }
 
 export async function getApiSupportedMarkets() {
-  let products = import.meta.env.VITE_APP_API_SUPPORTED_PAIRS as string | string[]
+  let products = import.meta.env.VITE_APP_API_SUPPORTED_PAIRS as
+    | string
+    | string[]
   if (products && products.length) {
     products = (products as string).split(',').map(market => market.trim())
   } else {
@@ -527,6 +530,10 @@ export async function resolvePairs(pairs: string[]) {
     for (const symbol of symbols) {
       const product = getMarketProduct(exchangeId, symbol, true)
 
+      if (!product) {
+        continue
+      }
+
       if (historicalOnly && historicalMarkets.indexOf(product.id) === -1) {
         continue
       }
@@ -547,6 +554,29 @@ export async function resolvePairs(pairs: string[]) {
 
   if (!markets.length) {
     return null
+  }
+
+  return markets
+}
+
+export async function resolvePair(base: string, quote: string) {
+  const markets = []
+
+  const stripedStableQuote = stripStableQuote(quote)
+
+  for (const exchangeId in indexedProducts) {
+    if (store.state.exchanges[exchangeId].disabled === true) {
+      continue
+    }
+
+    for (const product of indexedProducts[exchangeId]) {
+      if (
+        product.base === base &&
+        stripStableQuote(product.quote) === stripedStableQuote
+      ) {
+        markets.push(product.id)
+      }
+    }
   }
 
   return markets

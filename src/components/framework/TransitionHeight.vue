@@ -51,6 +51,10 @@ export default {
     autoWidth: {
       type: Boolean,
       default: false
+    },
+    fillHeight: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({
@@ -87,6 +91,10 @@ export default {
         element.style.left = '0px'
         element.style.right = '0px'
       }
+
+      if (this.fillHeight) {
+        element.style.bottom = '0px'
+      }
     },
 
     async enter(element) {
@@ -121,24 +129,17 @@ export default {
       element.style.position = ''
       element.style.left = ''
       element.style.right = ''
+      element.style.bottom = ''
       element.style.height = ''
 
       this.$emit('after-enter', element)
     },
 
     beforeLeave(element) {
-      if (this.stepper) {
-        return
-      }
-
       element.style.height = `${element.clientHeight}px`
     },
 
     leave(element) {
-      if (this.stepper) {
-        return
-      }
-
       setTimeout(() => {
         element.style.height = '0px'
       })
@@ -179,12 +180,12 @@ export default {
 /* transition-height */
 
 .transition-height {
-  transition: height 0.15s $ease-out-expo;
+  transition: height 0.25s $ease-out-expo;
 
   &-leave-active,
   &-enter-active {
     overflow: hidden;
-    transition: all 0.15s $ease-out-expo;
+    transition: all 0.25s $ease-out-expo;
   }
 
   &-enter,
@@ -199,7 +200,9 @@ export default {
 
 .transition-height-scale {
   &-enter-active {
-    transition: all 0.25s $ease-out-expo 0.15s, height 0.375s $ease-out-expo;
+    transition:
+      all 0.25s $ease-out-expo 0.15s,
+      height 0.375s $ease-out-expo;
   }
 
   &-leave-active {
@@ -217,7 +220,7 @@ export default {
 .slide-fade-left {
   &-enter-active,
   &-leave-active {
-    transition: all 0.15s $ease-out-expo;
+    transition: all 0.25s $ease-out-expo;
   }
 
   &-enter,
@@ -228,21 +231,21 @@ export default {
 
 .slide-fade-left {
   &-enter {
-    transform: translateX((-1.5rem));
+    transform: translateX(-2rem);
   }
 
   &-leave-to {
-    transform: translateX(1.5rem);
+    transform: translateX(2rem);
   }
 }
 
 .slide-fade-right {
   &-enter {
-    transform: translateX(1.5rem);
+    transform: translateX(2rem);
   }
 
   &-leave-to {
-    transform: translateX((-1.5rem));
+    transform: translateX(-2rem);
   }
 }
 </style>

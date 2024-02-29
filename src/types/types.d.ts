@@ -1,9 +1,7 @@
 import 'vite/client'
 
-import { PaneType } from '@/store/panes'
-
 export type SlippageMode = false | 'price' | 'bps'
-export type AggregationLength = 0 | 1 | 10 | 100 | 1000
+export type AggregationLength = 0 | 1 | 10 | 100 | 1000 | -1
 
 declare module 'test.worker' {
   // You need to change `Worker`, if you specified a different value for the `workerType` option
@@ -54,10 +52,6 @@ export interface Trade {
   slippage?: number
 }
 
-export interface QueuedTrade extends Trade {
-  timeout?: number
-}
-
 export interface Volumes {
   timestamp: number
   vbuy: number
@@ -97,11 +91,9 @@ export interface Workspace {
   states: { [id: string]: any }
 }
 
-export type PresetType = ('audio' | 'colors' | 'indicator') | PaneType
-
 export interface Preset {
   name: string
-  type: PresetType
+  type: 'preset'
   data: any
   createdAt: number
   updatedAt: number
@@ -119,4 +111,12 @@ export interface PreviousSearchSelection {
   label: string
   count: number
   markets: string[]
+}
+
+export interface Ticker {
+  updated?: boolean
+  initialPrice?: number
+  price: number
+  volume?: number
+  volumeDelta?: number
 }

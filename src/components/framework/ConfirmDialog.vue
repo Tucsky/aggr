@@ -1,5 +1,5 @@
 <template>
-  <Dialog @clickOutside="close" size="small" :resizable="false">
+  <Dialog ref="dialog" @clickOutside="close" size="small" :resizable="false">
     <template v-slot:header>
       <div class="dialog__title">{{ title }}</div>
     </template>
@@ -16,33 +16,41 @@
       >
         {{ action.label }}
       </button>
-
-      <button
+      <Btn
         type="button"
-        class="btn -text mr8"
+        class="mr8"
+        :class="cancelClass"
         @click="close(false)"
-        @mousedown.prevent
+        @mousedown.native.prevent
         v-if="cancel"
-        v-text="cancel"
-      ></button>
-      <button
+      >
+        <i v-if="cancelIcon" class="mr4" :class="cancelIcon"></i> {{ cancel }}
+      </Btn>
+
+      <Btn
         v-if="ok"
         type="button"
-        class="btn -green -large"
+        :disabled="!isSubmitEnabled"
+        class="-large"
+        :class="okClass"
         v-autofocus
         @click="close(true)"
-        @mousedown.prevent
+        @mousedown.native.prevent
       >
-        <i class="icon-check mr4"></i> {{ ok }}
-      </button>
+        <i v-if="okIcon" class="mr4" :class="okIcon"></i> {{ ok }}
+      </Btn>
     </template>
   </Dialog>
 </template>
 
 <script>
+import Btn from '@/components/framework/Btn.vue'
 import DialogMixin from '@/mixins/dialogMixin'
 
 export default {
+  components: {
+    Btn
+  },
   props: {
     title: {
       type: String,
@@ -56,9 +64,25 @@ export default {
       type: String,
       default: 'OK'
     },
+    okIcon: {
+      type: String,
+      default: 'icon-check'
+    },
+    okClass: {
+      type: String,
+      default: '-green'
+    },
     cancel: {
       type: String,
       default: 'Cancel'
+    },
+    cancelIcon: {
+      type: String,
+      default: null
+    },
+    cancelClass: {
+      type: String,
+      default: '-text'
     },
     html: {
       type: Boolean,
@@ -67,6 +91,15 @@ export default {
     actions: {
       type: Array,
       default: () => []
+    },
+    requireScroll: {
+      type: Boolean,
+      default: false
+    }
+  },
+  data() {
+    return {
+      isSubmitEnabled: !this.requireScroll
     }
   },
   computed: {
@@ -77,11 +110,56 @@ export default {
   mixins: [DialogMixin],
   mounted() {
     document.querySelector('.app__wrapper').classList.add('-blur')
+
+    if (this.requireScroll) {
+      this.bindScroll()
+    }
   },
   beforeDestroy() {
     document.querySelector('.app__wrapper').classList.remove('-blur')
+
+    this.unbindScroll()
   },
   methods: {
+    async bindScroll() {
+      await this.$nextTick()
+      const bodyElement = this.$refs.dialog.$refs.body
+
+      if (bodyElement.clientHeight === bodyElement.scrollHeight) {
+        this.isSubmitEnabled = true
+        return
+      }
+
+      if (bodyElement) {
+        this.scrollHandler = this.handleScroll.bind(this)
+
+        bodyElement.addEventListener('scroll', this.handleScroll)
+      }
+    },
+    handleScroll() {
+      const bodyElement = this.$refs.dialog.$refs.body
+      this.isSubmitEnabled =
+        bodyElement.scrollTop + bodyElement.clientHeight >=
+        bodyElement.scrollHeight - 1
+
+      if (this.isSubmitEnabled) {
+        this.unbindScroll()
+      }
+    },
+    unbindScroll() {
+      if (!this.scrollHandler) {
+        return
+      }
+
+      const bodyElement = this.$refs.dialog.$refs.body
+
+      if (bodyElement) {
+        bodyElement.removeEventListener('scroll', this.handleScroll)
+        this.handleScroll = null
+      } else {
+        this.scrollHandler = null
+      }
+    },
     onClickAction(event, action) {
       if (action.callback) {
         const output = action.callback(event)

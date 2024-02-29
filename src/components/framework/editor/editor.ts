@@ -2,18 +2,27 @@ import 'monaco-editor/esm/vs/editor/editor.all.js'
 import 'monaco-editor/esm/vs/language/typescript/monaco.contribution'
 import 'monaco-editor/esm/vs/basic-languages/monaco.contribution'
 
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
+import {
+  editor,
+  languages,
+  Range
+} from 'monaco-editor/esm/vs/editor/editor.api'
+import AGGR_SUGGESTIONS from './suggestions'
+import { loadMd, showReference, TOKENS } from './references'
 
-monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+languages.typescript.javascriptDefaults.setCompilerOptions({
   noLib: true,
   lib: [],
   allowNonTsExtensions: true
 })
 
-monaco.languages.registerCompletionItemProvider('javascript', {
-  provideCompletionItems: function (model, position) {
-    // find out if we are completing a property in the 'dependencies' object.
+languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+  noSemanticValidation: true,
+  noSyntaxValidation: true
+})
 
+languages.registerCompletionItemProvider('javascript', {
+  provideCompletionItems: function (model, position) {
     const word = model.getWordUntilPosition(position)
     const range = {
       startLineNumber: position.lineNumber,
@@ -22,196 +31,77 @@ monaco.languages.registerCompletionItemProvider('javascript', {
       endColumn: word.endColumn
     }
 
+    const queryFilter = new RegExp(`${word}`, 'i')
+
     return {
-      suggestions: [
-        {
-          label: 'number',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] number option',
-          insertText: `MyNumber = option(
-  default=123, // default value
-  label="Number value", // text above input
-  placeholder="Type something" // text within empty input
-)`,
-          range
-        },
-        {
-          label: 'text',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] text option',
-          insertText: `MyText = option(
-  type=text,
-  label="Text value",
-  placeholder="Fill me",
-  description="Small description to help understand the option"
-)`,
-          range
-        },
-        {
-          label: 'threshold',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] threshold option',
-          insertText: `threshold = option(type=number, min=0, max=10, step=0.1)`,
-          range
-        },
-        {
-          label: 'range',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] range option',
-          insertText: `MyRange = option(
-  type=range,
-  label="My range",
-  min=0,
-  max=1
-)`,
-          range
-        },
-        {
-          label: 'rangecolor',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] range w/ gradient color',
-          insertText: `MyRangeColor = option(
-  type=range,
-  label="Big range",
-  gradient=["red", "limegreen"], // colorize slider
-  min=0,
-  max=1000000,
-  log=true // slider will ajust displayed value logarithmic scale
-)`,
-          range
-        },
-        {
-          label: 'list',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] list option',
-          insertText: `quote = option(
-  type=list,
-  options=[null, "USD", "USDT", "TUSD", "USDC", "BUSD"],
-  rebuild=true // not specifc to list but will trigger a full indi rebuild when change
-)`,
-          range
-        },
-        {
-          label: 'listname',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] named list option',
-          insertText: `quote = option(
-  type=list,
-  options={
-    "": "Pick something",
-    "USD": "United State Dollar",
-    "USDT": "Tether",
-    "TUSD": "TrueUSD",
-    "USDC": "Coinbase USD",
-    "BUSD": "Binance USD"
-  },
-  default=USD
-)`,
-          range
-        },
-        {
-          label: 'color',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] color option',
-          insertText: `color = option(type=color,default="red")`,
-          range
-        },
-        {
-          label: 'color rgba',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] color rgba option',
-          insertText: `color = option(type=color,default="rgba(0, 255, 0, 0.5)")`,
-          range
-        },
-        {
-          label: 'sourced candlestick',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] sourced candlestick',
-          insertText: `// let user choose spot, perp or both in indicator's settings
-type = option(type=list, options=[null, "spot", "perp"])
-
-// get list of markets matching given type 
-src = source(type=type)
-
-// aggregate ohlc from markets & print into candlestick serie
-candlestick(avg_ohlc(src))`,
-          range
-        },
-        {
-          label: 'multicolor histogram',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] multicolor histogram',
-          insertText: `histogram({
-  time: time,
-  value: vbuy + vsell,
-  color: vbuy > vsell ? upColor : downColor
-})`,
-          range
-        },
-        {
-          label: 'brokenarea',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] heatmap example',
-          insertText: `brokenarea(
-  {
-    time: time,
-    lowerValue: 10,
-    higherValue: 20,
-    extendRight: true,
-    color: 'yellow'
-  },
-  strokeColor=options.strokeColor,
-  strokeWidth=options.strokeWidth
-)`,
-          range
-        },
-        {
-          label: 'markers',
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: '[AGGR] markers example',
-          insertText: `// <STARTUP SCRIPT> 
-if (!pendingMarkers) {
-  // runs only once
-  markers = []
-  pendingMarkers = []
-  lastIndex = null
-}
-// </STARTUP SCRIPT> 
-
-// <MARKERS.UTILS> 
-if (pendingMarkers.length) {
-  markers = markers.concat(pendingMarkers)
-  if (series[0].setMarkers) {
-    series[0].setMarkers(markers)
-  }
-  pendingMarkers = []
-}
-// </MARKERS.UTILS>
-
-// process only on new candle
-if (bar.length === lastIndex) {
-  return
-}
-
-line($price.close, color="transparent") // ghost price for markers
-
-// script goes here
-
-// we add a marker as an example :
-pendingMarkers.push({
-  time: time,
-  position: 'belowBar',
-  color: 'red',
-  text: '🔺',
-})
-
-// set reference to bar index : only process first bar of tick
-lastIndex = bar.length`,
-          range
-        }
-      ]
+      suggestions: AGGR_SUGGESTIONS.filter(
+        a => queryFilter.test(a.label) || queryFilter.test(a.detail)
+      ).map(s => ({
+        ...s,
+        kind: languages.CompletionItemKind.Function,
+        range
+      }))
     }
   }
 })
-console.log(monaco)
-export default monaco
+
+languages.registerHoverProvider('javascript', {
+  provideHover: async function (model, position) {
+    // Get the word at the current position
+    const word = model.getWordAtPosition(position)
+
+    if (!word || !word.word) {
+      return
+    }
+
+    const token = word.word.replace(/^plot/, '')
+
+    // Check if the word is one of the specific tokens
+    if (TOKENS.indexOf(token) !== -1) {
+      const md = await loadMd(token)
+      let contents
+      if (md) {
+        contents = md
+          .split(/\n\n/)
+          .slice(0, 2)
+          .map(row => ({
+            value: row
+          }))
+          .concat({
+            value: `[Learn more](${token})`
+          })
+
+        setTimeout(() => {
+          const linkElement = document.querySelector(`a[data-href="${token}"]`)
+
+          if (!linkElement) {
+            return
+          }
+
+          linkElement.addEventListener('click', (event: MouseEvent) => {
+            event.preventDefault()
+
+            showReference(token, md, {
+              x: event.clientX,
+              y: event.clientY
+            })
+          })
+        }, 500)
+      } else {
+        contents = [{ value: 'no definition found' }]
+      }
+
+      return {
+        range: new Range(
+          position.lineNumber,
+          word.startColumn,
+          position.lineNumber,
+          word.endColumn
+        ),
+        contents
+      }
+    }
+  }
+})
+
+export default editor

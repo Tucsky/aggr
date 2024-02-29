@@ -3,7 +3,6 @@
     <pane-header
       ref="paneHeader"
       :paneId="paneId"
-      :onEdit="() => $store.dispatch('app/showSearch', { paneId: this.paneId })"
       :settings="() => import('@/components/chart/ChartDialog.vue')"
     >
       <template v-slot:menu>
@@ -23,12 +22,11 @@
       <button
         v-for="(timeframeLabel, timeframe) of favoriteTimeframes"
         :key="timeframe"
-        @click="$store.dispatch(`${paneId}/setTimeframe`, timeframe)"
+        @click="selectTimeframe($event, timeframe)"
         title="Maintain shift key to change timeframe on all panes"
         class="btn pane-chart__timeframe -text -cases"
         :class="[
-          timeframeForHuman === timeframeLabel &&
-            'pane-header__highlight'
+          timeframeForHuman === timeframeLabel && 'pane-header__highlight'
         ]"
       >
         <span>{{ timeframeLabel }}</span>
@@ -50,14 +48,14 @@
       <markets-overlay :pane-id="paneId" />
     </div>
 
-    <div class="chart__container" ref="chartContainer">
-      <chart-layout
-        v-if="layouting"
-        :pane-id="paneId"
-        :layouting="layouting"
-        :axis="axis"
-      ></chart-layout>
-    </div>
+    <chart-layout
+      v-if="layouting"
+      :pane-id="paneId"
+      :layouting="layouting"
+      :axis="axis"
+    ></chart-layout>
+
+    <div class="chart__container" ref="chartContainer"></div>
   </div>
 </template>
 
@@ -147,13 +145,13 @@ export default class ChartComponent extends Mixins(PaneMixin) {
   $refs!: {
     chartContainer: HTMLElement
     paneHeader: PaneHeader
+    timeframeButton: HTMLElement
   }
 
   mounted() {
     this.chart = new Chart(this.paneId, this.$refs.chartContainer)
 
     this.bindAggregator()
-    this.refreshAxisSize()
 
     if (this.showIndicators && this.$parent.$el.clientHeight > 420) {
       this.showIndicators = true
@@ -199,6 +197,7 @@ export default class ChartComponent extends Mixins(PaneMixin) {
 
     this.chart.refreshChartDimensions()
     this.chart.updateFontSize()
+    this.refreshAxisSize()
   }
 
   async refreshAxisSize() {
@@ -206,36 +205,9 @@ export default class ChartComponent extends Mixins(PaneMixin) {
       return
     }
 
-    await sleep(10)
+    await sleep(100)
 
-    const chartOptions = this.$store.state[this.paneId] as ChartPaneState
-
-    const axis = {
-      top: 0,
-      left: 0,
-      right: 0,
-      time: 0
-    }
-
-    if (chartOptions.showLeftScale) {
-      axis.left = this.$refs.chartContainer.querySelector(
-        'tr:first-child td:first-child canvas'
-      ).clientWidth
-    }
-
-    if (chartOptions.showRightScale) {
-      axis.right = this.$refs.chartContainer.querySelector(
-        'tr:first-child td:last-child canvas'
-      ).clientWidth
-    }
-
-    if (chartOptions.showTimeScale) {
-      axis.time = this.$refs.chartContainer.querySelector(
-        'tr:last-child td:nth-child(2) canvas'
-      ).clientHeight
-    }
-
-    this.axis = axis
+    this.axis = this.chart.getAxisSize()
   }
 
   toggleLayout() {
@@ -254,6 +226,14 @@ export default class ChartComponent extends Mixins(PaneMixin) {
 
   takeScreenshot(event) {
     this.chart.takeScreenshot(event)
+  }
+
+  selectTimeframe(event, timeframe) {
+    if (timeframe === this.timeframe) {
+      this.toggleTimeframeDropdown(event, this.$refs.timeframeButton)
+      return
+    }
+    this.$store.dispatch(`${this.paneId}/setTimeframe`, timeframe)
   }
 }
 </script>
@@ -330,7 +310,6 @@ export default class ChartComponent extends Mixins(PaneMixin) {
 
   -webkit-touch-callout: none;
   -webkit-user-select: none;
-  -khtml-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;

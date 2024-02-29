@@ -1,7 +1,7 @@
 .table {
   width: 100%;
   border: 0;
-  border-spacing: 0px;
+  border-spacing: 0;
 
   th {
     text-align: left;
@@ -14,19 +14,11 @@
   &-input {
     position: relative;
     background-color: transparent;
-    padding: 0.5em;
-
-    i.icon {
-      position: absolute;
-      left: 0.5em;
-      top: 0.5em;
-      line-height: 1.5;
-      color: var(--theme-buy-100);
-    }
+    padding: 0.5rem;
 
     .checkbox-control > div {
-      width: 1.1em;
-      height: 1.1em;
+      width: 1.1rem;
+      height: 1.1rem;
       padding: 0;
     }
 
@@ -47,6 +39,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 1px;
+    white-space: nowrap;
   }
 
   &-min {
@@ -57,7 +50,6 @@
   &-action {
     border: 0;
     cursor: pointer;
-    padding: 0;
     margin: 0;
     min-width: 1px;
     padding: 0 0.25rem;
@@ -78,10 +70,9 @@
     }
 
     .btn {
-      display: block;
-      font-size: 12px;
-      display: inline-block;
+      font-size: 0.875rem;
       text-align: center;
+      vertical-align: middle;
     }
   }
 
@@ -145,7 +136,7 @@
   }
 
   &--inset {
-    margin: 1rem -1rem 0 -1rem;
+    margin: 0 -1rem 0 -1rem;
     width: calc(100% + 2rem);
 
     thead th {
@@ -153,7 +144,7 @@
         padding-left: 1rem;
       }
       &:last-child {
-        padding-left: 1rem;
+        padding-right: 1rem;
       }
     }
 
@@ -162,7 +153,7 @@
         padding-left: 1rem;
       }
       &:last-child {
-        padding-left: 1rem;
+        padding-right: 1rem;
       }
     }
   }

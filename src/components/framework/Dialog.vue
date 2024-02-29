@@ -4,6 +4,8 @@
     :class="[
       impliedSize && `dialog--size-${impliedSize}`,
       currentSize && `dialog--${currentSize}`,
+      contrasted && `dialog--contrasted`,
+      borderless && `dialog--borderless`,
       moved && `dialog--moved`,
       mask && 'dialog--mask'
     ]"
@@ -24,22 +26,24 @@
       ></i>
       <header
         v-if="$slots.header"
-        class="dialog__header"
+        class="dialog__header-wrapper"
         @mousedown="handleDrag"
         @touchstart="handleDrag"
       >
-        <slot name="header"></slot>
-        <button
-          type="button"
-          class="dialog__close btn -link -text -no-grab"
-          @click="close"
-        >
-          <i class="icon-cross"></i>
-        </button>
+        <div class="dialog__header">
+          <slot name="header"></slot>
+          <button
+            type="button"
+            class="dialog__close btn -link -text -no-grab"
+            @click="close"
+          >
+            <i class="icon-cross"></i>
+          </button>
+        </div>
+        <div class="dialog__subheader" v-if="$slots.subheader">
+          <slot name="subheader" />
+        </div>
       </header>
-      <div class="dialog__subheader" v-if="$slots.subheader">
-        <slot name="subheader" />
-      </div>
       <div ref="body" class="dialog__body hide-scrollbar" :class="bodyClass">
         <slot></slot>
       </div>
@@ -61,6 +65,14 @@ import { getEventCords } from '../../utils/helpers'
     mask: {
       type: Boolean,
       default: true
+    },
+    contrasted: {
+      type: Boolean,
+      default: false
+    },
+    borderless: {
+      type: Boolean,
+      default: false
     },
     resizable: {
       type: Boolean,
@@ -107,6 +119,7 @@ export default class Dialog extends Vue {
     body: HTMLElement
   }
   position: DialogPosition = {}
+  private _persistTimeout: NodeJS.Timeout
 
   created() {
     if (this.size) {
@@ -134,19 +147,8 @@ export default class Dialog extends Vue {
 
     this.$emit('mounted')
   }
-
   beforeDestroy() {
-    const dialogPosition = this.position
-    const parentDialog = this.$parent as any
-
-    if (parentDialog && parentDialog.dialogId) {
-      dialogService.dialogPositions[parentDialog.dialogId] = {
-        x: dialogPosition.x,
-        y: dialogPosition.y,
-        w: dialogPosition.w,
-        h: dialogPosition.h
-      }
-    }
+    this.persistPosition()
 
     if (this._handleTranslateRelease) {
       this._handleTranslateRelease()
@@ -165,8 +167,23 @@ export default class Dialog extends Vue {
     }
   }
 
+  persistPosition() {
+    const dialogPosition = this.position
+    const parentDialog = this.$parent as any
+
+    if (parentDialog && parentDialog.dialogId) {
+      dialogService.dialogPositions[parentDialog.dialogId] = {
+        x: dialogPosition.x,
+        y: dialogPosition.y,
+        w: dialogPosition.w,
+        h: dialogPosition.h
+      }
+    }
+  }
+
   handleDrag(event) {
     if (
+      this._handleTranslateRelease || 
       event.button === 2 ||
       event.target.classList.contains('-no-grab') ||
       event.target.parentElement.classList.contains('-no-grab')
@@ -174,7 +191,6 @@ export default class Dialog extends Vue {
       return
     }
 
-    event.preventDefault()
     const lastMove = Object.assign({}, this.delta)
     const startPosition = getEventCords(event)
     const startOffset = this.$refs.content.offsetTop
@@ -326,6 +342,12 @@ export default class Dialog extends Vue {
 
       this.$emit('resize')
     }
+
+    if (this._persistTimeout) {
+      clearTimeout(this._persistTimeout)
+
+      this._persistTimeout = setTimeout(() => this.persistPosition(), 100)
+    }
   }
 
   bindEscKey() {
@@ -375,12 +397,13 @@ export default class Dialog extends Vue {
     this.$refs.body.style.maxHeight = '100vh'
     this.$refs.content.style.width = position.w + 'px'
     this.$refs.body.style.height = position.h + 'px'
+    this.moved = true
   }
 
   detectSize(w) {
-    if (w >= 720) {
+    if (w >= 840) {
       this.currentSize = 'large'
-    } else if (w > 375) {
+    } else if (w > 420) {
       this.currentSize = 'medium'
     } else {
       this.currentSize = 'small'

@@ -1,7 +1,8 @@
 <template>
   <transition name="draggable-market">
     <div class="draggable-market" :style="styles">
-      <i :class="`icon-${product.exchange}`"></i> {{ market }}
+      <i :class="`icon-${market.exchange}`" class="draggable-market__icon"></i>
+      {{ market.id }}
     </div>
   </transition>
 </template>
@@ -11,7 +12,7 @@ export default {
   name: 'DraggableMarket',
   props: {
     market: {
-      type: String
+      type: Object
     },
     target: {
       type: Object
@@ -28,12 +29,9 @@ export default {
   computed: {
     styles() {
       return {
-        top: this.position.y + 'px',
-        left: this.position.x + 'px'
+        top: Math.round(this.position.y) + 'px',
+        left: Math.round(this.position.x) + 'px'
       }
-    },
-    product() {
-      return this.$store.state.panes.marketsListeners[this.market]
     }
   },
   watch: {
@@ -81,9 +79,16 @@ export default {
   border-radius: 0.5rem;
   gap: 0.25rem;
   z-index: 10;
+  line-height: 1;
+
+  &__icon {
+    font-size: 1.25rem;
+  }
 
   &-enter-active {
-    transition: all 0.2s $ease-out-expo, transform 0.2s $ease-elastic;
+    transition:
+      all 0.2s $ease-out-expo,
+      transform 0.2s $ease-elastic;
     pointer-events: none;
   }
 

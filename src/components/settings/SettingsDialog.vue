@@ -5,14 +5,8 @@
     contentClass="settings"
     size="medium"
   >
-    <template v-slot:header
-      ><div>
-        <div class="dialog__title">Settings</div>
-        <div class="dialog__subtitle" v-if="hits">
-          <i class="icon-bolt"></i> <code v-text="hits"></code> messages /s
-        </div>
-      </div>
-      <div class="column -center"></div>
+    <template #header>
+      <div class="dialog__title">Settings</div>
     </template>
     <ToggableSection
       v-if="currentWorkspace"
@@ -47,7 +41,7 @@
             @click="openWorkspace(workspaceDropdownId, true)"
           >
             <i class="icon-external-link-square-alt"></i>
-            <span>Open in a new tab</span>
+            <span>Open in a tab</span>
           </button>
           <button
             type="button"
@@ -80,7 +74,7 @@
             @click="removeWorkspace(workspaceDropdownId)"
           >
             <i class="icon-cross"></i>
-            <span>Remove workspace</span>
+            <span>Remove</span>
           </button>
         </dropdown>
         <button
@@ -150,27 +144,54 @@
     <ToggableSection
       v-if="currentWorkspace"
       id="settings-trades"
-      title="Trades"
+      title="Data"
       description="aggregation, slippage, currency"
       inset
     >
-      <div class="form-group column mb8">
-        <label class="checkbox-control -aggr -auto flex-grow-1">
+      <div class="form-group column">
+        <label
+          class="checkbox-control -aggr -auto flex-grow-1"
+          title="Granularity preference"
+          v-tippy="{ placement: 'left', boundary: 'window' }"
+        >
           <input
             type="checkbox"
             class="form-control"
             :checked="true"
             @click.prevent="$store.commit('settings/TOGGLE_AGGREGATION')"
           />
-          <div :on="aggregationLength + 'ms'" off="No aggregation"></div>
-          <span v-if="aggregationLength"
-            >{{ aggregationLength }}ms aggregation</span
-          >
-          <span v-else>No aggregation</span>
+          <div :on="aggregationLengthLabel" off="No aggregation"></div>
+          <span v-if="aggregationLength < 0">
+            <strong>RAW</strong> trades
+            <i
+              class="icon-info"
+              v-tippy="{ followCursor: true, distance: 32 }"
+              title="Will pull Binance tick data"
+            ></i>
+          </span>
+          <span v-else-if="aggregationLength">
+            {{ aggregationLengthLabel }} aggregation
+            <i
+              class="icon-info"
+              v-tippy="{ followCursor: true, distance: 32 }"
+              :title="`Will pull aggregated data <br>so that 1 tick = ${aggregationLength}ms`"
+            ></i>
+          </span>
+          <span v-else>
+            No aggregation
+            <i
+              class="icon-info"
+              v-tippy="{ followCursor: true, distance: 32 }"
+              title="Will pull aggregated Binance data but won't aggregate on top of it"
+            ></i>
+          </span>
         </label>
       </div>
+      <p v-if="aggregationLength < 0" class="form-feedback mt4">
+        <i class="icon-warning"></i> Processing raw data eats up CPU power
+      </p>
 
-      <div class="form-group mb8">
+      <div class="form-group mt8 mb8">
         <label
           class="checkbox-control -auto"
           :title="
@@ -180,7 +201,7 @@
               ? 'Show slippage in basis point (bps)'
               : 'Slippage disabled'
           "
-          v-tippy="{ placement: 'top', boundary: 'window' }"
+          v-tippy="{ placement: 'left', boundary: 'window' }"
         >
           <input
             type="checkbox"
@@ -203,7 +224,7 @@
       <div class="form-group">
         <label
           class="checkbox-control checkbox-control-input -auto"
-          v-tippy="{ placement: 'top', boundary: 'window' }"
+          v-tippy="{ placement: 'left', boundary: 'window' }"
           title="Size display preference"
         >
           <input
@@ -220,12 +241,7 @@
           <span>Size in</span>
           <div on="quote currency" off="base currency"></div>
           <span>
-            <span class="text-success">
-              (<i
-                :class="preferQuoteCurrencySize ? 'icon-quote' : 'icon-base'"
-              ></i
-              >)
-            </span>
+            <span class="text-success"> (<i class="icon-currency"></i>) </span>
           </span>
         </label>
       </div>
@@ -387,14 +403,13 @@ import ToggableSection from '@/components/framework/ToggableSection.vue'
 
 import importService from '@/services/importService'
 import workspacesService from '@/services/workspacesService'
-import aggregatorService from '@/services/aggregatorService'
-import { APPLICATION_START_TIME } from '@/utils/constants'
 
 import DialogMixin from '@/mixins/dialogMixin'
 
 export default {
   mixins: [DialogMixin],
   components: {
+    // eslint-disable-next-line vue/no-reserved-component-names
     Dialog,
     Exchange,
     AudioSettings,
@@ -407,7 +422,6 @@ export default {
     return {
       currentWorkspace: null,
       workspaces: [],
-      hits: null,
       workspaceDropdownId: null,
       workspaceDropdownTrigger: null
     }
@@ -449,6 +463,14 @@ export default {
       return this.$store.state.settings.aggregationLength
     },
 
+    aggregationLengthLabel() {
+      if (this.aggregationLength < 0) {
+        return 'RAW'
+      }
+
+      return this.aggregationLength + 'ms'
+    },
+
     preferQuoteCurrencySize() {
       return this.$store.state.settings.preferQuoteCurrencySize
     },
@@ -460,33 +482,9 @@ export default {
 
   async created() {
     await this.getWorkspaces()
-
-    if (import.meta.env.NODE_ENV !== 'production') {
-      this.getHits()
-    }
-  },
-
-  beforeDestroy() {
-    if (this._hitsTimeout) {
-      clearTimeout(this._hitsTimeout)
-    }
   },
 
   methods: {
-    getHits() {
-      if (this.hits === null) {
-        this.hits = '...'
-      }
-
-      this._hitsTimeout = setTimeout(async () => {
-        const hits = await aggregatorService.dispatchAsync({ op: 'getHits' })
-        const elapsed = Date.now() - APPLICATION_START_TIME
-        this.hits = (hits / (elapsed / 1000)).toFixed()
-
-        this.getHits()
-      }, 1000)
-    },
-
     async getWorkspaces() {
       const workspaces = (await workspacesService.getWorkspaces()).sort(
         (a, b) => b.updatedAt - a.updatedAt
@@ -569,6 +567,7 @@ export default {
         'https://random-word-api.herokuapp.com/word?number=2'
       )
         .then(response => response.json())
+        .catch(() => [])
         .then(words =>
           words.map(word => word[0].toUpperCase() + word.slice(1)).join('')
         )
@@ -619,6 +618,12 @@ export default {
 
       if (name) {
         await workspacesService.renameWorkspace(workspace, name)
+
+        history.replaceState(
+          {},
+          '',
+          window.location.href.replace(this.currentWorkspace.id, workspace.id)
+        )
 
         await this.getWorkspaces()
       }
@@ -742,8 +747,8 @@ export default {
   opacity: 0.75;
   line-height: 1;
   position: relative;
-  top: -0.5em;
-  left: 0.25em;
+  top: -0.5rem;
+  left: 0.25rem;
   align-self: center;
 }
 

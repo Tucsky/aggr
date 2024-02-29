@@ -1,24 +1,21 @@
 <template>
-  <Dialog @clickOutside="hide" class="search-dialog" ref="dialog">
+  <Dialog
+    ref="dialog"
+    class="search-dialog"
+    size="wide"
+    @resize="onResize"
+    @clickOutside="hide"
+  >
     <template v-slot:header>
-      <div v-if="paneId">
+      <div v-if="selectedPaneId">
         <div class="dialog__title">
-          Connect
+          Connect →
           <code class="-filled -green">
             <span>{{ paneName }}</span>
-            <button
-              type="button"
-              class="btn -small -text"
-              v-tippy
-              title="Rename pane"
-              @click="renamePane"
-            >
-              <i class="icon-edit"></i>
-            </button>
           </code>
           <button
             type="button"
-            class="btn -small ml4 -text"
+            class="btn -small ml4 -text -no-grab"
             v-tippy
             title="Connect to all"
             @click="detargetPane"
@@ -30,7 +27,13 @@
       <div v-else>
         <div class="dialog__title">Manage connections</div>
       </div>
-      <Loader v-if="isPreloading" small class="mtauto mbauto mr0" />
+      <Loader
+        v-if="isLoading || isPreloading"
+        small
+        class="mtauto mbauto mr0"
+        title="Updating database..."
+        v-tippy
+      />
       <div class="column -center"></div>
     </template>
     <div
@@ -187,34 +190,13 @@
         </label>
       </ToggableSection>
     </div>
-    <div ref="scroller" class="search-dialog__wrapper hide-scrollbar">
+    <div class="search-dialog__wrapper hide-scrollbar">
       <div
-        class="search-dialog-selection search-dialog__tags form-control"
+        class="search-dialog-selection search-dialog__tags form-control hide-scrollbar"
         :class="groupsCount < 10 && '-sticky'"
         @click="$refs.input.focus()"
         ref="selection"
       >
-        <div
-          v-if="selection.length"
-          class="search-dialog-selection__controls d-flex btn-group"
-        >
-          <button
-            class="btn -text -small"
-            @click="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')"
-            title="Toggle grouping"
-            v-tippy="{ boundary: 'window', placement: 'bottom' }"
-          >
-            <i class="icon-merge"></i>
-          </button>
-          <button
-            class="btn -text -small"
-            @click="clearSelection"
-            title="Clear"
-            v-tippy="{ boundary: 'window', placement: 'bottom' }"
-          >
-            <i class="icon-eraser"></i>
-          </button>
-        </div>
         <template v-if="searchTypes.normalize">
           <button
             v-for="(markets, localPair) of groupedSelection"
@@ -233,156 +215,163 @@
         </template>
         <template v-else>
           <button
-            v-for="market of selection"
-            :key="market"
-            class="search-dialog__tags-item btn"
-            :class="{ '-green': activeMarkets.indexOf(market) !== -1 }"
-            title="Click to remove"
-            @click.stop.prevent="toggleMarkets(market)"
-            v-text="market"
-          ></button>
+            v-for="market of selectedProducts"
+            :key="market.id"
+            class="search-dialog__tags-item btn -theme"
+            :class="{ '-green': activeMarkets.indexOf(market.id) !== -1 }"
+            :title="`Click to remove ${market.id}`"
+            @click.stop.prevent="toggleMarkets(market.id)"
+          >
+            <template v-if="!market.exchange">
+              {{ market.id }}
+            </template>
+            <template v-else>
+              <i class="mr4" :class="`icon-${market.exchange}`"></i>
+              {{ market.pair }}
+            </template>
+          </button>
         </template>
         <input
           ref="input"
           class="search-dialog__tags-item"
           type="text"
-          placeholder="Search"
+          :placeholder="`Search (${filteredProducts.length})`"
           :value="query"
-          @input=";(page = 0), (query = $event.target.value)"
+          @input="onInput"
         />
       </div>
-      <div class="search-dialog__results">
-        <template v-if="results.length">
-          <div v-if="page > 0" class="d-flex mt8">
-            <button class="mx8 btn -text mlauto switch-page" @click="showLess">
-              ... go page {{ page }}
-            </button>
-          </div>
-          <table
-            class="table mt8 search-dialog-recents table--inset"
-            v-if="
-              searchTypes.recent &&
-              previousSearchSelections.length &&
-              !query.length
-            "
-          >
-            <thead>
-              <tr>
-                <th colspan="100%">
-                  Search history
-                  <button
-                    class="btn -small -text"
-                    @click="toggleType('recent')"
-                  >
-                    <i class="icon-cross"></i>
-                  </button>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="savedSelection of previousSearchSelections"
-                :key="savedSelection.label"
-                class="-action"
-                :title="savedSelection.markets.join(', ')"
-                @click="toggleMarkets(savedSelection.markets, $event.shiftKey)"
-              >
-                <td class="search-dialog-recents__label">
-                  {{ savedSelection.label }}
-                  <span
-                    v-if="savedSelection.count > 1"
-                    class="badge -invert ml8"
-                    v-text="savedSelection.markets.length"
-                  ></span>
-                </td>
-                <td
-                  class="search-dialog-recents__markets table-ellipsis text-nowrap"
-                >
-                  <small>{{ savedSelection.markets.join(', ') }}</small>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <table class="table mt8 table--inset" v-if="searchTypes.normalize">
-            <tbody>
-              <tr
-                v-for="(group, index) in results"
-                :key="group.localPair"
-                @click="toggleMarkets(group.markets)"
-                :class="{ active: activeIndex === index }"
-                class="-action"
-              >
-                <td v-text="group.localPair"></td>
-                <td class="-lower">
-                  <span class="search-dialog__group-count">
-                    <div class="badge mr8">
-                      {{ group.markets.length }}
-                    </div>
-                  </span>
-                  <i
-                    v-for="(pairs, exchange) of group.exchanges"
-                    :key="exchange"
-                    class="pr4 search-dialog__exchange-logo"
-                    :class="'icon-' + exchange"
-                    :title="pairs.join(', ')"
-                  ></i>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <table v-else class="table table--inset mt8">
-            <tbody>
-              <tr
-                v-for="(market, index) of results"
-                :key="market.id"
-                @click="toggleMarkets([market.id])"
-                :class="{ active: activeIndex === index }"
-                class="-action"
-              >
-                <td
-                  class="icon search-dialog__exchange text-center text-color-base"
-                  :class="'icon-' + market.exchange"
-                ></td>
-                <td v-text="market.exchange"></td>
-                <td v-text="market.pair"></td>
-                <td v-text="market.type"></td>
-                <td class="text-center">
-                  <i
-                    v-if="historicalMarkets.indexOf(market.id) !== -1"
-                    class="icon-candlestick"
-                    title="historical data available for this market"
-                  ></i>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div class="mt8 d-flex">
-            <button class="mx8 btn -text" @click="addAll">
-              <i class="icon-plus mr8"></i> add all of the above
-            </button>
-            <button
-              class="mx8 btn -text mlauto switch-page"
-              @click="showMore"
-              v-if="results.length === resultsPerPage"
+      <button
+        v-if="query.length || selection.length"
+        class="btn search-dialog__tags-delete -text -small"
+        @click="clearSelection"
+        title="Clear"
+        v-tippy="{ boundary: 'window', placement: 'bottom' }"
+      >
+        <i class="icon-cross"></i>
+      </button>
+      <div class="search-dialog__results hide-scrollbar">
+        <table
+          class="table mt8 search-dialog-recents table--inset"
+          v-if="
+            searchTypes.recent &&
+            previousSearchSelections.length &&
+            !query.length
+          "
+        >
+          <thead>
+            <tr>
+              <th colspan="100%">
+                Search history
+                <button class="btn -small -text" @click="toggleType('recent')">
+                  <i class="icon-cross"></i>
+                </button>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="savedSelection of previousSearchSelections"
+              :key="savedSelection.label"
+              class="-action"
+              @click="toggleMarkets(savedSelection.markets, $event.shiftKey)"
             >
-              go page {{ page + 2 }} ...
-            </button>
-          </div>
-        </template>
-        <p class="mb0 pb0 ml16" v-else-if="query.length">
-          <span class="text-muted">No results found for "{{ query }}".</span>
-          <br />
+              <td class="search-dialog-recents__label">
+                {{ savedSelection.label }}
+                <span
+                  v-if="savedSelection.count > 1"
+                  class="badge -invert ml8"
+                  v-text="savedSelection.markets.length"
+                ></span>
+              </td>
+              <td
+                class="search-dialog-recents__markets table-ellipsis text-nowrap"
+              >
+                <small>{{ savedSelection.markets.join(', ') }}</small>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-          <button
-            v-if="hasFilters || !allExchangesEnabled"
-            class="btn -cases -text"
-            @click="clearFilters"
+        <table class="table mt8 table--inset" v-if="searchTypes.normalize">
+          <tbody>
+            <tr
+              v-for="(group, index) in slicedResults"
+              :key="group.localPair"
+              @click="toggleMarkets(group.markets)"
+              :class="{ '-active': activeIndex === index }"
+              class="-action"
+            >
+              <td v-text="group.localPair"></td>
+              <td class="-lower">
+                <span class="search-dialog__group-count">
+                  <div class="badge mr8">
+                    {{ group.markets.length }}
+                  </div>
+                </span>
+                <i
+                  v-for="(pairs, exchange) of group.exchanges"
+                  :key="exchange"
+                  class="pr4 search-dialog__exchange-logo"
+                  :class="'icon-' + exchange"
+                ></i>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <table v-else class="table table--inset mt8">
+          <tbody>
+            <tr
+              v-for="(market, index) of slicedResults"
+              :key="market.id"
+              @click="toggleMarkets([market.id])"
+              :class="{ '-active': activeIndex === index }"
+              class="-action"
+            >
+              <td
+                class="icon search-dialog__exchange text-center text-color-base"
+                :class="'icon-' + market.exchange"
+              ></td>
+              <td v-text="market.exchange"></td>
+              <td v-text="market.pair"></td>
+              <td v-text="market.type"></td>
+              <td class="text-center">
+                <i
+                  v-if="historicalMarkets.indexOf(market.id) !== -1"
+                  class="icon-candlestick"
+                  title="historical data available for this market"
+                ></i>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <transition name="fade-scale">
+          <div
+            v-if="!isPreloading && !pagesCount"
+            class="search-dialog__results-empty"
+            :style="{ backgroundImage: `url(${noResultsPng})` }"
           >
-            <i class="icon-eraser mr8"></i> remove filters
-          </button>
-        </p>
+            <p
+              class="shake-horizontal"
+              v-html="noResultsMessage"
+              @click="$event.target.tagName === 'BUTTON' && clearSelection()"
+            ></p>
+          </div>
+        </transition>
+      </div>
+      <div v-if="pagesCount" class="search-dialog__results-footer mt8 d-flex">
+        <button class="btn -text mrauto" @click="addAll">
+          <i class="icon-plus mr8"></i> add all
+        </button>
+        <button
+          v-for="(i, index) in pagination"
+          :key="index"
+          class="btn -text search-dialog__results-footer-page"
+          :class="[page === i && '-active -theme']"
+          @click="goPage(i)"
+        >
+          {{ i + 1 }}
+        </button>
       </div>
     </div>
 
@@ -422,8 +411,12 @@ import {
   stripStableQuote
 } from '@/services/productsService'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
+import noResultsPng from '@/assets/noresults.png'
 
 const RESULTS_PER_PAGE = 25
+
+const selectedProducts = {}
+let flattenedProducts = []
 
 export default {
   mixins: [DialogMixin],
@@ -450,23 +443,26 @@ export default {
     page: 0,
     query: '',
     markets: [],
+    maxPages: 5,
+    selection: [],
     isLoading: false,
+    noResultsPng,
+    noResultsMessage: null,
     isPreloading: false,
     productsReady: false,
     selectedPaneId: null,
-    selection: [],
+    cacheTimestamp: 0,
     originalSelection: [],
     activeIndex: null,
     mobileShowFilters: false,
     canRefreshProducts: true,
-    flattenedProducts: [],
     quoteCurrencies: [
       'USD',
       'USDT',
+      'FDUSD',
       'UST',
       'USDC',
       'USDD',
-      'BUSD',
       'TUSD',
       'ETH',
       'BTC',
@@ -481,20 +477,18 @@ export default {
     previousSearchSelections() {
       return this.$store.state.settings.previousSearchSelections
     },
-    resultsPerPage() {
-      return RESULTS_PER_PAGE
-    },
-    otherPanes() {
-      return Object.keys(this.$store.state.panes.panes)
-        .filter(a => a !== this.selectedPaneId)
-        .map(a => this.$store.state.panes.panes[a])
-    },
     paneName() {
-      if (this.selectedPaneId) {
-        return this.$store.getters['panes/getName'](this.selectedPaneId)
+      if (!this.selectedPaneId) {
+        return 'n/a'
       }
 
-      return ''
+      const name = this.$store.getters['panes/getName'](this.selectedPaneId)
+
+      if (!name.trim().length) {
+        return '👻'
+      }
+
+      return name
     },
     activeMarkets() {
       return Object.keys(this.$store.state.panes.marketsListeners)
@@ -607,6 +601,10 @@ export default {
       }
     },
     filteredProducts() {
+      // force recalculate computed when cacheTimestamp changes
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const id = this.cacheTimestamp
+
       const hasHistorical = this.searchTypes.historical
       const hasSpot = this.searchTypes.spots
       const hasPerpetuals = this.searchTypes.perpetuals
@@ -618,11 +616,10 @@ export default {
       const searchQuotes = this.searchQuotes
       const allQuotes = this.allQuotes
 
-      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-      this.page = 0
+      const historicalMarkets = this.historicalMarkets
 
-      return this.flattenedProducts.filter(a => {
-        if (hasHistorical && this.historicalMarkets.indexOf(a.id) === -1) {
+      return flattenedProducts.filter(a => {
+        if (hasHistorical && historicalMarkets.indexOf(a.id) === -1) {
           return false
         }
 
@@ -652,32 +649,45 @@ export default {
         return true
       })
     },
+    marketsByPair: function () {
+      const searchTypes = this.searchTypes
+      const selection = this.selection
+      const queryFilter = this.queryFilter
+
+      if (!searchTypes.normalize) {
+        return {}
+      }
+
+      return this.filteredProducts
+        .filter(
+          product =>
+            selection.indexOf(product.id) === -1 &&
+            queryFilter.test(product.local)
+        )
+        .reduce((groups, product) => {
+          let localPair
+
+          if (product && searchTypes.mergeUsdt) {
+            localPair = product.base + stripStableQuote(product.quote)
+          } else {
+            localPair = product.base + product.quote
+          }
+
+          if (!groups[localPair]) {
+            groups[localPair] = []
+          }
+
+          groups[localPair].push(product.id)
+
+          return groups
+        }, {})
+    },
     results: function () {
       const offset = this.page * RESULTS_PER_PAGE
+      const selection = this.selection
+      const queryFilter = this.queryFilter
       if (this.searchTypes.normalize) {
-        const marketsByPair = this.filteredProducts
-          .filter(
-            product =>
-              this.selection.indexOf(product.id) === -1 &&
-              this.queryFilter.test(product.local)
-          )
-          .reduce((groups, product) => {
-            let localPair
-
-            if (product && this.searchTypes.mergeUsdt) {
-              localPair = product.base + stripStableQuote(product.quote)
-            } else {
-              localPair = product.base + product.quote
-            }
-
-            if (!groups[localPair]) {
-              groups[localPair] = []
-            }
-
-            groups[localPair].push(product.id)
-
-            return groups
-          }, {})
+        const marketsByPair = this.marketsByPair
 
         return Object.keys(marketsByPair)
           .slice(offset, offset + RESULTS_PER_PAGE)
@@ -699,30 +709,59 @@ export default {
             }, {})
           }))
       } else {
-        return this.filteredProducts
-          .filter(
-            product =>
-              this.selection.indexOf(product.id) === -1 &&
-              this.queryFilter.test(product.id)
-          )
-          .slice(offset, offset + RESULTS_PER_PAGE)
+        return this.filteredProducts.filter(
+          product =>
+            selection.indexOf(product.id) === -1 && queryFilter.test(product.id)
+        )
       }
     },
-    groupedSelection: function () {
-      if (!this.productsReady) {
-        return {}
+    slicedResults() {
+      if (this.searchTypes.normalize) {
+        return this.results
       }
 
-      return this.selection.reduce((groups, market) => {
-        const [exchange] = market.split(':')
+      const offset = this.page * RESULTS_PER_PAGE
 
-        if (!indexedProducts[exchange]) {
-          return groups
-        }
-
-        const indexedProduct = indexedProducts[exchange].find(
-          product => product.id === market
+      return this.results.slice(offset, offset + RESULTS_PER_PAGE)
+    },
+    pagesCount() {
+      if (this.searchTypes.normalize) {
+        return Math.ceil(
+          Object.keys(this.marketsByPair).length / RESULTS_PER_PAGE
         )
+      }
+      return Math.ceil(this.results.length / RESULTS_PER_PAGE)
+    },
+    pagination() {
+      let start, end
+
+      const halfMax = Math.floor(this.maxPages / 2)
+
+      if (this.pagesCount <= this.maxPages) {
+        start = 0
+        end = this.pagesCount - 1
+      } else if (this.page < halfMax) {
+        start = 0
+        end = this.maxPages - 1
+      } else if (this.page >= this.pagesCount - halfMax) {
+        start = this.pagesCount - this.maxPages
+        end = this.pagesCount - 1
+      } else {
+        // Center the current page
+        start = this.page - halfMax
+        end = this.page + (this.maxPages - halfMax - 1)
+      }
+
+      return Array.from({ length: end - start + 1 }, (_, i) => i + start)
+    },
+    selectedProducts: function () {
+      return this.selection.map(
+        market => selectedProducts[market] || { id: market }
+      )
+    },
+    groupedSelection: function () {
+      return this.selection.reduce((groups, market) => {
+        const indexedProduct = selectedProducts[market]
 
         let localPair = market
 
@@ -746,6 +785,9 @@ export default {
     },
     groupsCount() {
       return Object.keys(this.groupedSelection).length
+    },
+    showNoResults() {
+      return !this.isPreloading && !this.pagesCount
     }
   },
 
@@ -759,6 +801,14 @@ export default {
       if (await this.ensureIndexedProducts()) {
         this.cacheProducts()
       }
+    },
+    showNoResults(value) {
+      if (value) {
+        this.noResultsMessage = this.getNoResultsMessage()
+      }
+    },
+    pagesCount() {
+      this.page = 0
     }
   },
   async created() {
@@ -777,6 +827,8 @@ export default {
     document.addEventListener('keydown', this.onKeydown)
 
     await this.$nextTick()
+
+    this.maxPages = this.getMaxPages()
 
     if (!this.$refs.input) {
       return
@@ -801,18 +853,20 @@ export default {
     }
   },
   methods: {
-    async renamePane() {
-      const name = await dialogService.prompt({
-        action: 'Rename',
-        input: this.paneName
-      })
-
-      if (name !== null && name !== this.paneName) {
-        this.$store.commit('panes/SET_PANE_NAME', {
-          id: this.selectedPaneId,
-          name
-        })
-      }
+    onInput(event) {
+      this.page = 0
+      this.query = event.target.value
+      this.activeIndex = 0
+    },
+    onResize() {
+      this.maxPages = this.getMaxPages()
+    },
+    getMaxPages() {
+      return this.$refs.dialog.currentSize === 'small'
+        ? 3
+        : this.$refs.dialog.currentSize === 'medium'
+          ? 5
+          : 10
     },
     async ensureIndexedProducts() {
       const selectedExchanges = this.selection.reduce((acc, market) => {
@@ -840,9 +894,19 @@ export default {
 
       return false
     },
-    detargetPane() {
+    async detargetPane() {
       this.$store.commit('app/SET_FOCUSED_PANE', null)
       this.selectedPaneId = null
+      if (
+        this.selection.join('') !== this.originalSelection.join('') &&
+        !(await dialogService.confirm({
+          title: `Override selection ?`,
+          message: `Replace the existing selection<br>with the app's current active connections ?`,
+          html: true
+        }))
+      ) {
+        return
+      }
       this.initSelection()
     },
     initSelection() {
@@ -859,7 +923,7 @@ export default {
 
       this.originalSelection = this.selection.slice()
     },
-    containMultipleMarketsConfigurations() {
+    hasMultipleMarketsConfigurations() {
       return (
         Object.keys(this.$store.state.panes.panes)
           .map(id => getBucketId(this.$store.state.panes.panes[id].markets))
@@ -892,8 +956,10 @@ export default {
 
       if (index === -1) {
         this.selection.push(market)
+        this.cacheSelectedProducts(market)
       } else {
         this.selection.splice(index, 1)
+        this.cacheSelectedProducts(market, true)
       }
     },
     async submit() {
@@ -903,7 +969,7 @@ export default {
 
       if (!this.selectedPaneId) {
         if (
-          this.containMultipleMarketsConfigurations() &&
+          this.hasMultipleMarketsConfigurations() &&
           !(await dialogService.confirm(
             `Override the other panes market filters`
           ))
@@ -955,6 +1021,8 @@ export default {
       this.query = ''
 
       this.$refs.input.focus()
+
+      this.cacheSelectedProducts(null, true)
     },
 
     copySelection() {
@@ -989,29 +1057,39 @@ export default {
     },
 
     onKeydown(event) {
+      if (dialogService.isDialogOpened('prompt')) {
+        return false
+      }
+
       switch (event.key) {
         case 'Enter':
           event.preventDefault()
-          if (this.results[this.activeIndex]) {
+          if (this.slicedResults[this.activeIndex]) {
             if (this.searchTypes.normalize) {
-              this.toggleMarkets([this.results[this.activeIndex].markets])
+              this.toggleMarkets(this.slicedResults[this.activeIndex].markets)
             } else {
-              this.toggleMarkets([this.results[this.activeIndex].id])
+              this.toggleMarkets([this.slicedResults[this.activeIndex].id])
             }
+
+            if (this.activeIndex === 0) {
+              this.activeIndex = -1
+            }
+          } else if (this.activeIndex === null || this.activeIndex === -1) {
+            this.submit()
           }
           break
 
         case 'ArrowDown':
         case 'ArrowUp':
-          if (this.results.length) {
+          if (this.pagesCount) {
             if (event.key === 'ArrowUp') {
-              this.activeIndex = Math.max(0, this.activeIndex - 1)
+              this.activeIndex = Math.max(-1, this.activeIndex - 1)
             } else {
               if (this.activeIndex === null) {
                 this.activeIndex = 0
               } else {
                 this.activeIndex = Math.min(
-                  this.results.length - 1,
+                  this.slicedResults.length - 1,
                   this.activeIndex + 1
                 )
               }
@@ -1046,17 +1124,21 @@ export default {
       }
     },
 
+    goPage(i) {
+      this.page = i
+    },
+
     addAll() {
       const normalized = this.searchTypes.normalize
       const markets = []
 
-      for (let i = 0; i < this.results.length; i++) {
+      for (let i = 0; i < this.slicedResults.length; i++) {
         if (normalized) {
-          for (const market of this.results[i].markets) {
+          for (const market of this.slicedResults[i].markets) {
             markets.push(market)
           }
         } else {
-          markets.push(this.results[i].id)
+          markets.push(this.slicedResults[i].id)
         }
       }
 
@@ -1129,22 +1211,55 @@ export default {
       this.cacheProducts()
     },
 
-    async showMore() {
-      this.page++
-      await this.$nextTick()
-      this.$refs.scroller.scrollTop = 0
-    },
-
-    async showLess() {
-      this.page = Math.max(this.page - 1, 0)
-      await this.$nextTick()
-      this.$refs.scroller.scrollTop = this.$refs.scroller.offsetHeight
-    },
-
     cacheProducts() {
-      this.flattenedProducts = Array.prototype.concat(
+      flattenedProducts = Array.prototype.concat(
         ...Object.values(indexedProducts)
       )
+
+      this.cacheSelectedProducts()
+
+      this.selection = [...this.selection]
+      this.cacheTimestamp = Date.now()
+    },
+
+    cacheSelectedProducts(id, clear = false) {
+      for (const market of this.selection) {
+        if (id && market !== id) {
+          continue
+        }
+
+        if (clear) {
+          delete selectedProducts[market]
+          continue
+        }
+
+        const [exchange] = parseMarket(market)
+        const product = indexedProducts[exchange].find(
+          product => product.id === market
+        )
+        selectedProducts[market] = product
+
+        if (id) {
+          break
+        }
+      }
+    },
+    getNoResultsMessage() {
+      const options = [
+        "Oops! Looks like the market's playing hide and seek. <button>Try searching again</button>! 🐮🐻💰",
+        'Bulls and bears are puzzled! No coins found.',
+        "The market's taking a breather. <button>Try another search</button>!",
+        "Even our bullish friend couldn't find that coin!",
+        'Bear with us! No coins matched your search.',
+        "Lost in the crypto maze? <button>Let's search again</button>!",
+        'Coins in limbo! Adjust your filters or <button>try a new term</button>.',
+        "Our bear's got the blues, no results found!",
+        'Tales of the missing coins! <button>Refine your search</button>.',
+        'Crypto hideout! Nothing turned up, <button>try again</button>.',
+        "Coins playing hard to get? <button>Let's give it another shot</button>!"
+      ]
+
+      return options[Math.floor(Math.random() * options.length)]
     }
   }
 }
@@ -1152,25 +1267,19 @@ export default {
 <style lang="scss" scoped>
 .search-dialog {
   ::v-deep .dialog__content {
-    width: 75vw;
-
     .dialog__body {
       padding: 0;
       flex-direction: row;
       align-items: stretch;
       overflow: hidden;
     }
-
-    .dialog__subtitle {
-      color: var(--theme-color-o75);
-      opacity: 1;
-    }
   }
 
   &__side {
-    width: 12.5em;
-    min-width: 12.5em;
-    overflow: auto;
+    width: 13.5rem;
+    overflow-y: auto;
+    border-right: 1px solid var(--theme-background-150);
+    flex-shrink: 0;
 
     .dialog--small & {
       display: none;
@@ -1190,13 +1299,24 @@ export default {
   &__wrapper {
     flex-grow: 1;
     overflow: auto;
-
-    @media screen and (min-width: 551px) {
-      padding-left: 0;
-    }
+    display: flex;
+    flex-direction: column;
+    background-color: var(--theme-base-o25);
+    position: relative;
   }
 
   &__results {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 1px;
+    position: relative;
+    overflow: auto;
+
+    .icon-candlestick {
+      display: block;
+    }
+
     table {
       border: 0;
       border-collapse: collapse;
@@ -1204,11 +1324,18 @@ export default {
       width: 100%;
     }
 
-    tr.-action {
+    tr {
       color: var(--theme-color-300);
 
-      padding-top: 1px;
+      + tr:not(:last-child) > td {
+        border-top: 1px solid var(--theme-background-100);
+      }
 
+      &:hover {
+        background-color: transparent;
+      }
+
+      &.-active,
       &:hover {
         color: var(--theme-color-base);
 
@@ -1216,25 +1343,111 @@ export default {
           color: var(--theme-color-200);
         }
       }
+
+      &.-active {
+        background-color: var(--theme-background-100);
+      }
     }
 
     td {
-      padding: 0.5em;
+      padding: 0.5rem;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    &-footer {
+      position: sticky;
+      bottom: 0;
+      backdrop-filter: blur(0.25rem);
+      background-color: var(--theme-background-o75);
+      position: sticky;
+      border-top: 1px solid var(--theme-background-100);
+      align-items: center;
+      padding: 0.5rem;
+      gap: 0.25rem;
+      margin-top: auto;
+
+      &-page {
+        opacity: 0.5;
+        width: 1.75rem;
+        justify-content: center;
+
+        &.-active,
+        &:hover {
+          opacity: 1;
+          background-color: var(--theme-background-150) !important;
+        }
+      }
+    }
+
+    &-empty {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.125rem;
+      flex-grow: 1;
+      gap: 1rem;
+      max-height: 100%;
+      position: relative;
+      background-color: var(--theme-background-50);
+      background-blend-mode: lighten;
+      background-size: cover;
+      background-position: center center;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 0;
+
+      #app.-light & {
+        background-blend-mode: darken;
+      }
+
+      p {
+        max-width: 75%;
+        text-align: center;
+        margin: 0;
+      }
+
+      ::v-deep button {
+        text-decoration: underline;
+        cursor: pointer;
+      }
     }
   }
 
   &__tags {
-    padding: 0.25em;
-
     &-item {
-      padding: 0.25em;
+      padding: 0.25rem;
 
       .dialog--small & {
-        padding: 0.125em;
+        padding: 0.125rem;
       }
 
       .dialog--large & {
-        padding: 0.375em;
+        padding: 0.375rem;
+      }
+    }
+
+    &-delete {
+      position: absolute;
+      top: 0;
+      right: 0;
+      margin: 0.375rem;
+      z-index: 2;
+
+      .dialog--small & {
+        margin: 0.25rem;
+      }
+
+      .dialog--large & {
+        margin: 0.5rem;
       }
     }
 
@@ -1243,9 +1456,9 @@ export default {
       background: 0;
       color: inherit;
       font-family: inherit;
-      padding: 0.25em;
+      padding: 0.25rem;
       flex-grow: 1;
-      font-size: 1em;
+      font-size: 1rem;
     }
   }
 
@@ -1265,19 +1478,23 @@ export default {
 
   &-selection {
     position: relative;
-    min-width: 19em;
+    min-width: 19rem;
     border: 0;
-    max-height: 50%;
+    max-height: 33%;
     overflow: auto;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25em;
-    padding-right: 2em;
+    gap: 0.25rem;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    padding-right: 1.5rem;
 
     &.-sticky {
       @media screen and (min-width: 550px) {
-        backdrop-filter: blur(0.25em);
+        backdrop-filter: blur(0.25rem);
         background-color: var(--theme-background-o75);
+        border-bottom: 1px solid var(--theme-background-100);
         position: sticky;
         top: 0;
         z-index: 2;
@@ -1290,27 +1507,28 @@ export default {
       top: 0;
       right: 0;
       display: flex;
-      gap: 0.25em;
-      padding: 0.25em;
+      gap: 0.25rem;
+      padding: 0.25rem;
     }
   }
 
   &__group-count {
-    width: 2em;
+    width: 2rem;
     display: inline-flex;
     justify-content: center;
+
     .badge {
       font-weight: 400;
       text-align: center;
       color: var(--theme-color-base);
-      font-size: 1em;
+      font-size: 1rem;
       line-height: 0;
       margin: 0;
     }
   }
 
   &__exchange-logo {
-    width: 2em;
+    font-size: 1rem;
     color: var(--theme-background-300);
   }
 

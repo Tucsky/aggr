@@ -122,6 +122,17 @@ export async function registerModule(
   }
 }
 
+export function subscribeOnce(type: string): Promise<any> {
+  return new Promise(resolve => {
+    const unsubscribe = store.subscribe(mutation => {
+      if (mutation.type === type) {
+        resolve(mutation.payload)
+        unsubscribe()
+      }
+    })
+  })
+}
+
 export function waitForStateMutation(getter): Promise<any> {
   return new Promise(resolve => {
     const unsubscribe = store.watch(getter, value => {

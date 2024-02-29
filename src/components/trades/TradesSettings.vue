@@ -36,6 +36,7 @@
       title="Thresholds"
       id="trades-thresholds"
       :badge="thresholds.length"
+      :disabled="!showTrades"
       inset
     >
       <div class="form-group">
@@ -62,7 +63,7 @@
       title="Liquidations"
       id="trades-liquidations"
       :badge="liquidations.length"
-      :disabled="!showTrades"
+      :disabled="!showLiquidations"
       inset
     >
       <div class="form-group">

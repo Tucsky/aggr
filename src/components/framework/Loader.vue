@@ -33,11 +33,13 @@ export default {
 .loader {
   margin-inline: auto;
   border-radius: 50%;
-  width: 3em;
-  height: 3em;
+  width: 1.5rem;
+  height: 1.5rem;
   border: 0.25rem solid var(--theme-color-o20);
   border-top-color: currentColor;
   animation: spin 1s infinite linear;
+  cursor: progress;
+  flex-shrink: 0;
 
   &-wrapper {
     position: fixed;
@@ -50,8 +52,8 @@ export default {
   }
 
   &--small {
-    width: 1em;
-    height: 1em;
+    width: 0.75rem;
+    height: 0.75rem;
   }
 }
 </style>

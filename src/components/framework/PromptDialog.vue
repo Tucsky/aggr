@@ -8,6 +8,16 @@
       <div class="form-group">
         <label v-if="label">{{ label }}</label>
         <input
+          v-if="tag === 'input'"
+          type="text"
+          class="form-control w-100"
+          :placeholder="placeholder"
+          v-model="value"
+          v-autofocus
+          v-on:keyup.enter="submit"
+        />
+        <textarea
+          v-else
           type="text"
           class="form-control w-100"
           :placeholder="placeholder"
@@ -18,9 +28,9 @@
     </form>
 
     <template v-slot:footer>
-      <a href="javascript:void(0);" class="btn -text" @click="close(false)"
-        >Cancel</a
-      >
+      <a href="javascript:void(0);" class="btn -text" @click="close(null)">
+        Cancel
+      </a>
       <button type="button" class="btn -green ml8 -large" @click="submit">
         <i class="icon-check mr8"></i> {{ submitLabel }}
       </button>
@@ -33,6 +43,10 @@ import DialogMixin from '@/mixins/dialogMixin'
 
 export default {
   props: {
+    tag: {
+      type: String,
+      default: 'input'
+    },
     question: {
       type: String
     },
@@ -61,7 +75,7 @@ export default {
   data: () => ({
     value: ''
   }),
-  created() {
+  mounted() {
     if (this.input && this.input.length) {
       this.value = this.input
     }

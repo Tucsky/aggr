@@ -18,15 +18,24 @@ Vue.use(VueTippy, {
   delay: [200, 0],
   animateFill: false,
   theme: 'dark',
-  boundary: 'window'
+  boundary: 'window',
+  distance: 24
 })
 
+/* eslint-disable vue/multi-word-component-names */
 Vue.component('tippy', TippyComponent)
 Vue.component('dropdown', DropdownComponent)
 Vue.component('editable', Editable)
 Vue.component('presets', Presets)
 Vue.directive('autofocus', autofocus)
 Vue.directive('draggable-market', draggableMarket)
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    const base_url = import.meta.env.VITE_APP_BASE_PATH || '/'
+    navigator.serviceWorker.register(`${base_url}sw.js`)
+  })
+}
 
 new Vue({
   el: '#app',

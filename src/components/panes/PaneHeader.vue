@@ -6,14 +6,14 @@
   >
     <div
       v-if="showName && name"
-      class="btn pane-header__highlight"
+      class="btn -cases pane-header__highlight"
       @dblclick="maximizePane"
     >
       <slot name="title">
         {{ name }}
         <btn
           type="button"
-          @click="onEditHandler"
+          @click="renamePane"
           class="pane-header__edit btn -text -small"
         >
           <i class="icon-edit"></i>
@@ -90,6 +90,20 @@
         <i class="icon-search"></i>
         <span>Sources</span>
       </button>
+      <div v-if="isInFrame" class="dropdown-item" @click.stop>
+        <label class="checkbox-control -small">
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="syncedWithParent"
+            @change="
+              $store.commit('panes/TOGGLE_SYNC_WITH_PARENT_FRAME', paneId)
+            "
+          />
+          <div></div>
+          <span>Sync</span>
+        </label>
+      </div>
       <div
         v-if="$slots.menu"
         class="dropdown-divider"
@@ -128,6 +142,7 @@ import Component from 'vue-class-component'
 import Btn from '@/components/framework/Btn.vue'
 import { downloadAnything, getSiblings, slugify } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
+import { INFRAME } from '@/utils/constants'
 
 @Component({
   name: 'PaneHeader',
@@ -150,10 +165,6 @@ import dialogService from '@/services/dialogService'
     split: {
       type: Boolean,
       default: true
-    },
-    onEdit: {
-      type: Function,
-      default: null
     }
   },
   components: {
@@ -161,11 +172,11 @@ import dialogService from '@/services/dialogService'
   }
 })
 export default class PaneHeader extends Vue {
-  private onEdit: (event) => void
   private settings?: () => Promise<any>
   paneId: string
   paneDropdownTrigger = null
   isLoading = false
+  isInFrame = INFRAME
 
   get zoom() {
     return this.$store.state.panes.panes[this.paneId].zoom || 1
@@ -173,6 +184,12 @@ export default class PaneHeader extends Vue {
 
   get type() {
     return this.$store.state.panes.panes[this.paneId].type
+  }
+
+  get syncedWithParent() {
+    return (
+      this.$store.state.panes.syncedWithParentFrame.indexOf(this.paneId) !== -1
+    )
   }
 
   get name() {
@@ -244,7 +261,7 @@ export default class PaneHeader extends Vue {
 
     this.$store.dispatch('panes/setZoom', {
       id: this.paneId,
-      zoom: isMaximized ? this.zoom * 2 : this.zoom * 0.5
+      zoom: isMaximized ? this.zoom * 1.5 : this.zoom * (2 / 3)
     })
   }
 
@@ -254,6 +271,7 @@ export default class PaneHeader extends Vue {
     }
 
     const name = await dialogService.prompt({
+      placeholder: `Main pane's market`,
       action: 'Rename',
       input: this.name
     })
@@ -297,15 +315,6 @@ export default class PaneHeader extends Vue {
       paneId: this.paneId
     })
     this.isLoading = false
-  }
-
-  onEditHandler(event) {
-    if (typeof this.onEdit === 'function') {
-      this.onEdit(event)
-      return
-    }
-
-    this.renamePane(event)
   }
 }
 </script>

@@ -44,12 +44,12 @@
       class="chart-overlay__head pane-overlay"
       @click="showOverlay = !showOverlay"
     >
-      <div class="chart-overlay__title">Sources</div>
-      <button type="button" class="btn badge -outline" @click="searchMarkets">
-        <span>{{ visibleMarkets }} </span>|
-        <span>Add</span>
+      <div class="chart-overlay__title">
+        {{ label }}
+      </div>
+      <button type="button" class="btn badge -text" @click="searchMarkets">
+        <i class="icon-plus"></i>
       </button>
-      <i class="icon-up-thin"></i>
     </div>
   </div>
 </template>
@@ -80,6 +80,12 @@ export default class MarketsOverlay extends Vue {
 
   get visibleMarkets() {
     return this.markets.filter(a => !this.hiddenMarkets[a]).length
+  }
+
+  get label() {
+    const count = this.visibleMarkets
+
+    return `${count} market${count > 1 ? 's' : ''}`
   }
 
   searchMarkets(event) {

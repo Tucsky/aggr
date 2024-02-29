@@ -9,6 +9,7 @@ import {
 } from 'lightweight-charts'
 import { ChartPaneState, IndicatorSettings } from '@/store/panesSettings/chart'
 import merge from 'lodash.merge'
+import { getCustomPlotOptions } from './buildUtils'
 
 const computedDefaultValues = {}
 const computedOptionTypes = {}
@@ -60,7 +61,7 @@ export const defaultChartOptions: DeepPartial<ChartOptions> = {
     barSpacing: 4,
     minBarSpacing: 0,
     rightOffset: 12,
-    lockVisibleTimeRangeOnResize: true,
+    lockVisibleTimeRangeOnResize: false,
     borderVisible: true,
     borderColor: 'rgba(255, 255, 255, .2)',
     visible: true,
@@ -204,12 +205,14 @@ export function getChartFontSize(paneId) {
 
 export function getChartLayoutOptions(paneId?: string) {
   const styles = getComputedStyle(document.documentElement)
-  const textColor = styles.getPropertyValue('--theme-color-100')
   const transColor = styles.getPropertyValue('--theme-background-100')
+
+  const chartOptions = store.state[paneId] as ChartPaneState
 
   const customColorsOptions = {
     layout: {
-      textColor: textColor,
+      textColor:
+        chartOptions?.textColor || styles.getPropertyValue('--theme-color-100'),
       borderColor: transColor,
       fontSize: getChartFontSize(paneId)
     }
@@ -323,7 +326,7 @@ export function getChartScales(
   indicators: {
     [id: string]: IndicatorSettings
   },
-  indicatorId?: string
+  indicatorId = ''
 ) {
   return Object.values(indicators).reduce(
     (scales, indicator) => {
@@ -333,15 +336,17 @@ export function getChartScales(
         indicator.options.priceScaleId &&
         !scales[indicator.options.priceScaleId]
       ) {
-        scales[indicator.options.priceScaleId] = indicator.name || indicator.id
+        scales[indicator.options.priceScaleId] = `${
+          indicator.name
+        } (${indicator.id.slice(0, 8)}${indicator.id.length > 8 ? '...' : ''})`
       }
 
       return scales
     },
     {
-      ...(indicatorId ? { [indicatorId]: `* Indicator's scale (📍)` } : {}),
-      left: '* Left (←)',
-      right: '* Right (→)'
+      ...{ [indicatorId]: `Own scale 📍` },
+      left: 'Left ←',
+      right: 'Right →'
     }
   )
 }
@@ -424,7 +429,7 @@ export function getIndicatorOptionType(
     value = getDefaultIndicatorOptionValue(key, plotTypes, forceCompute)
   }
 
-  let type = 'string'
+  let type = 'text'
 
   let typedValue
 
@@ -439,7 +444,7 @@ export function getIndicatorOptionType(
     typeof typedValue === 'boolean' ||
     /^(show|toggle|set|use)[A-Z]/.test(key)
   ) {
-    type = 'boolean'
+    type = 'checkbox'
   } else if (
     /color/i.test(key) ||
     /^rgba?/.test(typedValue) ||
@@ -488,4 +493,30 @@ export function getIndicatorOptionValue(
   }
 
   return null
+}
+
+export function getSerieOptions(indicator, plot, priceScale?) {
+  if (priceScale && priceScale.priceFormat) {
+    indicator.options.priceFormat = {
+      ...indicator.options.priceFormat,
+      ...priceScale.priceFormat
+    }
+  }
+
+  const customPlotOptions = getCustomPlotOptions(indicator, plot)
+
+  return {
+    ...defaultSerieOptions,
+    ...(defaultPlotsOptions[plot.type] || {}),
+    ...indicator.options,
+    ...(priceScale && priceScale.scaleMargins
+      ? {
+          scaleMargins: {
+            top: priceScale.scaleMargins.top,
+            bottom: priceScale.scaleMargins.bottom
+          }
+        }
+      : {}),
+    ...customPlotOptions
+  }
 }

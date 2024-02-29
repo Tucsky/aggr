@@ -1,76 +1,54 @@
 <template>
-  <div
-    class="indicator-option form-group"
-    :class="['-' + type, inline && 'indicator-option--inline']"
-  >
-    <label>
-      {{ label }}
-    </label>
-
-    <dropdown-button
-      v-if="name === 'lineType'"
-      v-model="value"
-      :options="{ 0: 'Simple', 1: 'with steps' }"
-      class="-outline form-control -arrow"
-      placeholder="lineType"
-      @input="setValue($event)"
-    ></dropdown-button>
-    <dropdown-button
-      v-else-if="/linestyle$/i.test(name)"
-      v-model="value"
-      :options="{
-        0: 'Solid',
-        1: 'Dotted',
-        2: 'Dashed',
-        3: 'LargeDashed',
-        4: 'SparseDotted'
-      }"
-      class="-outline form-control -arrow"
-      placeholder="lineStyle"
-      @input="setValue($event)"
-    ></dropdown-button>
-    <color-picker-control
-      v-else-if="type === 'color'"
+  <div class="indicator-option">
+    <component
+      v-if="type"
+      :is="componentName"
+      :pane-id="paneId"
+      :indicator-id="indicatorId"
       :label="label"
-      model="rgb"
-      allow-null
       :value="value"
+      :definition="definition"
       @input="setValue($event)"
-      @close="reloadIndicator"
-    ></color-picker-control>
-    <editable
-      v-else-if="type === 'string' || type === 'number'"
-      class="form-control"
-      :value="value"
-      @input="setValue($event)"
-    ></editable>
-    <label v-else-if="type === 'boolean'" class="checkbox-control">
-      <input
-        type="checkbox"
-        class="form-control"
-        :checked="value"
-        @change="setValue($event.target.checked)"
-      />
-      <span>{{ label }}</span>
-      <div></div>
-    </label>
+    >
+      <template v-if="definition.description" #description>
+        <i
+          class="icon-info pl4"
+          v-tippy="{ followCursor: true, distance: 24 }"
+          :title="definition.description"
+        ></i>
+      </template>
+    </component>
   </div>
 </template>
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import {
-  getDefaultIndicatorOptionValue,
-  getIndicatorOptionType
+  getIndicatorOptionType,
+  getDefaultIndicatorOptionValue
 } from './options'
-
-import DropdownButton from '@/components/framework/DropdownButton.vue'
-import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
+import { ALLOWED_OPTION_TYPES } from './buildUtils'
 
 @Component({
-  name: 'IndicatorOption',
+  name: 'IndicatorOptions',
   components: {
-    DropdownButton,
-    ColorPickerControl
+    IndicatorOptionNumber: () =>
+      import('@/components/chart/options/IndicatorOptionNumber.vue'),
+    IndicatorOptionText: () =>
+      import('@/components/chart/options/IndicatorOptionText.vue'),
+    IndicatorOptionList: () =>
+      import('@/components/chart/options/IndicatorOptionList.vue'),
+    IndicatorOptionLineStyle: () =>
+      import('@/components/chart/options/IndicatorOptionLineStyle.vue'),
+    IndicatorOptionLineType: () =>
+      import('@/components/chart/options/IndicatorOptionLineType.vue'),
+    IndicatorOptionExchange: () =>
+      import('@/components/chart/options/IndicatorOptionExchange.vue'),
+    IndicatorOptionRange: () =>
+      import('@/components/chart/options/IndicatorOptionRange.vue'),
+    IndicatorOptionCheckbox: () =>
+      import('@/components/chart/options/IndicatorOptionCheckbox.vue'),
+    IndicatorOptionColor: () =>
+      import('@/components/chart/options/IndicatorOptionColor.vue')
   },
   props: {
     indicatorId: {
@@ -87,10 +65,6 @@ import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
     name: {
       type: String,
       required: true
-    },
-    inline: {
-      type: Boolean,
-      default: false
     },
     ensure: {
       type: Boolean,
@@ -114,8 +88,38 @@ export default class IndicatorOption extends Vue {
     ]
   }
 
+  get definition() {
+    return (
+      this.$store.state[this.paneId].indicators[this.indicatorId]
+        .optionsDefinitions[this.name] || {}
+    )
+  }
+
   get label() {
-    return this.name
+    return this.definition.label || this.name
+  }
+
+  get componentName() {
+    if (!this.type) {
+      return 'IndicatorOptionText'
+    }
+
+    if (this.name === 'lineType') {
+      return 'IndicatorOptionLineType'
+    }
+
+    if (this.name === 'lineStyle') {
+      return 'IndicatorOptionLineStyle'
+    }
+
+    return `IndicatorOption${this.type[0].toUpperCase()}${this.type
+      .toLowerCase()
+      .slice(1)}`
+  }
+
+  @Watch('definition')
+  onDefinitionChange() {
+    this.type = this.getType()
   }
 
   @Watch('currentIndicatorValue')
@@ -132,16 +136,32 @@ export default class IndicatorOption extends Vue {
 
   created() {
     this.value = this.getValue()
-    this.type = getIndicatorOptionType(
-      this.name,
-      this.plotTypes,
-      null,
-      this.currentIndicatorValue
-    )
+    this.type = this.getType()
 
-    if (this.ensure && typeof this.currentIndicatorValue === 'undefined') {
+    if (
+      this.ensure &&
+      typeof this.currentIndicatorValue === 'undefined' &&
+      this.value !== 'null'
+    ) {
       this.setValue(this.value)
     }
+  }
+
+  getType() {
+    const type =
+      this.definition.type ||
+      getIndicatorOptionType(
+        this.name,
+        this.plotTypes,
+        true,
+        this.currentIndicatorValue
+      )
+
+    if (!Object.values(ALLOWED_OPTION_TYPES).includes(type)) {
+      return 'number'
+    }
+
+    return type
   }
 
   getValue() {
@@ -149,6 +169,13 @@ export default class IndicatorOption extends Vue {
 
     if (typeof this.currentIndicatorValue !== 'undefined') {
       preferedValue = this.currentIndicatorValue
+    }
+
+    if (
+      typeof preferedValue === 'undefined' &&
+      typeof this.definition.default !== 'undefined'
+    ) {
+      return this.definition.default
     }
 
     const defaultValue = getDefaultIndicatorOptionValue(
@@ -181,75 +208,18 @@ export default class IndicatorOption extends Vue {
     })
 
     this.value = value
-    this.type = getIndicatorOptionType(
-      this.name,
-      this.plotTypes,
-      true,
-      this.currentIndicatorValue
-    )
-  }
-
-  reloadIndicator() {
-    this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', {
-      id: this.indicatorId,
-      value: this.$store.state[this.paneId].indicators[this.indicatorId].script
-    })
+    this.type = this.getType()
   }
 }
 </script>
 <style lang="scss">
 .indicator-option {
-  &--inline > label {
-    margin: 0 0.5rem 0 0;
-  }
-
-  > label {
-    display: block;
-  }
-
-  &.-boolean,
-  &.-color {
-    display: flex;
-    align-items: center;
-
-    > label:first-child {
-      flex-grow: 1;
-      margin: 0;
-    }
-  }
-
-  &.-color > label {
-    flex-grow: 1;
-    color: var(--theme-color-base);
-    margin-right: 0.25rem;
-  }
-
-  &.-boolean {
-    > label:first-child {
-      display: none;
-    }
-
-    .checkbox-control {
-      flex-grow: 1;
-
-      > span {
-        flex-grow: 1;
-        word-break: break-word;
-      }
-    }
-  }
-
-  + .indicator-option {
-    margin-top: 1rem;
-  }
+  width: 100%;
+  max-width: 200px;
 
   .form-control {
-    width: 100%;
-    max-width: 200px;
-  }
-
-  .dropdown {
-    width: 100%;
+    min-width: 100px;
+    max-width: 100%;
   }
 }
 </style>
