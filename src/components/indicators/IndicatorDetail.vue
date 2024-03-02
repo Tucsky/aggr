@@ -73,7 +73,7 @@
             >Install</Btn
           >
           <Btn v-else @click="addToChart">
-            <i class="icon-plus mr4"></i> Add
+            <i class="icon-plus mr4"></i> Add {{ added ? 'again' : '' }}
           </Btn>
         </div>
 
@@ -111,6 +111,10 @@ export default {
     indicator: {
       type: Object,
       required: true
+    },
+    paneId: {
+      type: String,
+      default: null
     }
   },
   components: {
@@ -188,6 +192,15 @@ export default {
       return `${import.meta.env.VITE_APP_LIB_REPO_URL}/tree/main/indicators/${
         this.indicator.author
       }`
+    },
+    added() {
+      if (!this.paneId || !this.$store.state[this.paneId].indicators) {
+        return false
+      }
+
+      return !!Object.values(this.$store.state[this.paneId].indicators).find(
+        indicator => indicator.libraryId === this.indicator.id
+      )
     }
   },
   watch: {
@@ -266,7 +279,7 @@ export default {
           indicator.data.preview = await (await fetch(this.image)).blob()
         }
 
-        await importService.importIndicator(indicator)
+        await importService.importIndicator(indicator, false, true)
       } catch (error) {
         console.error(error)
         this.$store.dispatch('app/showNotice', {

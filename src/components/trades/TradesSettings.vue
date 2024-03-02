@@ -33,12 +33,28 @@
     </div>
     <br />
     <ToggableSection
+      class="thresholds"
       title="Thresholds"
       id="trades-thresholds"
       :badge="thresholds.length"
       :disabled="!showTrades"
       inset
     >
+      <template #title>
+        <label class="checkbox-control -small mr0" @click.stop>
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="showTrades"
+            @change="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showTrades')"
+          />
+          <div></div>
+        </label>
+        <div class="toggable-section__title ml16">Trades</div>
+        <span class="badge -outline ml8 mrauto">{{ thresholds.length }}</span>
+        <ThresholdColor :pane-id="paneId" type="thresholds" side="buy" />
+        <ThresholdColor :pane-id="paneId" type="thresholds" side="sell" />
+      </template>
       <div class="form-group">
         <thresholds
           :paneId="paneId"
@@ -60,12 +76,30 @@
       </div>
     </ToggableSection>
     <ToggableSection
-      title="Liquidations"
+      class="thresholds"
       id="trades-liquidations"
       :badge="liquidations.length"
       :disabled="!showLiquidations"
       inset
     >
+      <template #title>
+        <label class="checkbox-control -small mr0" @click.stop>
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="showLiquidations"
+            @change="
+              $store.commit(paneId + '/TOGGLE_PREFERENCE', 'showLiquidations')
+            "
+            @click.stop
+          />
+          <div></div>
+        </label>
+        <div class="toggable-section__title ml16">Liquidations</div>
+        <span class="badge -outline ml8 mrauto">{{ liquidations.length }}</span>
+        <ThresholdColor :pane-id="paneId" type="liquidations" side="buy" />
+        <ThresholdColor :pane-id="paneId" type="liquidations" side="sell" />
+      </template>
       <div class="form-group">
         <thresholds
           :paneId="paneId"
@@ -205,46 +239,6 @@
           :value="maxRows"
           @change="$store.commit(paneId + '/SET_MAX_ROWS', $event.target.value)"
         />
-      </div>
-
-      <div
-        class="form-group column mb8"
-        @click.stop="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showTrades')"
-      >
-        <label class="-fill -center -inline">Show trades</label>
-        <div
-          class="checkbox-control checkbox-control-input -unshrinkable"
-          @click.stop
-        >
-          <input type="checkbox" class="form-control" :checked="showTrades" />
-          <div
-            @click="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showTrades')"
-          />
-        </div>
-      </div>
-
-      <div
-        class="form-group column mb8"
-        @click.stop="
-          $store.commit(paneId + '/TOGGLE_PREFERENCE', 'showLiquidations')
-        "
-      >
-        <label class="-fill -center -inline">Show liquidations</label>
-        <div
-          class="checkbox-control checkbox-control-input -unshrinkable"
-          @click.stop
-        >
-          <input
-            type="checkbox"
-            class="form-control"
-            :checked="showLiquidations"
-          />
-          <div
-            @click="
-              $store.commit(paneId + '/TOGGLE_PREFERENCE', 'showLiquidations')
-            "
-          />
-        </div>
       </div>
 
       <div
@@ -455,16 +449,20 @@
 import { TradesPaneState } from '@/store/panesSettings/trades'
 import { ago } from '@/utils/helpers'
 import { Component, Vue } from 'vue-property-decorator'
-import Slider from '../framework/picker/Slider.vue'
-import Thresholds from '../settings/Thresholds.vue'
+import Slider from '@/components/framework/picker/Slider.vue'
+import Thresholds from '@/components/settings/Thresholds.vue'
 import { formatAmount, parseMarket } from '@/services/productsService'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
+import ColorPickerControl from '@/components/framework/picker/ColorPickerControl.vue'
+import ThresholdColor from '@/components/trades/ThresholdColor.vue'
 
 @Component({
   components: {
     Thresholds,
     Slider,
-    ToggableSection
+    ThresholdColor,
+    ToggableSection,
+    ColorPickerControl
   },
   name: 'TradesSettings',
   props: {
@@ -614,6 +612,22 @@ export default class TradesSettings extends Vue {
     ]
   }
 
+  get thresholdsBuyColor() {
+    return this.thresholds[1].buyColor
+  }
+
+  get thresholdsSellColor() {
+    return this.thresholds[1].sellColor
+  }
+
+  get liquidationsBuyColor() {
+    return this.liquidations[1].buyColor
+  }
+
+  get liquidationsSellColor() {
+    return this.liquidations[1].sellColor
+  }
+
   mounted() {
     const time = Date.now()
 
@@ -634,6 +648,10 @@ export default class TradesSettings extends Vue {
 }
 </script>
 <style scoped lang="scss">
+.thresholds {
+  pointer-events: all;
+}
+
 .multipliers {
   margin: 0 -1rem;
   padding: 0.5rem 0;

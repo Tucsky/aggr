@@ -485,7 +485,7 @@ export default {
       const name = this.$store.getters['panes/getName'](this.selectedPaneId)
 
       if (!name.trim().length) {
-        return '👻'
+        return this.$store.state.panes.panes[this.selectedPaneId].type
       }
 
       return name
@@ -1327,7 +1327,7 @@ export default {
     tr {
       color: var(--theme-color-300);
 
-      + tr:not(:last-child) > td {
+      + tr > td {
         border-top: 1px solid var(--theme-background-100);
       }
 
@@ -1361,7 +1361,7 @@ export default {
       backdrop-filter: blur(0.25rem);
       background-color: var(--theme-background-o75);
       position: sticky;
-      border-top: 1px solid var(--theme-background-100);
+      border-top: 1px solid var(--theme-background-150);
       align-items: center;
       padding: 0.5rem;
       gap: 0.25rem;
@@ -1494,7 +1494,7 @@ export default {
       @media screen and (min-width: 550px) {
         backdrop-filter: blur(0.25rem);
         background-color: var(--theme-background-o75);
-        border-bottom: 1px solid var(--theme-background-100);
+        border-bottom: 1px solid var(--theme-background-150);
         position: sticky;
         top: 0;
         z-index: 2;

@@ -160,9 +160,10 @@ const actions = {
   },
   addIndicator({ commit, state }, indicator) {
     const id = `_${randomString()}`
+    const libraryId = indicator.id || indicator.libraryId
     indicator = {
       id,
-      libraryId: indicator.libraryId,
+      libraryId,
       name: uniqueName(
         indicator.name,
         Object.keys(state.indicators).map(
@@ -176,7 +177,7 @@ const actions = {
       createdAt: indicator.createdAt,
       updatedAt: indicator.updatedAt,
       options: {
-        priceScaleId: indicator.priceScaleId || indicator.libraryId || id,
+        priceScaleId: indicator.priceScaleId || libraryId || id,
         ...indicator.options
       }
     }

@@ -57,7 +57,11 @@ export default class Editable extends Vue {
     el.innerText = value
   }
 
-  getCaretPosition() {
+  getCursorPosition() {
+    if (typeof this.position !== 'undefined') {
+      return this.position // return saved position
+    }
+
     let caretPos = 0
     let sel
     let range
@@ -73,6 +77,31 @@ export default class Editable extends Vue {
     }
 
     return caretPos
+  }
+
+  setCursorPosition(position) {
+    this.position = position
+
+    if (this._incrementSelectionTimeout) {
+      clearTimeout(this._incrementSelectionTimeout)
+    }
+
+    this._incrementSelectionTimeout = setTimeout(() => {
+      this._incrementSelectionTimeout = null
+
+      let sel
+
+      if ((document as any).selection) {
+        sel = (document as any).selection.createRange()
+        sel.moveStart('character', position)
+        sel.select()
+      } else {
+        sel = window.getSelection()
+        sel.collapse(this.$el.lastChild, position)
+      }
+
+      this.position = undefined
+    }, 50) as unknown as number
   }
 
   onBlur(event) {
@@ -92,6 +121,16 @@ export default class Editable extends Vue {
       // eslint-disable-next-line @typescript-eslint/no-extra-semi
       ;(document as any).selection.empty()
     }
+  }
+
+  emitInput(value) {
+    if (this._emitTimeout) {
+      clearTimeout(this._emitTimeout)
+    }
+    this._emitTimeout = setTimeout(() => {
+      this._emitTimeout = null
+      this.$emit('input', value)
+    }, 50) as unknown as number
   }
 
   onInput() {
@@ -121,84 +160,66 @@ export default class Editable extends Vue {
   }
 
   increment(direction: number) {
-    const parts = (this.$el as HTMLElement).innerText.trim().split(/[|,]/)
+    const el = this.$el as HTMLElement // Assuming this is your input element
+    let position = this.getCursorPosition() // Use saved or current position
+    let text = el.innerText.trim()
 
-    let text
-    let partIndex
-    let count = 0
-    let position
-
-    if (parts.length > 0) {
-      if (this._incrementSelectionTimeout) {
-        clearTimeout(this._incrementSelectionTimeout)
-      }
-
-      if (this.position) {
-        position = this.position
-      } else {
-        position = this.getCaretPosition()
-      }
-
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i]
-        if (position >= count && position <= count + part.length) {
-          text = part.replace(/[^0-9-.]/g, '')
-          partIndex = i
-          break
+    // Identify the boundaries of the number to change
+    let boundaries = this.findNumberBoundaries(text, position)
+    if (!boundaries && text.match(/\d/)) {
+      // If no boundaries found but text contains a number
+      const singleNumberMatch = text.match(/[\d.-]+/) // Adjust regex as needed
+      if (singleNumberMatch && singleNumberMatch.index !== undefined) {
+        boundaries = {
+          start: singleNumberMatch.index,
+          end: singleNumberMatch.index + singleNumberMatch[0].length
         }
-
-        count += part.length + 1
+        position = boundaries.start // Adjust position to the start of the found number
       }
-    } else {
-      text = parts[0]
     }
+    if (!boundaries) return // Early return if no number found at position
 
-    if (isNaN(text as any)) {
-      return
-    }
+    const numberStr = text.substring(boundaries.start, boundaries.end)
+    const number = parseFloat(numberStr)
 
+    // Calculate the new number with precision handling
     const max = typeof this.max !== 'number' ? Infinity : this.max
     const min = typeof this.min !== 'number' ? -Infinity : this.min
-    const precision = countDecimals(text)
+    const precision = countDecimals(numberStr)
     const step = 1 / Math.pow(10, precision)
-    const change = step * direction * -1
+    const change = step * (direction * -1)
+    const newNumber = Math.max(min, Math.min(max, number + change)).toFixed(
+      precision
+    )
 
-    text = Math.max(min, Math.min(max, +text + change)).toFixed(precision)
+    // Replace the number in the original string
+    text =
+      text.slice(0, boundaries.start) + newNumber + text.slice(boundaries.end)
 
-    if (parts.length > 1) {
-      this.position = position
-
-      parts[partIndex] = text
-      text = parts.join(',')
-
-      this._incrementSelectionTimeout = setTimeout(() => {
-        this._incrementSelectionTimeout = null
-
-        let sel
-
-        if ((document as any).selection) {
-          sel = (document as any).selection.createRange()
-          sel.moveStart('character', position)
-          sel.select()
-        } else {
-          sel = window.getSelection()
-          sel.collapse(this.$el.lastChild, position)
-        }
-
-        this.position = null
-      }, 100) as unknown as number
-    }
-    // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;(this.$el as HTMLElement).innerText = text
-
-    if (this._emitTimeout) {
-      clearTimeout(this._emitTimeout)
-    }
-    this._emitTimeout = setTimeout(() => {
-      this._emitTimeout = null
-      this.$emit('input', text)
-    }, 50) as unknown as number
+    // Set the updated text
+    el.innerText = text
+    this.emitInput(text)
+    this.setCursorPosition(position)
   }
+
+  findNumberBoundaries(text, position) {
+    let start = position
+    let end = position
+
+    // Move backwards to find the start of the number
+    while (start > 0 && /[\d.-]/.test(text[start - 1])) {
+      start--
+    }
+
+    // Move forwards to find the end of the number
+    while (end < text.length && /[\d.-]/.test(text[end])) {
+      end++
+    }
+
+    if (start === end) return null // No number found
+    return { start, end }
+  }
+
   onWheel(event: WheelEvent) {
     const focusedElement = document.activeElement as HTMLElement
 

@@ -72,6 +72,22 @@ const getters = {
     } else {
       return state.panes[id].type
     }
+  },
+  getFocusedPaneId: (state, getters, rootState) => (type: string) => {
+    if (
+      rootState.app.focusedPaneId &&
+      state.panes[rootState.app.focusedPaneId].type === type
+    ) {
+      return rootState.app.focusedPaneId
+    } else {
+      for (const id in state.panes.panes) {
+        if (state.panes.panes[id].type === type) {
+          return id
+        }
+      }
+    }
+
+    return null
   }
 } as GetterTree<PanesState, ModulesState>
 

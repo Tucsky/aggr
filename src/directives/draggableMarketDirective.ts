@@ -60,7 +60,7 @@ function handleDragEnd(event: MouseEvent | TouchEvent) {
   if (el.classList.contains('pane') && el.id !== marketContext.paneId) {
     store.dispatch('panes/setMarketsForPane', {
       id: el.id,
-      markets: [marketContext.market]
+      markets: [marketContext.market.id]
     })
   }
 

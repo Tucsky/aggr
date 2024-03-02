@@ -85,11 +85,16 @@ export default {
       this.$emit('add', indicator)
     },
     async duplicateIndicator(indicator = this.selectedIndicator) {
-      importService.importIndicator({
-        type: 'indicator',
-        name: indicator.name,
-        data: indicator
-      })
+      importService.importIndicator(
+        {
+          type: 'indicator',
+          name: indicator.name,
+          data: indicator
+        },
+        {
+          addToChart: true
+        }
+      )
     },
     async downloadIndicator(indicator = this.selectedIndicator) {
       await downloadAnything(

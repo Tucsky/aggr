@@ -28,19 +28,19 @@
   </div>
 </template>
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Mixins } from 'vue-property-decorator'
 import IndicatorOptionMixin from '@/mixins/indicatorOptionMixin'
 
 import Slider from '@/components/framework/picker/Slider.vue'
+import { countDecimals } from '@/services/productsService'
 
 @Component({
   name: 'IndicatorOptionRange',
-  mixins: [IndicatorOptionMixin],
   components: {
     Slider
   }
 })
-export default class IndicatorOptionRange extends Vue {
+export default class IndicatorOptionRange extends Mixins(IndicatorOptionMixin) {
   private value
   private definition
 
@@ -60,12 +60,16 @@ export default class IndicatorOptionRange extends Vue {
     return typeof this.definition.step === 'number' ? this.definition.step : 0.1
   }
 
+  get decimals() {
+    return countDecimals(this.step)
+  }
+
   get stepRoundedValue() {
     if (typeof this.value !== 'number') {
       return this.value
     }
 
-    return +this.value.toFixed(2)
+    return +this.value.toFixed(this.decimals)
   }
 
   get gradient() {

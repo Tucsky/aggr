@@ -2,8 +2,19 @@
 
 All notable changes to this project will be documented here.
 
-## [3.5.0] - 2023-12-29
+## [3.5.1] - 2024-03-02
 
+### Changed
+
+Improve fast threshold coloring in trades settings
+
+### Bug Fixes:
+
+Improve Editable increment algo
+Set market from draggable #391
+Step attr not being respected in range option
+
+## [3.5.0] - 2024-02-29
 
 ### Added:
 

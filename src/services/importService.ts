@@ -129,11 +129,14 @@ class ImportService {
     return null
   }
 
-  async importIndicator(json) {
-    const name = json.name.split(':').slice(1).join(':')
+  async importIndicator(
+    json,
+    { save = false, addToChart = false, openLibrary = false }
+  ) {
+    const name = json.name.replace(/^indicators?:/, '')
     const now = Date.now()
-
-    const indicator = await workspacesService.saveIndicator({
+    let indicator = {
+      id: null,
       name,
       displayName: json.data.displayName || name,
       author: json.data.author || null,
@@ -143,9 +146,16 @@ class ImportService {
       createdAt: json.data.createdAt || now,
       updatedAt: json.data.updatedAt || json.data.createdAt || now,
       preview: json.data.preview || null
-    })
+    }
 
-    if (json.data.presets) {
+    openLibrary =
+      dialogService.mountedComponents['indicator-library'] || openLibrary
+
+    if (save || openLibrary) {
+      indicator = await workspacesService.saveIndicator(indicator)
+    }
+
+    if (indicator.id && json.data.presets) {
       for (const preset of json.data.presets) {
         await workspacesService.savePreset({
           ...preset,
@@ -157,24 +167,34 @@ class ImportService {
       }
     }
 
-    if (!dialogService.isDialogOpened('indicator-library')) {
-      dialogService.open(
-        (await import('@/components/indicators/IndicatorLibraryDialog.vue'))
-          .default,
-        {},
-        'indicator-library'
-      )
+    if (openLibrary) {
+      if (!dialogService.isDialogOpened('indicator-library')) {
+        dialogService.open(
+          (await import('@/components/indicators/IndicatorLibraryDialog.vue'))
+            .default,
+          {},
+          'indicator-library'
+        )
+      }
+
+      const indicatorLibraryDialog =
+        dialogService.mountedComponents['indicator-library']
+
+      store.dispatch('app/showNotice', {
+        title: `indicator "${indicator.id}" imported successfully`
+      })
+
+      if (indicatorLibraryDialog) {
+        indicatorLibraryDialog.setSelection(indicator)
+      }
     }
 
-    const indicatorLibraryDialog =
-      dialogService.mountedComponents['indicator-library']
+    if (addToChart) {
+      const paneId = store.getters['panes/getFocusedPaneId']('chart')
 
-    store.dispatch('app/showNotice', {
-      title: `indicator "${indicator.id}" imported successfully`
-    })
-
-    if (indicatorLibraryDialog) {
-      indicatorLibraryDialog.setSelection(indicator)
+      if (paneId) {
+        store.dispatch(paneId + '/addIndicator', indicator)
+      }
     }
   }
 
@@ -203,7 +223,9 @@ class ImportService {
         await this.importDatabase(file)
       } else if (json.type && json.data) {
         if (json.type === 'indicator' && json.name.split(':').length < 3) {
-          this.importIndicator(json)
+          this.importIndicator(json, {
+            addToChart: true
+          })
         } else {
           await this.importPreset(file)
         }

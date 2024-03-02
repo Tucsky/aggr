@@ -7,7 +7,6 @@ import {
   GifsStorage,
   ImportedSound,
   Preset,
-  PresetType,
   ProductsStorage,
   Workspace
 } from '@/types/types'
@@ -660,6 +659,13 @@ class WorkspacesService {
 
     await this.db.put('indicators', payload)
 
+    if (!originalIndicator) {
+      store.dispatch('app/showNotice', {
+        type: 'info',
+        title: `Saved indicator ${payload.id}`
+      })
+    }
+
     return payload
   }
 
@@ -714,7 +720,7 @@ class WorkspacesService {
     if (type) {
       // ex indicator:price
 
-      const inputType = preset.name.split(':')[0] as PresetType
+      const inputType = preset.name.split(':')[0]
       const targetType = type.split(':')[0]
 
       if (targetType !== inputType) {
@@ -748,7 +754,7 @@ class WorkspacesService {
     return this.db.get('presets', id)
   }
 
-  getPresetsKeysByType(type: PresetType) {
+  getPresetsKeysByType(type: string) {
     return this.db.getAllKeys(
       'presets',
       IDBKeyRange.bound(type, type + '|', true, true)

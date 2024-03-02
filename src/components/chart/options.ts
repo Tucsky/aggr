@@ -367,7 +367,7 @@ export function getChartOptions(
 
 export function getChartCustomColorsOptions(paneId) {
   return merge(
-    getChartLayoutOptions(),
+    getChartLayoutOptions(paneId),
     getChartOptions(defaultChartOptions as any),
     getChartWatermarkOptions(paneId),
     getChartGridlinesOptions(paneId)

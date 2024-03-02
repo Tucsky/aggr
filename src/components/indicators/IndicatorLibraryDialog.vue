@@ -49,6 +49,7 @@
     <IndicatorDetail
       v-if="selection"
       :indicator="selection"
+      :pane-id="paneId"
       @close="selection = null"
       @add="addToChart($event, true)"
       @reload="reloadSelection"
@@ -136,20 +137,11 @@ export default {
   methods: {
     async handleFile(event) {
       try {
-        const preset = await importService.getJSON(event.target.files[0])
+        const json = await importService.getJSON(event.target.files[0])
 
-        if (!preset.data) {
-          throw new Error('indicator is empty')
-        }
-
-        if (preset.type !== 'indicator') {
-          throw new Error('not an indicator')
-        }
-
-        this.createIndicator({
-          name: preset.name.split(':').slice(1).join(':'),
-          script: preset.data.script || '',
-          options: preset.data.options || {}
+        await importService.importIndicator(json, {
+          save: true,
+          openLibrary: true
         })
       } catch (error) {
         this.$store.dispatch('app/showNotice', {

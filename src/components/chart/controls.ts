@@ -124,6 +124,7 @@ export default class ChartControl {
           break
         case 'settings/SET_CHART_THEME':
         case 'settings/SET_TEXT_COLOR':
+        case 'settings/SET_BACKGROUND_COLOR':
           this.chart.chartInstance.applyOptions(
             getChartCustomColorsOptions(this.chart.paneId)
           )

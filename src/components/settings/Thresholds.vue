@@ -3,24 +3,6 @@
     class="thresholds"
     :class="{ '-dragging': dragging, '-rendering': rendering }"
   >
-    <div class="d-flex mx8">
-      <label class="column mlauto mrauto -center">
-        <small class="-fill -center mr8 text-right">Buy color</small>
-        <color-picker-control
-          :value="buyColor"
-          label="Buy color"
-          @input="regenerateSwatch('buy', $event)"
-        />
-      </label>
-      <label class="column mrauto mlauto -center">
-        <color-picker-control
-          :value="sellColor"
-          label="Sell color"
-          @input="regenerateSwatch('sell', $event)"
-        />
-        <small class="-fill -center ml8">Sell color</small>
-      </label>
-    </div>
     <table class="table thresholds-table" v-if="showThresholdsAsTable">
       <thead>
         <tr>
@@ -257,14 +239,6 @@ export default class Thresholds extends Vue {
     return this.thresholds[this.thresholds.length - 1].max
   }
 
-  get buyColor() {
-    return this.thresholds[1].buyColor
-  }
-
-  get sellColor() {
-    return this.thresholds[1].sellColor
-  }
-
   $refs!: {
     thresholdContainer: HTMLElement
     buysGradient: HTMLElement
@@ -482,12 +456,12 @@ export default class Thresholds extends Vue {
         i === 0
           ? 0
           : i === this.thresholds.length - 1
-          ? 100
-          : (
-              ((Math.log(this.thresholds[i].amount + 1) - minLog) /
-                (maxLog - minLog)) *
-              100
-            ).toFixed(2)
+            ? 100
+            : (
+                ((Math.log(this.thresholds[i].amount + 1) - minLog) /
+                  (maxLog - minLog)) *
+                100
+              ).toFixed(2)
 
       buysStops.push(`${this.thresholds[i].buyColor} ${percent}%`)
       sellsStops.push(`${this.thresholds[i].sellColor} ${percent}%`)
@@ -521,8 +495,8 @@ export default class Thresholds extends Vue {
     })
   }
 
-  formatAmount(amount) {
-    return formatAmount(amount)
+  formatAmount(amount, precision?) {
+    return formatAmount(amount, precision)
   }
 
   flipSwatches(side) {
@@ -541,8 +515,6 @@ export default class Thresholds extends Vue {
 
   toggleMaximumThreshold(threshold) {
     this.$store.commit(this.paneId + '/TOGGLE_THRESHOLD_MAX', threshold.id)
-
-    // this.capToLastThreshold = threshold.max
   }
 
   async getPreset() {
@@ -703,25 +675,6 @@ export default class Thresholds extends Vue {
         sellAudio: referenceThreshold.sellAudio
       })
     }
-  }
-
-  async regenerateSwatch(side, value) {
-    this.$store.dispatch(`${this.paneId}/generateSwatch`, {
-      buyColor: side === 'buy' && value,
-      sellColor: side === 'sell' && value,
-      type: this.type,
-      baseVariance: 0.15
-    })
-
-    this.$store.state[this.paneId].thresholds = JSON.parse(
-      JSON.stringify(this.$store.state[this.paneId].thresholds)
-    )
-
-    this.$store.commit(this.paneId + '/SET_THRESHOLD_COLOR', {
-      id: this.thresholds[1].id,
-      side,
-      value
-    })
   }
 }
 </script>
