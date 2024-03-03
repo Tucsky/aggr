@@ -160,7 +160,7 @@ export default class BYBIT extends Exchange {
       return
     }
 
-    if (json.data.length) {
+    if (json.data) {
       if (TRADE_TOPIC_REGEX.test(json.topic)) {
         const isSpot = api.url === SPOT_WS
 
@@ -169,10 +169,9 @@ export default class BYBIT extends Exchange {
           json.data.map(trade => this.formatTrade(trade, isSpot))
         )
       } else {
-        return this.emitLiquidations(
-          api.id,
-          json.data.map(liquidation => this.formatLiquidation(liquidation))
-        )
+        return this.emitLiquidations(api.id, [
+          this.formatLiquidation(json.data)
+        ])
       }
     }
   }
