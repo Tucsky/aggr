@@ -358,7 +358,7 @@ export default class Trades extends Mixins(PaneMixin) {
   background-size: cover;
   background-blend-mode: overlay;
   position: relative;
-  padding: 0 2rem 0 1.5rem;
+  padding: 0 2rem 0 1.25rem;
 
   &:after {
     content: '';
@@ -479,6 +479,8 @@ export default class Trades extends Mixins(PaneMixin) {
   }
 
   .trade__amount {
+    flex-grow: 1.25;
+
     .trade__amount__base {
       display: none;
       padding: 0 0.5em;
@@ -504,6 +506,10 @@ export default class Trades extends Mixins(PaneMixin) {
     &.-fixed {
       font-size: 87.5%;
     }
+  }
+
+  .trade__price {
+    direction: rtl;
   }
 }
 
