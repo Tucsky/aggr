@@ -113,7 +113,10 @@ export function mix(ratio, ...colors) {
   if (ratio >= 1) return colors[colors.length - 1]
 
   const segmentLength = 1 / (colors.length - 1)
-  const segmentIndex = Math.floor(ratio / segmentLength)
+  const segmentIndex = Math.min(
+    Math.floor(ratio / segmentLength),
+    colors.length - 2
+  )
 
   const a = colors[segmentIndex]
   const b = colors[segmentIndex + 1]
@@ -258,6 +261,18 @@ export function joinRgba(color) {
   return (
     'rgb' + (d ? 'a(' : '(') + a + ',' + b + ',' + c + (d ? ',' + d + ')' : ')')
   )
+}
+
+export function computeThemeColorAlpha(name, alpha = 0.5) {
+  const rgba = splitColorCode(
+    getComputedStyle(document.documentElement).getPropertyValue(
+      `--theme-${name}`
+    )
+  )
+
+  rgba[3] = (typeof rgba[3] === 'number' ? rgba[3] : 1) * alpha
+
+  return joinRgba(rgba)
 }
 
 export function getAppBackgroundColor() {
