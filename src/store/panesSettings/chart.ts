@@ -172,7 +172,6 @@ const actions = {
         false,
         '2'
       ),
-      description: indicator.description,
       script: indicator.script || 'line(avg_close(bar))',
       createdAt: indicator.createdAt,
       updatedAt: indicator.updatedAt,
