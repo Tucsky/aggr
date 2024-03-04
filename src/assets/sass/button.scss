@@ -320,7 +320,7 @@ a {
       }
     }
 
-    &:last-child {
+    &:last-child:not(:first-child) {
       padding-left: 0.25rem;
     }
   }

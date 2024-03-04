@@ -130,7 +130,7 @@ import Btn from '@/components/framework/Btn.vue'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import importService from '@/services/importService'
-import { Preset, PresetType } from '@/types/types'
+import { Preset } from '@/types/types'
 import { Component, Vue } from 'vue-property-decorator'
 import { downloadAnything, slugify } from '@/utils/helpers'
 
@@ -168,7 +168,7 @@ interface PresetSummary {
   }
 })
 export default class Presets extends Vue {
-  type: PresetType
+  type: string
   adapter: (originalPreset: Preset) => Preset
   placeholder: string
   presets: PresetSummary[] = []

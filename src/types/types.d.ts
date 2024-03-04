@@ -93,7 +93,7 @@ export interface Workspace {
 
 export interface Preset {
   name: string
-  type: 'preset'
+  type?: 'preset'
   data: any
   createdAt: number
   updatedAt: number

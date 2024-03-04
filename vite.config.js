@@ -79,6 +79,7 @@ export default defineConfig(({ mode }) => {
       // Add the terser plugin for production builds to remove console.log
     ],
     build: {
+      minify: 'terser',
       rollupOptions: {
         output: {
           entryFileNames: `[name].` + hash + `.js`,

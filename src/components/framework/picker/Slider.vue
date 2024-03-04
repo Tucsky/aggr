@@ -12,14 +12,20 @@
         class="slider__completion"
         :style="`width: ${handle.position}%`"
       ></div>
-      <div
-        class="slider__handle"
-        @mousedown="select"
-        @touchstart="select"
-        :style="`left: ${handle.position}%; background-color: ${handle.color};`"
-        v-tippy="{ followCursor: true, distance: 24 }"
-        :title="+handle.value.toFixed(2)"
-      />
+      <tippy :distance="24" follow-cursor>
+        <template v-slot:trigger>
+          <div
+            class="slider__handle"
+            @mousedown="select"
+            @touchstart="select"
+            :style="`left: ${handle.position}%; background-color: ${handle.color};`"
+          />
+        </template>
+
+        <slot name="tooltip" :value="handle.value">
+          {{ +handle.value.toFixed(2) }}
+        </slot>
+      </tippy>
     </div>
   </div>
 </template>

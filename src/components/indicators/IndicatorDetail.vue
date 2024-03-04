@@ -6,7 +6,7 @@
           <Btn class="indicator-detail__close -text" @click="close">
             <i class="icon-cross"></i>
           </Btn>
-          <code class="indicator-detail__id -filled ml8">
+          <code class="indicator-detail__id -filled">
             <small>#{{ indicator.id }}</small>
           </code>
           <img v-if="image" :src="image" />
@@ -21,7 +21,7 @@
               <Btn
                 v-if="isInstalled"
                 class="-text -small indicator-detail__toggle"
-                @click="toggleDropdown"
+                @click="toggleMenuDropdown"
               >
                 <i class="icon-more"></i>
               </Btn>
@@ -65,19 +65,30 @@
             </ul>
           </div>
         </div>
-        <div class="indicator-detail__footer">
-          <Btn
-            v-if="!isInstalled"
-            @click="installIndicator"
-            :loading="isInstalling"
-            >Install</Btn
-          >
+        <div
+          class="indicator-detail__footer"
+          :style="{ backgroundColor: footerColor }"
+        >
+          <div v-if="!isInstalled" class="btn-group d-flex">
+            <Btn
+              @click="installIndicator()"
+              :loading="isInstalling"
+              :disabled="isInstalling || isFetchingVersions"
+              >Install</Btn
+            >
+            <Btn
+              @click="toggleVersionsDropdown"
+              :loading="isFetchingVersions"
+              :disabled="isInstalling || isFetchingVersions"
+              :class="[!isFetchingVersions && '-arrow']"
+            />
+          </div>
           <Btn v-else @click="addToChart">
             <i class="icon-plus mr4"></i> Add {{ added ? 'again' : '' }}
           </Btn>
         </div>
 
-        <dropdown v-model="dropdownTrigger">
+        <dropdown v-model="menuDropdownTrigger">
           <btn
             v-if="communityTabEnabled"
             class="dropdown-item -cases"
@@ -92,6 +103,23 @@
             <span>Edit</span>
           </Btn>
         </dropdown>
+
+        <dropdown v-model="versionsDropdownTrigger">
+          <template v-if="!versions.length && fetchedVersions">
+            <div class="px8 text-danger">No history available</div>
+          </template>
+          <template v-else>
+            <btn
+              v-for="item in versions"
+              :key="item.sha"
+              class="dropdown-item -cases"
+              :loading="isPublishing"
+              @click="installIndicator(item.sha)"
+            >
+              {{ item.date }}
+            </btn>
+          </template>
+        </dropdown>
       </div>
     </div>
   </transition>
@@ -100,11 +128,12 @@
 <script>
 import Btn from '@/components/framework/Btn.vue'
 import importService from '@/services/importService'
-import { ago } from '@/utils/helpers'
+import { ago, sleep } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import EditResourceDialog from '@/components/library/EditResourceDialog.vue'
 import { openPublishDialog } from '@/components/library/helpers'
+import { computeThemeColorAlpha } from '@/utils/colors'
 
 export default {
   props: {
@@ -125,10 +154,14 @@ export default {
       opened: false,
       isInstalling: false,
       isPublishing: false,
-      dropdownTrigger: null,
+      isFetchingVersions: false,
+      menuDropdownTrigger: null,
+      versionsDropdownTrigger: null,
       imageObjectUrl: null,
+      fetchedVersions: null,
       dateIndex: 0,
-      communityTabEnabled: !!import.meta.env.VITE_APP_LIB_URL
+      communityTabEnabled: !!import.meta.env.VITE_APP_LIB_URL,
+      footerColor: computeThemeColorAlpha('background-150', 0.5)
     }
   },
   computed: {
@@ -201,6 +234,9 @@ export default {
       return !!Object.values(this.$store.state[this.paneId].indicators).find(
         indicator => indicator.libraryId === this.indicator.id
       )
+    },
+    versions() {
+      return this.indicator.versions || this.fetchedVersions || []
     }
   },
   watch: {
@@ -227,11 +263,21 @@ export default {
     close() {
       this.opened = false
     },
-    toggleDropdown(event) {
-      if (event && !this.dropdownTrigger) {
-        this.dropdownTrigger = event.currentTarget
+    toggleMenuDropdown(event) {
+      if (event && !this.menuDropdownTrigger) {
+        this.menuDropdownTrigger = event.currentTarget
       } else {
-        this.dropdownTrigger = null
+        this.menuDropdownTrigger = null
+      }
+    },
+    async toggleVersionsDropdown(event) {
+      if (event && !this.versionsDropdownTrigger) {
+        if (!this.indicator.versions && !this.fetchedVersions) {
+          await this.fetchIndicatorVersions()
+        }
+        this.versionsDropdownTrigger = event.target
+      } else {
+        this.versionsDropdownTrigger = null
       }
     },
     onBackdropClick(event) {
@@ -257,7 +303,28 @@ export default {
         this.imageObjectUrl = null
       }
     },
-    async installIndicator() {
+    async fetchIndicatorVersions() {
+      if (this.indicator.versions) {
+        return
+      }
+
+      this.isFetchingVersions = true
+
+      await sleep(1000)
+
+      try {
+        this.fetchedVersions = await (
+          await fetch(
+            `${import.meta.env.VITE_APP_LIB_URL}versions/${this.indicator.jsonPath}`
+          )
+        ).json()
+      } catch {
+        this.fetchedVersions = []
+      } finally {
+        this.isFetchingVersions = false
+      }
+    },
+    async installIndicator(sha) {
       if (this.isInstalled) {
         return
       }
@@ -265,11 +332,25 @@ export default {
       this.isInstalling = true
 
       try {
-        const indicator = await (
-          await fetch(
-            `${import.meta.env.VITE_APP_LIB_URL}${this.indicator.jsonPath}`
+        let indicator
+
+        if (sha) {
+          console.log(
+            'path',
+            `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${this.indicator.jsonPath}`
           )
-        ).json()
+          indicator = await (
+            await fetch(
+              `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${this.indicator.jsonPath}`
+            )
+          ).json()
+        } else {
+          indicator = await (
+            await fetch(
+              `${import.meta.env.VITE_APP_LIB_URL}${this.indicator.jsonPath}`
+            )
+          ).json()
+        }
 
         if (!indicator.data) {
           throw new Error('invalid payload')
@@ -415,7 +496,7 @@ export default {
 
   &__id {
     position: absolute;
-    bottom: 0.5rem;
+    top: 0.5rem;
     left: 0.5rem;
   }
 
@@ -501,6 +582,9 @@ export default {
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
+    position: sticky;
+    bottom: 0;
+    backdrop-filter: blur(0.5rem);
   }
 
   &-enter-active {

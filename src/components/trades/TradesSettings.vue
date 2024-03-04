@@ -366,70 +366,25 @@
         </div>
       </div>
     </ToggableSection>
-    <ToggableSection v-if="isLegacy" title="THRESHOLD MULTIPLIER" inset>
+    <ToggableSection
+      v-if="isLegacy"
+      :title="`THRESHOLD MULTIPLIER (${mutipliersCount})`"
+      inset
+    >
       <div class="form-group" v-if="multipliers.length">
         <label>
           <div class="d-flex">
-            <div>
-              ← Decrease threshold<br /><small>← Increase visibility</small>
-            </div>
-            <div class="text-right mlauto">
-              Increase threshold →<br /><small>Decrease visibility →</small>
-            </div>
+            <div>← Decrease threshold</div>
+            <div class="text-right mlauto">Increase threshold →</div>
           </div>
         </label>
         <div class="multipliers">
-          <div
+          <MarketMultiplier
             v-for="market in multipliers"
             :key="market.identifier"
-            class="d-flex multipliers-market"
-            :class="{ '-disabled': market.multiplier === 1 }"
-          >
-            <div
-              class="multipliers-market__id"
-              @dblclick="
-                $store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', {
-                  identifier: market.identifier,
-                  multiplier: null
-                })
-              "
-            >
-              <div class="text-nowrap market-exchange">
-                <small>{{ market.exchange }}</small>
-              </div>
-              <div class="text-nowrap market-pair">
-                {{ market.pair }}
-              </div>
-            </div>
-            <div class="-fill -center ml16">
-              <slider
-                style="width: 100%; min-width: 150px"
-                :min="0"
-                :max="2"
-                :label="market.multiplier !== 1"
-                :step="0.01"
-                :showCompletion="false"
-                :value="market.multiplier"
-                :editable="false"
-                @input="
-                  $store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', {
-                    identifier: market.identifier,
-                    multiplier: $event
-                  })
-                "
-                @reset="
-                  $store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', {
-                    identifier: market.identifier,
-                    multiplier: 1
-                  })
-                "
-              >
-                <template v-slot:tooltip="{ value }">
-                  {{ thresholds[0].amount * value }}
-                </template>
-              </slider>
-            </div>
-          </div>
+            :pane-id="paneId"
+            :market="market"
+          />
         </div>
       </div>
       <p v-else class="mb0">
@@ -455,6 +410,7 @@ import { formatAmount, parseMarket } from '@/services/productsService'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
 import ColorPickerControl from '@/components/framework/picker/ColorPickerControl.vue'
 import ThresholdColor from '@/components/trades/ThresholdColor.vue'
+import MarketMultiplier from '@/components/trades/MarketMultiplier.vue'
 
 @Component({
   components: {
@@ -462,6 +418,7 @@ import ThresholdColor from '@/components/trades/ThresholdColor.vue'
     Slider,
     ThresholdColor,
     ToggableSection,
+    MarketMultiplier,
     ColorPickerControl
   },
   name: 'TradesSettings',

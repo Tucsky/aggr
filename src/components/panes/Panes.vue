@@ -3,7 +3,6 @@
     ref="grid"
     :layout="layout"
     :col-num="cols"
-    :max-rows="cols"
     :row-height="rowHeight"
     :margin="[0, 0]"
     :is-resizable="unlocked"

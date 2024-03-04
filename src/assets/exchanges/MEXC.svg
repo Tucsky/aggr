@@ -1,16 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0" id="Layer_1" x="0px" y="0px" style="enable-background:new 0 0 869.5 559.5;" xml:space="preserve" viewBox="71.42 235.95 142.55 87.55">
-<style type="text/css">
-	.st0{fill:#00B897;}
-	.st1{fill:#76FCB2;}
-	.st2{fill:url(#SVGID_1_);}
-	.st3{fill:none;}
-</style><style class="darkreader darkreader--sync" media="screen"/>
-<path class="st0" d="M211.7,297.7l-30.8-53.4c-6.8-11.1-23.2-11.3-29.7,0.5l-32.4,55.6c-6,10.2,1.4,23,13.5,23h64.8  C209.3,323.4,218.4,310.2,211.7,297.7z"/>
-<path class="st1" d="M167.2,301.9l-1.9-3.3c-1.8-3.1-5.7-9.7-5.7-9.7l-26.1-45.3c-5.2-7.9-15.8-10-23.7-4.8  c-2.5,1.6-4.5,3.9-5.8,6.6l-30.3,52.5c-4.7,8.1-1.9,18.5,6.3,23.2c2.6,1.5,5.5,2.3,8.5,2.3h108.3  C180.1,323.5,174.8,314.8,167.2,301.9z"/>
-<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="123.8478" y1="416.516" x2="198.7178" y2="444.176" gradientTransform="matrix(1 0 0 1 -13.78 -134.73)">
-	<stop offset="0" style="stop-color: rgb(83, 229, 122); stop-opacity: 0; --darkreader-inline-stopcolor:#58fb84;" data-darkreader-inline-stopcolor=""/>
-	<stop offset="1" style="stop-color: rgb(0, 169, 119); --darkreader-inline-stopcolor:#54ffde;" data-darkreader-inline-stopcolor=""/>
-</linearGradient>
-<path class="st2" d="M167.2,301.9l-1.9-3.3c-1.8-3.1-5.7-9.7-5.7-9.7l-16.8-29.6l-24.2,41.2c-6,10.2,1.4,23,13.5,23h64.7  C180,323.4,174.8,314.8,167.2,301.9z"/>
-<rect x="48.5" y="216.5" class="st3" width="772.5" height="126.5"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="enable-background:new 0 0 869.5 559.5" version="1.0" viewBox="71.4 235.9 142.6 87.5"><path d="m211.7 297.7-30.8-53.4a17.1 17.1 0 0 0-29.7.5l-32.4 55.6c-6 10.2 1.4 23 13.5 23h64.8a17.1 17.1 0 0 0 14.6-25.7z" style="fill:#00b897"/><path d="m167.2 301.9-1.9-3.3-5.7-9.7-26.1-45.3a17 17 0 0 0-29.5 1.8l-30.3 52.5a17 17 0 0 0 6.3 23.2 17 17 0 0 0 8.5 2.3h108.3c-16.7.1-22-8.6-29.6-21.5z" style="fill:#76fcb2"/><linearGradient id="a" x1="123.8" x2="198.7" y1="416.5" y2="444.2" gradientTransform="translate(-13.8 -134.7)" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:#53e57a;stop-opacity:0;--darkreader-inline-stopcolor:#58fb84"/><stop offset="1" style="stop-color:#00a977;--darkreader-inline-stopcolor:#54ffde"/></linearGradient><path d="m167.2 301.9-1.9-3.3-5.7-9.7-16.8-29.6-24.2 41.2c-6 10.2 1.4 23 13.5 23h64.7c-16.8-.1-22-8.7-29.6-21.6z" style="fill:url(#a)"/><path d="M48.5 216.5H821V343H48.5z" style="fill:none"/></svg>
