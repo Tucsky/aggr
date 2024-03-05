@@ -65,6 +65,10 @@ export default {
       this.indicators = (await workspacesService.getIndicators()).map(
         indicator => ({
           ...indicator,
+          enabled:
+            typeof indicator.enabled === 'undefined'
+              ? false
+              : indicator.enabled,
           updatedAt: indicator.updatedAt || minDate
         })
       )

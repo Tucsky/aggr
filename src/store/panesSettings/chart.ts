@@ -134,7 +134,9 @@ const actions = {
     state.indicatorsErrors = {} // let chart recalculate potential errors
     state.layouting = false // start without layouting overlay
 
-    if (!Object.keys(state.indicators).length) {
+    const indicatorsIds = Object.keys(state.indicators)
+
+    if (!indicatorsIds.length) {
       const indicators = await workspacesService.getIndicators()
 
       for (const indicator of indicators) {
@@ -149,13 +151,14 @@ const actions = {
           libraryId: indicator.id,
           series: []
         })
+        indicatorsIds.push(id)
       }
 
       scheduleSync(state)
     }
 
-    if (!state.indicatorOrder.length) {
-      state.indicatorOrder = Object.keys(state.indicators)
+    if (state.indicatorOrder.length !== indicatorsIds.length) {
+      state.indicatorOrder = indicatorsIds
     }
   },
   addIndicator({ commit, state }, indicator) {

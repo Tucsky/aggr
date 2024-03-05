@@ -1,6 +1,7 @@
 {
   "_id": "panes",
   "locked": false,
+  "layout": [],
   "panes": {
     "chart": {
       "id": "chart",

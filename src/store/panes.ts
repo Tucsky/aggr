@@ -93,7 +93,7 @@ const getters = {
 
 const actions = {
   async boot({ state, dispatch }) {
-    if (!state.layout) {
+    if (!state.layout.length && Object.keys(state.panes).length) {
       dispatch('setupLayout')
     }
 
@@ -414,7 +414,6 @@ const actions = {
     } else {
       // start with mobile layout
       state.layout = layoutMobile
-      initialZoom = 1.25
 
       delete state.panes.liquidations
     }
