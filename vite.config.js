@@ -59,7 +59,9 @@ export default defineConfig(({ mode }) => {
 
   const hash = crypto
     .createHash('md5')
-    .update('aggr')
+    .update(
+      `aggr-${process.env.VITE_APP_VERSION}-${process.env.VITE_APP_BUILD_DATE}`
+    )
     .digest('hex')
     .substring(0, 7)
 
