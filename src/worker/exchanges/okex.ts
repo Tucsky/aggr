@@ -8,14 +8,14 @@ export default class OKEX extends Exchange {
 
   protected endpoints = {
     PRODUCTS: [
-      'https://www.okex.com/api/v5/public/instruments?instType=SPOT',
-      'https://www.okex.com/api/v5/public/instruments?instType=FUTURES',
-      'https://www.okex.com/api/v5/public/instruments?instType=SWAP'
+      'https://www.okx.com/api/v5/public/instruments?instType=SPOT',
+      'https://www.okx.com/api/v5/public/instruments?instType=FUTURES',
+      'https://www.okx.com/api/v5/public/instruments?instType=SWAP'
     ]
   }
 
   async getUrl() {
-    return 'wss://ws.okex.com:8443/ws/v5/public'
+    return 'wss://ws.okx.com:8443/ws/v5/public'
   }
 
   validateProducts(data: any) {
