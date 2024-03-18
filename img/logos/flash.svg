@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 27.7.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Camada_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 500 500" style="enable-background:new 0 0 500 500;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:url(#SVGID_1_);}
+	.st1{fill:#FFFFFF;}
+</style>
+<circle cx="250" cy="250" r="250"/>
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="1842.6329" y1="3011.8494" x2="2342.6245" y2="3011.8494" gradientTransform="matrix(0.7071 -0.7071 -0.7071 -0.7071 899.9517 3859.3628)">
+	<stop  offset="0" style="stop-color:#00F9FF"/>
+	<stop  offset="1" style="stop-color:#FF0095"/>
+</linearGradient>
+<path class="st0" d="M73.2,73.2c-97.6,97.6-97.6,255.9,0,353.5s255.9,97.6,353.5,0s97.6-255.9,0-353.5S170.8-24.4,73.2,73.2z
+	 M412.6,412.6c-89.7,89.7-235.6,89.7-325.3,0S-2.3,177,87.3,87.4s235.6-89.7,325.3,0S502.3,323,412.6,412.6z"/>
+<polygon class="st1" points="193.6,282.2 159.3,282.2 193.9,122.5 380.8,122.5 333.3,184.6 253.8,184.6 245.7,222.3 304.5,222.3 
+	156,416.5 "/>
+</svg>

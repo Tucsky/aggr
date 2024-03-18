@@ -1,0 +1,1 @@
+const t="```ts\r\ncbuy: number\r\n```\r\n\r\nRepresents the sum of all the individuals buy / long market orders in the current bar.\r\nIt's the count, not the volume.\r\n> Disabling a market in the chart filter UI will affect this amount\r\n\r\n\r\n```ts\r\nhistogram(cbuy, title='buy count')\r\n```";export{t as default};
