@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented here.
 
+## [3.5.4] - 2024-03-29
+- Updated Okex API domain
+- Updated Huobi API domain
+
+
+### [3.5.3] - 2024-03-05
+
+- Ensure lightweight charts is packed with last version on build    
+- Fix enabled by default (star icon) reactivity
+- Fix Panes layout reactivity on initial workspace load
+- Fix indicatorOrder mismatch in Chart component on boot
+### [3.5.2] - 2024-03-05
+
 ## [3.5.1] - 2024-03-02
 
 ### Changed

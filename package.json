@@ -1,6 +1,6 @@
 {
   "name": "aggr",
-  "version": "3.5.3",
+  "version": "3.5.4",
   "private": true,
   "type": "module",
   "scripts": {
