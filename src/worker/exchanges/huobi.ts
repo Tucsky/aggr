@@ -8,7 +8,7 @@ export default class HUOBI extends Exchange {
 
   protected endpoints = {
     PRODUCTS: [
-      'https://api.huobi.pro/v1/common/symbols',
+      'https://api.htx.com/v1/settings/common/symbols',
       'https://api.hbdm.com/api/v1/contract_contract_info',
       'https://api.hbdm.com/swap-api/v1/swap_contract_info',
       'https://api.hbdm.com/linear-swap-api/v1/swap_contract_info'
@@ -34,7 +34,7 @@ export default class HUOBI extends Exchange {
     } else if (this.types[pair] === 'linear') {
       return 'wss://api.hbdm.com/linear-swap-ws'
     } else {
-      return 'wss://api.huobi.pro/ws'
+      return 'wss://api.htx.com/ws'
     }
   }
 
@@ -51,9 +51,7 @@ export default class HUOBI extends Exchange {
 
         switch (type) {
           case 'spot':
-            pair = (
-              product['base-currency'] + product['quote-currency']
-            ).toLowerCase()
+            pair = product.symbol
             break
           case 'futures':
             pair =
@@ -67,12 +65,6 @@ export default class HUOBI extends Exchange {
             pair = product.contract_code
             specs[pair] = product.contract_size
             break
-        }
-
-        if (products.find(a => a.toLowerCase() === pair.toLowerCase())) {
-          throw new Error(
-            'Duplicate pair detected on huobi exchange (' + pair + ')'
-          )
         }
 
         types[pair] = type
