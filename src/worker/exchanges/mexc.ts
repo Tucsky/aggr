@@ -16,7 +16,7 @@ export default class MEXC extends Exchange {
 
   async getUrl(pair) {
     if (typeof this.contractSizes[pair] === 'number') {
-      return 'wss://contract.mexc.com/ws'
+      return 'wss://contract.mexc.com/edge'
     }
 
     return 'wss://wbs.mexc.com/ws'
