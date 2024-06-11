@@ -5,6 +5,31 @@ import { getApiUrl } from '../utils/helpers'
 import aggregatorService from './aggregatorService'
 import workspacesService from './workspacesService'
 
+const COINBASE_INTX_REGEX = /-INTX$/
+const BITFINEX_PERP_REGEX = /F0$/
+const BITFINEX_FUTURES_REGEX = /(.*)F0:(\w+)F0/
+const BITFINEX_UST_REGEX = /UST($|F0)/
+const HUOBI_FUTURES_REGEX = /_(CW|CQ|NW|NQ)$/
+const UNDERSCORE_REGEX = /_/
+const DASH_REGEX = /-/
+const DASH_SPOT_REGEX = /-SPOT$/
+const SWAP_OR_PERP_REGEX = /(-|_)swap$|(-|_|:)perp/i
+const TWO_DIGITS_REGEX = /\d{2}/
+const KRAKEN_FUTURES_REGEX = /(PI|FI|PF)_/
+const HUOBI_SUFFIXES_REGEX = /_CW|_CQ|_NW|_NQ/i
+const DERIBIT_PERP_REGEX = /_(\w+)-PERPETUAL/i
+const KUCOIN_SUFFIX_REGEX = /M$/
+const PERP_QUOTE_REGEX = /-PERP(ETUAL)?/i
+const XBT_BASE_REGEX = /xbt$|^xbt/i
+const PERP_SUFFIX_REGEX = /[^a-z0-9](perp|swap|perpetual)$/i
+const DIGIT_PREFIX_REGEX = /[^a-z0-9]\d+$/i
+const SYMBOL_DELIMITER_REGEX = /[-_/:]/
+const EVERYTHING_BINANCE_REGEX = /BINANCE/
+const REVERSE_MATCH_REGEX = /(\w+)[^a-z0-9]/i
+const COMMON_FUTURES_SUFFIX_REGEX = /[HUZ_-]\d{2}/
+const UNDERSCORE_ANYTHING_REGEX = /_.*/
+const PARSE_MARKET_REGEX = /([^:]*):(.*)/
+
 const stablecoins = [
   'USDT',
   'USDC',
@@ -274,7 +299,7 @@ export async function getExchangeSymbols(
 }
 
 export function parseMarket(market: string) {
-  return market.match(/([^:]*):(.*)/).slice(1, 3)
+  return market.match(PARSE_MARKET_REGEX).slice(1, 3)
 }
 
 export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
@@ -282,36 +307,39 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
 
   let type = 'spot'
 
-  if (/[HUZ_-]\d{2}/.test(symbol)) {
+  if (COMMON_FUTURES_SUFFIX_REGEX.test(symbol)) {
     type = 'future'
   } else if (exchangeId === 'BINANCE_FUTURES' || exchangeId === 'DYDX') {
     type = 'perp'
-  } else if (exchangeId === 'BITFINEX' && /F0$/.test(symbol)) {
+  } else if (exchangeId === 'COINBASE' && COINBASE_INTX_REGEX.test(symbol)) {
     type = 'perp'
-  } else if (exchangeId === 'HUOBI' && /_(CW|CQ|NW|NQ)$/.test(symbol)) {
+  } else if (exchangeId === 'BITFINEX' && BITFINEX_PERP_REGEX.test(symbol)) {
+    type = 'perp'
+  } else if (exchangeId === 'HUOBI' && HUOBI_FUTURES_REGEX.test(symbol)) {
     type = 'future'
-  } else if (exchangeId === 'BITMART' && !/_/.test(symbol)) {
+  } else if (exchangeId === 'BITMART' && !UNDERSCORE_REGEX.test(symbol)) {
     type = 'perp'
-  } else if (exchangeId === 'HUOBI' && /-/.test(symbol)) {
+  } else if (exchangeId === 'HUOBI' && DASH_REGEX.test(symbol)) {
     type = 'perp'
-  } else if (exchangeId === 'BYBIT' && !/-SPOT$/.test(symbol)) {
-    if (/.*[0-9]{2}$/.test(symbol)) {
+  } else if (exchangeId === 'BYBIT' && !DASH_SPOT_REGEX.test(symbol)) {
+    if (TWO_DIGITS_REGEX.test(symbol)) {
       type = 'future'
-    } else if (!/-SPOT$/.test(symbol)) {
+    } else if (!DASH_SPOT_REGEX.test(symbol)) {
       type = 'perp'
     }
-  } else if (
-    exchangeId === 'BITMEX' ||
-    /(-|_)swap$|(-|_|:)perp/i.test(symbol)
-  ) {
-    if (/\d{2}/.test(symbol)) {
+  } else if (exchangeId === 'BITMEX' || SWAP_OR_PERP_REGEX.test(symbol)) {
+    if (TWO_DIGITS_REGEX.test(symbol)) {
       type = 'future'
     } else {
       type = 'perp'
     }
   } else if (exchangeId === 'PHEMEX' && symbol[0] !== 's') {
     type = 'perp'
-  } else if (exchangeId === 'KRAKEN' && /_/.test(symbol) && type === 'spot') {
+  } else if (
+    exchangeId === 'KRAKEN' &&
+    UNDERSCORE_REGEX.test(symbol) &&
+    type === 'spot'
+  ) {
     type = 'perp'
   } else if (
     (exchangeId === 'BITGET' || exchangeId === 'MEXC') &&
@@ -325,37 +353,39 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   let localSymbol = symbol
 
   if (exchangeId === 'BYBIT') {
-    localSymbol = localSymbol.replace(/-SPOT$/, '')
+    localSymbol = localSymbol.replace(DASH_SPOT_REGEX, '')
   } else if (exchangeId === 'KRAKEN') {
-    localSymbol = localSymbol.replace(/(PI|FI|PF)_/, '')
+    localSymbol = localSymbol.replace(KRAKEN_FUTURES_REGEX, '')
   } else if (exchangeId === 'BITFINEX') {
     localSymbol = localSymbol
-      .replace(/(.*)F0:(\w+)F0/, '$1-$2')
-      .replace(/UST($|F0)/, 'USDT$1')
+      .replace(BITFINEX_FUTURES_REGEX, '$1-$2')
+      .replace(BITFINEX_UST_REGEX, 'USDT$1')
   } else if (exchangeId === 'HUOBI') {
-    localSymbol = localSymbol.replace(/_CW|_CQ|_NW|_NQ/i, 'USD')
+    localSymbol = localSymbol.replace(HUOBI_SUFFIXES_REGEX, 'USD')
   } else if (exchangeId === 'DERIBIT') {
-    localSymbol = localSymbol.replace(/_(\w+)-PERPETUAL/i, '$1')
+    localSymbol = localSymbol.replace(DERIBIT_PERP_REGEX, '$1')
   } else if (exchangeId === 'BITGET') {
     localSymbol = localSymbol
       .replace('USD_DMCBL', 'USD')
       .replace('PERP_CMCBL', 'USDC')
-      .replace(/_.*/, '')
+      .replace(UNDERSCORE_ANYTHING_REGEX, '')
   } else if (exchangeId === 'KUCOIN') {
-    localSymbol = localSymbol.replace(/M$/, '')
+    localSymbol = localSymbol.replace(KUCOIN_SUFFIX_REGEX, '')
+  } else if (exchangeId === 'COINBASE' && type === 'perp') {
+    localSymbol = localSymbol.replace(COINBASE_INTX_REGEX, '')
   }
 
   localSymbol = localSymbol
-    .replace(/xbt$|^xbt/i, 'BTC')
-    .replace(/-PERP(ETUAL)?/i, '-USD')
-    .replace(/[^a-z0-9](perp|swap|perpetual)$/i, '')
-    .replace(/[^a-z0-9]\d+$/i, '')
+    .replace(XBT_BASE_REGEX, 'BTC')
+    .replace(PERP_QUOTE_REGEX, '-USD')
+    .replace(PERP_SUFFIX_REGEX, '')
+    .replace(DIGIT_PREFIX_REGEX, '')
     .toUpperCase()
 
-  let localSymbolAlpha = localSymbol.replace(/[-_/:]/, '')
+  let localSymbolAlpha = localSymbol.replace(SYMBOL_DELIMITER_REGEX, '')
 
   let match
-  if (!/BINANCE/.test(exchangeId)) {
+  if (!EVERYTHING_BINANCE_REGEX.test(exchangeId)) {
     match = localSymbol.match(currencyPairLookup)
   }
 
@@ -367,7 +397,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     }
 
     if (!match && (exchangeId === 'DERIBIT' || exchangeId === 'HUOBI')) {
-      match = localSymbolAlpha.match(/(\w+)[^a-z0-9]/i)
+      match = localSymbolAlpha.match(REVERSE_MATCH_REGEX)
 
       if (match) {
         match[2] = match[1]
