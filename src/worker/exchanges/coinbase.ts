@@ -1,16 +1,48 @@
 import Exchange from '../exchange'
+const INTX_PAIR_REGEX = /-INTX$/
 
 export default class COINBASE extends Exchange {
   id = 'COINBASE'
 
-  protected endpoints = { PRODUCTS: 'https://api.pro.coinbase.com/products' }
-
-  async getUrl() {
-    return 'wss://ws-feed.pro.coinbase.com/'
+  protected endpoints = {
+    PRODUCTS: [
+      'https://api.pro.coinbase.com/products',
+      'https://api.coinbase.com/api/v3/brokerage/market/products?product_type=FUTURE&contract_expiry_type=PERPETUAL'
+    ]
   }
 
-  formatProducts(data) {
-    return data.map(product => product.id)
+  async getUrl(pair) {
+    if (INTX_PAIR_REGEX.test(pair)) {
+      return 'wss://advanced-trade-ws.coinbase.com'
+    }
+
+    return 'wss://ws-feed.pro.coinbase.com'
+  }
+
+  formatProducts(response) {
+    const products = []
+
+    const [spotResponse, perpResponse] = response
+
+    if (spotResponse && spotResponse.length) {
+      for (const product of spotResponse) {
+        if (product.status !== 'online') {
+          continue
+        }
+
+        products.push(product.id)
+      }
+    }
+
+    if (perpResponse && perpResponse.products && perpResponse.products.length) {
+      for (const product of perpResponse.products) {
+        products.push(product.product_id)
+      }
+    }
+
+    return {
+      products
+    }
   }
 
   /**
@@ -23,10 +55,19 @@ export default class COINBASE extends Exchange {
       return
     }
 
+    const isIntx = INTX_PAIR_REGEX.test(pair)
+
     api.send(
       JSON.stringify({
         type: 'subscribe',
-        channels: [{ name: 'matches', product_ids: [pair] }]
+        ...(isIntx
+          ? {
+              channel: 'market_trades',
+              product_ids: [pair]
+            }
+          : {
+              channels: [{ name: 'matches', product_ids: [pair] }]
+            })
       })
     )
 
@@ -43,10 +84,19 @@ export default class COINBASE extends Exchange {
       return
     }
 
+    const isIntx = INTX_PAIR_REGEX.test(pair)
+
     api.send(
       JSON.stringify({
         type: 'unsubscribe',
-        channels: [{ name: 'matches', product_ids: [pair] }]
+        ...(isIntx
+          ? {
+              channel: 'market_trades',
+              product_ids: [pair]
+            }
+          : {
+              channels: [{ name: 'matches', product_ids: [pair] }]
+            })
       })
     )
 
@@ -56,17 +106,38 @@ export default class COINBASE extends Exchange {
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
-    if (json && json.size > 0) {
-      return this.emitTrades(api.id, [
-        {
-          exchange: this.id,
-          pair: json.product_id,
-          timestamp: +new Date(json.time),
-          price: +json.price,
-          size: +json.size,
-          side: json.side === 'buy' ? 'sell' : 'buy'
-        }
-      ])
+    if (json) {
+      if (json.type === 'match') {
+        return this.emitTrades(api.id, [
+          this.formatTrade(json, json.product_id)
+        ])
+      } else if (json.channel === 'market_trades') {
+        return this.emitTrades(
+          api.id,
+          json.events.reduce((acc, event) => {
+            if (event.type === 'update') {
+              acc.push(
+                ...event.trades.map(trade =>
+                  this.formatTrade(trade, trade.product_id)
+                )
+              )
+            }
+
+            return acc
+          }, [])
+        )
+      }
+    }
+  }
+
+  formatTrade(trade, pair) {
+    return {
+      exchange: this.id,
+      pair: pair,
+      timestamp: +new Date(trade.time),
+      price: +trade.price,
+      size: +trade.size,
+      side: trade.side === 'buy' || trade.side === 'BUY' ? 'sell' : 'buy'
     }
   }
 }
