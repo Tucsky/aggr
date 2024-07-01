@@ -6,6 +6,7 @@ export interface Renderer {
   timeframe: number
   timestamp: number
   localTimestamp: number
+  lastTradeTimestamp: renderer
   length: number
   bar: Bar
   sources: { [name: string]: Bar }
