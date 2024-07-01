@@ -1178,6 +1178,10 @@ export default class Chart {
         }
       }
 
+      if (trade.timestamp) {
+        this.activeRenderer.lastTradeTimestamp = trade.timestamp / 1000
+      }
+
       if (
         !this.activeRenderer.sources[identifier] ||
         typeof this.activeRenderer.sources[identifier].pair === 'undefined'

@@ -114,6 +114,7 @@ export interface Renderer {
   timeframe: number
   timestamp: number
   localTimestamp: number
+  lastTradeTimestamp: number
   length: number
   bar: Bar
   sources: { [name: string]: Bar }
