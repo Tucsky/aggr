@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented here.
 
+## [3.6.1] - 2024-08-14
+
+- Fix Dockerfile and startup instructions
+
 ## [3.6.0] - 2024-06-11
 
 - Add support for -INTX pairs on COINBASE
