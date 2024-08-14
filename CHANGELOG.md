@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented here.
 
+## [3.6.0] - 2024-06-11
+
+- Add support for -INTX pairs on COINBASE
+- Add lastTradeTimestamp to chart's Renderer base model 
+- Fix MEXC Futures ws endpoints
+
 ## [3.5.5] - 2024-04-21
 
 - Make sure that the path to `Index.html` is compatible with different operating systems when using the local distribution server.
