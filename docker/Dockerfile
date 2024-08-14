@@ -23,6 +23,5 @@ COPY ./conf/nginx.conf /temp/nginx.conf
 RUN envsubst / < /temp/nginx.conf > /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
-USER guest
 
 CMD [ "nginx", "-g", "daemon off;" ]

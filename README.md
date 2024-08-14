@@ -83,9 +83,9 @@ build your own aggr client docker:
 ```bash
 git clone https://github.com/Tucsky/aggr
 cd aggr
-docker build -t aggr-chart .
+docker-compose -f "docker\docker-compose.yml" up -d --build # prod
 ```
-you need to set the API_URL as environment variable for your own installation, if you want to use that.
+ If you want to use aggr-server as your local data source, load the docker-compose.dev.yml instead.
 
 ## Configuration
 
