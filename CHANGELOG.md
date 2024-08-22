@@ -2,10 +2,14 @@
 
 All notable changes to this project will be documented here.
 
+## [3.6.0-hotfix.0] - 2024-08-22
+
+* Update Coinbase Spot endpoint
+
 ## [3.6.0] - 2024-06-11
 
 - Add support for -INTX pairs on COINBASE
-- Add lastTradeTimestamp to chart's Renderer base model 
+- Add lastTradeTimestamp to chart's Renderer base model
 - Fix MEXC Futures ws endpoints
 
 ## [3.5.5] - 2024-04-21
