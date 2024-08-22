@@ -16,7 +16,7 @@ export default class COINBASE extends Exchange {
       return 'wss://advanced-trade-ws.coinbase.com'
     }
 
-    return 'wss://ws-feed.pro.coinbase.com'
+    return 'wss://ws-feed.exchange.coinbase.com'
   }
 
   formatProducts(response) {
