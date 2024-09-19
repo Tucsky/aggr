@@ -119,4 +119,6 @@ export interface Ticker {
   price: number
   volume?: number
   volumeDelta?: number
+  count?: number
+  countDelta?: number
 }

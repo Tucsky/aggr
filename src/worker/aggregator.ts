@@ -309,6 +309,8 @@ class Aggregator {
     this.tickers[marketKey].volumeDelta +=
       trade.amount * (trade.side === 'buy' ? 1 : -1)
     this.tickers[marketKey].price = trade.price
+    this.tickers[marketKey].count += trade.count
+    this.tickers[marketKey].countDelta += trade.count * (trade.side === 'buy' ? 1 : -1)
 
     if (this.tickers[marketKey].initialPrice === null) {
       this.emitInitialPrice(marketKey, trade.price)
@@ -430,12 +432,16 @@ class Aggregator {
         updatedTickers[marketKey] = {
           price: this.tickers[marketKey].price,
           volume: this.tickers[marketKey].volume,
-          volumeDelta: this.tickers[marketKey].volumeDelta
+          volumeDelta: this.tickers[marketKey].volumeDelta,
+          count: this.tickers[marketKey].count,
+          countDelta: this.tickers[marketKey].countDelta
         }
 
         this.tickers[marketKey].updated = false
         this.tickers[marketKey].volume = 0
         this.tickers[marketKey].volumeDelta = 0
+        this.tickers[marketKey].count = 0
+        this.tickers[marketKey].countDelta = 0
       }
 
       this.ctx.postMessage({ op: 'tickers', data: updatedTickers })
@@ -465,7 +471,9 @@ class Aggregator {
       volume: 0,
       volumeDelta: 0,
       initialPrice: null,
-      price: null
+      price: null,
+      count: 0,
+      countDelta: 0,
     }
 
     this.connectionsCount = Object.keys(this.connections).length
