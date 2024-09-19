@@ -60,6 +60,32 @@
           <input
             type="checkbox"
             class="form-control"
+            :checked="showCount"
+            @change="$store.commit(paneId + '/TOGGLE_COUNT')"
+          />
+          <div></div>
+          <span>Show count</span>
+        </label>
+      </div>
+
+      <div class="form-group mb8">
+        <label class="checkbox-control -small">
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="showCountDelta"
+            @change="$store.commit(paneId + '/TOGGLE_COUNT_DELTA')"
+          />
+          <div></div>
+          <span>Show count Δ</span>
+        </label>
+      </div>
+
+      <div class="form-group mb8">
+        <label class="checkbox-control -small">
+          <input
+            type="checkbox"
+            class="form-control"
             :checked="showPrice"
             @change="$store.commit(paneId + '/TOGGLE_PRICE')"
           />
@@ -230,12 +256,20 @@ export default class PricesSettings extends Vue {
     return this.$store.state[this.paneId].showVolume
   }
 
+  get showCount() {
+    return this.$store.state[this.paneId].showCount
+  }
+
   get showPrice() {
     return this.$store.state[this.paneId].showPrice
   }
 
   get showVolumeDelta() {
     return this.$store.state[this.paneId].showVolumeDelta
+  }
+
+  get showCountDelta() {
+    return this.$store.state[this.paneId].showCountDelta
   }
 
   get period() {

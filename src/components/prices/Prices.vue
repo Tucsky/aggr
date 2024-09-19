@@ -52,6 +52,12 @@
           <div v-if="showVolumeDelta" class="market__volume">
             {{ market.avgVolumeDelta }}%
           </div>
+          <div v-if="showCount" class="market__count">
+            {{ formatPrice(market.avgCount) }}
+          </div>
+          <div v-if="showCountDelta" class="market__count">
+            {{ market.avgCountDelta }}%
+          </div>
         </div>
       </component>
     </div>
@@ -68,6 +74,7 @@ import PaneHeader from '../panes/PaneHeader.vue'
 import { Market, Ticker } from '@/types/types'
 import {
   formatAmount,
+  formatPrice,
   formatMarketPrice,
   parseMarket,
   getMarketProduct
@@ -84,6 +91,10 @@ type WatchlistMarket = Market & {
   avgVolume: number
   volumeDelta: number
   avgVolumeDelta: number
+  count: number
+  avgCount: number
+  countDelta: number
+  avgCountDelta: number
   status: TickerStatus
 }
 
@@ -213,6 +224,14 @@ export default class Prices extends Mixins(PaneMixin) {
     return this.$store.state[this.paneId].showVolumeDelta
   }
 
+  get showCount() {
+    return this.$store.state[this.paneId].showCount
+  }
+
+  get showCountDelta() {
+    return this.$store.state[this.paneId].showCountDelta
+  }
+
   get animateSort() {
     return this.$store.state[this.paneId].animateSort
   }
@@ -320,6 +339,8 @@ export default class Prices extends Mixins(PaneMixin) {
 
       market.volume += ticker.volume
       market.volumeDelta += ticker.volumeDelta
+      market.count += ticker.count
+      market.countDelta += ticker.countDelta
 
       if (avgPeriods) {
         market.avgVolume =
@@ -330,10 +351,22 @@ export default class Prices extends Mixins(PaneMixin) {
             market.avgVolume) *
             100
         )
+        market.avgCount =
+          market.count * periodWeight + oldData.count * (1 - periodWeight)
+        market.avgCountDelta = Math.round(
+          ((market.countDelta * periodWeight +
+            oldData.countDelta * (1 - periodWeight)) /
+            market.avgCount) *
+            100
+        )
       } else {
         market.avgVolume = market.volume
         market.avgVolumeDelta = Math.round(
           (market.volumeDelta / market.volume) * 100
+        )
+        market.avgCount = market.count
+        market.avgCountDelta = Math.round(
+          (market.countDelta / market.count) * 100
         )
       }
 
@@ -391,7 +424,9 @@ export default class Prices extends Mixins(PaneMixin) {
       price: 0,
       change: 0,
       volume: 0,
-      volumeDelta: 0
+      volumeDelta: 0,
+      count: 0,
+      countDelta: 0
     }
 
     const product = getMarketProduct(market.exchange, market.pair)
@@ -408,7 +443,11 @@ export default class Prices extends Mixins(PaneMixin) {
         volume: 0,
         avgVolume: 0,
         volumeDelta: 0,
-        avgVolumeDelta: 0
+        avgVolumeDelta: 0,
+        count: 0,
+        avgCount: 0,
+        countDelta: 0,
+        avgCountDelta: 0
       })
 
       return product
@@ -447,11 +486,23 @@ export default class Prices extends Mixins(PaneMixin) {
       } else {
         this.sortFunction = (a, b) => b.avgVolume - a.avgVolume
       }
+    } else if (by === 'count') {
+      if (order === 1) {
+        this.sortFunction = (a, b) => a.avgCount - b.avgCount
+      } else {
+        this.sortFunction = (a, b) => b.avgCount - a.avgCount
+      }
     } else if (by === 'delta') {
       if (order === 1) {
         this.sortFunction = (a, b) => a.avgVolumeDelta - b.avgVolumeDelta
       } else {
         this.sortFunction = (a, b) => b.avgVolumeDelta - a.avgVolumeDelta
+      }
+    } else if (by === 'countDelta') {
+      if (order === 1) {
+        this.sortFunction = (a, b) => a.avgCountDelta - b.avgCountDelta
+      } else {
+        this.sortFunction = (a, b) => b.avgCountDelta - a.avgCountDelta
       }
     }
 
@@ -460,6 +511,10 @@ export default class Prices extends Mixins(PaneMixin) {
 
   formatAmount(amount) {
     return formatAmount(amount, 0)
+  }
+
+  formatPrice(amount) {
+    return formatPrice(amount)
   }
 
   onResize(width: number, height: number) {
@@ -496,9 +551,13 @@ export default class Prices extends Mixins(PaneMixin) {
           this.lastPeriodTickers[market.id].change = +market.change
           this.lastPeriodTickers[market.id].volume = +market.volume
           this.lastPeriodTickers[market.id].volumeDelta = +market.volumeDelta
+          this.lastPeriodTickers[market.id].count = +market.count
+          this.lastPeriodTickers[market.id].countDelta = +market.countDelta
 
           market.volume = 0
           market.volumeDelta = 0
+          market.count = 0
+          market.countDelta = 0
         }
       }
 
@@ -511,6 +570,8 @@ export default class Prices extends Mixins(PaneMixin) {
       this.lastPeriodTickers[market].price =
         this.lastPeriodTickers[market].volume =
         this.lastPeriodTickers[market].volumeDelta =
+        this.lastPeriodTickers[market].count =
+        this.lastPeriodTickers[market].countDelta =
           0
     }
 

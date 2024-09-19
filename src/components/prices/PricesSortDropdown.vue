@@ -1,7 +1,7 @@
 <template>
   <dropdown-button
     v-model="sortType"
-    :options="['none', 'price', 'volume', 'delta', 'change']"
+    :options="['none', 'price', 'volume', 'delta', 'change', 'count', 'countDelta']"
     @input="selectSortType($event)"
   ></dropdown-button>
 </template>
