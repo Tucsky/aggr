@@ -170,7 +170,7 @@ class Aggregator {
       const trade = trades[i]
       const marketKey = trade.exchange + ':' + trade.pair
 
-      if (!this.connections[marketKey]) {
+      if (!this.connections[marketKey] || !trade.size || !trade.price) {
         continue
       }
 
@@ -196,7 +196,7 @@ class Aggregator {
       const trade = trades[i] as unknown as AggregatedTrade
       const marketKey = trade.exchange + ':' + trade.pair
 
-      if (!this.connections[marketKey]) {
+      if (!this.connections[marketKey] || !trade.size || !trade.price) {
         continue
       }
 
