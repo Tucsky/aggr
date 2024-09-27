@@ -121,13 +121,13 @@ export default class BINANCE_FUTURES extends Exchange {
     if (!json) {
       return
     } else {
-      if (json.T && json.X !== 'INSURANCE_FUND') {
+      if (json.T && json.X === 'MARKET') {
+        const symbol = json.s.toLowerCase()
+        const price = +json.p
         let size = +json.q
 
-        const symbol = json.s.toLowerCase()
-
         if (typeof this.specs[symbol] === 'number') {
-          size = (size * this.specs[symbol]) / json.p
+          size = (size * this.specs[symbol]) / price
         }
 
         return this.emitTrades(api.id, [
@@ -135,7 +135,7 @@ export default class BINANCE_FUTURES extends Exchange {
             exchange: this.id,
             pair: symbol,
             timestamp: json.T,
-            price: +json.p,
+            price: +price,
             size: size,
             side: json.m ? 'sell' : 'buy',
             count: json.l - json.f + 1

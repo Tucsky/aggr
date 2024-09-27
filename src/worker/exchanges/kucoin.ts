@@ -149,7 +149,7 @@ export default class KUCOIN extends Exchange {
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
-    if (!json || !json.data) {
+    if (!json || !json.data || json.type !== 'message') {
       return
     }
 
