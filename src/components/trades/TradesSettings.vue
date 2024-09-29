@@ -222,7 +222,7 @@
       </button>
     </ToggableSection>
 
-    <ToggableSection title="Preferences" id="trades-display" inset>
+    <ToggableSection title="Preferences" id="trades-preferences" inset>
       <div
         class="form-group column mb8"
         title="Number of trades rendered"
@@ -239,86 +239,6 @@
           :value="maxRows"
           @change="$store.commit(paneId + '/SET_MAX_ROWS', $event.target.value)"
         />
-      </div>
-
-      <div
-        v-if="isLegacy"
-        class="form-group column mb8"
-        @click.stop="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showLogos')"
-      >
-        <label class="-fill -center -inline">Show logos</label>
-        <div
-          class="checkbox-control checkbox-control-input -unshrinkable"
-          title="Exchange's logos + style"
-          v-tippy
-          @click.stop
-        >
-          <input type="checkbox" class="form-control" :checked="showLogos" />
-          <div
-            @click="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showLogos')"
-          />
-        </div>
-      </div>
-
-      <div
-        v-if="showLogos && isLegacy"
-        class="form-group column mb8"
-        @click.stop="
-          $store.commit(paneId + '/TOGGLE_PREFERENCE', 'monochromeLogos')
-        "
-      >
-        <label class="-fill -center -inline">Monochrome logos</label>
-        <div
-          class="checkbox-control checkbox-control-input -unshrinkable"
-          title="Exchange's logos + style"
-          v-tippy
-          @click.stop
-        >
-          <input
-            type="checkbox"
-            class="form-control"
-            :checked="monochromeLogos"
-          />
-          <div
-            @click="
-              $store.commit(paneId + '/TOGGLE_PREFERENCE', 'monochromeLogos')
-            "
-          />
-        </div>
-      </div>
-
-      <div
-        class="form-group column mb8"
-        @click.stop="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showPairs')"
-      >
-        <label class="-fill -center -inline">Show pairs</label>
-        <div
-          class="checkbox-control checkbox-control-input -unshrinkable"
-          title="Show symbol's names<br>(ex: BTC-USD)"
-          v-tippy
-          @click.stop
-        >
-          <input type="checkbox" class="form-control" :checked="showPairs" />
-          <div
-            @click="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showPairs')"
-          ></div>
-        </div>
-      </div>
-
-      <div
-        class="form-group column mb8"
-        @click.stop="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showPrices')"
-      >
-        <label class="-fill -center -inline">Show prices</label>
-        <div
-          class="checkbox-control checkbox-control-input -unshrinkable"
-          @click.stop
-        >
-          <input type="checkbox" class="form-control" :checked="showPrices" />
-          <div
-            @click="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showPrices')"
-          />
-        </div>
       </div>
 
       <div
@@ -366,6 +286,81 @@
         </div>
       </div>
     </ToggableSection>
+
+    <ToggableSection title="Formats" id="trades-columns" inset>
+      <div class="form-group mb8">
+        <label class="checkbox-control -small">
+          <input
+            type="checkbox"
+            class="form-control"
+            :checked="showPairs"
+            @change="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showPairs')"
+          />
+          <div></div>
+          <span>
+            Show pairs
+            <i
+              class="icon-info"
+              v-tippy
+              title="Show symbol's names<br>(ex: BTC-USD)"
+            ></i>
+          </span>
+        </label>
+      </div>
+
+      <toggable-group
+        class="mb8 mt16"
+        :value="showPrices"
+        label="Show prices"
+        @change="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showPrices')"
+        small
+      >
+        <div class="form-group">
+          <label class="checkbox-control -small">
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="showAvgPrice"
+              @change="
+                $store.commit(paneId + '/TOGGLE_PREFERENCE', 'showAvgPrice')
+              "
+            />
+            <div></div>
+            <span>
+              Weighted average
+              <i
+                class="icon-info"
+                v-tippy
+                title="Show the weighted average price instead of the last price for aggregated trade results"
+              ></i>
+            </span>
+          </label>
+        </div>
+      </toggable-group>
+      <toggable-group
+        v-if="isLegacy"
+        class="mb8 mt16"
+        :value="showLogos"
+        label="Show logos"
+        @change="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showLogos')"
+        small
+      >
+        <div class="form-group">
+          <label class="checkbox-control -small">
+            <input
+              type="checkbox"
+              class="form-control"
+              :checked="monochromeLogos"
+              @change="
+                $store.commit(paneId + '/TOGGLE_PREFERENCE', 'monochromeLogos')
+              "
+            />
+            <div></div>
+            <span> Monochrome logos </span>
+          </label>
+        </div>
+      </toggable-group>
+    </ToggableSection>
     <ToggableSection
       v-if="isLegacy"
       :title="`THRESHOLD MULTIPLIER (${mutipliersCount})`"
@@ -411,6 +406,7 @@ import ToggableSection from '@/components/framework/ToggableSection.vue'
 import ColorPickerControl from '@/components/framework/picker/ColorPickerControl.vue'
 import ThresholdColor from '@/components/trades/ThresholdColor.vue'
 import MarketMultiplier from '@/components/trades/MarketMultiplier.vue'
+import ToggableGroup from '@/components/framework/ToggableGroup.vue'
 
 @Component({
   components: {
@@ -419,7 +415,8 @@ import MarketMultiplier from '@/components/trades/MarketMultiplier.vue'
     ThresholdColor,
     ToggableSection,
     MarketMultiplier,
-    ColorPickerControl
+    ColorPickerControl,
+    ToggableGroup
   },
   name: 'TradesSettings',
   props: {
@@ -474,6 +471,10 @@ export default class TradesSettings extends Vue {
 
   get showTimeAgo() {
     return (this.$store.state[this.paneId] as TradesPaneState).showTimeAgo
+  }
+
+  get showAvgPrice() {
+    return (this.$store.state[this.paneId] as TradesPaneState).showAvgPrice
   }
 
   get showPrices() {
