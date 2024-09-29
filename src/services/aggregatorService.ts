@@ -82,6 +82,7 @@ class AggregatorService extends EventEmitter {
       marketDecimals[market] = countDecimals(
         price < 0.000001 ? price + 1 : price
       )
+
       if (!this.normalizeDecimalsQueue) {
         this.normalizeDecimalsQueue = {
           markets: []
@@ -249,6 +250,7 @@ class AggregatorService extends EventEmitter {
 
     for (const localPair in decimalsByLocalMarkets) {
       const decimals = Object.values(decimalsByLocalMarkets[localPair])
+      console.log(decimalsByLocalMarkets[localPair])
       marketDecimals[localPair] = Math.round(
         decimals.reduce((a, b) => a + b) / decimals.length
       )

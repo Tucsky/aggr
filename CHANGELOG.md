@@ -5,6 +5,9 @@ All notable changes to this project will be documented here.
 ## [3.6.1] - 2024-08-14
 
 - Fix Dockerfile and startup instructions
+- Fix Binance Futures wicks of death
+- Show weighted average price in trade feed (instead of last price)
+- Accurate slippage aggregation
 
 ## [3.6.0-hotfix.0] - 2024-08-22
 

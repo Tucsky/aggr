@@ -344,7 +344,7 @@ export default class TradesLite extends Mixins(PaneMixin) {
         pair: trades[i].pair,
         amount: trades[i].amount,
         count: trades[i].count,
-        price: trades[i].price,
+        price: trades[i].avgPrice,
         side: trades[i].side,
         time: null
       }
@@ -970,7 +970,7 @@ export default class TradesLite extends Mixins(PaneMixin) {
   drawPrice(trade, market, height) {
     this.ctx.textAlign = 'left'
     this.ctx.fillText(
-      formatMarketPrice(trade.price, market),
+      formatMarketPrice(trade.avgPrice, market),
       this.priceOffset,
       this.drawOffset + height / 2 + 1,
       this.maxWidth

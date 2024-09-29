@@ -1,3 +1,5 @@
+import settings from '../settings'
+
 export function randomString(
   length = 16,
   characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
@@ -66,4 +68,18 @@ export function sleep(duration = 1000): Promise<void> {
   return new Promise(resolve => {
     setTimeout(() => resolve(), duration)
   })
+}
+
+export function calculateSlippage(previousPrice, currentPrice) {
+  if (settings.calculateSlippage === 'price') {
+    return currentPrice - previousPrice
+  } else if (settings.calculateSlippage === 'bps') {
+    if (currentPrice > previousPrice) {
+      return ((currentPrice - previousPrice) / previousPrice) * 10000
+    } else {
+      return ((previousPrice - currentPrice) / currentPrice) * 10000
+    }
+  }
+
+  return 0
 }

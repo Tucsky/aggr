@@ -672,7 +672,7 @@ export default class Prices extends Mixins(PaneMixin) {
     &__exchange {
       padding: 0;
       background-repeat: no-repeat;
-      background-size: 1em;
+      background-size: 1em 1em;
       width: 1rem;
       align-self: stretch;
       flex-shrink: 0;
