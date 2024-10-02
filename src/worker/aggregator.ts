@@ -265,6 +265,7 @@ class Aggregator {
           aggTrade.side === trade.side
         ) {
           aggTrade.size += trade.size
+          aggTrade.value += trade.price * trade.size
           aggTrade.count++
           continue
         } else {
@@ -273,9 +274,14 @@ class Aggregator {
       }
 
       trade.count = 1
+      trade.value = trade.price * trade.size
       this.aggregationTimeouts[tradeKey] = now + this.baseAggregationTimeout
       this.onGoingAggregations[tradeKey] = trade
     }
+  }
+
+  isAggregatedTrade(trade: Trade | AggregatedTrade): trade is AggregatedTrade {
+    return !!(trade as AggregatedTrade).value
   }
 
   processTrade(trade: AggregatedTrade | Trade): Trade {
@@ -291,22 +297,15 @@ class Aggregator {
           trade.slippage = 0
         }
       } else if (settings.calculateSlippage === 'bps') {
-        if (trade.price > trade.originalPrice) {
-          trade.slippage = Math.round(
-            ((trade.price - trade.originalPrice) / trade.originalPrice) * 10000
-          )
-        } else {
-          trade.slippage = Math.round(
-            ((trade.originalPrice - trade.price) / trade.price) * 10000
-          )
-        }
+        trade.slippage = Math.round(
+          ((trade.price - trade.originalPrice) / trade.originalPrice) * 1e4
+        )
       }
     }
 
-    trade.avgPrice =
-      trade.count > 1
-        ? (trade as AggregatedTrade).value / trade.size
-        : trade.price
+    trade.avgPrice = this.isAggregatedTrade(trade)
+      ? trade.value / trade.size
+      : trade.price
 
     trade.amount =
       (settings.preferQuoteCurrencySize ? trade.avgPrice : 1) * trade.size
@@ -334,6 +333,10 @@ class Aggregator {
 
     trade.amount =
       (settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
+
+    trade.avgPrice = this.isAggregatedTrade(trade)
+      ? trade.value / trade.size
+      : trade.price
 
     if (this.connections[marketKey].bucket) {
       this.connections[marketKey].bucket['l' + trade.side] += trade.amount
