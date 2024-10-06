@@ -28,6 +28,11 @@ type ExchangeEndpoint =
       proxy?: boolean
     }
 
+type ApiStateChangeResolver = {
+  promise?: Promise<Api | void>
+  resolver?: (success: boolean) => void
+}
+
 class Exchange extends EventEmitter {
   public id: string
   public pairs: string[] = []
@@ -38,45 +43,38 @@ class Exchange extends EventEmitter {
 
   /**
    * ping timers
-   * @type {{[url: string]: number}}
    */
-  keepAliveIntervals = {}
+  keepAliveIntervals: { [url: string]: number } = {}
 
   /**
    * active websocket apis
-   * @type {WebSocket[]}
    */
-  apis = []
+  apis: Api[] = []
 
   /**
    * promises of ws. opens
-   * @type {{[url: string]: {promise: Promise<void>, resolver: Function}}}
    */
-  connecting = {}
+  connecting: { [url: string]: ApiStateChangeResolver } = {}
 
   /**
    * promises of ws. closes
-   * @type {{[url: string]: {promise: Promise<void>, resolver: Function}}}
    */
-  disconnecting = {}
+  disconnecting: { [url: string]: ApiStateChangeResolver } = {}
 
   /**
    * Operations timeout delay by operationId
-   * @type {{[operationId: string]: number]}}
    */
-  scheduledOperations = {}
+  scheduledOperations: { [operationId: string]: number } = {}
 
   /**
    * Operation timeout delay by operationId
-   * @type {{[operationId: string]: number]}}
    */
-  scheduledOperationsDelays = {}
+  scheduledOperationsDelays: { [operationId: string]: number } = {}
 
   /**
    * Clear reconnection delay timeout by apiUrl
-   * @type {{[apiUrl: string]: number]}}
    */
-  clearReconnectionDelayTimeout = {}
+  clearReconnectionDelayTimeout: { [apiUrl: string]: number } = {}
 
   /*
     Number of messages received since start
@@ -154,7 +152,6 @@ class Exchange extends EventEmitter {
       api = this.createWs(url, pair)
     }
 
-    api._wasErrored = hadError
     api._originalUrl = originalUrl
 
     if (api._pending.indexOf(pair) !== -1) {
@@ -231,6 +228,7 @@ class Exchange extends EventEmitter {
     }
 
     api.onclose = async event => {
+      console.log('on close', this.scheduledOperationsDelays, this.apis, event)
       if (this.clearReconnectionDelayTimeout[url]) {
         clearTimeout(this.clearReconnectionDelayTimeout[url])
         delete this.clearReconnectionDelayTimeout[url]
@@ -254,6 +252,7 @@ class Exchange extends EventEmitter {
         )
 
         setTimeout(() => {
+          console.log('reconnecting now...', this.apis, this.apis[0] === api)
           this.reconnectApi(api)
         }, this.getTimeoutDelay(api.url))
       } else {
@@ -274,7 +273,7 @@ class Exchange extends EventEmitter {
 
     this.connecting[api._id] = {}
 
-    this.connecting[api._id].promise = new Promise((resolve, reject) => {
+    this.connecting[api._id].promise = new Promise<Api>((resolve, reject) => {
       this.connecting[api._id].resolver = success => {
         if (success) {
           this.onApiCreated(api)
@@ -351,7 +350,7 @@ class Exchange extends EventEmitter {
   /**
    * Get active websocket api by pair
    * @param {string} pair
-   * @returns {WebSocket}
+   * @returns {Api}
    */
   getActiveApiByPair(pair) {
     for (let i = 0; i < this.apis.length; i++) {
@@ -367,9 +366,9 @@ class Exchange extends EventEmitter {
   /**
    * Get active websocket api by url
    * @param {string} url
-   * @returns {WebSocket}
+   * @returns {Api}
    */
-  getActiveApiByUrl(url) {
+  getActiveApiByUrl(url): Api {
     for (let i = 0; i < this.apis.length; i++) {
       if (
         this.apis[i].readyState < 2 &&
@@ -385,7 +384,7 @@ class Exchange extends EventEmitter {
 
   /**
    * Close websocket api
-   * @param {WebSocket} api
+   * @param {Api} api
    * @returns {Promise<void>}
    */
   removeWs(api: Api) {
@@ -425,9 +424,16 @@ class Exchange extends EventEmitter {
 
   /**
    * Reconnect api
-   * @param {WebSocket} api
+   * @param {Api} api
    */
   reconnectApi(api: Api) {
+    if (this.apis.indexOf(api) === -1) {
+      console.debug(
+        `[${this.id}.reconnectApi] reconnect api prevented because api doesn't exist anymore (url: ${api.url})`
+      )
+      return
+    }
+
     console.debug(
       `[${this.id}.reconnectApi] reconnect api (url: ${
         api.url
@@ -439,6 +445,7 @@ class Exchange extends EventEmitter {
     )
 
     const pairsToReconnect = [...api._pending, ...api._connected]
+
     this.removeWs(api)
     this.reconnectPairs(pairsToReconnect, api._errored)
   }
@@ -550,7 +557,7 @@ class Exchange extends EventEmitter {
 
   /**
    * Fire when a new websocket connection is created
-   * @param {WebSocket} api WebSocket instance
+   * @param {Api} api WebSocket instance
    */
   onApiCreated(api) {
     // should be overrided by exchange class
@@ -558,7 +565,7 @@ class Exchange extends EventEmitter {
 
   /**
    * Fire when a new websocket connection has been removed
-   * @param {WebSocket} api WebSocket instance
+   * @param {Api} api WebSocket instance
    */
   onApiRemoved(api) {
     // should be overrided by exchange class
@@ -567,7 +574,7 @@ class Exchange extends EventEmitter {
   /**
    * Fire when a new websocket connection received something
    * @param {Event} event
-   * @param {WebSocket} api WebSocket instance
+   * @param {Api} api WebSocket instance
    */
   onMessage(event, api): boolean {
     throw new Error('Not implemented')
@@ -610,7 +617,7 @@ class Exchange extends EventEmitter {
 
   /**
    * Sub
-   * @param {WebSocket} api
+   * @param {Api} api
    * @param {string} pair
    */
   async subscribe(api, pair) {
@@ -635,7 +642,7 @@ class Exchange extends EventEmitter {
 
   /**
    * Unsub
-   * @param {WebSocket} api
+   * @param {Api} api
    * @param {string} pair
    */
   async unsubscribe(api, pair) {
@@ -727,12 +734,7 @@ class Exchange extends EventEmitter {
   }
 
   markLoadingAsCompleted(
-    type: {
-      [id: string]: {
-        promise?: Promise<any>
-        resolver?: (success: boolean) => void
-      }
-    },
+    type: { [url: string]: ApiStateChangeResolver },
     id: string,
     success: boolean
   ) {
@@ -822,6 +824,16 @@ class Exchange extends EventEmitter {
     }
 
     return delay
+  }
+
+  reconnectAllClosedApis() {
+    this.scheduledOperationsDelays = {}
+
+    for (const api of this.apis) {
+      if (api.readyState == WebSocket.CLOSED) {
+        this.reconnectApi(api)
+      }
+    }
   }
 }
 
