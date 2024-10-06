@@ -96,13 +96,13 @@ export default class TradesPlaceholder extends Vue {
     const minimumLiquidationAmount = this.liquidationsThresholds[0].amount
 
     if (this.showTrades && this.showLiquidations) {
-      return `Waiting for trades > ${formatAmount(
+      return `Waiting for trades > ${formatAmount(
         minimumTradeAmount
-      )} or liquidations > ${formatAmount(minimumLiquidationAmount)}`
+      )} or liquidations > ${formatAmount(minimumLiquidationAmount)}`
     } else if (this.showTrades) {
-      return `Waiting for trades > ${formatAmount(minimumTradeAmount)}`
+      return `Waiting for trades > ${formatAmount(minimumTradeAmount)}`
     } else if (this.showLiquidations) {
-      return `Waiting for liquidations > ${formatAmount(
+      return `Waiting for liquidations > ${formatAmount(
         minimumLiquidationAmount
       )}`
     } else {
