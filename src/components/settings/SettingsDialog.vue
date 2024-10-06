@@ -91,14 +91,16 @@
             <i class="icon-upload"></i>
             <span>Upload template file</span>
           </button>
-          <button
+          <Btn
             type="button"
-            class="dropdown-item"
-            @click="createBlankWorkspace"
+            class="dropdown-item -cases"
+            :loading="fetchingWords"
+            @click.stop="createBlankWorkspace"
+            @mousedown.prevent
           >
             <i class="icon-plus"></i>
             <span>Create blank template</span>
-          </button>
+          </Btn>
         </dropdown>
       </div>
       <table v-if="workspaces.length" class="table mt8 table--inset">
@@ -400,7 +402,7 @@ import AudioSettings from './AudioSettings.vue'
 import OtherSettings from './OtherSettings.vue'
 import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
-
+import Btn from '@/components/framework/Btn.vue'
 import importService from '@/services/importService'
 import workspacesService from '@/services/workspacesService'
 
@@ -409,6 +411,7 @@ import DialogMixin from '@/mixins/dialogMixin'
 export default {
   mixins: [DialogMixin],
   components: {
+    Btn,
     // eslint-disable-next-line vue/no-reserved-component-names
     Dialog,
     Exchange,
@@ -423,7 +426,8 @@ export default {
       currentWorkspace: null,
       workspaces: [],
       workspaceDropdownId: null,
-      workspaceDropdownTrigger: null
+      workspaceDropdownTrigger: null,
+      fetchingWords: false
     }
   },
   computed: {
@@ -563,14 +567,32 @@ export default {
     },
 
     async createBlankWorkspace() {
-      const randomName = await fetch(
-        'https://random-word-api.herokuapp.com/word?number=2'
-      )
-        .then(response => response.json())
-        .catch(() => [])
-        .then(words =>
-          words.map(word => word[0].toUpperCase() + word.slice(1)).join('')
+      const fetchWithTimeout = async (url, options, timeout = 5000) => {
+        return Promise.race([
+          fetch(url, options),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Request timed out')), timeout)
+          )
+        ])
+      }
+
+      let randomName = 'Untitled'
+      try {
+        this.fetchingWords = true
+        const response = await fetchWithTimeout(
+          'https://random-word-api.herokuapp.com/word?number=2',
+          undefined,
+          3000 // Set timeout to 3 seconds
         )
+        const words = await response.json()
+        randomName = words
+          .map(word => word[0].toUpperCase() + word.slice(1))
+          .join('')
+      } catch (error) {
+        console.error('Failed to fetch random name:', error)
+      } finally {
+        this.fetchingWords = false
+      }
 
       const name = await dialogService.prompt({
         label: 'Name',
