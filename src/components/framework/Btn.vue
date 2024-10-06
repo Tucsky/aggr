@@ -63,7 +63,7 @@ export default class Btn extends Vue {
 <style lang="scss" scoped>
 .btn {
   &__loader {
-    margin-right: 0.25rem;
+    margin-right: 0.5rem;
     width: 0.5em;
     height: 0.5em;
 
