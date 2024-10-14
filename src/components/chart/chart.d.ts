@@ -110,6 +110,7 @@ export interface IndicatorReference {
   plotIndex: number
 }
 export interface Renderer {
+  minLength: number
   type: 'time' | 'tick' | 'bps' | 'vol'
   timeframe: number
   timestamp: number
