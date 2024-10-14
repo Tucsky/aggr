@@ -37,7 +37,7 @@
           log
         >
           <template v-slot:tooltip>
-            {{ +(thresholdsMultipler * 100).toFixed(2) }}%
+            {{ formatAmount(thresholdsMultipler * minAmount) }}
           </template>
         </slider>
       </dropdown>
@@ -193,6 +193,7 @@ export default class TradesLite extends Mixins(PaneMixin) {
   $refs!: {
     canvas: HTMLCanvasElement
   }
+
   private scrollHandler: (event) => void
   private blurHandler: (event) => void
 
@@ -291,6 +292,10 @@ export default class TradesLite extends Mixins(PaneMixin) {
     if (this.blurHandler) {
       this.onBlur()
     }
+  }
+
+  formatAmount(v) {
+    return formatAmount(v)
   }
 
   onTrades(trades: Trade[]) {
