@@ -10,7 +10,7 @@
           <div class="d-flex">
             <div class="dialog__title">Edit {{ item.name }}</div>
 
-            <small>
+            <small class="-center">
               <code
                 class="-filled -center ml4"
                 :title="`ID: ${item.id}`"
