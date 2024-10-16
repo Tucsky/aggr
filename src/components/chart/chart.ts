@@ -2615,19 +2615,29 @@ export default class Chart {
       let end
 
       if (visibleRange) {
-        if (
-          this.activeRenderer &&
-          this.renderedRange.from &&
-          this.activeRenderer.type === 'time' &&
-          this.activeRenderer.minLength
-        ) {
-          end = Math.max(
-            visibleRange.from - (visibleRange.to - visibleRange.from) * 2,
-            this.renderedRange.to -
-              this.activeRenderer.timeframe * this.activeRenderer.minLength
-          )
-        } else {
-          end = visibleRange.from - (visibleRange.to - visibleRange.from) * 2
+        const visibleLogicalRange = this.chartInstance
+          .timeScale()
+          .getVisibleLogicalRange() as TimeRange
+
+        if (visibleLogicalRange) {
+          const count = visibleLogicalRange.to - visibleLogicalRange.from
+          if (visibleLogicalRange.from < 0 || count > MAX_BARS_PER_CHUNKS) {
+            if (
+              this.activeRenderer &&
+              this.renderedRange.from &&
+              this.activeRenderer.type === 'time' &&
+              this.activeRenderer.minLength
+            ) {
+              end = Math.max(
+                visibleRange.from - (visibleRange.to - visibleRange.from) * 2,
+                this.renderedRange.to -
+                  this.activeRenderer.timeframe * this.activeRenderer.minLength
+              )
+            } else {
+              end =
+                visibleRange.from - (visibleRange.to - visibleRange.from) * 2
+            }
+          }
         }
       }
 
@@ -2726,12 +2736,12 @@ export default class Chart {
   async saveIndicatorPreview(indicatorId) {
     const chartOptions = merge(
       getChartOptions(defaultChartOptions, this.paneId),
-      getChartBarSpacingOptions(this.paneId, 500),
+      getChartBarSpacingOptions(this.paneId, 840),
       {
         timeScale: {
           visible: false,
           barSpacing: 4,
-          rightOffset: Math.ceil((500 * 0.05) / 4)
+          rightOffset: Math.ceil((840 * 0.05) / 4)
         },
         rightPriceScale: {
           visible: false
@@ -2743,8 +2753,8 @@ export default class Chart {
     )
 
     const chartElement = document.createElement('div')
-    chartElement.style.width = `${500}px`
-    chartElement.style.height = `${100}px`
+    chartElement.style.width = `${840}px`
+    chartElement.style.height = `${420}px`
     chartElement.style.position = 'fixed'
     chartElement.style.visibility = 'hidden'
     document.body.appendChild(chartElement)
