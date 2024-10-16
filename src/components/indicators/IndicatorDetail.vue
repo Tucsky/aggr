@@ -2,14 +2,17 @@
   <transition name="indicator-detail" @after-leave="$emit('close')">
     <div v-if="opened" class="indicator-detail" @click="onBackdropClick">
       <div class="indicator-detail__wrapper hide-scrollbar">
-        <div class="indicator-detail__preview">
+        <div
+          class="indicator-detail__preview"
+          :style="{ '--image-height': imageHeight + 'px' }"
+        >
           <Btn class="indicator-detail__close -text" @click="close">
             <i class="icon-cross"></i>
           </Btn>
           <code class="indicator-detail__id -filled">
             <small>#{{ indicator.id }}</small>
           </code>
-          <img v-if="image" :src="image" />
+          <img v-if="image" :src="image" @load="onImageLoad" />
         </div>
         <div class="indicator-detail__content">
           <div class="indicator-detail__head">
@@ -152,6 +155,7 @@ export default {
   data() {
     return {
       opened: false,
+      imageHeight: 100,
       isInstalling: false,
       isPublishing: false,
       isFetchingVersions: false,
@@ -315,7 +319,9 @@ export default {
       try {
         this.fetchedVersions = await (
           await fetch(
-            `${import.meta.env.VITE_APP_LIB_URL}versions/${this.indicator.jsonPath}`
+            `${import.meta.env.VITE_APP_LIB_URL}versions/${
+              this.indicator.jsonPath
+            }`
           )
         ).json()
       } catch {
@@ -337,11 +343,15 @@ export default {
         if (sha) {
           console.log(
             'path',
-            `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${this.indicator.jsonPath}`
+            `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${
+              this.indicator.jsonPath
+            }`
           )
           indicator = await (
             await fetch(
-              `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${this.indicator.jsonPath}`
+              `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${
+                this.indicator.jsonPath
+              }`
             )
           ).json()
         } else {
@@ -463,6 +473,10 @@ export default {
         await workspacesService.saveIndicator(indicator, true)
         this.$emit('reload', indicator.id)
       }
+    },
+    onImageLoad(event) {
+      const img = event.target
+      this.imageHeight = img.naturalHeight
     }
   }
 }
@@ -485,12 +499,18 @@ export default {
     overflow: hidden;
     border-radius: 0.75rem 0.75rem 0 0;
     background-color: var(--theme-background-o75);
+    transition: height 0.2s $ease-out-expo;
+    max-height: 420px;
 
     img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       border-radius: 0.75rem 0.75rem 0 0;
+    }
+
+    &:hover {
+      height: var(--image-height);
     }
   }
 
