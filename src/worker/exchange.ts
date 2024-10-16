@@ -228,7 +228,6 @@ class Exchange extends EventEmitter {
     }
 
     api.onclose = async event => {
-      console.log('on close', this.scheduledOperationsDelays, this.apis, event)
       if (this.clearReconnectionDelayTimeout[url]) {
         clearTimeout(this.clearReconnectionDelayTimeout[url])
         delete this.clearReconnectionDelayTimeout[url]
@@ -252,7 +251,6 @@ class Exchange extends EventEmitter {
         )
 
         setTimeout(() => {
-          console.log('reconnecting now...', this.apis, this.apis[0] === api)
           this.reconnectApi(api)
         }, this.getTimeoutDelay(api.url))
       } else {
