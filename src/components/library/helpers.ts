@@ -21,6 +21,67 @@ export async function openPublishDialog(item) {
   )
 }
 
+function cleanOptions(options = {}) {
+  const whitelist = [
+    'priceScaleId',
+    'strokeWidth',
+    'scaleMargins',
+    'priceFormat',
+    'crosshairMarkerVisible',
+    'lastValueVisible',
+    'priceLineVisible',
+    'baseLineVisible',
+    'type',
+    'minMove',
+    'precision',
+    'priceLineStyle',
+    'color',
+    'lineWidth',
+    'lineStyle',
+    'lineType',
+    'priceLineColor',
+    'borderVisible',
+    'upColor',
+    'downColor',
+    'borderUpColor',
+    'borderDownColor',
+    'wickUpColor',
+    'wickDownColor',
+    'topFillColor1',
+    'topFillColor2',
+    'topLineColor',
+    'bottomFillColor1',
+    'bottomFillColor2',
+    'bottomLineColor',
+    'lineWidth',
+    'color',
+    'topColor',
+    'bottomColor',
+    'lineColor',
+    'lineStyle',
+    'lineWidth',
+    'positiveColor',
+    'negativeColor',
+    'positiveLineColor',
+    'higherLineStyle',
+    'higherLineWidth',
+    'negativeLineColor',
+    'lowerLineStyle',
+    'lowerLineWidth',
+    'color',
+    'thinBars',
+    'upColor',
+    'downColor',
+    'openVisible'
+  ]
+
+  return Object.keys(options)
+    .filter(key => whitelist.includes(key))
+    .reduce((filteredOptions, key) => {
+      filteredOptions[key] = options[key]
+      return filteredOptions
+    }, {})
+}
 export async function uploadResource(item) {
   if (!item.preview) {
     dialogService.confirm({
@@ -47,6 +108,7 @@ export async function uploadResource(item) {
 
   const jsonData = {
     ...item,
+    options: cleanOptions(item.options),
     preview: undefined,
     author
   }
