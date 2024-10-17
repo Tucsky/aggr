@@ -423,13 +423,14 @@ class Exchange extends EventEmitter {
   /**
    * Reconnect api
    * @param {Api} api
+   * @returns true if has attempted a reconnection
    */
-  reconnectApi(api: Api) {
+  reconnectApi(api: Api): boolean {
     if (this.apis.indexOf(api) === -1) {
       console.debug(
         `[${this.id}.reconnectApi] reconnect api prevented because api doesn't exist anymore (url: ${api.url})`
       )
-      return
+      return false
     }
 
     console.debug(
@@ -443,9 +444,11 @@ class Exchange extends EventEmitter {
     )
 
     const pairsToReconnect = [...api._pending, ...api._connected]
-
+    const hasPairs = pairsToReconnect.length > 0
     this.removeWs(api)
     this.reconnectPairs(pairsToReconnect, api._errored)
+
+    return hasPairs
   }
 
   /**
@@ -826,12 +829,17 @@ class Exchange extends EventEmitter {
 
   reconnectAllClosedApis() {
     this.scheduledOperationsDelays = {}
+    let isReconecting = false
 
     for (const api of this.apis) {
       if (api.readyState == WebSocket.CLOSED) {
-        this.reconnectApi(api)
+        if (!isReconecting && this.reconnectApi(api)) {
+          isReconecting = true
+        }
       }
     }
+
+    return isReconecting
   }
 }
 
