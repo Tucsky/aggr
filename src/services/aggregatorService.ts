@@ -268,7 +268,6 @@ class AggregatorService extends EventEmitter {
   listenVisibilityChange() {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
-        console.log('made visible')
         this.worker.postMessage({ op: 'clearReconnectionTimeout' })
       }
     })

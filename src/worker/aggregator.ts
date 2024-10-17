@@ -881,7 +881,14 @@ class Aggregator {
 
   clearReconnectionTimeout() {
     for (const exchange of exchanges) {
-      exchange.reconnectAllClosedApis()
+      if (exchange.reconnectAllClosedApis()) {
+        this.ctx.postMessage({
+          op: 'notice',
+          data: {
+            title: `Reconnecting ${exchange.id}`
+          }
+        })
+      }
     }
   }
 }
