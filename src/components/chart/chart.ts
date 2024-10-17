@@ -759,6 +759,10 @@ export default class Chart {
     }
 
     renderer.indicators[indicator.id] = getRendererIndicatorData(indicator)
+    renderer.minLength = Object.values(renderer.indicators).reduce(
+      (acc, indicator) => acc + indicator.minLength || 0,
+      0
+    )
 
     if (!this.activeRenderer || renderer === this.activeRenderer) {
       // update indicator series with plotoptions
@@ -1897,12 +1901,13 @@ export default class Chart {
         const point = renderer.series[indicator.apis[j].id]
 
         if (
-          renderer.length < serieData.minLength ||
           !point ||
           (typeof point.value !== 'undefined' && point.value === null) ||
           (typeof point.lowerValue !== 'undefined' &&
             point.lowerValue === null) ||
-          (indicator.model.plots[j].type === 'histogram' && point.value === 0)
+          (indicator.model.plots[j] &&
+            indicator.model.plots[j].type === 'histogram' &&
+            point.value === 0)
         ) {
           continue
         }
@@ -1962,6 +1967,7 @@ export default class Chart {
       timestamp: firstBarTimestamp,
       localTimestamp: firstBarTimestamp + this.timezoneOffset,
       timeframe: this.timeframe,
+      minLength: 0,
       type: this.type,
       length: 1,
       indicators: {},
@@ -2522,13 +2528,28 @@ export default class Chart {
   async fetchMore(visibleLogicalRange) {
     const logicalRangeId = `${visibleLogicalRange.from},${visibleLogicalRange.to}`
 
+    if (this.isLoading) {
+      return
+    }
+
+    if (this.hasReachedEnd) {
+      return
+    }
+
+    if (!visibleLogicalRange) {
+      return
+    }
+
     if (
-      this.isLoading ||
-      this.hasReachedEnd ||
-      !visibleLogicalRange ||
-      visibleLogicalRange.from > 0 ||
-      (this.previousLogicalRange &&
-        this.previousLogicalRange === logicalRangeId)
+      visibleLogicalRange.from > 0 &&
+      this.activeRenderer.length > this.activeRenderer.minLength
+    ) {
+      return
+    }
+
+    if (
+      this.previousLogicalRange &&
+      this.previousLogicalRange === logicalRangeId
     ) {
       return
     }
@@ -2594,7 +2615,30 @@ export default class Chart {
       let end
 
       if (visibleRange) {
-        end = visibleRange.from - (visibleRange.to - visibleRange.from) * 2
+        const visibleLogicalRange = this.chartInstance
+          .timeScale()
+          .getVisibleLogicalRange() as TimeRange
+
+        if (visibleLogicalRange) {
+          const count = visibleLogicalRange.to - visibleLogicalRange.from
+          if (visibleLogicalRange.from < 0 || count > MAX_BARS_PER_CHUNKS) {
+            if (
+              this.activeRenderer &&
+              this.renderedRange.from &&
+              this.activeRenderer.type === 'time' &&
+              this.activeRenderer.minLength
+            ) {
+              end = Math.max(
+                visibleRange.from - (visibleRange.to - visibleRange.from) * 2,
+                this.renderedRange.to -
+                  this.activeRenderer.timeframe * this.activeRenderer.minLength
+              )
+            } else {
+              end =
+                visibleRange.from - (visibleRange.to - visibleRange.from) * 2
+            }
+          }
+        }
       }
 
       if (this.chartCache.trim(end)) {
@@ -2692,12 +2736,12 @@ export default class Chart {
   async saveIndicatorPreview(indicatorId) {
     const chartOptions = merge(
       getChartOptions(defaultChartOptions, this.paneId),
-      getChartBarSpacingOptions(this.paneId, 500),
+      getChartBarSpacingOptions(this.paneId, 840),
       {
         timeScale: {
           visible: false,
           barSpacing: 4,
-          rightOffset: Math.ceil((500 * 0.05) / 4)
+          rightOffset: Math.ceil((840 * 0.05) / 4)
         },
         rightPriceScale: {
           visible: false
@@ -2709,8 +2753,8 @@ export default class Chart {
     )
 
     const chartElement = document.createElement('div')
-    chartElement.style.width = `${500}px`
-    chartElement.style.height = `${100}px`
+    chartElement.style.width = `${840}px`
+    chartElement.style.height = `${420}px`
     chartElement.style.position = 'fixed'
     chartElement.style.visibility = 'hidden'
     document.body.appendChild(chartElement)

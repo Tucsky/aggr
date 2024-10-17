@@ -1,5 +1,5 @@
 <template>
-  <dropdown v-model="value">
+  <dropdown :value="value" @input="$emit('input', $event)">
     <div class="timeframe-dropdown">
       <div class="dropdown-item timeframe-dropdown__header" @click.stop>
         <timeframe-input
@@ -233,13 +233,21 @@ export default {
     }
   }
 
-  &:hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      .icon-star {
+        display: block;
+
+        &:hover {
+          color: var(--theme-color-base);
+        }
+      }
+    }
+  }
+
+  @media (hover: none) and (pointer: coarse) {
     .icon-star {
       display: block;
-
-      &:hover {
-        color: var(--theme-color-base);
-      }
     }
   }
 }

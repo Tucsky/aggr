@@ -1143,7 +1143,7 @@ export function getRendererIndicatorData(indicator: LoadedIndicator) {
 
     indicator.options.minLength = Math.max(
       indicator.options.minLength,
-      instruction.length
+      instruction.length * 2
     )
   }
 
