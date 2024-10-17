@@ -1,0 +1,1 @@
+const t="```ts\nlbuy: number\n```\n\nRepresents the sum of all short liquidations amount, (or forced buy orders) from the added sources for the current bar.\n> Disabling a market in the chart filter UI will affect this amount\n\n\n```ts\nhistogram(lbuy, title='short liqs')\n```";export{t as default};
