@@ -143,40 +143,24 @@ import Btn from '@/components/framework/Btn.vue'
 import { downloadAnything, getSiblings, slugify } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import { INFRAME } from '@/utils/constants'
+import { Prop } from 'vue-property-decorator'
 
 @Component({
   name: 'PaneHeader',
-  props: {
-    paneId: {
-      type: String
-    },
-    settings: {
-      type: Function,
-      default: null
-    },
-    showSearch: {
-      type: Boolean,
-      default: true
-    },
-    showName: {
-      type: Boolean,
-      default: true
-    },
-    split: {
-      type: Boolean,
-      default: true
-    }
-  },
   components: {
     Btn
   }
 })
 export default class PaneHeader extends Vue {
-  private settings?: () => Promise<any>
-  paneId: string
   paneDropdownTrigger = null
   isLoading = false
   isInFrame = INFRAME
+
+  @Prop(String) readonly paneId: string
+  @Prop({ default: null }) readonly settings?: () => Promise<any>
+  @Prop({ default: true }) readonly showSearch: boolean
+  @Prop({ default: true }) readonly showName: boolean
+  @Prop({ default: true }) readonly split: boolean
 
   get zoom() {
     return this.$store.state.panes.panes[this.paneId].zoom || 1
