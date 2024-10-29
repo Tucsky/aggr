@@ -1,4 +1,5 @@
 import dialogService from '@/services/dialogService'
+import { ExportedIndicator } from '@/services/importService'
 import notificationService from '@/services/notificationService'
 
 export async function openPublishDialog(item) {
@@ -144,4 +145,41 @@ export async function uploadResource(item) {
   } catch (error) {
     throw new Error('Failed to parse server response')
   }
+}
+
+export async function fetchIndicator(
+  jsonPath: string,
+  imagePath: string,
+  sha?: string
+): Promise<ExportedIndicator> {
+  let indicator: ExportedIndicator
+  let preview: Blob
+  if (sha) {
+    indicator = await (
+      await fetch(
+        `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${jsonPath}`
+      )
+    ).json()
+
+    preview = await (
+      await fetch(
+        `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${imagePath}`
+      )
+    ).blob()
+  } else {
+    indicator = await (
+      await fetch(`${import.meta.env.VITE_APP_LIB_URL}${jsonPath}`)
+    ).json()
+    preview = await (
+      await fetch(`${import.meta.env.VITE_APP_LIB_URL}${imagePath}`)
+    ).blob()
+  }
+
+  if (!indicator.data) {
+    throw new Error('invalid payload')
+  }
+
+  indicator.data.preview = preview
+
+  return indicator
 }

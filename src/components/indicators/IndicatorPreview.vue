@@ -120,6 +120,10 @@ export default {
       const preview = this.$refs.preview
       const image = this.$refs.image
 
+      if (!image) {
+        return
+      }
+
       const previewRect = preview.getBoundingClientRect()
       const imageRect = image.getBoundingClientRect()
 
@@ -150,6 +154,10 @@ export default {
     moveImage(event) {
       const preview = this.$refs.preview
       const image = this.$refs.image
+
+      if (!image) {
+        return
+      }
 
       const previewRect = preview.getBoundingClientRect()
       const imageRect = image.getBoundingClientRect()
