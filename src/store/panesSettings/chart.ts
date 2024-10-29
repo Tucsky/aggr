@@ -112,7 +112,7 @@ const state = {
   showAlerts: true,
   showAlertsLabel: true,
   showLegend: true,
-  fillGapsWithEmpty: true,
+  fillGapsWithEmpty: false,
   showHorizontalGridlines: false,
   horizontalGridlinesColor: 'rgba(255,255,255,.1)',
   showVerticalGridlines: false,
