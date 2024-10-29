@@ -108,6 +108,7 @@ export interface IndicatorReference {
   indicatorId: string
   serieId?: string
   plotIndex: number
+  plotType: string
 }
 export interface Renderer {
   minLength: number
