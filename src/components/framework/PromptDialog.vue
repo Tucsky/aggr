@@ -1,12 +1,31 @@
 <template>
-  <Dialog @clickOutside="close" size="small" :resizable="false">
+  <Dialog
+    @clickOutside="close"
+    size="small"
+    :resizable="tag === 'editor'"
+    @resize="resizeEditor"
+  >
     <template v-slot:header>
       <div class="dialog__title">{{ action }}</div>
     </template>
     <p class="mt0 mb8 -nl" v-if="question">{{ question }}</p>
-    <form ref="form" @submit.prevent="submit">
-      <div class="form-group">
-        <label v-if="label">{{ label }}</label>
+    <form
+      ref="form"
+      class="flex-grow-1 d-flex -column"
+      @submit.prevent="submit"
+    >
+      <div class="form-group flex-grow-1 d-flex -column">
+        <div class="d-flex mb8">
+          <label class="mr8 mt4 mb4">{{ label }}</label>
+
+          <label
+            v-if="tag === 'editor'"
+            class="checkbox-control -small mlauto mr0"
+          >
+            <input type="checkbox" class="form-control" v-model="showPreview" />
+            <div v-tippy title="Show preview"></div>
+          </label>
+        </div>
         <input
           v-if="tag === 'input'"
           type="text"
@@ -15,6 +34,15 @@
           v-model="value"
           v-autofocus
           v-on:keyup.enter="submit"
+        />
+        <MarkdownEditor
+          v-else-if="tag === 'editor'"
+          class="w-100 flex-grow-1"
+          ref="editor"
+          v-model="value"
+          :show-preview="showPreview"
+          minimal
+          autofocus
         />
         <textarea
           v-else
@@ -42,6 +70,10 @@
 import DialogMixin from '@/mixins/dialogMixin'
 
 export default {
+  components: {
+    MarkdownEditor: () =>
+      import('@/components/framework/editor/MarkdownEditor.vue')
+  },
   props: {
     tag: {
       type: String,
@@ -73,7 +105,8 @@ export default {
   },
   mixins: [DialogMixin],
   data: () => ({
-    value: ''
+    value: '',
+    showPreview: false
   }),
   mounted() {
     if (this.input && this.input.length) {
@@ -83,6 +116,11 @@ export default {
   methods: {
     submit() {
       this.close(this.value)
+    },
+    resizeEditor() {
+      if (this.$refs.editor && this.$refs.editor.resize) {
+        this.$refs.editor.resize()
+      }
     }
   }
 }

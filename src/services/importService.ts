@@ -5,6 +5,13 @@ import SettingsImportConfirmation from '../components/settings/ImportConfirmatio
 import store from '@/store'
 import notificationService from './notificationService'
 import { PaneType } from '../store/panes'
+import { IndicatorSettings } from '@/store/panesSettings/chart'
+import { SeriesOptions, SeriesOptionsMap } from 'lightweight-charts'
+
+export interface ExportedIndicator {
+  name: string
+  data: IndicatorSettings & { presets: Preset[] }
+}
 
 class ImportService {
   getJSON(file: File) {
@@ -130,18 +137,19 @@ class ImportService {
   }
 
   async importIndicator(
-    json,
+    json: ExportedIndicator,
     { save = false, addToChart = false, openLibrary = false }
   ) {
     const name = json.name.replace(/^indicators?:/, '')
     const now = Date.now()
-    let indicator = {
+    let indicator: IndicatorSettings = {
       id: null,
       name,
       displayName: json.data.displayName || name,
       author: json.data.author || null,
       script: json.data.script || '',
-      options: json.data.options || {},
+      options:
+        json.data.options || ({} as SeriesOptions<keyof SeriesOptionsMap>),
       description: json.data.description || null,
       createdAt: json.data.createdAt || now,
       updatedAt: json.data.updatedAt || json.data.createdAt || now,
