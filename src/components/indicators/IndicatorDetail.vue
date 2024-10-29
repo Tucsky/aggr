@@ -42,10 +42,9 @@
           <div class="indicator-detail__detail">
             <p
               class="indicator-detail__description"
+              v-html="description"
               @dblclick="editDescription"
-            >
-              {{ indicator.description || 'Add description' }}
-            </p>
+            />
             <ul class="indicator-detail__metadatas">
               <li
                 v-if="indicator.pr"
@@ -131,9 +130,10 @@ import { ago, sleep } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import EditResourceDialog from '@/components/library/EditResourceDialog.vue'
-import { openPublishDialog } from '@/components/library/helpers'
+import { openPublishDialog, fetchIndicator } from '@/components/library/helpers'
 import { computeThemeColorAlpha } from '@/utils/colors'
 import IndicatorPreview from './IndicatorPreview.vue'
+import { marked } from 'marked'
 
 export default {
   props: {
@@ -227,6 +227,18 @@ export default {
     },
     versions() {
       return this.indicator.versions || this.fetchedVersions || []
+    },
+    description() {
+      if (!this.indicator.description) {
+        if (this.installed) {
+          return 'Add description'
+        }
+
+        return ''
+      }
+
+      console.log('do marked')
+      return marked(this.indicator.description)
     }
   },
   watch: {
@@ -299,33 +311,11 @@ export default {
       this.isInstalling = true
 
       try {
-        let indicator
-
-        if (sha) {
-          console.log(
-            'path',
-            `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${
-              this.indicator.jsonPath
-            }`
-          )
-          indicator = await (
-            await fetch(
-              `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${
-                this.indicator.jsonPath
-              }`
-            )
-          ).json()
-        } else {
-          indicator = await (
-            await fetch(
-              `${import.meta.env.VITE_APP_LIB_URL}${this.indicator.jsonPath}`
-            )
-          ).json()
-        }
-
-        if (!indicator.data) {
-          throw new Error('invalid payload')
-        }
+        const indicator = await fetchIndicator(
+          this.indicator.jsonPath,
+          this.indicator.imagePath,
+          sha
+        )
 
         await importService.importIndicator(indicator, false, true)
       } catch (error) {
@@ -370,13 +360,16 @@ export default {
         return
       }
 
-      const description = await dialogService.prompt({
-        label: 'Description',
-        action: 'Edit',
-        placeholder: this.indicator.description,
-        input: this.indicator.description,
-        tag: 'textarea'
-      })
+      const description = await dialogService.prompt(
+        {
+          label: 'Description',
+          action: 'Edit',
+          placeholder: this.indicator.description,
+          input: this.indicator.description,
+          tag: 'editor'
+        },
+        'edit-description'
+      )
 
       if (description && description !== this.indicator.description) {
         await workspacesService.saveIndicator(
@@ -560,7 +553,6 @@ export default {
   &__description {
     margin: 0;
     flex-grow: 1;
-    white-space: pre-line;
   }
 
   &__detail {
