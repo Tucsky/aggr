@@ -831,7 +831,8 @@ function parseReferences(
           references.push({
             indicatorId,
             serieId,
-            plotIndex
+            plotIndex,
+            plotType: 'unknown'
           })
         }
 

@@ -156,7 +156,7 @@ class DialogService {
     return this.openAsPromise(ConfirmDialog, options)
   }
 
-  async prompt(options: any) {
+  async prompt(options: any, dialogId = 'prompt') {
     if (!options) {
       return
     }
@@ -171,7 +171,7 @@ class DialogService {
       return
     }
 
-    return this.openAsPromise(PromptDialog, options, 'prompt')
+    return this.openAsPromise(PromptDialog, options, dialogId)
   }
 }
 

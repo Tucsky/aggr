@@ -1400,9 +1400,11 @@ export default class Chart {
                 this.incrementRendererBar(temporaryRenderer)
 
                 for (const id in computedSeries) {
-                  computedSeries[id].push({
-                    time: temporaryRenderer.localTimestamp
-                  })
+                  if (this.seriesIndicatorsMap[id].plotType !== 'broken-area') {
+                    computedSeries[id].push({
+                      time: temporaryRenderer.localTimestamp
+                    })
+                  }
                 }
 
                 barCount++
@@ -1475,7 +1477,7 @@ export default class Chart {
     }
   }
 
-  createIndicatorSeries(indicator) {
+  createIndicatorSeries(indicator: LoadedIndicator) {
     if (!indicator.model) {
       return
     }
@@ -1501,7 +1503,8 @@ export default class Chart {
 
       this.seriesIndicatorsMap[plot.id] = {
         indicatorId: indicator.id,
-        plotIndex: i
+        plotIndex: i,
+        plotType: plot.type
       }
       series.push(plot.id)
 
