@@ -7,12 +7,14 @@
     :class="[isImageZoomed && 'indicator-preview--zoomed']"
     :style="{ '--image-height': imageDimensions.height + 'px' }"
   >
-    <Btn class="indicator-preview__close -text" @click="$emit('close')">
-      <i class="icon-cross"></i>
-    </Btn>
-    <code class="indicator-preview__id -filled">
-      <small>#{{ id }}</small>
-    </code>
+    <template v-if="id">
+      <Btn class="indicator-preview__close -text" @click="$emit('close')">
+        <i class="icon-cross"></i>
+      </Btn>
+      <code class="indicator-preview__id -filled">
+        <small>#{{ id }}</small>
+      </code>
+    </template>
     <img v-if="image" :src="image" ref="image" @load="onImageLoad" />
   </div>
 </template>
@@ -24,7 +26,7 @@ export default {
   props: {
     id: {
       type: String,
-      required: true
+      default: null
     },
     path: {
       default: null
@@ -84,10 +86,7 @@ export default {
 
       const preview = this.preview
 
-      if (
-        this.isInstalled &&
-        (preview instanceof Blob || preview instanceof File)
-      ) {
+      if (preview instanceof Blob || preview instanceof File) {
         this.imageObjectUrl = URL.createObjectURL(preview)
       }
     },

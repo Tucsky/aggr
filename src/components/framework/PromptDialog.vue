@@ -2,7 +2,7 @@
   <Dialog
     @clickOutside="close"
     size="small"
-    :resizable="tag === 'editor'"
+    :resizable="markdown"
     @resize="resizeEditor"
   >
     <template v-slot:header>
@@ -15,28 +15,16 @@
       @submit.prevent="submit"
     >
       <div class="form-group flex-grow-1 d-flex -column">
-        <div class="d-flex mb8">
+        <div v-if="label || markdown" class="d-flex mb8">
           <label class="mr8 mt4 mb4">{{ label }}</label>
 
-          <label
-            v-if="tag === 'editor'"
-            class="checkbox-control -small mlauto mr0"
-          >
+          <label v-if="markdown" class="checkbox-control -small mlauto mr0">
             <input type="checkbox" class="form-control" v-model="showPreview" />
             <div v-tippy title="Show preview"></div>
           </label>
         </div>
-        <input
-          v-if="tag === 'input'"
-          type="text"
-          class="form-control w-100"
-          :placeholder="placeholder"
-          v-model="value"
-          v-autofocus
-          v-on:keyup.enter="submit"
-        />
         <MarkdownEditor
-          v-else-if="tag === 'editor'"
+          v-if="markdown"
           class="w-100 flex-grow-1"
           ref="editor"
           v-model="value"
@@ -44,13 +32,14 @@
           minimal
           autofocus
         />
-        <textarea
+        <input
           v-else
           type="text"
           class="form-control w-100"
           :placeholder="placeholder"
           v-model="value"
           v-autofocus
+          v-on:keyup.enter="submit"
         />
       </div>
     </form>
@@ -75,9 +64,13 @@ export default {
       import('@/components/framework/editor/MarkdownEditor.vue')
   },
   props: {
-    tag: {
-      type: String,
-      default: 'input'
+    markdown: {
+      type: Boolean,
+      default: false
+    },
+    textarea: {
+      type: Boolean,
+      default: false
     },
     question: {
       type: String
