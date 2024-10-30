@@ -30,7 +30,7 @@ export enum ALLOWED_OPTION_TYPES {
 
 ```ts
 // number input with `min`, `max` and `step` attribute
-threshold = option((type = number), (min = 0), (max = 10), (step = 0.1))
+threshold = option(type = number, min = 0, max = 10, step = 0.1)
 ```
 
 ```ts
@@ -58,19 +58,19 @@ console.log(MyText) // ""
 
 ```ts
 smallrange = option(
-  (type = range),
-  (label = 'Small range'),
-  (min = 0),
-  (max = 1)
+type = range,
+label = 'Small range',
+min = 0,
+max = 1
 )
 
 bigrange = option(
-  (type = range),
-  (label = 'Big range'),
-  (gradient = ['red', 'limegreen']), // colorize slider
-  (min = 0),
-  (max = 1000000),
-  (log = true) // slider will ajust displayed value logarithmic scale
+type = range,
+label = 'Big range',
+gradient = ['red', 'limegreen'], // colorize slider
+min = 0,
+max = 1000000,
+log = true // slider will ajust displayed value logarithmic scale
 )
 ```
 
