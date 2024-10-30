@@ -193,8 +193,12 @@ export default class Editor extends Vue {
     })
   }
 
-  zoom(value) {
-    this.currentEditorOptions.fontSize += value
+  zoom(value, override?: boolean) {
+    if (override) {
+      this.currentEditorOptions.fontSize = value
+    } else {
+      this.currentEditorOptions.fontSize += value
+    }
     this.$emit('options', this.currentEditorOptions)
   }
 
