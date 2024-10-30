@@ -366,7 +366,7 @@ export default {
           action: 'Edit',
           placeholder: this.indicator.description,
           input: this.indicator.description,
-          tag: 'editor'
+          markdown: true
         },
         'edit-description'
       )
