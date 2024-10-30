@@ -65,7 +65,7 @@
             <Btn
               type="submit"
               class="-large -green -cases"
-              title="Automatic contribuation"
+              title="Automatic contribution"
               v-tippy
             >
               <i class="icon-upload mr8"></i> Upload now
