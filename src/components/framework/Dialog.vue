@@ -30,6 +30,7 @@
         @mousedown="handleDrag"
         @touchstart="handleDrag"
       >
+        <slot name="cover"></slot>
         <div class="dialog__header">
           <slot name="header"></slot>
           <button

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented here.
 
+## [3.6.4] - 2025-01-03
+
+- Reconnect closed apis when tab made visible again (& ios pwa)
+- Fetch range based on indicator length
+- Autocomplete local variable in script
+- Zoomable indicator preview
+- Markdown editor for indicators description
+- Indicator scaleWith dropdown
+
 ## [3.6.3] - 2025-01-02
 
 - Add Bitunix exchange
