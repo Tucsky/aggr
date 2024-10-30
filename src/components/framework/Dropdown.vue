@@ -421,6 +421,10 @@ export default {
     margin: 0.5em 0;
     position: relative;
 
+    &:first-child {
+      margin-top: 0.75rem;
+    }
+
     &[data-label]:before {
       content: attr(data-label);
       position: absolute;
@@ -452,9 +456,19 @@ export default {
     box-shadow: none;
     line-height: 1;
     cursor: pointer;
+    text-decoration: none;
 
     &:hover {
       background-color: var(--theme-color-o10);
+    }
+
+    &--active {
+      font-weight: 600;
+      background-color: var(--theme-background-100);
+
+      &:hover {
+        background-color: var(--theme-background-100);
+      }
     }
 
     &--group {
@@ -465,10 +479,24 @@ export default {
       }
     }
 
+    &--narrow {
+      padding-block: 0.375rem;
+    }
+
     &__subtitle {
       opacity: 0.5;
       font-size: 0.875em;
       margin-top: 0.25em;
+    }
+
+    &__emoji {
+      width: 1em;
+      padding-right: 1em;
+      font-size: 0.75em;
+    }
+
+    &__icon {
+      padding: 0 0.375rem;
     }
 
     &--space-between {

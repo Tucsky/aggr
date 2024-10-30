@@ -344,7 +344,7 @@ export function getChartScales(
       return scales
     },
     {
-      ...{ [indicatorId]: `Own scale 📍` },
+      ...{ [indicatorId]: `Own scale` },
       left: 'Left ←',
       right: 'Right →'
     }

@@ -1,69 +1,11 @@
 <template>
   <div class="chart-overlay__panel indicators-overlay">
     <div class="chart-overlay__content" v-if="value">
-      <dropdown v-model="dropdownTrigger">
-        <button
-          type="button"
-          class="dropdown-item"
-          @click="editIndicator(selectedIndicator)"
-        >
-          <i class="icon-edit"></i>
-          <span>Edit</span>
-        </button>
-        <button
-          type="button"
-          class="dropdown-item"
-          @click="resizeIndicator(selectedIndicator)"
-        >
-          <i class="icon-resize-height"></i>
-          <span>Resize</span>
-        </button>
-        <button
-          type="button"
-          class="dropdown-item"
-          @click="duplicateIndicator(selectedIndicator)"
-        >
-          <i class="icon-copy-paste"></i>
-          <span>Duplicate</span>
-        </button>
-        <button
-          type="button"
-          class="dropdown-item"
-          @click="downloadIndicator(selectedIndicator)"
-        >
-          <i class="icon-download"></i>
-          <span>Download</span>
-        </button>
-        <button
-          type="button"
-          class="dropdown-item"
-          @click="setIndicatorOrder(selectedIndicator, 0)"
-          v-if="selectedIndicatorIsFront"
-        >
-          <i class="icon-up"></i>
-          <span>Send to back</span>
-        </button>
-        <button
-          v-else
-          type="button"
-          class="dropdown-item"
-          @click="
-            setIndicatorOrder(selectedIndicator, indicatorOrder.length - 1)
-          "
-        >
-          <i class="icon-down -lower"></i>
-          <span>Bring to front</span>
-        </button>
-        <div class="dropdown-divider"></div>
-        <button
-          type="button"
-          class="dropdown-item"
-          @click="removeIndicator(selectedIndicator)"
-        >
-          <i class="icon-trash"></i>
-          <span>Remove</span>
-        </button>
-      </dropdown>
+      <IndicatorDropdown
+        v-model="dropdownTrigger"
+        :indicator-id="indicatorId"
+        :pane-id="paneId"
+      />
       <IndicatorControl
         v-for="id in indicatorOrder"
         :key="id"
@@ -93,11 +35,13 @@ import { ChartPaneState } from '../../store/panesSettings/chart'
 import dialogService from '../../services/dialogService'
 
 import IndicatorControl from '@/components/chart/IndicatorControl.vue'
+import IndicatorDropdown from '@/components/indicators/IndicatorDropdown.vue'
 
 @Component({
   name: 'IndicatorsOverlay',
   components: {
-    IndicatorControl
+    IndicatorControl,
+    IndicatorDropdown
   },
   props: {
     paneId: {
@@ -114,8 +58,7 @@ export default class IndicatorsOverlay extends Vue {
   private value: boolean
 
   dropdownTrigger: HTMLElement = null
-  selectedIndicator: string = null
-  selectedIndicatorIsFront: boolean = null
+  indicatorId: string = null
   sorting: {
     id: string
     height: number
@@ -151,18 +94,14 @@ export default class IndicatorsOverlay extends Vue {
   toggleDropdown(event?: Event, id?: string) {
     if (
       event &&
-      (!this.dropdownTrigger ||
-        !this.selectedIndicator ||
-        this.selectedIndicator !== id)
+      (!this.dropdownTrigger || !this.indicatorId || this.indicatorId !== id)
     ) {
       const triggerElement = event.currentTarget as HTMLElement
+      this.indicatorId = id
       this.dropdownTrigger = triggerElement
-      this.selectedIndicator = id
-      this.selectedIndicatorIsFront =
-        this.indicatorOrder.indexOf(id) === this.indicatorOrder.length - 1
     } else {
       this.dropdownTrigger = null
-      this.selectedIndicator = null
+      this.indicatorId = null
     }
   }
 
@@ -173,22 +112,6 @@ export default class IndicatorsOverlay extends Vue {
       'indicator'
     )
     this.dropdownTrigger = null
-  }
-
-  removeIndicator(indicatorId: string) {
-    this.$store.dispatch(this.paneId + '/removeIndicator', { id: indicatorId })
-  }
-
-  resizeIndicator(indicatorId: string) {
-    this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING', indicatorId)
-  }
-
-  duplicateIndicator(indicatorId: string) {
-    this.$store.dispatch(this.paneId + '/duplicateIndicator', indicatorId)
-  }
-
-  downloadIndicator(indicatorId: string) {
-    this.$store.dispatch(this.paneId + '/downloadIndicator', indicatorId)
   }
 
   async addIndicator() {
@@ -217,9 +140,14 @@ export default class IndicatorsOverlay extends Vue {
       case 'menu':
         return this.toggleDropdown(event, indicatorId)
       case 'remove':
-        return this.removeIndicator(indicatorId)
+        return this.$store.dispatch(this.paneId + '/removeIndicator', {
+          id: indicatorId
+        })
       case 'resize':
-        return this.resizeIndicator(indicatorId)
+        return this.$store.commit(
+          this.paneId + '/TOGGLE_LAYOUTING',
+          indicatorId
+        )
     }
 
     return this.editIndicator(indicatorId)
