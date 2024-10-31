@@ -54,367 +54,278 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import dialogService, { DialogPosition } from '@/services/dialogService'
-import { Component, Vue } from 'vue-property-decorator'
+<script setup lang="ts">
+import {
+  ref,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+  getCurrentInstance
+} from 'vue'
+import dialogService, {
+  DialogComponent,
+  DialogPosition
+} from '@/services/dialogService'
 import { getEventCords } from '../../utils/helpers'
 
-@Component({
-  name: 'Dialog',
-  props: {
-    mask: {
-      type: Boolean,
-      default: true
-    },
-    contrasted: {
-      type: Boolean,
-      default: false
-    },
-    borderless: {
-      type: Boolean,
-      default: false
-    },
-    resizable: {
-      type: Boolean,
-      default: true
-    },
-    size: {
-      type: String,
-      default: null
-    },
-    bodyClass: {
-      type: String,
-      required: false
-    },
-    contentClass: {
-      type: String,
-      required: false
-    },
-    closeOnEscape: {
-      type: Boolean,
-      default: true
-    }
-  }
+const props = defineProps({
+  mask: { type: Boolean, default: true },
+  contrasted: { type: Boolean, default: false },
+  borderless: { type: Boolean, default: false },
+  resizable: { type: Boolean, default: true },
+  size: { type: String, default: null },
+  bodyClass: String,
+  contentClass: String,
+  closeOnEscape: { type: Boolean, default: true }
 })
-export default class Dialog extends Vue {
-  size: string
-  closeOnEscape: boolean
-  delta = { x: 0, y: 0 }
-  impliedSize = null
-  currentSize = null
-  moved = false
 
-  private _deinteractionTimeout: number
-  private _windowResizeTimeout: number
-  private _handleTranslateMove: (event: any) => void
-  private _handleTranslateRelease: () => void
-  private _handleResizeMove: (event: any) => void
-  private _handleResizeRelease: () => void
-  private _handleEscKey: (event: any) => void
-  private _handleWindowResize: (event: any) => void
-  private _resizeOrigin: any
+const emit = defineEmits(['mounted', 'resize', 'clickOutside'])
 
-  $refs!: {
-    content: HTMLElement
-    body: HTMLElement
-  }
-  position: DialogPosition = {}
-  private _persistTimeout: NodeJS.Timeout
+const delta = ref({ x: 0, y: 0 })
+const impliedSize = ref(props.size)
+const currentSize = ref(null)
+const moved = ref(false)
+const position = ref<DialogPosition>({})
+const content = ref<HTMLElement | null>(null)
+const body = ref<HTMLElement | null>(null)
 
-  created() {
-    if (this.size) {
-      this.impliedSize = this.size
-    }
-  }
+let _handleTranslateMove: ((event: any) => void) | null = null
+let _handleTranslateRelease: (() => void) | null = null
+let _handleResizeMove: ((event: any) => void) | null = null
+let _handleResizeRelease: (() => void) | null = null
+let _handleEscKey: ((event: any) => void) | null = null
+let _handleWindowResize: (() => void) | null = null
+let _resizeOrigin: any = null
+let _persistTimeout: NodeJS.Timeout | null = null
+let _deinteractionTimeout: NodeJS.Timeout | null = null
+let _windowResizeTimeout: NodeJS.Timeout | null = null
 
-  async mounted() {
-    const parentDialog = this.$parent as any
-    if (this.$parent && parentDialog.dialogId) {
-      this.setPosition(
-        dialogService.dialogPositions[parentDialog.dialogId],
-        true
-      )
-    }
+// Created lifecycle logic
+if (props.size) impliedSize.value = props.size
 
-    if (this.closeOnEscape) {
-      this.bindEscKey()
-    }
-
-    this.bindWindowResize()
-
-    await this.$nextTick()
-    this.detectSize(this.$refs.content.clientWidth)
-
-    this.$emit('mounted')
-  }
-  beforeDestroy() {
-    this.persistPosition()
-
-    if (this._handleTranslateRelease) {
-      this._handleTranslateRelease()
-    }
-
-    if (this._handleResizeRelease) {
-      this._handleResizeRelease()
-    }
-
-    if (this._handleEscKey) {
-      document.removeEventListener('keydown', this._handleEscKey)
-    }
-
-    if (this._handleWindowResize) {
-      window.removeEventListener('resize', this._handleWindowResize)
-    }
+// Handle drag functionality
+const handleDrag = event => {
+  if (
+    _handleTranslateRelease ||
+    event.button === 2 ||
+    event.target.classList.contains('-no-grab') ||
+    event.target.parentElement.classList.contains('-no-grab')
+  ) {
+    return
   }
 
-  persistPosition() {
-    const dialogPosition = this.position
-    const parentDialog = this.$parent as any
+  const lastMove = { ...delta.value }
+  const startPosition = getEventCords(event)
+  const startOffset = content.value?.offsetTop || 0
+  const minY = startOffset * -1
 
-    if (parentDialog && parentDialog.dialogId) {
-      dialogService.dialogPositions[parentDialog.dialogId] = {
-        x: dialogPosition.x,
-        y: dialogPosition.y,
-        w: dialogPosition.w,
-        h: dialogPosition.h
-      }
-    }
+  _handleTranslateMove = evnt => {
+    moved.value = true
+    const endPosition = getEventCords(evnt)
+    const x = lastMove.x + endPosition.x - startPosition.x
+    const y = Math.max(minY, lastMove.y + endPosition.y - startPosition.y)
+
+    delta.value = { x, y }
+    setPosition({ x, y }, true)
   }
 
-  handleDrag(event) {
+  _handleTranslateRelease = () => {
+    document.removeEventListener('mousemove', _handleTranslateMove)
+    document.removeEventListener('mouseup', _handleTranslateRelease)
+    document.removeEventListener('touchmove', _handleTranslateMove)
+    document.removeEventListener('touchend', _handleTranslateRelease)
+    window.removeEventListener('blur', _handleTranslateRelease)
+    _handleTranslateRelease = null
+  }
+
+  document.addEventListener('mousemove', _handleTranslateMove)
+  document.addEventListener('mouseup', _handleTranslateRelease)
+  document.addEventListener('touchmove', _handleTranslateMove)
+  document.addEventListener('touchend', _handleTranslateRelease)
+  window.addEventListener('blur', _handleTranslateRelease)
+}
+
+// Handle resize functionality
+const handleResize = event => {
+  _resizeOrigin = getEventCords(event)
+  const padding = parseInt(getComputedStyle(body.value).padding)
+
+  setPosition({
+    w: content.value.clientWidth,
+    h: body.value.clientHeight - padding * 2
+  })
+
+  _handleResizeMove = event => {
+    const coordinates = getEventCords(event)
+    const dialogWidth =
+      parseInt(content.value.style.width) +
+      (coordinates.x - _resizeOrigin.x) * 2
+    const dialogHeight =
+      parseInt(body.value.style.height) + (coordinates.y - _resizeOrigin.y) * 2
+
+    setPosition({ w: dialogWidth, h: dialogHeight }, true)
+    _resizeOrigin = coordinates
+  }
+
+  _handleResizeRelease = () => {
+    document.removeEventListener('mousemove', _handleResizeMove)
+    document.removeEventListener('mouseup', _handleResizeRelease)
+    document.removeEventListener('touchmove', _handleResizeMove)
+    document.removeEventListener('touchend', _handleResizeRelease)
+    window.removeEventListener('blur', _handleResizeRelease)
+
+    document.body.classList.remove('-unselectable')
+    _handleResizeRelease = null
+  }
+
+  document.addEventListener('mousemove', _handleResizeMove)
+  document.addEventListener('mouseup', _handleResizeRelease)
+  document.addEventListener('touchmove', _handleResizeMove)
+  document.addEventListener('touchend', _handleResizeRelease)
+  window.addEventListener('blur', _handleResizeRelease)
+
+  document.body.classList.add('-unselectable')
+}
+
+const clickOutside = () => {
+  if (dialogService.isInteracting) return
+  emit('clickOutside')
+}
+
+const close = () => {
+  emit('clickOutside')
+}
+
+const onMouseDown = () => {
+  if (_deinteractionTimeout) clearTimeout(_deinteractionTimeout)
+  dialogService.isInteracting = true
+
+  const handler = () => {
+    document.removeEventListener('mouseup', handler)
+    _deinteractionTimeout = setTimeout(() => {
+      dialogService.isInteracting = false
+      _deinteractionTimeout = null
+    }, 100)
+  }
+  document.addEventListener('mouseup', handler)
+}
+
+const detectSize = w => {
+  if (w >= 840) currentSize.value = 'large'
+  else if (w > 420) currentSize.value = 'medium'
+  else currentSize.value = 'small'
+}
+
+const lockSize = position => {
+  if (!position) {
+    position = { w: content.value.clientWidth, h: body.value.clientHeight }
+  }
+  content.value.style.maxWidth = '100vw'
+  body.value.style.maxHeight = '100vh'
+  content.value.style.width = position.w + 'px'
+  body.value.style.height = position.h + 'px'
+  moved.value = true
+}
+
+const savePosition = newPosition => {
+  position.value = { ...position.value, ...newPosition }
+}
+
+const setPosition = (pos, shouldSavePosition = false) => {
+  if (!pos) return
+
+  if (typeof pos.w === 'number' && typeof pos.h === 'number') {
+    lockSize(pos)
+    detectSize(pos.w)
+  }
+
+  if (typeof pos.x === 'number' && typeof pos.y === 'number') {
+    content.value.style.transform = `translate(${pos.x}px, ${pos.y}px)`
+    delta.value = { x: Math.round(pos.x), y: Math.round(pos.y) }
+  }
+
+  if (shouldSavePosition) {
+    const { w: savedW, h: savedH } = position.value
     if (
-      this._handleTranslateRelease ||
-      event.button === 2 ||
-      event.target.classList.contains('-no-grab') ||
-      event.target.parentElement.classList.contains('-no-grab')
+      typeof pos.w === 'number' &&
+      typeof pos.h === 'number' &&
+      (pos.w !== savedW || pos.h !== savedH)
     ) {
-      return
+      emit('resize')
     }
 
-    const lastMove = Object.assign({}, this.delta)
-    const startPosition = getEventCords(event)
-    const startOffset = this.$refs.content.offsetTop
-    const minY = startOffset * -1
-
-    this._handleTranslateMove = evnt => {
-      this.moved = true
-      const endPosition = getEventCords(evnt)
-
-      const x = lastMove.x + endPosition.x - startPosition.x
-      const y = Math.max(minY, lastMove.y + endPosition.y - startPosition.y)
-
-      this.delta.x = x
-      this.delta.y = y
-
-      this.setPosition(
-        {
-          x,
-          y
-        },
-        true
-      )
-    }
-
-    this._handleTranslateRelease = () => {
-      document.removeEventListener('mousemove', this._handleTranslateMove)
-      document.removeEventListener('mouseup', this._handleTranslateRelease)
-      document.removeEventListener('touchmove', this._handleTranslateMove)
-      document.removeEventListener('touchend', this._handleTranslateRelease)
-      window.removeEventListener('blur', this._handleTranslateRelease)
-
-      delete this._handleTranslateRelease
-    }
-
-    document.addEventListener('mousemove', this._handleTranslateMove)
-    document.addEventListener('mouseup', this._handleTranslateRelease)
-    document.addEventListener('touchmove', this._handleTranslateMove)
-    document.addEventListener('touchend', this._handleTranslateRelease)
-    window.addEventListener('blur', this._handleTranslateRelease)
+    savePosition(pos)
   }
 
-  onMouseDown() {
-    if (this._deinteractionTimeout) {
-      clearTimeout(this._deinteractionTimeout)
-    }
+  if (_persistTimeout) clearTimeout(_persistTimeout)
+  _persistTimeout = setTimeout(persistPosition, 100)
+}
 
-    dialogService.isInteracting = true
-
-    const handler = () => {
-      document.removeEventListener('mouseup', handler)
-
-      this._deinteractionTimeout = setTimeout(() => {
-        dialogService.isInteracting = false
-        this._deinteractionTimeout = null
-      }, 100) as unknown as number
-    }
-
-    document.addEventListener('mouseup', handler)
+// Lifecycle hooks
+onMounted(async () => {
+  const parentDialog = getCurrentInstance()?.proxy.$parent as DialogComponent
+  if (parentDialog && parentDialog.dialogId) {
+    dialogService.dialogPositions[parentDialog.dialogId] = { ...position.value }
   }
 
-  clickOutside() {
-    if (dialogService.isInteracting) {
-      return false
+  if (props.closeOnEscape) {
+    _handleEscKey = event => {
+      if (event.key === 'Escape') close()
     }
-
-    this.$emit('clickOutside')
+    document.addEventListener('keydown', _handleEscKey)
   }
 
-  close() {
-    this.$emit('clickOutside')
+  await nextTick()
+  detectSize(content.value.clientWidth)
+  emit('mounted')
+})
+
+onBeforeUnmount(() => {
+  if (_handleTranslateRelease) _handleTranslateRelease()
+  if (_handleResizeRelease) _handleResizeRelease()
+  if (_handleEscKey) document.removeEventListener('keydown', _handleEscKey)
+  if (_handleWindowResize)
+    window.removeEventListener('resize', _handleWindowResize)
+})
+
+const bindWindowResize = () => {
+  if (_handleWindowResize) return
+
+  _handleWindowResize = () => {
+    if (_windowResizeTimeout) clearTimeout(_windowResizeTimeout)
+    _windowResizeTimeout = setTimeout(() => {
+      detectSize(content.value.clientWidth)
+      _windowResizeTimeout = null
+    }, 100)
   }
 
-  handleResize(event) {
-    this._resizeOrigin = getEventCords(event)
+  window.addEventListener('resize', _handleWindowResize)
+}
 
-    const padding = parseInt(getComputedStyle(this.$refs.body).padding)
+// Bind resize event on window
+bindWindowResize()
 
-    this.setPosition({
-      w: this.$refs.content.clientWidth,
-      h: this.$refs.body.clientHeight - padding * 2
-    })
-
-    this._handleResizeMove = event => {
-      const coordinates = getEventCords(event)
-
-      const dialogWidth =
-        parseInt(this.$refs.content.style.width) +
-        (coordinates.x - this._resizeOrigin.x) * 2
-      const dialogHeight =
-        parseInt(this.$refs.body.style.height) +
-        (coordinates.y - this._resizeOrigin.y) * 2
-
-      this.setPosition(
-        {
-          w: dialogWidth,
-          h: dialogHeight
-        },
-        true
-      )
-
-      this._resizeOrigin = coordinates
-    }
-
-    this._handleResizeRelease = () => {
-      document.removeEventListener('mousemove', this._handleResizeMove)
-      document.removeEventListener('mouseup', this._handleResizeRelease)
-      document.removeEventListener('touchmove', this._handleResizeMove)
-      document.removeEventListener('touchend', this._handleResizeRelease)
-      window.removeEventListener('blur', this._handleResizeRelease)
-
-      document.body.classList.remove('-unselectable')
-      delete this._handleResizeRelease
-    }
-
-    document.addEventListener('mousemove', this._handleResizeMove)
-    document.addEventListener('mouseup', this._handleResizeRelease)
-    document.addEventListener('touchmove', this._handleResizeMove)
-    document.addEventListener('touchend', this._handleResizeRelease)
-    window.addEventListener('blur', this._handleResizeRelease)
-
-    document.body.classList.add('-unselectable')
-  }
-
-  savePosition(position) {
-    this.position = {
-      ...this.position,
-      ...position
-    }
-  }
-
-  setPosition(position, savePosition?: boolean) {
-    if (!position) {
-      return
-    }
-
-    if (typeof position.w === 'number' && typeof position.h === 'number') {
-      this.lockSize(position)
-      this.detectSize(position.w)
-    }
-
-    if (typeof position.x === 'number' && typeof position.y === 'number') {
-      this.$refs.content.style.transform = `translate(${position.x}px, ${position.y}px)`
-      this.delta.x = Math.round(position.x)
-      this.delta.y = Math.round(position.y)
-    }
-
-    if (savePosition) {
-      if (
-        typeof position.w === 'number' &&
-        typeof position.h === 'number' &&
-        (position.w !== this.position?.w || position.h !== this.position?.h)
-      ) {
-        this.$emit('resize')
-      }
-
-      this.savePosition(position)
-    }
-
-    if (this._persistTimeout) {
-      clearTimeout(this._persistTimeout)
-
-      this._persistTimeout = setTimeout(() => this.persistPosition(), 100)
-    }
-  }
-
-  bindEscKey() {
-    if (this._handleEscKey) {
-      return
-    }
-
-    this._handleEscKey = event => {
-      if (
-        event.key === 'Escape' &&
-        this.$el === this.$el.parentElement.querySelector('.dialog:last-child')
-      ) {
-        event.stopPropagation()
-        this.close()
-      }
-    }
-
-    document.addEventListener('keydown', this._handleEscKey)
-  }
-
-  bindWindowResize() {
-    if (this._handleWindowResize) {
-      return
-    }
-
-    this._handleWindowResize = () => {
-      if (this._windowResizeTimeout) {
-        clearTimeout(this._windowResizeTimeout)
-      }
-      this._windowResizeTimeout = setTimeout(() => {
-        this.detectSize(this.$refs.content.clientWidth)
-        this._windowResizeTimeout = null
-      }) as unknown as number
-    }
-
-    window.addEventListener('resize', this._handleWindowResize)
-  }
-
-  lockSize(position) {
-    if (!position) {
-      position = {
-        w: this.$refs.content.clientWidth,
-        h: this.$refs.body.clientHeight
-      }
-    }
-    this.$refs.content.style.maxWidth = '100vw'
-    this.$refs.body.style.maxHeight = '100vh'
-    this.$refs.content.style.width = position.w + 'px'
-    this.$refs.body.style.height = position.h + 'px'
-    this.moved = true
-  }
-
-  detectSize(w) {
-    if (w >= 840) {
-      this.currentSize = 'large'
-    } else if (w > 420) {
-      this.currentSize = 'medium'
-    } else {
-      this.currentSize = 'small'
+// Persist position and settings if applicable when window unloads or before component is destroyed
+const persistPosition = () => {
+  const dialogPosition = { ...position.value }
+  const parentDialog = getCurrentInstance()?.proxy.$parent as DialogComponent
+  if (parentDialog && parentDialog.dialogId) {
+    dialogService.dialogPositions[parentDialog.dialogId] = {
+      x: dialogPosition.x,
+      y: dialogPosition.y,
+      w: dialogPosition.w,
+      h: dialogPosition.h
     }
   }
 }
+
+// Ensuring everything cleans up properly on unmount
+onBeforeUnmount(() => {
+  persistPosition()
+  if (_handleTranslateRelease) _handleTranslateRelease()
+  if (_handleResizeRelease) _handleResizeRelease()
+  if (_handleEscKey) document.removeEventListener('keydown', _handleEscKey)
+  if (_handleWindowResize)
+    window.removeEventListener('resize', _handleWindowResize)
+})
 </script>

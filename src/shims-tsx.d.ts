@@ -1,13 +1,14 @@
 import Vue, { VNode } from 'vue'
 
+import type monaco from 'monaco-editor'
+
 declare global {
-  namespace JSX {
-    // tslint:disable no-empty-interface
-    interface Element extends VNode {}
-    // tslint:disable no-empty-interface
-    interface ElementClass extends Vue {}
-    interface IntrinsicElements {
-      [elem: string]: any
-    }
+  namespace Monaco {
+    type Editor = typeof monaco.editor
+    type Options = monaco.editor.IEditorOptions &
+      monaco.editor.IGlobalEditorOptions & {
+        value?: string
+        language?: string
+      }
   }
 }
