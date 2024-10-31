@@ -1,175 +1,169 @@
 <template>
-  <div class="markdown-editor form-control">
+  <div class="markdown-editor form-control" :class="[isLoading && 'shimmer']">
     <Loader v-if="isLoading" class="markdown-editor__loader" small />
     <template v-if="isLoaded">
-      <div ref="editor" class="markdown-editor__monaco"></div>
+      <div ref="editorElement" class="markdown-editor__monaco"></div>
       <template v-if="showPreview">
-        <div class="markdown-editor__divider">
-          <span class="markdown-editor__divider-badge badge ml4">
-            preview
-          </span>
-        </div>
-        <div class="markdown-editor__preview" v-html="preview" />
+        <div class="markdown-editor__divider"></div>
+        <div class="markdown-editor__preview marked" v-html="preview" />
       </template>
     </template>
   </div>
 </template>
-
-<script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator'
+<script setup lang="ts">
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  watch,
+  nextTick,
+  defineProps,
+  defineExpose
+} from 'vue'
 import { marked } from 'marked'
 import Loader from '@/components/framework/Loader.vue'
 
-@Component({
-  name: 'MarkdownEditor',
-  components: {
-    Loader
+// Define props
+const props = defineProps({
+  value: {
+    type: String,
+    default: ''
   },
-  props: {
-    value: {
-      type: String,
-      default: ''
-    },
-    minimal: {
-      type: Boolean,
-      default: false
-    },
-    autofocus: {
-      type: Boolean,
-      default: false
-    },
-    showPreview: {
-      type: Boolean,
-      default: false
-    }
+  autofocus: {
+    type: Boolean,
+    default: false
+  },
+  showPreview: {
+    type: Boolean,
+    default: false
   }
 })
-export default class MarkdownEditor extends Vue {
-  private value: string
-  private editorInstance: any
-  private minimal: boolean
-  private autofocus: boolean
 
-  isLoaded = false
-  isLoading = false
+// Component import
+const emit = defineEmits(['input'])
 
-  get preview() {
-    return marked(this.value)
-  }
+// Refs
+const editorElement = ref<HTMLElement | null>(null)
 
-  @Watch('value')
-  onValueChange(value) {
-    if (value !== this.editorInstance.getValue()) {
-      this.editorInstance.setValue(value)
+// Reactive data properties
+const isLoaded = ref(false)
+const isLoading = ref(true)
+const editorInstance = ref<any>(null)
+
+// Computed property for preview
+const preview = computed(() => marked(props.value))
+
+// Watchers
+watch(
+  () => props.value,
+  newValue => {
+    if (editorInstance.value && newValue !== editorInstance.value.getValue()) {
+      editorInstance.value.setValue(newValue)
     }
   }
+)
 
-  @Watch('showPreview')
-  onShowPreviewChange() {
-    this.resize()
+watch(
+  () => props.showPreview,
+  async () => {
+    await resize()
   }
+)
 
-  async mounted() {
-    await this.loadMonaco()
-  }
+// Lifecycle hooks
+onMounted(async () => {
+  await loadMonaco()
+})
 
-  beforeDestroy() {
-    this.editorInstance.dispose()
-  }
+onBeforeUnmount(() => {
+  editorInstance.value?.dispose()
+})
 
-  async loadMonaco() {
-    this.isLoading = true
-    try {
-      const { default: monaco } = await import('./editor')
-
-      this.isLoaded = true
-
-      await this.$nextTick()
-
-      this.createEditor(monaco)
-
-      await this.$nextTick()
-    } catch (error) {
-      console.error('Failed to load editor:', error)
-    } finally {
-      this.isLoading = false
-    }
-  }
-
-  async resize() {
-    this.editorInstance.layout({ width: 0, height: 0 })
-
-    await this.$nextTick()
-    this.editorInstance.layout()
-  }
-
-  getDefaultOptions(): any {
-    return {
-      padding: {
-        top: 8,
-        bottom: 8
-      },
-      value: this.value,
-      tabSize: 2,
-      insertSpaces: true,
-      fontSize: 12,
-      lineNumbers: 'off',
-      overviewRulerLanes: 0,
-      overviewRulerBorder: false,
-      contextmenu: false,
-      theme: 'aggr',
-
-      minimap: {
-        enabled: false
-      },
-      glyphMargin: false,
-      folding: false,
-      lineNumbersMinChars: 3,
-      scrollbar: {
-        vertical: 'visible'
-      },
-      renderLineHighlight: 'none',
-      renderIndentGuides: false,
-      renderLineHighlightOnlyWhenFocus: true,
-      renderValidationDecorations: 'off',
-      renderWhitespace: 'none',
-      rulers: [],
-      language: 'markdown'
-    }
-  }
-
-  async createEditor(monaco) {
-    console.log('create editor', monaco, this.$refs.editor)
-    this.editorInstance = monaco.create(
-      this.$refs.editor as HTMLElement,
-      this.getDefaultOptions()
-    )
-
-    this.editorInstance.onDidChangeModelContent(() => {
-      console.log('monaco change')
-      this.$emit('input', this.editorInstance.getValue())
-    })
-
-    if (this.autofocus) {
-      await this.$nextTick()
-      this.editorInstance.focus()
-      const model = this.editorInstance.getModel()
-      const lastLine = model.getLineCount()
-      const lastColumn = model.getLineMaxColumn(lastLine)
-      this.editorInstance.setPosition({
-        lineNumber: lastLine,
-        column: lastColumn
-      })
-    }
-
-    window.instance = this.editorInstance
-
-    await this.$nextTick()
-
-    this.editorInstance.layout()
+// Methods
+const loadMonaco = async () => {
+  isLoading.value = true
+  try {
+    const { default: monaco } = await import('./editor')
+    isLoaded.value = true
+    await nextTick()
+    createEditor(monaco)
+    await nextTick()
+  } catch (error) {
+    console.error('Failed to load editor:', error)
+  } finally {
+    isLoading.value = false
   }
 }
+
+const resize = async () => {
+  if (editorInstance.value) {
+    editorInstance.value.layout({ width: 0, height: 0 })
+    await nextTick()
+    editorInstance.value.layout()
+  }
+}
+
+// Default editor options as a method
+const getDefaultOptions = (): Monaco.Options => ({
+  padding: {
+    top: 8,
+    bottom: 8
+  },
+  value: props.value,
+  tabSize: 2,
+  insertSpaces: true,
+  fontSize: 12,
+  lineNumbers: 'off',
+  overviewRulerLanes: 0,
+  overviewRulerBorder: false,
+  contextmenu: false,
+  theme: 'aggr',
+  minimap: {
+    enabled: false
+  },
+  glyphMargin: false,
+  folding: false,
+  lineNumbersMinChars: 3,
+  scrollbar: {
+    vertical: 'visible'
+  },
+  renderLineHighlight: 'none',
+  renderLineHighlightOnlyWhenFocus: true,
+  renderValidationDecorations: 'off',
+  renderWhitespace: 'none',
+  rulers: [],
+  language: 'markdown'
+})
+
+// Create editor instance
+const createEditor = async (monaco: Monaco.Editor) => {
+  editorInstance.value = monaco.create(editorElement.value, getDefaultOptions())
+
+  // Editor content change event
+  editorInstance.value.onDidChangeModelContent(() => {
+    emit('input', editorInstance.value.getValue())
+  })
+
+  if (props.autofocus) {
+    await nextTick()
+    editorInstance.value.focus()
+    const model = editorInstance.value.getModel()
+    const lastLine = model.getLineCount()
+    const lastColumn = model.getLineMaxColumn(lastLine)
+    editorInstance.value.setPosition({
+      lineNumber: lastLine,
+      column: lastColumn
+    })
+  }
+
+  await nextTick()
+  editorInstance.value.layout()
+}
+// Public methods
+defineExpose({ resize })
 </script>
+
 <style lang="scss" scoped>
 .markdown-editor {
   padding: 0;
@@ -184,6 +178,7 @@ export default class MarkdownEditor extends Vue {
     width: 1rem;
     height: 1rem;
     margin: 1rem auto;
+    visibility: visible;
   }
 
   &__divider {

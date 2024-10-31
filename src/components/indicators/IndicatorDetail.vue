@@ -1,5 +1,5 @@
 <template>
-  <transition name="indicator-detail" @after-leave="$emit('close')">
+  <transition name="indicator-detail" @after-leave="emit('close')">
     <div v-if="opened" class="indicator-detail" @click="onBackdropClick">
       <div class="indicator-detail__wrapper hide-scrollbar">
         <IndicatorPreview
@@ -30,18 +30,14 @@
                 by
                 <a :href="authorUrl" target="_blank">{{ indicator.author }}</a>
               </span>
-              <span
-                :title="dates[dateIndex].title"
-                v-tippy="{ placement: 'top', distance: 24 }"
-                @click="dateIndex = (dateIndex + 1) % dates.length"
-              >
-                {{ dates[dateIndex].value }}
+              <span @click="dateIndex = (dateIndex + 1) % dates.length">
+                {{ dates[dateIndex].label }} {{ dates[dateIndex].value }}
               </span>
             </small>
           </div>
           <div class="indicator-detail__detail">
-            <p
-              class="indicator-detail__description"
+            <div
+              class="indicator-detail__description marked"
               v-html="description"
               @dblclick="editDescription"
             />
@@ -122,8 +118,8 @@
     </div>
   </transition>
 </template>
-
-<script lang="ts">
+<script setup lang="ts">
+import { ref, computed, onMounted, watch, getCurrentInstance } from 'vue'
 import Btn from '@/components/framework/Btn.vue'
 import importService from '@/services/importService'
 import { ago, sleep } from '@/utils/helpers'
@@ -134,299 +130,256 @@ import { openPublishDialog, fetchIndicator } from '@/components/library/helpers'
 import { computeThemeColorAlpha } from '@/utils/colors'
 import IndicatorPreview from './IndicatorPreview.vue'
 import { marked } from 'marked'
+import { ChartPaneState } from '@/store/panesSettings/chart'
 
-export default {
-  props: {
-    indicator: {
-      type: Object,
-      required: true
-    },
-    paneId: {
-      type: String,
-      default: null
+// Props
+const props = defineProps({
+  indicator: {
+    type: Object,
+    required: true
+  },
+  paneId: {
+    type: String,
+    default: null
+  }
+})
+
+// Emits
+const emit = defineEmits(['add', 'reload', 'close'])
+
+// Reactive data properties
+const opened = ref(false)
+const isInstalling = ref(false)
+const isPublishing = ref(false)
+const isFetchingVersions = ref(false)
+const menuDropdownTrigger = ref(null)
+const versionsDropdownTrigger = ref(null)
+const fetchedVersions = ref(null)
+const dateIndex = ref(0)
+const communityTabEnabled = !!import.meta.env.VITE_APP_LIB_URL
+const footerColor = computeThemeColorAlpha('background-150', 0.5)
+
+// Computed properties
+const isInstalled = computed(() => !!props.indicator.script)
+const dates = computed(() => {
+  const arr = []
+  if (props.indicator.updatedAt) {
+    arr.push({
+      label: 'Updated',
+      value: `${ago(props.indicator.updatedAt)} ago`
+    })
+  }
+  if (props.indicator.createdAt) {
+    arr.push({
+      label: 'Created',
+      value: `${ago(props.indicator.createdAt)} ago`
+    })
+  }
+  return arr
+})
+const prId = computed(() =>
+  props.indicator.pr ? props.indicator.pr.split('/').pop() : null
+)
+const authorUrl = computed(
+  () =>
+    `${import.meta.env.VITE_APP_LIB_REPO_URL}/tree/main/indicators/${props.indicator.author}`
+)
+const added = computed(() => {
+  const store = getCurrentInstance()?.proxy.$store
+  if (
+    !props.paneId ||
+    !(store.state[props.paneId] as ChartPaneState).indicators
+  )
+    return false
+  return !!Object.values(
+    (store.state[props.paneId] as ChartPaneState).indicators
+  ).find(indicator => indicator.libraryId === props.indicator.id)
+})
+const versions = computed(
+  () => props.indicator.versions || fetchedVersions.value || []
+)
+const description = computed(() => {
+  if (!props.indicator.description)
+    return isInstalled.value ? 'Add description' : ''
+  return marked(props.indicator.description)
+})
+
+// Watchers
+watch(
+  () => props.indicator,
+  async () => {
+    if (isInstalling.value) {
+      await addToChart()
     }
   },
-  components: {
-    Btn,
-    IndicatorPreview
-  },
-  data() {
-    return {
-      opened: false,
-      isInstalling: false,
-      isPublishing: false,
-      isFetchingVersions: false,
-      menuDropdownTrigger: null,
-      versionsDropdownTrigger: null,
-      imageObjectUrl: null,
-      fetchedVersions: null,
-      dateIndex: 0,
-      communityTabEnabled: !!import.meta.env.VITE_APP_LIB_URL,
-      footerColor: computeThemeColorAlpha('background-150', 0.5)
+  { immediate: true }
+)
+
+// Lifecycle hook
+onMounted(() => {
+  opened.value = true
+})
+
+// Methods
+const close = () => {
+  opened.value = false
+}
+
+const toggleMenuDropdown = event => {
+  menuDropdownTrigger.value =
+    event && !menuDropdownTrigger.value ? event.currentTarget : null
+}
+
+const toggleVersionsDropdown = async event => {
+  if (event && !versionsDropdownTrigger.value) {
+    if (!props.indicator.versions && !fetchedVersions.value) {
+      await fetchIndicatorVersions()
     }
-  },
-  computed: {
-    isInstalled() {
-      return !!this.indicator.script
+    versionsDropdownTrigger.value = event.target
+  } else {
+    versionsDropdownTrigger.value = null
+  }
+}
+
+const onBackdropClick = event => {
+  if (event.target === event.currentTarget) close()
+}
+
+const fetchIndicatorVersions = async () => {
+  if (props.indicator.versions) return
+
+  isFetchingVersions.value = true
+  await sleep(1000)
+
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_APP_LIB_URL}versions/${props.indicator.jsonPath}`
+    )
+    fetchedVersions.value = await response.json()
+  } catch {
+    fetchedVersions.value = []
+  } finally {
+    isFetchingVersions.value = false
+  }
+}
+
+const installIndicator = async (sha?: string) => {
+  if (isInstalled.value) return
+
+  isInstalling.value = true
+  try {
+    const indicator = await fetchIndicator(
+      props.indicator.jsonPath,
+      props.indicator.imagePath,
+      sha
+    )
+    await importService.importIndicator(indicator, { addToChart: true })
+  } catch (error) {
+    console.error(error)
+    const store = getCurrentInstance()?.proxy.$store
+    store.dispatch('app/showNotice', {
+      type: 'error',
+      title: 'Failed to fetch indicator'
+    })
+  } finally {
+    isInstalling.value = false
+  }
+}
+
+const addToChart = () => {
+  emit('add', props.indicator)
+}
+
+const editName = async () => {
+  if (!isInstalled.value) return
+
+  const name = await dialogService.prompt({
+    label: 'Name',
+    action: 'Rename',
+    placeholder: props.indicator.name
+  })
+
+  if (name && name !== props.indicator.name) {
+    await workspacesService.saveIndicator(
+      {
+        ...props.indicator,
+        name,
+        displayName: name
+      },
+      true
+    )
+    emit('reload')
+  }
+}
+
+const editDescription = async () => {
+  if (!isInstalled.value) return
+
+  const description = await dialogService.prompt(
+    {
+      label: 'Description',
+      action: 'Edit',
+      placeholder: props.indicator.description,
+      input: props.indicator.description,
+      markdown: true
     },
-    createdAt() {
-      if (this.indicator.createdAt) {
-        return `${ago(this.indicator.createdAt)} ago`
-      }
+    'edit-description'
+  )
 
-      return null
-    },
-    updatedAt() {
-      if (this.indicator.updatedAt) {
-        return `${ago(this.indicator.updatedAt)} ago`
-      }
+  if (description && description !== props.indicator.description) {
+    await workspacesService.saveIndicator(
+      {
+        ...props.indicator,
+        description
+      },
+      true
+    )
+    emit('reload')
+  }
+}
 
-      return null
-    },
-    dates() {
-      const arr = []
+const publish = async () => {
+  if (!isInstalled.value) return
 
-      if (this.indicator.updatedAt) {
-        arr.push({
-          title: 'Updated at',
-          label: 'Updated',
-          value: `${ago(this.indicator.updatedAt)} ago`
-        })
-      }
+  try {
+    const url = await openPublishDialog(props.indicator)
 
-      if (this.indicator.createdAt) {
-        arr.push({
-          title: 'Created at',
-          label: 'Created',
-          value: `${ago(this.indicator.createdAt)} ago`
-        })
-      }
-
-      return arr
-    },
-    prId() {
-      if (this.indicator.pr) {
-        return this.indicator.pr.split('/').pop()
-      }
-
-      return null
-    },
-    authorUrl() {
-      return `${import.meta.env.VITE_APP_LIB_REPO_URL}/tree/main/indicators/${
-        this.indicator.author
-      }`
-    },
-    added() {
-      if (!this.paneId || !this.$store.state[this.paneId].indicators) {
-        return false
-      }
-
-      return !!Object.values(this.$store.state[this.paneId].indicators).find(
-        indicator => indicator.libraryId === this.indicator.id
-      )
-    },
-    versions() {
-      return this.indicator.versions || this.fetchedVersions || []
-    },
-    description() {
-      if (!this.indicator.description) {
-        if (this.installed) {
-          return 'Add description'
-        }
-
-        return ''
-      }
-
-      console.log('do marked')
-      return marked(this.indicator.description)
-    }
-  },
-  watch: {
-    indicator: {
-      immediate: true,
-      handler() {
-        if (this.isInstalling) {
-          this.addToChart()
-        }
-      }
-    }
-  },
-  mounted() {
-    this.opened = true
-  },
-  methods: {
-    close() {
-      this.opened = false
-    },
-    toggleMenuDropdown(event) {
-      if (event && !this.menuDropdownTrigger) {
-        this.menuDropdownTrigger = event.currentTarget
-      } else {
-        this.menuDropdownTrigger = null
-      }
-    },
-    async toggleVersionsDropdown(event) {
-      if (event && !this.versionsDropdownTrigger) {
-        if (!this.indicator.versions && !this.fetchedVersions) {
-          await this.fetchIndicatorVersions()
-        }
-        this.versionsDropdownTrigger = event.target
-      } else {
-        this.versionsDropdownTrigger = null
-      }
-    },
-    onBackdropClick(event) {
-      if (event.target === event.currentTarget) {
-        this.close()
-      }
-    },
-    async fetchIndicatorVersions() {
-      if (this.indicator.versions) {
-        return
-      }
-
-      this.isFetchingVersions = true
-
-      await sleep(1000)
-
-      try {
-        this.fetchedVersions = await (
-          await fetch(
-            `${import.meta.env.VITE_APP_LIB_URL}versions/${
-              this.indicator.jsonPath
-            }`
-          )
-        ).json()
-      } catch {
-        this.fetchedVersions = []
-      } finally {
-        this.isFetchingVersions = false
-      }
-    },
-    async installIndicator(sha) {
-      if (this.isInstalled) {
-        return
-      }
-
-      this.isInstalling = true
-
-      try {
-        const indicator = await fetchIndicator(
-          this.indicator.jsonPath,
-          this.indicator.imagePath,
-          sha
-        )
-
-        await importService.importIndicator(indicator, false, true)
-      } catch (error) {
-        console.error(error)
-        this.$store.dispatch('app/showNotice', {
-          type: 'error',
-          title: 'Failed to fetch indicator'
-        })
-      } finally {
-        this.isInstalling = false
-      }
-    },
-    addToChart() {
-      this.$emit('add', this.indicator)
-    },
-    async editName() {
-      if (!this.isInstalled) {
-        return
-      }
-
-      const name = await dialogService.prompt({
-        label: 'Name',
-        action: 'Rename',
-        placeholder: this.indicator.name
-      })
-
-      if (name && name !== this.indicator.name) {
-        await workspacesService.saveIndicator(
-          {
-            ...this.indicator,
-            name,
-            displayName: name
-          },
-          true
-        )
-
-        this.$emit('reload')
-      }
-    },
-    async editDescription() {
-      if (!this.isInstalled) {
-        return
-      }
-
-      const description = await dialogService.prompt(
+    if (url) {
+      await workspacesService.saveIndicator(
         {
-          label: 'Description',
-          action: 'Edit',
-          placeholder: this.indicator.description,
-          input: this.indicator.description,
-          markdown: true
+          ...props.indicator,
+          pr: url
         },
-        'edit-description'
+        true
       )
-
-      if (description && description !== this.indicator.description) {
-        await workspacesService.saveIndicator(
-          {
-            ...this.indicator,
-            description
-          },
-          true
-        )
-
-        this.$emit('reload')
-      }
-    },
-    async publish() {
-      if (!this.isInstalled) {
-        return
-      }
-
-      try {
-        const url = await openPublishDialog(this.indicator)
-
-        if (url) {
-          await workspacesService.saveIndicator(
-            {
-              ...this.indicator,
-              pr: url
-            },
-            true
-          )
-          this.$emit('reload')
-        }
-      } catch (error) {
-        console.error(error)
-        this.$store.dispatch('app/showNotice', {
-          type: 'error',
-          title: 'Failed to publish indicator'
-        })
-      }
-    },
-    async edit() {
-      const indicator = await dialogService.openAsPromise(EditResourceDialog, {
-        item: this.indicator,
-        ids: await workspacesService.getIndicatorsIds()
-      })
-
-      if (indicator) {
-        if (indicator.id !== this.indicator.id) {
-          await workspacesService.deleteIndicator(this.indicator.id)
-        }
-
-        await workspacesService.saveIndicator(indicator, true)
-        this.$emit('reload', indicator.id)
-      }
+      emit('reload')
     }
+  } catch (error) {
+    console.error(error)
+    const store = getCurrentInstance()?.proxy.$store
+    store.dispatch('app/showNotice', {
+      type: 'error',
+      title: 'Failed to publish indicator'
+    })
+  }
+}
+
+const edit = async () => {
+  const indicator = await dialogService.openAsPromise(EditResourceDialog, {
+    item: props.indicator,
+    ids: await workspacesService.getIndicatorsIds()
+  })
+
+  if (indicator) {
+    if (indicator.id !== props.indicator.id) {
+      await workspacesService.deleteIndicator(props.indicator.id)
+    }
+    await workspacesService.saveIndicator(indicator, true)
+    emit('reload', indicator.id)
   }
 }
 </script>
+
 <style lang="scss" scoped>
 .indicator-detail {
   $self: &;

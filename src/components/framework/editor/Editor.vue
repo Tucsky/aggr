@@ -4,7 +4,6 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
-import { rgbToHex, splitColorCode } from '@/utils/colors'
 import monaco from './editor'
 import { createComponent, getEventCords, mountComponent } from '@/utils/helpers'
 import {

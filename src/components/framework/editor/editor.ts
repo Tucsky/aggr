@@ -26,7 +26,7 @@ languages.registerHoverProvider('javascript', {
   provideHover
 })
 
-const lsLight = store.state.settings.theme === 'light'
+const isLight = store.state.settings.theme === 'light'
 const style = getComputedStyle(document.documentElement)
 const backgroundColor = splitColorCode(
   style.getPropertyValue('--theme-background-base')
@@ -38,7 +38,7 @@ const backgroundColor150 = splitColorCode(
   style.getPropertyValue('--theme-background-150')
 )
 
-if (lsLight) {
+if (isLight) {
   editor.defineTheme('aggr', {
     base: 'vs',
     inherit: true,

@@ -1,18 +1,17 @@
 
 @mixin shimmer(
   $width: 100%,
-  $main-color: $ds-color-standard-6,
-  $shining-color: $ds-color-standard-5
+  $main-color: var(--theme-background-100),
+  $shining-color: var(--theme-background-200)
 ) {
-  background-image: linear-gradient(
+  background: linear-gradient(
     270deg,
     $main-color,
     $shining-color,
     $main-color
   );
   background-size: 600% 600%;
-  animation: shimmer 1s ease infinite;
-  animation-direction: reverse;
+  animation: shimmer 1s $ease-in-out-expo infinite both alternate-reverse;
 
   @if ($width != null) {
     width: $width;
@@ -20,4 +19,13 @@
   * {
     visibility: hidden;
   }
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.shimmer {
+  @include shimmer()
 }

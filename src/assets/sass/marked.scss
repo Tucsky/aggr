@@ -1,0 +1,61 @@
+.marked {
+  .monaco-editor {
+    --vscode-editor-background: var(--theme-background-50);
+    --vscode-editorGutter-background: var(--theme-background-50);
+  }
+
+  p {
+    line-height: 1.4;
+  }
+
+  code {
+    font-size: 0.75rem;
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: var(--theme-color-base);
+  }
+
+  h2 {
+    margin-block: 1rem;
+    font-size: 1.25rem;
+  }
+
+  ol,
+  ul {
+    padding-left: 1.5rem;
+  }
+
+  blockquote {
+    code {
+      color: inherit;
+    }
+
+    p {
+      margin: 0;
+    }
+  }
+
+  img {
+    width: 100%;
+  }
+
+  code {
+    border: 1px solid var(--theme-background-200);
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    color: var(--theme-color-50);
+
+    &.-monaco {
+      border: 0;
+      padding: 0;
+      color: inherit;
+    }
+
+    &.-filled {
+      padding: 0.125rem;
+    }
+  }
+}

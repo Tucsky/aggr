@@ -47,8 +47,7 @@ export default class IndicatorsOverlay extends Vue {
 
     const { priceScaleId } = options
 
-    this.priceScaleLabel =
-      priceScaleId === this.indicatorId ? name : priceScaleId
+    this.priceScaleLabel = name || priceScaleId
   }
 
   async togglePriceScaleDropdown(indicatorId, anchor) {
