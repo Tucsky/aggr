@@ -11,6 +11,10 @@ export interface DialogPosition {
   h?: number
 }
 
+export interface DialogComponent extends Vue {
+  dialogId?: string
+}
+
 class DialogService {
   mountedComponents: { [id: string]: any } = {}
   dialogPositions: { [id: string]: any } = {}

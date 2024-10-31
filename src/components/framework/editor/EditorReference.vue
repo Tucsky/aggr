@@ -25,7 +25,7 @@
     <div
       ref="markdown"
       v-html="markupContent"
-      class="editor-reference__content"
+      class="editor-reference__content marked"
     ></div>
   </dropdown>
 </template>
@@ -75,6 +75,7 @@ export default {
         const lines = content.split('\n')
 
         if (content.length > 64) {
+          code.classList.add('-monaco')
           code.style.display = 'block'
           code.style.width = '100%'
           code.style.minWidth = '250px'
@@ -84,10 +85,7 @@ export default {
             editor.create(code, {
               value: content,
               language: 'javascript',
-              theme:
-                this.$store.state.settings.theme === 'light'
-                  ? 'vs-light'
-                  : 'my-dark',
+              theme: 'aggr',
               readOnly: true,
               minimap: {
                 enabled: false
@@ -184,24 +182,6 @@ export default {
   &__content {
     padding: 0 1rem;
 
-    .monaco-editor {
-      --vscode-editor-background: var(--theme-background-50);
-      --vscode-editorGutter-background: var(--theme-background-50);
-    }
-
-    p {
-      line-height: 1.4;
-    }
-
-    code {
-      font-size: 0.75rem;
-    }
-
-    h2 {
-      margin-block: 1rem;
-      font-size: 1.25rem;
-    }
-
     blockquote {
       color: #ffd54f;
       border-color: #ffd54f;
@@ -210,18 +190,6 @@ export default {
         color: #ff9800;
         border-color: #ff9800;
       }
-
-      code {
-        color: inherit;
-      }
-
-      p {
-        margin: 0;
-      }
-    }
-
-    img {
-      width: 100%;
     }
   }
 
