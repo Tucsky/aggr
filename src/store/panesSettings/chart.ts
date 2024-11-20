@@ -8,6 +8,7 @@ import {
 } from '@/utils/helpers'
 import { scheduleSync } from '@/utils/store'
 import {
+  PriceFormat,
   PriceScaleMargins,
   PriceScaleMode,
   SeriesOptions,
@@ -22,6 +23,8 @@ import merge from 'lodash.merge'
 export interface PriceScaleSettings {
   scaleMargins?: PriceScaleMargins
   mode?: PriceScaleMode
+  priceFormat?: PriceFormat & { auto?: boolean; precision?: number }
+  indicators?: string[]
 }
 
 export type IndicatorEditorWordWrapOption =
@@ -40,6 +43,7 @@ export interface IndicatorNavigationState {
   optionsQuery: string
   columnWidth: number
   editorOptions: IndicatorEditorOptions
+  resizing?: boolean
 }
 
 export interface IndicatorSettings {
@@ -53,10 +57,13 @@ export interface IndicatorSettings {
   enabled?: boolean
   script?: string
   optionsDefinitions?: { [key: string]: any }
-  options?: SeriesOptions<SeriesType>
+  options?: SeriesOptions<SeriesType> & {
+    priceFormat: PriceFormat & { auto?: boolean; precision?: number }
+  }
   createdAt?: number
   updatedAt?: number
   unsavedChanges?: boolean
+  lastPreset?: string
   series?: string[]
   version?: string
   preview?: Blob

@@ -4,21 +4,25 @@
       type="checkbox"
       class="form-control"
       :checked="value"
-      @change="$emit('input', $event.target.checked)"
+      @change="onChange"
     />
     <span>{{ label }}<slot name="description" /></span>
     <div></div>
   </label>
 </template>
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-import IndicatorOptionMixin from '@/mixins/indicatorOptionMixin'
+<script setup lang="ts">
+import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 
-@Component({
-  name: 'IndicatorOptionCheckbox',
-  mixins: [IndicatorOptionMixin]
-})
-export default class IndicatorOptionCheckbox extends Vue {}
+const emit = defineEmits(['input'])
+
+// Import props directly
+defineProps(useIndicatorOptionProps)
+
+const onChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+
+  emit('input', target.checked)
+}
 </script>
 <style lang="scss" scoped>
 .indicator-option-checkbox {

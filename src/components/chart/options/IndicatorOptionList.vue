@@ -6,42 +6,39 @@
       :options="options"
       class="-outline form-control -arrow"
       :placeholder="definition.placeholder"
-      @input="$emit('input', $event)"
+      @input="onInput"
     ></dropdown-button>
   </label>
 </template>
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-import IndicatorOptionMixin from '@/mixins/indicatorOptionMixin'
+
+<script setup lang="ts">
+import { computed, defineEmits, defineProps } from 'vue'
+import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 
-@Component({
-  name: 'IndicatorOptionDropdown',
-  mixins: [IndicatorOptionMixin],
-  components: {
-    DropdownButton
-  }
-})
-export default class IndicatorOptionDropdown extends Vue {
-  private definition
+// Define props and emit
+const props = defineProps(useIndicatorOptionProps)
+const emit = defineEmits(['input'])
 
-  get options() {
-    if (!this.definition.options) {
-      return []
-    }
+// Computed property for dropdown options
+const options = computed(() => {
+  if (!props.definition.options) return []
 
-    if (Array.isArray(this.definition.options)) {
-      return this.definition.options.reduce((acc, option) => {
-        if (!option) {
-          acc[option] = 'Choose'
-        } else {
-          acc[option] = option
-        }
+  if (Array.isArray(props.definition.options)) {
+    return props.definition.options.reduce(
+      (acc: Record<string, string>, option: string) => {
+        acc[option] = option || 'Choose'
         return acc
-      }, {})
-    }
-
-    return this.definition.options
+      },
+      {}
+    )
   }
+
+  return props.definition.options
+})
+
+// Emit input event
+const onInput = (value: any) => {
+  emit('input', value)
 }
 </script>

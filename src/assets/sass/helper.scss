@@ -1,3 +1,6 @@
+@use 'sass:color';
+@use '@/assets/sass/variables.scss' as vars;
+
 html {
   height: 100%;
 }
@@ -18,7 +21,7 @@ a {
 
 $max: 16;
 $offset: 4;
-$unit: 'px'; 
+$unit: 'px';
 @mixin list-loop($className, $styleName) {
   $i: 0;
 
@@ -111,11 +114,11 @@ $unit: 'px';
 }
 
 .text-condensed {
-  font-family: $font-condensed;
+  font-family: vars.$font-condensed;
 }
 
 .text-monospace {
-  font-family: $font-monospace !important;
+  font-family: vars.$font-monospace !important;
 }
 
 .d-block {
@@ -171,6 +174,10 @@ $unit: 'px';
   }
 }
 
+.d-inline-flex {
+  display: inline-flex;
+}
+
 @media screen and (max-width: 767px) {
   .min-768 {
     display: none !important;
@@ -211,7 +218,7 @@ $unit: 'px';
 }
 
 .text-danger {
-  color: $red;
+  color: vars.$red;
 }
 
 .text-success {
@@ -239,10 +246,10 @@ $unit: 'px';
 }
 
 .text-info {
-  color: $blue;
+  color: vars.$blue;
 
   @at-root a#{&}:hover {
-    color: lighten($blue, 5%);
+    color: color.adjust(vars.$blue, $lightness: 5%);
   }
 }
 

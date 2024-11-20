@@ -1,5 +1,5 @@
 <template>
-  <div class="pane-stats">
+  <div class="pane-stats" ref="paneElementRef">
     <pane-header
       :paneId="paneId"
       :settings="() => import('@/components/stats/StatsDialog.vue')"
@@ -15,12 +15,19 @@
         <div class="stat-bucket__value">{{ bucket.value }}</div>
       </li>
     </ul>
-    <div v-if="enableChart" class="stats-chart" ref="chart"></div>
+    <div v-if="enableChart" class="stats-chart" ref="chartRef"></div>
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Mixins } from 'vue-property-decorator'
+<script setup lang="ts">
+import {
+  ref,
+  reactive,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  nextTick
+} from 'vue'
 import * as TV from 'lightweight-charts'
 import aggregatorService from '@/services/aggregatorService'
 import Bucket from '../../utils/bucket'
@@ -36,318 +43,302 @@ import dialogService from '@/services/dialogService'
 
 import { getBucketId } from '@/utils/helpers'
 import { formatAmount } from '@/services/productsService'
-import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '../panes/PaneHeader.vue'
+import { usePane } from '@/composables/usePane'
+import store from '@/store'
+import { useMutationObserver } from '@/composables/useMutationObserver'
 
-@Component({
-  components: { PaneHeader },
-  name: 'Stats'
+// Define props
+const props = defineProps({
+  paneId: {
+    type: String,
+    required: true
+  }
 })
-export default class Stats extends Mixins(PaneMixin) {
-  data = {}
 
-  $refs!: {
-    chart: HTMLElement
-  }
+// Data
+const data = reactive<{ [key: string]: any }>({})
 
-  private _refreshChartDimensionsTimeout: number
-  private _chart: TV.IChartApi
-  private _buckets: { [id: string]: Bucket } = {}
-  private _feed: string = null
+const chartRef = ref<HTMLElement | null>(null)
 
-  get enableChart() {
-    return this.$store.state[this.paneId].enableChart
-  }
+// Private variables
+let _refreshChartDimensionsTimeout: number | undefined
+let _chart: TV.IChartApi | null = null
+const _buckets: { [id: string]: Bucket } = {}
+let _feed: string | null = null
 
-  get buckets() {
-    return this.$store.state[this.paneId].buckets
-  }
+// Computed properties
+const paneId = props.paneId
+const enableChart = computed(() => store.state[paneId].enableChart)
+const buckets = computed(() => store.state[paneId].buckets)
+const pane = computed(() => store.state.panes[paneId])
 
-  created() {
-    this._onStoreMutation = this.$store.subscribe(mutation => {
-      switch (mutation.type) {
-        case 'settings/SET_TEXT_COLOR':
-          if (this._chart && mutation.payload) {
-            this._chart.applyOptions(getChartCustomColorsOptions(this.paneId))
-          }
-          break
-        case 'settings/SET_CHART_THEME':
-          if (this._chart) {
-            this._chart.applyOptions(getChartCustomColorsOptions(this.paneId))
-          }
-          break
-        case 'panes/SET_PANE_MARKETS':
-        case this.paneId + '/SET_WINDOW':
-          if (mutation.payload.id && mutation.payload.id !== this.paneId) {
-            break
-          }
-          this.prepareBuckets()
-          break
-        case this.paneId + '/SET_BUCKET_COLOR':
-          this.recolorBucket(mutation.payload.id, mutation.payload.value)
-          break
-        case this.paneId + '/SET_BUCKET_TYPE':
-          if (this._chart) {
-            this.reloadBucketSerie(mutation.payload.id, mutation.payload.value)
-          }
-          break
-        case this.paneId + '/TOGGLE_CHART':
-          if (mutation.payload) {
-            this.createChart()
-          } else {
-            this.removeChart()
-          }
-          break
-        case this.paneId + '/TOGGLE_BUCKET':
-          if (mutation.payload.value) {
-            this.createBucket(this.buckets[mutation.payload.id])
-          } else {
-            this.removeBucket(mutation.payload.id)
-          }
-          break
-        case 'panes/SET_PANE_ZOOM':
-          if (mutation.payload.id === this.paneId) {
-            this.updateFontSize()
-          }
-          break
-        case this.paneId + '/REMOVE_BUCKET':
-          this.removeBucket(mutation.payload)
-          break
-        case this.paneId + '/SET_BUCKET_WINDOW':
-        case this.paneId + '/SET_BUCKET_INPUT':
-        case this.paneId + '/SET_BUCKET_PRECISION':
-          this.refreshBucket(mutation.payload.id)
-          break
-        case this.paneId + '/RENAME_BUCKET':
-          this.refreshBucketName(mutation.payload)
-          break
+useMutationObserver(mutation => {
+  switch (mutation.type) {
+    case 'settings/SET_TEXT_COLOR':
+      if (_chart && mutation.payload) {
+        _chart.applyOptions(getChartCustomColorsOptions(paneId))
       }
-    })
-
-    this.prepareBuckets()
-  }
-
-  mounted() {
-    if (this.enableChart) {
-      this.createChart()
-    }
-  }
-
-  beforeDestroy() {
-    if (this._feed) {
-      aggregatorService.off(this._feed, this.onVolume)
-    }
-
-    this.clearBuckets()
-    this.removeChart()
-
-    this._chart = null
-  }
-
-  async createChart() {
-    await this.$nextTick()
-
-    const chartOptions = getChartOptions(
-      defaultStatsChartOptions as any,
-      this.paneId
-    )
-
-    this._chart = TV.createChart(this.$refs.chart, chartOptions)
-
-    for (const id in this._buckets) {
-      this._buckets[id].createSerie(this._chart)
-    }
-
-    this.refreshChartDimensions(0)
-  }
-
-  updateFontSize() {
-    if (!this._chart) {
-      return
-    }
-
-    this._chart.applyOptions({
-      layout: {
-        fontSize: getChartFontSize(this.paneId)
+      break
+    case 'settings/SET_CHART_THEME':
+      if (_chart) {
+        _chart.applyOptions(getChartCustomColorsOptions(paneId))
       }
-    })
-  }
-
-  removeChart() {
-    if (!this._chart) {
-      return
-    }
-
-    // this.stopChartUpdate()
-
-    for (const id in this._buckets) {
-      this._buckets[id].removeIndicator(this._chart)
-    }
-
-    this._chart.remove()
-
-    this._chart = null
-  }
-
-  /* chartUpdate() {
-    if (!this._chartUpdateInterval) {
-      this._chartUpdateInterval = setInterval(this.chartUpdate.bind(this), 100)
-      return
-    }
-
-    for (const id in this._buckets) {
-      this._buckets[id].updateSerie()
-    }
-  }
-  stopChartUpdate() {
-    if (this._chartUpdateInterval) {
-      clearInterval(this._chartUpdateInterval)
-      delete this._chartUpdateInterval
-    }
-  } */
-  async refreshChartDimensions(debounceTime = 500) {
-    if (!this.enableChart) {
-      return
-    }
-
-    clearTimeout(this._refreshChartDimensionsTimeout)
-
-    this._refreshChartDimensionsTimeout = setTimeout(() => {
-      this._chart &&
-        this._chart.resize(this.$el.clientWidth, this.$el.clientHeight)
-    }, debounceTime) as unknown as number
-  }
-  prepareBuckets() {
-    if (this._feed) {
-      console.debug(`[stats/${this.paneId}] unsubscribe from feed`, this._feed)
-      aggregatorService.off(this._feed, this.onVolume)
-    }
-
-    this.clearBuckets()
-
-    for (const id in this.buckets) {
-      this.createBucket(this.buckets[id])
-    }
-
-    this._feed = 'bucket-' + getBucketId(this.pane.markets)
-    console.debug(`[stats/${this.paneId}] subscribe to feed`, this._feed)
-
-    if (this._feed.length) {
-      aggregatorService.on(this._feed, this.onVolume)
-    } else {
-      console.debug(`[stats/${this.paneId}] error feed empty...`)
-    }
-  }
-  onVolume(sums) {
-    for (const id in this._buckets) {
-      this._buckets[id].onStats(sums)
-
-      if (this._buckets[id].stacks.length) {
-        const value = this._buckets[id].getValue()
-
-        this.$set(
-          this.data[id],
-          'value',
-          formatAmount(value, this._buckets[id].precision)
-        )
+      break
+    case 'panes/SET_PANE_MARKETS':
+    case paneId + '/SET_WINDOW':
+      if (mutation.payload.id && mutation.payload.id !== paneId) {
+        break
       }
-
-      if (this._chart) {
-        this._buckets[id].updateSerie()
+      prepareBuckets()
+      break
+    case paneId + '/SET_BUCKET_COLOR':
+      recolorBucket(mutation.payload.id, mutation.payload.value)
+      break
+    case paneId + '/SET_BUCKET_TYPE':
+      if (_chart) {
+        reloadBucketSerie(mutation.payload.id, mutation.payload.value)
       }
-    }
-  }
-
-  clearBuckets() {
-    for (const id in this._buckets) {
-      this.removeBucket(id)
-    }
-
-    this._buckets = {}
-  }
-
-  removeBucket(id) {
-    if (!this._buckets[id]) {
-      return
-    }
-
-    this._buckets[id].unbind()
-
-    if (this._chart) {
-      this._buckets[id].removeIndicator(this._chart)
-    }
-
-    this.$delete(this.data, id)
-
-    delete this._buckets[id]
-  }
-  refreshBucket(id) {
-    const options = this.buckets[id]
-
-    if (!options) {
-      return
-    }
-
-    this.removeBucket(id)
-    this.createBucket(options)
-  }
-
-  recolorBucket(id, color) {
-    if (!this._buckets[id]) {
-      return
-    }
-
-    this._buckets[id].updateColor(color)
-
-    this.$set(this.data[id], 'color', color)
-  }
-
-  reloadBucketSerie(id, type?: string) {
-    if (!this._buckets[id]) {
-      return
-    }
-
-    if (type) {
-      // set different serie type
-      this._buckets[id].type = type
-    }
-
-    this._buckets[id].removeIndicator(this._chart)
-    this._buckets[id].createSerie(this._chart)
-  }
-
-  createBucket(statBucket) {
-    if (statBucket.enabled && typeof this.data[statBucket.id] === 'undefined') {
-      const bucket = new Bucket(statBucket.input, statBucket, this.paneId)
-
-      if (this._chart) {
-        bucket.createSerie(this._chart)
+      break
+    case paneId + '/TOGGLE_CHART':
+      if (mutation.payload) {
+        createChart()
+      } else {
+        removeChart()
       }
+      break
+    case paneId + '/TOGGLE_BUCKET':
+      if (mutation.payload.value) {
+        createBucket(buckets.value[mutation.payload.id])
+      } else {
+        removeBucket(mutation.payload.id)
+      }
+      break
+    case 'panes/SET_PANE_ZOOM':
+      if (mutation.payload.id === paneId) {
+        updateFontSize()
+      }
+      break
+    case paneId + '/REMOVE_BUCKET':
+      removeBucket(mutation.payload)
+      break
+    case paneId + '/SET_BUCKET_WINDOW':
+    case paneId + '/SET_BUCKET_INPUT':
+    case paneId + '/SET_BUCKET_PRECISION':
+      refreshBucket(mutation.payload.id)
+      break
+    case paneId + '/RENAME_BUCKET':
+      refreshBucketName(mutation.payload)
+      break
+  }
+})
 
-      this._buckets[statBucket.id] = bucket
+onMounted(() => {
+  prepareBuckets()
 
-      this.$set(this.data, bucket.id, {
-        value: 0,
-        name: bucket.name,
-        color: bucket.color
-      })
+  if (enableChart.value) {
+    createChart()
+  }
+
+  window.addEventListener('resize', onResize)
+})
+
+onBeforeUnmount(() => {
+  if (_feed) {
+    aggregatorService.off(_feed, onVolume)
+  }
+
+  clearBuckets()
+  removeChart()
+  _chart = null
+  window.removeEventListener('resize', onResize)
+})
+
+async function createChart() {
+  await nextTick()
+
+  const chartOptions = getChartOptions(defaultStatsChartOptions as any, paneId)
+
+  _chart = TV.createChart(chartRef.value, chartOptions)
+
+  for (const id in _buckets) {
+    _buckets[id].createSerie(_chart)
+  }
+
+  refreshChartDimensions(0)
+}
+
+function updateFontSize() {
+  if (!_chart) {
+    return
+  }
+
+  _chart.applyOptions({
+    layout: {
+      fontSize: getChartFontSize(paneId)
     }
+  })
+}
+
+function removeChart() {
+  if (!_chart) {
+    return
   }
 
-  refreshBucketName({ id, name }: { id: string; name: string }) {
-    const bucket = this._buckets[id]
-    bucket.name = name
-    this.$set(this.data[id], 'name', name)
+  for (const id in _buckets) {
+    _buckets[id].removeIndicator(_chart)
   }
 
-  editStat(id) {
-    dialogService.open(StatDialog, { paneId: this.paneId, bucketId: id })
+  _chart.remove()
+
+  _chart = null
+}
+
+async function refreshChartDimensions(debounceTime = 500) {
+  if (!enableChart.value) {
+    return
   }
 
-  onResize() {
-    this.refreshChartDimensions()
+  clearTimeout(_refreshChartDimensionsTimeout)
+
+  _refreshChartDimensionsTimeout = window.setTimeout(() => {
+    if (_chart && paneElementRef.value) {
+      _chart.resize(
+        paneElementRef.value.clientWidth,
+        paneElementRef.value.clientHeight
+      )
+    }
+  }, debounceTime)
+}
+
+function prepareBuckets() {
+  if (_feed) {
+    console.debug(`[stats/${paneId}] unsubscribe from feed`, _feed)
+    aggregatorService.off(_feed, onVolume)
+  }
+
+  clearBuckets()
+
+  for (const id in buckets.value) {
+    createBucket(buckets.value[id])
+  }
+
+  _feed = 'bucket-' + getBucketId(pane.value.markets)
+  console.debug(`[stats/${paneId}] subscribe to feed`, _feed)
+
+  if (_feed.length) {
+    aggregatorService.on(_feed, onVolume)
+  } else {
+    console.debug(`[stats/${paneId}] error feed empty...`)
   }
 }
+
+function onVolume(sums) {
+  for (const id in _buckets) {
+    _buckets[id].onStats(sums)
+
+    if (_buckets[id].stacks.length) {
+      const value = _buckets[id].getValue()
+
+      data[id].value = formatAmount(value, _buckets[id].precision)
+    }
+
+    if (_chart) {
+      _buckets[id].updateSerie()
+    }
+  }
+}
+
+function clearBuckets() {
+  for (const id in _buckets) {
+    removeBucket(id)
+  }
+}
+
+function removeBucket(id) {
+  if (!_buckets[id]) {
+    return
+  }
+
+  _buckets[id].unbind()
+
+  if (_chart) {
+    _buckets[id].removeIndicator(_chart)
+  }
+
+  delete data[id]
+  delete _buckets[id]
+}
+
+function refreshBucket(id) {
+  const options = buckets.value[id]
+
+  if (!options) {
+    return
+  }
+
+  removeBucket(id)
+  createBucket(options)
+}
+
+function recolorBucket(id, color) {
+  if (!_buckets[id]) {
+    return
+  }
+
+  _buckets[id].updateColor(color)
+
+  data[id].color = color
+}
+
+function reloadBucketSerie(id, type?: string) {
+  if (!_buckets[id]) {
+    return
+  }
+
+  if (type) {
+    _buckets[id].type = type
+  }
+
+  _buckets[id].removeIndicator(_chart)
+  _buckets[id].createSerie(_chart)
+}
+
+function createBucket(statBucket) {
+  if (statBucket.enabled && typeof data[statBucket.id] === 'undefined') {
+    const bucket = new Bucket(statBucket.input, statBucket, paneId)
+
+    if (_chart) {
+      bucket.createSerie(_chart)
+    }
+
+    _buckets[statBucket.id] = bucket
+
+    data[bucket.id] = {
+      value: 0,
+      name: bucket.name,
+      color: bucket.color
+    }
+  }
+}
+
+function refreshBucketName({ id, name }: { id: string; name: string }) {
+  const bucket = _buckets[id]
+  bucket.name = name
+  data[id].name = name
+}
+
+function editStat(id) {
+  dialogService.open(StatDialog, { paneId: paneId, bucketId: id })
+}
+
+function onResize() {
+  refreshChartDimensions()
+}
+
+const paneElementRef = ref<HTMLElement>()
+usePane(props.paneId, paneElementRef, onResize)
+defineExpose({ onResize })
 </script>
 
 <style lang="scss">

@@ -149,7 +149,7 @@ function emitContext(event: MouseEvent | TouchEvent) {
 }
 
 const draggableHandlers = {
-  bind(el) {
+  beforeMount(el) {
     const touchEvents = isTouchSupported()
 
     if (touchEvents && window.innerWidth < 768) {
@@ -162,7 +162,7 @@ const draggableHandlers = {
     )
   },
 
-  unbind(el) {
+  beforeUnmount(el) {
     const touchEvents = isTouchSupported()
 
     if (touchEvents && window.innerWidth < 768) {
@@ -181,11 +181,11 @@ const draggableHandlers = {
 }
 
 const iframeHandlers = {
-  bind(el) {
+  beforeMount(el) {
     el.addEventListener('click', emitContext)
   },
 
-  unbind(el) {
+  beforeUnmount(el) {
     el.removeEventListener('click', emitContext)
   }
 }

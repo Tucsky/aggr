@@ -4,13 +4,20 @@ import Vue from 'vue'
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import { ModulesState } from '.'
 import TimeframeDialog from '../components/TimeframeDialog.vue'
-import { getApiSupportedMarkets } from '../services/productsService'
+import {
+  getApiSupportedMarkets,
+  ProductTypeEnum
+} from '../services/productsService'
 
 export interface Notice {
   id?: string
+  icon?: string
+  type?: string
   title?: string
+  html?: string
   timeout?: number
   button: NoticeButton
+  action?: () => boolean
   _timeoutId?: number
 }
 
@@ -26,12 +33,12 @@ export interface NoticesState {
 
 export interface Product {
   id: string
-  pair: string
-  exchange: string
-  type: string
   base: string
   quote: string
+  pair: string
   local: string
+  exchange: string
+  type: ProductTypeEnum
 }
 
 export interface ListenedProduct extends Product {
@@ -170,7 +177,7 @@ const actions = {
     }
 
     dialogService.open(
-      (await import('@/components/SearchDialog.vue')).default,
+      (await import('@/components/search/SearchDialog.vue')).default,
       { paneId, pristine, input }
     )
   },

@@ -2,10 +2,11 @@
   <transition
     name="dropdown"
     @enter="onEnterStart"
-    @after-enter="onEnterEnd"
-    @before-leave="onLeaveStart"
+    @after-enter="emit('opened')"
+    @before-leave="emit('closed')"
   >
     <div
+      ref="elementRef"
       class="dropdown hide-scrollbar"
       :class="[
         noScroll && 'dropdown--no-scroll',
@@ -20,354 +21,251 @@
   </transition>
 </template>
 
-<script lang="ts">
+<script lang="ts" setup>
+import {
+  ref,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+  defineProps,
+  defineEmits,
+  nextTick
+} from 'vue'
 import { isTouchSupported } from '@/utils/touchevent'
 
-export default {
-  name: 'Dropdown',
-  props: {
-    value: {
-      required: false,
-      default: null
-    },
-    margin: {
-      type: Number,
-      required: false,
-      default: 16
-    },
-    interactive: {
-      type: Boolean,
-      required: false,
-      default: false
-    },
-    isolate: {
-      type: Boolean,
-      required: false,
-      default: false
-    },
-    noScroll: {
-      type: Boolean,
-      required: false,
-      default: false
-    },
-    onSides: {
-      type: Boolean,
-      required: false,
-      default: false
-    },
-    transparent: {
-      type: Boolean,
-      required: false,
-      default: false
-    },
-    autoFocus: {
-      type: Boolean,
-      required: false,
-      default: false
-    },
-    draggable: {
-      type: Boolean,
-      default: false
-    }
+const props = defineProps({
+  value: {
+    type: Object,
+    default: null
   },
-  watch: {
-    /**
-     * v-model (which contain the triggerElement) was updated from parent component
-     */
-    value(triggerElement) {
-      this.toggle(triggerElement)
-    }
+  margin: {
+    type: Number,
+    default: 16
   },
-  data: () => ({
-    triggerElement: null,
-    top: null,
-    left: null
-  }),
-  mounted() {
-    if (this.value) {
-      this.toggle(this.value)
-    }
+  interactive: {
+    type: Boolean,
+    default: false
   },
-  beforeDestroy() {
-    this.toggle(null, true)
-
-    if (this.$el instanceof HTMLElement) {
-      document.getElementById('app').removeChild(this.$el)
-    }
+  isolate: {
+    type: Boolean,
+    default: false
   },
-  methods: {
-    /**
-     * Open the dropdown
-     */
-    async open(nextTriggerElement) {
-      if (nextTriggerElement instanceof HTMLElement) {
-        nextTriggerElement.classList.add('dropdown-trigger')
+  noScroll: {
+    type: Boolean,
+    default: false
+  },
+  onSides: {
+    type: Boolean,
+    default: false
+  },
+  transparent: {
+    type: Boolean,
+    default: false
+  },
+  autoFocus: {
+    type: Boolean,
+    default: false
+  },
+  draggable: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['input', 'opened', 'closed'])
+
+// State refs
+const triggerElement = ref<any>(props.value || null)
+const top = ref<number | null>(null)
+const left = ref<number | null>(null)
+const elementRef = ref<HTMLElement>()
+
+// Internal refs for resize and outside-click handling
+let _resizeHandler: (() => void) | null = null
+let _resizeTimeout: ReturnType<typeof setTimeout> | null = null
+let clickOutsideHandler: ((event: MouseEvent | TouchEvent) => void) | null =
+  null
+
+// Watch for changes in `value` prop to toggle dropdown
+watch(
+  () => props.value,
+  newTrigger => toggle(newTrigger)
+)
+
+// Lifecycle hooks
+onMounted(() => {
+  if (props.value) {
+    toggle(props.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  toggle(null, true)
+  if (_resizeHandler) {
+    window.removeEventListener('resize', _resizeHandler)
+  }
+  if (clickOutsideHandler) {
+    document.removeEventListener(
+      isTouchSupported() ? 'touchstart' : 'mousedown',
+      clickOutsideHandler
+    )
+  }
+})
+
+// Methods
+
+const toggle = (newTriggerElement: any, emitInput = false) => {
+  const nextTrigger =
+    newTriggerElement && newTriggerElement !== triggerElement.value
+      ? newTriggerElement
+      : null
+
+  if (triggerElement.value) {
+    close()
+  }
+
+  triggerElement.value = nextTrigger
+
+  if (nextTrigger) {
+    open(nextTrigger)
+  }
+
+  if (emitInput) {
+    emit('input', triggerElement.value)
+  }
+}
+
+const open = async (nextTrigger: any) => {
+  if (nextTrigger instanceof HTMLElement) {
+    nextTrigger.classList.add('dropdown-trigger')
+  }
+  document
+    .getElementById('app')
+    ?.appendChild(triggerElement.value as HTMLElement)
+
+  bindResize()
+  await nextTick()
+
+  if (!props.isolate) {
+    bindClickOutside()
+  }
+}
+
+const close = () => {
+  if (!triggerElement.value) return
+  if (triggerElement.value instanceof HTMLElement) {
+    triggerElement.value.classList.remove('dropdown-trigger')
+  }
+  unbindResize()
+  unbindClickOutside()
+}
+
+const fitScreen = () => {
+  if (
+    !triggerElement.value ||
+    !(triggerElement.value as HTMLElement).getBoundingClientRect
+  )
+    return
+
+  const dropdownElement = triggerElement.value as HTMLElement
+  const triggerRect =
+    triggerElement.value instanceof HTMLElement
+      ? triggerElement.value.getBoundingClientRect()
+      : triggerElement.value
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+  const dropdownWidth = dropdownElement.offsetWidth * 1.25
+
+  left.value = Math.max(
+    props.margin,
+    Math.min(
+      triggerRect.left + triggerRect.width / 2 - dropdownWidth / 2,
+      viewportWidth - dropdownWidth - props.margin * 2
+    )
+  )
+
+  const triggerIsLowerThanViewportMiddle = triggerRect.top > viewportHeight / 2
+  if (triggerIsLowerThanViewportMiddle) {
+    top.value = triggerRect.top - dropdownElement.offsetHeight - props.margin
+  } else {
+    top.value = triggerRect.top + triggerRect.height + props.margin
+  }
+}
+
+const onResize = () => {
+  if (_resizeTimeout) clearTimeout(_resizeTimeout)
+  _resizeTimeout = setTimeout(() => {
+    fitScreen()
+    _resizeTimeout = null
+  }, 500)
+}
+
+const bindResize = () => {
+  if (_resizeHandler) return
+  _resizeHandler = onResize
+  window.addEventListener('resize', _resizeHandler)
+}
+
+const unbindResize = () => {
+  if (_resizeHandler) {
+    window.removeEventListener('resize', _resizeHandler)
+    _resizeHandler = null
+  }
+}
+
+const bindClickOutside = () => {
+  if (clickOutsideHandler) return
+
+  clickOutsideHandler = (event: MouseEvent | TouchEvent) => {
+    let isOutside = true
+    let element = event.target as HTMLElement
+    let depth = 0
+
+    while (isOutside && depth++ < 10 && (element = element.parentElement)) {
+      if (element.classList.contains('dropdown')) {
+        isOutside = false
       }
+    }
 
-      document.getElementById('app').appendChild(this.$el)
+    if (isOutside) {
+      toggle(null, true)
+    }
+  }
 
-      this.bindResize()
+  document.addEventListener(
+    isTouchSupported() ? 'touchstart' : 'mousedown',
+    clickOutsideHandler
+  )
+}
 
-      await this.$nextTick()
+const unbindClickOutside = () => {
+  if (clickOutsideHandler) {
+    document.removeEventListener(
+      isTouchSupported() ? 'touchstart' : 'mousedown',
+      clickOutsideHandler
+    )
+    clickOutsideHandler = null
+  }
+}
 
-      if (this.$el instanceof HTMLElement) {
-        this.fitScreen()
-      }
+/**
+ * Enter animation started
+ */
+const onEnterStart = async () => {
+  await nextTick()
 
-      if (!this.isolate) {
-        this.bindClickOutside()
-      }
-    },
+  fitScreen()
 
-    /**
-     * Closes the dropdown
-     */
-    close() {
-      if (!this.triggerElement) {
-        return
-      }
+  if (props.autoFocus) {
+    const button = elementRef.value.querySelector('button')
 
-      if (this.triggerElement.classList) {
-        this.triggerElement.classList.remove('dropdown-trigger')
-      }
-
-      this.unbindResize()
-      this.unbindClickOutside()
-    },
-
-    /**
-     * Enter animation started
-     */
-    async onEnterStart() {
-      await this.$nextTick()
-
-      this.fitScreen()
-
-      if (this.autoFocus) {
-        const button = this.$el.querySelector('button')
-
-        if (button) {
-          button.focus()
-        }
-      }
-    },
-
-    onEnterEnd() {
-      this.$emit('opened')
-    },
-
-    onLeaveStart() {
-      this.$emit('closed')
-    },
-
-    /**
-     * Close if was open then open if given a trigger element
-     * @param {HTMLElement | { top, left, width, height }} triggerElement element that triggered the dropdown
-     * @param {boolean} emit mutate v-model with the new triggerElement if true
-     */
-    toggle(triggerElement, emit = false) {
-      const nextTriggerElement =
-        triggerElement && triggerElement !== this.triggerElement
-          ? triggerElement
-          : null
-
-      if (this.triggerElement) {
-        this.close()
-      }
-
-      this.triggerElement = nextTriggerElement
-
-      if (
-        nextTriggerElement &&
-        (nextTriggerElement.getBoundingClientRect ||
-          typeof nextTriggerElement.top !== 'undefined')
-      ) {
-        this.open(nextTriggerElement)
-      }
-
-      if (emit) {
-        this.$emit('input', this.triggerElement)
-      }
-    },
-
-    /**
-     * Align the dropdown below or above of trigger element
-     */
-    fitScreen() {
-      const triggerElement = this.triggerElement
-      if (
-        !triggerElement ||
-        (!triggerElement.getBoundingClientRect &&
-          typeof triggerElement.top === 'undefined')
-      ) {
-        return
-      }
-
-      const dropdownElement = this.$el as HTMLElement
-      if (!dropdownElement || !dropdownElement.getBoundingClientRect) {
-        return
-      }
-
-      dropdownElement.offsetHeight
-
-      const viewportWidth = window.innerWidth
-      const viewportHeight = window.innerHeight
-
-      let triggerElementRect
-      if (triggerElement instanceof HTMLElement) {
-        triggerElementRect = triggerElement.getBoundingClientRect()
-      } else {
-        triggerElementRect = triggerElement
-      }
-      const dropdownElementRect = dropdownElement.getBoundingClientRect()
-      const dropdownElementWidth = dropdownElementRect.width
-
-      let optimalLeft
-
-      if (this.onSides) {
-        // show show the dropdown above the trigger if the later is lower than viewport mid
-        const triggerIsBeyondViewportMiddle =
-          triggerElementRect.left > viewportWidth / 2
-
-        if (triggerIsBeyondViewportMiddle) {
-          optimalLeft =
-            triggerElementRect.left - dropdownElementWidth - this.margin
-        } else {
-          optimalLeft =
-            triggerElementRect.left + triggerElementRect.width + this.margin
-        }
-      } else {
-        optimalLeft = viewportWidth - dropdownElementWidth - this.margin * 2
-      }
-
-      // align the dropdown on the trigger center while avoiding going beyond the viewport
-      this.left = Math.max(
-        this.margin,
-        Math.min(
-          triggerElementRect.left +
-            triggerElementRect.width / 2 -
-            dropdownElementWidth / 2,
-          optimalLeft
-        )
-      )
-
-      const maxHeight = triggerElementRect.top - this.margin * 2
-      dropdownElement.style.maxHeight = maxHeight + 'px'
-
-      const dropdownElementHeight = Math.min(
-        maxHeight,
-        dropdownElement.scrollHeight
-      )
-
-      if (this.onSides) {
-        this.top =
-          triggerElementRect.top +
-          triggerElementRect.height / 2 -
-          dropdownElementHeight / 2
-      } else {
-        // show show the dropdown above the trigger if the later is lower than viewport mid
-        const triggerIsLowerThanViewportMiddle =
-          triggerElementRect.top > viewportHeight / 2
-
-        if (triggerIsLowerThanViewportMiddle) {
-          // top = trigger top - (dropdownHeight + margin)
-          this.top =
-            triggerElementRect.top - (dropdownElementHeight + this.margin)
-        } else {
-          dropdownElement.style.maxHeight =
-            viewportHeight -
-            triggerElementRect.top -
-            triggerElementRect.height -
-            this.margin * 2 +
-            'px'
-
-          // top = trigger top + it's height + margin
-          this.top =
-            triggerElementRect.top + triggerElementRect.height + this.margin
-        }
-      }
-    },
-
-    bindResize() {
-      if (this._resizeHandler) {
-        return
-      }
-
-      this._resizeHandler = this.onResize.bind(this)
-      window.addEventListener('resize', this._resizeHandler)
-    },
-    onResize() {
-      if (this._resizeTimeout) {
-        clearTimeout(this._resizeTimeout)
-      }
-
-      this._resizeTimeout = setTimeout(() => {
-        this.fitScreen(true)
-
-        this._resizeTimeout = null
-      }, 500)
-    },
-    unbindResize() {
-      if (!this._resizeHandler) {
-        return
-      }
-
-      window.removeEventListener('resize', this._resizeHandler)
-      this._resizeHandler = null
-    },
-    bindClickOutside() {
-      if (this.clickOutsideHandler) {
-        return
-      }
-
-      this.clickOutsideHandler = event => {
-        if (event.defaultPrevented || event.button === 2) {
-          return
-        }
-
-        let parentElement = event.target as HTMLElement
-        let depth = 0
-        let isOutside = true
-
-        while (
-          isOutside &&
-          depth++ < 10 &&
-          (parentElement = parentElement.parentElement)
-        ) {
-          if (parentElement.classList.contains('dropdown')) {
-            isOutside = false
-          }
-        }
-
-        if (
-          isOutside &&
-          (typeof this.triggerElement.top !== 'undefined' ||
-            (!this.triggerElement.contains(event.target) &&
-              this.triggerElement !== event.target))
-        ) {
-          this.toggle(null, true)
-        }
-      }
-
-      document.addEventListener(
-        isTouchSupported() ? 'touchstart' : 'mousedown',
-        this.clickOutsideHandler
-      )
-    },
-    unbindClickOutside() {
-      if (!this.clickOutsideHandler) {
-        return
-      }
-
-      document.removeEventListener(
-        isTouchSupported() ? 'touchstart' : 'mousedown',
-        this.clickOutsideHandler
-      )
-
-      this.clickOutsideHandler = null
+    if (button) {
+      button.focus()
     }
   }
 }
+
+defineExpose({ toggle })
 </script>
 
 <style lang="scss" scoped>
@@ -414,16 +312,12 @@ export default {
     transform: scale(0.8);
   }
 
-  ::v-deep &-divider {
+  ::v-deep(&-divider) {
     background-color: var(--theme-background-200);
     height: 1px;
     padding: 0;
     margin: 0.5em 0;
     position: relative;
-
-    &:first-child {
-      margin-top: 0.75rem;
-    }
 
     &[data-label]:before {
       content: attr(data-label);
@@ -438,10 +332,23 @@ export default {
       transform: translateY(-50%);
       left: 0.5rem;
       margin-top: -1px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      max-width: 80%;
+    }
+
+    &:first-child {
+      margin-top: 0.75rem;
+      background: 0;
+
+      &:before {
+        padding-left: 0;
+      }
     }
   }
 
-  ::v-deep &-item {
+  ::v-deep(&-item) {
     border: 0;
     background: 0;
     padding: 0.625em;

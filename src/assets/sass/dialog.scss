@@ -1,3 +1,5 @@
+@use '@/assets/sass/variables.scss' as vars;
+
 .dialog {
   $self: &;
   position: fixed;
@@ -93,7 +95,7 @@
   }
 
   @media screen and (max-width: 579px), (max-height: 420px) {
-    &:not(.dialog--size-small):not(.dialog--moved) {
+    &:not(.dialog--size-small):not(.dialog--resized) {
       .dialog__content {
         width: 100%;
         height: 100%;
@@ -126,6 +128,11 @@
 
     &-wrapper {
       position: relative;
+      user-select: none;
+
+      button {
+        user-select: contain;
+      }
     }
 
     #{$self}--contrasted & {
@@ -165,12 +172,11 @@
   }
 
   &__title {
-    text-transform: uppercase;
     margin-bottom: 0;
     letter-spacing: 1px;
     font-size: 1.125rem;
     line-height: 1;
-    font-family: $font-condensed;
+    font-family: vars.$font-condensed;
     font-weight: 400;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -222,7 +228,7 @@
       opacity: 1;
     }
 
-    #{$self}--moved & {
+    #{$self}--resized & {
       display: block;
     }
 
@@ -256,23 +262,23 @@
   }
 
   &-enter-active {
-    transition: opacity 0.2s ease-out;
+    transition: opacity 0.1s ease-out;
 
     #{$self}__content {
-      transition: transform 0.3s $ease-out-expo;
+      transition: transform 0.3s vars.$ease-out-expo;
 
       @media screen and (min-width: 768px) {
-        transition-timing-function: $ease-elastic;
+        transition-timing-function: vars.$ease-elastic;
       }
     }
   }
 
   &-leave-active {
-    transition: opacity 0.2s $ease-out-expo;
+    transition: opacity 0.3s vars.$ease-out-expo;
     pointer-events: all;
 
     #{$self}__content {
-      transition: transform 0.2s $ease-out-expo;
+      transition: transform 0.3s vars.$ease-out-expo;
     }
   }
 

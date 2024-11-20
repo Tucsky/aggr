@@ -1,12 +1,14 @@
+@use '@/assets/sass/variables.scss' as vars;
+
 .slide-notice-enter-active,
 .slide-notice-leave-active {
   overflow: hidden;
 }
 .slide-notice-enter-active {
-  transition: all 0.4s $ease-elastic, height 0.4s $ease-out-expo;
+  transition: all 0.4s vars.$ease-elastic, height 0.4s vars.$ease-out-expo;
 }
 .slide-notice-leave-active {
-  transition: all 1s $ease-out-expo;
+  transition: all 1s vars.$ease-out-expo;
 }
 
 .slide-notice-enter,
@@ -70,7 +72,7 @@
   &__wrapper {
     padding: 0.5rem;
     margin: 4px;
-    border-radius: $border-radius-base;
+    border-radius: vars.$border-radius-base;
     background-color: var(--theme-background-200);
 
     display: flex;
@@ -84,7 +86,7 @@
   }
 
   &.-warning .notice__wrapper {
-    background-color: $orange;
+    background-color: vars.$orange;
     color: black;
   }
 

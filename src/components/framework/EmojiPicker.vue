@@ -20,7 +20,7 @@
     </div>
     <ul class="emoji-picker__list hide-scrollbar" @click="onClick">
       <li
-        v-for="emoji of emojis"
+        v-for="emoji in emojis"
         :key="emoji"
         v-html="emoji"
         class="emoji-picker__emoji"
@@ -29,63 +29,66 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-const emojisRanges = [
+<script setup lang="ts">
+import { ref, computed, defineEmits } from 'vue'
+
+// Define the emojisRanges constant
+const emojisRanges: [number, number][] = [
   [128513, 128591],
   [128640, 128704],
   [127757, 127999],
   [128000, 128359]
 ]
 
-@Component({
-  name: 'EmojiPicker'
+// Reactive state for the current index
+const index = ref(0)
+
+// Computed property to determine if the previous button should be enabled
+const canPrev = computed(() => index.value > 0)
+
+// Computed property to determine if the next button should be enabled
+const canNext = computed(() => index.value < emojisRanges.length - 1)
+
+// Computed property to generate the list of emojis based on the current range
+const emojis = computed(() => {
+  const [start, end] = emojisRanges[index.value]
+  const list: string[] = []
+
+  for (let i = start; i < end; i++) {
+    list.push(`&#${i};`)
+  }
+
+  return list
 })
-export default class EmojiPicker extends Vue {
-  index = 0
 
-  get canPrev() {
-    return this.index > 0
+// Define the emit function for the 'emoji' event
+const emit = defineEmits<{
+  (event: 'emoji', emoji: string): void
+}>()
+
+// Method to handle click events on the emoji list
+const onClick = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (target.tagName === 'LI') {
+    // Decode the HTML entity to get the actual emoji character
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(target.innerHTML, 'text/html')
+    const emojiText = doc.body.textContent || ''
+    emit('emoji', emojiText)
   }
+}
 
-  get canNext() {
-    return this.index < emojisRanges.length - 1
+// Method to navigate to the previous emoji range
+const prev = () => {
+  if (index.value > 0) {
+    index.value--
   }
+}
 
-  get emojis() {
-    const list = []
-
-    for (
-      let i = emojisRanges[this.index][0];
-      i < emojisRanges[this.index][1];
-      i++
-    ) {
-      list.push(`&#${i};`)
-    }
-
-    return list
-  }
-
-  onClick(event) {
-    if (event.target.tagName === 'LI') {
-      this.$emit('emoji', event.target.innerText)
-    }
-  }
-
-  prev() {
-    if (this.index === 0) {
-      return
-    }
-
-    this.index--
-  }
-
-  next() {
-    if (this.index === emojisRanges.length - 1) {
-      return
-    }
-
-    this.index++
+// Method to navigate to the next emoji range
+const next = () => {
+  if (index.value < emojisRanges.length - 1) {
+    index.value++
   }
 }
 </script>

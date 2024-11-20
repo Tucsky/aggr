@@ -1,78 +1,83 @@
 <template>
-  <button
-    type="button"
-    class="dropdown-item dropdown-item--narrow"
+  <Btn
+    class="form-control -outline -arrow"
     @click.stop="togglePriceScaleDropdown(indicatorId, $event.currentTarget)"
   >
-    <span class="dropdown-item__emoji"> 📊 </span>
-    <span class="d-flex -column">
-      <small class="block text-muted">Scale with:</small>
-      {{ priceScaleLabel }}
-    </span>
-  </button>
+    {{ priceScaleLabel }}
+  </Btn>
 </template>
 
-<script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-
-import { ChartPaneState } from '../../store/panesSettings/chart'
+<script setup lang="ts">
+import { ref, defineProps, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { createComponent, mountComponent } from '@/utils/helpers'
+import Btn from '@/components/framework/Btn.vue'
+import { ChartPaneState } from '../../store/panesSettings/chart'
+import store from '@/store'
 
-@Component({
-  name: 'IndicatorsOverlay',
-  props: {
-    paneId: {
-      type: String
-    },
-    indicatorId: {
-      type: String
-    }
+// Define props
+const props = defineProps<{ paneId: string; indicatorId: string }>()
+
+// Reactive state for the label and dropdown instance
+const priceScaleLabel = ref<string | null>(null)
+let priceScaleDropdown: any = null
+
+// Update label based on store state
+const updateLabel = () => {
+  const paneState = store.state[props.paneId] as ChartPaneState
+  const indicator = paneState.indicators[props.indicatorId]
+
+  if (
+    indicator.options.priceScaleId === 'right' ||
+    indicator.options.priceScaleId === 'left'
+  ) {
+    priceScaleLabel.value = indicator.options.priceScaleId
+  }
+
+  if (indicator) {
+    priceScaleLabel.value = indicator.name || indicator.options.priceScaleId
+  }
+}
+
+// Initialize label on mount
+onMounted(() => {
+  updateLabel()
+})
+
+// Cleanup dropdown on unmount
+onBeforeUnmount(() => {
+  if (priceScaleDropdown) {
+    priceScaleDropdown.$destroy()
+    priceScaleDropdown = null
   }
 })
-export default class IndicatorsOverlay extends Vue {
-  private paneId: string
-  private indicatorId: string
 
-  priceScaleLabel = null
-  priceScaleDropdown: any
+// Toggle dropdown visibility
+const togglePriceScaleDropdown = async (
+  indicatorId: string,
+  anchor: HTMLElement
+) => {
+  updateLabel()
+  if (!priceScaleDropdown) {
+    const { default: PriceScaleDropdown } = await import(
+      '@/components/indicators/PriceScaleDropdown.vue'
+    )
+    priceScaleDropdown = createComponent(PriceScaleDropdown, {
+      paneId: props.paneId,
+      indicatorId,
+      value: anchor
+    })
 
-  mounted() {
-    this.updateLabel()
-  }
-
-  updateLabel() {
-    const { options, name } = (this.$store.state[this.paneId] as ChartPaneState)
-      .indicators[this.indicatorId]
-
-    const { priceScaleId } = options
-
-    this.priceScaleLabel = name || priceScaleId
-  }
-
-  async togglePriceScaleDropdown(indicatorId, anchor) {
-    this.updateLabel()
-    if (!this.priceScaleDropdown) {
-      const module = await import(
-        `@/components/indicators/PriceScaleDropdown.vue`
-      )
-      this.priceScaleDropdown = createComponent(module.default, {
-        paneId: this.paneId,
-        indicatorId: indicatorId,
-        value: anchor
-      })
-      this.priceScaleDropdown.$on('input', async v => {
-        this.priceScaleDropdown.value = v
-        await this.$nextTick()
-        this.updateLabel()
-      })
-      mountComponent(this.priceScaleDropdown)
-    } else if (this.priceScaleDropdown.value) {
-      this.priceScaleDropdown.value = null
-    } else {
-      this.priceScaleDropdown.indicatorId = indicatorId
-      this.priceScaleDropdown.value = anchor
-    }
+    priceScaleDropdown.$on('input', async (value: any) => {
+      priceScaleDropdown.value = value
+      await nextTick()
+      updateLabel()
+    })
+    mountComponent(priceScaleDropdown)
+  } else if (priceScaleDropdown.value) {
+    priceScaleDropdown.value = null
+  } else {
+    priceScaleDropdown.indicatorId = indicatorId
+    priceScaleDropdown.value = anchor
   }
 }
 </script>

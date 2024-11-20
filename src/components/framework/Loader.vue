@@ -7,16 +7,17 @@
   />
 </template>
 
-<script>
-export default {
-  name: 'Loader',
-  props: {
-    small: {
-      type: Boolean,
-      default: false
-    }
+<script setup lang="ts">
+import { defineProps, withDefaults } from 'vue'
+
+withDefaults(
+  defineProps<{
+    small?: boolean
+  }>(),
+  {
+    small: false
   }
-}
+)
 </script>
 
 <style lang="scss" scoped>

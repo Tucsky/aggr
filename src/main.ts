@@ -1,16 +1,30 @@
-import Vue from 'vue'
-import App from './App.vue'
-import VueTippy, { TippyComponent } from 'vue-tippy'
-import './assets/sass/app.scss'
-import store from './store'
+import { createApp } from 'vue';
+import App from './App.vue';
+import './assets/sass/app.scss';
+import store from './store';
 
-import Editable from '@/components/framework/Editable.vue'
-import DropdownComponent from '@/components/framework/Dropdown.vue'
-import Presets from '@/components/framework/Presets.vue'
-import autofocus from '@/directives/autofocusDirective'
-import draggableMarket from '@/directives/draggableMarketDirective'
+// Import VueTippy and its component
+import { plugin as VueTippy } from 'vue-tippy';
+import 'tippy.js/dist/tippy.css';
 
-Vue.use(VueTippy, {
+// Import global components
+import Editable from '@/components/framework/Editable.vue';
+import DropdownComponent from '@/components/framework/Dropdown.vue';
+import Presets from '@/components/framework/Presets.vue';
+
+// Import directives
+import autofocus from '@/directives/autofocusDirective';
+import draggableMarket from '@/directives/draggableMarketDirective';
+import {
+  commitDirective,
+  dispatchDirective,
+} from './directives/commitDirective';
+
+// Create the Vue app
+const app = createApp(App);
+
+// Install VueTippy
+app.use(VueTippy, {
   maxWidth: '200px',
   duration: 0,
   arrow: true,
@@ -20,25 +34,26 @@ Vue.use(VueTippy, {
   theme: 'dark',
   boundary: 'window',
   distance: 24
-})
+});
 
-/* eslint-disable vue/multi-word-component-names */
-Vue.component('tippy', TippyComponent)
-Vue.component('dropdown', DropdownComponent)
-Vue.component('editable', Editable)
-Vue.component('presets', Presets)
-Vue.directive('autofocus', autofocus)
-Vue.directive('draggable-market', draggableMarket)
+// Register global components
+app.component('dropdown', DropdownComponent);
+app.component('editable', Editable);
+app.component('presets', Presets);
 
+// Register directives
+app.directive('autofocus', autofocus);
+app.directive('draggable-market', draggableMarket);
+app.directive('commit', commitDirective);
+app.directive('dispatch', dispatchDirective);
+
+// Register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    const base_url = import.meta.env.VITE_APP_BASE_PATH || '/'
-    navigator.serviceWorker.register(`${base_url}sw.js`)
-  })
+    const base_url = import.meta.env.VITE_APP_BASE_PATH || '/';
+    navigator.serviceWorker.register(`${base_url}sw.js`);
+  });
 }
 
-new Vue({
-  el: '#app',
-  store,
-  render: h => h(App)
-})
+// Mount the app
+app.use(store).mount('#app');

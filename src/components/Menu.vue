@@ -2,15 +2,15 @@
   <div id="menu" class="menu" :class="{ '-open': open }">
     <button
       class="menu__button btn"
-      @click="$refs.menuDropdown.toggle($event.currentTarget)"
+      @click="menuDropdownRef.toggle($event.currentTarget)"
     >
       <i class="icon-menu"></i>
     </button>
-    <dropdown ref="menuDropdown">
+    <dropdown ref="menuDropdownRef">
       <button
         type="button"
         class="dropdown-item dropdown-item--space-between"
-        @click="$store.dispatch('app/showSearch')"
+        @click="store.dispatch('app/showSearch')"
       >
         <span class="mr4">Search</span>
         <i class="icon-search"></i>
@@ -18,20 +18,21 @@
       <button
         type="button"
         class="dropdown-item"
-        @click.stop="$refs.panesDropdown.toggle($event.currentTarget)"
+        @click.stop="panesDropdownRef.toggle($event.currentTarget)"
       >
         <i class="icon-dashboard -center mr8"></i>
         <span class="mr4">Pane</span>
         <i class="icon-plus mlauto"></i>
       </button>
       <dropdown
-        ref="panesDropdown"
+        ref="panesDropdownRef"
         @mousedown.native.stop
         @touchstart.native.stop
+        on-sides
       >
         <button
           class="dropdown-item dropdown-item--space-between"
-          @click="addPane('chart')"
+          @click="addPane(PaneTypeEnum.CHART)"
         >
           <div>
             <div>Chart</div>
@@ -41,7 +42,7 @@
         </button>
         <button
           class="dropdown-item dropdown-item--space-between"
-          @click="addPane('trades')"
+          @click="addPane(PaneTypeEnum.TRADES)"
         >
           <div>
             <div>Trades</div>
@@ -51,7 +52,7 @@
         </button>
         <button
           class="dropdown-item dropdown-item--space-between"
-          @click="addPane('trades-lite')"
+          @click="addPane(PaneTypeEnum.TRADESLITE)"
         >
           <div>
             <div>Trades <span>LITE ⚡️</span></div>
@@ -61,7 +62,7 @@
         </button>
         <button
           class="dropdown-item dropdown-item--space-between"
-          @click="addPane('prices')"
+          @click="addPane(PaneTypeEnum.PRICES)"
         >
           <div>
             <div>Watchlist</div>
@@ -71,7 +72,7 @@
         </button>
         <button
           class="dropdown-item dropdown-item--space-between"
-          @click="addPane('website')"
+          @click="addPane(PaneTypeEnum.WEBSITE)"
         >
           <div>
             <div>Website</div>
@@ -81,7 +82,7 @@
         </button>
         <button
           class="dropdown-item dropdown-item--space-between"
-          @click="addPane('stats')"
+          @click="addPane(PaneTypeEnum.STATS)"
         >
           <div>
             <div>Stats</div>
@@ -91,7 +92,7 @@
         </button>
         <button
           class="dropdown-item dropdown-item--space-between"
-          @click="addPane('counters')"
+          @click="addPane(PaneTypeEnum.COUNTERS)"
         >
           <div>
             <div>Counters</div>
@@ -101,7 +102,7 @@
         </button>
         <button
           class="dropdown-item dropdown-item--space-between"
-          @click="addPane('alerts')"
+          @click="addPane(PaneTypeEnum.ALERTS)"
         >
           <div>
             <div>Alerts</div>
@@ -124,23 +125,30 @@
         transparent
         on-sides
       >
-        <slider
+        <Slider
           style="width: 100px"
           :min="0"
           :max="3"
           :step="0.01"
           :label="true"
-          :value="audioVolume"
-          @input="$store.dispatch('settings/setAudioVolume', $event)"
-          @reset="$store.dispatch('settings/setAudioVolume', 1)"
+          :model-value="audioVolume"
+          @input="store.dispatch('settings/setAudioVolume', $event)"
+          @reset="store.dispatch('settings/setAudioVolume', 1)"
           log
-        />
+        >
+          <template v-slot:tooltip="{ value }">
+            {{
+              ((Math.log10(value + 1) / Math.log10(3 + 1)) * 100).toFixed() +
+              '%'
+            }}
+          </template>
+        </Slider>
       </dropdown>
 
       <button
         type="button"
         class="dropdown-item dropdown-item--space-between"
-        ref="volumeSliderTrigger"
+        ref="volumeSliderTriggerRef"
         v-on="volumeSliderTriggerEvents"
         @click="toggleAudio"
       >
@@ -173,153 +181,122 @@
     </dropdown>
   </div>
 </template>
-
-<script lang="ts">
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import dialogService from '@/services/dialogService'
-import { PaneType } from '@/store/panes'
-import { Component, Vue } from 'vue-property-decorator'
+import { PaneTypeEnum } from '@/store/panes'
 import { isTouchSupported } from '../utils/touchevent'
+import Dropdown from './framework/Dropdown.vue'
 import Slider from './framework/picker/Slider.vue'
 import SettingsDialog from './settings/SettingsDialog.vue'
+import store from '@/store'
 
-@Component({
-  name: 'Menu',
-  components: {
-    Slider
+// Reactive state
+const volumeSliderOpened = ref<HTMLElement | null>(null)
+const isFullscreen = ref(false)
+const open = ref(false)
+
+// Refs
+const volumeSlider = ref<any>(null)
+const volumeSliderTriggerRef = ref<HTMLElement | null>(null)
+const menuDropdownRef = ref<InstanceType<typeof Dropdown> | null>(null)
+const panesDropdownRef = ref<InstanceType<typeof Dropdown> | null>(null)
+
+// Fullscreen event handlers
+function handleFullScreenChange() {
+  isFullscreen.value =
+    !!document.fullscreenElement || !!(document as any).webkitFullscreenElement
+}
+
+onMounted(() => {
+  document.addEventListener('webkitfullscreenchange', handleFullScreenChange)
+  document.addEventListener('fullscreenchange', handleFullScreenChange)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('webkitfullscreenchange', handleFullScreenChange)
+  document.removeEventListener('fullscreenchange', handleFullScreenChange)
+})
+
+// Computed properties
+const useAudio = computed(() => store.state.settings.useAudio)
+const audioVolume = computed(() => store.state.settings.audioVolume)
+
+// Event handling for volume slider
+const volumeSliderEvents = computed(() => {
+  if (!volumeSliderOpened.value) return null
+  return {
+    [isTouchSupported() ? 'touchstart' : 'mousedown']: (event: Event) => {
+      event.stopPropagation()
+    },
+    mouseleave: (event: MouseEvent) => {
+      if (
+        event.relatedTarget === volumeSliderTriggerRef.value ||
+        volumeSliderTriggerRef.value?.contains(event.relatedTarget as Node)
+      ) {
+        return
+      }
+      volumeSliderOpened.value = null
+    }
   }
 })
-export default class Menu extends Vue {
-  volumeSliderOpened = false
-  isFullscreen = false
-  open = false
 
-  $refs!: {
-    volumeSlider: any
-    volumeSliderTrigger: HTMLElement
-  }
-  mounted() {
-    document.addEventListener(
-      'webkitfullscreenchange',
-      this.handleFullScreenChange
-    )
-    document.addEventListener('fullscreenchange', this.handleFullScreenChange)
-  }
-
-  get useAudio() {
-    return this.$store.state.settings.useAudio
-  }
-
-  get audioVolume() {
-    return this.$store.state.settings.audioVolume
-  }
-
-  get volumeSliderEvents() {
-    if (!this.volumeSliderOpened) {
-      return null
-    }
-
+const volumeSliderTriggerEvents = computed(() => {
+  if (volumeSliderOpened.value) {
     return {
-      [isTouchSupported() ? 'touchstart' : 'mousedown']: event => {
-        event.stopPropagation()
-      },
-      mouseleave: event => {
+      mouseleave: (event: MouseEvent) => {
         if (
-          event.toElement === this.$refs.volumeSliderTrigger ||
-          this.$refs.volumeSliderTrigger.contains(event.toElement)
+          event.relatedTarget === volumeSlider.value?.$el ||
+          volumeSlider.value?.$el.contains(event.relatedTarget as Node)
         ) {
           return
         }
-
-        this.volumeSliderOpened = null
+        volumeSliderOpened.value = null
+      }
+    }
+  } else {
+    return {
+      mouseenter: (event: MouseEvent) => {
+        volumeSliderOpened.value = event.currentTarget as HTMLElement
       }
     }
   }
+})
 
-  get volumeSliderTriggerEvents() {
-    if (this.volumeSliderOpened) {
-      return {
-        mouseleave: event => {
-          if (
-            event.toElement === this.$refs.volumeSlider.$el ||
-            this.$refs.volumeSlider.$el.contains(event.toElement)
-          ) {
-            return
-          }
+// Methods
+function showSettings() {
+  dialogService.open(SettingsDialog, undefined, 'settings')
+}
 
-          this.volumeSliderOpened = null
-        }
-      }
-    } else {
-      return {
-        mouseenter: event => {
-          this.volumeSliderOpened = event.currentTarget
-        }
-      }
-    }
+async function toggleFullscreen() {
+  const doc = document as any
+  const body = doc.body
+
+  body.requestFullscreen =
+    body.requestFullscreen || body.webkitRequestFullscreen || (() => false)
+  doc.cancelFullscreen =
+    doc.exitFullscreen ||
+    doc.webkitExitFullscreen ||
+    doc.cancelFullScreen ||
+    doc.webkitCancelFullScreen ||
+    doc.mozCancelFullScreen ||
+    (() => false)
+
+  if (isFullscreen.value) {
+    doc.cancelFullscreen()
+    isFullscreen.value = false
+  } else {
+    body.requestFullscreen()
+    isFullscreen.value = true
   }
+}
 
-  showSettings() {
-    dialogService.open(SettingsDialog)
-  }
+function addPane(type: PaneTypeEnum) {
+  store.dispatch('panes/addPane', { type })
+}
 
-  async toggleFullscreen() {
-    const doc = document as any
-    const body = doc.body
-
-    body.requestFullscreen =
-      body.requestFullscreen ||
-      body.webkitRequestFullscreen ||
-      function () {
-        return false
-      }
-    doc.cancelFullscreen =
-      doc.exitFullscreen ||
-      doc.webkitExitFullscreen ||
-      doc.cancelFullScreen ||
-      doc.webkitCancelFullScreen ||
-      doc.mozCancelFullScreen ||
-      function () {
-        return false
-      }
-
-    if (this.isFullscreen) {
-      doc.cancelFullscreen()
-      this.isFullscreen = false
-    } else {
-      body.requestFullscreen()
-      this.isFullscreen = true
-    }
-  }
-
-  handleFullScreenChange() {
-    if (
-      document.fullscreenElement ||
-      (document as any).webkitFullscreenElement
-    ) {
-      this.isFullscreen = true
-    } else {
-      this.isFullscreen = false
-    }
-  }
-
-  toggleMenu() {
-    this.open = !this.open
-
-    if (this.open) {
-      this.isFullscreen =
-        (document as any).webkitIsFullScreen || (document as any).mozFullScreen
-          ? true
-          : false
-    }
-  }
-
-  addPane(type: PaneType) {
-    this.$store.dispatch('panes/addPane', { type })
-  }
-
-  toggleAudio() {
-    this.$store.commit('settings/TOGGLE_AUDIO', !this.useAudio)
-  }
+function toggleAudio() {
+  store.commit('settings/TOGGLE_AUDIO', !useAudio.value)
 }
 </script>
 

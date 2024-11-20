@@ -1,7 +1,8 @@
 import { formatMarketPrice } from '@/services/productsService'
 import { createComponent, getEventCords, mountComponent } from '@/utils/helpers'
 import { Time } from 'lightweight-charts'
-import ChartController, { IndicatorApi } from '../chart'
+import ChartController from '../chart'
+import { IndicatorApi } from '../chart.d'
 
 export default class MeasurementEventHandler {
   isBusy = false
@@ -28,9 +29,9 @@ export default class MeasurementEventHandler {
   private top: number
   private left: number
   private width: number
-  private onMoveHandler: (event) => {}
-  private onEndHandler: (event) => {}
-  private onPanHandler: (event) => {}
+  private onMoveHandler: (event) => void
+  private onEndHandler: (event) => void
+  private onPanHandler: (event) => void
 
   constructor(chart: ChartController, event: MouseEvent | TouchEvent) {
     this.chart = chart
@@ -133,7 +134,8 @@ export default class MeasurementEventHandler {
     const x = [this.a.x, this.b.x].sort((a, b) => a - b)
     const y = [this.a.y, this.b.y].sort((a, b) => a - b)
     const prices = [this.a.price, this.b.price].sort((a, b) => a - b)
-    const percent = ((this.b.price - this.a.price) / Math.abs(this.a.price)) * 100;
+    const percent =
+      ((this.b.price - this.a.price) / Math.abs(this.a.price)) * 100
     return {
       position: {
         top: y[0],

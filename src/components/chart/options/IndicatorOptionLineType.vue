@@ -6,21 +6,22 @@
       :options="{ 0: 'Simple', 1: 'with steps' }"
       class="-outline form-control -arrow"
       :placeholder="definition.placeholder || 'lineType'"
-      @input="$emit('input', $event)"
+      @input="onInput"
     ></dropdown-button>
   </label>
 </template>
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-import IndicatorOptionMixin from '@/mixins/indicatorOptionMixin'
+
+<script setup lang="ts">
+import { defineEmits, defineProps } from 'vue'
+import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 
-@Component({
-  name: 'IndicatorOptionLineType',
-  mixins: [IndicatorOptionMixin],
-  components: {
-    DropdownButton
-  }
-})
-export default class IndicatorOptionLineType extends Vue {}
+// Define props and emit
+defineProps(useIndicatorOptionProps)
+const emit = defineEmits(['input'])
+
+// Emit input event
+const onInput = (value: any) => {
+  emit('input', value)
+}
 </script>

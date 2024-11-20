@@ -1,24 +1,22 @@
 <template>
   <form @submit.prevent="submit">
-    <transition name="dialog" :duration="500" @after-leave="onHide">
+    <transition name="dialog" :duration="300" @after-leave="close">
       <Dialog
-        v-if="dialogOpened"
+        v-if="opened"
         class="edit-resource-dialog"
-        @clickOutside="hide"
+        @close="hide"
         @resize="resizeEditor"
       >
         <template v-slot:header>
           <div class="d-flex">
             <div class="dialog__title">Edit {{ item.name }}</div>
-
             <small class="-center">
               <code
                 class="-filled -center ml4"
                 :title="`ID: ${item.id}`"
                 v-tippy
+                >{{ displayId }}</code
               >
-                {{ displayId }}
-              </code>
             </small>
           </div>
         </template>
@@ -40,7 +38,7 @@
               <div class="mr8" title="Get a new ID" v-tippy></div>
               <i
                 class="icon-info"
-                title="IDs are unique in the library !"
+                title="IDs are unique in the library!"
                 v-tippy
               ></i>
             </label>
@@ -62,8 +60,8 @@
           </label>
           <MarkdownEditor
             class="w-100 flex-grow-1"
-            ref="editor"
-            style="height: auto"
+            ref="editorRef"
+            style="height: auto; min-height: 100px"
             v-model="description"
             minimal
           />
@@ -91,7 +89,6 @@
             <img v-if="imageObjectUrl" :src="imageObjectUrl" />
           </div>
         </div>
-
         <template v-slot:footer>
           <Btn type="button" class="btn -text" @click="hide">Cancel</Btn>
           <Btn type="submit" class="btn -green ml8 -large">
@@ -103,157 +100,114 @@
   </form>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import Dialog from '@/components/framework/Dialog.vue'
+import { useDialog } from '@/composables/useDialog'
 import Btn from '@/components/framework/Btn.vue'
-import DialogMixin from '@/mixins/dialogMixin'
 import { slugify, uniqueName } from '@/utils/helpers'
+import MarkdownEditor from '@/components/framework/editor/MarkdownEditor.vue'
 
-export default {
-  name: 'EditResourceDialog',
-  components: {
-    Btn,
-    MarkdownEditor: () =>
-      import('@/components/framework/editor/MarkdownEditor.vue')
+const props = defineProps({
+  item: {
+    type: Object,
+    required: true
   },
-  props: {
-    item: {
-      type: Object,
-      required: true
-    },
-    ids: {
-      type: Array,
-      required: true
-    }
-  },
-  mixins: [DialogMixin],
-  data() {
-    return {
-      dialogOpened: false,
-      name: this.item.name || '',
-      description: this.item.description || '',
-      updateId: false,
-      imageObjectUrl: null,
-      newImagePreview: null,
-      hasDeletedPreview: false
-    }
-  },
-  computed: {
-    displayId() {
-      const id = this.item.id
+  ids: {
+    type: Array,
+    required: true
+  }
+})
 
-      if (!id) {
-        return 'no id'
-      }
+defineEmits(['close'])
+const { opened, close, hide } = useDialog()
+defineExpose({ close })
 
-      if (id.length <= 16) {
-        return id
-      } else {
-        return id.slice(0, 6) + '..' + id.substr(-6)
-      }
-    },
-    newId() {
-      return uniqueName(slugify(this.name), this.idsExceptCurrent)
-    },
-    idsExceptCurrent() {
-      return this.ids.filter(id => id !== this.item.id)
-    },
-    hasCustomPreview() {
-      if (this.hasDeletedPreview) {
-        return false
-      }
+const name = ref(props.item.name || '')
+const description = ref(props.item.description || '')
+const updateId = ref(false)
+const imageObjectUrl = ref<string | null>(null)
+const newImagePreview = ref<File | null>(null)
+const hasDeletedPreview = ref(false)
+const editorRef = ref<InstanceType<typeof MarkdownEditor> | null>(null)
 
-      if (this.newImagePreview || this.item.preview instanceof File) {
-        return true
-      }
+const displayId = computed(() => {
+  const id = props.item.id
+  if (!id) return 'no id'
+  return id.length <= 16 ? id : `${id.slice(0, 6)}..${id.substr(-6)}`
+})
 
-      return false
-    },
-    previewName() {
-      if (this.hasCustomPreview) {
-        return this.item.id + '.png'
-      }
+const newId = computed(() =>
+  uniqueName(slugify(name.value), idsExceptCurrent.value)
+)
+const idsExceptCurrent = computed(() =>
+  props.ids.filter(id => id !== props.item.id)
+)
 
-      return 'Browse'
-    }
-  },
-  mounted() {
-    this.loadPreview()
-    this.show()
-  },
-  beforeDestroy() {
-    this.clearPreview()
-  },
-  methods: {
-    show() {
-      this.dialogOpened = true
-    },
-    hide() {
-      this.dialogOpened = false
-    },
-    onHide() {
-      this.close()
-    },
-    submit() {
-      this.output = {
-        ...this.item,
-        name: this.name,
-        displayName: this.name,
-        description: this.description
-      }
+const hasCustomPreview = computed(() => {
+  if (hasDeletedPreview.value) return false
+  return !!(newImagePreview.value || props.item.preview instanceof File)
+})
 
-      if (this.newImagePreview) {
-        this.output.preview = this.newImagePreview
-      } else if (this.hasDeletedPreview) {
-        this.output.preview = null
-      }
+const previewName = computed(() =>
+  hasCustomPreview.value ? `${props.item.id}.png` : 'Browse'
+)
 
-      if (this.updateId) {
-        this.output.id = this.newId
-      }
-
-      this.hide()
-    },
-    loadPreview() {
-      this.clearPreview()
-
-      const preview = this.newImagePreview || this.item.preview
-      if (preview instanceof File || preview instanceof Blob) {
-        this.imageObjectUrl = URL.createObjectURL(preview)
-      }
-    },
-    clearPreview() {
-      if (this.imageObjectUrl) {
-        URL.revokeObjectURL(this.imageObjectUrl)
-        this.imageObjectUrl = null
-      }
-    },
-    handlePreviewFile() {
-      const file = event.target.files[0]
-
-      if (!file) {
-        return
-      }
-
-      this.newImagePreview = file
-      this.hasDeletedPreview = false
-      this.loadPreview()
-    },
-    removePreview() {
-      if (this.newImagePreview) {
-        this.newImagePreview = null
-      }
-
-      this.clearPreview()
-      this.hasDeletedPreview = true
-    },
-    resizeEditor() {
-      if (this.$refs.editor) {
-        this.$refs.editor.resize()
-      }
-    }
+const loadPreview = () => {
+  clearPreview()
+  const preview = newImagePreview.value || props.item.preview
+  if (preview instanceof File || preview instanceof Blob) {
+    imageObjectUrl.value = URL.createObjectURL(preview)
   }
 }
+
+const clearPreview = () => {
+  if (imageObjectUrl.value) {
+    URL.revokeObjectURL(imageObjectUrl.value)
+    imageObjectUrl.value = null
+  }
+}
+
+const handlePreviewFile = (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  newImagePreview.value = file
+  hasDeletedPreview.value = false
+  loadPreview()
+}
+
+const removePreview = () => {
+  newImagePreview.value = null
+  clearPreview()
+  hasDeletedPreview.value = true
+}
+
+const resizeEditor = () => {
+  editorRef.value?.resize()
+}
+
+const submit = () => {
+  hide({
+    ...props.item,
+    name: name.value,
+    displayName: name.value,
+    description: description.value,
+    preview:
+      newImagePreview.value ||
+      (hasDeletedPreview.value ? null : props.item.preview),
+    id: updateId.value ? newId.value : props.item.id
+  })
+}
+
+onMounted(() => {
+  loadPreview()
+})
+
+onBeforeUnmount(() => {
+  clearPreview()
+})
 </script>
+
 <style lang="scss" scoped>
 .edit-resource-dialog {
   &__preview {

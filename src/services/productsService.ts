@@ -31,6 +31,12 @@ const UNDERSCORE_ANYTHING_REGEX = /_.*/
 const PARSE_MARKET_REGEX = /([^:]*):(.*)/
 const BITUNIX_PERP_REGEX = /[A-Z]/
 
+export enum ProductTypeEnum {
+  SPOT = 'spot',
+  PERP = 'perp',
+  FUTURE = 'future'
+}
+
 const stablecoins = [
   'USDT',
   'USDC',
@@ -306,47 +312,47 @@ export function parseMarket(market: string) {
 export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   const id = exchangeId + ':' + symbol
 
-  let type = 'spot'
+  let type: ProductTypeEnum = ProductTypeEnum.SPOT
 
   if (COMMON_FUTURES_SUFFIX_REGEX.test(symbol)) {
-    type = 'future'
+    type = ProductTypeEnum.FUTURE
   } else if (exchangeId === 'BINANCE_FUTURES' || exchangeId === 'DYDX') {
-    type = 'perp'
+    type = ProductTypeEnum.PERP
   } else if (exchangeId === 'COINBASE' && COINBASE_INTX_REGEX.test(symbol)) {
-    type = 'perp'
+    type = ProductTypeEnum.PERP
   } else if (exchangeId === 'BITFINEX' && BITFINEX_PERP_REGEX.test(symbol)) {
-    type = 'perp'
+    type = ProductTypeEnum.PERP
   } else if (exchangeId === 'HUOBI' && HUOBI_FUTURES_REGEX.test(symbol)) {
-    type = 'future'
+    type = ProductTypeEnum.FUTURE
   } else if (exchangeId === 'BITMART' && !UNDERSCORE_REGEX.test(symbol)) {
-    type = 'perp'
+    type = ProductTypeEnum.PERP
   } else if (exchangeId === 'HUOBI' && DASH_REGEX.test(symbol)) {
-    type = 'perp'
+    type = ProductTypeEnum.PERP
   } else if (exchangeId === 'BYBIT' && !DASH_SPOT_REGEX.test(symbol)) {
     if (TWO_DIGITS_REGEX.test(symbol)) {
-      type = 'future'
+      type = ProductTypeEnum.FUTURE
     } else if (!DASH_SPOT_REGEX.test(symbol)) {
-      type = 'perp'
+      type = ProductTypeEnum.PERP
     }
   } else if (exchangeId === 'BITMEX' || SWAP_OR_PERP_REGEX.test(symbol)) {
     if (TWO_DIGITS_REGEX.test(symbol)) {
-      type = 'future'
+      type = ProductTypeEnum.FUTURE
     } else {
-      type = 'perp'
+      type = ProductTypeEnum.PERP
     }
   } else if (exchangeId === 'PHEMEX' && symbol[0] !== 's') {
-    type = 'perp'
+    type = ProductTypeEnum.PERP
   } else if (
     exchangeId === 'KRAKEN' &&
     UNDERSCORE_REGEX.test(symbol) &&
-    type === 'spot'
+    type === ProductTypeEnum.SPOT
   ) {
-    type = 'perp'
+    type = ProductTypeEnum.PERP
   } else if (
     (exchangeId === 'BITGET' || exchangeId === 'MEXC') &&
     symbol.indexOf('_') !== -1
   ) {
-    type = 'perp'
+    type = ProductTypeEnum.PERP
   } else if (exchangeId === 'KUCOIN' && symbol.indexOf('-') === -1) {
     type = 'perp'
   } else if (exchangeId === 'BITUNIX' && BITUNIX_PERP_REGEX.test(symbol)) {
@@ -376,7 +382,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
       .replace(UNDERSCORE_ANYTHING_REGEX, '')
   } else if (exchangeId === 'KUCOIN') {
     localSymbol = localSymbol.replace(KUCOIN_SUFFIX_REGEX, '')
-  } else if (exchangeId === 'COINBASE' && type === 'perp') {
+  } else if (exchangeId === 'COINBASE' && type === ProductTypeEnum.PERP) {
     localSymbol = localSymbol.replace(COINBASE_INTX_REGEX, '')
   }
 
@@ -523,6 +529,8 @@ export async function ensureIndexedProducts(filter?: {
 }) {
   let indexChanged = false
 
+  const promises = []
+
   for (const exchangeId of store.getters['exchanges/getExchanges']) {
     if (
       (filter && !filter[exchangeId]) ||
@@ -532,10 +540,16 @@ export async function ensureIndexedProducts(filter?: {
       continue
     }
 
-    await indexProducts(exchangeId, await getExchangeSymbols(exchangeId))
+    promises.push(
+      getExchangeSymbols(exchangeId).then(symbols =>
+        indexProducts(exchangeId, symbols)
+      )
+    )
 
     indexChanged = true
   }
+
+  await Promise.all(promises)
 
   return indexChanged
 }

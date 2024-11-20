@@ -3,63 +3,95 @@
     <slot />
   </div>
 </template>
+<script setup lang="ts">
+import {
+  ref,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+  defineProps,
+  defineEmits,
+  getCurrentInstance
+} from 'vue'
+import Tab from './Tab.vue'
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-
-@Component({
-  name: 'Tabs',
-  props: {
-    value: {
-      default: null
-    }
+// Define props and emits
+const props = defineProps({
+  value: {
+    default: null
   }
 })
-export default class Tabs extends Vue {
-  tabs: any[]
-  private value: string | number
-  private selectedTab: any
+const emit = defineEmits(['input'])
 
-  mounted() {
-    this.bindTabs()
-  }
+// Reactive internal value
+const _value = ref<string | null>(null)
 
-  beforeDestroy() {
-    this.unbindTabs()
-  }
+// Access instance to handle slot components
+const instance = getCurrentInstance()
 
-  bindTabs() {
-    for (const tab of this.$slots.default) {
-      tab.componentInstance.$on('select', this.selectTab)
+// Methods for binding/unbinding tabs
+const bindTabs = () => {
+  instance?.proxy?.$slots.default?.forEach(tab => {
+    const tabInstance = tab.componentInstance as unknown as InstanceType<
+      typeof Tab
+    >
+    tabInstance.$on('select', selectTab)
 
-      if (this.value === (tab.componentInstance as any).name) {
-        this.selectTab(tab.componentInstance)
-      }
+    if (props.value === tabInstance.name) {
+      selectTab(props.value)
     }
-  }
+  })
+}
 
-  unbindTabs() {
-    for (const tab of this.$slots.default) {
-      tab.componentInstance.$off('select', this.selectTab)
+const unbindTabs = () => {
+  instance?.proxy?.$slots.default?.forEach(tab => {
+    const tabInstance = tab.componentInstance as unknown as InstanceType<
+      typeof Tab
+    >
+    tabInstance.$off('select', selectTab)
+  })
+}
+
+// Method to retrieve a tab instance by name
+const getTabInstance = (name: string) => {
+  return instance?.proxy?.$slots.default?.find(
+    tab => (tab.componentInstance as any).name === name
+  ).componentInstance as unknown as InstanceType<typeof Tab>
+}
+
+// Method to select a tab
+const selectTab = (name: string) => {
+  if (!_value.value || props.value !== name) {
+    if (_value.value) {
+      getTabInstance(_value.value)?.deselect()
     }
-  }
 
-  selectTab(tab) {
-    const name = tab.name
-
-    if (!this.selectedTab || this.value !== name) {
-      if (this.selectedTab) {
-        this.selectedTab.deselect()
-      }
-
-      this.selectedTab = tab
-      this.selectedTab.select()
-    }
-
-    this.$emit('input', tab.name)
+    _value.value = name
+    getTabInstance(name)?.select()
+    emit('input', _value.value)
   }
 }
+
+// Watch for changes in `value` prop to handle selection updates
+watch(
+  () => props.value,
+  newValue => {
+    if (newValue !== _value.value) {
+      selectTab(newValue)
+    }
+  }
+)
+
+// Lifecycle hooks to bind and unbind tabs
+onMounted(() => {
+  bindTabs()
+})
+
+onBeforeUnmount(() => {
+  unbindTabs()
+})
 </script>
+
 <style lang="scss" scoped>
 .tabs {
   padding: 0 1rem;

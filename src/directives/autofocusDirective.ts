@@ -1,12 +1,13 @@
 export default {
-  bind(el) {
-    // When the component of the element gets activated
+  beforeMount(el: HTMLElement) {
+    // When the element is added to the DOM
     setTimeout(() => {
-      el.focus()
+      el.focus();
 
       if (el.tagName === 'INPUT') {
-        el.setSelectionRange(0, el.value.length)
+        const inputEl = el as HTMLInputElement;
+        inputEl.setSelectionRange(0, inputEl.value.length);
       }
-    })
-  }
-}
+    });
+  },
+};

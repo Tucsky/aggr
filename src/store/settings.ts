@@ -23,6 +23,16 @@ import { getTimeframeForHuman } from '@/utils/helpers'
 import { isTouchSupported } from '@/utils/touchevent'
 import { getMarketProduct, parseMarket } from '../services/productsService'
 
+export interface SearchFilters {
+  recent: boolean
+  historical: boolean
+  spots: boolean
+  perpetuals: boolean
+  futures: boolean
+  normalize: boolean
+  mergeUsdt: boolean
+}
+
 export type AudioFilters = { [id: string]: boolean }
 export interface SettingsState {
   preferQuoteCurrencySize?: boolean
@@ -43,14 +53,14 @@ export interface SettingsState {
   disableAnimations?: boolean
   autoHideHeaders?: boolean
   autoHideNames?: boolean
-  searchTypes?: any
+  searchTypes?: SearchFilters
   searchQuotes?: any
   searchExchanges?: any
   previousSearchSelections?: PreviousSearchSelection[]
   timeframes?: { label: string; value: string }[]
   favoriteTimeframes?: { [timeframe: number]: string }
   normalizeWatermarks: boolean
-  alerts: number | boolean
+  alerts: boolean
   alertsLineStyle: number
   alertsLineWidth: number
   alertsColor: string
@@ -162,7 +172,7 @@ const actions = {
     )
     document.documentElement.style.setProperty(
       '--theme-base-o50',
-      joinRgba([...themeBase.slice(0, 3), 0.50])
+      joinRgba([...themeBase.slice(0, 3), 0.5])
     )
     document.documentElement.style.setProperty(
       '--theme-background-75',

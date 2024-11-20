@@ -103,101 +103,80 @@
     </tbody>
   </table>
 </template>
-
-<script lang="ts">
+<script setup lang="ts">
+import { ref, computed, defineProps } from 'vue'
 import { ago } from '@/utils/helpers'
-import PreviewMixin from '@/mixins/previewMixin'
+import { usePreview } from '@/composables/usePreview'
 
-export default {
-  name: 'IndicatorTable',
-  mixins: [PreviewMixin],
-  props: {
-    indicators: {
-      type: Array,
-      required: true
-    },
-    query: {
-      type: String,
-      default: ''
-    },
-    showDropdown: {
-      type: Boolean,
-      default: false
-    },
-    showAuthor: {
-      type: Boolean,
-      default: false
-    },
-    showEnabled: {
-      type: Boolean,
-      default: false
-    }
-  },
-  data() {
-    return {
-      ago,
-      sortDirection: -1,
-      sortProperty: 'updatedAt'
-    }
-  },
-  computed: {
-    queryFilter() {
-      return new RegExp(this.query.replace(/\W/, '.*'), 'i')
-    },
-    sortFunction() {
-      if (this.sortProperty === 'description') {
-        if (this.sortDirection > 0) {
-          return (a, b) =>
-            (a.description || '').localeCompare(b.description || '')
-        }
-        return (a, b) =>
+const { movePreview, showPreview, clearPreview } = usePreview()
+
+// Define props
+const props = defineProps<{
+  indicators: Array<any>
+  query: string
+  showDropdown?: boolean
+  showAuthor?: boolean
+  showEnabled?: boolean
+}>()
+
+// Reactive state
+const sortDirection = ref(-1)
+const sortProperty = ref('updatedAt')
+
+// Computed properties
+const queryFilter = computed(() => {
+  return new RegExp(props.query.replace(/\W/, '.*'), 'i')
+})
+
+const sortFunction = computed(() => {
+  const direction = sortDirection.value
+  const property = sortProperty.value
+
+  if (property === 'description') {
+    return direction > 0
+      ? (a: any, b: any) =>
+          (a.description || '').localeCompare(b.description || '')
+      : (a: any, b: any) =>
           (b.description || '').localeCompare(a.description || '')
-      } else if (this.sortProperty === 'name') {
-        if (this.sortDirection > 0) {
-          return (a, b) => (a.name || '').localeCompare(b.name || '')
-        }
-        return (a, b) => (b.name || '').localeCompare(a.name || '')
-      } else if (this.sortProperty === 'createdAt') {
-        if (this.sortDirection > 0) {
-          return (a, b) => a.createdAt - b.createdAt
-        }
-        return (a, b) => b.createdAt - a.createdAt
-      } else if (this.sortProperty === 'updatedAt') {
-        if (this.sortDirection > 0) {
-          return (a, b) => a.updatedAt - b.updatedAt
-        }
-        return (a, b) => b.updatedAt - a.updatedAt
-      } else if (this.sortProperty === 'author') {
-        if (this.sortDirection > 0) {
-          return (a, b) => a.author - b.author
-        }
-        return (a, b) => b.author - a.author
-      }
-
-      return (a, b) => a.id.localeCompare(b.id)
-    },
-    filteredIndicators() {
-      const sortFunction = this.sortFunction
-      return this.indicators
-        .filter(
-          a =>
-            this.queryFilter.test(a.description) ||
-            this.queryFilter.test(a.name)
-        )
-        .sort(sortFunction)
-    }
-  },
-  methods: {
-    toggleSort(name) {
-      if (name === this.sortProperty) {
-        this.sortDirection = this.sortDirection * -1
-      }
-
-      this.sortProperty = name
-    }
+  } else if (property === 'name') {
+    return direction > 0
+      ? (a: any, b: any) => (a.name || '').localeCompare(b.name || '')
+      : (a: any, b: any) => (b.name || '').localeCompare(a.name || '')
+  } else if (property === 'createdAt') {
+    return direction > 0
+      ? (a: any, b: any) => a.createdAt - b.createdAt
+      : (a: any, b: any) => b.createdAt - a.createdAt
+  } else if (property === 'updatedAt') {
+    return direction > 0
+      ? (a: any, b: any) => a.updatedAt - b.updatedAt
+      : (a: any, b: any) => b.updatedAt - a.updatedAt
+  } else if (property === 'author') {
+    return direction > 0
+      ? (a: any, b: any) => (a.author || '').localeCompare(b.author || '')
+      : (a: any, b: any) => (b.author || '').localeCompare(a.author || '')
   }
+
+  return (a: any, b: any) => a.id.localeCompare(b.id)
+})
+
+const filteredIndicators = computed(() => {
+  return props.indicators
+    .filter(
+      (a: any) =>
+        queryFilter.value.test(a.description) || queryFilter.value.test(a.name)
+    )
+    .sort(sortFunction.value)
+})
+
+// Methods
+function toggleSort(name: string) {
+  if (name === sortProperty.value) {
+    sortDirection.value *= -1
+  }
+  sortProperty.value = name
 }
 </script>
+
 <style lang="scss" scoped>
 .icon-star-filled {
   color: var(--theme-buy-200);

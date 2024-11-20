@@ -50,35 +50,31 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+<script lang="ts" setup>
+import { computed } from 'vue'
 import Slider from '@/components/framework/picker/Slider.vue'
-@Component({
-  components: {
-    Slider
+
+// Props
+const props = defineProps({
+  paneId: {
+    type: String,
+    required: true
   },
-  name: 'TradesMarketMultiplier',
-  props: {
-    paneId: {
-      type: String,
-      required: true
+  market: {
+    type: Object as () => {
+      identifier: string
+      multiplier: number
+      exchange: string
+      pair: string
     },
-    market: {
-      type: Object,
-      required: true
-    }
+    required: true
   }
 })
-export default class TradesSettings extends Vue {
-  paneId: string
-  market: { identifier: string; multiplier: number }
 
-  get hasMultiplier() {
-    return this.market.multiplier !== 1
-  }
-}
+// Computed properties
+const hasMultiplier = computed(() => props.market.multiplier !== 1)
 </script>
+
 <style scoped lang="scss">
 .market-multiplier {
   padding: 0.4rem 1rem;

@@ -93,11 +93,11 @@ export interface Workspace {
 }
 
 export interface Preset {
-  name: string
+  name?: string
   type?: 'preset'
   data: any
-  createdAt: number
-  updatedAt: number
+  createdAt?: number
+  updatedAt?: number
   markets?: string[]
   version?: string
 }

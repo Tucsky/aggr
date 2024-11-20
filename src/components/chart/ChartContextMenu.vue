@@ -1,23 +1,26 @@
 <template>
-  <dropdown v-model="value">
+  <Dropdown
+    :model-value="modelValue"
+    @input="emit('update:modelValue', $event)"
+  >
     <button
-      @click="$emit('cmd', ['toggleTimeframeDropdown', $event])"
+      @click="emit('cmd', ['toggleTimeframeDropdown', $event])"
       class="dropdown-item -arrow"
     >
       {{ timeframeForHuman }}
     </button>
-    <button @click="$store.dispatch('app/showSearch')" class="dropdown-item">
+    <button @click="showSearch" class="dropdown-item">
       <i class="icon-search"></i>
       <span>Search</span>
     </button>
     <button
-      @click="$emit('cmd', ['takeScreenshot', $event])"
+      @click="emit('cmd', ['takeScreenshot', $event])"
       class="dropdown-item"
     >
       <i class="icon-add-photo"></i>
       <span>Snapshot</span>
     </button>
-    <button @click="$emit('cmd', ['flipChart'])" class="dropdown-item">
+    <button @click="emit('cmd', ['flipChart'])" class="dropdown-item">
       <i class="icon-flip"></i>
       <span>Flip</span>
     </button>
@@ -41,17 +44,17 @@
           <i class="icon-cog" @click.stop="toggleAlertsSettingsDropdown"></i>
         </button>
       </template>
-      <dropdown v-model="alertsDropdownTrigger" @click.stop>
+      <Dropdown v-model="alertsDropdownTrigger" on-sides @click.stop>
         <alerts-list :query="market" with-options />
-      </dropdown>
-      <dropdown v-model="alertsDropdownSettingsTrigger" @click.stop>
+      </Dropdown>
+      <Dropdown v-model="alertsDropdownSettingsTrigger" on-sides @click.stop>
         <button type="button" class="dropdown-item" @click.stop>
           <label class="checkbox-control -small">
             <input
               type="checkbox"
               class="form-control"
               :checked="showAlerts"
-              @change="$store.commit(`${paneId}/TOGGLE_ALERTS`)"
+              @change="toggleShowAlerts"
             />
             <div></div>
             <span>Visible</span>
@@ -63,7 +66,7 @@
               type="checkbox"
               class="form-control"
               :checked="showAlertsLabel"
-              @change="$store.commit(`${paneId}/TOGGLE_ALERTS_LABEL`)"
+              @change="toggleShowAlertsLabel"
               :disabled="!showAlerts"
             />
             <div></div>
@@ -78,177 +81,163 @@
           Manage
           <i class="icon-more mr0"></i>
         </button>
-      </dropdown>
+      </Dropdown>
     </template>
-  </dropdown>
+  </Dropdown>
 </template>
 
-<script lang="ts">
+<script lang="ts" setup>
+import { ref, computed } from 'vue'
 import AlertsList from '@/components/alerts/AlertsList.vue'
 import { getTimeframeForHuman } from '@/utils/helpers'
 import { formatMarketPrice } from '@/services/productsService'
 import dialogService from '@/services/dialogService'
 import alertService, { MarketAlert } from '@/services/alertService'
 import { ChartPaneState } from '@/store/panesSettings/chart'
+import store from '@/store' // Rule #11
+import Dropdown from '../framework/Dropdown.vue'
 
-export default {
-  name: 'ChartContextMenu',
-  components: {
-    AlertsList
+// Props
+const props = defineProps({
+  modelValue: {
+    type: Object,
+    default: null
   },
-  props: {
-    value: {
-      type: Object,
-      default: null
-    },
-    paneId: {
-      type: String,
-      required: true
-    },
-    timeframe: {
-      type: String,
-      required: true
-    },
-    market: {
-      type: String,
-      required: true
-    },
-    getPrice: {
-      type: Function,
-      default: null
-    },
-    price: {
-      type: Number,
-      default: null
-    },
-    timestamp: {
-      type: Number,
-      default: null
-    },
-    alert: {
-      type: Object,
-      default: null
-    }
+  paneId: {
+    type: String,
+    required: true
   },
-  data: () => ({
-    alertsDropdownTrigger: null,
-    alertsDropdownSettingsTrigger: null
-  }),
-  computed: {
-    timeframeForHuman() {
-      if (!this.value) {
-        return null
-      }
-
-      return getTimeframeForHuman(this.timeframe)
-    },
-    alertsEnabled() {
-      return this.$store.state.settings.alerts
-    },
-    showAlerts() {
-      return (this.$store.state[this.paneId] as ChartPaneState).showAlerts
-    },
-    showAlertsLabel() {
-      return (this.$store.state[this.paneId] as ChartPaneState).showAlertsLabel
-    },
-    priceFormatted() {
-      return +formatMarketPrice(this.price, this.market)
-    },
-    alertLabel() {
-      if (!this.alert) {
-        return null
-      }
-
-      if (this.alert.message) {
-        return `${this.alert.message} @${formatMarketPrice(
-          this.alert.price,
-          this.alert.market
-        )}`
-      }
-
-      return `${this.alert.market} @${formatMarketPrice(
-        this.alert.price,
-        this.alert.market
-      )}`
-    }
+  timeframe: {
+    type: String,
+    required: true
   },
-  methods: {
-    toggleAlertsDropdown(event) {
-      if (this.alertsDropdownTrigger) {
-        this.alertsDropdownTrigger = null
-      } else {
-        this.alertsDropdownTrigger = event.currentTarget.parentElement
-      }
-    },
-    async toggleAlertsSettingsDropdown(event) {
-      if (!(await this.ensureAlerts())) {
-        return
-      }
-
-      if (this.alertsDropdownSettingsTrigger) {
-        this.alertsDropdownSettingsTrigger = null
-      } else {
-        this.alertsDropdownSettingsTrigger = event.currentTarget.parentElement
-      }
-    },
-    async ensureAlerts() {
-      if (!this.$store.state.settings.alerts) {
-        if (
-          !(await dialogService.confirm({
-            title: 'Alerts are disabled',
-            message: 'Enable alerts ?',
-            ok: 'Yes please'
-          }))
-        ) {
-          return false
-        }
-
-        this.$store.commit('settings/TOGGLE_ALERTS', true)
-      }
-
-      return true
-    },
-    async createAlert() {
-      if (!(await this.ensureAlerts())) {
-        return
-      }
-
-      const alert: MarketAlert = {
-        price: this.price,
-        market: this.market,
-        timestamp: this.timestamp,
-        active: false
-      }
-
-      alertService.createAlert(alert, this.getPrice(), true)
-    },
-    removeAlert() {
-      alertService.removeAlert(this.alert)
-    },
-    async editAlert() {
-      const message = await dialogService.openAsPromise(
-        (await import('@/components/alerts/CreateAlertDialog.vue')).default,
-        {
-          price: +formatMarketPrice(this.alert.price, this.alert.market),
-          input: this.alert.message,
-          edit: true
-        }
-      )
-
-      if (typeof message === 'string' && message !== this.alert.message) {
-        const newAlert = {
-          ...this.alert,
-          price: this.alert.price,
-          message: message
-        }
-        await alertService.moveAlert(
-          this.alert.market,
-          this.alert.price,
-          newAlert,
-          this.getPrice()
-        )
-      }
-    }
+  market: {
+    type: String,
+    required: true
+  },
+  getPrice: {
+    type: Function,
+    default: null
+  },
+  price: {
+    type: Number,
+    default: null
+  },
+  timestamp: {
+    type: Number,
+    default: null
+  },
+  alert: {
+    type: Object,
+    default: null
   }
+})
+
+// Emits
+const emit = defineEmits(['update:modelValue', 'cmd'])
+
+// Refs
+const alertsDropdownTrigger = ref(null)
+const alertsDropdownSettingsTrigger = ref(null)
+
+// Computed properties
+const timeframeForHuman = computed(() =>
+  props.modelValue ? getTimeframeForHuman(props.timeframe) : null
+)
+
+const showAlerts = computed(
+  () => (store.state[props.paneId] as ChartPaneState).showAlerts
+)
+const showAlertsLabel = computed(
+  () => (store.state[props.paneId] as ChartPaneState).showAlertsLabel
+)
+
+const priceFormatted = computed(
+  () => +formatMarketPrice(props.price, props.market)
+)
+
+// Methods
+const toggleAlertsDropdown = (event: Event) => {
+  alertsDropdownTrigger.value = alertsDropdownTrigger.value
+    ? null
+    : event.target
+}
+
+const toggleAlertsSettingsDropdown = async (event: Event) => {
+  if (!(await ensureAlerts())) return
+
+  alertsDropdownSettingsTrigger.value = alertsDropdownSettingsTrigger.value
+    ? null
+    : (event.target as HTMLElement)
+}
+
+const ensureAlerts = async () => {
+  if (!store.state.settings.alerts) {
+    const confirmed = await dialogService.confirm({
+      title: 'Alerts are disabled',
+      message: 'Enable alerts?',
+      ok: 'Yes please'
+    })
+
+    if (!confirmed) return false
+
+    store.commit('settings/TOGGLE_ALERTS', true)
+  }
+
+  return true
+}
+
+const createAlert = async () => {
+  if (!(await ensureAlerts())) return
+
+  const alert: MarketAlert = {
+    price: props.price,
+    market: props.market,
+    timestamp: props.timestamp,
+    active: false
+  }
+
+  alertService.createAlert(alert, props.getPrice?.(), true)
+}
+
+const removeAlert = () => {
+  alertService.removeAlert(props.alert as MarketAlert)
+}
+
+const editAlert = async () => {
+  const message = await dialogService.openAsPromise(
+    (await import('@/components/alerts/CreateAlertDialog.vue')).default,
+    {
+      price: +formatMarketPrice(props.alert.price, props.alert.market),
+      input: props.alert.message,
+      edit: true
+    }
+  )
+
+  if (typeof message === 'string' && message !== props.alert.message) {
+    const newAlert = {
+      ...(props.alert as MarketAlert),
+      price: props.alert.price,
+      message
+    }
+    await alertService.moveAlert(
+      props.alert.market,
+      props.alert.price,
+      newAlert,
+      props.getPrice()
+    )
+  }
+}
+
+const showSearch = () => {
+  store.dispatch('app/showSearch')
+}
+
+const toggleShowAlerts = () => {
+  store.commit(`${props.paneId}/TOGGLE_ALERTS`)
+}
+
+const toggleShowAlertsLabel = () => {
+  store.commit(`${props.paneId}/TOGGLE_ALERTS_LABEL`)
 }
 </script>

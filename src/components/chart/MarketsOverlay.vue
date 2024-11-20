@@ -53,56 +53,50 @@
     </div>
   </div>
 </template>
+<script lang="ts" setup>
+import { ref, computed } from 'vue'
+import store from '@/store'
 
-<script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-
-@Component({
-  name: 'MarketsOverlay',
-  props: {
-    paneId: {
-      type: String
-    }
+// Props
+const props = defineProps({
+  paneId: {
+    type: String,
+    required: true
   }
 })
-export default class MarketsOverlay extends Vue {
-  private paneId: string
-  showOverlay = false
 
-  get markets() {
-    return this.$store.state.panes.panes[this.paneId].markets
-  }
+// Refs (data)
+const showOverlay = ref(false)
 
-  get hiddenMarkets() {
-    return this.$store.state[this.paneId].hiddenMarkets
-  }
+// Computed properties
+const markets = computed(() => store.state.panes.panes[props.paneId].markets)
 
-  get visibleMarkets() {
-    return this.markets.filter(a => !this.hiddenMarkets[a]).length
-  }
+const hiddenMarkets = computed(() => store.state[props.paneId].hiddenMarkets)
 
-  get label() {
-    const count = this.visibleMarkets
+const visibleMarkets = computed(
+  () => markets.value.filter(market => !hiddenMarkets.value[market]).length
+)
 
-    return `${count} market${count > 1 ? 's' : ''}`
-  }
+const label = computed(() => {
+  const count = visibleMarkets.value
+  return `${count} market${count > 1 ? 's' : ''}`
+})
 
-  searchMarkets(event) {
-    this.$store.dispatch('app/showSearch', { paneId: this.paneId })
-    event.stopPropagation()
-  }
+// Methods
+const searchMarkets = (event: Event) => {
+  store.dispatch('app/showSearch', { paneId: props.paneId })
+  event.stopPropagation()
+}
 
-  toggleMarket(event, id) {
-    this.$store.dispatch(this.paneId + '/toggleMarkets', {
-      id,
-      inverse: event.shiftKey
-    })
-  }
+const toggleMarket = (event: MouseEvent, id: string) => {
+  store.dispatch(`${props.paneId}/toggleMarkets`, {
+    id,
+    inverse: event.shiftKey
+  })
+}
 
-  toggleMarkets(type) {
-    this.$store.dispatch(this.paneId + '/toggleMarkets', { type })
-  }
+const toggleMarkets = (type: string) => {
+  store.dispatch(`${props.paneId}/toggleMarkets`, { type })
 }
 </script>
 

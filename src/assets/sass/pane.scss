@@ -1,3 +1,5 @@
+@use '@/assets/sass/variables.scss' as vars;
+
 .vue-grid-layout {
   flex-grow: 1;
 
@@ -40,7 +42,7 @@
 
       &:before {
         font-family: 'icon';
-        content: $icon-up-thin;
+        content: vars.$icon-up-thin;
         transform: rotateZ(-225deg) scale(1);
         display: block;
         width: 2rem;
@@ -98,7 +100,7 @@
   }
 
   &--selected {
-    animation: pulse 1s $ease-out-expo;
+    animation: pulse 1s vars.$ease-out-expo;
   }
 
   @keyframes pulse {

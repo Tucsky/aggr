@@ -9,7 +9,7 @@
         class="mb8 mt16"
         :value="showPairs"
         label="Show Symbols"
-        @change="$store.commit(paneId + '/TOGGLE_PAIRS')"
+        @change="store.commit(paneId + '/TOGGLE_PAIRS')"
         small
       >
         <div class="form-group">
@@ -18,7 +18,7 @@
               type="checkbox"
               class="form-control"
               :checked="shortSymbols"
-              @change="$store.commit(paneId + '/TOGGLE_SHORT_SYMBOLS')"
+              @change="store.commit(paneId + '/TOGGLE_SHORT_SYMBOLS')"
             />
             <div></div>
             <span>
@@ -35,7 +35,7 @@
             type="checkbox"
             class="form-control"
             :checked="showVolume"
-            @change="$store.commit(paneId + '/TOGGLE_VOLUME')"
+            @change="store.commit(paneId + '/TOGGLE_VOLUME')"
           />
           <div></div>
           <span>Show volume</span>
@@ -48,7 +48,7 @@
             type="checkbox"
             class="form-control"
             :checked="showVolumeDelta"
-            @change="$store.commit(paneId + '/TOGGLE_VOLUME_DELTA')"
+            @change="store.commit(paneId + '/TOGGLE_VOLUME_DELTA')"
           />
           <div></div>
           <span>Show volume Δ</span>
@@ -61,7 +61,7 @@
             type="checkbox"
             class="form-control"
             :checked="showPrice"
-            @change="$store.commit(paneId + '/TOGGLE_PRICE')"
+            @change="store.commit(paneId + '/TOGGLE_PRICE')"
           />
           <div></div>
           <span>Show price</span>
@@ -74,7 +74,7 @@
             type="checkbox"
             class="form-control"
             :checked="showChange"
-            @change="$store.commit(paneId + '/TOGGLE_CHANGE')"
+            @change="store.commit(paneId + '/TOGGLE_CHANGE')"
           />
           <div></div>
           <span>Show price change</span>
@@ -83,7 +83,7 @@
     </ToggableSection>
 
     <ToggableSection id="watchlist-settings-extra" inset>
-      <template v-slot:title>
+      <template #title>
         <div class="toggable-section__title">
           Filter
           <span v-if="volumeThreshold" class="badge -red ml8">{{
@@ -97,7 +97,7 @@
           placeholder="Enter amount"
           class="form-control pl16 w-100"
           :value="formatAmountHelper(volumeThreshold)"
-          @input="$store.commit(paneId + '/SET_VOLUME_THRESHOLD', $event)"
+          @input="store.commit(paneId + '/SET_VOLUME_THRESHOLD', $event)"
         />
       </div>
       <div class="form-group mb8">
@@ -116,7 +116,7 @@
               type="checkbox"
               class="form-control"
               :checked="sortOrder === 1"
-              @change="$store.commit(paneId + '/TOGGLE_SORT_ORDER')"
+              @change="store.commit(paneId + '/TOGGLE_SORT_ORDER')"
             />
             <div v-tippy title="Switch order"></div>
           </label>
@@ -128,7 +128,7 @@
             type="checkbox"
             class="form-control"
             :checked="animateSort"
-            @change="$store.commit(paneId + '/TOGGLE_SORT_ANIMATION')"
+            @change="store.commit(paneId + '/TOGGLE_SORT_ANIMATION')"
           />
           <div></div>
           <span>Sort animation</span>
@@ -137,7 +137,7 @@
     </ToggableSection>
 
     <ToggableSection id="watchlist-settings-period" inset>
-      <template v-slot:title>
+      <template #title>
         <div class="toggable-section__title">
           Period
           <span v-if="period" class="badge -red ml8">
@@ -160,7 +160,7 @@
           :options="periods"
           class="-outline form-control -arrow w-100 -cases"
           placeholder="No period"
-          @input="$store.commit(paneId + '/SET_PERIOD', $event)"
+          @input="store.commit(paneId + '/SET_PERIOD', $event)"
         ></dropdown-button>
       </div>
       <div class="form-group mb8">
@@ -169,7 +169,7 @@
             type="checkbox"
             class="form-control"
             :checked="avgPeriods"
-            @change="$store.commit(paneId + '/TOGGLE_AVG_PERIODS')"
+            @change="store.commit(paneId + '/TOGGLE_AVG_PERIODS')"
           />
           <div></div>
           <span>
@@ -186,97 +186,52 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+<script setup lang="ts">
+import { computed } from 'vue'
 import PricesSortDropdown from '@/components/prices/PricesSortDropdown.vue'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
 import ToggableGroup from '@/components/framework/ToggableGroup.vue'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 import { formatAmount } from '@/services/productsService'
+import store from '@/store'
 
-@Component({
-  components: {
-    PricesSortDropdown,
-    DropdownButton,
-    ToggableSection,
-    ToggableGroup
-  },
-  name: 'PricesSettings',
-  props: {
-    paneId: {
-      type: String,
-      required: true
-    }
+// Define props
+const props = defineProps({
+  paneId: {
+    type: String,
+    required: true
   }
 })
-export default class PricesSettings extends Vue {
-  paneId: string
-  formatAmountHelper = formatAmount
-  periods = {
-    0: 'No period',
-    1: '1m',
-    5: '5m',
-    15: '15m',
-    30: '30m',
-    60: '1h',
-    240: '4h'
-  }
 
-  get showPairs() {
-    return this.$store.state[this.paneId].showPairs
-  }
+// Helper functions
+const formatAmountHelper = formatAmount
 
-  get showVolume() {
-    return this.$store.state[this.paneId].showVolume
-  }
-
-  get showPrice() {
-    return this.$store.state[this.paneId].showPrice
-  }
-
-  get showVolumeDelta() {
-    return this.$store.state[this.paneId].showVolumeDelta
-  }
-
-  get period() {
-    return this.$store.state[this.paneId].period
-  }
-
-  get showChange() {
-    return this.$store.state[this.paneId].showChange
-  }
-
-  get animateSort() {
-    return this.$store.state[this.paneId].animateSort
-  }
-
-  get sortType() {
-    return this.$store.state[this.paneId].sortType
-  }
-
-  get sortOrder() {
-    return this.$store.state[this.paneId].sortOrder
-  }
-
-  get shortSymbols() {
-    return this.$store.state[this.paneId].shortSymbols
-  }
-
-  get volumeThreshold() {
-    return this.$store.state[this.paneId].volumeThreshold
-  }
-
-  get avgPeriods() {
-    return this.$store.state[this.paneId].avgPeriods
-  }
-
-  selectSortType(option) {
-    if (option === this.sortType) {
-      this.$store.commit(this.paneId + '/TOGGLE_SORT_ORDER')
-    }
-
-    this.$store.commit(this.paneId + '/SET_SORT_TYPE', option)
-  }
+// Data
+const periods = {
+  0: 'No period',
+  1: '1m',
+  5: '5m',
+  15: '15m',
+  30: '30m',
+  60: '1h',
+  240: '4h'
 }
+
+// Computed properties
+const showPairs = computed(() => store.state[props.paneId].showPairs)
+const showVolume = computed(() => store.state[props.paneId].showVolume)
+const showPrice = computed(() => store.state[props.paneId].showPrice)
+const showVolumeDelta = computed(
+  () => store.state[props.paneId].showVolumeDelta
+)
+const period = computed(() => store.state[props.paneId].period)
+const showChange = computed(() => store.state[props.paneId].showChange)
+const animateSort = computed(() => store.state[props.paneId].animateSort)
+const sortType = computed(() => store.state[props.paneId].sortType)
+const sortOrder = computed(() => store.state[props.paneId].sortOrder)
+const shortSymbols = computed(() => store.state[props.paneId].shortSymbols)
+const volumeThreshold = computed(
+  () => store.state[props.paneId].volumeThreshold
+)
+const avgPeriods = computed(() => store.state[props.paneId].avgPeriods)
 </script>
-<style lang="scss"></style>

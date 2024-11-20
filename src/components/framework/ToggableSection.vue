@@ -30,126 +30,86 @@
         </div>
         <i class="icon-up-thin"></i>
       </div>
-      <transition-height single auto-width>
+      <TransitionHeight single auto-width>
         <div v-if="value" class="toggable-section__content" key="section">
           <div class="toggable-section__spacer" />
           <slot />
         </div>
-      </transition-height>
+      </TransitionHeight>
     </div>
   </section>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import { randomString } from '../../utils/helpers'
 import TransitionHeight from './TransitionHeight.vue'
+import store from '@/store'
 
-export default {
-  name: 'ToggableSection',
-  components: {
-    TransitionHeight
-  },
-  props: {
-    model: {
-      required: false,
-      default: () => []
-    },
-    id: {
-      required: false,
-      default: null
-    },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    title: {
-      type: String,
-      default: null
-    },
-    description: {
-      type: String,
-      default: null
-    },
-    inset: {
-      type: Boolean,
-      default: false
-    },
-    small: {
-      type: Boolean,
-      default: false
-    },
-    outline: {
-      type: Boolean,
-      default: false
-    },
-    badge: {
-      default: null
-    },
-    autoClose: {
-      type: Boolean,
-      default: false
-    },
-    autoOpen: {
-      type: Boolean,
-      default: false
-    }
-  },
-  computed: {
-    sections() {
-      if (this.id) {
-        return this.$store.state.settings.sections
-      }
+const props = defineProps<{
+  model?: string[]
+  id?: string
+  disabled?: boolean
+  title?: string
+  description?: string
+  inset?: boolean
+  small?: boolean
+  outline?: boolean
+  badge?: string | number
+  autoClose?: boolean
+  autoOpen?: boolean
+}>()
 
-      return this.model
-    },
-    value() {
-      return this.sections.indexOf(this.sectionId) !== -1
-    }
-  },
-  created() {
-    if (!this.id) {
-      this.sectionId = randomString(8)
-    } else {
-      this.sectionId = this.id
-    }
+const model = ref(props.model || [])
 
-    if (this.autoOpen && !this.value) {
-      this.toggle()
-    }
-  },
-  methods: {
-    toggle(event?: MouseEvent) {
-      event && event.stopPropagation()
+const emit = defineEmits(['update:model'])
+const sectionId = ref(props.id || randomString(8))
 
-      if (this.id) {
-        this.$store.commit('settings/TOGGLE_SECTION', this.sectionId)
-        return
-      }
+const sections = computed(() => {
+  return props.id ? store.state.settings.sections : model.value
+})
 
-      let index = this.model.indexOf(this.sectionId)
+const value = computed(() => {
+  return sections.value?.includes(sectionId.value)
+})
 
-      if (this.autoClose && this.model.length) {
-        this.model.splice(0, this.model.length)
+function toggle(event?: MouseEvent) {
+  event?.stopPropagation()
 
-        if (index !== -1) {
-          return
-        }
+  if (props.id) {
+    store.commit('settings/TOGGLE_SECTION', sectionId.value)
+  } else {
+    const index = model.value?.indexOf(sectionId.value) ?? -1
 
-        index = -1
-      }
-
+    if (props.autoClose && model.value && model.value.length) {
+      model.value.splice(0, model.value.length)
       if (index === -1) {
-        this.model.push(this.sectionId)
-      } else {
-        this.model.splice(index, 1)
+        model.value.push(sectionId.value)
       }
+      emit('update:model', model.value)
+      return
     }
+
+    if (index === -1) {
+      model.value?.push(sectionId.value)
+    } else {
+      model.value?.splice(index, 1)
+    }
+
+    emit('update:model', model.value)
   }
 }
+
+onMounted(() => {
+  if (props.autoOpen && !value.value) {
+    toggle()
+  }
+})
 </script>
 
 <style lang="scss" scoped>
 .toggable-section {
+  $self: &;
   padding: 1rem;
 
   &--inset {

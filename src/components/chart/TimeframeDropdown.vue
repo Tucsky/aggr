@@ -65,134 +65,102 @@
     </div>
   </dropdown>
 </template>
-
-<script lang="ts">
+<script setup lang="ts">
+import { ref, computed, defineProps } from 'vue'
 import TimeframeInput from '@/components/chart/TimeframeInput.vue'
-import { getTimeframeForHuman } from '@/utils/helpers'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
+import { getTimeframeForHuman } from '@/utils/helpers'
+import store from '@/store'
 
-export default {
-  name: 'TimeframeDropdown',
-  components: {
-    TimeframeInput,
-    ToggableSection
-  },
-  props: {
-    paneId: {
-      type: String,
-      required: true
-    },
-    value: {
-      type: HTMLButtonElement,
-      default: null
-    }
-  },
-  data: () => ({
-    editing: false,
-    typeaheadTimeframe: null
-  }),
-  computed: {
-    timeframes() {
-      return this.$store.state.settings.timeframes
-    },
+// Define props
+const props = defineProps<{
+  paneId: string
+  value: HTMLButtonElement | null
+}>()
 
-    favoriteTimeframes() {
-      return this.$store.state.settings.favoriteTimeframes
-    },
+// Reactive state
+const editing = ref(false)
+const typeaheadTimeframe = ref<any>(null)
 
-    groups() {
-      const minute = 60
-      const hour = minute * 60
-      const units = ['seconds', 'minutes', 'hours', 'ticks', 'bps', 'vol']
+// Computed properties
+const timeframes = computed(() => store.state.settings.timeframes)
+const favoriteTimeframes = computed(
+  () => store.state.settings.favoriteTimeframes
+)
 
-      return this.timeframes
-        .map(timeframe => {
-          const modifier = timeframe.value[timeframe.value.length - 1]
-          let weight
-          if (modifier === 't') {
-            weight = 3
-          } else if (modifier === 'b') {
-            weight = 4
-          } else if (modifier === 'v') {
-            weight = 5
-          } else if (timeframe.value >= hour) {
-            weight = 2
-          } else if (timeframe.value >= minute) {
-            weight = 1
-          } else {
-            weight = 0
-          }
+const groups = computed(() => {
+  const minute = 60
+  const hour = minute * 60
+  const units = ['seconds', 'minutes', 'hours', 'ticks', 'bps', 'vol']
 
-          return {
-            ...timeframe,
-            weight
-          }
-        })
-        .sort((a, b) => {
-          if (a.weight !== b.weight) {
-            return a.weight - b.weight
-          }
+  return timeframes.value
+    .map((timeframe: any) => {
+      const modifier = timeframe.value[timeframe.value.length - 1]
+      let weight
+      if (modifier === 't') weight = 3
+      else if (modifier === 'b') weight = 4
+      else if (modifier === 'v') weight = 5
+      else if (timeframe.value >= hour) weight = 2
+      else if (timeframe.value >= minute) weight = 1
+      else weight = 0
 
-          return parseFloat(a.value) - parseFloat(b.value)
-        })
-        .reduce((acc, timeframe) => {
-          let group = acc[acc.length - 1]
-
-          if (!group || group.weight < timeframe.weight) {
-            group =
-              acc[
-                acc.push({
-                  title: units[timeframe.weight],
-                  weight: timeframe.weight,
-                  timeframes: []
-                }) - 1
-              ]
-          }
-
-          group.timeframes.push(timeframe)
-
-          return acc
-        }, [])
-    }
-  },
-  methods: {
-    toggleFavoriteTimeframe(timeframe) {
-      this.$store.commit('settings/TOGGLE_FAVORITE_TIMEFRAME', timeframe)
-    },
-
-    addTimeframe(value, save?: boolean) {
-      if (!value) {
-        return
+      return { ...timeframe, weight }
+    })
+    .sort((a: any, b: any) => {
+      if (a.weight !== b.weight) return a.weight - b.weight
+      return parseFloat(a.value) - parseFloat(b.value)
+    })
+    .reduce((acc: any[], timeframe: any) => {
+      let group = acc[acc.length - 1]
+      if (!group || group.weight < timeframe.weight) {
+        group =
+          acc[
+            acc.push({
+              title: units[timeframe.weight],
+              weight: timeframe.weight,
+              timeframes: []
+            }) - 1
+          ]
       }
+      group.timeframes.push(timeframe)
+      return acc
+    }, [])
+})
 
-      this.$store.commit(this.paneId + '/SET_TIMEFRAME', value)
+// Methods
+function toggleFavoriteTimeframe(timeframe: any) {
+  store.commit('settings/TOGGLE_FAVORITE_TIMEFRAME', timeframe)
+}
 
-      if (
-        save &&
-        !this.timeframes.find(timeframe => timeframe.value == value)
-      ) {
-        this.$store.commit('settings/ADD_TIMEFRAME', value)
+function addTimeframe(value: any, save?: boolean) {
+  if (!value) return
 
-        this.$store.dispatch('app/showNotice', {
-          title: `Added timeframe ${getTimeframeForHuman(value)} to the list !`
-        })
-      }
-    },
+  store.commit(`${props.paneId}/SET_TIMEFRAME`, value)
 
-    removeTimeframe(value) {
-      this.$store.commit('settings/REMOVE_TIMEFRAME', value)
-    },
-
-    toggleEdit() {
-      this.editing = !this.editing
-    },
-
-    onInput(event) {
-      this.typeaheadTimeframe = event
-    }
+  if (
+    save &&
+    !timeframes.value.find((timeframe: any) => timeframe.value == value)
+  ) {
+    store.commit('settings/ADD_TIMEFRAME', value)
+    store.dispatch('app/showNotice', {
+      title: `Added timeframe ${getTimeframeForHuman(value)} to the list!`
+    })
   }
 }
+
+function removeTimeframe(value: any) {
+  store.commit('settings/REMOVE_TIMEFRAME', value)
+}
+
+function toggleEdit() {
+  editing.value = !editing.value
+}
+
+function onInput(event: any) {
+  typeaheadTimeframe.value = event
+}
 </script>
+
 <style lang="scss" scoped>
 .timeframe-dropdown {
   &__header {

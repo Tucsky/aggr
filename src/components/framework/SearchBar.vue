@@ -5,23 +5,38 @@
       class="search-bar__input form-control w-100"
       placeholder="Search"
       :value="value"
-      @input="$emit('input', $event.currentTarget.value)"
+      @input="onInput"
       v-autofocus
     />
     <slot />
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    value: {
-      type: String,
-      default: ''
-    }
+<script setup lang="ts">
+import { defineProps, withDefaults, defineEmits } from 'vue'
+
+// Define props with defaults
+withDefaults(
+  defineProps<{
+    value?: string
+  }>(),
+  {
+    value: ''
   }
+)
+
+// Define emits
+const emit = defineEmits<{
+  (e: 'input', value: string): void
+}>()
+
+// Handle input event
+const onInput = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  emit('input', target.value)
 }
 </script>
+
 <style lang="scss" scoped>
 .search-bar {
   position: relative;

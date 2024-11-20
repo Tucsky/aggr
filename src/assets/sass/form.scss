@@ -1,3 +1,6 @@
+@use 'sass:color';
+@use '@/assets/sass/variables.scss' as vars;
+
 .form-group {
   > label {
     margin-bottom: 0.25rem;
@@ -11,7 +14,7 @@
     .icon-info {
       margin-left: 2px;
       opacity: 0.5;
-      transition: opacity 0.2s $ease-out-expo;
+      transition: opacity 0.2s vars.$ease-out-expo;
       cursor: help;
       vertical-align: bottom;
 
@@ -56,7 +59,7 @@
   }
 
   &.-code {
-    font-family: $font-monospace;
+    font-family: vars.$font-monospace;
     line-height: 1.4;
     height: auto;
     width: 100%;
@@ -149,27 +152,27 @@
   &.-rip input ~ div {
     &:before,
     &:after {
-      content: $icon-skull;
+      content: vars.$icon-skull;
     }
   }
 
   &.-aggr input ~ div {
     &:before {
-      content: $icon-ms;
+      content: vars.$icon-ms;
     }
 
     &:after {
-      content: $icon-cross;
+      content: vars.$icon-cross;
     }
   }
 
   &.-sort input ~ div {
     &:before {
-      content: $icon-up;
+      content: vars.$icon-up;
     }
 
     &:after {
-      content: $icon-down;
+      content: vars.$icon-down;
       transform: none;
     }
   }
@@ -225,7 +228,7 @@
 
         &:before,
         &:after {
-          transition: all 0.5s $ease-out-expo;
+          transition: all 0.5s vars.$ease-out-expo;
         }
 
         &:before {
@@ -280,7 +283,7 @@
     border-radius: 3px;
     border: 1px solid var(--theme-background-200);
     background-color: var(--theme-background-150);
-    transition: all 0.2s $ease-out-expo;
+    transition: all 0.2s vars.$ease-out-expo;
     position: relative;
     flex-shrink: 0;
     color: var(--theme-color-100);
@@ -296,7 +299,7 @@
       bottom: 0;
       transform: translateY(-50%) skewY(-20deg);
       opacity: 0;
-      transition: all 0.2s $ease-out-expo;
+      transition: all 0.2s vars.$ease-out-expo;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -305,7 +308,7 @@
     }
 
     &:not([class^='icon-']):before {
-      content: $icon-check;
+      content: vars.$icon-check;
     }
 
     &:after {
@@ -337,7 +340,7 @@
 [contenteditable] {
   display: inline-block;
   cursor: text;
-  font-family: $font-monospace;
+  font-family: vars.$font-monospace;
   color: var(--theme-color-base);
   font-size: 0.875rem;
   padding: 0.5rem;
@@ -356,9 +359,11 @@
   &[disabled] {
     color: inherit;
     cursor: inherit;
+    opacity: 0.5;
+    pointer-events: none;
   }
 }
 
 .form-feedback {
-  color: lighten($red, 10%);
+  color: color.adjust(vars.$red, $lightness: 10%);
 }

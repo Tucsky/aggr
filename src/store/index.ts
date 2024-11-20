@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import Vuex, { Module, StoreOptions } from 'vuex'
+import { createStore, Module, StoreOptions } from 'vuex'
 import { bootPane, registerModule, scheduleSync } from '@/utils/store'
 
 import app, { AppState } from './app'
@@ -10,8 +9,7 @@ import { Workspace } from '@/types/types'
 import { resolvePairs } from '../services/productsService'
 import panesSettings from './panesSettings'
 
-Vue.use(Vuex)
-
+// Define the module tree
 export interface AppModuleTree<R> {
   [key: string]: Module<any, R>
 }
@@ -23,14 +21,17 @@ export interface ModulesState {
   exchanges: ExchangesState
 }
 
-const store = new Vuex.Store({} as StoreOptions<ModulesState>)
-const modules = {
+// Create the store instance
+const store = createStore<ModulesState>({} as StoreOptions<ModulesState>)
+
+const modules: AppModuleTree<ModulesState> = {
   app,
   settings,
   exchanges,
   panes
-} as AppModuleTree<ModulesState>
+}
 
+// Subscribe to store changes
 store.subscribe((mutation, state: any) => {
   const moduleId = mutation.type.split('/')[0]
 
@@ -39,6 +40,7 @@ store.subscribe((mutation, state: any) => {
   }
 })
 
+// Boot function for dynamic module registration
 export async function boot(workspace?: Workspace, pairsFromURL?: string[]) {
   console.log(
     `[store] booting on workspace "${workspace.name}" (${workspace.id})`

@@ -4,56 +4,44 @@
       <input
         type="checkbox"
         class="form-control"
-        :checked="value"
-        @change="$emit('change', $event)"
+        :checked="modelValue"
+        @change="emit('change', $event)"
       />
       <div></div>
       <span>{{ label }}</span>
     </label>
-    <transition-height name="toggable-group">
-      <div class="toggable-group__collapse" v-if="value" key="content-on">
+    <TransitionHeight name="toggable-group">
+      <div class="toggable-group__collapse" v-if="modelValue" key="content-on">
         <div class="pt8">
           <slot />
         </div>
       </div>
       <div
         class="toggable-group__collapse"
-        v-if="$slots.off && !value"
+        v-if="$slots.off && !modelValue"
         key="content-off"
       >
         <div class="pt8">
           <slot name="off" />
         </div>
       </div>
-    </transition-height>
+    </TransitionHeight>
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+<script setup lang="ts">
+import { defineProps, defineEmits } from 'vue'
 import TransitionHeight from './TransitionHeight.vue'
 
-@Component({
-  name: 'ToggableGroup',
-  components: {
-    TransitionHeight
-  },
-  props: {
-    label: {
-      type: String,
-      required: true
-    },
-    small: {
-      type: Boolean,
-      default: false
-    },
-    value: {
-      required: true
-    }
-  }
-})
-export default class TogglableGroup extends Vue {}
+defineProps<{
+  label: string
+  small?: boolean
+  modelValue: boolean
+}>()
+
+const emit = defineEmits(['change'])
 </script>
+
 <style lang="scss" scoped>
 .toggable-group {
   &__collapse {

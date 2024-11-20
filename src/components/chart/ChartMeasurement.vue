@@ -21,90 +21,58 @@
     </div>
   </div>
 </template>
+<script lang="ts" setup>
+import { computed } from 'vue'
 
-<script lang="ts">
-export default {
-  name: 'ChartMeasurement',
-  props: {
-    position: {
-      type: Object,
-      required: true
+// Props
+const props = defineProps({
+  position: {
+    type: Object as () => {
+      top: number
+      left: number
+      width: number
+      height: number
     },
-    high: {
-      type: Number,
-      required: true
-    },
-    low: {
-      type: Number,
-      required: true
-    },
-    percent: {
-      type: Number,
-      required: true
-    }
+    required: true
   },
-  computed: {
-    showAlerts() {
-      return this.$store.state.settings.alerts
-    },
-    size() {
-      const surface = this.position.width * this.position.height
-
-      if (surface < 10000) {
-        return 'small'
-      }
-
-      if (surface < 50000) {
-        return 'medium'
-      }
-
-      if (surface < 100000) {
-        return 'large'
-      }
-
-      return 'extra-large'
-    },
-    styles() {
-      return {
-        top: this.position.top + 'px',
-        left: this.position.left + 'px',
-        width: this.position.width + 'px',
-        height: this.position.height + 'px'
-      }
-    },
-    precision() {
-      const abs = Math.abs(this.percent)
-
-      if (abs > 10) {
-        return 2
-      }
-
-      if (abs > 1) {
-        return 2
-      }
-
-      return 3
-    }
+  high: {
+    type: Number,
+    required: true
   },
-  methods: {
-    toggleTimeframeDropdown(event) {
-      if (this.timeframeDropdownTrigger) {
-        this.timeframeDropdownTrigger = null
-      } else {
-        this.timeframeDropdownTrigger = event.currentTarget
-      }
-    },
-
-    toggleAlertsDropdown(event) {
-      if (this.alertsDropdownTrigger) {
-        this.alertsDropdownTrigger = null
-      } else {
-        this.alertsDropdownTrigger = event.currentTarget
-      }
-    }
+  low: {
+    type: Number,
+    required: true
+  },
+  percent: {
+    type: Number,
+    required: true
   }
-}
+})
+
+const size = computed(() => {
+  const surface = props.position.width * props.position.height
+
+  if (surface < 10000) return 'small'
+  if (surface < 50000) return 'medium'
+  if (surface < 100000) return 'large'
+  return 'extra-large'
+})
+
+const styles = computed(() => ({
+  top: `${props.position.top}px`,
+  left: `${props.position.left}px`,
+  width: `${props.position.width}px`,
+  height: `${props.position.height}px`
+}))
+
+const precision = computed(() => {
+  const abs = Math.abs(props.percent)
+
+  if (abs > 10 || abs > 1) return 2
+  return 3
+})
 </script>
+
 <style lang="scss" scoped>
 .chart-measurement {
   $self: &;

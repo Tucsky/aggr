@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import store from '@/store'
 
 import ConfirmDialog from '@/components/framework/ConfirmDialog.vue'
@@ -11,135 +11,99 @@ export interface DialogPosition {
   h?: number
 }
 
-export interface DialogComponent extends Vue {
-  dialogId?: string
-}
-
 class DialogService {
   mountedComponents: { [id: string]: any } = {}
-  dialogPositions: { [id: string]: any } = {}
+  dialogPositions: { [id: string]: DialogPosition } = {}
   isInteracting = false
   hasDialogOpened = false
   pickerInstance: any
 
   createComponent(
-    component,
+    component: any,
     props: any = {},
-    resolve = null,
+    resolve: ((value: any) => void) | null = null,
     dialogId?: string
-  ): Vue {
-    const Factory = Vue.extend(Object.assign({ store }, component))
-
-    const cmp: any = new Factory(
-      Object.assign(
-        {},
-        {
-          dialogId: dialogId,
-          propsData: Object.assign({}, props),
-          destroyed: () => {
-            if (dialogId && this.mountedComponents[dialogId]) {
-              delete this.mountedComponents[dialogId]
-
-              this.hasDialogOpened =
-                Object.keys(this.mountedComponents).length > 0
-            }
-
-            if (this.pickerInstance === cmp) {
-              delete this.pickerInstance
-            }
-
-            if (typeof resolve === 'function') {
-              resolve((cmp as any).output)
-            }
-          }
+  ) {
+    const app = createApp(component, {
+      ...props,
+      // Add the close event handler directly to the component's props
+      onClose: (data: any) => {
+        // Clean up mountedComponents
+        if (dialogId && this.mountedComponents[dialogId]) {
+          delete this.mountedComponents[dialogId]
+          this.hasDialogOpened = Object.keys(this.mountedComponents).length > 0
         }
-      )
-    )
 
-    cmp.dialogId = dialogId
+        // Unmount the app and remove the container
+        app.unmount()
+        container.remove()
 
-    return cmp
+        // Resolve the promise if provided
+        if (resolve) {
+          resolve(data) // Pass the output value
+        }
+      }
+    })
+
+    // Provide store globally if needed
+    app.provide('store', store)
+
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+
+    app.mount(container)
+
+    if (dialogId) {
+      this.mountedComponents[dialogId] = app
+      this.hasDialogOpened = Object.keys(this.mountedComponents).length > 0
+    }
+
+    return app
   }
 
-  async openAsPromise(component, props = {}, dialogId?: string): Promise<any> {
+  async openAsPromise(
+    component: any,
+    props: any = {},
+    dialogId?: string
+  ): Promise<any> {
     return new Promise(resolve => {
-      component = this.createComponent(component, props, resolve, dialogId)
-
-      this.mountDialog(component)
+      this.createComponent(component, props, resolve, dialogId)
     })
   }
 
-  open(component, props = {}, dialogId?: string, onClose?: () => void): Vue {
-    component = this.createComponent(component, props, onClose, dialogId)
-
-    this.mountDialog(component)
-
-    return component
-  }
-
-  mountDialog(cmp: Vue) {
-    const container = document.getElementById('app') || document.body
-
-    const mounted = cmp.$mount()
-    container.appendChild(mounted.$el)
-
-    const id = (cmp as any).dialogId
-
-    if (id) {
-      if (this.mountedComponents[id]) {
-        this.mountedComponents[id].close()
-      }
-
-      this.mountedComponents[id] = cmp
-
-      this.hasDialogOpened = Object.keys(this.mountedComponents).length > 0
-    }
-  }
-
-  isDialogOpened(name) {
-    return !!this.mountedComponents[name]
+  open(
+    component: any,
+    props: any = {},
+    dialogId?: string,
+    onClose?: (value: any) => void
+  ) {
+    return this.createComponent(component, props, onClose, dialogId)
   }
 
   async openPicker(
-    initialColor,
+    initialColor: string,
     label?: string,
-    onInput?: () => void,
+    onInput?: (color: string) => void,
     onClose?: () => void
   ) {
     if (this.pickerInstance) {
-      this.pickerInstance.$off('input')
       this.pickerInstance.setColorFromProp(initialColor)
-
-      this.pickerInstance.label = typeof label !== 'undefined' ? label : null
+      this.pickerInstance.label = label || null
     } else {
       this.pickerInstance = this.open(
         (await import('@/components/framework/picker/ColorPickerDialog.vue'))
           .default,
         {
-          value: initialColor,
-          label
+          modelValue: initialColor,
+          label,
+          onInput
         },
         null,
         onClose
       )
     }
 
-    if (typeof onInput === 'function') {
-      this.pickerInstance.$on('input', onInput)
-    }
-
     return this.pickerInstance
-  }
-
-  async openIndicator(paneId: string, indicatorId: string) {
-    return this.open(
-      (await import('@/components/indicators/IndicatorDialog.vue')).default,
-      {
-        paneId,
-        indicatorId
-      },
-      'indicator'
-    )
   }
 
   async confirm(options: any) {
@@ -148,9 +112,7 @@ class DialogService {
     }
 
     if (typeof options === 'string') {
-      options = {
-        message: options
-      }
+      options = { message: options }
     }
 
     if (!options.message) {
@@ -166,9 +128,7 @@ class DialogService {
     }
 
     if (typeof options === 'string') {
-      options = {
-        action: options
-      }
+      options = { action: options }
     }
 
     if (!options.action) {

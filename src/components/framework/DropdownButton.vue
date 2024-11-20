@@ -1,9 +1,9 @@
 <template>
   <Btn :loading="loading" :class="buttonClass" @click="toggleDropdown">
-    <slot name="selection" :item="value" :placeholder="placeholder">
+    <slot name="selection" :item="modelValue" :placeholder="placeholder">
       <span>{{ label }}</span>
     </slot>
-    <dropdown
+    <Dropdown
       v-model="dropdownTrigger"
       @mousedown.native="selectFromElementRecursive($event)"
     >
@@ -16,106 +16,80 @@
         <slot name="option" :value="option" :index="index">
           <span>{{ option }}</span>
         </slot>
+        {{ option }}
       </button>
-    </dropdown>
+    </Dropdown>
   </Btn>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+<script lang="ts" setup>
+import { ref, computed, defineProps, defineEmits } from 'vue'
 import Btn from '@/components/framework/Btn.vue'
+import Dropdown from '@/components/framework/Dropdown.vue'
 
-@Component({
-  name: 'DropdownButton',
-  components: {
-    Btn
-  },
-  props: {
-    value: {
-      required: false,
-      default: null
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    buttonClass: {
-      required: false,
-      default: '-arrow'
-    },
-    placeholder: {
-      required: false,
-      default: null
-    },
-    options: {
-      type: [Array, Object],
-      required: false,
-      default: () => []
-    }
+// Define props
+const props = defineProps<{
+  modelValue?: any
+  loading?: boolean
+  buttonClass?: string
+  placeholder?: string
+  options?: any[] | Record<string, any>
+}>()
+
+// Define emits
+const emit = defineEmits(['input'])
+
+// Dropdown trigger element state
+const dropdownTrigger = ref<HTMLElement | null>(null)
+
+// Determine if options is an array or object
+const isArray = computed(() => Array.isArray(props.options))
+
+// Computed label for the button
+const label = computed(() => {
+  if (props.modelValue) {
+    return isArray.value ? props.options[props.modelValue] : props.modelValue
   }
+  return props.placeholder || 'Choose'
 })
-export default class DropdownButton extends Vue {
-  private value: any
-  private placeholder: string
-  private options: any[] | { [key: string]: any }
-  private isArray: boolean
-  dropdownTrigger = null
 
-  created() {
-    this.isArray = Array.isArray(this.options as any[])
+// Flatten options into a list for rendering
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const optionsList = computed(
+  () => (isArray.value ? props.options : Object.values(props.options)) || []
+)
+
+// Methods
+function toggleDropdown(event: Event) {
+  if (!dropdownTrigger.value) {
+    dropdownTrigger.value = event.currentTarget as HTMLElement
+  } else {
+    dropdownTrigger.value = null
   }
+}
 
-  get label() {
-    if (this.value) {
-      return this.options[this.value] || this.value
+function selectFromElementRecursive(event: Event) {
+  let element = event.target as HTMLElement | null
+  let depth = 0
+  while (element && ++depth < 3) {
+    if (element.classList.contains('dropdown-item')) {
+      selectOption(element)
+      toggleDropdown(event)
+      event.stopPropagation()
+      break
     }
-
-    if (this.placeholder) {
-      return this.placeholder
-    }
-
-    return 'Choose'
+    element = element.parentElement
   }
+}
 
-  toggleDropdown(event) {
-    if (event && !this.dropdownTrigger) {
-      this.dropdownTrigger = event.currentTarget
-    } else {
-      this.dropdownTrigger = null
-    }
-  }
-
-  selectFromElementRecursive(event) {
-    let element = event.target
-
-    let depth = 0
-    while (element && ++depth < 3) {
-      if (element.classList && element.classList.contains('dropdown-item')) {
-        this.selectOption(element)
-        this.toggleDropdown(event)
-        event.stopPropagation()
-
-        break
-      }
-
-      element = element.parentElement
-    }
-  }
-
-  selectOption(optionElement: HTMLElement) {
-    const index = Array.prototype.indexOf.call(
-      optionElement.parentElement.children,
-      optionElement
-    )
-
-    let value
-    if (this.isArray) {
-      value = this.options[index]
-    } else {
-      value = Object.keys(this.options)[index]
-    }
-
-    this.$emit('input', value)
-  }
+function selectOption(optionElement: HTMLElement) {
+  const index = Array.prototype.indexOf.call(
+    optionElement.parentElement?.children,
+    optionElement
+  )
+  const value = isArray.value
+    ? props.options[index]
+    : Object.keys(props.options)[index]
+  emit('input', value)
 }
 </script>

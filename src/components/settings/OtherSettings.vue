@@ -6,33 +6,33 @@
           type="checkbox"
           class="form-control"
           :checked="autoHideHeaders"
-          @change="$store.commit('settings/TOGGLE_AUTO_HIDE_HEADERS')"
+          @change="store.commit('settings/TOGGLE_AUTO_HIDE_HEADERS')"
         />
         <div></div>
         <span>Floating headers</span>
       </label>
     </div>
-    <transition-height :duration="5000">
+    <TransitionHeight :duration="5000">
       <div v-if="autoHideHeaders" key="a" class="form-group mb8">
         <label class="checkbox-control">
           <input
             type="checkbox"
             class="form-control"
             :checked="autoHideNames"
-            @change="$store.commit('settings/TOGGLE_AUTO_HIDE_NAMES')"
+            @change="store.commit('settings/TOGGLE_AUTO_HIDE_NAMES')"
           />
           <div></div>
           <span>Auto hide names</span>
         </label>
       </div>
-    </transition-height>
+    </TransitionHeight>
     <div class="form-group mb8">
       <label class="checkbox-control -animations">
         <input
           type="checkbox"
           class="form-control"
           :checked="animationsEnabled"
-          @change="$store.commit('settings/TOGGLE_ANIMATIONS')"
+          @change="store.commit('settings/TOGGLE_ANIMATIONS')"
         />
         <div></div>
         <span>
@@ -50,7 +50,7 @@
           type="checkbox"
           class="form-control"
           :checked="locked"
-          @change="$store.commit('panes/TOGGLE_LAYOUT')"
+          @change="store.commit('panes/TOGGLE_LAYOUT')"
         />
         <div></div>
         <span>
@@ -64,7 +64,7 @@
           type="checkbox"
           class="form-control"
           :checked="normalizeWatermarks"
-          @change="$store.commit('settings/TOGGLE_NORMAMIZE_WATERMARKS')"
+          @change="store.commit('settings/TOGGLE_NORMAMIZE_WATERMARKS')"
         />
         <div></div>
         <span>Simple watermarks</span>
@@ -77,7 +77,7 @@
           class="form-control"
           :checked="!!timezoneOffset"
           @change="
-            $store.commit(
+            store.commit(
               'settings/SET_TIMEZONE_OFFSET',
               !timezoneOffset ? new Date().getTimezoneOffset() * 60000 * -1 : 0
             )
@@ -93,7 +93,7 @@
           type="checkbox"
           class="form-control"
           :checked="!showThresholdsAsTable"
-          @change="$store.commit('settings/TOGGLE_THRESHOLDS_TABLE')"
+          @change="store.commit('settings/TOGGLE_THRESHOLDS_TABLE')"
         />
         <div></div>
         <span>Use slider for thresholds</span>
@@ -102,45 +102,22 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+<script setup lang="ts">
+import { computed } from 'vue'
+import store from '@/store'
 import TransitionHeight from '@/components/framework/TransitionHeight.vue'
 
-@Component({
-  name: 'OtherSettings',
-  components: {
-    TransitionHeight
-  }
-})
-export default class OtherSettings extends Vue {
-  responsiveEnabled: boolean = null
-
-  get animationsEnabled() {
-    return !this.$store.state.settings.disableAnimations
-  }
-
-  get autoHideHeaders() {
-    return this.$store.state.settings.autoHideHeaders
-  }
-
-  get autoHideNames() {
-    return this.$store.state.settings.autoHideNames
-  }
-
-  get locked() {
-    return this.$store.state.panes.locked
-  }
-
-  get normalizeWatermarks() {
-    return this.$store.state.settings.normalizeWatermarks
-  }
-
-  get timezoneOffset() {
-    return this.$store.state.settings.timezoneOffset
-  }
-
-  get showThresholdsAsTable() {
-    return this.$store.state.settings.showThresholdsAsTable
-  }
-}
+const animationsEnabled = computed(
+  () => !store.state.settings.disableAnimations
+)
+const autoHideHeaders = computed(() => store.state.settings.autoHideHeaders)
+const autoHideNames = computed(() => store.state.settings.autoHideNames)
+const locked = computed(() => store.state.panes.locked)
+const normalizeWatermarks = computed(
+  () => store.state.settings.normalizeWatermarks
+)
+const timezoneOffset = computed(() => store.state.settings.timezoneOffset)
+const showThresholdsAsTable = computed(
+  () => store.state.settings.showThresholdsAsTable
+)
 </script>

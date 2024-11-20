@@ -12,21 +12,22 @@
       }"
       class="-outline form-control -arrow"
       :placeholder="definition.placeholder || 'lineStyle'"
-      @input="$emit('input', $event)"
+      @input="onInput"
     ></dropdown-button>
   </div>
 </template>
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-import IndicatorOptionMixin from '@/mixins/indicatorOptionMixin'
+
+<script setup lang="ts">
+import { defineEmits, defineProps } from 'vue'
+import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 
-@Component({
-  name: 'IndicatorOptionLineStyle',
-  mixins: [IndicatorOptionMixin],
-  components: {
-    DropdownButton
-  }
-})
-export default class IndicatorOptionLineStyle extends Vue {}
+// Define props and emit
+defineProps(useIndicatorOptionProps)
+const emit = defineEmits(['input'])
+
+// Emit input event
+const onInput = (value: any) => {
+  emit('input', value)
+}
 </script>

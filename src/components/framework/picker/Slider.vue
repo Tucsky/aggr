@@ -12,224 +12,235 @@
         class="slider__completion"
         :style="`width: ${handle.position}%`"
       ></div>
-      <tippy :distance="24" follow-cursor>
-        <template v-slot:trigger>
-          <div
-            class="slider__handle"
-            @mousedown="select"
-            @touchstart="select"
-            :style="`left: ${handle.position}%; background-color: ${handle.color};`"
-          />
-        </template>
+      <div ref="inner" class="slider__inner">
+        <tippy :distance="24" follow-cursor>
+          <template v-slot:trigger>
+            <div
+              class="slider__handle"
+              @mousedown="select"
+              @touchstart="select"
+              :style="`left: ${handle.position}%; background-color: ${handle.color};`"
+            />
+          </template>
 
-        <slot name="tooltip" :value="handle.value">
-          {{ +handle.value.toFixed(2) }}
-        </slot>
-      </tippy>
+          <slot name="tooltip" :value="handle.value">
+            {{ +handle.value.toFixed(2) }}
+          </slot>
+        </tippy>
+      </div>
     </div>
   </div>
 </template>
-
-<script>
+<script setup lang="ts">
+import {
+  ref,
+  computed,
+  defineProps,
+  defineEmits,
+  onMounted,
+  onBeforeUnmount,
+  watch,
+  withDefaults
+} from 'vue'
 import { getEventCords } from '@/utils/helpers'
 
-export default {
-  name: 'Slider',
-  props: {
-    gradient: { type: Array, default: null },
-    colorCode: { type: Boolean, default: false },
-    label: { type: Boolean, default: false },
-    disabled: { type: Boolean, default: false },
-    min: { type: Number, default: 0 },
-    max: { type: Number, default: 255 },
-    step: { type: Number, default: 1 },
-    value: { type: Number, default: 0 },
-    showCompletion: {
-      type: Boolean,
-      default() {
-        if (this.gradient) {
-          return false
-        }
-        return true
-      }
-    },
-    log: { type: Boolean, default: false }
-  },
-  data() {
-    return {
-      handle: {
-        value: Number(this.value),
-        position: 0,
-        color: '#fff'
-      }
-    }
-  },
-  computed: {
-    sizeRelatedOptions() {
-      return [this.log, this.min, this.max, this.step]
-    }
-  },
-  watch: {
-    sizeRelatedOptions() {
-      this.updateSize()
-      this.updateHandlePosition(true)
-    },
-    gradient(value) {
-      this.initGradient(value)
-    },
-    value(value) {
-      this.handle.value = value
-      this.updateHandlePosition(true)
-    }
-  },
-  async mounted() {
-    window.addEventListener('resize', this.handleResize)
-    this.initElements()
-    this.updateSize()
-
-    if (this.gradient) {
-      this.initGradient(this.gradient)
-    }
-
-    this.updateHandlePosition(true)
-  },
-  beforeDestroy() {
-    window.removeEventListener('resize', this.handleResize)
-
-    if (this._dragHandler) {
-      this.release()
-    }
-
-    if (this._dblClickTimeout) {
-      clearTimeout(this._dblClickTimeout)
-    }
-  },
-  methods: {
-    initElements() {
-      this.wrapper = this.$refs.wrapper
-      this.track = this.$refs.track
-      this.fill = this.$refs.fill
-    },
-    initGradient(gradient) {
-      if (gradient.length > 1) {
-        this.fill.style.backgroundImage = `linear-gradient(90deg, ${gradient})`
-        return
-      }
-      this.fill.style.backgroundImage = ''
-      this.fill.style.backgroundColor = gradient[0]
-      this.handle.color = gradient[0]
-    },
-    handleResize() {
-      this.updateSize()
-      this.updateHandlePosition(true)
-    },
-    select(event) {
-      event.preventDefault()
-
-      if (event.buttons === 2) return
-
-      if (this._dblClickTimeout) {
-        clearTimeout(this._dblClickTimeout)
-      }
-
-      if (this.pendingDblClick) {
-        this.pendingDblClick = false
-        this.$emit('reset')
-        return
-      }
-
-      this.pendingDblClick = true
-
-      this.updateSize()
-      this.track.classList.add('slider--dragging')
-      this.ticking = false
-
-      this.updateHandleValue(event)
-      this.updateHandlePosition()
-
-      this._dragHandler = this.dragging.bind(this)
-      this._releaseHandler = this.release.bind(this)
-      document.addEventListener('mousemove', this._dragHandler)
-      document.addEventListener('touchmove', this._dragHandler)
-      document.addEventListener('touchend', this._releaseHandler)
-      document.addEventListener('mouseup', this._releaseHandler)
-    },
-    dragging(event) {
-      const stepValue = this.updateHandleValue(event)
-      if (!this.ticking) {
-        window.requestAnimationFrame(() => {
-          this.updateHandlePosition(stepValue)
-          this.ticking = false
-        })
-        this.ticking = true
-      }
-    },
-    release() {
-      this.track.classList.remove('slider--dragging')
-      document.removeEventListener('mousemove', this._dragHandler)
-      document.removeEventListener('touchmove', this._dragHandler)
-      document.removeEventListener('mouseup', this._releaseHandler)
-      document.removeEventListener('touchend', this._releaseHandler)
-
-      if (this.pendingDblClick) {
-        this._dblClickTimeout = setTimeout(() => {
-          this.pendingDblClick = false
-          this._dblClickTimeout = null
-        }, 150)
-      }
-
-      this._dragHandler = null
-      this._releaseHandler = null
-    },
-    // get the current slider value from the click/move event on the slider (using event.clientX)
-    updateHandleValue(event) {
-      // x = x coordinate of mouse click / move event
-      const { x } = getEventCords(event)
-      let value
-
-      // offsetX = slider offset x
-      // width = slider width
-      const { offsetX, width } = this
-
-      if (!this.log) {
-        // value = current slider value (between min & max)
-        value = ((x - offsetX) / width) * (this.max - this.min) + this.min
-      } else {
-        // value = same but log scaled (smaller values takes a larger space on the slider)
-        const scale = width / (Math.log(this.max + 1) - Math.log(this.min + 1))
-        value = Math.exp((x - offsetX) / scale + Math.log(this.min + 1)) - 1
-      }
-
-      // Constrain value to be between this.min and this.max
-      value = Math.min(this.max, Math.max(this.min, value))
-
-      // make sure the value is rounded to the step prop
-      const stepValue = Math.round(value / this.step) * this.step
-
-      this.handle.value = stepValue
-    },
-    // set the handle position (left: n%) based on the slider value (value between min & max)
-    updateHandlePosition(silent) {
-      const { value } = this.handle
-      if (!this.log) {
-        // this is working fine
-        this.handle.position =
-          ((value - this.min) / (this.max - this.min)) * 100
-      } else {
-        const scale = Math.log(this.max + 1) - Math.log(this.min + 1)
-        this.handle.position =
-          ((Math.log(value + 1) - Math.log(this.min + 1)) / scale) * 100
-      }
-
-      if (!silent) {
-        this.$emit('input', value)
-      }
-    },
-    updateSize() {
-      this.width = this.track.offsetWidth
-      this.offsetX = this.track.getBoundingClientRect().left
-    }
+// Define props with types and defaults
+const props = withDefaults(
+  defineProps<{
+    gradient?: string[]
+    colorCode?: boolean
+    label?: boolean
+    disabled?: boolean
+    step?: number
+    min?: number
+    max: number
+    modelValue: number
+    showCompletion?: boolean
+    log?: boolean
+  }>(),
+  {
+    gradient: null,
+    colorCode: false,
+    label: false,
+    disabled: false,
+    step: 1,
+    min: 0,
+    max: 255,
+    modelValue: 0,
+    showCompletion: true,
+    log: false
   }
+)
+
+const emit = defineEmits(['modelValue', 'reset'])
+
+// Reactive state
+const handle = ref({
+  value: props.modelValue,
+  position: 0,
+  color: '#fff'
+})
+const wrapper = ref<HTMLElement | null>(null)
+const track = ref<HTMLElement | null>(null)
+const inner = ref<HTMLElement | null>(null)
+const fill = ref<HTMLElement | null>(null)
+const width = ref(0)
+const offsetX = ref(0)
+const dblClickTimeout = ref<NodeJS.Timeout | null>(null)
+const pendingDblClick = ref(false)
+const ticking = ref(false)
+
+// Computed properties
+const sizeRelatedOptions = computed(() => [
+  props.log,
+  props.min,
+  props.max,
+  props.step
+])
+
+// Watchers
+watch(sizeRelatedOptions, () => {
+  updateSize()
+  updateHandlePosition(true)
+})
+
+watch(
+  () => props.gradient,
+  newGradient => {
+    if (newGradient) initGradient(newGradient)
+  }
+)
+
+watch(
+  () => props.modelValue,
+  newValue => {
+    handle.value.value = newValue
+    updateHandlePosition(true)
+  }
+)
+
+// Lifecycle hooks
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+  initElements()
+  updateSize()
+  if (props.gradient) initGradient(props.gradient)
+  updateHandlePosition(true)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  if (dblClickTimeout.value) clearTimeout(dblClickTimeout.value)
+  release()
+})
+
+// Methods
+function initElements() {
+  wrapper.value = document.querySelector('.wrapper') as HTMLElement
+  track.value = document.querySelector('.track') as HTMLElement
+  inner.value = document.querySelector('.inner') as HTMLElement
+  fill.value = document.querySelector('.fill') as HTMLElement
+}
+
+function initGradient(gradient: string[]) {
+  if (!fill.value) return
+  if (gradient.length > 1) {
+    fill.value.style.backgroundImage = `linear-gradient(90deg, ${gradient.join(', ')})`
+  } else {
+    fill.value.style.backgroundImage = ''
+    fill.value.style.backgroundColor = gradient[0]
+    handle.value.color = gradient[0]
+  }
+}
+
+function handleResize() {
+  updateSize()
+  updateHandlePosition(true)
+}
+
+function select(event: MouseEvent | TouchEvent) {
+  event.preventDefault()
+  if ((event as MouseEvent).buttons === 2) return
+
+  if (dblClickTimeout.value) clearTimeout(dblClickTimeout.value)
+  if (pendingDblClick.value) {
+    pendingDblClick.value = false
+    emit('reset')
+    return
+  }
+
+  pendingDblClick.value = true
+  updateSize()
+  track.value?.classList.add('slider--dragging')
+  ticking.value = false
+  updateHandleValue(event)
+  updateHandlePosition()
+
+  document.addEventListener('mousemove', dragging)
+  document.addEventListener('touchmove', dragging)
+  document.addEventListener('mouseup', release)
+  document.addEventListener('touchend', release)
+}
+
+function dragging(event: MouseEvent | TouchEvent) {
+  updateHandleValue(event)
+  if (!ticking.value) {
+    window.requestAnimationFrame(() => {
+      updateHandlePosition()
+      ticking.value = false
+    })
+    ticking.value = true
+  }
+}
+
+function release() {
+  track.value?.classList.remove('slider--dragging')
+  document.removeEventListener('mousemove', dragging)
+  document.removeEventListener('touchmove', dragging)
+  document.removeEventListener('mouseup', release)
+  document.removeEventListener('touchend', release)
+
+  if (pendingDblClick.value) {
+    dblClickTimeout.value = setTimeout(() => {
+      pendingDblClick.value = false
+      dblClickTimeout.value = null
+    }, 150)
+  }
+}
+
+// Calculate the current slider value from the event
+function updateHandleValue(event: MouseEvent | TouchEvent) {
+  const { x } = getEventCords(event)
+  const range = props.max - props.min
+  const logScale =
+    width.value / (Math.log(props.max + 1) - Math.log(props.min + 1))
+  let value = props.log
+    ? Math.exp((x - offsetX.value) / logScale + Math.log(props.min + 1)) - 1
+    : ((x - offsetX.value) / width.value) * range + props.min
+
+  // Constrain and round value based on the step
+  value = Math.min(props.max, Math.max(props.min, value))
+  const stepValue = Math.round(value / props.step) * props.step
+  handle.value.value = stepValue
+}
+
+// Update the handle position based on the slider value
+function updateHandlePosition(silent = false) {
+  const { value } = handle.value
+  const range = props.max - props.min
+  const logScale = Math.log(props.max + 1) - Math.log(props.min + 1)
+
+  handle.value.position = props.log
+    ? ((Math.log(value + 1) - Math.log(props.min + 1)) / logScale) * 100
+    : ((value - props.min) / range) * 100
+
+  if (!silent) emit('modelValue', value)
+}
+
+function updateSize() {
+  if (!inner.value) return
+  width.value = inner.value.offsetWidth
+  offsetX.value = inner.value.getBoundingClientRect().left
 }
 </script>
 
@@ -276,6 +287,7 @@ export default {
   text-align: center;
   font-size: 12px;
   -webkit-appearance: none;
+  appearance: none;
   -moz-appearance: textfield;
 
   &::-webkit-inner-spin-button,
@@ -310,7 +322,7 @@ export default {
   left: 0;
   will-change: transform;
   color: black;
-  margin: -0.25rem -0.5rem;
+  margin: -0.75rem -0.5rem;
   width: 1rem;
   height: 1rem;
   border: 0;
@@ -361,6 +373,11 @@ export default {
     content: '';
     transform: translate3d(-50%, 0, 0);
   }
+}
+
+.slider__inner {
+  position: relative;
+  margin: 0 0.5rem;
 }
 
 .slider__fill {

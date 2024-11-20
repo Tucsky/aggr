@@ -37,12 +37,13 @@
       <div class="form-group column">
         <label
           class="checkbox-control"
-          @change="
-            $store.commit(paneId + '/SET_GRIDLINES', {
+          v-commit="[
+            paneId + '/SET_GRIDLINES',
+            value => ({
               type: 'vertical',
-              value: $event.target.checked
+              value
             })
-          "
+          ]"
         >
           <input
             type="checkbox"
@@ -71,12 +72,13 @@
       <div class="form-group column">
         <label
           class="checkbox-control"
-          @change="
-            $store.commit(paneId + '/SET_GRIDLINES', {
+          v-commit="[
+            paneId + '/SET_GRIDLINES',
+            value => ({
               type: 'horizontal',
-              value: $event.target.checked
+              value
             })
-          "
+          ]"
         >
           <input
             type="checkbox"
@@ -104,14 +106,7 @@
       </div>
     </div>
     <div class="form-group mb8 column">
-      <label
-        class="checkbox-control"
-        @change="
-          $store.commit(paneId + '/SET_WATERMARK', {
-            value: $event.target.checked
-          })
-        "
-      >
+      <label class="checkbox-control" v-commit="paneId + '/SET_WATERMARK'">
         <input type="checkbox" class="form-control" :checked="showWatermark" />
         <div></div>
         <span>Watermark</span>
@@ -128,14 +123,7 @@
       ></color-picker-control>
     </div>
     <div class="form-group mb8 column">
-      <label
-        class="checkbox-control"
-        @change="
-          $store.commit(paneId + '/SET_BORDER', {
-            value: $event.target.checked
-          })
-        "
-      >
+      <label class="checkbox-control" v-commit="paneId + '/SET_BORDER'">
         <input type="checkbox" class="form-control" :checked="showBorder" />
         <div></div>
         <span>Borders</span>
@@ -223,96 +211,47 @@
   </div>
 </template>
 
-<script lang="ts">
+<script lang="ts" setup>
+import { computed } from 'vue'
+import store from '@/store' // Rule #11
 import { getHms } from '@/utils/helpers'
-import { Component, Vue } from 'vue-property-decorator'
 import Slider from '@/components/framework/picker/Slider.vue'
-import ToggableGroup from '@/components/framework/ToggableGroup.vue'
-import DropdownButton from '@/components/framework/DropdownButton.vue'
 import ColorPickerControl from '@/components/framework/picker/ColorPickerControl.vue'
 import AlertsSettings from '@/components/alerts/AlertsSettings.vue'
 
-@Component({
-  components: {
-    AlertsSettings,
-    Slider,
-    ToggableGroup,
-    DropdownButton,
-    ColorPickerControl
-  },
-  name: 'ChartSettings',
-  props: {
-    paneId: {
-      type: String,
-      required: true
-    }
+// Props
+const props = defineProps({
+  paneId: {
+    type: String,
+    required: true
   }
 })
-export default class ChartSettings extends Vue {
-  paneId: string
 
-  get showLegend() {
-    return this.$store.state[this.paneId].showLegend
-  }
-
-  get fillGapsWithEmpty() {
-    return this.$store.state[this.paneId].fillGapsWithEmpty
-  }
-
-  get refreshRate() {
-    return this.$store.state[this.paneId].refreshRate
-  }
-
-  get showVerticalGridlines() {
-    return this.$store.state[this.paneId].showVerticalGridlines
-  }
-
-  get verticalGridlinesColor() {
-    return this.$store.state[this.paneId].verticalGridlinesColor
-  }
-
-  get showHorizontalGridlines() {
-    return this.$store.state[this.paneId].showHorizontalGridlines
-  }
-
-  get horizontalGridlinesColor() {
-    return this.$store.state[this.paneId].horizontalGridlinesColor
-  }
-
-  get showWatermark() {
-    return this.$store.state[this.paneId].showWatermark
-  }
-
-  get watermarkColor() {
-    return this.$store.state[this.paneId].watermarkColor
-  }
-
-  get showBorder() {
-    return this.$store.state[this.paneId].showBorder
-  }
-
-  get borderColor() {
-    return this.$store.state[this.paneId].borderColor
-  }
-
-  get textColor() {
-    return this.$store.state[this.paneId].textColor
-  }
-
-  get showRightScale() {
-    return this.$store.state[this.paneId].showRightScale
-  }
-
-  get showLeftScale() {
-    return this.$store.state[this.paneId].showLeftScale
-  }
-
-  get showTimeScale() {
-    return this.$store.state[this.paneId].showTimeScale
-  }
-
-  get refreshRateHms() {
-    return getHms(this.refreshRate)
-  }
-}
+// Computed properties
+const showLegend = computed(() => store.state[props.paneId].showLegend)
+const fillGapsWithEmpty = computed(
+  () => store.state[props.paneId].fillGapsWithEmpty
+)
+const refreshRate = computed(() => store.state[props.paneId].refreshRate)
+const showVerticalGridlines = computed(
+  () => store.state[props.paneId].showVerticalGridlines
+)
+const verticalGridlinesColor = computed(
+  () => store.state[props.paneId].verticalGridlinesColor
+)
+const showHorizontalGridlines = computed(
+  () => store.state[props.paneId].showHorizontalGridlines
+)
+const horizontalGridlinesColor = computed(
+  () => store.state[props.paneId].horizontalGridlinesColor
+)
+const showWatermark = computed(() => store.state[props.paneId].showWatermark)
+const watermarkColor = computed(() => store.state[props.paneId].watermarkColor)
+const showBorder = computed(() => store.state[props.paneId].showBorder)
+const borderColor = computed(() => store.state[props.paneId].borderColor)
+const textColor = computed(() => store.state[props.paneId].textColor)
+const showRightScale = computed(() => store.state[props.paneId].showRightScale)
+const showLeftScale = computed(() => store.state[props.paneId].showLeftScale)
+const showTimeScale = computed(() => store.state[props.paneId].showTimeScale)
+const refreshRateHms = computed(() => getHms(refreshRate.value))
 </script>

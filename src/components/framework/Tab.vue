@@ -6,38 +6,83 @@
     @click="onClick"
   >
     <slot />
+    <transition
+      name="tab__control"
+      @before-enter="beforeEnter"
+      @enter="enter"
+      @after-enter="afterEnter"
+      @before-leave="beforeLeave"
+      @leave="leave"
+    >
+      <div ref="control" class="tab__control" v-if="$slots.control && selected">
+        <slot name="control"></slot>
+      </div>
+    </transition>
   </button>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+<script setup lang="ts">
+import { ref, defineProps, defineEmits } from 'vue'
 
-@Component({
-  name: 'Tab',
-  props: {
-    name: {
-      type: String,
-      required: true
-    }
+const props = defineProps({
+  name: {
+    type: String,
+    required: true
   }
 })
-export default class Tab extends Vue {
-  selected = false
 
-  select() {
-    this.selected = true
-  }
+// Define emits
+const emit = defineEmits(['select'])
 
-  deselect() {
-    this.selected = false
-  }
+// Reactive state for selection
+const selected = ref(false)
 
-  onClick() {
-    this.$emit('select', this)
-  }
+// Methods for selection handling
+const select = () => {
+  selected.value = true
 }
-</script>
 
+const deselect = () => {
+  selected.value = false
+}
+
+const onClick = () => {
+  emit('select', props.name)
+}
+
+// Transition hooks for entry and exit
+const beforeEnter = (el: HTMLElement) => {
+  el.style.position = 'absolute' // Prevent layout shift
+}
+
+const enter = (el: HTMLElement) => {
+  const finalWidth = el.scrollWidth + 'px'
+  el.style.position = ''
+  el.style.width = '0px'
+  requestAnimationFrame(() => {
+    el.style.width = finalWidth
+  })
+}
+
+const afterEnter = (el: HTMLElement) => {
+  el.style.width = ''
+}
+
+const beforeLeave = (el: HTMLElement) => {
+  el.style.width = el.scrollWidth + 'px'
+}
+
+const leave = (el: HTMLElement) => {
+  requestAnimationFrame(() => {
+    el.style.width = '0px'
+  })
+}
+
+defineExpose({
+  select,
+  deselect
+})
+</script>
 <style lang="scss" scoped>
 .tab {
   display: inline-flex;
@@ -79,6 +124,32 @@ export default class Tab extends Vue {
     &:active {
       box-shadow: 0 1px 0 1px var(--theme-background-100);
       background: var(--theme-background-100);
+    }
+  }
+
+  &__control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    right: -0.5rem;
+
+    transition:
+      width 0.5s $ease-out-expo 0.1s,
+      opacity 0.5s $ease-out-expo,
+      transform 0.5s $ease-out-expo;
+
+    &-enter-active {
+      transition:
+        width 0.5s $ease-out-expo,
+        opacity 0.5s $ease-out-expo 0.1s,
+        transform 0.5s $ease-out-expo 0.1s;
+    }
+
+    &-enter,
+    &-leave-to {
+      opacity: 0;
+      transform: translateX(100%);
     }
   }
 }

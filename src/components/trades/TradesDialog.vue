@@ -1,33 +1,45 @@
 <template>
-  <Dialog @clickOutside="close" class="pane-dialog" size="medium">
-    <template v-slot:header>
-      <div
-        class="dialog__title -editable"
-        @dblclick="renamePane"
-        v-text="name"
-      ></div>
-      <div class="column -center"></div>
-    </template>
-    <trades-settings :paneId="paneId" />
-    <template v-slot:footer>
-      <presets
-        type="trades"
-        :adapter="getPreset"
-        :placeholder="paneId"
-        @apply="resetPane($event)"
-        class="-left -top"
-      />
-    </template>
-  </Dialog>
+  <transition name="dialog" :duration="300" @after-leave="close">
+    <Dialog v-if="opened" @close="hide" class="pane-dialog" size="medium">
+      <template v-slot:header>
+        <div
+          class="dialog__title -editable"
+          @dblclick="renamePane"
+          v-text="name"
+        ></div>
+        <div class="column -center"></div>
+      </template>
+      <trades-settings :paneId="paneId" />
+      <template v-slot:footer>
+        <presets
+          type="trades"
+          :adapter="getPreset"
+          :placeholder="paneId"
+          @apply="resetPane"
+          class="-left -top"
+        />
+      </template>
+    </Dialog>
+  </transition>
 </template>
 
-<script>
-import DialogMixin from '../../mixins/dialogMixin'
-import PaneDialogMixin from '../../mixins/paneDialogMixin'
+<script setup lang="ts">
+import { useDialog } from '@/composables/useDialog'
+import { usePaneDialog } from '@/composables/usePaneDialog'
 import TradesSettings from './TradesSettings.vue'
+import Presets from '@/components/framework/Presets.vue'
 
-export default {
-  components: { TradesSettings },
-  mixins: [DialogMixin, PaneDialogMixin]
-}
+defineEmits(['close'])
+
+const props = defineProps({
+  paneId: {
+    type: String,
+    required: true
+  }
+})
+
+const { name, renamePane, getPreset, resetPane } = usePaneDialog(props.paneId)
+const { hide, close, opened } = useDialog()
+
+defineExpose({ hide, close })
 </script>

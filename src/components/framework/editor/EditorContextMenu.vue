@@ -31,7 +31,7 @@
           type="checkbox"
           class="form-control"
           :checked="currentEditorOptions.wordWrap === 'on'"
-          @change="$emit('cmd', ['toggleWordWrap', !$event.target.checked])"
+          @change="toggleWordWrap"
         />
         <div></div>
         <span>Word Wrap</span>
@@ -52,36 +52,48 @@
     </a>
   </dropdown>
 </template>
+<script setup lang="ts">
+import { ref, watch, defineProps, defineEmits, onMounted } from 'vue'
 
-<script lang="ts">
-export default {
-  name: 'EditorContextMenu',
-  props: {
-    value: {
-      type: Object,
-      default: null
-    },
-    editorOptions: {
-      type: Object,
-      required: true
-    }
+// Define props and emits
+const props = defineProps({
+  value: {
+    type: Object,
+    default: null
   },
-  data() {
-    return {
-      dropdownTrigger: null,
-      currentEditorOptions: this.editorOptions
-    }
-  },
-  watch: {
-    value(value) {
-      this.dropdownTrigger = value
-    },
-    editorOptions(value) {
-      this.currentEditorOptions = value
-    }
-  },
-  mounted() {
-    this.dropdownTrigger = this.value
+  editorOptions: {
+    type: Object,
+    required: true
   }
+})
+const emit = defineEmits(['cmd'])
+
+// Reactive state
+const dropdownTrigger = ref(props.value)
+const currentEditorOptions = ref(props.editorOptions)
+
+// Watchers
+watch(
+  () => props.value,
+  newValue => {
+    dropdownTrigger.value = newValue
+  }
+)
+
+watch(
+  () => props.editorOptions,
+  newValue => {
+    currentEditorOptions.value = newValue
+  }
+)
+
+// Lifecycle hook
+onMounted(() => {
+  dropdownTrigger.value = props.value
+})
+
+const toggleWordWrap = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  emit('cmd', ['toggleWordWrap', target.checked])
 }
 </script>

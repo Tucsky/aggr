@@ -23,7 +23,7 @@
   },
   "sections": ["settings-workspaces", "settings-trades", "timeframe-minutes"],
   "searchTypes": {
-    "recentSearches": true,
+    "recent": true,
     "historical": true,
     "spots": true,
     "perpetuals": true,

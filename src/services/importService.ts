@@ -4,12 +4,13 @@ import workspacesService from './workspacesService'
 import SettingsImportConfirmation from '../components/settings/ImportConfirmation.vue'
 import store from '@/store'
 import notificationService from './notificationService'
-import { PaneType } from '../store/panes'
+import { PaneTypeEnum } from '../store/panes'
 import { IndicatorSettings } from '@/store/panesSettings/chart'
 import { SeriesOptions, SeriesOptionsMap } from 'lightweight-charts'
 
 export interface ExportedIndicator {
   name: string
+  type?: string
   data: IndicatorSettings & { presets: Preset[] }
 }
 
@@ -68,9 +69,11 @@ class ImportService {
     }
 
     const type = preset.name.split(':')[0]
-    const isPresetAPane = Object.values(PaneType).includes(type as PaneType)
+    const isPresetAPane = Object.values(PaneTypeEnum).includes(
+      type as PaneTypeEnum
+    )
 
-    await workspacesService.savePreset(preset, presetType)
+    await workspacesService.savePreset(preset, presetType, false)
 
     if (isPresetAPane) {
       store.dispatch('panes/addPane', {
@@ -178,8 +181,11 @@ class ImportService {
     if (openLibrary) {
       if (!dialogService.isDialogOpened('indicator-library')) {
         dialogService.open(
-          (await import('@/components/indicators/IndicatorLibraryDialog.vue'))
-            .default,
+          (
+            await import(
+              '@/components/library/indicators/IndicatorLibraryDialog.vue'
+            )
+          ).default,
           {},
           'indicator-library'
         )

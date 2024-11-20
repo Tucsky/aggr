@@ -499,7 +499,7 @@ class WorkspacesService {
     return workspace
   }
 
-  async createWorkspace(name) {
+  async createWorkspace(name?: string) {
     const timestamp = Date.now()
 
     const panes = JSON.parse(JSON.stringify(defaultPanes))
@@ -732,16 +732,16 @@ class WorkspacesService {
       preset.name = type + ':' + preset.name.split(':').pop()
     }
 
-    if (
-      confirmOverride &&
-      (await this.getPreset(preset.name)) &&
-      !(await dialogService.confirm({
+    if (confirmOverride && (await this.getPreset(preset.name))) {
+      const confirmation = await dialogService.confirm({
         message: `This preset "${preset.name}" already exists.`,
         ok: 'Continue anyway',
         cancel: 'Cancel'
-      }))
-    ) {
-      return
+      })
+      debugger
+      if (!confirmation) {
+        return
+      }
     }
 
     return this.db.put('presets', {

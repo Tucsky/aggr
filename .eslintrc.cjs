@@ -19,6 +19,7 @@ module.exports = {
     '@typescript-eslint/camelcase': 'off',
     'no-irregular-whitespace': 'off',
     'vue/no-reserved-component-names': 'off',
+    'vue/multi-word-component-names': 'off',
     '@typescript-eslint/no-var-requires': 0,
     camelcase: 'off',
     'prettier/prettier': [
