@@ -6,35 +6,37 @@
       model="rgb"
       allow-null
       :value="value"
-      @input="$emit('input', $event)"
+      @input="onInput"
       @close="reloadIndicator"
     ></color-picker-control>
   </div>
 </template>
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-import IndicatorOptionMixin from '@/mixins/indicatorOptionMixin'
+
+<script setup lang="ts">
+import store from '@/store'
+import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 import ColorPickerControl from '@/components/framework/picker/ColorPickerControl.vue'
 
-@Component({
-  name: 'IndicatorOptionColor',
-  mixins: [IndicatorOptionMixin],
-  components: {
-    ColorPickerControl
-  }
-})
-export default class IndicatorOptionColor extends Vue {
-  private paneId
-  private indicatorId
+// Import props
+const props = defineProps(useIndicatorOptionProps)
 
-  reloadIndicator() {
-    this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', {
-      id: this.indicatorId,
-      value: this.$store.state[this.paneId].indicators[this.indicatorId].script
-    })
-  }
+const emit = defineEmits(['input'])
+
+// Event handler for emitting input
+const onInput = (value: any) => {
+  emit('input', value)
+}
+
+// Method to reload the indicator script
+const reloadIndicator = () => {
+  const { paneId, indicatorId } = useIndicatorOptionProps
+  store.commit(`${paneId}/SET_INDICATOR_SCRIPT`, {
+    id: indicatorId,
+    value: store.state[props.paneId].indicators[props.indicatorId].script
+  })
 }
 </script>
+
 <style lang="scss" scoped>
 .indicator-option-color {
   display: flex;

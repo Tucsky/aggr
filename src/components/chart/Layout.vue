@@ -30,176 +30,163 @@
       v-for="(priceScale, id) of activePriceScales"
       :key="id"
       :paneId="paneId"
-      :priceScaleId="id"
+      :priceScaleId="id.toString()"
       :priceScale="priceScale"
-      @update="updatePriceScaleScaleMargins(id, $event)"
+      @update="updatePriceScaleScaleMargins(id.toString(), $event)"
       class="chart-layout__item"
     ></chart-price-scale>
   </div>
 </template>
-
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-
-import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
+<script lang="ts" setup>
+import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
+import store from '@/store' // Rule #11
 import ChartPriceScale from './PriceScale.vue'
 
-@Component({
-  components: { ChartPriceScale },
-  name: 'ChartLayout',
-  props: {
-    paneId: {
-      required: true
-    },
-    axis: {
-      required: true
-    },
-    layouting: {
-      required: true
-    }
+import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
+
+// Props
+const props = defineProps({
+  paneId: {
+    type: String,
+    required: true
+  },
+  axis: {
+    type: Object as () => { left: number; right: number; time: number },
+    required: true
+  },
+  layouting: {
+    type: [String, Boolean],
+    required: true
   }
 })
-export default class Layout extends Vue {
-  paneId: string
-  layouting: string
-  unsyncableMoveId: string
-  axis: {
-    left: number
-    right: number
-    time: number
-  }
-  activePriceScales: { [id: string]: PriceScaleSettings }
 
-  private _originalActivePriceScales: { [id: string]: PriceScaleSettings }
-  private _handleEscKey: (event: KeyboardEvent) => void
+// Refs (data properties)
+const unsyncableMoveId = ref<string | null>(null)
+const activePriceScales = reactive<{ [id: string]: PriceScaleSettings }>({})
+let _originalActivePriceScales: { [id: string]: PriceScaleSettings } = {}
+let _handleEscKey: ((event: KeyboardEvent) => void) | null = null
 
-  created() {
-    this.getActivePriceScales()
-  }
+// Computed properties
+const indicators = computed(
+  () => (store.state[props.paneId] as ChartPaneState).indicators
+)
 
-  mounted() {
-    document.body.classList.add('-unselectable')
-
-    this.bindEscKey()
-  }
-
-  beforeDestroy() {
-    document.body.classList.remove('-unselectable')
-
-    if (this._handleEscKey) {
-      document.removeEventListener('keydown', this._handleEscKey)
-    }
-  }
-
-  getActivePriceScales() {
-    const indicators = (this.$store.state[this.paneId] as ChartPaneState)
-      .indicators
-
-    this.activePriceScales = Object.keys(indicators).reduce(
-      (priceScales, indicatorId) => {
-        if (
-          typeof this.layouting === 'string' &&
-          indicatorId !== this.layouting
-        ) {
-          return priceScales
-        }
-        const priceScaleId = indicators[indicatorId].options.priceScaleId
-
-        if (!priceScales[priceScaleId]) {
-          priceScales[priceScaleId] =
-            this.$store.state[this.paneId].priceScales[priceScaleId]
-          priceScales[priceScaleId].indicators = []
-        }
-
-        priceScales[priceScaleId].indicators.push(indicators[indicatorId].name)
-
-        return priceScales
-      },
-      {}
-    )
-
-    this._originalActivePriceScales = JSON.parse(
-      JSON.stringify(this.activePriceScales)
-    )
-  }
-
-  updatePriceScaleScaleMargins(priceScaleId, event) {
-    if (event.syncable && this.unsyncableMoveId !== event.id) {
-      if (!this.syncMoveWithOthers(priceScaleId, event.side, event.value)) {
-        this.unsyncableMoveId = event.id
+const getActivePriceScales = () => {
+  const priceScales = Object.keys(indicators.value).reduce(
+    (scales, indicatorId) => {
+      if (
+        typeof props.layouting === 'string' &&
+        indicatorId !== props.layouting
+      ) {
+        return scales
       }
+      const priceScaleId = indicators.value[indicatorId].options.priceScaleId
+
+      if (!scales[priceScaleId]) {
+        scales[priceScaleId] = {
+          ...store.state[props.paneId].priceScales[priceScaleId],
+          indicators: []
+        }
+      }
+
+      scales[priceScaleId].indicators.push(indicators.value[indicatorId].name)
+
+      return scales
+    },
+    {} as { [id: string]: PriceScaleSettings }
+  )
+
+  Object.assign(activePriceScales, priceScales)
+  _originalActivePriceScales = JSON.parse(JSON.stringify(priceScales))
+}
+
+// Methods
+const updatePriceScaleScaleMargins = (priceScaleId: string, event: any) => {
+  if (event.syncable && unsyncableMoveId.value !== event.id) {
+    if (!syncMoveWithOthers(priceScaleId, event.side, event.value)) {
+      unsyncableMoveId.value = event.id
     }
+  }
 
-    this.activePriceScales[priceScaleId].scaleMargins = event.value
+  activePriceScales[priceScaleId].scaleMargins = event.value
 
-    this.$store.commit(this.paneId + '/SET_PRICE_SCALE', {
-      id: priceScaleId,
-      priceScale: this.activePriceScales[priceScaleId]
+  store.commit(`${props.paneId}/SET_PRICE_SCALE`, {
+    id: priceScaleId,
+    priceScale: activePriceScales[priceScaleId]
+  })
+}
+
+const syncMoveWithOthers = (
+  priceScaleId: string,
+  side: string,
+  scaleMargins: any
+): boolean => {
+  const originalScaleMargins = activePriceScales[priceScaleId].scaleMargins
+  let hasSynced = false
+
+  for (const otherId in activePriceScales) {
+    if (priceScaleId === otherId) continue
+
+    const otherScaleMargins = activePriceScales[otherId].scaleMargins
+
+    if (
+      otherScaleMargins.top === originalScaleMargins.top &&
+      otherScaleMargins.bottom === originalScaleMargins.bottom
+    ) {
+      activePriceScales[otherId].scaleMargins = scaleMargins
+
+      store.commit(`${props.paneId}/SET_PRICE_SCALE`, {
+        id: otherId,
+        priceScale: activePriceScales[otherId]
+      })
+
+      hasSynced = true
+    }
+  }
+
+  return hasSynced
+}
+
+const cancel = () => {
+  for (const id in _originalActivePriceScales) {
+    store.commit(`${props.paneId}/SET_PRICE_SCALE`, {
+      id,
+      priceScale: _originalActivePriceScales[id]
     })
   }
 
-  syncMoveWithOthers(priceScaleId, side, scaleMargins): boolean {
-    const originalScaleMargins =
-      this.activePriceScales[priceScaleId].scaleMargins
-
-    let hasSynced = false
-
-    for (const otherId in this.activePriceScales) {
-      if (priceScaleId === otherId) {
-        continue
-      }
-
-      const otherScaleMargins = this.activePriceScales[otherId].scaleMargins
-
-      if (
-        otherScaleMargins.top === originalScaleMargins.top &&
-        otherScaleMargins.bottom === originalScaleMargins.bottom
-      ) {
-        // sync overlapping
-
-        Vue.set(this.activePriceScales[otherId], 'scaleMargins', scaleMargins)
-
-        this.$store.commit(this.paneId + '/SET_PRICE_SCALE', {
-          id: otherId,
-          priceScale: this.activePriceScales[otherId]
-        })
-
-        hasSynced = true
-      }
-    }
-
-    return hasSynced
-  }
-
-  cancel() {
-    for (const id in this._originalActivePriceScales) {
-      this.$store.commit(this.paneId + '/SET_PRICE_SCALE', {
-        id,
-        priceScale: this._originalActivePriceScales[id]
-      })
-    }
-
-    this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING')
-  }
-
-  close() {
-    this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING')
-  }
-
-  bindEscKey() {
-    if (this._handleEscKey) {
-      return
-    }
-
-    this._handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        this.close()
-      }
-    }
-
-    document.addEventListener('keydown', this._handleEscKey)
-  }
+  store.commit(`${props.paneId}/TOGGLE_LAYOUTING`)
 }
+
+const close = () => {
+  store.commit(`${props.paneId}/TOGGLE_LAYOUTING`)
+}
+
+const bindEscKey = () => {
+  if (_handleEscKey) return
+
+  _handleEscKey = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      close()
+    }
+  }
+
+  document.addEventListener('keydown', _handleEscKey)
+}
+
+// Lifecycle hooks
+onMounted(() => {
+  document.body.classList.add('-unselectable')
+  bindEscKey()
+  getActivePriceScales()
+})
+
+onBeforeUnmount(() => {
+  document.body.classList.remove('-unselectable')
+  if (_handleEscKey) {
+    document.removeEventListener('keydown', _handleEscKey)
+  }
+})
 </script>
 
 <style lang="scss">
@@ -209,9 +196,8 @@ export default class Layout extends Vue {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 3;
 
-  + .chart__container .tv-lightweight-charts {
+  + .chart__container {
     pointer-events: none;
   }
 

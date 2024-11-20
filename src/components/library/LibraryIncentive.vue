@@ -1,7 +1,7 @@
 <template>
   <div
     class="community-indicators-incentive"
-    :class="[isDismissed && 'community-indicators-incentive--dismissed']"
+    :class="{ 'community-indicators-incentive--dismissed': isDismissed }"
   >
     <div class="community-indicators-incentive__wrapper">
       <div class="community-indicators-incentive__head">
@@ -13,18 +13,21 @@
           class="community-indicators-incentive__close -small -text"
           @click="dismiss"
         >
-          <i class="icon-cross" />
+          <i class="icon-cross"></i>
         </Btn>
       </div>
       <p class="community-indicators-incentive__subtitle">
         Indicators that are uploaded to
-        <a :href="repoUrl" target="_blank">aggr-lib</a>
+        <a :href="repoUrl" target="_blank" rel="noopener noreferrer"
+          >aggr-lib</a
+        >
         will automatically appear in this list.
       </p>
       <Btn
         class="community-indicators-incentive__cta -theme"
         :href="repoUrl"
         target="_blank"
+        rel="noopener noreferrer"
       >
         <i class="icon-github mr8"></i> Start contributing
       </Btn>
@@ -32,29 +35,28 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref } from 'vue'
 import Btn from '@/components/framework/Btn.vue'
 import notificationService from '@/services/notificationService'
 
-export default {
-  name: 'CommunityIndicatorsIncentive',
-  components: {
-    Btn
-  },
-  data: () => ({
-    isDismissed: notificationService.hasDismissed(
-      'community-indicators-incentive'
-    ),
-    repoUrl: import.meta.env.VITE_APP_LIB_REPO_URL
-  }),
-  methods: {
-    dismiss() {
-      notificationService.dismiss('community-indicators-incentive')
-      this.isDismissed = true
-    }
-  }
+// Reactive state for dismissal status
+const isDismissed = ref<boolean>(
+  notificationService.hasDismissed('community-indicators-incentive')
+)
+
+// Constant for repository URL
+const repoUrl: string = import.meta.env.VITE_APP_LIB_REPO_URL
+
+/**
+ * Dismisses the incentive banner.
+ */
+const dismiss = () => {
+  notificationService.dismiss('community-indicators-incentive')
+  isDismissed.value = true
 }
 </script>
+
 <style lang="scss" scoped>
 .community-indicators-incentive {
   border: 1px solid var(--theme-background-50);

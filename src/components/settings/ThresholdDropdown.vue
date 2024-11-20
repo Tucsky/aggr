@@ -10,13 +10,14 @@
             class="form-control w-100"
             placeholder="Giphy keyword"
             :value="threshold.buyGif"
-            @change="
-              $store.commit(paneId + '/SET_THRESHOLD_GIF', {
+            v-commit="[
+              paneId + '/SET_THRESHOLD_GIF',
+              value => ({
                 id: threshold.id,
                 side: 'buy',
-                value: $event.target.value
+                value
               })
-            "
+            ]"
           />
         </div>
         <div class="form-group" v-if="isLegacy">
@@ -26,13 +27,14 @@
             class="form-control w-100"
             placeholder="Giphy keyword"
             :value="threshold.sellGif"
-            @change="
-              $store.commit(paneId + '/SET_THRESHOLD_GIF', {
+            v-commit="[
+              paneId + '/SET_THRESHOLD_GIF',
+              value => ({
                 id: threshold.id,
                 side: 'sell',
-                value: $event.target.value
+                value
               })
-            "
+            ]"
           />
         </div>
       </div>
@@ -50,7 +52,7 @@
             label="Buy color"
             :value="threshold.buyColor"
             @input="
-              $store.commit(paneId + '/SET_THRESHOLD_COLOR', {
+              store.commit(paneId + '/SET_THRESHOLD_COLOR', {
                 id: threshold.id,
                 side: 'buyColor',
                 value: $event
@@ -68,7 +70,7 @@
             label="Sell color"
             :value="threshold.sellColor"
             @input="
-              $store.commit(paneId + '/SET_THRESHOLD_COLOR', {
+              store.commit(paneId + '/SET_THRESHOLD_COLOR', {
                 id: threshold.id,
                 side: 'sellColor',
                 value: $event
@@ -84,59 +86,51 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+<script setup lang="ts">
+import { defineProps, defineEmits, computed } from 'vue'
+import store from '@/store'
 import dialogService from '../../services/dialogService'
 import { formatAmount } from '../../services/productsService'
-import { Threshold } from '../../store/panesSettings/trades'
+import type { Threshold } from '../../store/panesSettings/trades'
 import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
 
-@Component({
-  name: 'ThresholdDropdown',
-  components: {
-    ColorPickerControl
-  },
-  props: {
-    paneId: {
-      type: String,
-      required: true
-    },
-    threshold: {
-      required: true
-    },
-    canDelete: {
-      default: false
-    }
+// Define props with types and defaults
+const props = withDefaults(
+  defineProps<{
+    paneId: string
+    threshold: Threshold
+    canDelete?: boolean
+  }>(),
+  {
+    canDelete: false
   }
+)
+
+// Define emits for the component
+const emit = defineEmits<{
+  (e: 'input', value: Threshold | null): void
+}>()
+
+// Computed property to determine if the pane type is 'trades'
+const isLegacy = computed(() => {
+  return store.state.panes.panes[props.paneId].type === 'trades'
 })
-export default class ThresholdDropdown extends Vue {
-  private paneId: string
-  private threshold: Threshold
-  private canDelete: boolean
 
-  get isLegacy() {
-    return this.$store.state.panes.panes[this.paneId].type === 'trades'
+// Method to remove the threshold
+const removeThreshold = () => {
+  if (!props.canDelete) {
+    dialogService.confirm({
+      message: `You can't delete the threshold because there is only 2 and the minimum is 2`,
+      cancel: null
+    })
+    return
   }
 
-  formatAmount(value) {
-    return formatAmount(value)
-  }
-
-  removeThreshold() {
-    if (!this.canDelete) {
-      dialogService.confirm({
-        message: `You can't delete the threshold because there is only 2 and the minimum is 2`,
-        cancel: null
-      })
-
-      return
-    }
-
-    this.$store.commit(this.paneId + '/DELETE_THRESHOLD', this.threshold.id)
-    this.$emit('input', null)
-  }
+  store.commit(`${props.paneId}/DELETE_THRESHOLD`, props.threshold.id)
+  emit('input', null)
 }
 </script>
+
 <style lang="scss" scoped>
 .threshold-dropdown {
   background-color: var(--theme-background-100);

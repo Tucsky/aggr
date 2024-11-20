@@ -6,67 +6,71 @@
     </div>
   </transition>
 </template>
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
 
-<script>
-export default {
-  name: 'DraggableMarket',
-  props: {
-    market: {
-      type: Object
-    },
-    target: {
-      type: Object
-    }
+// Props
+const props = defineProps({
+  market: {
+    type: Object,
+    required: true
   },
-  data() {
-    return {
-      position: {
-        x: this.target.x,
-        y: this.target.y
-      }
-    }
-  },
-  computed: {
-    styles() {
-      return {
-        top: Math.round(this.position.y) + 'px',
-        left: Math.round(this.position.x) + 'px'
-      }
-    }
-  },
-  watch: {
-    target(value) {
-      if (!this.animating) {
-        this.animate(value)
-      }
-    }
-  },
-  methods: {
-    animate(target) {
-      if (target) {
-        this.animating = true
-      }
+  target: {
+    type: Object,
+    required: true
+  }
+})
 
-      const offset = {
-        x: this.target.x - this.position.x,
-        y: this.target.y - this.position.y
-      }
+// Reactive position
+const position = ref({
+  x: props.target.x,
+  y: props.target.y
+})
 
-      const distance = Math.abs(offset.x) + Math.abs(offset.y)
+// Computed styles
+const styles = computed(() => ({
+  top: Math.round(position.value.y) + 'px',
+  left: Math.round(position.value.x) + 'px'
+}))
 
-      if (distance < 1) {
-        this.animating = false
-        return
-      }
+// Animation flag
+let animating = false
 
-      this.position.x += offset.x * 0.125
-      this.position.y += offset.y * 0.125
+// Animate function
+const animate = target => {
+  if (target) {
+    animating = true
+  }
 
-      requestAnimationFrame(this.animate)
+  const offset = {
+    x: target.x - position.value.x,
+    y: target.y - position.value.y
+  }
+
+  const distance = Math.abs(offset.x) + Math.abs(offset.y)
+
+  if (distance < 1) {
+    animating = false
+    return
+  }
+
+  position.value.x += offset.x * 0.125
+  position.value.y += offset.y * 0.125
+
+  requestAnimationFrame(() => animate(target))
+}
+
+// Watch for changes in target
+watch(
+  () => props.target,
+  newValue => {
+    if (!animating) {
+      animate(newValue)
     }
   }
-}
+)
 </script>
+
 <style lang="scss">
 .draggable-market {
   pointer-events: none;

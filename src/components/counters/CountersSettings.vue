@@ -11,9 +11,7 @@
             type="checkbox"
             class="form-control"
             :checked="countersCount"
-            @change="
-              $store.commit(paneId + '/TOGGLE_COUNT', $event.target.checked)
-            "
+            @change="toggleCount"
           />
           <div on="count" off="volume"></div>
         </label>
@@ -26,7 +24,7 @@
           placeholder="Enter a set of timeframes (ie 1m, 15m)"
           class="form-control"
           :value="countersStepsStringified"
-          @change="replaceCounters($event.target.value)"
+          @change="updateCounters"
         />
       </div>
     </div>
@@ -34,12 +32,7 @@
     <div class="form-group mt8">
       <label
         class="checkbox-control -rip checkbox-control-input"
-        @change="
-          $store.commit(
-            paneId + '/TOGGLE_LIQUIDATIONS_ONLY',
-            $event.target.checked
-          )
-        "
+        @change="toggleLiquidationsOnly"
       >
         <input
           type="checkbox"
@@ -53,67 +46,63 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { computed, defineProps } from 'vue'
+import store from '@/store'
 import { ago } from '@/utils/helpers'
-import { Component, Vue } from 'vue-property-decorator'
 
-@Component({
-  name: 'CountersSettings',
-  props: {
-    paneId: {
-      type: String,
-      required: true
-    }
-  }
-})
-export default class CountersSettings extends Vue {
+// Define props
+const props = defineProps<{
   paneId: string
+}>()
 
-  get countersCount() {
-    return this.$store.state[this.paneId].count
+// Computed properties
+const countersCount = computed(() => store.state[props.paneId].count)
+const countersSteps = computed(() => store.state[props.paneId].steps)
+const liquidationsOnly = computed(
+  () => store.state[props.paneId].liquidationsOnly
+)
+const countersStepsStringified = computed(() => {
+  const now = Date.now()
+  return countersSteps.value.map((step: number) => ago(now - step)).join(', ')
+})
+
+// Event handlers
+function toggleCount(event: Event) {
+  const checked = (event.target as HTMLInputElement).checked
+  store.commit(`${props.paneId}/TOGGLE_COUNT`, checked)
+}
+
+function updateCounters(event: Event) {
+  const value = (event.target as HTMLInputElement).value
+  replaceCounters(value)
+}
+
+function toggleLiquidationsOnly(event: Event) {
+  const checked = (event.target as HTMLInputElement).checked
+  store.commit(`${props.paneId}/TOGGLE_LIQUIDATIONS_ONLY`, checked)
+}
+
+// Method to replace counters
+function replaceCounters(value: string) {
+  const counters = value
+    .split(',')
+    .map(a => {
+      a = a.trim()
+      if (/[\d.]+s/.test(a)) return parseFloat(a) * 1000
+      if (/[\d.]+h/.test(a)) return parseFloat(a) * 1000 * 60 * 60
+      return parseFloat(a) * 1000 * 60
+    })
+    .filter((item, pos, self) => self.indexOf(item) === pos)
+
+  if (counters.some(a => isNaN(a))) {
+    store.dispatch('app/showNotice', {
+      type: 'error',
+      title: `Counters (${value}) contains invalid steps.`
+    })
+    return
   }
 
-  get countersSteps() {
-    return this.$store.state[this.paneId].steps
-  }
-
-  get liquidationsOnly() {
-    return this.$store.state[this.paneId].liquidationsOnly
-  }
-
-  get countersStepsStringified() {
-    const now = Date.now()
-
-    return this.countersSteps.map(a => ago(now - a)).join(', ')
-  }
-
-  replaceCounters(value) {
-    const counters = value
-      .split(',')
-      .map(a => {
-        a = a.trim()
-
-        if (/[\d.]+s/.test(a)) {
-          return parseFloat(a) * 1000
-        } else if (/[\d.]+h/.test(a)) {
-          return parseFloat(a) * 1000 * 60 * 60
-        } else {
-          return parseFloat(a) * 1000 * 60
-        }
-      })
-      .filter(function (item, pos, self) {
-        return self.indexOf(item) == pos
-      })
-
-    if (counters.filter(a => isNaN(a)).length) {
-      this.$store.dispatch('app/showNotice', {
-        type: 'error',
-        title: `Counters (${value}) contains invalid steps.`
-      })
-      return
-    }
-
-    this.$store.commit(this.paneId + '/REPLACE_COUNTERS', counters)
-  }
+  store.commit(`${props.paneId}/REPLACE_COUNTERS`, counters)
 }
 </script>

@@ -7,31 +7,27 @@
       :min="min"
       :max="max"
       :step="step"
-      @input="$emit('input', $event)"
+      @input="emit('input', $event)"
     ></editable>
   </div>
 </template>
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-import IndicatorOptionMixin from '@/mixins/indicatorOptionMixin'
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 
-@Component({
-  name: 'IndicatorOptionNumber',
-  mixins: [IndicatorOptionMixin]
-})
-export default class IndicatorOptionNumber extends Vue {
-  private definition
+const emit = defineEmits(['input'])
 
-  get min() {
-    return this.definition.min === 'number' ? this.definition.min : null
-  }
+// Import props
+const props = defineProps(useIndicatorOptionProps)
 
-  get max() {
-    return this.definition.max === 'number' ? this.definition.max : null
-  }
-
-  get step() {
-    return this.definition.step === 'number' ? this.definition.step : null
-  }
-}
+// Use props as needed
+const min = computed(() =>
+  typeof props.definition.min === 'number' ? props.definition.min : null
+)
+const max = computed(() =>
+  typeof props.definition.max === 'number' ? props.definition.max : null
+)
+const step = computed(() =>
+  typeof props.definition.step === 'number' ? props.definition.step : null
+)
 </script>

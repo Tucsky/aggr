@@ -5,72 +5,63 @@
     :value="color"
     label="Buy color"
     @input="regenerateSwatch"
-    @click.native.stop
+    @click.stop
   />
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+<script setup lang="ts">
+import { computed } from 'vue'
+import store from '@/store'
 import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
 import { TradesPaneState } from '@/store/panesSettings/trades'
 import { joinRgba, splitColorCode } from '@/utils/colors'
 
-@Component({
-  components: {
-    ColorPickerControl
-  },
-  name: 'ThresholdColor',
-  props: {
-    paneId: {
-      type: String,
-      required: true
-    },
-    side: {
-      type: String,
-      required: true
-    },
-    type: {
-      type: String,
-      required: true
-    }
-  }
-})
-export default class ThresholdColor extends Vue {
+// Define props with types
+const props = defineProps<{
   paneId: string
-  type: 'thresholds' | 'liquidations'
   side: 'buy' | 'sell'
+  type: 'thresholds' | 'liquidations'
+}>()
 
-  get thresholds() {
-    return (this.$store.state[this.paneId] as TradesPaneState)[this.type]
+// Computed property to access thresholds from the store
+const thresholds = computed(() => {
+  return (store.state[props.paneId] as TradesPaneState)[props.type]
+})
+
+// Computed property to generate the color property name
+const name = computed(() => `${props.side}Color`)
+
+// Computed property to derive the color value
+const color = computed<string | null>(() => {
+  const value = thresholds.value[1][name.value]
+  if (!value) {
+    return null
   }
+  const colorRgb = splitColorCode(value)
+  colorRgb[3] = 1 // Ensure alpha is set to 1
+  return joinRgba(colorRgb)
+})
 
-  get name() {
-    return `${this.side}Color`
-  }
+/**
+ * Method to regenerate the swatch based on the selected color.
+ * @param {string} newColor - The new color selected by the user.
+ */
+const regenerateSwatch = async (newColor: string) => {
+  // Dispatch the generateSwatch action to the store
+  await store.dispatch(`${props.paneId}/generateSwatch`, {
+    type: props.type,
+    side: props.side,
+    baseVariance: 0.33,
+    color: newColor
+  })
 
-  get color() {
-    const value = this.thresholds[1][this.name]
-    if (!value) {
-      return null
-    }
-    const colorRgb = splitColorCode(value)
-    colorRgb[3] = 1
-    return joinRgba(colorRgb)
-  }
+  // Force refresh by deep cloning the thresholds object
+  const updatedThresholds = JSON.parse(
+    JSON.stringify(store.state[props.paneId][props.type])
+  )
+  store.state[props.paneId][props.type] = updatedThresholds
 
-  async regenerateSwatch(color) {
-    this.$store.dispatch(`${this.paneId}/generateSwatch`, {
-      type: this.type,
-      side: this.side,
-      baseVariance: 0.33,
-      color
-    })
-
-    // force refresh
-    this.$store.state[this.paneId][this.type] = JSON.parse(
-      JSON.stringify(this.$store.state[this.paneId][this.type])
-    )
-    this.$store.commit(this.paneId + '/SET_THRESHOLD_COLOR', {})
-  }
+  // Commit an empty object to trigger any watchers or reactivity
+  store.commit(`${props.paneId}/SET_THRESHOLD_COLOR`, {})
 }
 </script>

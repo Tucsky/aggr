@@ -9,7 +9,7 @@
         :min="min"
         :max="max"
         :step="step"
-        @input="$emit('input', +$event || 0)"
+        @input="onInput"
       ></editable>
       <slot name="description" />
     </label>
@@ -22,65 +22,55 @@
       :label="true"
       :value="value"
       :gradient="gradient"
-      @input="$emit('input', $event)"
-      @reset="$emit('input', definition.default ?? definition.value)"
+      @input="onInput"
+      @reset="onReset"
     />
   </div>
 </template>
-<script lang="ts">
-import { Component, Mixins } from 'vue-property-decorator'
-import IndicatorOptionMixin from '@/mixins/indicatorOptionMixin'
 
+<script setup lang="ts">
+import { computed, defineEmits, defineProps } from 'vue'
+import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 import Slider from '@/components/framework/picker/Slider.vue'
 import { countDecimals } from '@/services/productsService'
 
-@Component({
-  name: 'IndicatorOptionRange',
-  components: {
-    Slider
-  }
+// Define props and emit
+const props = defineProps(useIndicatorOptionProps)
+const emit = defineEmits(['input'])
+
+// Computed properties for range settings
+const min = computed(() =>
+  typeof props.definition.min === 'number' ? props.definition.min : 0
+)
+const max = computed(() =>
+  typeof props.definition.max === 'number' ? props.definition.max : 1
+)
+const log = computed(() => !!props.definition.log)
+const step = computed(() =>
+  typeof props.definition.step === 'number' ? props.definition.step : 0.1
+)
+const decimals = computed(() => countDecimals(step.value))
+
+// Computed for the rounded step value
+const stepRoundedValue = computed(() => {
+  return typeof props.value === 'number'
+    ? +props.value.toFixed(decimals.value)
+    : props.value
 })
-export default class IndicatorOptionRange extends Mixins(IndicatorOptionMixin) {
-  private value
-  private definition
 
-  get min() {
-    return typeof this.definition.min === 'number' ? this.definition.min : 0
-  }
+// Computed for gradient if available
+const gradient = computed(() => {
+  return Array.isArray(props.definition.gradient)
+    ? props.definition.gradient
+    : null
+})
 
-  get max() {
-    return typeof this.definition.max === 'number' ? this.definition.max : 1
-  }
-
-  get log() {
-    return !!this.definition.log
-  }
-
-  get step() {
-    return typeof this.definition.step === 'number' ? this.definition.step : 0.1
-  }
-
-  get decimals() {
-    return countDecimals(this.step)
-  }
-
-  get stepRoundedValue() {
-    if (typeof this.value !== 'number') {
-      return this.value
-    }
-
-    return +this.value.toFixed(this.decimals)
-  }
-
-  get gradient() {
-    if (!this.definition.gradient || !Array.isArray(this.definition.gradient)) {
-      return null
-    }
-
-    return this.definition.gradient
-  }
-}
+// Event handlers
+const onInput = (value: any) => emit('input', value ? +value : 0)
+const onReset = () =>
+  emit('input', props.definition.default ?? props.definition.value)
 </script>
+
 <style lang="scss" scoped>
 .indicator-option-range {
   &__value {

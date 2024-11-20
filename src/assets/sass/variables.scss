@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 $green: rgb(100, 157, 102);
 $red: rgb(239, 67, 82);
 $blue: #2196f3;
@@ -6,10 +8,10 @@ $dark: #171b29;
 $text: #111111;
 $pink: #e91e63;
 $purple: #3e2161;
-$base: desaturate(lighten($dark, 10%), 10%);
+$base: color.adjust(color.adjust($dark, $lightness: 10%), $saturation: -10%);
 $light: #d5f0e9;
-$lighter: lighten($base, 10%);
-$darker: darken($base, 10%);
+$lighter: color.adjust($base, $lightness: 10%);
+$darker: color.adjust($base, $lightness: -10%);
 
 $ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 $ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);

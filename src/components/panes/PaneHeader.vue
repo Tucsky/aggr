@@ -1,7 +1,8 @@
 <template>
   <div
+    ref="paneHeader"
     class="pane-header hide-scrollbar d-flex"
-    :class="[split && 'pane-header--split']"
+    :class="{ 'pane-header--split': split }"
     @dblclick="maximizePane"
   >
     <div
@@ -11,13 +12,13 @@
     >
       <slot name="title">
         {{ name }}
-        <btn
+        <Btn
           type="button"
-          @click="renamePane"
+          @click.stop="renamePane"
           class="pane-header__edit btn -text -small"
         >
           <i class="icon-edit"></i>
-        </btn>
+        </Btn>
       </slot>
     </div>
     <slot>
@@ -31,7 +32,7 @@
     >
       <i class="icon-search"></i>
     </button>
-    <btn
+    <Btn
       v-if="settings"
       type="button"
       @click="openSettings"
@@ -39,7 +40,7 @@
       :loading="isLoading"
     >
       <i class="icon-cog"></i>
-    </btn>
+    </Btn>
     <button
       type="button"
       @click="toggleDropdown"
@@ -48,12 +49,12 @@
       <i class="icon-more"></i>
     </button>
 
-    <dropdown v-model="paneDropdownTrigger">
+    <Dropdown v-model="paneDropdownTrigger">
       <div class="d-flex btn-group">
         <button
           type="button"
           class="btn -green"
-          @click.stop="changeZoom($event, -1)"
+          @click.stop="changeZoom(-1, $event)"
         >
           <i class="icon-minus"></i>
         </button>
@@ -67,7 +68,7 @@
         <button
           type="button"
           class="btn -green"
-          @click.stop="changeZoom($event, 1)"
+          @click.stop="changeZoom(1, $event)"
         >
           <i class="icon-plus"></i>
         </button>
@@ -96,9 +97,7 @@
             type="checkbox"
             class="form-control"
             :checked="syncedWithParent"
-            @change="
-              $store.commit('panes/TOGGLE_SYNC_WITH_PARENT_FRAME', paneId)
-            "
+            @change="toggleSyncWithParent"
           />
           <div></div>
           <span>Sync</span>
@@ -131,174 +130,186 @@
         <i class="icon-trash"></i>
         <span>Remove</span>
       </button>
-    </dropdown>
+    </Dropdown>
   </div>
 </template>
 
-<script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-
+<script setup lang="ts">
+import { ref, computed, defineProps, defineEmits } from 'vue'
+import store from '@/store'
 import Btn from '@/components/framework/Btn.vue'
+import Dropdown from '@/components/framework/Dropdown.vue'
 import { downloadAnything, getSiblings, slugify } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import { INFRAME } from '@/utils/constants'
-import { Prop } from 'vue-property-decorator'
 
-@Component({
-  name: 'PaneHeader',
-  components: {
-    Btn
+// Define props with types and defaults
+const props = withDefaults(
+  defineProps<{
+    paneId: string
+    settings?: () => Promise<any> | null
+    showSearch?: boolean
+    showName?: boolean
+    split?: boolean
+  }>(),
+  {
+    settings: null,
+    showSearch: true,
+    showName: true,
+    split: true
+  }
+)
+
+// Define emits
+const emit = defineEmits<{
+  (e: 'zoom', zoom: number): void
+}>()
+
+// References
+const paneHeader = ref<HTMLElement | null>(null)
+
+// Reactive variables
+const paneDropdownTrigger = ref<HTMLElement | null>(null)
+const isLoading = ref(false)
+const isInFrame = INFRAME
+
+// Computed properties
+const zoom = computed(() => store.state.panes.panes[props.paneId].zoom || 1)
+const type = computed(() => store.state.panes.panes[props.paneId].type)
+const syncedWithParent = computed(
+  () => store.state.panes.syncedWithParentFrame.indexOf(props.paneId) !== -1
+)
+const name = computed(() => {
+  const pane = store.state.panes.panes[props.paneId]
+  const paneName = pane.name
+  const marketKey = pane.markets[0]
+  const market = store.state.panes.marketsListeners[marketKey]
+
+  if (paneName) {
+    return paneName.trim()
+  } else if (market) {
+    return market.local
+  } else {
+    return type.value
   }
 })
-export default class PaneHeader extends Vue {
-  paneDropdownTrigger = null
-  isLoading = false
-  isInFrame = INFRAME
 
-  @Prop(String) readonly paneId: string
-  @Prop({ default: null }) readonly settings?: () => Promise<any>
-  @Prop({ default: true }) readonly showSearch: boolean
-  @Prop({ default: true }) readonly showName: boolean
-  @Prop({ default: true }) readonly split: boolean
+// Methods
+const openSearch = () => {
+  store.dispatch('app/showSearch', { paneId: props.paneId })
+}
 
-  get zoom() {
-    return this.$store.state.panes.panes[this.paneId].zoom || 1
+const changeZoom = (direction: number, event: MouseEvent) => {
+  const increment = event.shiftKey ? 0.0625 * direction : 0.125 * direction
+  const newZoom = zoom.value + increment
+  store.dispatch('panes/setZoom', { id: props.paneId, zoom: newZoom })
+
+  emit('zoom', newZoom)
+}
+
+const resetZoom = () => {
+  store.dispatch('panes/setZoom', { id: props.paneId, zoom: 1 })
+
+  emit('zoom', 1)
+}
+
+const removePane = async () => {
+  const confirmed = await dialogService.confirm(
+    `Delete pane ${type.value} "${name.value}" ?`
+  )
+  if (confirmed) {
+    store.dispatch('panes/removePane', props.paneId)
+  }
+}
+
+const duplicatePane = () => {
+  store.dispatch('panes/duplicatePane', props.paneId)
+}
+
+const maximizePane = (event: MouseEvent) => {
+  if (event.type === 'dblclick' && event.currentTarget !== event.target) {
+    return
   }
 
-  get type() {
-    return this.$store.state.panes.panes[this.paneId].type
-  }
+  if (!paneHeader.value) return
 
-  get syncedWithParent() {
-    return (
-      this.$store.state.panes.syncedWithParentFrame.indexOf(this.paneId) !== -1
-    )
-  }
+  const el = paneHeader.value.parentElement?.parentElement
+  if (!el) return
 
-  get name() {
-    const name = this.$store.state.panes.panes[this.paneId].name
-    const market =
-      this.$store.state.panes.marketsListeners[
-        this.$store.state.panes.panes[this.paneId].markets[0]
-      ]
+  const isMaximized = el.classList.toggle('-maximized')
 
-    if (name) {
-      return name.trim()
-    } else if (market) {
-      return market.local
-    } else {
-      return this.type
+  const siblings = getSiblings(el)
+
+  for (const sibling of siblings) {
+    if (!sibling.getAttribute('type')) {
+      continue
     }
+    sibling.classList.remove('-maximized')
+    sibling.style.display = isMaximized ? 'none' : 'block'
   }
 
-  openSearch() {
-    this.$store.dispatch('app/showSearch', { paneId: this.paneId })
+  window.dispatchEvent(new Event('resize'))
+
+  const updatedZoom = isMaximized ? zoom.value * 1.5 : zoom.value * (2 / 3)
+  store.dispatch('panes/setZoom', { id: props.paneId, zoom: updatedZoom })
+
+  emit('zoom', updatedZoom)
+}
+
+const renamePane = async (event?: MouseEvent) => {
+  if (event) {
+    event.stopPropagation()
   }
 
-  changeZoom(event, direction) {
-    const zoom = this.zoom + (event.shiftKey ? 0.0625 : 0.125) * direction
-    this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: zoom })
+  const newName = await dialogService.prompt({
+    placeholder: `Main pane's market`,
+    action: 'Rename',
+    input: name.value
+  })
 
-    this.$emit('zoom', zoom)
+  if (typeof newName === 'string' && newName !== name.value) {
+    store.commit('panes/SET_PANE_NAME', { id: props.paneId, name: newName })
+  }
+}
+
+const downloadPane = () => {
+  const id = `${type.value}:${props.paneId}`
+  const paneState = store.state.panes.panes[props.paneId]
+  downloadAnything(
+    {
+      name: id,
+      type: type.value,
+      data: paneState,
+      markets: paneState.markets,
+      createdAt: Date.now(),
+      updatedAt: null
+    },
+    slugify(`${type.value} ${name.value}`)
+  )
+}
+
+const toggleDropdown = (event: MouseEvent) => {
+  if (paneDropdownTrigger.value) {
+    paneDropdownTrigger.value = null
+  } else {
+    paneDropdownTrigger.value = event.currentTarget as HTMLElement
+  }
+}
+
+const openSettings = async () => {
+  if (!props.settings) {
+    return
   }
 
-  resetZoom() {
-    this.$store.dispatch('panes/setZoom', { id: this.paneId, zoom: 1 })
+  isLoading.value = true
+  const settingsComponent = (await props.settings()).default
+  dialogService.open(settingsComponent, {
+    paneId: props.paneId
+  })
+  isLoading.value = false
+}
 
-    this.$emit('zoom', 1)
-  }
-
-  async removePane() {
-    if (
-      await dialogService.confirm(`Delete pane ${this.type} "${this.name}" ?`)
-    ) {
-      this.$store.dispatch('panes/removePane', this.paneId)
-    }
-  }
-
-  duplicatePane() {
-    this.$store.dispatch('panes/duplicatePane', this.paneId)
-  }
-
-  maximizePane(event) {
-    if (event.type === 'dblclick' && event.currentTarget !== event.target) {
-      return
-    }
-
-    const el = this.$el.parentElement.parentElement
-    const isMaximized = el.classList.toggle('-maximized')
-
-    const siblings = getSiblings(el)
-
-    for (const sibling of siblings) {
-      if (!sibling.getAttribute('type')) {
-        continue
-      }
-      sibling.classList.remove('-maximized')
-      sibling.style.display = isMaximized ? 'none' : 'block'
-    }
-
-    const cls = Event as any
-
-    window.dispatchEvent(new cls('resize'))
-
-    this.$store.dispatch('panes/setZoom', {
-      id: this.paneId,
-      zoom: isMaximized ? this.zoom * 1.5 : this.zoom * (2 / 3)
-    })
-  }
-
-  async renamePane(event) {
-    if (event) {
-      event.stopPropagation()
-    }
-
-    const name = await dialogService.prompt({
-      placeholder: `Main pane's market`,
-      action: 'Rename',
-      input: this.name
-    })
-
-    if (typeof name === 'string' && name !== this.name) {
-      this.$store.commit('panes/SET_PANE_NAME', { id: this.paneId, name: name })
-    }
-  }
-
-  async downloadPane() {
-    const id = `${this.type}:${this.paneId}`
-
-    downloadAnything(
-      {
-        name: id,
-        type: this.type,
-        data: this.$store.state[this.paneId],
-        markets: this.$store.state.panes.panes[this.paneId].markets,
-        createdAt: Date.now(),
-        updatedAt: null
-      },
-      slugify(`${this.type} ${this.name}`)
-    )
-  }
-
-  toggleDropdown(event) {
-    if (this.paneDropdownTrigger) {
-      this.paneDropdownTrigger = null
-    } else {
-      this.paneDropdownTrigger = event.currentTarget
-    }
-  }
-
-  async openSettings() {
-    if (!this.settings) {
-      return
-    }
-
-    this.isLoading = true
-    dialogService.open((await this.settings()).default, {
-      paneId: this.paneId
-    })
-    this.isLoading = false
-  }
+const toggleSyncWithParent = () => {
+  store.commit('panes/TOGGLE_SYNC_WITH_PARENT_FRAME', props.paneId)
 }
 </script>

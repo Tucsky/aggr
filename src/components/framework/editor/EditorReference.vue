@@ -29,154 +29,148 @@
     ></div>
   </dropdown>
 </template>
-
-<script>
+<script setup lang="ts">
+import { ref, defineProps, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { marked } from 'marked'
 import { editor } from 'monaco-editor/esm/vs/editor/editor.api'
 import { getEventCords } from '@/utils/helpers'
 
-export default {
-  name: 'EditorReference',
-  props: {
-    token: {
-      type: String,
-      required: true
-    },
-    coordinates: {
-      type: Object,
-      required: true
-    },
-    content: {
-      type: String,
-      required: true
-    }
+// Define props
+const props = defineProps({
+  token: {
+    type: String,
+    required: true
   },
-  data() {
-    return {
-      dropdownTrigger: null,
-      markupContent: ''
-    }
+  coordinates: {
+    type: Object,
+    required: true
   },
-  async mounted() {
-    this.monacoInstances = []
-    this.dropdownTrigger = this.coordinates
-    this.markupContent = marked(this.content)
+  content: {
+    type: String,
+    required: true
+  }
+})
 
-    await this.$nextTick()
+const emit = defineEmits(['closed'])
 
-    this.attachMonaco()
-  },
-  methods: {
-    attachMonaco() {
-      const elements = this.$refs.markdown.querySelectorAll('code')
+// Reactive state
+const dropdownTrigger = ref(props.coordinates)
+const markupContent = ref('')
+const monacoInstances = ref<any[]>([])
+const dragging = ref<{ x: number; y: number } | null>(null)
 
-      for (const code of elements) {
-        const content = code.innerText.replace(/\n$/, '')
-        const lines = content.split('\n')
+// Lifecycle hook
+onMounted(async () => {
+  markupContent.value = marked(props.content)
+  await nextTick()
+  attachMonaco()
+})
 
-        if (content.length > 64) {
-          code.classList.add('-monaco')
-          code.style.display = 'block'
-          code.style.width = '100%'
-          code.style.minWidth = '250px'
-          code.style.height = lines.length * 18 + 'px'
-          code.innerHTML = ''
-          this.monacoInstances.push(
-            editor.create(code, {
-              value: content,
-              language: 'javascript',
-              theme: 'aggr',
-              readOnly: true,
-              minimap: {
-                enabled: false
-              },
-              scrollbar: {
-                alwaysConsumeMouseWheel: false
-              },
-              automaticLayout: false,
-              wordBreak: 'on',
-              glyphMargin: false,
-              lineNumbers: 'off',
-              tabSize: 2,
-              contextmenu: false,
-              insertSpaces: true,
-              lineDecorationsWidth: 4,
-              renderLineHighlight: 'none',
-              scrollBeyondLastLine: false,
-              folding: false,
-              renderWhitespace: 'none',
-              overviewRulerBorder: false,
-              guides: {
-                highlightActiveIndentation: false,
-                bracketPairsHorizontal: false,
-                indentation: false
-              }
-            })
-          )
-        } else {
-          code.classList.add('-filled')
-        }
-      }
-    },
+// Cleanup on unmount
+onBeforeUnmount(() => {
+  detachMonaco()
+})
 
-    detachMonaco() {
-      for (let i = 0; i < this.monacoInstances.length; i++) {
-        this.monacoInstances[i].dispose()
-        this.monacoInstances.splice(i--, 1)
-      }
-    },
+// Methods
+function attachMonaco() {
+  const elements =
+    (document.querySelectorAll('.markdown code') as NodeListOf<HTMLElement>) ||
+    []
 
-    beforeDestroy() {
-      this.detachMonaco()
-    },
+  elements.forEach(code => {
+    const content = code.innerText.replace(/\n$/, '')
+    const lines = content.split('\n')
 
-    bindDragMove(event) {
-      if (event.button === 2 || this.dragging) {
-        return
-      }
+    if (content.length > 64) {
+      code.classList.add('-monaco')
+      code.style.display = 'block'
+      code.style.width = '100%'
+      code.style.minWidth = '250px'
+      code.style.height = `${lines.length * 18}px`
+      code.innerHTML = ''
 
-      document.addEventListener('mousemove', this.handleDragMove)
-      document.addEventListener('mouseup', this.unbindDragMove)
-      document.addEventListener('touchmove', this.handleDragMove)
-      document.addEventListener('touchend', this.unbindDragMove)
-
-      const { x, y } = getEventCords(event)
-      this.dragging = {
-        x,
-        y
-      }
-    },
-
-    unbindDragMove() {
-      if (!this.dragging) {
-        return
-      }
-
-      document.removeEventListener('mousemove', this.handleDragMove)
-      document.removeEventListener('mouseup', this.unbindDragMove)
-      document.removeEventListener('touchmove', this.handleDragMove)
-      document.removeEventListener('touchend', this.unbindDragMove)
-
-      this.dragging = null
-    },
-
-    handleDragMove(event) {
-      const { x, y } = getEventCords(event)
-
-      this.$refs.dropdown.top += y - this.dragging.y
-      this.$refs.dropdown.left += x - this.dragging.x
-
-      this.dragging.x = x
-      this.dragging.y = y
-    },
-
-    onReferenceDropdownClose() {
-      this.unbindDragMove()
-      this.detachMonaco()
+      monacoInstances.value.push(
+        editor.create(code, {
+          value: content,
+          language: 'javascript',
+          theme: 'aggr',
+          readOnly: true,
+          minimap: { enabled: false },
+          scrollbar: { alwaysConsumeMouseWheel: false },
+          automaticLayout: false,
+          glyphMargin: false,
+          lineNumbers: 'off',
+          tabSize: 2,
+          contextmenu: false,
+          insertSpaces: true,
+          lineDecorationsWidth: 4,
+          renderLineHighlight: 'none',
+          scrollBeyondLastLine: false,
+          folding: false,
+          renderWhitespace: 'none',
+          overviewRulerBorder: false,
+          guides: {
+            highlightActiveIndentation: false,
+            bracketPairsHorizontal: false,
+            indentation: false
+          }
+        })
+      )
+    } else {
+      code.classList.add('-filled')
     }
+  })
+}
+
+function detachMonaco() {
+  monacoInstances.value.forEach(instance => instance.dispose())
+  monacoInstances.value = []
+}
+
+function bindDragMove(event: MouseEvent | TouchEvent) {
+  if ((event instanceof MouseEvent && event.button === 2) || dragging.value)
+    return
+
+  document.addEventListener('mousemove', handleDragMove)
+  document.addEventListener('mouseup', unbindDragMove)
+  document.addEventListener('touchmove', handleDragMove)
+  document.addEventListener('touchend', unbindDragMove)
+
+  const { x, y } = getEventCords(event)
+  dragging.value = { x, y }
+}
+
+function unbindDragMove() {
+  if (!dragging.value) return
+
+  document.removeEventListener('mousemove', handleDragMove)
+  document.removeEventListener('mouseup', unbindDragMove)
+  document.removeEventListener('touchmove', handleDragMove)
+  document.removeEventListener('touchend', unbindDragMove)
+
+  dragging.value = null
+}
+
+function handleDragMove(event: MouseEvent | TouchEvent) {
+  const { x, y } = getEventCords(event)
+
+  const dropdown = document.querySelector('.dropdown') as HTMLElement
+  if (dropdown) {
+    dropdown.style.top = `${dropdown.offsetTop + (y - dragging.value.y)}px`
+    dropdown.style.left = `${dropdown.offsetLeft + (x - dragging.value.x)}px`
+
+    dragging.value = { x, y }
   }
 }
+
+function onReferenceDropdownClose() {
+  unbindDragMove()
+  detachMonaco()
+
+  emit('closed')
+}
 </script>
+
 <style lang="scss">
 .editor-reference {
   &__content {

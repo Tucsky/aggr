@@ -1,8 +1,10 @@
+@use '@/assets/sass/variables.scss' as vars;
+
 .badge {
   display: inline-flex;
   align-items: center;
   text-transform: uppercase;
-  font-family: $font-condensed;
+  font-family: vars.$font-condensed;
   font-size: 0.75em;
   padding: 0.25em;
   border-radius: 4px;

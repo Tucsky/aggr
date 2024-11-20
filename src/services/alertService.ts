@@ -18,6 +18,7 @@ export interface MarketAlerts {
 }
 
 export interface MarketAlert {
+  id?: string
   price: number
   market: string
   message?: string

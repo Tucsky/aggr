@@ -25,99 +25,97 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Threshold } from '@/store/panesSettings/trades'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import store from '@/store'
 import { formatAmount, stripStablePair } from '@/services/productsService'
-import { Component, Vue } from 'vue-property-decorator'
+import type { Threshold } from '@/store/panesSettings/trades'
 
-@Component({
-  name: 'TradesPlaceholder',
-  props: {
-    paneId: {
-      type: String,
-      required: true
+// Define props with types
+const props = defineProps<{
+  paneId: string
+}>()
+
+// Reactive state for showing more or less
+const showMore = ref(false)
+
+// Computed property to check if exchanges are ready
+const exchangesReady = computed(() => {
+  return store.state.app.isExchangesReady
+})
+
+// Computed property to get paneMarkets from the store
+const paneMarkets = computed(() => {
+  return store.state.panes.panes[props.paneId].markets
+})
+
+// Computed property to stringify paneMarkets
+const paneMarketStringified = computed(() => {
+  return paneMarkets.value.join('\n')
+})
+
+// Computed property to derive unique pairs
+const pairs = computed(() => {
+  const mergeUsdt = store.state.settings.searchTypes.mergeUsdt
+  const uniquePairs: string[] = []
+
+  paneMarkets.value.forEach((marketKey: string) => {
+    const market = store.state.panes.marketsListeners[marketKey]
+    let localPair = market ? market.local : marketKey
+
+    if (mergeUsdt) {
+      localPair = stripStablePair(localPair)
     }
+
+    if (!uniquePairs.includes(localPair)) {
+      uniquePairs.push(localPair)
+    }
+  })
+
+  return uniquePairs
+})
+
+// Computed properties to get thresholds and display settings
+const tradesThresholds = computed<Threshold[]>(() => {
+  return store.state[props.paneId].thresholds
+})
+
+const liquidationsThresholds = computed<Threshold[]>(() => {
+  return store.state[props.paneId].liquidations
+})
+
+const showTrades = computed(() => {
+  return store.state[props.paneId].showTrades
+})
+
+const showLiquidations = computed(() => {
+  return store.state[props.paneId].showLiquidations
+})
+
+// Computed property to generate the filter recap message
+const filterRecap = computed(() => {
+  const minimumTradeAmount = tradesThresholds.value[0]?.amount || 0
+  const minimumLiquidationAmount = liquidationsThresholds.value[0]?.amount || 0
+
+  if (showTrades.value && showLiquidations.value) {
+    return `Waiting for trades > ${formatAmount(minimumTradeAmount)} or liquidations > ${formatAmount(minimumLiquidationAmount)}`
+  } else if (showTrades.value) {
+    return `Waiting for trades > ${formatAmount(minimumTradeAmount)}`
+  } else if (showLiquidations.value) {
+    return `Waiting for liquidations > ${formatAmount(minimumLiquidationAmount)}`
+  } else {
+    return 'Nothing to show, see settings'
   }
 })
-export default class TradesPlaceholder extends Vue {
-  paneId: string
-  showMore = false
 
-  get exchangesReady() {
-    return this.$store.state.app.isExchangesReady
-  }
+// Method to toggle the showMore state
+const toggleShowMore = () => {
+  showMore.value = !showMore.value
 
-  get paneMarkets() {
-    return this.$store.state.panes.panes[this.paneId].markets
-  }
+  const focusedElement = document.activeElement as HTMLElement
 
-  get paneMarketStringified() {
-    return this.paneMarkets.join('\n')
-  }
-
-  get pairs() {
-    const mergeUsdt = this.$store.state.settings.searchTypes.mergeUsdt
-
-    return this.paneMarkets.reduce((pairs, marketKey) => {
-      const market = this.$store.state.panes.marketsListeners[marketKey]
-
-      let localPair = market ? market.local : marketKey
-
-      if (mergeUsdt) {
-        localPair = stripStablePair(localPair)
-      }
-
-      if (pairs.indexOf(localPair) === -1) {
-        pairs.push(localPair)
-      }
-
-      return pairs
-    }, [])
-  }
-
-  get tradesThresholds(): Threshold[] {
-    return this.$store.state[this.paneId].thresholds
-  }
-
-  get liquidationsThresholds(): Threshold[] {
-    return this.$store.state[this.paneId].liquidations
-  }
-
-  get showTrades() {
-    return this.$store.state[this.paneId].showTrades
-  }
-
-  get showLiquidations() {
-    return this.$store.state[this.paneId].showLiquidations
-  }
-
-  get filterRecap() {
-    const minimumTradeAmount = this.tradesThresholds[0].amount
-    const minimumLiquidationAmount = this.liquidationsThresholds[0].amount
-
-    if (this.showTrades && this.showLiquidations) {
-      return `Waiting for trades > ${formatAmount(
-        minimumTradeAmount
-      )} or liquidations > ${formatAmount(minimumLiquidationAmount)}`
-    } else if (this.showTrades) {
-      return `Waiting for trades > ${formatAmount(minimumTradeAmount)}`
-    } else if (this.showLiquidations) {
-      return `Waiting for liquidations > ${formatAmount(
-        minimumLiquidationAmount
-      )}`
-    } else {
-      return 'Nothing to show, see settings'
-    }
-  }
-
-  toggleShowMore() {
-    this.showMore = !this.showMore
-
-    const focusedElement = document.activeElement as HTMLElement
-
-    if (focusedElement) {
-      focusedElement.blur()
-    }
+  if (focusedElement) {
+    focusedElement.blur()
   }
 }
 </script>

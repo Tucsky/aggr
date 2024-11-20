@@ -24,7 +24,7 @@
         </code>
         <dropdown-button
           :options="modes"
-          v-model="priceScale.mode"
+          :value="priceScale.mode"
           placeholder="linear"
           @input="updateMode($event)"
           button-class="badge -outline"
@@ -51,222 +51,213 @@
     ></div>
   </div>
 </template>
-
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-
-import { PriceScaleSettings } from '@/store/panesSettings/chart'
-import { getEventCords, randomString } from '@/utils/helpers'
+<script lang="ts" setup>
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import store from '@/store' // Rule #11
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 
-@Component({
-  name: 'ChartPriceScale',
-  components: {
-    DropdownButton
-  },
-  props: {
-    paneId: {
-      required: true
-    },
-    priceScaleId: {
-      required: true
-    },
-    priceScale: {
-      required: true
-    }
-  },
-  watch: {
-    'priceScale.scaleMargins.top': function () {
-      if (!this.currentMoveId) {
-        this.getSize()
-      }
-    },
-    'priceScale.scaleMargins.bottom': function () {
-      if (!this.currentMoveId) {
-        this.getSize()
-      }
-    }
-  }
-})
-export default class PriceScale extends Vue {
+import { getEventCords, randomString } from '@/utils/helpers'
+
+// Props
+const props = defineProps<{
   paneId: string
   priceScaleId: string
-  priceScale: PriceScaleSettings
+  priceScale: any
+}>()
 
-  top: number = null
-  bottom: number = null
-  roundedTop: number = null
-  roundedBottom: number = null
+// Emits
+const emit = defineEmits(['update'])
 
-  currentMoveId: string = null
-  currentSide: 'top' | 'bottom' | 'both' = null
-  currentOrigin: number = null
-  currentContainerHeight: number = null
+// Refs (data properties)
+const top = ref<number | null>(null)
+const bottom = ref<number | null>(null)
+const roundedTop = ref<number | null>(null)
+const roundedBottom = ref<number | null>(null)
 
-  modes = {
-    0: 'Linear',
-    1: 'Logarithimic',
-    2: 'Percent',
-    3: 'Indexed to 100'
-  }
+const currentMoveId = ref<string | null>(null)
+const currentSide = ref<'top' | 'bottom' | 'both' | null>(null)
+const currentOrigin = ref<number | null>(null)
+const currentContainerHeight = ref<number | null>(null)
 
-  created() {
-    this.getSize()
-  }
-
-  beforeDestroy() {
-    this.release()
-  }
-
-  getSize() {
-    this.roundedTop = this.top = this.priceScale.scaleMargins.top * 100
-    this.roundedBottom = this.bottom = this.priceScale.scaleMargins.bottom * 100
-  }
-
-  handleResize(event: MouseEvent | TouchEvent, side: 'top' | 'bottom') {
-    if (this.currentMoveId) {
-      this.release()
-
-      return
-    }
-
-    this.start(side, getEventCords(event).y)
-
-    document.addEventListener('mousemove', this.resize)
-    document.addEventListener('mouseup', this.release)
-    document.addEventListener('touchmove', this.resize)
-    document.addEventListener('touchend', this.release)
-  }
-
-  resize(event: MouseEvent | TouchEvent) {
-    const percentMove = this.getPercentMove(event)
-
-    if (!percentMove) {
-      return
-    }
-
-    this[this.currentSide] +=
-      percentMove * (this.currentSide === 'top' ? 1 : -1)
-
-    this.updateScaleMargins(event)
-  }
-
-  handleMove(event: MouseEvent | TouchEvent) {
-    if (this.currentMoveId) {
-      this.release()
-
-      return
-    }
-
-    this.start('both', getEventCords(event).y)
-
-    document.addEventListener('mousemove', this.move)
-    document.addEventListener('mouseup', this.release)
-    document.addEventListener('touchmove', this.move)
-    document.addEventListener('touchend', this.release)
-  }
-
-  move(event: MouseEvent | TouchEvent) {
-    const percentMove = this.getPercentMove(event)
-
-    if (!percentMove) {
-      return
-    }
-
-    this.top += percentMove
-    this.bottom -= percentMove
-
-    this.updateScaleMargins(event)
-  }
-
-  release() {
-    if (!this.currentSide) {
-      return
-    }
-
-    if (this.currentSide !== 'both') {
-      document.removeEventListener('mousemove', this.resize)
-      document.removeEventListener('touchmove', this.resize)
-    } else {
-      document.removeEventListener('mousemove', this.move)
-      document.removeEventListener('touchmove', this.move)
-    }
-
-    document.removeEventListener('mouseup', this.release)
-    document.removeEventListener('touchend', this.release)
-
-    this.currentMoveId = null
-    this.currentSide = null
-
-    this.top = this.roundedTop
-    this.bottom = this.roundedBottom
-  }
-
-  updateScaleMargins(event) {
-    const top = Math.round(this.top)
-    const bottom = Math.round(this.bottom)
-
-    this.roundedTop = Math.max(0, Math.min(100 - bottom, top))
-    this.roundedBottom = Math.max(0, Math.min(bottom, 100 - top))
-
-    const scaleMargins = {
-      top: this.roundedTop / 100,
-      bottom: this.roundedBottom / 100
-    }
-
-    if (
-      this.priceScale.scaleMargins.top === scaleMargins.top &&
-      this.priceScale.scaleMargins.bottom === scaleMargins.bottom
-    ) {
-      return
-    }
-
-    this.$emit('update', {
-      id: this.currentMoveId,
-      side: this.currentSide,
-      value: scaleMargins,
-      syncable: event.type !== 'touchmove' && !event.shiftKey
-    })
-  }
-
-  updateMode(mode) {
-    this.priceScale.mode = +mode
-
-    this.$store.commit(this.paneId + '/SET_PRICE_SCALE', {
-      id: this.priceScaleId,
-      priceScale: this.priceScale
-    })
-  }
-
-  getContainerHeight() {
-    const height = parseFloat(this.$el.parentElement.clientHeight as any)
-
-    return height
-  }
-
-  getPercentMove(event) {
-    const currentPosition = getEventCords(event)
-
-    const percent =
-      ((currentPosition.y - this.currentOrigin) / this.currentContainerHeight) *
-      100
-
-    if (!percent) {
-      return null
-    }
-
-    this.currentOrigin = currentPosition.y
-
-    return percent
-  }
-
-  start(side: 'top' | 'bottom' | 'both', origin: number) {
-    this.currentMoveId = randomString(8)
-    this.currentSide = side
-    this.currentOrigin = origin
-    this.currentContainerHeight = this.getContainerHeight()
-  }
+const modes = {
+  0: 'Linear',
+  1: 'Logarithimic',
+  2: 'Percent',
+  3: 'Indexed to 100'
 }
+
+// Watchers
+watch(
+  () => props.priceScale.scaleMargins.top,
+  () => {
+    if (!currentMoveId.value) {
+      getSize()
+    }
+  }
+)
+
+watch(
+  () => props.priceScale.scaleMargins.bottom,
+  () => {
+    if (!currentMoveId.value) {
+      getSize()
+    }
+  }
+)
+
+// Methods
+const getSize = () => {
+  roundedTop.value = top.value = props.priceScale.scaleMargins.top * 100
+  roundedBottom.value = bottom.value =
+    props.priceScale.scaleMargins.bottom * 100
+}
+
+const handleResize = (
+  event: MouseEvent | TouchEvent,
+  side: 'top' | 'bottom'
+) => {
+  if (currentMoveId.value) {
+    release()
+    return
+  }
+
+  start(side, getEventCords(event).y)
+
+  document.addEventListener('mousemove', resize)
+  document.addEventListener('mouseup', release)
+  document.addEventListener('touchmove', resize)
+  document.addEventListener('touchend', release)
+}
+
+const resize = (event: MouseEvent | TouchEvent) => {
+  const percentMove = getPercentMove(event)
+  if (!percentMove) return
+
+  if (currentSide.value === 'top') {
+    top.value += percentMove
+  } else if (currentSide.value === 'bottom') {
+    bottom.value -= percentMove
+  }
+
+  updateScaleMargins(event)
+}
+
+const handleMove = (event: MouseEvent | TouchEvent) => {
+  if (currentMoveId.value) {
+    release()
+    return
+  }
+
+  start('both', getEventCords(event).y)
+
+  document.addEventListener('mousemove', move)
+  document.addEventListener('mouseup', release)
+  document.addEventListener('touchmove', move)
+  document.addEventListener('touchend', release)
+}
+
+const move = (event: MouseEvent | TouchEvent) => {
+  const percentMove = getPercentMove(event)
+  if (!percentMove) return
+
+  top.value += percentMove
+  bottom.value -= percentMove
+
+  updateScaleMargins(event)
+}
+
+const release = () => {
+  if (!currentSide.value) return
+
+  if (currentSide.value !== 'both') {
+    document.removeEventListener('mousemove', resize)
+    document.removeEventListener('touchmove', resize)
+  } else {
+    document.removeEventListener('mousemove', move)
+    document.removeEventListener('touchmove', move)
+  }
+
+  document.removeEventListener('mouseup', release)
+  document.removeEventListener('touchend', release)
+
+  currentMoveId.value = null
+  currentSide.value = null
+
+  top.value = roundedTop.value
+  bottom.value = roundedBottom.value
+}
+
+const updateScaleMargins = (event: MouseEvent | TouchEvent) => {
+  const newTop = Math.round(top.value)
+  const newBottom = Math.round(bottom.value)
+
+  roundedTop.value = Math.max(0, Math.min(100 - newBottom, newTop))
+  roundedBottom.value = Math.max(0, Math.min(newBottom, 100 - newTop))
+
+  const scaleMargins = {
+    top: roundedTop.value / 100,
+    bottom: roundedBottom.value / 100
+  }
+
+  if (
+    props.priceScale.scaleMargins.top === scaleMargins.top &&
+    props.priceScale.scaleMargins.bottom === scaleMargins.bottom
+  ) {
+    return
+  }
+
+  emit('update', {
+    id: currentMoveId.value,
+    side: currentSide.value,
+    value: scaleMargins,
+    syncable: event.type !== 'touchmove' && !event.shiftKey
+  })
+}
+
+const updateMode = (mode: number) => {
+  store.commit(`${props.paneId}/SET_PRICE_SCALE`, {
+    id: props.priceScaleId,
+    priceScale: {
+      ...props.priceScale,
+      mode
+    }
+  })
+}
+
+const getContainerHeight = () => {
+  return parseFloat(
+    (document.querySelector(`#${props.paneId}`) as HTMLElement)
+      ?.clientHeight as any
+  )
+}
+
+const getPercentMove = (event: MouseEvent | TouchEvent) => {
+  const currentPosition = getEventCords(event)
+  const percent =
+    ((currentPosition.y - currentOrigin.value) / currentContainerHeight.value) *
+    100
+
+  if (!percent) return null
+
+  currentOrigin.value = currentPosition.y
+  return percent
+}
+
+const start = (side: 'top' | 'bottom' | 'both', origin: number) => {
+  currentMoveId.value = randomString(8)
+  currentSide.value = side
+  currentOrigin.value = origin
+  currentContainerHeight.value = getContainerHeight()
+}
+
+// Lifecycle hooks
+onMounted(() => {
+  getSize()
+})
+
+onBeforeUnmount(() => {
+  release()
+})
 </script>
 
 <style lang="scss">
@@ -303,7 +294,7 @@ export default class PriceScale extends Vue {
     &:before {
       content: '';
       position: absolute;
-      border-top: 1px solid var(--theme-background-200);
+      border-top: 2px solid var(--theme-background-200);
       width: 100%;
       margin: 0.5em 0;
     }

@@ -12,20 +12,20 @@ import { getMarketProduct, parseMarket } from '../services/productsService'
 import { GridItem, GridSpace, findOrCreateSpace } from '@/utils/grid'
 import dialogService from '@/services/dialogService'
 
-enum StaticPaneType {
+enum StaticPaneTypeEnum {
   website = 'website',
   alerts = 'alerts'
 }
 
-export enum PaneType {
-  trades = 'trades',
-  chart = 'chart',
-  stats = 'stats',
-  counters = 'counters',
-  prices = 'prices',
-  website = 'website',
-  alerts = 'alerts',
-  'trades-list' = 'trades-lite'
+export enum PaneTypeEnum {
+  TRADES = 'trades',
+  TRADESLITE = 'trades-lite',
+  CHART = 'chart',
+  STATS = 'stats',
+  COUNTERS = 'counters',
+  PRICES = 'prices',
+  WEBSITE = 'website',
+  ALERTS = 'alerts'
 }
 
 export type MarketsListeners = { [market: string]: ListenedProduct }
@@ -133,7 +133,7 @@ const actions = {
       zoom: options.zoom,
       settings: options.settings,
       markets:
-        options.type in StaticPaneType
+        options.type in StaticPaneTypeEnum
           ? []
           : options.markets || Object.keys(state.marketsListeners)
     }
@@ -308,7 +308,7 @@ const actions = {
     { dispatch, state },
     { id, markets }: { id: string; markets: string[] }
   ) {
-    if (state.panes[id].type in StaticPaneType) {
+    if (state.panes[id].type in StaticPaneTypeEnum) {
       return dispatch('refreshMarketsListeners', { id, markets: [] })
     }
 

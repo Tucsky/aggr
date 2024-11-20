@@ -764,7 +764,7 @@ class Aggregator {
     }
     this['_aggrInterval'] = self.setInterval(
       this.emitPendingTrades.bind(this),
-      Math.max(settings.aggregationLength, 50)
+      50
     )
   }
 

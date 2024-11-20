@@ -1,3 +1,5 @@
+@use '@/assets/sass/variables.scss' as vars;
+
 .icon-currency,
 .icon-quote,
 .icon-base {
@@ -7,20 +9,20 @@
 
 #app {
   .icon-currency:before {
-    content: $icon-dollar;
+    content: vars.$icon-dollar;
   }
 
   .icon-quote:before {
-    content: $icon-dollar;
+    content: vars.$icon-dollar;
   }
 
   .icon-base:before {
-    content: $icon-coin;
+    content: vars.$icon-coin;
   }
 
   &[data-prefered-sizing-currency='base'] {
     .icon-currency:before {
-      content: $icon-coin;
+      content: vars.$icon-coin;
     }
   }
 }

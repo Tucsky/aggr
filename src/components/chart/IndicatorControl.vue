@@ -43,75 +43,63 @@
     </div>
   </div>
 </template>
+<script lang="ts" setup>
+import { computed } from 'vue'
+import store from '@/store' // Rule #11
 
-<script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
-
-@Component({
-  name: 'IndicatorControl',
-  props: {
-    paneId: {
-      required: true
-    },
-    indicatorId: {
-      required: true
-    }
+// Props
+const props = defineProps({
+  paneId: {
+    type: String,
+    required: true
+  },
+  indicatorId: {
+    type: String,
+    required: true
   }
 })
-export default class IndicatorControl extends Vue {
-  private paneId: string
-  private indicatorId: string
 
-  get indicator() {
-    return this.$store.state[this.paneId].indicators[this.indicatorId]
+// Emits
+const emit = defineEmits(['action'])
+
+// Computed properties
+const indicator = computed(
+  () => store.state[props.paneId].indicators[props.indicatorId]
+)
+
+const name = computed(() => {
+  if (indicator.value.displayName) {
+    return indicator.value.displayName
+  } else if (indicator.value.name) {
+    return indicator.value.name
+  } else {
+    return props.indicatorId
   }
-  get showLegend() {
-    return this.$store.state[this.paneId].showLegend
-  }
+})
 
-  get name() {
-    if (this.indicator.displayName) {
-      return this.indicator.displayName
-    } else if (this.indicator.name) {
-      return this.indicator.name
-    } else {
-      return this.indicatorId
-    }
-  }
+const visible = computed(() => {
+  return !indicator.value.options ||
+    typeof indicator.value.options.visible === 'undefined'
+    ? true
+    : indicator.value.options.visible
+})
 
-  get visible() {
-    return !this.indicator.options ||
-      typeof this.indicator.options.visible === 'undefined'
-      ? true
-      : this.indicator.options.visible
-  }
+const error = computed(
+  () => store.state[props.paneId].indicatorsErrors[props.indicatorId]
+)
 
-  get error() {
-    return this.$store.state[this.paneId].indicatorsErrors[this.indicatorId]
-  }
-
-  onClick(event) {
-    if (event.shiftKey) {
-      this.$emit('action', {
-        actionName: 'resize',
-        indicatorId: this.indicatorId
-      })
-
-      return
-    }
-
-    this.$emit('action', { indicatorId: this.indicatorId })
+// Methods
+const onClick = (event: MouseEvent) => {
+  if (event.shiftKey) {
+    emit('action', { actionName: 'resize', indicatorId: props.indicatorId })
+    return
   }
 
-  toggleVisibility() {
-    this.$nextTick(() => {
-      this.$store.dispatch(
-        this.paneId + '/toggleSerieVisibility',
-        this.indicatorId
-      )
-    })
-  }
+  emit('action', { indicatorId: props.indicatorId })
+}
+
+const toggleVisibility = () => {
+  store.dispatch(`${props.paneId}/toggleSerieVisibility`, props.indicatorId)
 }
 </script>
 
