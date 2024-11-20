@@ -54,9 +54,9 @@
       </template>
       <template v-slot:control>
         <Btn
-          ref="clearBtns"
+          ref="clearBtnRef"
           class="-text mr16"
-          @click="clearAlerts(index, $refs.clearBtns[cursor])"
+          @click="clearAlerts(index, clearBtnRef[cursor])"
           ><i class="icon-trash"></i
         ></Btn>
       </template>
@@ -139,12 +139,11 @@
     </dropdown>
   </div>
 </template>
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
-
-import workspacesService from '@/services/workspacesService'
 import Btn from '@/components/framework/Btn.vue'
+import workspacesService from '@/services/workspacesService'
 import alertService, {
   AlertEvent,
   AlertEventType,
@@ -155,227 +154,183 @@ import dialogService from '@/services/dialogService'
 import aggregatorService from '@/services/aggregatorService'
 import { sleep } from '@/utils/helpers'
 import { formatMarketPrice } from '@/services/productsService'
+import store from '@/store'
 
-@Component({
-  components: { ToggableSection, Btn },
-  name: 'Alerts',
-  props: {
-    query: {
-      type: String,
-      default: ''
-    },
-    persistSections: {
-      type: Boolean,
-      default: false
-    },
-    withOptions: {
-      type: Boolean,
-      default: false
-    }
+// Props
+const props = defineProps({
+  query: {
+    type: String,
+    default: ''
+  },
+  persistSections: {
+    type: Boolean,
+    default: false
+  },
+  withOptions: {
+    type: Boolean,
+    default: false
   }
 })
-export default class AlertsList extends Vue {
-  dropdownAlert: MarketAlert = null
-  alertDropdownTrigger: HTMLElement = null
-  indexes: MarketAlerts[] = []
-  sections = []
-  isLoading = false
-  market: string
-  query: string
 
-  get queryFilter() {
-    return new RegExp(this.query, 'i')
-  }
+// Reactive state
+const dropdownAlert = ref<MarketAlert | null>(null)
+const alertDropdownTrigger = ref<HTMLElement | null>(null)
+const indexes = ref<MarketAlerts[]>([])
+const sections = ref<string[]>([])
+const isLoading = ref(false)
+const clearBtnRef = ref<InstanceType<typeof Btn>[]>()
 
-  get alertsClick() {
-    return this.$store.state.settings.alertsClick
-  }
+// Computed properties
+const queryFilter = computed(() => new RegExp(props.query, 'i'))
+const alertsClick = computed(() => store.state.settings.alertsClick)
+const filteredIndexes = computed(() => {
+  return props.query
+    ? indexes.value.filter(a => queryFilter.value.test(a.market))
+    : indexes.value
+})
 
-  get filteredIndexes() {
-    if (!this.query) {
-      return this.indexes
-    }
+// Lifecycle hooks
+onMounted(async () => {
+  await getAlerts()
 
-    return this.indexes.filter(a => this.queryFilter.test(a.market))
-  }
-
-  async created() {
-    await this.getAlerts()
-
-    if (this.filteredIndexes.length === 1) {
-      const singleSectionId = `alerts-${this.filteredIndexes[0].market}`
-
-      if (this.$store.state.settings.sections.indexOf(singleSectionId) === -1) {
-        this.$store.commit('settings/TOGGLE_SECTION', singleSectionId)
-      }
-    }
-
-    aggregatorService.on('alert', this.onAlert)
-  }
-
-  beforeDestroy() {
-    aggregatorService.off('alert', this.onAlert)
-  }
-
-  async getAlerts() {
-    this.isLoading = true
-    const groups = await workspacesService.getAllAlerts()
-
-    for (let i = 0; i < groups.length; i++) {
-      this.$set(this.indexes, i, groups[i])
-    }
-
-    await sleep(100)
-    this.isLoading = false
-  }
-
-  formatPrice(price, market) {
-    return formatMarketPrice(price, market)
-  }
-
-  togglePresetDropdown(event, alert) {
-    if (this.alertDropdownTrigger) {
-      this.alertDropdownTrigger = null
-    } else {
-      this.alertDropdownTrigger = event.currentTarget
-      this.dropdownAlert = alert
+  if (filteredIndexes.value.length === 1) {
+    const singleSectionId = `alerts-${filteredIndexes.value[0].market}`
+    if (!store.state.settings.sections.includes(singleSectionId)) {
+      store.commit('settings/TOGGLE_SECTION', singleSectionId)
     }
   }
 
-  async removeAlert(alert: MarketAlert) {
-    this.isLoading = true
-    await alertService.removeAlert(alert)
-    this.isLoading = false
-  }
+  aggregatorService.on('alert', onAlert)
+})
 
-  async createAlert(alert: MarketAlert) {
-    this.isLoading = true
-    await alertService.createAlert(alert)
-    this.isLoading = false
-  }
+onBeforeUnmount(() => {
+  aggregatorService.off('alert', onAlert)
+})
 
-  async checkStatus(alert: MarketAlert) {
-    this.isLoading = true
-    const status = await alertService.toggleAlert(
-      alert.market,
-      alert.price,
-      undefined,
-      undefined,
-      true
-    )
-    this.isLoading = false
+// Methods
+async function getAlerts() {
+  isLoading.value = true
+  const groups = await workspacesService.getAllAlerts()
+  indexes.value = groups
+  await sleep(100)
+  isLoading.value = false
+}
 
-    if (status.alert) {
-      dialogService.confirm({
-        message: `Alert ${alert.market} @<code>${alert.price}</code> is still pending`,
-        html: true,
-        ok: 'Ok',
-        cancel: null
-      })
-    } else {
-      const action = await dialogService.confirm({
-        title: 'Not found',
-        message: `Alert already triggered or expired`,
-        html: true,
-        ok: 'Recreate',
-        actions: [
-          {
-            label: 'Remove',
-            callback: () => 2
-          }
-        ]
-      })
+function formatPrice(price: number, market: string) {
+  return formatMarketPrice(price, market)
+}
 
-      if (action) {
-        if (action === 2) {
-          this.removeAlert(alert)
-        } else {
-          this.createAlert(alert)
-        }
-      } else {
-        await alertService.deactivateAlert(alert)
-      }
-    }
-  }
+function togglePresetDropdown(event: Event, alert: MarketAlert) {
+  alertDropdownTrigger.value = alertDropdownTrigger.value
+    ? null
+    : (event.currentTarget as HTMLElement)
+  dropdownAlert.value = alert
+}
 
-  onAlert({ price, market, type, newPrice, message }: AlertEvent) {
-    let group = this.indexes.find(index => index.market === market)
+async function removeAlert(alert: MarketAlert) {
+  isLoading.value = true
+  await alertService.removeAlert(alert)
+  isLoading.value = false
+}
 
-    if (!group) {
-      if (type === AlertEventType.CREATED) {
-        this.$set(this.indexes, this.indexes.length, {
-          market: market,
-          alerts: []
-        })
-        group = this.indexes[this.indexes.length - 1]
-        if (this.sections.indexOf(`alerts-${this.sections}`) === -1) {
-          this.sections.push(`alerts-${this.sections}`)
-        }
-      } else {
-        return
-      }
-    }
+async function createAlert(alert: MarketAlert) {
+  isLoading.value = true
+  await alertService.createAlert(alert)
+  isLoading.value = false
+}
 
-    const index = group.alerts.findIndex(
-      existingAlert => existingAlert.price === price
-    )
+async function checkStatus(alert: MarketAlert) {
+  isLoading.value = true
+  const status = await alertService.toggleAlert(
+    alert.market,
+    alert.price,
+    undefined,
+    undefined,
+    true
+  )
+  isLoading.value = false
 
-    if (index !== -1) {
-      if (type === AlertEventType.DELETED) {
-        group.alerts.splice(index, 1)
-        if (!group.alerts.length) {
-          this.indexes.splice(this.indexes.indexOf(group), 1)
-        }
-      } else if (type === AlertEventType.UPDATED) {
-        this.$set(group.alerts[index], 'price', newPrice)
-      } else if (type === AlertEventType.TRIGGERED) {
-        this.$set(group.alerts[index], 'triggered', true)
-      } else if (type === AlertEventType.ACTIVATED) {
-        this.$set(group.alerts[index], 'active', true)
-
-        if (typeof message !== 'undefined') {
-          this.$set(group.alerts[index], 'message', message)
-        }
-      } else if (type === AlertEventType.DEACTIVATED) {
-        this.$set(group.alerts[index], 'active', false)
-      }
-    } else if (type === AlertEventType.CREATED) {
-      this.$set(group.alerts, group.alerts.length, {
-        price,
-        market
-      })
-    }
-  }
-
-  async clearAlerts(group, button) {
-    if (
-      !(await dialogService.confirm({
-        message: `Remove all ${group.market} alerts`,
-        ok: `Yes (${group.alerts.length})`
-      }))
-    ) {
-      return
-    }
-
-    if (button) {
-      button.loading = true
-    }
-
-    const alerts = [...group.alerts]
-    for (const alert of alerts) {
-      await alertService.removeAlert(alert)
-    }
-
-    await workspacesService.saveAlerts({
-      market: group.market,
-      alerts: []
+  if (status.alert) {
+    dialogService.confirm({
+      message: `Alert ${alert.market} @<code>${alert.price}</code> is still pending`,
+      html: true,
+      ok: 'Ok',
+      cancel: null
+    })
+  } else {
+    const action = await dialogService.confirm({
+      title: 'Not found',
+      message: `Alert already triggered or expired`,
+      html: true,
+      ok: 'Recreate',
+      actions: [{ label: 'Remove', callback: () => 2 }]
     })
 
-    if (button) {
-      button.loading = false
+    if (action) {
+      if (action === 2) removeAlert(alert)
+      else createAlert(alert)
+    } else {
+      await alertService.deactivateAlert(alert)
     }
   }
 }
+
+function onAlert({ price, market, type, newPrice, message }: AlertEvent) {
+  let group = indexes.value.find(index => index.market === market)
+
+  if (!group) {
+    if (type === AlertEventType.CREATED) {
+      indexes.value.push({ market, alerts: [] })
+      group = indexes.value[indexes.value.length - 1]
+      if (!sections.value.includes(`alerts-${market}`))
+        sections.value.push(`alerts-${market}`)
+    } else {
+      return
+    }
+  }
+
+  const index = group.alerts.findIndex(
+    existingAlert => existingAlert.price === price
+  )
+
+  if (index !== -1) {
+    if (type === AlertEventType.DELETED) {
+      group.alerts.splice(index, 1)
+      if (!group.alerts.length)
+        indexes.value.splice(indexes.value.indexOf(group), 1)
+    } else if (type === AlertEventType.UPDATED) {
+      group.alerts[index].price = newPrice
+    } else if (type === AlertEventType.TRIGGERED) {
+      group.alerts[index].triggered = true
+    } else if (type === AlertEventType.ACTIVATED) {
+      group.alerts[index].active = true
+      if (message) group.alerts[index].message = message
+    } else if (type === AlertEventType.DEACTIVATED) {
+      group.alerts[index].active = false
+    }
+  } else if (type === AlertEventType.CREATED) {
+    group.alerts.push({ price, market })
+  }
+}
+
+async function clearAlerts(group: MarketAlerts, button: any) {
+  if (
+    !(await dialogService.confirm({
+      message: `Remove all ${group.market} alerts`,
+      ok: `Yes (${group.alerts.length})`
+    }))
+  ) {
+    return
+  }
+
+  if (button) button.loading = true
+  const alerts = [...group.alerts]
+  for (const alert of alerts) await alertService.removeAlert(alert)
+  await workspacesService.saveAlerts({ market: group.market, alerts: [] })
+  if (button) button.loading = false
+}
+
+defineExpose({ getAlerts })
 </script>
 
 <style lang="scss" scoped>

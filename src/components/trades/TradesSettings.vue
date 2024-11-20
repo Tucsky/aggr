@@ -56,7 +56,7 @@
         <ThresholdColor :pane-id="paneId" type="thresholds" side="sell" />
       </template>
       <div class="form-group">
-        <thresholds
+        <Thresholds
           :paneId="paneId"
           :thresholds="thresholds"
           label="Trades"
@@ -237,7 +237,7 @@
           step="1"
           class="form-control"
           :value="maxRows"
-          @change="$store.commit(paneId + '/SET_MAX_ROWS', $event.target.value)"
+          v-commit="paneId + '/SET_MAX_ROWS'"
         />
       </div>
 
@@ -394,217 +394,137 @@
     </ToggableSection>
   </div>
 </template>
-
-<script lang="ts">
-import { TradesPaneState } from '@/store/panesSettings/trades'
+<script lang="ts" setup>
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { ago } from '@/utils/helpers'
-import { Component, Vue } from 'vue-property-decorator'
 import Slider from '@/components/framework/picker/Slider.vue'
 import Thresholds from '@/components/settings/Thresholds.vue'
-import { formatAmount, parseMarket } from '@/services/productsService'
+import { parseMarket } from '@/services/productsService'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
-import ColorPickerControl from '@/components/framework/picker/ColorPickerControl.vue'
 import ThresholdColor from '@/components/trades/ThresholdColor.vue'
 import MarketMultiplier from '@/components/trades/MarketMultiplier.vue'
 import ToggableGroup from '@/components/framework/ToggableGroup.vue'
+import { TradesPaneState } from '@/store/panesSettings/trades'
+import store from '@/store'
 
-@Component({
-  components: {
-    Thresholds,
-    Slider,
-    ThresholdColor,
-    ToggableSection,
-    MarketMultiplier,
-    ColorPickerControl,
-    ToggableGroup
-  },
-  name: 'TradesSettings',
-  props: {
-    paneId: {
-      type: String,
-      required: true
+const props = defineProps<{
+  paneId: string
+}>()
+
+const secondsAgoExample = ref('0s ago')
+let secondsAgoExampleTimeout: number | null = null
+
+const HHMM = computed(() =>
+  new Date().toISOString().split('T')[1].split(':').slice(0, 2).join(':')
+)
+
+const useAudio = computed(() => store.state.settings.useAudio)
+const markets = computed(() => store.state.panes.panes[props.paneId].markets)
+
+const maxRows = computed(
+  () => (store.state[props.paneId] as TradesPaneState).maxRows
+)
+const thresholds = computed(
+  () => (store.state[props.paneId] as TradesPaneState).thresholds
+)
+const liquidations = computed(
+  () => (store.state[props.paneId] as TradesPaneState).liquidations
+)
+const showLogos = computed(
+  () => (store.state[props.paneId] as TradesPaneState).showLogos
+)
+const monochromeLogos = computed(
+  () => (store.state[props.paneId] as TradesPaneState).monochromeLogos
+)
+const showTimeAgo = computed(
+  () => (store.state[props.paneId] as TradesPaneState).showTimeAgo
+)
+const showAvgPrice = computed(
+  () => (store.state[props.paneId] as TradesPaneState).showAvgPrice
+)
+const showPrices = computed(
+  () => (store.state[props.paneId] as TradesPaneState).showPrices
+)
+const showTrades = computed(
+  () => (store.state[props.paneId] as TradesPaneState).showTrades
+)
+const showLiquidations = computed(
+  () => (store.state[props.paneId] as TradesPaneState).showLiquidations
+)
+const showPairs = computed(
+  () => (store.state[props.paneId] as TradesPaneState).showPairs
+)
+const showHistograms = computed(
+  () => (store.state[props.paneId] as TradesPaneState).showHistograms
+)
+const audioThreshold = computed(
+  () => (store.state[props.paneId] as TradesPaneState).audioThreshold
+)
+const muted = computed(
+  () => (store.state[props.paneId] as TradesPaneState).muted
+)
+const audioPitch = computed(
+  () => (store.state[props.paneId] as TradesPaneState).audioPitch || 1
+)
+const audioVolume = computed(() => {
+  const volume = (store.state[props.paneId] as TradesPaneState).audioVolume
+  return volume === null ? store.state.settings.audioVolume : volume
+})
+const thresholdsMultipler = computed(
+  () => (store.state[props.paneId] as TradesPaneState).thresholdsMultipler
+)
+const disableAnimations = computed(() => store.state.settings.disableAnimations)
+const isLegacy = computed(
+  () => store.state.panes.panes[props.paneId].type === 'trades'
+)
+
+const displayGifWarning = computed(
+  () =>
+    isLegacy.value &&
+    disableAnimations.value &&
+    (thresholds.value.filter(t => !!t.buyGif && !!t.sellGif).length ||
+      liquidations.value.filter(t => !!t.buyGif && !!t.sellGif).length)
+)
+
+const multipliers = computed(() =>
+  markets.value.map(marketKey => {
+    const [exchange, pair] = parseMarket(marketKey)
+    const multiplier = (store.state[props.paneId] as TradesPaneState)
+      .multipliers[marketKey]
+    return {
+      exchange,
+      pair,
+      multiplier: !isNaN(multiplier) ? multiplier : 1,
+      identifier: marketKey
     }
+  })
+)
+
+const mutipliersCount = computed(
+  () => multipliers.value.filter(market => market.multiplier !== 1).length
+)
+
+const gradient = computed(() => [
+  (store.state[props.paneId] as TradesPaneState).thresholds[0].buyColor,
+  (store.state[props.paneId] as TradesPaneState).thresholds[
+    (store.state[props.paneId] as TradesPaneState).thresholds.length - 1
+  ].buyColor
+])
+
+onMounted(() => {
+  const time = Date.now()
+  secondsAgoExampleTimeout = setInterval(() => {
+    secondsAgoExample.value = `${ago(time)} ago`
+  }, 1000) as unknown as number
+})
+
+onBeforeUnmount(() => {
+  if (secondsAgoExampleTimeout) {
+    clearTimeout(secondsAgoExampleTimeout)
   }
 })
-export default class TradesSettings extends Vue {
-  paneId: string
-  secondsAgoExample = '0s ago'
-
-  private _secondsAgoExampleTimeout: number
-
-  get HHMM() {
-    return new Date()
-      .toISOString()
-      .split('T')[1]
-      .split(':')
-      .slice(0, 2)
-      .join(':')
-  }
-
-  get useAudio() {
-    return this.$store.state.settings.useAudio
-  }
-
-  get markets() {
-    return this.$store.state.panes.panes[this.paneId].markets
-  }
-
-  get maxRows() {
-    return (this.$store.state[this.paneId] as TradesPaneState).maxRows
-  }
-
-  get thresholds() {
-    return (this.$store.state[this.paneId] as TradesPaneState).thresholds
-  }
-
-  get liquidations() {
-    return (this.$store.state[this.paneId] as TradesPaneState).liquidations
-  }
-
-  get showLogos() {
-    return (this.$store.state[this.paneId] as TradesPaneState).showLogos
-  }
-
-  get monochromeLogos() {
-    return (this.$store.state[this.paneId] as TradesPaneState).monochromeLogos
-  }
-
-  get showTimeAgo() {
-    return (this.$store.state[this.paneId] as TradesPaneState).showTimeAgo
-  }
-
-  get showAvgPrice() {
-    return (this.$store.state[this.paneId] as TradesPaneState).showAvgPrice
-  }
-
-  get showPrices() {
-    return (this.$store.state[this.paneId] as TradesPaneState).showPrices
-  }
-
-  get showTrades() {
-    return (this.$store.state[this.paneId] as TradesPaneState).showTrades
-  }
-
-  get showLiquidations() {
-    return (this.$store.state[this.paneId] as TradesPaneState).showLiquidations
-  }
-
-  get showPairs() {
-    return (this.$store.state[this.paneId] as TradesPaneState).showPairs
-  }
-
-  get showHistograms() {
-    return (this.$store.state[this.paneId] as TradesPaneState).showHistograms
-  }
-
-  get audioThreshold() {
-    return (this.$store.state[this.paneId] as TradesPaneState).audioThreshold
-  }
-
-  get muted() {
-    return (this.$store.state[this.paneId] as TradesPaneState).muted
-  }
-
-  get audioPitch() {
-    return (this.$store.state[this.paneId] as TradesPaneState).audioPitch || 1
-  }
-
-  get audioVolume() {
-    const volume = (this.$store.state[this.paneId] as TradesPaneState)
-      .audioVolume
-
-    if (volume === null) {
-      return this.$store.state.settings.audioVolume
-    }
-    return volume
-  }
-
-  get thresholdsMultipler() {
-    return (this.$store.state[this.paneId] as TradesPaneState)
-      .thresholdsMultipler
-  }
-
-  get disableAnimations() {
-    return this.$store.state.settings.disableAnimations
-  }
-
-  get isLegacy() {
-    return this.$store.state.panes.panes[this.paneId].type === 'trades'
-  }
-
-  get displayGifWarning() {
-    return (
-      this.isLegacy &&
-      this.disableAnimations &&
-      (this.thresholds.filter(t => !!t.buyGif && !!t.sellGif).length ||
-        this.liquidations.filter(t => !!t.buyGif && !!t.sellGif).length)
-    )
-  }
-
-  get multipliers() {
-    return this.markets.map(marketKey => {
-      const [exchange, pair] = parseMarket(marketKey)
-
-      const multiplier = (this.$store.state[this.paneId] as TradesPaneState)
-        .multipliers[marketKey]
-
-      return {
-        exchange,
-        pair,
-        multiplier: !isNaN(multiplier) ? multiplier : 1,
-        identifier: marketKey
-      }
-    })
-  }
-
-  get mutipliersCount() {
-    return this.multipliers.filter(market => market.multiplier !== 1).length
-  }
-
-  get gradient() {
-    return [
-      this.$store.state[this.paneId].thresholds[0].buyColor,
-      this.$store.state[this.paneId].thresholds[
-        this.$store.state[this.paneId].thresholds.length - 1
-      ].buyColor
-    ]
-  }
-
-  get thresholdsBuyColor() {
-    return this.thresholds[1].buyColor
-  }
-
-  get thresholdsSellColor() {
-    return this.thresholds[1].sellColor
-  }
-
-  get liquidationsBuyColor() {
-    return this.liquidations[1].buyColor
-  }
-
-  get liquidationsSellColor() {
-    return this.liquidations[1].sellColor
-  }
-
-  mounted() {
-    const time = Date.now()
-
-    this._secondsAgoExampleTimeout = setInterval(() => {
-      this.secondsAgoExample = `${ago(time)} ago`
-    }, 1000) as unknown as number
-  }
-
-  beforeDestroy() {
-    if (this._secondsAgoExampleTimeout) {
-      clearTimeout(this._secondsAgoExampleTimeout)
-    }
-  }
-
-  formatAmount(amount) {
-    return formatAmount(amount)
-  }
-}
 </script>
+
 <style scoped lang="scss">
 .thresholds {
   pointer-events: all;

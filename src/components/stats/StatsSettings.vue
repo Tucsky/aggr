@@ -2,20 +2,20 @@
   <div class="settings-stats settings-section">
     <div class="column mb16">
       <div class="form-group -fill">
-        <label
-          >Window
+        <label>
+          Window
           <i
             class="icon-info"
             v-tippy
             title="Interval in which data is summed (ex: 1m)"
-          ></i
-        ></label>
+          ></i>
+        </label>
         <input
           type="text"
           class="form-control"
           :value="statsWindowStringified"
           placeholder="Window (minutes)"
-          @change="$store.commit(paneId + '/SET_WINDOW', $event.target.value)"
+          v-commit="paneId + '/SET_WINDOW'"
         />
       </div>
       <div class="form-group -tight">
@@ -29,9 +29,7 @@
             type="checkbox"
             class="form-control"
             :checked="enableChart"
-            @change="
-              $store.commit(paneId + '/TOGGLE_CHART', $event.target.checked)
-            "
+            v-commit="paneId + '/TOGGLE_CHART'"
           />
           <div></div>
         </label>
@@ -46,7 +44,7 @@
         class="-nowrap -text"
         v-tippy
         title="Add a stat"
-        @click="$store.dispatch(paneId + '/createBucket')"
+        @click="createBucket"
       >
         Add
         <i class="icon-plus ml4 -lower"></i>
@@ -64,13 +62,14 @@
             type="checkbox"
             class="form-control"
             :checked="bucket.enabled"
-            @change="
-              $store.dispatch(paneId + '/updateBucket', {
+            v-commit="[
+              paneId + '/updateBucket',
+              value => ({
                 id: bucket.id,
                 prop: 'enabled',
-                value: $event.target.checked
+                value
               })
-            "
+            ]"
           />
           <div></div>
         </label>
@@ -87,44 +86,46 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { defineProps, computed } from 'vue'
+import store from '@/store'
 import dialogService from '@/services/dialogService'
 import StatDialog from '@/components/stats/StatDialog.vue'
-import { Component, Vue } from 'vue-property-decorator'
 import { getHms } from '@/utils/helpers'
 
-@Component({
-  name: 'StatsSettings',
-  props: {
-    paneId: {
-      type: String,
-      required: true
-    }
-  }
-})
-export default class StatsSettings extends Vue {
+// Define props with types
+const props = defineProps<{
   paneId: string
+}>()
 
-  get enableChart() {
-    return this.$store.state[this.paneId].enableChart
-  }
+// Computed property to get enableChart from the store
+const enableChart = computed(() => {
+  return store.state[props.paneId].enableChart
+})
 
-  get buckets() {
-    return Object.keys(this.$store.state[this.paneId].buckets).map(
-      id => this.$store.state[this.paneId].buckets[id]
-    )
-  }
+// Computed property to get buckets as an array from the store
+const buckets = computed(() => {
+  const bucketsObj = store.state[props.paneId].buckets
+  return Object.keys(bucketsObj).map(id => bucketsObj[id])
+})
 
-  get window() {
-    return this.$store.state[this.paneId].window
-  }
+// Computed property to get window from the store
+const windowValue = computed(() => {
+  return store.state[props.paneId].window
+})
 
-  get statsWindowStringified() {
-    return getHms(this.window || 0)
-  }
+// Computed property to get the stringified window using getHms
+const statsWindowStringified = computed(() => {
+  return getHms(windowValue.value || 0)
+})
 
-  openStat(id) {
-    dialogService.open(StatDialog, { bucketId: id, paneId: this.paneId })
-  }
+// Method to open the StatDialog
+const openStat = (id: string) => {
+  dialogService.open(StatDialog, { bucketId: id, paneId: props.paneId })
+}
+
+// Method to dispatch createBucket action
+const createBucket = () => {
+  store.dispatch(`${props.paneId}/createBucket`)
 }
 </script>

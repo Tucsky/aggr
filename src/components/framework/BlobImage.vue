@@ -2,44 +2,55 @@
   <img v-if="imageObjectUrl" :src="imageObjectUrl" />
 </template>
 
-<script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator'
+<script setup lang="ts">
+import { ref, watch, onBeforeUnmount } from 'vue'
 
-@Component({
-  name: 'BlobImage',
-  props: {
-    value: {
-      type: [Blob, File],
-      default: null
-    }
+// Define props with defineProps and withDefaults
+const props = withDefaults(
+  defineProps<{
+    value: Blob | File | null
+  }>(),
+  {
+    value: null
   }
-})
-export default class BlobImage extends Vue {
-  value: Blob | File
-  imageObjectUrl: string = null
+)
 
-  @Watch('value', { immediate: true })
-  onBlobChange() {
-    this.loadBlob()
-  }
+// Reactive state for the image URL
+const imageObjectUrl = ref<string | null>(null)
 
-  beforeDestroy() {
-    this.clearBlob()
-  }
-
-  loadBlob() {
-    this.clearBlob()
-
-    if (this.value instanceof Blob || (this.value as any) instanceof File) {
-      this.imageObjectUrl = URL.createObjectURL(this.value)
-    }
-  }
-
-  clearBlob() {
-    if (this.imageObjectUrl) {
-      URL.revokeObjectURL(this.imageObjectUrl)
-      this.imageObjectUrl = null
-    }
+/**
+ * Function to load the Blob or File and create an object URL.
+ */
+const loadBlob = () => {
+  clearBlob()
+  const isBlob = props.value instanceof Blob
+  const isFile = props.value instanceof File
+  if (isBlob || isFile) {
+    imageObjectUrl.value = URL.createObjectURL(props.value)
   }
 }
+
+/**
+ * Function to clear the previously created object URL.
+ */
+const clearBlob = () => {
+  if (imageObjectUrl.value) {
+    URL.revokeObjectURL(imageObjectUrl.value)
+    imageObjectUrl.value = null
+  }
+}
+
+// Watch the 'value' prop for changes and load the Blob immediately
+watch(
+  () => props.value,
+  () => {
+    loadBlob()
+  },
+  { immediate: true }
+)
+
+// Cleanup the object URL when the component is unmounted
+onBeforeUnmount(() => {
+  clearBlob()
+})
 </script>

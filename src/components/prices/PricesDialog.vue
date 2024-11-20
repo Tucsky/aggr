@@ -1,6 +1,6 @@
 <template>
   <Dialog
-    @clickOutside="close"
+    @close="close"
     class="pane-dialog"
     size="small"
     @mousedown="clickOutsideClose = false"
@@ -14,7 +14,7 @@
       ></div>
       <div class="column -center"></div>
     </template>
-    <prices-settings :paneId="paneId" />
+    <PricesSettings :paneId="paneId" />
     <template v-slot:footer>
       <presets
         type="prices"
@@ -27,13 +27,25 @@
   </Dialog>
 </template>
 
-<script>
-import DialogMixin from '../../mixins/dialogMixin'
-import PaneDialogMixin from '../../mixins/paneDialogMixin'
+<script setup lang="ts">
+import { ref } from 'vue'
+import Dialog from '@/components/framework/Dialog.vue'
 import PricesSettings from './PricesSettings.vue'
+import { usePaneDialog } from '@/composables/usePaneDialog'
+import { useDialog } from '@/composables/useDialog'
 
-export default {
-  components: { PricesSettings },
-  mixins: [DialogMixin, PaneDialogMixin]
-}
+defineEmits(['close'])
+const props = defineProps({
+  paneId: {
+    type: String,
+    required: true
+  }
+})
+
+const { close } = useDialog()
+const { name, renamePane, resetPane, getPreset } = usePaneDialog(props.paneId)
+
+defineExpose({ close })
+
+const clickOutsideClose = ref(true)
 </script>

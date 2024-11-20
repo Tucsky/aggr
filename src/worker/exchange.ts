@@ -11,6 +11,7 @@ interface Api extends WebSocket {
   _timestamp: number
   _reconnecting: boolean
   _wasOpened?: boolean
+  _wasErrored?: boolean
   _originalUrl?: string
   _errored?: boolean
 }
@@ -152,6 +153,7 @@ class Exchange extends EventEmitter {
       api = this.createWs(url, pair)
     }
 
+    api._wasErrored = hadError
     api._originalUrl = originalUrl
 
     if (api._pending.indexOf(pair) !== -1) {
@@ -335,7 +337,7 @@ class Exchange extends EventEmitter {
 
     await this.unsubscribe(api, pair)
 
-    if (!api._connected.length) {
+    if (!api._connected.length && !api._pending.length) {
       console.debug(
         `[${this.id}.unlink] ${pair}'s api is now empty (trigger close api)`
       )

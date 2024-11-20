@@ -1,11 +1,6 @@
 <template>
-  <transition
-    name="dialog"
-    :duration="500"
-    @after-leave="onHide"
-    @after-enter="onShow"
-  >
-    <Dialog v-if="dialogOpened" class="alert-dialog" @clickOutside="hide">
+  <transition name="dialog" :duration="300" @after-leave="close">
+    <Dialog v-if="opened" class="alert-dialog" @close="hide">
       <template v-slot:header>
         <div>
           <div class="dialog__title">
@@ -19,7 +14,7 @@
 
         <div class="column -center"></div>
       </template>
-      <form ref="form" class="alert-dialog__form" @submit.prevent="create">
+      <form ref="form" class="alert-dialog__form" @submit.prevent="submit">
         <div class="form-group">
           <label>Label</label>
 
@@ -31,7 +26,7 @@
               placeholder="Custom message (optional)"
               v-model="value"
               v-autofocus
-              @keyup.enter="create"
+              @keyup.enter="submit"
             />
             <button
               v-if="value.length"
@@ -48,84 +43,73 @@
       </form>
 
       <template v-slot:footer>
-        <button type="button" class="btn -text" @click="close(false)">
+        <button type="button" class="btn -text" @click="hide(false)">
           Cancel
         </button>
-        <button type="button" class="btn -green ml8 -large" @click="create">
+        <button type="button" class="btn -green ml8 -large" @click="submit">
           <i class="icon-check mr8"></i> {{ submitLabel }}
         </button>
       </template>
     </Dialog>
   </transition>
 </template>
-
-<script lang="ts">
-import DialogMixin from '@/mixins/dialogMixin'
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useDialog } from '@/composables/useDialog'
+import Dialog from '@/components/framework/Dialog.vue'
 import EmojiPicker from '@/components/framework/EmojiPicker.vue'
 
-export default {
-  name: 'CreateAlertDialog',
-  props: {
-    price: {
-      type: Number
-    },
-    input: {
-      type: String,
-      default: null
-    },
-    edit: {
-      type: Boolean,
-      default: false
-    }
+const props = defineProps({
+  price: {
+    type: Number,
+    required: false
   },
-  mixins: [DialogMixin, EmojiPicker],
-  data() {
-    return {
-      dialogOpened: false,
-      value: ''
-    }
+  input: {
+    type: String,
+    default: null
   },
-  mounted() {
-    if (this.input) {
-      this.value = this.input
-    }
-
-    this.show()
-  },
-  computed: {
-    submitLabel() {
-      if (!this.edit) {
-        return 'Create'
-      }
-
-      return 'Update'
-    }
-  },
-  methods: {
-    show() {
-      this.dialogOpened = true
-    },
-    hide() {
-      this.dialogOpened = false
-    },
-    onHide() {
-      this.close(typeof this.data === 'string' ? this.data : null)
-    },
-    onShow() {
-      //
-    },
-    create() {
-      this.data = this.value
-      this.hide()
-    },
-    appendEmoji(str) {
-      this.value += str
-
-      this.$refs.input.focus()
-    }
+  edit: {
+    type: Boolean,
+    default: false
   }
+})
+
+// Initialize dialog logic
+const { opened, close, hide } = useDialog()
+defineExpose({ close })
+
+// Reactive state
+const value = ref('')
+
+onMounted(() => {
+  if (props.input) {
+    value.value = props.input
+  }
+
+  show()
+})
+
+// Computed properties
+const submitLabel = computed(() => (props.edit ? 'Update' : 'Create'))
+
+// Methods
+const show = () => {
+  opened.value = true
 }
+
+const submit = () => {
+  hide(value.value)
+}
+
+const appendEmoji = (str: string) => {
+  value.value += str
+  inputRef.value?.focus()
+}
+
+// Refs
+const inputRef = ref<HTMLInputElement | null>(null)
 </script>
+
 <style lang="scss">
 .alert-dialog {
   .dialog__content {

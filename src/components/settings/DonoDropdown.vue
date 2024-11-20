@@ -1,5 +1,6 @@
 <template>
-  <dropdown-button
+  <DropdownButton
+    v-model="selectedOption"
     :options="donationMenu"
     :placeholder="label"
     class="-text -arrow"
@@ -10,26 +11,29 @@
 
       <span>{{ value.label }}</span>
     </template>
-  </dropdown-button>
+  </DropdownButton>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+<script setup lang="ts">
+import { ref, defineProps } from 'vue'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 import { copyTextToClipboard } from '@/utils/helpers'
 
-@Component({
-  components: {
-    DropdownButton
-  },
-  props: {
-    label: {
-      default: 'donate'
-    }
+// Define props with types and default values
+withDefaults(
+  defineProps<{
+    label?: string
+  }>(),
+  {
+    label: 'donate'
   }
 })
-export default class DonoDropdown extends Vue {
-  donationMenu = [
+
+// Define a ref for the selected option (for v-model)
+const selectedOption = ref<any>(null)
+
+// Define the donation menu options
+const donationMenu = [
     {
       label: 'with Bitcoin',
       icon: 'icon-bitcoin',
@@ -57,20 +61,20 @@ export default class DonoDropdown extends Vue {
     }
   ]
 
-  onSelect(option) {
-    if (typeof option.click === 'function') {
-      option.click()
-    }
-  }
+const copyAddress = async (text, name) => {
+  await copyTextToClipboard(text)
 
-  async copyAddress(text, name) {
-    await copyTextToClipboard(text)
+  this.$store.dispatch('app/showNotice', {
+    id: 'copy-address',
+    type: 'info',
+    title: `${name} address added to clipboard`
+  })
+}
 
-    this.$store.dispatch('app/showNotice', {
-      id: 'copy-address',
-      type: 'info',
-      title: `${name} address added to clipboard`
-    })
+// Handle the selection of an option
+const onSelect = (option: any) => {
+  if (typeof option.click === 'function') {
+    option.click()
   }
 }
 </script>

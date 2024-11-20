@@ -1,136 +1,157 @@
 <template>
-  <Dialog
-    @mousedown.native.stop
-    @clickOutside="close"
-    class="color-picker-dialog"
-    :resizable="false"
-    :mask="false"
-    size="small"
-    borderless
-  >
-    <template v-slot:header>
-      <div>
-        <div class="dialog__title">{{ label }}</div>
-      </div>
-    </template>
-    <div
-      ref="canvas"
-      class="color-picker-dialog-canvas"
-      @mousedown="startMovingThumbWithMouse"
-      @touchstart="startMovingThumbWithTouch"
+  <transition name="dialog" :duration="300" @after-leave="close">
+    <Dialog
+      v-if="opened"
+      class="color-picker-dialog"
+      :resizable="false"
+      ref="dialogRef"
+      :mask="false"
+      size="small"
+      borderless
+      @mousedown.native.stop
+      @close="hide"
     >
+      <template v-slot:header>
+        <div>
+          <div class="dialog__title">{{ label }}</div>
+        </div>
+      </template>
       <div
-        ref="thumb"
-        class="color-picker-dialog-canvas__thumb"
-        tabindex="0"
-        aria-label="Color space thumb"
-      />
-    </div>
-    <div class="color-picker-dialog-sliders">
-      <slider
-        class="color-picker-dialog-sliders__hue"
-        :showCompletion="false"
-        :gradient="['#f00', '#ff0', '#0f0', '#0ff', '#00f', '#f0f', '#f00']"
-        :max="360"
-        v-model="hue"
-        @input="updateHue(hue)"
-      ></slider>
-      <slider
-        class="color-picker-dialog-sliders__alpha -alpha"
-        :gradient="[
-          `rgba(${colors.rgb.r * 255}, ${colors.rgb.g * 255}, ${
-            colors.rgb.b * 255
-          }, 0)`,
-          `rgba(${colors.rgb.r * 255}, ${colors.rgb.g * 255}, ${
-            colors.rgb.b * 255
-          }, 1)`
-        ]"
-        :min="0"
-        :max="1"
-        :step="0.01"
-        :value="alpha"
-        :showCompletion="false"
-        v-model="alpha"
-        @input="updateAlpha(alpha)"
+        ref="canvasRef"
+        class="color-picker-dialog-canvas"
+        @mousedown="startMovingThumbWithMouse"
+        @touchstart="startMovingThumbWithTouch"
       >
-      </slider>
-    </div>
-    <div class="color-picker-dialog-controls">
-      <button
-        class="btn -text -small"
-        @click="switchFormat"
-        type="button"
-        title="Rotate"
-        v-tippy
-      >
-        <i class="icon-refresh"></i>
-      </button>
-      <editable
-        class="form-control hide-scrollbar"
-        :value="displayColor"
-        @input="setColorFromProp($event)"
-      ></editable>
-      <button
-        class="btn -text -small"
-        @click="submitColor"
-        type="button"
-        title="Save color"
-        v-tippy
-      >
-        <i class="icon-save"></i>
-      </button>
-    </div>
-    <template v-if="showPalette">
-      <div class="color-picker-dialog-colors">
-        <button
-          type="button"
-          class="btn color-picker-dialog-colors__color"
-          v-for="clr in swatches"
-          :class="[
-            clr === outputColor && 'color-picker-dialog-colors__color--active'
+        <div
+          ref="thumbRef"
+          class="color-picker-dialog-canvas__thumb"
+          tabindex="0"
+          aria-label="Color space thumb"
+        />
+      </div>
+      <div class="color-picker-dialog-sliders">
+        <Slider
+          class="color-picker-dialog-sliders__hue"
+          :showCompletion="false"
+          :gradient="['#f00', '#ff0', '#0f0', '#0ff', '#00f', '#f0f', '#f00']"
+          :max="360"
+          v-model="hue"
+          @input="updateHue(hue)"
+        ></Slider>
+        <Slider
+          class="color-picker-dialog-sliders__alpha -alpha"
+          :gradient="[
+            `rgba(${colors.rgb.r * 255}, ${colors.rgb.g * 255}, ${
+              colors.rgb.b * 255
+            }, 0)`,
+            `rgba(${colors.rgb.r * 255}, ${colors.rgb.g * 255}, ${
+              colors.rgb.b * 255
+            }, 1)`
           ]"
-          :key="clr"
-          :style="`color: ${clr}`"
-          @click.prevent="setColorFromProp(clr)"
-        ></button>
-        <button
-          type="button"
-          class="btn color-picker-dialog-colors__color color-picker-dialog-colors__color--transparent"
-          @click.prevent="setTransparent"
-          title="Transparent"
-          v-tippy="{ distance: 16 }"
-        ></button>
-        <button
-          type="button"
-          class="btn -text color-picker-dialog-colors__color color-picker-dialog-colors__color--null"
-          @click.prevent="setNull"
-          title="Default color"
-          v-tippy="{ distance: 16 }"
+          :min="0"
+          :max="1"
+          :step="0.01"
+          :showCompletion="false"
+          v-model="alpha"
+          @input="updateAlpha(alpha)"
         >
-          <i class="icon-cross -small"></i>
+        </Slider>
+      </div>
+      <div class="color-picker-dialog-controls">
+        <button
+          class="btn -text -small"
+          @click="switchFormat"
+          type="button"
+          title="Rotate"
+          v-tippy
+        >
+          <i class="icon-refresh"></i>
+        </button>
+        <editable
+          class="form-control hide-scrollbar"
+          :value="displayColor"
+          @input="setColorFromProp($event)"
+        ></editable>
+        <button
+          class="btn -text -small"
+          @click="submitColor"
+          type="button"
+          title="Save color"
+          v-tippy
+        >
+          <i class="icon-save"></i>
         </button>
       </div>
-      <div class="color-picker-dialog-colors">
-        <a
-          class="color-picker-dialog-colors__color"
-          role="button"
-          href="#"
-          v-for="clr in recentColors"
-          :key="clr"
-          :style="`color: ${clr}`"
-          :class="[
-            clr === outputColor && 'color-picker-dialog-colors__color--active'
-          ]"
-          @click.prevent="selectRecentColor($event, clr)"
-        >
-        </a>
-      </div>
-    </template>
-  </Dialog>
+      <template v-if="showPalette">
+        <div class="color-picker-dialog-colors">
+          <button
+            type="button"
+            class="btn color-picker-dialog-colors__color"
+            v-for="clr in swatches"
+            :class="[
+              clr === outputColor && 'color-picker-dialog-colors__color--active'
+            ]"
+            :key="clr"
+            :style="`color: ${clr}`"
+            @click.prevent="setColorFromProp(clr)"
+          ></button>
+          <button
+            type="button"
+            class="btn color-picker-dialog-colors__color color-picker-dialog-colors__color--transparent"
+            @click.prevent="setTransparent"
+            title="Transparent"
+            v-tippy="{ distance: 16 }"
+          ></button>
+          <button
+            type="button"
+            class="btn -text color-picker-dialog-colors__color color-picker-dialog-colors__color--null"
+            @click.prevent="setNull"
+            title="Default color"
+            v-tippy="{ distance: 16 }"
+          >
+            <i class="icon-cross -small"></i>
+          </button>
+        </div>
+        <div class="color-picker-dialog-colors">
+          <a
+            class="color-picker-dialog-colors__color"
+            role="button"
+            href="#"
+            v-for="clr in recentColors"
+            :key="clr"
+            :style="`color: ${clr}`"
+            :class="[
+              clr === outputColor && 'color-picker-dialog-colors__color--active'
+            ]"
+            @click.prevent="selectRecentColor($event, clr)"
+          >
+          </a>
+        </div>
+      </template>
+    </Dialog>
+  </transition>
 </template>
-
-<script lang="ts">
-const ALLOWED_VISIBLE_FORMATS = ['hex', 'hsl', 'rgb']
+<script setup lang="ts">
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  onBeforeMount,
+  nextTick
+} from 'vue'
+import { useDialog } from '@/composables/useDialog'
+import Dialog from '@/components/framework/Dialog.vue'
+import Slider from '@/components/framework/picker/Slider.vue'
+import workspacesService from '@/services/workspacesService'
+import {
+  clamp,
+  colorsAreValueEqual,
+  conversions,
+  copyColorObject,
+  formatAsCssColor,
+  parsePropsColor
+} from '@/utils/picker'
 import {
   getAppBackgroundColor,
   getColorLuminance,
@@ -140,305 +161,251 @@ import {
   splitColorCode
 } from '@/utils/colors'
 
-import Dialog from '@/components/framework/Dialog.vue'
-import Slider from '@/components/framework/picker/Slider.vue'
-import dialogMixin from '../../../mixins/dialogMixin'
-import workspacesService from '@/services/workspacesService'
-import {
-  clamp,
-  colorsAreValueEqual,
-  conversions,
-  copyColorObject,
-  formatAsCssColor,
-  isValidHexColor,
-  parsePropsColor
-} from '@/utils/picker'
+const ALLOWED_VISIBLE_FORMATS = ['hex', 'hsl', 'rgb']
 
-export default {
-  name: 'ColorPickerDialog',
-  mixins: [dialogMixin],
-  components: {
-    Dialog,
-    Slider
+const props = defineProps({
+  value: {
+    type: String,
+    default: '#000'
   },
-  props: {
-    value: {
-      type: String,
-      default: '#000'
-    },
-    label: {
-      type: String,
-      default: 'Select color'
-    },
-    outputFormat: {
-      type: String,
-      default: 'rgb'
-    },
-    showPalette: {
-      type: Boolean,
-      default: true
+  label: {
+    type: String,
+    default: 'Select color'
+  },
+  outputFormat: {
+    type: String,
+    default: 'rgb'
+  },
+  showPalette: {
+    type: Boolean,
+    default: true
+  },
+  onInput: {
+    type: Function,
+    default: null
+  }
+})
+
+const emit = defineEmits(['close', 'input'])
+
+const { opened, close, hide } = useDialog()
+defineExpose({ close, setColorFromProp })
+
+const colors = ref({
+  hex: '#ffffffff',
+  hsl: { h: 0, s: 0, l: 1, a: 1 },
+  hsv: { h: 0, s: 0, v: 1, a: 1 },
+  rgb: { r: 1, g: 1, b: 1, a: 1 }
+})
+const activeFormat = ref('rgb')
+const recentColors = ref<string[]>([])
+const movingFromCanvas = ref(false)
+const hue = ref<number | null>(null)
+const alpha = ref(1)
+const dialogRef = ref<InstanceType<typeof Dialog> | null>(null)
+const canvasRef = ref<HTMLElement | null>(null)
+const thumbRef = ref<HTMLElement | null>(null)
+
+const swatches = computed(() => PALETTE)
+const outputColor = computed(() => {
+  const activeColor = colors.value[props.outputFormat]
+  return formatAsCssColor(activeColor, props.outputFormat)
+})
+const displayColor = computed(() => {
+  if (activeFormat.value === props.outputFormat) return outputColor.value
+  const activeColor = colors.value[activeFormat.value]
+  return formatAsCssColor(activeColor, activeFormat.value)
+})
+
+onBeforeMount(() => {
+  workspacesService.getColors().then(retrievedColors => {
+    recentColors.value.push(...retrievedColors)
+  })
+
+  if (props.value && typeof props.value === 'string') {
+    setColorFromProp(props.value, true)
+  }
+})
+
+onMounted(async () => {
+  const passive = { passive: true }
+  document.addEventListener('mousemove', moveThumbWithMouse, passive)
+  document.addEventListener('touchmove', moveThumbWithTouch, passive)
+  document.addEventListener('mouseup', stopMovingThumb, passive)
+  document.addEventListener('touchend', stopMovingThumb)
+
+  await nextTick()
+  updateCanvas(colors.value)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousemove', moveThumbWithMouse)
+  document.removeEventListener('touchmove', moveThumbWithTouch)
+  document.removeEventListener('mouseup', stopMovingThumb)
+  document.removeEventListener('touchend', stopMovingThumb)
+})
+
+function setColor(format: string, color: any, silent?: boolean) {
+  if (!colorsAreValueEqual(colors.value[format], color)) {
+    colors.value[format] = color
+    applyColorUpdates(format)
+    if (!silent && typeof props.onInput === 'function') {
+      props.onInput(outputColor.value)
     }
-  },
-  data: () => ({
-    colors: {
-      hex: '#ffffffff',
-      hsl: { h: 0, s: 0, l: 1, a: 1 },
-      hsv: { h: 0, s: 0, v: 1, a: 1 },
-      rgb: { r: 1, g: 1, b: 1, a: 1 }
-    },
-    activeFormat: 'rgb',
-    recentColors: [],
-    movingFromCanvas: false,
-    hue: null,
-    alpha: 1
-  }),
-  computed: {
-    swatches: () => PALETTE,
-    outputColor() {
-      const activeColor = this.colors[this.outputFormat]
+  }
+}
 
-      const cssColor = formatAsCssColor(activeColor, this.outputFormat)
+const switchFormat = () => {
+  const activeFormatIndex = ALLOWED_VISIBLE_FORMATS.findIndex(
+    format => format === activeFormat.value
+  )
 
-      return cssColor
-    },
-    displayColor() {
-      if (this.activeFormat === this.outputFormat) {
-        return this.outputColor
-      }
+  const newFormatIndex =
+    activeFormatIndex === ALLOWED_VISIBLE_FORMATS.length - 1
+      ? 0
+      : activeFormatIndex + 1
 
-      const activeColor = this.colors[this.activeFormat]
+  activeFormat.value = ALLOWED_VISIBLE_FORMATS[newFormatIndex]
+}
 
-      const cssColor = formatAsCssColor(activeColor, this.activeFormat)
+const addColorToHistory = color => {
+  if (recentColors.value.indexOf(color) !== -1) {
+    return
+  }
 
-      return cssColor
+  workspacesService.saveColor(color)
+  recentColors.value.push(color)
+
+  if (recentColors.value.length > 32) {
+    workspacesService.removeColor(recentColors.value.shift())
+  }
+}
+
+const selectRecentColor = (event, color) => {
+  if (event.shiftKey) {
+    const index = recentColors.value.indexOf(color)
+
+    if (index !== -1) {
+      workspacesService.removeColor(recentColors.value.splice(index, 1)[0])
     }
-  },
-  created() {
-    workspacesService.getColors().then(colors => {
-      for (const color of colors) {
-        this.recentColors.push(color)
-      }
-    })
 
-    if (this.value && typeof this.value === 'string') {
-      this.setColorFromProp(this.value, true)
+    return
+  }
+
+  setColorFromProp(color)
+}
+const submitColor = () => {
+  addColorToHistory(outputColor.value)
+}
+const updateHue = value => {
+  const hsvColor = copyColorObject(colors.value.hsv)
+  hsvColor.h = value / 360
+
+  setColor('hsv', hsvColor)
+}
+const updateAlpha = value => {
+  const hsvColor = copyColorObject(colors.value.hsv)
+  hsvColor.a = value
+
+  setColor('hsv', hsvColor)
+}
+
+const setTransparent = () => {
+  updateAlpha(0)
+}
+
+const setNull = () => {
+  setColorFromProp('rgba(0,0,0,0)', true)
+  emit('input', null)
+}
+
+function setColorFromProp(propsColor: string | any, silent = false) {
+  if (propsColor === null) return
+  const result = parsePropsColor(propsColor)
+  if (result) {
+    activeFormat.value = result.format
+    if (result.color.a === 1 && !silent && alpha.value < 1) {
+      result.color.a = alpha.value
     }
-  },
-  mounted() {
-    const passive = { passive: true }
-    document.addEventListener('mousemove', this.moveThumbWithMouse, passive)
-    document.addEventListener('touchmove', this.moveThumbWithTouch, passive)
-    document.addEventListener('mouseup', this.stopMovingThumb, passive)
-    document.addEventListener('touchend', this.stopMovingThumb)
+    setColor(result.format, result.color, silent)
+  }
+}
 
-    this.updateCanvas(this.colors)
-  },
+function moveThumbWithTouch(event: TouchEvent) {
+  if (!movingFromCanvas.value) return
+  const touchPoint = event.touches[0]
+  moveThumb(touchPoint.clientX, touchPoint.clientY)
+}
 
-  beforeDestroy() {
-    document.removeEventListener('mousemove', this.moveThumbWithMouse)
-    document.removeEventListener('touchmove', this.moveThumbWithTouch)
-    document.removeEventListener('mouseup', this.stopMovingThumb)
-    document.removeEventListener('touchend', this.stopMovingThumb)
-  },
-  methods: {
-    /**
-     * @param {string | ColorHsl | ColorHsv | ColorHwb | ColorRgb} propsColor
-     * @param {boolean} silent
-     */
-    setColorFromProp(propsColor, silent = false) {
-      if (propsColor === null) {
-        return
-      }
+/**
+ * @param {MouseEvent} event
+ */
+const startMovingThumbWithMouse = event => {
+  movingFromCanvas.value = true
+  moveThumbWithMouse(event)
+}
 
-      const result = parsePropsColor(propsColor)
+/**
+ * @param {TouchEvent} event
+ */
+const startMovingThumbWithTouch = event => {
+  movingFromCanvas.value = true
+  moveThumbWithTouch(event)
+}
 
-      if (result !== null) {
-        this.activeFormat = result.format
+function moveThumbWithMouse(event: MouseEvent) {
+  if (event.buttons !== 1 || !movingFromCanvas.value) return
+  moveThumb(event.clientX, event.clientY)
+}
 
-        if (result.color.a === 1 && !silent && this.alpha && this.alpha < 1) {
-          result.color.a = this.alpha
-        }
+function moveThumb(clientX: number, clientY: number) {
+  const newThumbPosition = getNewThumbPosition(clientX, clientY)
+  const hsvColor = copyColorObject(colors.value.hsv)
+  hsvColor.s = newThumbPosition.x
+  hsvColor.v = newThumbPosition.y
+  setColor('hsv', hsvColor)
+}
 
-        this.setColor(result.format, result.color, silent)
-      }
-    },
-    /**
-     * @param {MouseEvent} event
-     */
-    startMovingThumbWithMouse(event) {
-      this.movingFromCanvas = true
-      this.moveThumbWithMouse(event)
-    },
+function stopMovingThumb() {
+  movingFromCanvas.value = false
+}
 
-    /**
-     * @param {TouchEvent} event
-     */
-    startMovingThumbWithTouch(event) {
-      this.movingFromCanvas = true
-      this.moveThumbWithTouch(event)
-    },
+function getNewThumbPosition(clientX: number, clientY: number) {
+  const rect = canvasRef.value.getBoundingClientRect()
+  const x = clientX - rect.left
+  const y = clientY - rect.top
+  return {
+    x: clamp(x / rect.width, 0, 1),
+    y: clamp(1 - y / rect.height, 0, 1)
+  }
+}
 
-    /**
-     * @param {MouseEvent} event
-     */
-    moveThumbWithMouse(event) {
-      if (event.buttons !== 1 || this.movingFromCanvas === false) {
-        return
-      }
+function applyColorUpdates(sourceFormat: string) {
+  for (const [format, convert] of conversions[sourceFormat]) {
+    colors.value[format] = convert(colors.value[sourceFormat])
+  }
+  hue.value = colors.value.hsl.h * 360
+  alpha.value = colors.value.rgb.a
+  updateCanvas(colors.value)
+}
 
-      this.moveThumb(event.clientX, event.clientY)
-    },
-
-    /**
-     * @param {TouchEvent} event
-     */
-    moveThumbWithTouch(event) {
-      if (this.movingFromCanvas === false) {
-        return
-      }
-
-      const touchPoint = /** @type {Touch} */ event.touches[0]
-      this.moveThumb(touchPoint.clientX, touchPoint.clientY)
-    },
-
-    /**
-     * @param {number} clientX
-     * @param {number} clientY
-     */
-    moveThumb(clientX, clientY) {
-      const newThumbPosition = this.getNewThumbPosition(clientX, clientY)
-      const hsvColor = copyColorObject(this.colors.hsv)
-      hsvColor.s = newThumbPosition.x
-      hsvColor.v = newThumbPosition.y
-      this.setColor('hsv', hsvColor)
-    },
-
-    stopMovingThumb() {
-      this.movingFromCanvas = false
-    },
-
-    /**
-     * @param {HTMLElement} canvasElement
-     * @param {number} clientX
-     * @param {number} clientY
-     * @returns {{ x: number, y: number }}
-     */
-    getNewThumbPosition(clientX, clientY) {
-      const rect = this.$refs.canvas.getBoundingClientRect()
-      const x = clientX - rect.left
-      const y = clientY - rect.top
-      const position = {
-        x: clamp(x / rect.width, 0, 1),
-        y: clamp(1 - y / rect.height, 0, 1)
-      }
-
-      return position
-    },
-
-    /**
-     * @param {ColorFormat} sourceFormat
-     */
-    applyColorUpdates(sourceFormat) {
-      for (const [format, convert] of conversions[sourceFormat]) {
-        this.colors[format] = convert(this.colors[sourceFormat])
-      }
-
-      this.hue = this.colors.hsl.h * 360
-      this.alpha = this.colors.rgb.a
-
-      this.updateCanvas(this.colors)
-    },
-
-    /**
-     * @param {any} colors
-     * @param {VisibleColorFormat} activeFormat
-     * @returns {{ colors: any, cssColor: string }}
-     */
-    getEventData(colors, activeFormat) {
-      const cssColor = formatAsCssColor(colors[activeFormat], activeFormat)
-
-      return {
-        colors,
-        cssColor
-      }
-    },
-
-    /**
-     * @param {ColorFormat} format
-     * @param {string | ColorHsl | ColorHsv | ColorHwb | ColorRgb} color
-     * @param {boolean} silent
-     */
-    setColor(format, color, silent) {
-      const normalizedColor = color
-
-      if (!colorsAreValueEqual(this.colors[format], normalizedColor)) {
-        this.colors[format] = normalizedColor
-        this.applyColorUpdates(format)
-
-        if (!silent) {
-          this.$emit('input', this.outputColor)
-        }
-      }
-    },
-
-    addColorToHistory(color) {
-      if (this.recentColors.indexOf(color) !== -1) {
-        return
-      }
-
-      workspacesService.saveColor(color)
-      this.recentColors.push(color)
-
-      if (this.recentColors.length > 32) {
-        workspacesService.removeColor(this.recentColors.shift())
-      }
-    },
-    switchFormat() {
-      const activeFormatIndex = ALLOWED_VISIBLE_FORMATS.findIndex(
-        format => format === this.activeFormat
-      )
-
-      const newFormatIndex =
-        activeFormatIndex === ALLOWED_VISIBLE_FORMATS.length - 1
-          ? 0
-          : activeFormatIndex + 1
-
-      this.activeFormat = ALLOWED_VISIBLE_FORMATS[newFormatIndex]
-    },
-    submitColor() {
-      this.addColorToHistory(this.outputColor)
-    },
-    updateHue(value) {
-      const hsvColor = copyColorObject(this.colors.hsv)
-      hsvColor.h = value / 360
-
-      this.setColor('hsv', hsvColor)
-    },
-    updateAlpha(value) {
-      const hsvColor = copyColorObject(this.colors.hsv)
-      hsvColor.a = value
-
-      this.setColor('hsv', hsvColor)
-    },
-    updateHexColorValue(value) {
-      if (isValidHexColor(value)) {
-        this.setColor('hex', value)
-      }
-    },
-    updateCanvas(colors) {
-      if (!this.$el) {
-        return
-      }
-
-      this.$el.style.setProperty('--vacp-hsl-h', String(colors.hsl.h))
-      this.$el.style.setProperty(
-        '--text-color',
-        this.getLinearShadeText(this.outputColor)
-      )
-      this.$el.style.setProperty('--background-color', this.outputColor)
-      this.$refs.canvas.setAttribute(
-        'style',
-        `
+function updateCanvas(colors: any) {
+  if (!canvasRef.value) return
+  dialogRef.value.content.style.setProperty(
+    '--vacp-hsl-h',
+    String(colors.hsl.h)
+  )
+  dialogRef.value.content.style.setProperty(
+    '--text-color',
+    getLinearShadeText(outputColor.value)
+  )
+  dialogRef.value.content.style.setProperty(
+    '--background-color',
+    outputColor.value
+  )
+  canvasRef.value.setAttribute(
+    'style',
+    `
     position: relative;
     background-color: hsl(calc(var(--vacp-hsl-h) * 360) 100% 50%); /* 1. */
     background-image:
@@ -446,51 +413,26 @@ export default {
       linear-gradient(to right, #fff, transparent) /* 2. */
     ;
   `
-      )
-      this.$refs.thumb.setAttribute(
-        'style',
-        `
+  )
+  thumbRef.value.setAttribute(
+    'style',
+    `
     box-sizing: border-box;
     position: absolute;
     left: ${colors.hsv.s * 100}%;   /* 3. */
     bottom: ${colors.hsv.v * 100}%; /* 3. */
   `
-      )
-    },
-    setNull() {
-      this.setColorFromProp('rgba(0,0,0,0)', true)
-      this.$emit('input', null)
-    },
-    setTransparent() {
-      this.updateAlpha(0)
-    },
-    selectRecentColor(event, color) {
-      if (event.shiftKey) {
-        const index = this.recentColors.indexOf(color)
+  )
+}
 
-        if (index !== -1) {
-          workspacesService.removeColor(this.recentColors.splice(index, 1)[0])
-        }
-
-        return
-      }
-
-      this.setColorFromProp(color)
-    },
-    getLinearShadeText(backgroundColor) {
-      if (!backgroundColor) {
-        return
-      }
-
-      const color = splitColorCode(backgroundColor, getAppBackgroundColor())
-      const scaledColor = getLinearShade(
-        color,
-        0.75 * (getColorLuminance(color) > 0 ? -1 : 1)
-      )
-
-      return joinRgba(scaledColor)
-    }
-  }
+function getLinearShadeText(backgroundColor: string) {
+  if (!backgroundColor) return ''
+  const color = splitColorCode(backgroundColor, getAppBackgroundColor())
+  const scaledColor = getLinearShade(
+    color,
+    0.75 * (getColorLuminance(color) > 0 ? -1 : 1)
+  )
+  return joinRgba(scaledColor)
 }
 </script>
 <style lang="scss">

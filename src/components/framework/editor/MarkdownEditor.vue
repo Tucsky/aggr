@@ -49,7 +49,7 @@ const editorElement = ref<HTMLElement | null>(null)
 // Reactive data properties
 const isLoaded = ref(false)
 const isLoading = ref(true)
-const editorInstance = ref<any>(null)
+let editorInstance = null
 
 // Computed property for preview
 const preview = computed(() => marked(props.value))
@@ -58,8 +58,8 @@ const preview = computed(() => marked(props.value))
 watch(
   () => props.value,
   newValue => {
-    if (editorInstance.value && newValue !== editorInstance.value.getValue()) {
-      editorInstance.value.setValue(newValue)
+    if (editorInstance && newValue !== editorInstance.getValue()) {
+      editorInstance.setValue(newValue)
     }
   }
 )
@@ -77,7 +77,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  editorInstance.value?.dispose()
+  editorInstance?.dispose()
 })
 
 // Methods
@@ -88,7 +88,6 @@ const loadMonaco = async () => {
     isLoaded.value = true
     await nextTick()
     createEditor(monaco)
-    await nextTick()
   } catch (error) {
     console.error('Failed to load editor:', error)
   } finally {
@@ -97,10 +96,10 @@ const loadMonaco = async () => {
 }
 
 const resize = async () => {
-  if (editorInstance.value) {
-    editorInstance.value.layout({ width: 0, height: 0 })
+  if (editorInstance) {
+    editorInstance.layout({ width: 0, height: 0 })
     await nextTick()
-    editorInstance.value.layout()
+    editorInstance.layout()
   }
 }
 
@@ -138,27 +137,27 @@ const getDefaultOptions = (): Monaco.Options => ({
 
 // Create editor instance
 const createEditor = async (monaco: Monaco.Editor) => {
-  editorInstance.value = monaco.create(editorElement.value, getDefaultOptions())
+  editorInstance = monaco.create(editorElement.value, getDefaultOptions())
 
   // Editor content change event
-  editorInstance.value.onDidChangeModelContent(() => {
-    emit('input', editorInstance.value.getValue())
+  editorInstance.onDidChangeModelContent(() => {
+    emit('input', editorInstance.getValue())
   })
 
   if (props.autofocus) {
     await nextTick()
-    editorInstance.value.focus()
-    const model = editorInstance.value.getModel()
+    editorInstance.focus()
+    const model = editorInstance.getModel()
     const lastLine = model.getLineCount()
     const lastColumn = model.getLineMaxColumn(lastLine)
-    editorInstance.value.setPosition({
+    editorInstance.setPosition({
       lineNumber: lastLine,
       column: lastColumn
     })
   }
 
   await nextTick()
-  editorInstance.value.layout()
+  editorInstance.layout()
 }
 // Public methods
 defineExpose({ resize })

@@ -1,17 +1,13 @@
+@use '@/assets/sass/variables.scss' as vars;
 
 @mixin shimmer(
   $width: 100%,
   $main-color: var(--theme-background-100),
   $shining-color: var(--theme-background-200)
 ) {
-  background: linear-gradient(
-    270deg,
-    $main-color,
-    $shining-color,
-    $main-color
-  );
+  background: linear-gradient(270deg, $main-color, $shining-color, $main-color);
   background-size: 600% 600%;
-  animation: shimmer 1s $ease-in-out-expo infinite both alternate-reverse;
+  animation: shimmer 1s vars.$ease-in-out-expo infinite both alternate-reverse;
 
   @if ($width != null) {
     width: $width;
@@ -22,10 +18,14 @@
 }
 
 @keyframes shimmer {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 100% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
 }
 
 .shimmer {
-  @include shimmer()
+  @include shimmer();
 }

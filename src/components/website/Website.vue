@@ -1,19 +1,18 @@
 <template>
   <div class="pane-website">
-    <pane-header
-      ref="paneHeader"
+    <PaneHeader
       :paneId="paneId"
       :settings="() => import('@/components/website/WebsiteDialog.vue')"
       :show-search="false"
     >
-      <template v-slot:menu>
+      <template #menu>
         <div class="dropdown-item">
           <label class="checkbox-control -small" @click.stop>
             <input
               type="checkbox"
               class="form-control"
               :checked="interactive"
-              @change="$store.commit(paneId + '/TOGGLE_INTERACTIVE')"
+              @change="store.commit(paneId + '/TOGGLE_INTERACTIVE')"
             />
             <div></div>
             <span>Interactive</span>
@@ -25,7 +24,7 @@
         </button>
         <div class="dropdown-divider"></div>
       </template>
-    </pane-header>
+    </PaneHeader>
     <div class="iframe__lock" v-if="locked">
       <div class="ml8 mr8">
         <p>
@@ -39,7 +38,7 @@
           ?
         </p>
         <div class="text-center">
-          <button class="btn" @click="$store.commit(paneId + '/UNLOCK_URL')">
+          <button class="btn" @click="store.commit(paneId + '/UNLOCK_URL')">
             Yes, authorize
           </button>
         </div>
@@ -60,137 +59,145 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Mixins, Watch } from 'vue-property-decorator'
-
-import PaneMixin from '@/mixins/paneMixin'
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import PaneHeader from '../panes/PaneHeader.vue'
+import store from '@/store'
 
-@Component({
-  components: { PaneHeader },
-  name: 'Website'
+// Define props
+const props = defineProps({
+  paneId: {
+    type: String,
+    required: true
+  }
 })
-export default class Website extends Mixins(PaneMixin) {
-  customId = ''
-  private _reloadTimeout: number
 
-  $refs!: {
-    iframe: HTMLIFrameElement
-    paneHeader: PaneHeader
+// Refs
+const iframe = ref<HTMLIFrameElement | null>(null)
+
+// Variables
+let _reloadTimeout: number | null = null
+
+// Computed properties
+
+const locked = computed(() => {
+  return store.state[props.paneId].locked
+})
+
+const url = computed<string>(() => {
+  return (
+    store.state[props.paneId].url ||
+    'https://alternative.me/crypto/fear-and-greed-index.png'
+  )
+})
+
+const interactive = computed(() => {
+  return store.state[props.paneId].interactive
+})
+
+const invert = computed(() => {
+  return store.state[props.paneId].invert
+})
+
+const reloadTimer = computed(() => {
+  return store.state[props.paneId].reloadTimer
+})
+
+const zoom = computed(() => {
+  return store.state.panes.panes[props.paneId].zoom
+})
+
+const style = computed<{
+  transform: string
+  width: string
+  height: string
+}>(() => {
+  const size = (1 / zoom.value) * 100
+
+  return {
+    transform: `scale(${zoom.value})`,
+    width: size + '%',
+    height: size + '%',
+    pointerEvents: interactive.value ? 'all' : 'none'
+  }
+})
+
+const trimmedUrl = computed(() => {
+  if (url.value.length <= 33) {
+    return url.value
+  } else {
+    return url.value.slice(0, 15) + '[...]' + url.value.substr(-15)
+  }
+})
+
+// Watchers
+
+watch(reloadTimer, () => {
+  setupReloadTimer()
+})
+
+// Lifecycle hooks
+
+onMounted(() => {
+  setupReloadTimer()
+})
+
+onBeforeUnmount(() => {
+  if (_reloadTimeout) {
+    clearTimeout(_reloadTimeout)
+  }
+})
+
+// Methods
+
+function setupReloadTimer() {
+  if (_reloadTimeout) {
+    clearTimeout(_reloadTimeout)
   }
 
-  get locked() {
-    return this.$store.state[this.paneId].locked
+  if (!reloadTimer.value) {
+    return
   }
 
-  get url() {
-    return (
-      this.$store.state[this.paneId].url ||
-      'https://alternative.me/crypto/fear-and-greed-index.png'
-    )
+  let interval: any = reloadTimer.value.trim()
+
+  if (/[\d.]+s/.test(interval)) {
+    interval = parseFloat(interval) * 1000
+  } else if (/[\d.]+h/.test(interval)) {
+    interval = parseFloat(interval) * 1000 * 60 * 60
+  } else {
+    interval = parseFloat(interval) * 1000 * 60
   }
 
-  get interactive() {
-    return this.$store.state[this.paneId].interactive
+  if (!interval) {
+    return
   }
 
-  get invert() {
-    return this.$store.state[this.paneId].invert
+  const now = Date.now()
+  let delay = Math.ceil(now / interval) * interval - now - 20
+
+  if (delay < 1000) {
+    delay += interval
   }
 
-  get reloadTimer() {
-    return this.$store.state[this.paneId].reloadTimer
-  }
+  _reloadTimeout = window.setTimeout(() => {
+    _reloadTimeout = null
 
-  get zoom() {
-    return this.$store.state.panes.panes[this.paneId].zoom
-  }
+    reload()
 
-  get style() {
-    const size = (1 / this.zoom) * 100
+    setupReloadTimer()
+  }, delay)
+}
 
-    return {
-      transform: `scale(${this.zoom})`,
-      width: size + '%',
-      height: size + '%',
-      pointerEvents: this.interactive ? 'all' : 'none'
-    }
-  }
-
-  get trimmedUrl() {
-    if (this.url.length <= 33) {
-      return this.url
-    } else {
-      return this.url.slice(0, 15) + '[...]' + this.url.substr(-15)
-    }
-  }
-
-  @Watch('reloadTimer')
-  onReloadTimerChange() {
-    this.setupReloadTimer()
-  }
-
-  created() {
-    this.setupReloadTimer()
-  }
-
-  getSettingsDialog() {
-    return import('@/components/website/WebsiteDialog.vue')
-  }
-
-  beforeDestroy() {
-    if (this._reloadTimeout) {
-      clearTimeout(this._reloadTimeout)
-    }
-  }
-
-  setupReloadTimer() {
-    if (this._reloadTimeout) {
-      clearTimeout(this._reloadTimeout)
-    }
-
-    if (!this.reloadTimer) {
-      return
-    }
-
-    let interval = this.reloadTimer.trim()
-
-    if (/[\d.]+s/.test(interval)) {
-      interval = parseFloat(interval) * 1000
-    } else if (/[\d.]+h/.test(interval)) {
-      interval = parseFloat(interval) * 1000 * 60 * 60
-    } else {
-      interval = parseFloat(interval) * 1000 * 60
-    }
-
-    if (!interval) {
-      return
-    }
-
-    const now = Date.now()
-    let delay = Math.ceil(now / interval) * interval - now - 20
-
-    if (delay < 1000) {
-      delay += interval
-    }
-
-    this._reloadTimeout = setTimeout(() => {
-      this._reloadTimeout = null
-
-      this.reload()
-
-      this.setupReloadTimer()
-    }, delay) as unknown as number
-  }
-
-  async reload(focus?: boolean) {
-    this.$refs.iframe.src += ''
+function reload(focus?: boolean) {
+  if (iframe.value) {
+    iframe.value.src += ''
 
     if (focus) {
-      this.$refs.iframe.onload = () => {
-        this.$refs.iframe.onload = null
+      iframe.value.onload = () => {
+        iframe.value.onload = null
 
-        this.$refs.iframe.focus()
+        iframe.value.focus()
       }
     }
   }

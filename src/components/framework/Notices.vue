@@ -1,5 +1,5 @@
 <template>
-  <transition-height
+  <TransitionHeight
     :name="transitionGroupName"
     tag="div"
     class="notices"
@@ -21,45 +21,50 @@
         <div v-else v-html="notice.title" class="notice__title"></div>
       </div>
     </div>
-  </transition-height>
+  </TransitionHeight>
 </template>
 
-<script lang="ts">
-import { Notice } from '@/store/app'
-import { Component, Vue } from 'vue-property-decorator'
+<script setup lang="ts">
+import { computed } from 'vue'
+import store from '@/store'
 import TransitionHeight from './TransitionHeight.vue'
+import type { Notice } from '@/store/app'
 
-@Component({
-  components: { TransitionHeight },
-  name: 'Notices'
+/**
+ * Computed property to retrieve notices from the Vuex store.
+ */
+const notices = computed<Notice[]>(() => store.state.app.notices)
+
+/**
+ * Computed property to check if animations are disabled.
+ */
+const disableAnimations = computed<boolean>(
+  () => store.state.settings.disableAnimations
+)
+
+/**
+ * Computed property to determine the transition group name based on animation settings.
+ */
+const transitionGroupName = computed<string | null>(() => {
+  return !disableAnimations.value ? 'slide-notice' : null
 })
-export default class Notices extends Vue {
-  get notices(): Notice[] {
-    return this.$store.state.app.notices
-  }
 
-  get disableAnimations() {
-    return this.$store.state.settings.disableAnimations
-  }
+/**
+ * Handles the click event on a notice.
+ * If the notice has an action, it executes it.
+ * If the action returns false, it aborts hiding the notice.
+ * Otherwise, it dispatches an action to hide the notice.
+ * @param {Notice} notice - The notice object that was clicked.
+ */
+const onClick = (notice: Notice) => {
+  if (typeof notice.action === 'function') {
+    const result = notice.action()
 
-  get transitionGroupName() {
-    if (!this.disableAnimations) {
-      return 'slide-notice'
-    } else {
-      return null
+    if (result === false) {
+      return
     }
   }
 
-  onClick(notice) {
-    if (typeof notice.action === 'function') {
-      const result = notice.action()
-
-      if (result === false) {
-        return
-      }
-    }
-
-    this.$store.dispatch('app/hideNotice', notice.id)
-  }
+  store.dispatch('app/hideNotice', notice.id)
 }
 </script>

@@ -10,71 +10,74 @@
     <div class="color-picker-control__wrapper"></div>
   </button>
 </template>
-
-<script lang="ts">
+<script setup lang="ts">
+import { ref, computed, defineProps, defineEmits, onBeforeUnmount } from 'vue'
 import { joinRgba, splitColorCode, getLinearShadeText } from '@/utils/colors'
-import dialogService from '../../../services/dialogService'
+import dialogService from '@/services/dialogService'
 
-export default {
-  name: 'ColorPickerControl',
-  props: {
-    value: {
-      type: String,
-      default: '#000'
-    },
-    label: {
-      type: String
-    }
+// Define props and emits
+const props = defineProps({
+  value: {
+    type: String,
+    default: '#000'
   },
-  data: () => ({
-    dialogInstance: null
-  }),
-  beforeDestroy() {
-    if (this.dialogInstance) {
-      this.dialogInstance.close()
-    }
-  },
-  computed: {
-    inverseValue() {
-      if (!this.value) {
-        return
-      }
-
-      return joinRgba(getLinearShadeText(splitColorCode(this.value), 0.5))
-    }
-  },
-  methods: {
-    async openPicker() {
-      this.colorDidChanged = false
-
-      this.dialogInstance = await dialogService.openPicker(
-        this.value,
-        this.label,
-        this.onInput,
-        this.onClose
-      )
-    },
-    onInput(color) {
-      if (this._debounceTimeoutId) {
-        clearTimeout(this._debounceTimeoutId)
-      }
-      this.colorDidChanged = true
-
-      this._debounceTimeoutId = setTimeout(() => {
-        this._debounceTimeoutId = null
-
-        this.onChange(color)
-      }, 500)
-    },
-    onChange(color) {
-      this.$emit('input', color)
-    },
-    onClose() {
-      this.$emit('close', this.colorDidChanged)
-    }
+  label: {
+    type: String,
+    default: ''
   }
+})
+const emit = defineEmits(['input', 'close'])
+
+// Reactive state
+const dialogInstance = ref<any>(null)
+let debounceTimeoutId: NodeJS.Timeout | null = null
+let colorDidChanged = false
+
+// Computed property
+const inverseValue = computed(() => {
+  if (!props.value) return
+  return joinRgba(getLinearShadeText(splitColorCode(props.value), 0.5))
+})
+
+// Lifecycle hook
+onBeforeUnmount(() => {
+  if (dialogInstance.value) {
+    dialogInstance.value.close()
+  }
+})
+
+// Methods
+function onInput(color: string) {
+  if (debounceTimeoutId) {
+    clearTimeout(debounceTimeoutId)
+  }
+  colorDidChanged = true
+
+  debounceTimeoutId = setTimeout(() => {
+    debounceTimeoutId = null
+    onChange(color)
+  }, 500)
+}
+
+async function openPicker() {
+  colorDidChanged = false
+  dialogInstance.value = await dialogService.openPicker(
+    props.value,
+    props.label,
+    onInput,
+    onClose
+  )
+}
+
+function onChange(color: string) {
+  emit('input', color)
+}
+
+function onClose() {
+  emit('close', colorDidChanged)
 }
 </script>
+
 <style lang="scss" scoped>
 .color-picker-control {
   position: relative;

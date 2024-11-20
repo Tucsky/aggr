@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import { createApp, h } from 'vue'
 import store from '@/store'
 
 const DAY = 60 * 60 * 24
@@ -545,28 +545,59 @@ export function getClosestValue(array, value) {
   })
 }
 
-export function createComponent(componentModule, props: any = {}): Vue {
-  const Factory = Vue.extend(Object.assign({ store }, componentModule))
+export function createComponent(componentModule: any, props: any = {}) {
+  // Dynamically create a Vue app instance for the component
+  const app = createApp({
+    render() {
+      return h(componentModule.default || componentModule, props)
+    }
+  })
 
-  const cmp: any = new Factory(
-    Object.assign(
-      {},
-      {
-        propsData: Object.assign({}, props)
-      }
-    )
-  )
-
-  return cmp
+  return app
 }
-
-export function mountComponent(cmp: Vue, container?: HTMLElement): void {
+export function mountComponent(
+  app: ReturnType<typeof createApp>,
+  container?: HTMLElement
+): () => void {
+  // Default to mounting inside the document body
   if (!container) {
-    container = document.getElementById('app') || document.body
+    container = document.body
   }
 
-  const mounted = cmp.$mount()
-  container.appendChild(mounted.$el)
+  // Create a new element for the component
+  const mountElement = document.createElement('div')
+  container.appendChild(mountElement)
+
+  // Mount the app to the element
+  app.mount(mountElement)
+
+  // Return a cleanup function for the caller
+  return () => {
+    const instance = app._instance?.proxy as {
+      modelValue?: any
+      $once?: (event: string, callback: () => void) => void
+    }
+
+    // Check if `modelValue` exists on the component
+    if (instance?.modelValue !== undefined) {
+      // If `modelValue` is truthy, set it to `false` to trigger closing animation
+      if (instance.modelValue) {
+        instance.modelValue = false
+
+        // Listen for the `after-closed` event emitted by the component
+        instance.$once('after-closed', () => {
+          app.unmount() // Unmount the app instance
+          mountElement.remove() // Remove the DOM element
+        })
+
+        return // Wait for the animation to complete before unmounting
+      }
+    }
+
+    // If `modelValue` doesn't exist or is falsy, unmount immediately
+    app.unmount()
+    mountElement.remove()
+  }
 }
 
 let popupWindow

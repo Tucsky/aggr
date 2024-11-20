@@ -1,5 +1,5 @@
 <template>
-  <grid-layout
+  <GridLayout
     ref="grid"
     :layout="layout"
     :col-num="cols"
@@ -12,7 +12,7 @@
     @layout-ready="layoutReady = true"
     @layout-updated="onLayoutUpdated"
   >
-    <grid-item
+    <GridItem
       v-for="gridItem in layout"
       :key="gridItem.i"
       :type="gridItem.type"
@@ -33,163 +33,226 @@
         :is="gridItem.type"
         :paneId="gridItem.i"
       ></component>
-    </grid-item>
-  </grid-layout>
+    </GridItem>
+  </GridLayout>
 </template>
 
-<script lang="ts">
-import Vue from 'vue'
-import Component from 'vue-class-component'
+<script setup lang="ts">
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+  defineAsyncComponent
+} from 'vue'
+import { useStore } from 'vuex'
 
-import VueGridLayout from 'vue-grid-layout'
-import PaneMixin from '@/mixins/paneMixin'
+// Import vue3-grid-layout-next components
+import { GridLayout, GridItem } from 'vue3-grid-layout-next'
 
+// Import constants and types
 import { GRID_COLS } from '@/utils/constants'
-import { GridItem } from '@/utils/grid'
+import type { GridItem as GridItemType } from '@/utils/grid'
 
-@Component({
-  components: {
-    GridLayout: VueGridLayout.GridLayout,
-    GridItem: VueGridLayout.GridItem,
-    Chart: () => import('@/components/chart/Chart.vue'),
-    Trades: () => import('@/components/trades/Trades.vue'),
-    Stats: () => import('@/components/stats/Stats.vue'),
-    Counters: () => import('@/components/counters/Counters.vue'),
-    Prices: () => import('@/components/prices/Prices.vue'),
-    Website: () => import('@/components/website/Website.vue'),
-    TradesLite: () => import('@/components/trades/TradesLite.vue'),
-    Alerts: () => import('@/components/alerts/Alerts.vue')
-  }
+// Define Async Components
+const Chart = defineAsyncComponent(() => import('@/components/chart/Chart.vue'))
+const Trades = defineAsyncComponent(
+  () => import('@/components/trades/Trades.vue')
+)
+const Stats = defineAsyncComponent(() => import('@/components/stats/Stats.vue'))
+const Counters = defineAsyncComponent(
+  () => import('@/components/counters/Counters.vue')
+)
+const Prices = defineAsyncComponent(
+  () => import('@/components/prices/Prices.vue')
+)
+const Website = defineAsyncComponent(
+  () => import('@/components/website/Website.vue')
+)
+const TradesLite = defineAsyncComponent(
+  () => import('@/components/trades/TradesLite.vue')
+)
+const Alerts = defineAsyncComponent(
+  () => import('@/components/alerts/Alerts.vue')
+)
+
+// Register Components for Template Usage
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const components = {
+  Chart,
+  Trades,
+  Stats,
+  Counters,
+  Prices,
+  Website,
+  TradesLite,
+  Alerts
+}
+
+// Template Refs
+const grid = ref<InstanceType<typeof GridLayout> | null>(null)
+const panes = ref<Array<any>>([]) // Replace `any` with appropriate type
+
+// Vuex Store
+const store = useStore()
+
+// Reactive Data
+const rowHeight = ref<number>(80)
+const cols = ref<number | null>(null)
+const layoutReady = ref<boolean>(false)
+
+// Internal Variables
+let resizeTimeout: number | null = null
+let maximizedPaneId: string | null = null
+
+// Computed Properties
+const unlocked = computed(() => !store.state.panes.locked)
+const layout = computed<GridItemType[]>(() => store.state.panes.layout)
+
+// Lifecycle Hooks
+onMounted(() => {
+  cols.value = GRID_COLS
+  updateRowHeight()
+  window.addEventListener('resize', updateRowHeight)
 })
-export default class Panes extends Vue {
-  rowHeight = 80
-  cols = null
-  breakpoint = null
-  layoutReady = false
 
-  private _resizeTimeout: number
-  private _maximizedPaneId
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateRowHeight)
+})
 
-  $refs!: {
-    panes: PaneMixin[]
-    grid: VueGridLayout.GridLayout
+// Methods
+
+/**
+ * Resizes the maximized pane by toggling its size.
+ */
+const resizeMaximizedPane = async () => {
+  let maximizedItem: HTMLElement | undefined
+
+  if (!maximizedPaneId) {
+    maximizedItem = document.getElementsByClassName(
+      '-maximized'
+    )[0] as HTMLElement
+  } else {
+    const elem = document.getElementById(maximizedPaneId)
+    maximizedItem = elem ? (elem.parentElement as HTMLElement) : undefined
   }
 
-  protected get panes() {
-    return this.$store.state.panes.panes
-  }
+  await nextTick()
 
-  protected get unlocked() {
-    return !this.$store.state.panes.locked
-  }
+  if (maximizedItem) {
+    const maximizedPaneIdLocal = maximizedItem.children[0].id
+    let width: number
+    let height: number
 
-  protected get layout() {
-    return this.$store.state.panes.layout
-  }
-
-  created() {
-    this.cols = GRID_COLS
-
-    this.updateRowHeight()
-  }
-
-  mounted() {
-    window.addEventListener('resize', this.updateRowHeight)
-  }
-
-  beforeDestroy() {
-    window.addEventListener('resize', this.updateRowHeight)
-  }
-
-  resizeMaximizedPane() {
-    let maximizedItem: HTMLElement
-
-    if (!this._maximizedPaneId) {
-      maximizedItem = document.getElementsByClassName(
-        '-maximized'
-      )[0] as HTMLElement
+    if (!maximizedPaneId) {
+      width = maximizedItem.clientWidth
+      height = maximizedItem.clientHeight
+      maximizedPaneId = maximizedPaneIdLocal
     } else {
-      maximizedItem = document.getElementById(
-        this._maximizedPaneId
-      ).parentElement
+      width = parseFloat(maximizedItem.style.width)
+      height = parseFloat(maximizedItem.style.height)
+      maximizedPaneId = null
     }
 
-    this.$nextTick(() => {
-      if (maximizedItem) {
-        const maximizedPaneId = maximizedItem.children[0].id
-        let width
-        let height
+    resizePane(maximizedPaneIdLocal, height, width)
+  }
+}
 
-        if (!this._maximizedPaneId) {
-          width = maximizedItem.clientWidth
-          height = maximizedItem.clientHeight
-          this._maximizedPaneId = maximizedPaneId
-        } else {
-          width = parseFloat(maximizedItem.style.width)
-          height = parseFloat(maximizedItem.style.height)
-          this._maximizedPaneId = null
-        }
-        this.resizePane(maximizedPaneId, height, width)
-      }
+/**
+ * Resizes a specific pane by its ID.
+ * @param id - The ID of the pane.
+ * @param height - The new height.
+ * @param width - The new width.
+ */
+const resizePane = (id: string, height: number, width: number) => {
+  if (!panes.value) {
+    return
+  }
+
+  const pane = panes.value.find((pane: any) => pane.paneId === id) // Adjust type based on PaneMixin
+
+  if (!pane) {
+    return
+  }
+
+  if (typeof pane.onResize === 'function') {
+    nextTick(() => {
+      pane.onResize(width, height)
     })
   }
+}
 
-  resizePane(id, height, width) {
-    if (!this.$refs.panes) {
-      return
-    }
+/**
+ * Handler for item resize event.
+ * @param id - The ID of the item.
+ * @param hPx - The new height in pixels.
+ * @param wPx - The new width in pixels.
+ */
+const onItemResized = (
+  id: string,
+  h: number,
+  w: number,
+  hPx: number,
+  wPx: number
+) => {
+  resizePane(id, hPx, wPx)
+  // Uncomment if you want to update the layout in the store
+  // store.commit('panes/UPDATE_LAYOUT', layout.value)
+}
 
-    const pane: PaneMixin = this.$refs.panes.find(pane => pane.paneId === id)
+/**
+ * Handler for layout updated event.
+ * @param gridItems - The updated grid items.
+ */
+const onLayoutUpdated = (gridItems: GridItemType[]) => {
+  store.commit('panes/UPDATE_LAYOUT', gridItems)
+}
 
-    if (!pane) {
-      return
-    }
+/**
+ * Handler for container resize event.
+ * @param id - The ID of the container.
+ * @param hPx - The new height in pixels.
+ * @param wPx - The new width in pixels.
+ */
+const onContainerResized = (
+  id: string,
+  h: number,
+  w: number,
+  hPx: number,
+  wPx: number
+) => {
+  resizePane(id, hPx, wPx)
+}
 
-    if (typeof pane.onResize === 'function') {
-      pane.$nextTick(() => {
-        pane.onResize(width, height)
-      })
-    }
+/**
+ * Updates the row height based on the window size.
+ * @param event - Optional resize event.
+ */
+const updateRowHeight = (event?: Event) => {
+  if (event && !(event as Event).isTrusted) {
+    resizeMaximizedPane()
+    return
   }
 
-  onItemResized(id, h, w, hPx, wPx) {
-    this.resizePane(id, +hPx, +wPx)
-    // this.$store.commit('panes/UPDATE_LAYOUT', this.layout)
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout)
   }
 
-  updateItem(id) {
-    const item = this.layout.find(item => item.i === id)
-    this.$store.commit('panes/UPDATE_ITEM', item)
-  }
-
-  onLayoutUpdated(gridItems: GridItem[]) {
-    this.$store.commit('panes/UPDATE_LAYOUT', gridItems)
-  }
-
-  onContainerResized(id, h, w, hPx, wPx) {
-    this.resizePane(id, +hPx, +wPx)
-  }
-
-  updateRowHeight(event?: Event) {
-    if (event && !event.isTrusted) {
-      this.resizeMaximizedPane()
-      return
-    }
-
-    if (this._resizeTimeout) {
-      clearTimeout(this._resizeTimeout)
-    }
-
-    if (event) {
-      this._resizeTimeout = window.setTimeout(
-        this.updateRowHeight.bind(this),
-        200
-      )
-    } else {
-      this._resizeTimeout = null
-
-      this.rowHeight = window.innerHeight / this.cols
-    }
+  if (event) {
+    resizeTimeout = window.setTimeout(updateRowHeight, 200)
+  } else {
+    resizeTimeout = null
+    rowHeight.value = window.innerHeight / (cols.value || GRID_COLS)
   }
 }
 </script>
+
+<style scoped>
+/* Your styles here */
+.pane {
+  /* Example styles */
+  width: 100%;
+  height: 100%;
+}
+</style>

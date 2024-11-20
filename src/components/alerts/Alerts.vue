@@ -8,7 +8,7 @@
       :show-name="false"
     >
       <hr />
-      <Btn type="button" class="-text" @click="$refs.list.getAlerts()">
+      <Btn type="button" class="-text" @click="listRef.getAlerts()">
         <i class="icon-refresh"></i>
       </Btn>
     </pane-header>
@@ -19,35 +19,29 @@
       class="form-control pane-alerts__query pane-overlay"
       v-model="query"
     />
-    <alerts-list ref="list" :query="query" persist-sections />
+    <alerts-list ref="listRef" :query="query" persist-sections />
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Mixins } from 'vue-property-decorator'
-import ToggableSection from '@/components/framework/ToggableSection.vue'
-
-import PaneMixin from '@/mixins/paneMixin'
+<script setup lang="ts">
 import PaneHeader from '../panes/PaneHeader.vue'
 import Btn from '@/components/framework/Btn.vue'
 import AlertsList from '@/components/alerts/AlertsList.vue'
+import { ref } from 'vue'
 
-@Component({
-  components: { PaneHeader, ToggableSection, AlertsList, Btn },
-  name: 'Alerts'
-})
-export default class Alerts extends Mixins(PaneMixin) {
-  query = ''
-}
+// Define props
+defineProps<{
+  paneId: string
+}>()
+
+// Reactive property for query
+const query = ref('')
+const listRef = ref<InstanceType<typeof AlertsList>>()
 </script>
 
 <style lang="scss" scoped>
 .pane-alerts {
   $self: &;
-
-  ::v-deep .alerts-list__table {
-    width: 100%;
-  }
 
   &__query {
     border: 0;

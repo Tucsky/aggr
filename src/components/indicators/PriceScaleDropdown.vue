@@ -1,6 +1,6 @@
 <template>
-  <dropdown :value="value" @input="$emit('input', $event)">
-    <div class="dropdown-divider" data-label="Scales"></div>
+  <dropdown :value="value" @input="$emit('input', $event)" on-sides>
+    <div class="dropdown-divider" data-label="Avl. scales"></div>
 
     <button
       v-for="(label, id) in priceScales"
@@ -18,54 +18,58 @@
     </button>
   </dropdown>
 </template>
-
-<script lang="ts">
+<script setup lang="ts">
+import { computed, defineProps } from 'vue'
 import { ChartPaneState } from '@/store/panesSettings/chart'
 import { getChartScales } from '../chart/options'
+import store from '@/store'
 
-export default {
-  name: 'PriceScaleDropdown',
-  props: {
-    value: {
-      type: HTMLButtonElement,
-      default: null
-    },
-    paneId: {
-      type: String,
-      required: true
-    },
-    indicatorId: {
-      type: String,
-      required: true
-    }
-  },
-  computed: {
-    priceScales() {
-      return getChartScales(
-        (this.$store.state[this.paneId] as ChartPaneState).indicators,
-        this.indicatorId
-      )
-    },
-    priceScaleId() {
-      return (this.$store.state[this.paneId] as ChartPaneState).indicators[
-        this.indicatorId
-      ].options.priceScaleId
-    },
-    indicatorName() {
-      return (this.$store.state[this.paneId] as ChartPaneState).indicators[
-        this.indicatorId
-      ].name
-    }
-  },
-  methods: {
-    setPriceScale(id) {
-      this.$store.dispatch(this.paneId + '/setIndicatorOption', {
-        id: this.indicatorId,
-        key: 'priceScaleId',
-        value: id
-      })
-    }
+// Define props
+const props = defineProps<{
+  value: HTMLButtonElement | null
+  paneId: string
+  indicatorId: string
+}>()
+
+// Computed properties
+const priceScales = computed(() => {
+  return getChartScales(
+    (store.state[props.paneId] as ChartPaneState).indicators,
+    props.indicatorId
+  )
+})
+
+const priceScaleId = computed(() => {
+  return (store.state[props.paneId] as ChartPaneState).indicators[
+    props.indicatorId
+  ].options.priceScaleId
+})
+
+const indicatorName = computed(() => {
+  return (store.state[props.paneId] as ChartPaneState).indicators[
+    props.indicatorId
+  ].name
+})
+
+const axisVisibility = computed(() => {
+  return {
+    left: (store.state[props.paneId] as ChartPaneState).showLeftScale,
+    right: (store.state[props.paneId] as ChartPaneState).showRightScale
   }
+})
+
+// Method to set the price scale
+function setPriceScale(id: string) {
+  if (axisVisibility.value[id] === false) {
+    store.commit(props.paneId + '/TOGGLE_AXIS', id)
+  }
+
+  store.dispatch(props.paneId + '/setIndicatorOption', {
+    id: props.indicatorId,
+    key: 'priceScaleId',
+    value: id
+  })
 }
 </script>
+
 <style lang="scss" scoped></style>

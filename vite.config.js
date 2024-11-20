@@ -1,12 +1,11 @@
 import { defineConfig, loadEnv } from 'vite'
-import { qrcode } from 'vite-plugin-qrcode'
 import { visualizer } from 'rollup-plugin-visualizer'
 import fs from 'fs'
 import gitprocess from 'child_process'
 import monacoEditorPlugin from 'vite-plugin-monaco-editor'
 import path from 'path'
 import svgLoader from 'vite-svg-loader'
-import vue from '@vitejs/plugin-vue2'
+import vue from '@vitejs/plugin-vue'
 
 import crypto from 'crypto'
 
@@ -74,9 +73,8 @@ export default defineConfig(({ mode }) => {
         defaultImport: 'url' // 👈
       }),
       visualizer(),
-      monacoEditorPlugin.default({}),
-      qrcode() // only applies in dev mode
-      // Add the terser plugin for production builds to remove console.log
+      monacoEditorPlugin.default({})
+      // Add other plugins here if needed
     ],
     build: {
       minify: 'terser',
@@ -109,7 +107,7 @@ export default defineConfig(({ mode }) => {
       devSourcemap: true,
       preprocessorOptions: {
         scss: {
-          additionalData: `@import "@/assets/sass/variables.scss";`
+          additionalData: `@use "@/assets/sass/variables.scss" as *;`
         }
       }
     }
