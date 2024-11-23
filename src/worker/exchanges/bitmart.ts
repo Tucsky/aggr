@@ -5,8 +5,8 @@ export default class extends Exchange {
   id = 'BITMART'
   protected endpoints: { [id: string]: any } = {
     PRODUCTS: [
-      'https://api-cloud.bitmart.com/spot/v1/symbols/details',
-      'https://api-cloud.bitmart.com/contract/public/details'
+      'https://api-cloud.bitmart.com/spot/v1/symbols',
+      'https://api-cloud-v2.bitmart.com/contract/public/details'
     ]
   }
 
@@ -14,9 +14,9 @@ export default class extends Exchange {
 
   async getUrl(pair: string) {
     if (this.specs[pair]) {
-      return 'wss://openapi-ws.bitmart.com/api?protocol=1.1'
+      return 'wss://openapi-ws-v2.bitmart.com/api?protocol=1.1'
     }
-    
+
     return 'wss://ws-manager-compress.bitmart.com/api?protocol=1.1'
   }
 
@@ -35,10 +35,16 @@ export default class extends Exchange {
 
     for (const response of responses) {
       for (const product of response.data.symbols) {
-        products.push(product.symbol)
+        if (typeof product === 'string') {
+          // spot endpoint
+          products.push(product)
+        } else {
+          // contracts endpoint
+          products.push(product.symbol)
 
-        if (product.contract_size) {
-          specs[product.symbol] = +product.contract_size
+          if (product.contract_size) {
+            specs[product.symbol] = +product.contract_size
+          }
         }
       }
     }
@@ -58,20 +64,20 @@ export default class extends Exchange {
 
     const isContract = !!this.specs[pair]
 
-    const typeImpl = isContract ? { 
-      prefix: 'futures',
-      arg: 'action'
-    } : {
-      prefix: 'spot',
-      arg: 'op',
-    }
+    const typeImpl = isContract
+      ? {
+          prefix: 'futures',
+          arg: 'action'
+        }
+      : {
+          prefix: 'spot',
+          arg: 'op'
+        }
 
     api.send(
       JSON.stringify({
         [typeImpl.arg]: `subscribe`,
-        args: [
-          `${typeImpl.prefix}/trade:${pair}`
-        ]
+        args: [`${typeImpl.prefix}/trade:${pair}`]
       })
     )
 
@@ -90,20 +96,20 @@ export default class extends Exchange {
 
     const isContract = !!this.specs[pair]
 
-    const typeImpl = isContract ? { 
-      prefix: 'futures',
-      arg: 'action'
-    } : {
-      prefix: 'spot',
-      arg: 'op',
-    }
+    const typeImpl = isContract
+      ? {
+          prefix: 'futures',
+          arg: 'action'
+        }
+      : {
+          prefix: 'spot',
+          arg: 'op'
+        }
 
     api.send(
       JSON.stringify({
         [typeImpl.arg]: `unsubscribe`,
-        args: [
-          `${typeImpl.prefix}/trade:${pair}`
-        ]
+        args: [`${typeImpl.prefix}/trade:${pair}`]
       })
     )
 
@@ -117,8 +123,11 @@ export default class extends Exchange {
         pair: trade.symbol,
         timestamp: trade.create_time_mill,
         price: +trade.deal_price,
-        size: (trade.deal_vol * this.specs[trade.symbol]) / (this.specs[trade.symbol] > 1 ? trade.deal_price : 1),
-        side: trade.way < 4 ? 'buy' : 'sell'
+        size:
+          (trade.deal_vol * this.specs[trade.symbol]) /
+          (this.specs[trade.symbol] > 1 ? trade.deal_price : 1),
+        side: trade.way < 4 ? 'buy' : 'sell',
+        liquidation: !!trade.type
       }
     } else {
       return {
@@ -131,8 +140,7 @@ export default class extends Exchange {
       }
     }
   }
-
-  onMessage(event: any, api: any) {
+  onMessage(event, api) {
     let data = event.data
 
     if (typeof data !== 'string') {
@@ -144,9 +152,29 @@ export default class extends Exchange {
     if (!json || !json.data) {
       return
     }
-    
-    return this.emitTrades(api.id,
-      json.data.map(trade => this.formatTrade(trade))
-    )
+
+    const trades = json.data
+    const regularTrades = []
+    const liquidationTrades = []
+
+    for (let i = 0; i < trades.length; i++) {
+      const trade = trades[i]
+
+      if (trade.type) {
+        // Collect liquidation trades
+        liquidationTrades.push(this.formatTrade(trade))
+      } else {
+        // Collect regular trades
+        regularTrades.push(this.formatTrade(trade))
+      }
+    }
+
+    if (regularTrades.length > 0) {
+      this.emitTrades(api.id, regularTrades)
+    }
+
+    if (liquidationTrades.length > 0) {
+      this.emitLiquidations(api.id, liquidationTrades)
+    }
   }
 }
