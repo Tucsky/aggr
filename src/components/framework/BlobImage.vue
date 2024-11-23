@@ -8,10 +8,10 @@ import { ref, watch, onBeforeUnmount } from 'vue'
 // Define props with defineProps and withDefaults
 const props = withDefaults(
   defineProps<{
-    value: Blob | File | null
+    modelValue: Blob | File | null
   }>(),
   {
-    value: null
+    modelValue: null
   }
 )
 
@@ -23,10 +23,10 @@ const imageObjectUrl = ref<string | null>(null)
  */
 const loadBlob = () => {
   clearBlob()
-  const isBlob = props.value instanceof Blob
-  const isFile = props.value instanceof File
+  const isBlob = props.modelValue instanceof Blob
+  const isFile = props.modelValue instanceof File
   if (isBlob || isFile) {
-    imageObjectUrl.value = URL.createObjectURL(props.value)
+    imageObjectUrl.value = URL.createObjectURL(props.modelValue)
   }
 }
 
@@ -42,7 +42,7 @@ const clearBlob = () => {
 
 // Watch the 'value' prop for changes and load the Blob immediately
 watch(
-  () => props.value,
+  () => props.modelValue,
   () => {
     loadBlob()
   },

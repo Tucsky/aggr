@@ -1,5 +1,8 @@
 <template>
-  <dropdown :value="value" @input="$emit('input', $event)">
+  <dropdown
+    :modelValue="modelValue"
+    @update:modelValue="$emit('update:modelValue', $event)"
+  >
     <div class="dropdown-divider" :data-label="indicatorName"></div>
     <IndicatorScaleButton :indicator-id="indicatorId" :pane-id="paneId" />
     <button type="button" class="dropdown-item" @click="resizeIndicator">
@@ -53,7 +56,7 @@ import store from '@/store'
 
 // Define props
 const props = defineProps<{
-  value: HTMLElement | null
+  modelValue: HTMLElement | null
   paneId: string
   indicatorId: string | null
 }>()
@@ -74,7 +77,7 @@ const indicatorOrder = computed(() => {
 
 // Watcher to call updateLabels whenever `value` prop changes
 watch(
-  () => props.value,
+  () => props.modelValue,
   newValue => {
     if (newValue) {
       updateLabels()

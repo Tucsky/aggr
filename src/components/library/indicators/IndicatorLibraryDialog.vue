@@ -119,7 +119,7 @@ const paneId = computed(() => {
       }
     }
   }
-  return null
+  return null;
 })
 
 // Methods
@@ -214,7 +214,7 @@ const reloadSelection = async (id?: string) => {
 
 <style lang="scss" scoped>
 .indicator-library-dialog {
-  ::v-deep {
+  :deep() {
     .dialog__content {
       width: 500px;
     }

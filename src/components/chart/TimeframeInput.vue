@@ -4,8 +4,8 @@
     class="w-100"
     ref="input"
     value=""
-    @input.native="onInput"
-    @keydown.native="onKeydown"
+    @input="onInput"
+    @keydown="onKeydown"
     :placeholder="placeholder"
   />
 </template>
@@ -59,9 +59,9 @@ const onInput = (event: Event) => {
   }
 
   if (!label || !label.length) {
-    emit('input', null)
+    emit('update:modelValue', null)
   } else {
-    emit('input', {
+    emit('update:modelValue', {
       value,
       label
     })
@@ -111,5 +111,5 @@ onMounted(() => {
 })
 
 // Emits
-const emit = defineEmits(['input', 'submit'])
+const emit = defineEmits(['update:modelValue', 'submit'])
 </script>

@@ -119,7 +119,7 @@
   </transition>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, getCurrentInstance } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import Btn from '@/components/framework/Btn.vue'
 import importService from '@/services/importService'
 import { ago, sleep } from '@/utils/helpers'
@@ -131,6 +131,7 @@ import { computeThemeColorAlpha } from '@/utils/colors'
 import IndicatorPreview from './IndicatorPreview.vue'
 import { marked } from 'marked'
 import { ChartPaneState } from '@/store/panesSettings/chart'
+import store from '@/store'
 
 // Props
 const props = defineProps({
@@ -185,7 +186,6 @@ const authorUrl = computed(
     `${import.meta.env.VITE_APP_LIB_REPO_URL}/tree/main/indicators/${props.indicator.author}`
 )
 const added = computed(() => {
-  const store = getCurrentInstance()?.proxy.$store
   if (
     !props.paneId ||
     !(store.state[props.paneId] as ChartPaneState).indicators
@@ -276,7 +276,6 @@ const installIndicator = async (sha?: string) => {
     await importService.importIndicator(indicator, { addToChart: true })
   } catch (error) {
     console.error(error)
-    const store = getCurrentInstance()?.proxy.$store
     store.dispatch('app/showNotice', {
       type: 'error',
       title: 'Failed to fetch indicator'
@@ -356,7 +355,6 @@ const publish = async () => {
     }
   } catch (error) {
     console.error(error)
-    const store = getCurrentInstance()?.proxy.$store
     store.dispatch('app/showNotice', {
       type: 'error',
       title: 'Failed to publish indicator'
@@ -494,7 +492,7 @@ const edit = async () => {
     }
   }
 
-  &-enter,
+  &-enter-from,
   &-leave-to {
     opacity: 0;
 

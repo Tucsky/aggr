@@ -4,7 +4,7 @@
     :options="donationMenu"
     :placeholder="label"
     class="-text -arrow"
-    @input="onSelect"
+    @update:modelValue="onSelect"
   >
     <template #option="{ value }">
       <i :class="value.icon" class="-fill"></i>

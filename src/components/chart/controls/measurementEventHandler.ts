@@ -32,6 +32,7 @@ export default class MeasurementEventHandler {
   private onMoveHandler: (event) => void
   private onEndHandler: (event) => void
   private onPanHandler: (event) => void
+  unmountMeasurementComponent: () => void
 
   constructor(chart: ChartController, event: MouseEvent | TouchEvent) {
     this.chart = chart
@@ -169,7 +170,10 @@ export default class MeasurementEventHandler {
       percent
     })
 
-    mountComponent(this.measurementComponent, this.canvas.parentElement)
+    this.unmountMeasurementComponent = mountComponent(
+      this.measurementComponent,
+      this.canvas.parentElement
+    )
 
     const timeScale = this.chart.chartInstance.timeScale()
 
@@ -224,10 +228,8 @@ export default class MeasurementEventHandler {
   }
 
   removeComponent() {
-    this.measurementComponent.$destroy()
-    this.measurementComponent.$el.parentNode.removeChild(
-      this.measurementComponent.$el
-    )
+    this.unmountMeasurementComponent()
+    this.unmountMeasurementComponent = null
     this.measurementComponent = null
 
     if (this.onPanHandler) {

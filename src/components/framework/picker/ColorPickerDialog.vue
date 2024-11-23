@@ -8,7 +8,7 @@
       :mask="false"
       size="small"
       borderless
-      @mousedown.native.stop
+      @mousedown.stop
       @close="hide"
     >
       <template v-slot:header>
@@ -36,7 +36,7 @@
           :gradient="['#f00', '#ff0', '#0f0', '#0ff', '#00f', '#f0f', '#f00']"
           :max="360"
           v-model="hue"
-          @input="updateHue(hue)"
+          @update:modelValue="updateHue(hue)"
         ></Slider>
         <Slider
           class="color-picker-dialog-sliders__alpha -alpha"
@@ -53,7 +53,7 @@
           :step="0.01"
           :showCompletion="false"
           v-model="alpha"
-          @input="updateAlpha(alpha)"
+          @update:modelValue="updateAlpha(alpha)"
         >
         </Slider>
       </div>
@@ -69,8 +69,8 @@
         </button>
         <editable
           class="form-control hide-scrollbar"
-          :value="displayColor"
-          @input="setColorFromProp($event)"
+          :modelValue="displayColor"
+          @update:modelValue="setColorFromProp($event)"
         ></editable>
         <button
           class="btn -text -small"
@@ -164,7 +164,7 @@ import {
 const ALLOWED_VISIBLE_FORMATS = ['hex', 'hsl', 'rgb']
 
 const props = defineProps({
-  value: {
+  modelValue: {
     type: String,
     default: '#000'
   },
@@ -186,7 +186,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close', 'input'])
+defineEmits(['close'])
 
 const { opened, close, hide } = useDialog()
 defineExpose({ close, setColorFromProp })
@@ -222,8 +222,8 @@ onBeforeMount(() => {
     recentColors.value.push(...retrievedColors)
   })
 
-  if (props.value && typeof props.value === 'string') {
-    setColorFromProp(props.value, true)
+  if (props.modelValue && typeof props.modelValue === 'string') {
+    setColorFromProp(props.modelValue, true)
   }
 })
 
@@ -316,7 +316,9 @@ const setTransparent = () => {
 
 const setNull = () => {
   setColorFromProp('rgba(0,0,0,0)', true)
-  emit('input', null)
+  if (typeof props.onInput === 'function') {
+    props.onInput(null)
+  }
 }
 
 function setColorFromProp(propsColor: string | any, silent = false) {

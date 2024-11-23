@@ -42,8 +42,8 @@
               <editable
                 placeholder="Amount*"
                 class="w-100"
-                :value="formatAmount(threshold.amount)"
-                @input="
+                :modelValue="formatAmount(threshold.amount)"
+                @update:modelValue="
                   store.commit(paneId + '/SET_THRESHOLD_AMOUNT', {
                     id: threshold.id,
                     value: $event
@@ -60,30 +60,30 @@
             </div>
           </td>
           <td class="table-action">
-            <color-picker-control
+            <ColorPickerControl
               label="Buy color"
-              :value="threshold.buyColor"
-              @input="
+              :modelValue="threshold.buyColor"
+              @update:modelValue="
                 store.commit(paneId + '/SET_THRESHOLD_COLOR', {
                   id: threshold.id,
                   side: 'buyColor',
                   value: $event
                 })
               "
-            ></color-picker-control>
+            ></ColorPickerControl>
           </td>
           <td class="table-action">
-            <color-picker-control
+            <ColorPickerControl
               label="Sell color"
-              :value="threshold.sellColor"
-              @input="
+              :modelValue="threshold.sellColor"
+              @update:modelValue="
                 store.commit(paneId + '/SET_THRESHOLD_COLOR', {
                   id: threshold.id,
                   side: 'sellColor',
                   value: $event
                 })
               "
-            ></color-picker-control>
+            ></ColorPickerControl>
           </td>
           <td
             v-if="useAudio"
@@ -147,7 +147,7 @@
         :threshold="selectedThreshold"
         :pane-id="paneId"
         :can-delete="thresholds.length > 2"
-        @input="thresholdPanelTrigger = $event"
+        @update:modelValue="thresholdPanelTrigger = $event"
       />
     </dropdown>
   </div>

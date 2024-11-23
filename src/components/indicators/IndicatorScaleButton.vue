@@ -74,10 +74,10 @@ async function togglePriceFormatDropdown(indicatorId: string, event: Event) {
     priceFormatDropdown = createComponent(module.default, {
       paneId: props.paneId,
       indicatorId: indicatorId,
-      value: anchor
-    })
-    priceFormatDropdown.$on('modelValue', (value: any) => {
-      priceFormatDropdown.value = value
+      modelValue: anchor,
+      onInput(value) {
+        priceFormatDropdown.modelValue = value
+      }
     })
     unmountPriceFormatDropdown = mountComponent(priceFormatDropdown)
   } else if (priceFormatDropdown.value) {

@@ -1,10 +1,10 @@
 <template>
   <Dropdown
     :model-value="modelValue"
-    @input="emit('update:modelValue', $event)"
+    @update:modelValue="emit('update:modelValue', $event)"
   >
     <button
-      @click="emit('cmd', ['toggleTimeframeDropdown', $event])"
+      @click="dispatch('toggleTimeframeDropdown', $event)"
       class="dropdown-item -arrow"
     >
       {{ timeframeForHuman }}
@@ -13,14 +13,11 @@
       <i class="icon-search"></i>
       <span>Search</span>
     </button>
-    <button
-      @click="emit('cmd', ['takeScreenshot', $event])"
-      class="dropdown-item"
-    >
+    <button @click="dispatch('takeScreenshot', $event)" class="dropdown-item">
       <i class="icon-add-photo"></i>
       <span>Snapshot</span>
     </button>
-    <button @click="emit('cmd', ['flipChart'])" class="dropdown-item">
+    <button @click="dispatch('flipChart')" class="dropdown-item">
       <i class="icon-flip"></i>
       <span>Flip</span>
     </button>
@@ -130,11 +127,15 @@ const props = defineProps({
   alert: {
     type: Object,
     default: null
+  },
+  onCmd: {
+    type: Function,
+    default: null
   }
 })
 
 // Emits
-const emit = defineEmits(['update:modelValue', 'cmd'])
+const emit = defineEmits(['update:modelValue'])
 
 // Refs
 const alertsDropdownTrigger = ref(null)
@@ -239,5 +240,11 @@ const toggleShowAlerts = () => {
 
 const toggleShowAlertsLabel = () => {
   store.commit(`${props.paneId}/TOGGLE_ALERTS_LABEL`)
+}
+
+const dispatch = (...args) => {
+  if (props.onCmd && typeof props.onCmd === 'function') {
+    props.onCmd(args)
+  }
 }
 </script>

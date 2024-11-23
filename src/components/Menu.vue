@@ -26,8 +26,8 @@
       </button>
       <dropdown
         ref="panesDropdownRef"
-        @mousedown.native.stop
-        @touchstart.native.stop
+        @mousedown.stop
+        @touchstart.stop
         on-sides
       >
         <button
@@ -115,9 +115,9 @@
       <dropdown
         v-model="volumeSliderOpened"
         v-on="volumeSliderEvents"
-        @mousedown.native.stop
-        @touchstart.native.stop
-        @mouseleave.native="volumeSliderTriggerEvents.mouseleave"
+        @mousedown.stop
+        @touchstart.stop
+        @mouseleave="volumeSliderTriggerEvents.mouseleave"
         ref="volumeSlider"
         class="volume-slider"
         interactive
@@ -132,14 +132,16 @@
           :step="0.01"
           :label="true"
           :model-value="audioVolume"
-          @input="store.dispatch('settings/setAudioVolume', $event)"
+          @update:modelValue="store.dispatch('settings/setAudioVolume', $event)"
           @reset="store.dispatch('settings/setAudioVolume', 1)"
           log
         >
-          <template v-slot:tooltip="{ value }">
+          <template #tooltip="{ modelValue }">
             {{
-              ((Math.log10(value + 1) / Math.log10(3 + 1)) * 100).toFixed() +
-              '%'
+              (
+                (Math.log10(modelValue + 1) / Math.log10(3 + 1)) *
+                100
+              ).toFixed() + '%'
             }}
           </template>
         </Slider>

@@ -14,8 +14,8 @@
           :options="availableTypes"
           class="mlauto"
           button-class="-text -arrow"
-          @input="
-            $store.dispatch(paneId + '/updateBucket', {
+          @update:modelValue="
+            store.dispatch(paneId + '/updateBucket', {
               id: bucketId,
               prop: 'type',
               value: $event
@@ -38,16 +38,16 @@
           class="form-group -end mtauto -tight"
           ref="colorContainer"
         >
-          <color-picker-control
-            :value="color"
-            @input="
-              $store.dispatch(paneId + '/updateBucket', {
+          <ColorPickerControl
+            :modelValue="color"
+            @update:modelValue="
+              store.dispatch(paneId + '/updateBucket', {
                 id: bucketId,
                 prop: 'color',
                 value: $event
               })
             "
-          ></color-picker-control>
+          ></ColorPickerControl>
         </div>
         <div v-if="type === 'histogram'" class="form-group -tight -end mtauto">
           <label
@@ -60,7 +60,7 @@
               class="form-control"
               :checked="conditionnalColor"
               @change="
-                $store.commit(
+                store.commit(
                   paneId + '/TOGGLE_BUCKET_COLOR_CONDITION',
                   bucketId
                 )
@@ -83,7 +83,7 @@
           class="form-control -code"
           rows="2"
           spellcheck="false"
-          :value="color"
+          :modelValue="color"
           v-dispatch="[
             paneId + '/updateBucket',
             value => ({
@@ -108,7 +108,7 @@
             type="text"
             class="form-control"
             :value="window"
-            :placeholder="getHms($store.state[paneId].window) + ' (default)'"
+            :placeholder="getHms(store.state[paneId].window) + ' (default)'"
             v-commit="[
               paneId + '/UPDATE_BUCKET',
               v => ({
@@ -127,9 +127,9 @@
           <editable
             class="form-control"
             placeholder="auto"
-            :value="precision"
-            @input="
-              $store.dispatch(paneId + '/updateBucket', {
+            :modelValue="precision"
+            @update:modelValue="
+              store.dispatch(paneId + '/updateBucket', {
                 id: bucketId,
                 prop: 'precision',
                 value: $event
@@ -151,7 +151,7 @@
           class="form-control -code"
           rows="5"
           spellcheck="false"
-          :value="input"
+          :modelValue="input"
           v-dispatch="[
             paneId + '/updateBucket',
             v => ({

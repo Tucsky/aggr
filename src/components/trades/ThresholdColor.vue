@@ -2,9 +2,9 @@
   <ColorPickerControl
     v-if="color"
     class="ml8"
-    :value="color"
+    :modelValue="color"
     label="Buy color"
-    @input="regenerateSwatch"
+    @update:modelValue="regenerateSwatch"
     @click.stop
   />
 </template>
@@ -35,7 +35,7 @@ const name = computed(() => `${props.side}Color`)
 const color = computed<string | null>(() => {
   const value = thresholds.value[1][name.value]
   if (!value) {
-    return null
+    return null;
   }
   const colorRgb = splitColorCode(value)
   colorRgb[3] = 1 // Ensure alpha is set to 1

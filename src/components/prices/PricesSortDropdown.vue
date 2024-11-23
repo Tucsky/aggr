@@ -1,8 +1,8 @@
 <template>
   <DropdownButton
-    :value="sortType"
+    :modelValue="sortType"
     :options="['none', 'price', 'volume', 'delta', 'change']"
-    @input="selectSortType($event)"
+    @update:modelValue="selectSortType($event)"
     :class="buttonClass"
   ></DropdownButton>
 </template>

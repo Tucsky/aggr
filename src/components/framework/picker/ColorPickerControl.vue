@@ -4,7 +4,7 @@
     @click="openPicker"
     :style="{
       '--text-color': inverseValue,
-      '--background-color': value
+      '--background-color': modelValue
     }"
   >
     <div class="color-picker-control__wrapper"></div>
@@ -17,7 +17,7 @@ import dialogService from '@/services/dialogService'
 
 // Define props and emits
 const props = defineProps({
-  value: {
+  modelValue: {
     type: String,
     default: '#000'
   },
@@ -26,7 +26,7 @@ const props = defineProps({
     default: ''
   }
 })
-const emit = defineEmits(['input', 'close'])
+const emit = defineEmits(['update:modelValue', 'close'])
 
 // Reactive state
 const dialogInstance = ref<any>(null)
@@ -35,8 +35,8 @@ let colorDidChanged = false
 
 // Computed property
 const inverseValue = computed(() => {
-  if (!props.value) return
-  return joinRgba(getLinearShadeText(splitColorCode(props.value), 0.5))
+  if (!props.modelValue) return
+  return joinRgba(getLinearShadeText(splitColorCode(props.modelValue), 0.5))
 })
 
 // Lifecycle hook
@@ -62,7 +62,7 @@ function onInput(color: string) {
 async function openPicker() {
   colorDidChanged = false
   dialogInstance.value = await dialogService.openPicker(
-    props.value,
+    props.modelValue,
     props.label,
     onInput,
     onClose
@@ -70,7 +70,7 @@ async function openPicker() {
 }
 
 function onChange(color: string) {
-  emit('input', color)
+  emit('update:modelValue', color)
 }
 
 function onClose() {

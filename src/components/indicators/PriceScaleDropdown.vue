@@ -1,5 +1,5 @@
 <template>
-  <dropdown :value="value" @input="$emit('input', $event)" on-sides>
+  <Dropdown :modelValue="modelValue" @update:modelValue="onInput" on-sides>
     <div class="dropdown-divider" data-label="Avl. scales"></div>
 
     <button
@@ -16,19 +16,21 @@
       </span>
       <span v-else>{{ label }}</span>
     </button>
-  </dropdown>
+  </Dropdown>
 </template>
 <script setup lang="ts">
 import { computed, defineProps } from 'vue'
 import { ChartPaneState } from '@/store/panesSettings/chart'
+import Dropdown from '@/components/framework/Dropdown.vue'
 import { getChartScales } from '../chart/options'
 import store from '@/store'
 
 // Define props
 const props = defineProps<{
-  value: HTMLButtonElement | null
+  modelValue: HTMLButtonElement | null
   paneId: string
   indicatorId: string
+  onInput: (event: any) => void
 }>()
 
 // Computed properties

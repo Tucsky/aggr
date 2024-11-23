@@ -13,7 +13,10 @@
       contrasted
     >
       <template #cover>
-        <BlobImage :value="savedPreview" class="indicator-dialog__preview" />
+        <BlobImage
+          :modelValue="savedPreview"
+          class="indicator-dialog__preview"
+        />
       </template>
 
       <template #header>
@@ -50,7 +53,7 @@
         </button>
       </template>
       <template #subheader>
-        <tabs :value="navigation.tab" @input="setTab">
+        <tabs :modelValue="navigation.tab" @update:modelValue="setTab">
           <tab name="script">
             Script
             <template #control>
@@ -68,14 +71,14 @@
           :pane-id="paneId"
         >
           <DropdownButton
-            @click.native.stop
+            @click.stop
             button-class="dropdown-item"
             :options="{
               revert: 'Revert changes',
               reset: 'Reset to default'
             }"
             class="-cases"
-            @input="revertChanges"
+            @update:modelValue="revertChanges"
           >
             <template #selection>
               <i class="icon-eraser"></i> <span>Reset</span>
@@ -101,7 +104,7 @@
         </p>
         <editor
           ref="editorRef"
-          :value="code"
+          :modelValue="code"
           :editor-options="navigation.editorOptions"
           @blur="updateScript"
           @options="updateIndicatorOptions"
@@ -424,7 +427,7 @@ const setTab = async value => {
     object-fit: cover;
   }
 
-  ::v-deep .dialog__content {
+  :deep(.dialog__content) {
     width: 755px;
     overflow: visible;
 

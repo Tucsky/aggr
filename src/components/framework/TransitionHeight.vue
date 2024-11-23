@@ -155,7 +155,7 @@ function getElementHeight(element) {
     transition: all 0.25s $ease-out-expo;
   }
 
-  &-enter,
+  &-from,
   &-leave-to {
     opacity: 0;
   }
@@ -172,7 +172,7 @@ function getElementHeight(element) {
     transition: all 0.15s $ease-out-expo;
   }
 
-  &-enter,
+  &-enter-from,
   &-leave-to {
     opacity: 0;
     transform: scale(0.8);
@@ -186,14 +186,14 @@ function getElementHeight(element) {
     transition: all 0.25s $ease-out-expo;
   }
 
-  &-enter,
+  &-enter-from,
   &-leave-to {
     opacity: 0;
   }
 }
 
 .slide-fade-left {
-  &-enter {
+  &-enter-from {
     transform: translateX(-2rem);
   }
 
@@ -203,7 +203,7 @@ function getElementHeight(element) {
 }
 
 .slide-fade-right {
-  &-enter {
+  &-enter-from {
     transform: translateX(2rem);
   }
 

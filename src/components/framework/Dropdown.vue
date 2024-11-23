@@ -3,7 +3,7 @@
     name="dropdown"
     @enter="onEnterStart"
     @after-enter="emit('opened')"
-    @before-leave="emit('closed')"
+    @after-leave="emit('closed')"
   >
     <div
       ref="elementRef"
@@ -34,7 +34,7 @@ import {
 import { isTouchSupported } from '@/utils/touchevent'
 
 const props = defineProps({
-  value: {
+  modelValue: {
     type: Object,
     default: null
   },
@@ -72,10 +72,10 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['input', 'opened', 'closed'])
+const emit = defineEmits(['update:modelValue', 'opened', 'closed'])
 
 // State refs
-const triggerElement = ref<any>(props.value || null)
+const triggerElement = ref<any>(props.modelValue || null)
 const top = ref<number | null>(null)
 const left = ref<number | null>(null)
 const elementRef = ref<HTMLElement>()
@@ -86,16 +86,16 @@ let _resizeTimeout: ReturnType<typeof setTimeout> | null = null
 let clickOutsideHandler: ((event: MouseEvent | TouchEvent) => void) | null =
   null
 
-// Watch for changes in `value` prop to toggle dropdown
+// Watch for changes in `modelValue` prop to toggle dropdown
 watch(
-  () => props.value,
+  () => props.modelValue,
   newTrigger => toggle(newTrigger)
 )
 
 // Lifecycle hooks
 onMounted(() => {
-  if (props.value) {
-    toggle(props.value)
+  if (props.modelValue) {
+    toggle(props.modelValue)
   }
 })
 
@@ -131,7 +131,7 @@ const toggle = (newTriggerElement: any, emitInput = false) => {
   }
 
   if (emitInput) {
-    emit('input', triggerElement.value)
+    emit('update:modelValue', triggerElement.value)
   }
 }
 
@@ -306,13 +306,13 @@ defineExpose({ toggle })
     transform: none;
   }
 
-  &-enter,
+  &-enter-from,
   &-leave-to {
     opacity: 0;
     transform: scale(0.8);
   }
 
-  ::v-deep(&-divider) {
+  :deep((&-divider)) {
     background-color: var(--theme-background-200);
     height: 1px;
     padding: 0;
@@ -348,7 +348,7 @@ defineExpose({ toggle })
     }
   }
 
-  ::v-deep(&-item) {
+  :deep((&-item)) {
     border: 0;
     background: 0;
     padding: 0.625em;

@@ -1,6 +1,5 @@
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 
-import Vue from 'vue'
 import { parseAmount, randomString } from '@/utils/helpers'
 import { formatMarketPrice } from '@/services/productsService'
 import { ModulesState } from '..'
@@ -229,7 +228,7 @@ const mutations = {
     const threshold = this.getters[state._id + '/getThreshold'](id)
 
     if (threshold) {
-      Vue.set(threshold, 'max', !threshold.max)
+      threshold.max = !threshold.max
     }
   },
   SET_THRESHOLD_MULTIPLIER(
@@ -237,7 +236,7 @@ const mutations = {
     { identifier, multiplier }: { identifier: string; multiplier: number }
   ) {
     if (multiplier === null || isNaN(multiplier) || multiplier < 0) {
-      Vue.delete(state.multipliers, identifier)
+      delete state.multipliers[identifier]
       return
     }
 
@@ -245,7 +244,7 @@ const mutations = {
       multiplier = 0.01
     }
 
-    Vue.set(state.multipliers, identifier, multiplier)
+    state.multipliers[identifier] = multiplier
   },
   SET_THRESHOLD_GIF(state, payload) {
     const threshold = this.getters[state._id + '/getThreshold'](payload.id)

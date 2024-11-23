@@ -37,12 +37,11 @@ export async function loadMd(token) {
 }
 
 export async function showReference(token, content, position) {
-  const module = await import(
+  const { default: Component } = await import(
     '@/components/framework/editor/EditorReference.vue'
   )
 
-  // Create the component instance
-  const appInstance = createComponent(module.default, {
+  const app = createComponent(Component, {
     token,
     coordinates: {
       top: position.y,
@@ -50,14 +49,11 @@ export async function showReference(token, content, position) {
       width: 2,
       height: 2
     },
-    content
+    content,
+    onClosed: () => {
+      unmount()
+    }
   })
 
-  // Mount the component and get the unmount function
-  const { unmount } = mountComponent(appInstance)
-
-  // Listen for the dropdown's `closed` event to trigger cleanup
-  appInstance.config.globalProperties.$on('closed', () => {
-    unmount() // Unmount and remove the component from the DOM
-  })
+  const unmount = mountComponent(app)
 }

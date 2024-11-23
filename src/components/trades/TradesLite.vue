@@ -20,8 +20,8 @@
           label
           :show-completion="false"
           :gradient="gradient"
-          :value="thresholdsMultipler"
-          @input="
+          :modelValue="thresholdsMultipler"
+          @update:modelValue="
             store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
               value: $event,
               market: market

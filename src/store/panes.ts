@@ -87,7 +87,7 @@ const getters = {
       }
     }
 
-    return null
+    return null;
   }
 } as GetterTree<PanesState, ModulesState>
 
@@ -302,17 +302,17 @@ const actions = {
     }
   },
   setMarketsForAll({ dispatch }, markets: string[]) {
-    return dispatch('refreshMarketsListeners', { markets })
+    return dispatch('refreshMarketsListeners', { markets });
   },
   setMarketsForPane(
     { dispatch, state },
     { id, markets }: { id: string; markets: string[] }
   ) {
     if (state.panes[id].type in StaticPaneTypeEnum) {
-      return dispatch('refreshMarketsListeners', { id, markets: [] })
+      return dispatch('refreshMarketsListeners', { id, markets: [] });
     }
 
-    return dispatch('refreshMarketsListeners', { id, markets })
+    return dispatch('refreshMarketsListeners', { id, markets });
   },
   duplicatePane({ state, rootState, dispatch }, id: string) {
     if (!state.panes[id] || !rootState[id]) {
@@ -428,10 +428,10 @@ const actions = {
 
 const mutations = {
   ADD_PANE: (state, pane: Pane) => {
-    Vue.set(state.panes, pane.id, pane)
+    state.panes[pane.id] = pane
   },
   REMOVE_PANE: (state, id: string) => {
-    Vue.delete(state.panes, id)
+    delete state.panes[id]
   },
   ADD_GRID_ITEM: (state, { pane, space }: { pane: Pane; space: GridSpace }) => {
     const item: GridItem = {
@@ -467,7 +467,7 @@ const mutations = {
     state.panes[id].name = name
   },
   SET_PANE_ZOOM: (state, { id, zoom }: { id: string; zoom: number }) => {
-    Vue.set(state.panes[id], 'zoom', zoom)
+    state.panes[id].zoom = zoom
   },
   TOGGLE_SYNC_WITH_PARENT_FRAME: (state, paneId) => {
     const index = state.syncedWithParentFrame.indexOf(paneId)

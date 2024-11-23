@@ -32,11 +32,11 @@
         ></i>
       </label>
       <dropdown-button
-        :value="reloadTimer"
+        :modelValue="reloadTimer"
         :options="reloadOptions"
         placeholder="Never"
         class="-outline form-control -arrow"
-        @input="setReloadTimer"
+        @update:modelValue="setReloadTimer"
       ></dropdown-button>
     </div>
     <div class="form-group mb8">
@@ -120,13 +120,13 @@ const reloadOptions: Record<string, string> = {
 
 // Computed property to trim the original URL
 const originalUrlTrimmed = computed(() => {
-  if (!originalUrl) return ''
+  if (!originalUrl) return '';
   const urlTrimmed = originalUrl.replace(/https?:\/\/(www\.)?/, '')
 
   if (urlTrimmed.length <= 16) {
     return urlTrimmed
   } else {
-    return `${urlTrimmed.slice(0, 8)}[...]${urlTrimmed.slice(-8)}`
+    return `${urlTrimmed.slice(0, 8)}[...]${urlTrimmed.slice(-8)}`;
   }
 })
 

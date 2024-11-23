@@ -32,15 +32,15 @@
           label
           :show-completion="false"
           :gradient="gradient"
-          :value="thresholdsMultipler"
-          @input="
-            $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
+          :modelValue="thresholdsMultipler"
+          @update:modelValue="
+            store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
               value: $event,
               market: market
             })
           "
           @reset="
-            $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
+            store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
               value: 1,
               market: market
             })

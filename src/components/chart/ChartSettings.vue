@@ -12,9 +12,9 @@
         :step="100"
         :show-completion="true"
         class="mt8"
-        :value="refreshRate"
-        @input="$store.commit(paneId + '/SET_REFRESH_RATE', $event)"
-        @reset="$store.commit(paneId + '/SET_REFRESH_RATE', 500)"
+        :modelValue="refreshRate"
+        @update:modelValue="store.commit(paneId + '/SET_REFRESH_RATE', $event)"
+        @reset="store.commit(paneId + '/SET_REFRESH_RATE', 500)"
       ></slider>
     </div>
     <p v-if="refreshRate < 500" class="form-feedback">
@@ -27,7 +27,7 @@
           type="checkbox"
           class="form-control"
           :checked="showLegend"
-          @change="$store.commit(paneId + '/TOGGLE_LEGEND')"
+          @change="store.commit(paneId + '/TOGGLE_LEGEND')"
         />
         <div></div>
         <span class="-inline">Show legend</span>
@@ -53,19 +53,19 @@
           <div></div>
           <span>Show vertical grid lines</span>
         </label>
-        <color-picker-control
+        <ColorPickerControl
           v-if="showVerticalGridlines"
           class="ml8"
-          :value="verticalGridlinesColor"
+          :modelValue="verticalGridlinesColor"
           label="Vertical line color"
-          @input="
+          @update:modelValue="
             $event !== verticalGridlinesColor &&
-              $store.commit(paneId + '/SET_GRIDLINES', {
+              store.commit(paneId + '/SET_GRIDLINES', {
                 type: 'vertical',
                 value: $event
               })
           "
-        ></color-picker-control>
+        ></ColorPickerControl>
       </div>
     </div>
     <div class="form-group mb8">
@@ -89,20 +89,20 @@
           <div></div>
           <span>Show horizontal grid lines</span>
         </label>
-        <color-picker-control
+        <ColorPickerControl
           v-if="showHorizontalGridlines"
           class="ml8"
           model="rgb"
-          :value="horizontalGridlinesColor"
+          :modelValue="horizontalGridlinesColor"
           label="Horizontal line color"
-          @input="
+          @update:modelValue="
             $event !== horizontalGridlinesColor &&
-              $store.commit(paneId + '/SET_GRIDLINES', {
+              store.commit(paneId + '/SET_GRIDLINES', {
                 type: 'horizontal',
                 value: $event
               })
           "
-        ></color-picker-control>
+        ></ColorPickerControl>
       </div>
     </div>
     <div class="form-group mb8 column">
@@ -111,16 +111,16 @@
         <div></div>
         <span>Watermark</span>
       </label>
-      <color-picker-control
+      <ColorPickerControl
         v-if="showWatermark"
         class="ml8"
-        :value="watermarkColor"
+        :modelValue="watermarkColor"
         label="Watermark color"
-        @input="
+        @update:modelValue="
           $event !== watermarkColor &&
-            $store.commit(paneId + '/SET_WATERMARK', { value: $event })
+            store.commit(paneId + '/SET_WATERMARK', { value: $event })
         "
-      ></color-picker-control>
+      ></ColorPickerControl>
     </div>
     <div class="form-group mb8 column">
       <label class="checkbox-control" v-commit="paneId + '/SET_BORDER'">
@@ -128,32 +128,32 @@
         <div></div>
         <span>Borders</span>
       </label>
-      <color-picker-control
+      <ColorPickerControl
         v-if="showBorder"
         class="ml8"
-        :value="borderColor"
+        :modelValue="borderColor"
         label="Border color"
-        @input="
+        @update:modelValue="
           $event !== borderColor &&
-            $store.commit(paneId + '/SET_BORDER', { value: $event })
+            store.commit(paneId + '/SET_BORDER', { value: $event })
         "
-      ></color-picker-control>
-      <color-picker-control
+      ></ColorPickerControl>
+      <ColorPickerControl
         class="ml8"
-        :value="textColor"
+        :modelValue="textColor"
         label="Text color"
-        @input="
+        @update:modelValue="
           $event !== textColor &&
-            $store.commit(paneId + '/SET_TEXT_COLOR', { value: $event })
+            store.commit(paneId + '/SET_TEXT_COLOR', { value: $event })
         "
-      ></color-picker-control>
+      ></ColorPickerControl>
     </div>
     <div class="form-group">
       <label>Scales</label>
       <div class="form-group mb8 column">
         <label
           class="checkbox-control"
-          @change="$store.commit(paneId + '/TOGGLE_AXIS', 'left')"
+          @change="store.commit(paneId + '/TOGGLE_AXIS', 'left')"
         >
           <input
             type="checkbox"
@@ -165,7 +165,7 @@
         </label>
         <label
           class="checkbox-control"
-          @change="$store.commit(paneId + '/TOGGLE_AXIS', 'right')"
+          @change="store.commit(paneId + '/TOGGLE_AXIS', 'right')"
         >
           <input
             type="checkbox"
@@ -177,7 +177,7 @@
         </label>
         <label
           class="checkbox-control"
-          @change="$store.commit(paneId + '/TOGGLE_AXIS', 'time')"
+          @change="store.commit(paneId + '/TOGGLE_AXIS', 'time')"
         >
           <input
             type="checkbox"
@@ -194,7 +194,7 @@
       <div class="form-group column">
         <label
           class="checkbox-control"
-          @change="$store.commit(paneId + '/TOGGLE_FILL_GAPS_WITH_EMPTY')"
+          @change="store.commit(paneId + '/TOGGLE_FILL_GAPS_WITH_EMPTY')"
         >
           <input
             type="checkbox"

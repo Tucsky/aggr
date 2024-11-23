@@ -18,15 +18,15 @@
             :step="1"
             :label="true"
             :show-completion="true"
-            :value="frequency"
-            @input="frequency = $event"
+            :modelValue="frequency"
+            @update:modelValue="frequency = $event"
             @reset="reset('frequency')"
           ></slider>
           <editable
             class="-center text-nowrap ml8"
             style="line-height: 1"
-            :value="frequency"
-            @input="frequency = $event"
+            :modelValue="frequency"
+            @update:modelValue="frequency = $event"
           ></editable>
         </div>
       </div>
@@ -55,8 +55,8 @@
             :step="0.01"
             :label="true"
             :show-completion="true"
-            :value="gain"
-            @input="gain = $event"
+            :modelValue="gain"
+            @update:modelValue="gain = $event"
             @reset="reset('gain')"
           ></slider>
           <label
@@ -83,8 +83,8 @@
             :step="0.1"
             :label="true"
             :show-completion="true"
-            :value="holdDuration"
-            @input="holdDuration = $event"
+            :modelValue="holdDuration"
+            @update:modelValue="holdDuration = $event"
             @reset="reset('holdDuration')"
           ></slider>
           <label
@@ -115,7 +115,7 @@
               v-model="osc"
               :options="[`'triangle'`, `'square'`, `'sine'`, `'sawtooth'`]"
               class="-outline form-control -arrow"
-              @input="osc = $event"
+              @update:modelValue="osc = $event"
             >
               <template v-slot:selection>
                 {{ osc.replace(/'/g, '') }}
@@ -140,8 +140,8 @@
                 :label="true"
                 :show-completion="true"
                 class="mt8"
-                :value="fadeIn"
-                @input="fadeIn = $event"
+                :modelValue="fadeIn"
+                @update:modelValue="fadeIn = $event"
                 @reset="reset('fadeIn')"
               ></slider>
             </div>
@@ -159,8 +159,8 @@
                 :label="true"
                 :show-completion="true"
                 class="mt8"
-                :value="fadeOut"
-                @input="fadeOut = $event"
+                :modelValue="fadeOut"
+                @update:modelValue="fadeOut = $event"
                 @reset="reset('fadeOut')"
               ></slider>
             </div>
@@ -180,8 +180,8 @@
                 :label="true"
                 :show-completion="true"
                 class="mt8"
-                :value="startGain"
-                @input="startGain = $event"
+                :modelValue="startGain"
+                @update:modelValue="startGain = $event"
                 @reset="reset('startGain')"
               ></slider>
             </div>
@@ -199,8 +199,8 @@
                 :label="true"
                 :show-completion="true"
                 class="mt8"
-                :value="endGain"
-                @input="endGain = $event"
+                :modelValue="endGain"
+                @update:modelValue="endGain = $event"
                 @reset="reset('endGain')"
               ></slider>
             </div>
@@ -219,8 +219,8 @@
               :label="true"
               :show-completion="true"
               class="mt8"
-              :value="delay"
-              @input="delay = $event"
+              :modelValue="delay"
+              @update:modelValue="delay = $event"
               @reset="reset('delay')"
             ></slider>
           </div>
@@ -241,7 +241,7 @@
             rows="4"
             ref="output"
             class="form-control"
-            :value="litteral"
+            :modelValue="litteral"
             spellcheck="false"
             readonly
           ></textarea>

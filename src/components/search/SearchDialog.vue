@@ -49,7 +49,7 @@
               class="form-control"
               :checked="searchFilters.normalize"
               @change="
-                $store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')
+                store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')
               "
             />
             <div></div>
@@ -64,7 +64,7 @@
               class="form-control"
               :checked="searchFilters.mergeUsdt"
               @change="
-                $store.commit('settings/TOGGLE_SEARCH_TYPE', 'mergeUsdt')
+                store.commit('settings/TOGGLE_SEARCH_TYPE', 'mergeUsdt')
               "
             />
             <div></div>
@@ -80,7 +80,7 @@
               class="form-control"
               :checked="searchFilters.historical"
               @change="
-                $store.commit('settings/TOGGLE_SEARCH_TYPE', 'historical')
+                store.commit('settings/TOGGLE_SEARCH_TYPE', 'historical')
               "
             />
             <div></div>
@@ -91,7 +91,7 @@
               type="checkbox"
               class="form-control"
               :checked="searchFilters.recent"
-              @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'recent')"
+              @change="store.commit('settings/TOGGLE_SEARCH_TYPE', 'recent')"
             />
             <div></div>
             <span>Show history</span>
@@ -103,7 +103,7 @@
             <label
               class="checkbox-control -small mb4 -custom hide-scrollbar"
               :key="id"
-              v-if="!$store.state.exchanges[id].disabled"
+              v-if="!store.state.exchanges[id].disabled"
             >
               <input
                 type="checkbox"
@@ -145,7 +145,7 @@
               type="checkbox"
               class="form-control"
               :checked="searchFilters.spots"
-              @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'spots')"
+              @change="store.commit('settings/TOGGLE_SEARCH_TYPE', 'spots')"
             />
             <div></div>
             <span>Spots</span>
@@ -156,7 +156,7 @@
               class="form-control"
               :checked="searchFilters.perpetuals"
               @change="
-                $store.commit('settings/TOGGLE_SEARCH_TYPE', 'perpetuals')
+                store.commit('settings/TOGGLE_SEARCH_TYPE', 'perpetuals')
               "
             />
             <div></div>
@@ -167,7 +167,7 @@
               type="checkbox"
               class="form-control"
               :checked="searchFilters.futures"
-              @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'futures')"
+              @change="store.commit('settings/TOGGLE_SEARCH_TYPE', 'futures')"
             />
             <div></div>
             <span>Futures</span>
@@ -394,7 +394,7 @@
         <button type="button" class="btn -text" @click="hide">Cancel</button>
         <btn
           class="-large -green ml8"
-          @click.native="submit"
+          @click="submit"
           :loading="isLoading"
         >
           {{ submitLabel }}
@@ -494,7 +494,7 @@ const previousSearchSelections = computed(
   () => store.state.settings.previousSearchSelections
 )
 const paneName = computed(() => {
-  if (!selectedPaneId.value) return 'n/a'
+  if (!selectedPaneId.value) return 'n/a';
   const name = store.getters['panes/getName'](selectedPaneId.value)
   return name.trim().length
     ? name
@@ -523,7 +523,7 @@ const submitLabel = computed(() => {
   if (!selection.value.length && toDisconnectCount)
     return `disconnect (${toDisconnectCount})`
   if (toConnectCount) return `connect (${toConnectCount})`
-  return 'refresh'
+  return 'refresh';
 })
 const searchFilters = computed(() => store.state.settings.searchTypes)
 const searchQuotes = computed(() => {
@@ -534,7 +534,7 @@ const searchQuotes = computed(() => {
         ? searchQuotesPreferences[quote]
         : false
     return acc
-  }, {})
+  }, {});
 })
 const quotesCount = computed(
   () => Object.values(searchQuotes.value).filter(Boolean).length
@@ -552,7 +552,7 @@ const searchExchanges = computed(() => {
       return output
     },
     {}
-  )
+  );
 })
 const allExchangesEnabled = computed(
   () => !Object.values(searchExchanges.value).includes(false)
@@ -565,7 +565,7 @@ const queryFilter = computed(() => {
   return new RegExp(
     searchFilters.value.normalize ? '^' + multiQuery : multiQuery,
     'i'
-  )
+  );
 })
 
 const filteredProducts = computed(() => {
@@ -580,19 +580,19 @@ const filteredProducts = computed(() => {
   const historicalMarketsList = historicalMarkets.value
 
   return flattenedProducts.filter(product => {
-    if (historical && !historicalMarketsList.includes(product.id)) return false
+    if (historical && !historicalMarketsList.includes(product.id)) return false;
     if (!allQuotesFlag && !quotesFilter[product.quote] && !quotesFilter.OTHERS)
-      return false
-    if (!exchangesFilter[product.exchange]) return false
+      return false;
+    if (!exchangesFilter[product.exchange]) return false;
     if (
       typeFilters &&
       ((!futures && product.type === ProductTypeEnum.FUTURE) ||
         (!perpetuals && product.type === ProductTypeEnum.PERP) ||
         (!spots && product.type === ProductTypeEnum.SPOT))
     )
-      return false
-    return true
-  })
+      return false;
+    return true;
+  });
 })
 
 const marketsByPair = computed<{ [localPair: string]: string[] }>(() => {
@@ -626,7 +626,7 @@ const marketsByPair = computed<{ [localPair: string]: string[] }>(() => {
       groups[localPair].push(product.id)
 
       return groups
-    }, {})
+    }, {});
 })
 
 const results = computed<Product[] | GroupedProducts[]>(() => {
@@ -652,12 +652,12 @@ const results = computed<Product[] | GroupedProducts[]>(() => {
 
         return acc
       }, {})
-    })) as GroupedProducts[]
+    })) as GroupedProducts[];
   } else {
     return filteredProducts.value.filter(
       product =>
         _selection.indexOf(product.id) === -1 && _queryFilter.test(product.id)
-    )
+    );
   }
 })
 
@@ -732,7 +732,7 @@ const getMaxPages = () => {
     ? 3
     : dialogRef.value.currentSize === 'medium'
       ? 5
-      : 10
+      : 10;
 }
 
 const onResize = () => {
@@ -758,10 +758,10 @@ const _ensureIndexedProducts = async () => {
   const indexChanged = await ensureIndexedProducts(requiredExchanges)
 
   if (indexChanged) {
-    return true
+    return true;
   }
 
-  return false
+  return false;
 }
 
 const detargetPane = async () => {
@@ -796,11 +796,9 @@ const initSelection = () => {
 }
 
 function hasMultipleMarketsConfigurations() {
-  return (
-    Object.keys(store.state.panes.panes)
-      .map(id => getBucketId(store.state.panes.panes[id].markets))
-      .filter((v, i, a) => a.indexOf(v) === i).length > 1
-  )
+  return (Object.keys(store.state.panes.panes)
+    .map(id => getBucketId(store.state.panes.panes[id].markets))
+    .filter((v, i, a) => a.indexOf(v) === i).length > 1);
 }
 
 async function submit() {
@@ -896,17 +894,17 @@ function cacheProducts() {
 
 function getNoResultsMessage() {
   const options = [
-    "Oops! Looks like the market's playing hide and seek. <button>Try searching again</button>! 🐮🐻💰",
+    'Oops! Looks like the market\'s playing hide and seek. <button>Try searching again</button>! 🐮🐻💰',
     'Bulls and bears are puzzled! No coins found.',
-    "The market's taking a breather. <button>Try another search</button>!",
-    "Even our bullish friend couldn't find that coin!",
+    'The market\'s taking a breather. <button>Try another search</button>!',
+    'Even our bullish friend couldn\'t find that coin!',
     'Bear with us! No coins matched your search.',
-    "Lost in the crypto maze? <button>Let's search again</button>!",
+    'Lost in the crypto maze? <button>Let\'s search again</button>!',
     'Coins in limbo! Adjust your filters or <button>try a new term</button>.',
-    "Our bear's got the blues, no results found!",
+    'Our bear\'s got the blues, no results found!',
     'Tales of the missing coins! <button>Refine your search</button>.',
     'Crypto hideout! Nothing turned up, <button>try again</button>!',
-    "Coins playing hard to get? <button>Let's give it another shot</button>!"
+    'Coins playing hard to get? <button>Let\'s give it another shot</button>!'
   ]
   return options[Math.floor(Math.random() * options.length)]
 }
@@ -914,7 +912,7 @@ function getNoResultsMessage() {
 
 <style lang="scss" scoped>
 .search-dialog {
-  ::v-deep .dialog__content {
+  :deep(.dialog__content) {
     .dialog__body {
       padding: 0;
       flex-direction: row;
@@ -1105,7 +1103,7 @@ function getNoResultsMessage() {
         margin: 0;
       }
 
-      ::v-deep button {
+      :deep(button) {
         text-decoration: underline;
         cursor: pointer;
       }

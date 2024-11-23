@@ -6,9 +6,9 @@
       :pane-id="paneId"
       :indicator-id="indicatorId"
       :label="label"
-      :value="value"
+      :modelValue="value"
       :definition="definition"
-      @input="setValue($event)"
+      @update:modelValue="setValue($event)"
     >
       <template v-if="definition.description" #description>
         <i
@@ -75,12 +75,12 @@ const definition = computed(
 const label = computed(() => definition.value.label || props.name)
 
 const componentName = computed(() => {
-  if (!type.value) return 'IndicatorOptionText'
-  if (props.name === 'lineType') return 'IndicatorOptionLineType'
-  if (props.name === 'lineStyle') return 'IndicatorOptionLineStyle'
+  if (!type.value) return 'IndicatorOptionText';
+  if (props.name === 'lineType') return 'IndicatorOptionLineType';
+  if (props.name === 'lineStyle') return 'IndicatorOptionLineStyle';
   return `IndicatorOption${type.value[0].toUpperCase()}${type.value
     .toLowerCase()
-    .slice(1)}`
+    .slice(1)}`;
 })
 
 // Async components
@@ -124,7 +124,7 @@ const getType = () => {
     )
 
   if (!Object.values(ALLOWED_OPTION_TYPES).includes(inferredType)) {
-    return 'number'
+    return 'number';
   }
   return inferredType
 }
@@ -163,7 +163,7 @@ const getValue = () => {
     return defaultValue
   }
 
-  return null
+  return null;
 }
 
 const setValue = (newValue: any) => {

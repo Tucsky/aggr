@@ -1,8 +1,7 @@
 <template>
   <dropdown
-    :value="modelValue"
-    @input="onInput"
-    @after-closed="emit('after-closed')"
+    :modelValue="modelValue"
+    @update:modelValue="onInput"
     interactive
     on-sides
   >
@@ -34,10 +33,10 @@
             />
           </label>
           <dropdown-button
-            :value="type"
+            :modelValue="type"
             :options="['price', 'volume', 'percent']"
             class="mr8 -outline form-control -arrow"
-            @input="setPriceFormat($event, precision)"
+            @update:modelValue="setPriceFormat($event, precision)"
             v-tippy
             title="Volume uses abbreviation for Million and Thousand"
           ></dropdown-button>
@@ -55,17 +54,17 @@
             <editable
               ref="editableRef"
               class="form-control w-100"
-              :value="precision"
+              :modelValue="precision"
               :editable="!isAuto"
               placeholder="auto"
-              @input="setPriceFormat(type, $event)"
+              @update:modelValue="setPriceFormat(type, $event)"
             ></editable>
             <Checkbox
               small
-              :value="isAuto"
+              :modelValue="isAuto"
               title="Auto"
               v-tippy
-              @input="toggleAuto"
+              @update:modelValue="toggleAuto"
             ></Checkbox>
           </div>
         </div>
@@ -88,15 +87,11 @@ const props = defineProps<{
   modelValue: HTMLButtonElement | null
   paneId: string
   indicatorId: string | null
+  onInput: (value) => void
 }>()
 
 const editableRef = ref<InstanceType<typeof Editable> | null>(null)
 
-const emit = defineEmits(['update:modelValue', 'after-closed'])
-
-function onInput(event) {
-  emit('update:modelValue', event.target.value)
-}
 // Computed properties
 const indicator = computed(() => {
   return store.state[props.paneId].indicators[

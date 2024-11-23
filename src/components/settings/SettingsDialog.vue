@@ -160,7 +160,7 @@
               type="checkbox"
               class="form-control"
               :checked="true"
-              @click.prevent="$store.commit('settings/TOGGLE_AGGREGATION')"
+              @click.prevent="store.commit('settings/TOGGLE_AGGREGATION')"
             />
             <div :on="aggregationLengthLabel" off="No aggregation"></div>
             <span v-if="aggregationLength < 0">
@@ -209,7 +209,7 @@
               type="checkbox"
               class="form-control"
               :checked="!!calculateSlippage"
-              @change="$store.commit('settings/TOGGLE_SLIPPAGE')"
+              @change="store.commit('settings/TOGGLE_SLIPPAGE')"
             />
             <div>
               <span v-if="calculateSlippage === 'price'">
@@ -262,29 +262,29 @@
         inset
       >
         <div class="form-group column mb8">
-          <color-picker-control
-            :value="backgroundColor"
+          <ColorPickerControl
+            :modelValue="backgroundColor"
             label="Background color"
-            @input="
-              $store.dispatch('settings/setColor', {
+            @update:modelValue="
+              store.dispatch('settings/setColor', {
                 type: 'BACKGROUND',
                 value: $event
               })
             "
-          ></color-picker-control>
+          ></ColorPickerControl>
           <label class="-fill -center ml8">Background color</label>
         </div>
         <div class="form-group column mb8">
-          <color-picker-control
-            :value="textColor"
+          <ColorPickerControl
+            :modelValue="textColor"
             label="App text color"
-            @input="
-              $store.dispatch('settings/setColor', {
+            @update:modelValue="
+              store.dispatch('settings/setColor', {
                 type: 'TEXT',
                 value: $event
               })
             "
-          ></color-picker-control>
+          ></ColorPickerControl>
           <label for="" class="-fill -center ml8"
             >Text color
             <a
@@ -292,7 +292,7 @@
                 class="icon-cross text-small"
                 v-if="textColor"
                 @click="
-                  $store.dispatch('settings/setColor', {
+                  store.dispatch('settings/setColor', {
                     type: 'TEXT',
                     value: null
                   })
@@ -301,31 +301,31 @@
           ></label>
         </div>
         <div class="form-group column mb8">
-          <color-picker-control
-            :value="buyColor"
+          <ColorPickerControl
+            :modelValue="buyColor"
             label="Buy color"
             @close="regenerateSwatch"
-            @input="
-              $store.dispatch('settings/setColor', {
+            @update:modelValue="
+              store.dispatch('settings/setColor', {
                 type: 'BUY',
                 value: $event
               })
             "
-          ></color-picker-control>
+          ></ColorPickerControl>
           <label class="-fill -center ml8">Buy color</label>
         </div>
         <div class="form-group column mb8">
-          <color-picker-control
-            :value="sellColor"
+          <ColorPickerControl
+            :modelValue="sellColor"
             label="Sell color"
             @close="regenerateSwatch"
-            @input="
-              $store.dispatch('settings/setColor', {
+            @update:modelValue="
+              store.dispatch('settings/setColor', {
                 type: 'SELL',
                 value: $event
               })
             "
-          ></color-picker-control>
+          ></ColorPickerControl>
           <label class="-fill -center ml8">Sell color</label>
         </div>
       </ToggableSection>
@@ -346,7 +346,7 @@
       </ToggableSection>
 
       <ToggableSection id="settings-other" title="Other" inset>
-        <other-settings />
+        <OtherSettings />
       </ToggableSection>
 
       <template v-slot:footer>

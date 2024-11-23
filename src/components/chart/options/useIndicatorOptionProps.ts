@@ -11,7 +11,7 @@ export const useIndicatorOptionProps = {
     type: String,
     required: true
   },
-  value: {
+  modelValue: {
     default: null
   },
   definition: {

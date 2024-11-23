@@ -3,9 +3,9 @@
     <label>{{ label }}<slot name="description" /></label>
     <editable
       class="form-control"
-      :value="value"
+      :modelValue="modelValue"
       :placeholder="definition.placeholder"
-      @input="onInput"
+      @update:modelValue="onInput"
     ></editable>
   </div>
 </template>
@@ -16,8 +16,8 @@ import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 
 // Define props and emit
 defineProps(useIndicatorOptionProps)
-const emit = defineEmits(['input'])
+const emit = defineEmits(['update:modelValue'])
 
 // Emit input event
-const onInput = (value: any) => emit('input', value)
+const onInput = (value: any) => emit('update:modelValue', value)
 </script>

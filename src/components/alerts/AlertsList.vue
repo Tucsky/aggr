@@ -13,7 +13,7 @@
           type="checkbox"
           class="form-control"
           :checked="alertsClick"
-          @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
+          @change="store.commit('settings/TOGGLE_ALERTS_CLICK')"
         />
         <span>1 click</span>
         <i

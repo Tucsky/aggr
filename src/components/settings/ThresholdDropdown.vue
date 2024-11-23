@@ -48,17 +48,17 @@
           v-tippy="{ placement: 'bottom' }"
         >
           <p class="help-text -center mr16 mt0 mb0">Buy</p>
-          <color-picker-control
+          <ColorPickerControl
             label="Buy color"
-            :value="threshold.buyColor"
-            @input="
+            :modelValue="threshold.buyColor"
+            @update:modelValue="
               store.commit(paneId + '/SET_THRESHOLD_COLOR', {
                 id: threshold.id,
                 side: 'buyColor',
                 value: $event
               })
             "
-          ></color-picker-control>
+          ></ColorPickerControl>
         </div>
         <div
           class="form-group column flex-center"
@@ -66,17 +66,17 @@
           v-tippy="{ placement: 'bottom' }"
         >
           <p class="help-text -center mr16 mt0 mb0">Sell</p>
-          <color-picker-control
+          <ColorPickerControl
             label="Sell color"
-            :value="threshold.sellColor"
-            @input="
+            :modelValue="threshold.sellColor"
+            @update:modelValue="
               store.commit(paneId + '/SET_THRESHOLD_COLOR', {
                 id: threshold.id,
                 side: 'sellColor',
                 value: $event
               })
             "
-          ></color-picker-control>
+          ></ColorPickerControl>
         </div>
       </div>
     </div>
@@ -113,7 +113,7 @@ const emit = defineEmits<{
 
 // Computed property to determine if the pane type is 'trades'
 const isLegacy = computed(() => {
-  return store.state.panes.panes[props.paneId].type === 'trades'
+  return store.state.panes.panes[props.paneId].type === 'trades';
 })
 
 // Method to remove the threshold

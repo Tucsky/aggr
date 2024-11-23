@@ -23,7 +23,7 @@
             />
           </template>
 
-          <slot name="tooltip" :value="handle.value">
+          <slot name="tooltip" :modelValue="handle.value">
             {{ +handle.value.toFixed(2) }}
           </slot>
         </tippy>
