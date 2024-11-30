@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented here.
 
+## [3.6.3] - 2024-10-30
+
+- Reconnect closed apis when tab made visible again (& ios pwa)
+- Fetch range based on indicator length
+- Autocomplete local variable in script
+- Zoomable indicator preview
+- Markdown editor for indicators description
+- Indicator scaleWith dropdown
+
 ## [3.6.2] - 2024-09-29
 
 - Fix Dockerfile and startup instructions
