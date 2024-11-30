@@ -4,6 +4,7 @@ export default class KRAKEN extends Exchange {
   id = 'KRAKEN'
   private specs: { [pair: string]: number }
   private isPFregex = /^PF_/
+  protected delayBetweenMessages = 250
 
   protected endpoints = {
     PRODUCTS: [
