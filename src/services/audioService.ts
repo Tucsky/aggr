@@ -1,9 +1,9 @@
-import Vue from 'vue'
 import Tuna from 'tunajs'
 import store from '../store'
 import {
   findClosingBracketMatchIndex,
-  parseFunctionArguments
+  parseFunctionArguments,
+  sleep
 } from '@/utils/helpers'
 import workspacesService from './workspacesService'
 
@@ -128,7 +128,7 @@ class AudioService {
   minTime = 0
   gainNode: any
 
-  connect() {
+  async connect() {
     console.log(`[sfx] connect`)
     if (this.context) {
       console.debug(`[sfx] context already exists -> abort`)
@@ -138,10 +138,9 @@ class AudioService {
     this.minTime = 0
     this.count = 0
 
-    Vue.nextTick(() => {
-      this.bindContext()
-      this.bindOutput()
-    })
+    await sleep()
+    this.bindContext()
+    this.bindOutput()
   }
 
   bindContext() {
@@ -180,7 +179,7 @@ class AudioService {
               store.dispatch('app/showNotice', {
                 id: 'audio',
                 type: 'success',
-                title: 'Audio resumed successfully 🔊'
+                title: 'Audio resumed 🔊'
               })
             }
 

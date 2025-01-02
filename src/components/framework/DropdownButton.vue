@@ -5,7 +5,7 @@
     </slot>
     <Dropdown
       v-model="dropdownTrigger"
-      @mousedown.native="selectFromElementRecursive($event)"
+      @mousedown="selectFromElementRecursive($event)"
     >
       <button
         type="button"
@@ -23,7 +23,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, defineProps, defineEmits } from 'vue'
+import { ref, computed } from 'vue'
 import Btn from '@/components/framework/Btn.vue'
 import Dropdown from '@/components/framework/Dropdown.vue'
 
@@ -37,7 +37,7 @@ const props = defineProps<{
 }>()
 
 // Define emits
-const emit = defineEmits(['input'])
+const emit = defineEmits(['update:modelValue'])
 
 // Dropdown trigger element state
 const dropdownTrigger = ref<HTMLElement | null>(null)
@@ -90,6 +90,6 @@ function selectOption(optionElement: HTMLElement) {
   const value = isArray.value
     ? props.options[index]
     : Object.keys(props.options)[index]
-  emit('input', value)
+  emit('update:modelValue', value)
 }
 </script>

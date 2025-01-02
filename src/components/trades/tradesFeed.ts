@@ -2,6 +2,7 @@ import audioService, { AudioFunction } from '@/services/audioService'
 import gifsService from '@/services/gifsService'
 import { formatAmount, formatMarketPrice } from '@/services/productsService'
 import store from '@/store'
+import { Threshold } from '@/store/panesSettings/trades'
 import { SlippageMode, Trade } from '@/types/types'
 import {
   getAppBackgroundColor,
@@ -11,23 +12,23 @@ import {
 } from '@/utils/colors'
 
 interface PreparedColorStep {
-  from?: number
-  to?: number
-  range?: number
+  from: number
+  to: number
+  range: number
   level?: number
   buy: {
     from: number[]
     to: number[]
     fromLuminance: number
     toLuminance: number
-    gif: string
+    gif?: string
   }
   sell: {
     from: number[]
     to: number[]
     fromLuminance: number
     toLuminance: number
-    gif: string
+    gif?: string
   }
 }
 
@@ -39,39 +40,39 @@ export default class TradesFeed {
   paneId: string
   containerElement: HTMLElement
 
-  private count: number
-  private maxCount: number
-  private maxLevel: number
+  private count = 0
+  private maxCount = 0
+  private maxLevel = 0
 
-  private showGifs: boolean
-  private showTrades: boolean
-  private showLiquidations: boolean
-  private showLogos: boolean
-  private showPairs: boolean
-  private showPrices: boolean
-  private showAvgPrice: boolean
-  private showTimeAgo: boolean
-  private slippageMode: SlippageMode
-  private paneMarkets: { [identifier: string]: boolean }
+  private showGifs = false
+  private showTrades = false
+  private showLiquidations = false
+  private showLogos = false
+  private showPairs = false
+  private showPrices = false
+  private showAvgPrice = false
+  private showTimeAgo = false
+  private slippageMode: SlippageMode = false
+  private paneMarkets: { [identifier: string]: boolean } = {}
 
-  private tradesAudios: PreparedAudioStep[]
-  private tradesColors: PreparedColorStep[]
-  private minimumTradeAmount: number
-  private significantTradeAmount: number
-  private maximumTradeAmount: number
+  private tradesAudios: PreparedAudioStep[] = []
+  private tradesColors: PreparedColorStep[] = []
+  private minimumTradeAmount = 0
+  private significantTradeAmount = 0
+  private maximumTradeAmount = 0
 
-  private liquidationsAudios: PreparedAudioStep[]
-  private liquidationsColors: PreparedColorStep[]
-  private minimumLiquidationAmount: number
-  private significantLiquidationAmount: number
-  private maximumLiquidationAmount: number
+  private liquidationsAudios: PreparedAudioStep[] = []
+  private liquidationsColors: PreparedColorStep[] = []
+  private minimumLiquidationAmount = 0
+  private significantLiquidationAmount = 0
+  private maximumLiquidationAmount = 0
 
-  private audioThreshold: number
+  private audioThreshold = 0
 
-  private lastSide: 'buy' | 'sell' | 'lbuy' | 'lsell'
-  private lastTimestamp: number
-  private timeUpdateInterval: number
-  private marketsMultipliers: { [identifier: string]: number }
+  private lastSide: null | 'buy' | 'sell' | 'lbuy' | 'lsell' = null
+  private lastTimestamp = 0
+  private timeUpdateInterval = 0
+  private marketsMultipliers: { [identifier: string]: number } = {}
 
   constructor(paneId: string, containerElement: HTMLElement, maxCount: number) {
     this.paneId = paneId
@@ -189,7 +190,7 @@ export default class TradesFeed {
     if (this.showGifs && colorStep[trade.side].gif) {
       const keyword = colorStep[trade.side].gif
 
-      if (gifsService.cache[keyword]) {
+      if (keyword && gifsService.cache[keyword]) {
         backgroundGif = `background-image:url('${
           gifsService.cache[keyword][
             Math.floor(Math.random() * (gifsService.cache[keyword].length - 1))
@@ -200,7 +201,9 @@ export default class TradesFeed {
 
     // -1 to 1 luminance of nearest color
     const luminance =
-      colorBySide[(percentToNextThreshold < 0.5 ? 'from' : 'to') + 'Luminance']
+      percentToNextThreshold < 0.5
+        ? colorBySide.fromLuminance
+        : colorBySide.toLuminance
 
     // background color simple color to color based on percentage of amount to next threshold
     const backgroundColor = getColorByWeight(
@@ -356,7 +359,7 @@ export default class TradesFeed {
     this.loadThresholdsGifs(this.getLiquidationsThresholds())
   }
 
-  async loadThresholdsGifs(thresholds) {
+  async loadThresholdsGifs(thresholds: Threshold[]) {
     for (const threshold of thresholds) {
       if (threshold.buyGif) {
         gifsService.getGifs(threshold.buyGif)
@@ -403,7 +406,7 @@ export default class TradesFeed {
     }
   }
 
-  prepareColorsThresholds(thresholds, appBackgroundColor) {
+  prepareColorsThresholds(thresholds: Threshold[], appBackgroundColor: number[]): PreparedColorStep[] {
     const steps = []
 
     const len = thresholds.length

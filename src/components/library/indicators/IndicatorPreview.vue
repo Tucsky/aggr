@@ -20,16 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ref,
-  computed,
-  onMounted,
-  onBeforeUnmount,
-  watch,
-  nextTick,
-  defineProps,
-  defineEmits
-} from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import Btn from '@/components/framework/Btn.vue'
 
 // Props definition

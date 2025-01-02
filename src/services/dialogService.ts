@@ -1,110 +1,35 @@
-import { createApp } from 'vue'
-import store from '@/store'
-
 import ConfirmDialog from '@/components/framework/ConfirmDialog.vue'
 import PromptDialog from '@/components/framework/PromptDialog.vue'
+import { reactive } from 'vue'
 
-export interface DialogPosition {
-  x?: number
-  y?: number
-  w?: number
-  h?: number
+type DialogProps = Record<string, any>
+type DialogInstance = {
+  id?: string
+  component: any
+  props: DialogProps
+  resolve: (value: any) => void
 }
 
-class DialogService {
-  mountedComponents: { [id: string]: any } = {}
-  dialogPositions: { [id: string]: DialogPosition } = {}
-  isInteracting = false
-  hasDialogOpened = false
-  pickerInstance: any
+const dialogs = reactive<DialogInstance[]>([])
 
-  createComponent(
-    component: any,
-    props: any = {},
-    resolve: ((value: any) => void) | null = null,
-    dialogId?: string
-  ) {
-    const app = createApp(component, {
-      ...props,
-      // Add the close event handler directly to the component's props
-      onClose: (data: any) => {
-        // Clean up mountedComponents
-        if (dialogId && this.mountedComponents[dialogId]) {
-          delete this.mountedComponents[dialogId]
-          this.hasDialogOpened = Object.keys(this.mountedComponents).length > 0
-        }
-
-        // Unmount the app and remove the container
-        app.unmount()
-        container.remove()
-
-        // Resolve the promise if provided
-        if (resolve) {
-          resolve(data) // Pass the output value
-        }
-      }
-    })
-
-    // Provide store globally if needed
-    app.provide('store', store)
-
-    const container = document.createElement('div')
-    document.body.appendChild(container)
-
-    app.mount(container)
-
-    if (dialogId) {
-      this.mountedComponents[dialogId] = app
-      this.hasDialogOpened = Object.keys(this.mountedComponents).length > 0
-    }
-
-    return app
-  }
-
-  async openAsPromise(
-    component: any,
-    props: any = {},
-    dialogId?: string
-  ): Promise<any> {
-    return new Promise(resolve => {
-      this.createComponent(component, props, resolve, dialogId)
-    })
-  }
-
+export const dialogService = {
   open(
     component: any,
-    props: any = {},
-    dialogId?: string,
-    onClose?: (value: any) => void
-  ) {
-    return this.createComponent(component, props, onClose, dialogId)
-  }
+    props: DialogProps = {},
+    id?: string
+  ): Promise<any> {
+    return new Promise(resolve => {
+      dialogs.push({ id, component, props, resolve })
+    })
+  },
 
-  async openPicker(
-    initialColor: string,
-    label?: string,
-    onInput?: (color: string) => void,
-    onClose?: () => void
-  ) {
-    if (this.pickerInstance) {
-      this.pickerInstance.setColorFromProp(initialColor)
-      this.pickerInstance.label = label || null
-    } else {
-      this.pickerInstance = this.open(
-        (await import('@/components/framework/picker/ColorPickerDialog.vue'))
-          .default,
-        {
-          modelValue: initialColor,
-          label,
-          onInput
-        },
-        null,
-        onClose
-      )
+  close(id: string, result: any = null) {
+    const index = dialogs.findIndex(d => d.id === id)
+    if (index !== -1) {
+      const [dialog] = dialogs.splice(index, 1) // Remove dialog
+      dialog.resolve(result) // Resolve the promise with the output
     }
-
-    return this.pickerInstance
-  }
+  },
 
   async confirm(options: any) {
     if (!options) {
@@ -119,8 +44,8 @@ class DialogService {
       return
     }
 
-    return this.openAsPromise(ConfirmDialog, options)
-  }
+    return this.open(ConfirmDialog, options)
+  },
 
   async prompt(options: any, dialogId = 'prompt') {
     if (!options) {
@@ -135,8 +60,10 @@ class DialogService {
       return
     }
 
-    return this.openAsPromise(PromptDialog, options, dialogId)
+    return this.open(PromptDialog, options, dialogId)
+  },
+
+  getDialogs() {
+    return dialogs
   }
 }
-
-export default new DialogService()

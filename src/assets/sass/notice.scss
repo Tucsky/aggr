@@ -11,12 +11,12 @@
   transition: all 1s vars.$ease-out-expo;
 }
 
-.slide-notice-enter,
+.slide-notice-enter-from,
 .slide-notice-leave-to {
   opacity: 0;
 }
 
-.slide-notice-enter {
+.slide-notice-enter-from {
   transform: translateX(-50%);
 }
 

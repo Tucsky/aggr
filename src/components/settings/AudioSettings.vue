@@ -23,8 +23,8 @@
             :max="3"
             :step="0.01"
             :label="true"
-            :value="audioVolume"
-            @input="setAudioVolume"
+            :modelValue="audioVolume"
+            @update:modelValue="setAudioVolume"
             @reset="resetAudioVolume"
             log
           />

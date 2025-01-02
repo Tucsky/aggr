@@ -9,7 +9,7 @@ import {
   plotTypesMap
 } from '../chart/options'
 import { Preset } from '@/types/types'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import IndicatorPresetDialog from '../chart/IndicatorPresetDialog.vue'
 import merge from 'lodash.merge'
 

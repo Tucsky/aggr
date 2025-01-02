@@ -3,7 +3,7 @@
     <input
       type="checkbox"
       class="form-control"
-      :checked="value"
+      :checked="modelValue"
       @change="onChange"
     />
     <span>{{ label }}<slot name="description" /></span>
@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 
-const emit = defineEmits(['input'])
+const emit = defineEmits(['update:modelValue'])
 
 // Import props directly
 defineProps(useIndicatorOptionProps)
@@ -21,7 +21,7 @@ defineProps(useIndicatorOptionProps)
 const onChange = (event: Event) => {
   const target = event.target as HTMLInputElement
 
-  emit('input', target.checked)
+  emit('update:modelValue', target.checked)
 }
 </script>
 <style lang="scss" scoped>

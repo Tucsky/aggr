@@ -1,60 +1,8 @@
-.tippy-tooltip {
-  max-width: 180px;
-  filter: drop-shadow(-1rem -1rem 3rem var(--theme-background-base));
-  color: white;
-  background-color: rgba(black, 0.75);
-
-  &.left-theme {
-    text-align: left;
-  }
-
-  &.transparent-theme {
-    background-color: transparent;
-
-    .tippy-arrow {
-      display: none;
-    }
-  }
-
-  &.auto-theme {
-    max-width: none;
-    background-color: transparent;
-
-    .tippy-arrow {
-      display: none;
-    }
-  }
+.tippy-box[data-theme='default'] {
+  background-color: rgba(0, 0, 0, 0.75);
+  color: white; /* Optional: Set text color */
 }
 
-.tippy-popper[x-placement^='bottom'] {
-  .tippy-arrow {
-    border-bottom-color: rgba(black, 0.75);
-    top: -8px;
-  }
-
-  .slider__label {
-    bottom: auto;
-    top: 2rem;
-
-    &:before {
-      bottom: auto;
-      top: -0.5rem;
-      border-width: 0 0.5rem 0.5rem 0.5rem;
-      border-color: transparent transparent rgba(black, 0.75) transparent;
-    }
-  }
-}
-
-.tippy-popper[x-placement^='top'] .tippy-arrow {
-  border-top-color: rgba(black, 0.75);
-  bottom: -8px;
-}
-
-.tippy-popper[x-placement^='left'] .tippy-arrow {
-  border-left-color: rgba(black, 0.75);
-  right: -8px;
-}
-.tippy-popper[x-placement^='right'] .tippy-arrow {
-  border-right-color: rgba(black, 0.75);
-  left: -8px;
+.tippy-box[data-theme='default'] .tippy-arrow {
+  color: rgba(0, 0, 0, 0.75); /* Match the arrow color to tooltip background */
 }

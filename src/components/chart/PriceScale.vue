@@ -24,9 +24,9 @@
         </code>
         <dropdown-button
           :options="modes"
-          :value="priceScale.mode"
+          :modelValue="priceScale.mode"
           placeholder="linear"
-          @input="updateMode($event)"
+          @update:modelValue="updateMode($event)"
           button-class="badge -outline"
           class="chart-pricescale__mode -small ml8 text-bold"
         >

@@ -35,7 +35,7 @@ import {
   getChartWatermarkOptions,
   getSerieOptions
 } from '@/components/chart/options'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import { ChartPaneState, PriceScaleSettings } from '@/store/panesSettings/chart'
 import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'

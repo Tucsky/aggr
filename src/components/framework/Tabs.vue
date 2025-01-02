@@ -3,93 +3,39 @@
     <slot />
   </div>
 </template>
-<script setup lang="ts">
-import {
-  ref,
-  watch,
-  onMounted,
-  onBeforeUnmount,
-  defineProps,
-  defineEmits,
-  getCurrentInstance
-} from 'vue'
-import Tab from './Tab.vue'
 
-// Define props and emits
+<script setup lang="ts">
+import { ref, watch, provide } from 'vue'
+
 const props = defineProps({
-  value: {
+  modelValue: {
+    type: String,
     default: null
   }
 })
-const emit = defineEmits(['input'])
 
-// Reactive internal value
-const _value = ref<string | null>(null)
+const emit = defineEmits(['update:modelValue'])
 
-// Access instance to handle slot components
-const instance = getCurrentInstance()
+const selectedTab = ref<string | null>(props.modelValue)
 
-// Methods for binding/unbinding tabs
-const bindTabs = () => {
-  instance?.proxy?.$slots.default?.forEach(tab => {
-    const tabInstance = tab.componentInstance as unknown as InstanceType<
-      typeof Tab
-    >
-    tabInstance.$on('select', selectTab)
-
-    if (props.value === tabInstance.name) {
-      selectTab(props.value)
-    }
-  })
-}
-
-const unbindTabs = () => {
-  instance?.proxy?.$slots.default?.forEach(tab => {
-    const tabInstance = tab.componentInstance as unknown as InstanceType<
-      typeof Tab
-    >
-    tabInstance.$off('select', selectTab)
-  })
-}
-
-// Method to retrieve a tab instance by name
-const getTabInstance = (name: string) => {
-  return instance?.proxy?.$slots.default?.find(
-    tab => (tab.componentInstance as any).name === name
-  ).componentInstance as unknown as InstanceType<typeof Tab>
-}
-
-// Method to select a tab
-const selectTab = (name: string) => {
-  if (!_value.value || props.value !== name) {
-    if (_value.value) {
-      getTabInstance(_value.value)?.deselect()
-    }
-
-    _value.value = name
-    getTabInstance(name)?.select()
-    emit('input', _value.value)
+// Provide the selected tab name and a method to select a tab
+provide('selectedTab', selectedTab)
+provide('selectTab', (name: string) => {
+  if (selectedTab.value !== name) {
+    selectedTab.value = name
+    emit('update:modelValue', name)
   }
-}
+})
 
-// Watch for changes in `value` prop to handle selection updates
+// Watch for external changes to modelValue
 watch(
-  () => props.value,
+  () => props.modelValue,
   newValue => {
-    if (newValue !== _value.value) {
-      selectTab(newValue)
+    if (newValue !== selectedTab.value) {
+      selectedTab.value = newValue
     }
   }
 )
-
-// Lifecycle hooks to bind and unbind tabs
-onMounted(() => {
-  bindTabs()
-})
-
-onBeforeUnmount(() => {
-  unbindTabs()
-})
 </script>
 
 <style lang="scss" scoped>

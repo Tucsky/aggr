@@ -43,7 +43,7 @@ export interface Trade {
   side: 'buy' | 'sell'
   originalPrice?: number
   avgPrice?: number
-  amount?: number
+  amount: number
   count?: number
   liquidation?: boolean
   slippage?: number

@@ -32,11 +32,11 @@
         ></i>
       </label>
       <dropdown-button
-        :value="reloadTimer"
+        :modelValue="reloadTimer"
         :options="reloadOptions"
         placeholder="Never"
         class="-outline form-control -arrow"
-        @input="setReloadTimer"
+        @update:modelValue="setReloadTimer"
       ></dropdown-button>
     </div>
     <div class="form-group mb8">

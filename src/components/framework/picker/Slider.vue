@@ -1,9 +1,9 @@
 <template>
   <div class="slider" ref="wrapper" :class="{ '-disabled': disabled }">
-    <div class="slider__track" ref="track">
+    <div class="slider__track" ref="trackRef">
       <div
         class="slider__fill"
-        ref="fill"
+        ref="fillRef"
         @mousedown="select"
         @touchstart="select"
       ></div>
@@ -12,37 +12,35 @@
         class="slider__completion"
         :style="`width: ${handle.position}%`"
       ></div>
-      <div ref="inner" class="slider__inner">
-        <tippy :distance="24" follow-cursor>
-          <template v-slot:trigger>
-            <div
-              class="slider__handle"
-              @mousedown="select"
-              @touchstart="select"
-              :style="`left: ${handle.position}%; background-color: ${handle.color};`"
-            />
-          </template>
 
-          <slot name="tooltip" :value="handle.value">
-            {{ +handle.value.toFixed(2) }}
-          </slot>
-        </tippy>
+      <div ref="innerRef" class="slider__inner">
+        <Tippy
+          :offset="[0, 24]"
+          :tag="null"
+          :hide-on-click="false"
+          follow-cursor
+        >
+          <div
+            ref="handleRef"
+            class="slider__handle"
+            @mousedown="select"
+            @touchstart="select"
+            :style="`left: ${handle.position}%; background-color: ${handle.color};`"
+          ></div>
+          <template #content>
+            <slot name="tooltip" :modelValue="handle.value">
+              {{ +handle.value.toFixed(2) }}
+            </slot>
+          </template>
+        </Tippy>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import {
-  ref,
-  computed,
-  defineProps,
-  defineEmits,
-  onMounted,
-  onBeforeUnmount,
-  watch,
-  withDefaults
-} from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { getEventCords } from '@/utils/helpers'
+import { Tippy } from 'vue-tippy'
 
 // Define props with types and defaults
 const props = withDefaults(
@@ -72,23 +70,25 @@ const props = withDefaults(
   }
 )
 
-const emit = defineEmits(['modelValue', 'reset'])
+const emit = defineEmits(['update:modelValue', 'reset'])
 
 // Reactive state
+const handleRef = ref<HTMLElement>()
 const handle = ref({
   value: props.modelValue,
   position: 0,
   color: '#fff'
 })
-const wrapper = ref<HTMLElement | null>(null)
-const track = ref<HTMLElement | null>(null)
-const inner = ref<HTMLElement | null>(null)
-const fill = ref<HTMLElement | null>(null)
+const wrapper = ref<HTMLElement>(null)
+const trackRef = ref<HTMLElement>(null)
+const innerRef = ref<HTMLElement>()
+const fillRef = ref<HTMLElement>(null)
 const width = ref(0)
 const offsetX = ref(0)
-const dblClickTimeout = ref<NodeJS.Timeout | null>(null)
 const pendingDblClick = ref(false)
 const ticking = ref(false)
+
+let dblClickTimeout: NodeJS.Timeout
 
 // Computed properties
 const sizeRelatedOptions = computed(() => [
@@ -120,9 +120,8 @@ watch(
 )
 
 // Lifecycle hooks
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('resize', handleResize)
-  initElements()
   updateSize()
   if (props.gradient) initGradient(props.gradient)
   updateHandlePosition(true)
@@ -130,25 +129,17 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
-  if (dblClickTimeout.value) clearTimeout(dblClickTimeout.value)
+  if (dblClickTimeout) clearTimeout(dblClickTimeout)
   release()
 })
 
-// Methods
-function initElements() {
-  wrapper.value = document.querySelector('.wrapper') as HTMLElement
-  track.value = document.querySelector('.track') as HTMLElement
-  inner.value = document.querySelector('.inner') as HTMLElement
-  fill.value = document.querySelector('.fill') as HTMLElement
-}
-
 function initGradient(gradient: string[]) {
-  if (!fill.value) return
+  if (!fillRef.value) return
   if (gradient.length > 1) {
-    fill.value.style.backgroundImage = `linear-gradient(90deg, ${gradient.join(', ')})`
+    fillRef.value.style.backgroundImage = `linear-gradient(90deg, ${gradient.join(', ')})`
   } else {
-    fill.value.style.backgroundImage = ''
-    fill.value.style.backgroundColor = gradient[0]
+    fillRef.value.style.backgroundImage = ''
+    fillRef.value.style.backgroundColor = gradient[0]
     handle.value.color = gradient[0]
   }
 }
@@ -162,7 +153,7 @@ function select(event: MouseEvent | TouchEvent) {
   event.preventDefault()
   if ((event as MouseEvent).buttons === 2) return
 
-  if (dblClickTimeout.value) clearTimeout(dblClickTimeout.value)
+  if (dblClickTimeout) clearTimeout(dblClickTimeout)
   if (pendingDblClick.value) {
     pendingDblClick.value = false
     emit('reset')
@@ -171,7 +162,6 @@ function select(event: MouseEvent | TouchEvent) {
 
   pendingDblClick.value = true
   updateSize()
-  track.value?.classList.add('slider--dragging')
   ticking.value = false
   updateHandleValue(event)
   updateHandlePosition()
@@ -194,16 +184,15 @@ function dragging(event: MouseEvent | TouchEvent) {
 }
 
 function release() {
-  track.value?.classList.remove('slider--dragging')
   document.removeEventListener('mousemove', dragging)
   document.removeEventListener('touchmove', dragging)
   document.removeEventListener('mouseup', release)
   document.removeEventListener('touchend', release)
 
   if (pendingDblClick.value) {
-    dblClickTimeout.value = setTimeout(() => {
+    dblClickTimeout = setTimeout(() => {
       pendingDblClick.value = false
-      dblClickTimeout.value = null
+      dblClickTimeout = null
     }, 150)
   }
 }
@@ -234,13 +223,13 @@ function updateHandlePosition(silent = false) {
     ? ((Math.log(value + 1) - Math.log(props.min + 1)) / logScale) * 100
     : ((value - props.min) / range) * 100
 
-  if (!silent) emit('modelValue', value)
+  if (!silent) emit('update:modelValue', value)
 }
 
 function updateSize() {
-  if (!inner.value) return
-  width.value = inner.value.offsetWidth
-  offsetX.value = inner.value.getBoundingClientRect().left
+  if (!innerRef.value) return
+  width.value = innerRef.value.offsetWidth
+  offsetX.value = innerRef.value.getBoundingClientRect().left
 }
 </script>
 
@@ -266,14 +255,6 @@ function updateSize() {
   &.-disabled {
     opacity: 0.5;
     pointer-events: none;
-  }
-
-  &:hover,
-  &--dragging {
-    .slider__label {
-      visibility: visible;
-      opacity: 1;
-    }
   }
 }
 
@@ -341,41 +322,8 @@ function updateSize() {
   }
 }
 
-.slider__label {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  z-index: 999;
-  padding: 0.5rem;
-  min-width: 1rem;
-  border-radius: 4px;
-  filter: drop-shadow(-1em -1em 3em var(--theme-background-base));
-  color: white;
-  background-color: rgba(black, 0.75);
-  text-align: center;
-  font-size: 14px;
-  line-height: 1rem;
-  transform: translate(-50%, 0);
-  white-space: nowrap;
-  visibility: hidden;
-  opacity: 0;
-
-  &:before {
-    position: absolute;
-    bottom: -0.5rem;
-    left: 50%;
-    display: block;
-    width: 0;
-    height: 0;
-    border-width: 0.5rem 0.5rem 0 0.5rem;
-    border-style: solid;
-    border-color: rgba(black, 0.75) transparent transparent transparent;
-    content: '';
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
 .slider__inner {
+  display: block;
   position: relative;
   margin: 0 0.5rem;
 }

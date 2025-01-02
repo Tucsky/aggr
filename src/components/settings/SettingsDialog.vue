@@ -30,7 +30,7 @@
             </div>
             <i class="icon-cog"></i>
           </button>
-          <dropdown v-model="workspaceDropdownTrigger">
+          <Dropdown v-model="workspaceDropdownTrigger">
             <button
               type="button"
               class="dropdown-item"
@@ -72,7 +72,7 @@
               <i class="icon-cross"></i>
               <span>Remove</span>
             </button>
-          </dropdown>
+          </Dropdown>
           <button
             type="button"
             class="btn -text -large -cases ml8"
@@ -82,7 +82,7 @@
             <span>New</span>
           </button>
 
-          <dropdown ref="createWorkspaceDropdown">
+          <Dropdown ref="createWorkspaceDropdown">
             <button
               type="button"
               class="dropdown-item"
@@ -101,7 +101,7 @@
               <i class="icon-plus"></i>
               <span>Create blank template</span>
             </Btn>
-          </dropdown>
+          </Dropdown>
         </div>
         <table v-if="workspaces.length" class="table mt8 table--inset">
           <thead>
@@ -160,7 +160,7 @@
               type="checkbox"
               class="form-control"
               :checked="true"
-              @click.prevent="$store.commit('settings/TOGGLE_AGGREGATION')"
+              @click.prevent="store.commit('settings/TOGGLE_AGGREGATION')"
             />
             <div :on="aggregationLengthLabel" off="No aggregation"></div>
             <span v-if="aggregationLength < 0">
@@ -209,7 +209,7 @@
               type="checkbox"
               class="form-control"
               :checked="!!calculateSlippage"
-              @change="$store.commit('settings/TOGGLE_SLIPPAGE')"
+              @change="store.commit('settings/TOGGLE_SLIPPAGE')"
             />
             <div>
               <span v-if="calculateSlippage === 'price'">
@@ -262,29 +262,29 @@
         inset
       >
         <div class="form-group column mb8">
-          <color-picker-control
-            :value="backgroundColor"
+          <ColorPickerControl
+            :modelValue="backgroundColor"
             label="Background color"
-            @input="
-              $store.dispatch('settings/setColor', {
+            @update:modelValue="
+              store.dispatch('settings/setColor', {
                 type: 'BACKGROUND',
                 value: $event
               })
             "
-          ></color-picker-control>
+          ></ColorPickerControl>
           <label class="-fill -center ml8">Background color</label>
         </div>
         <div class="form-group column mb8">
-          <color-picker-control
-            :value="textColor"
+          <ColorPickerControl
+            :modelValue="textColor"
             label="App text color"
-            @input="
-              $store.dispatch('settings/setColor', {
+            @update:modelValue="
+              store.dispatch('settings/setColor', {
                 type: 'TEXT',
                 value: $event
               })
             "
-          ></color-picker-control>
+          ></ColorPickerControl>
           <label for="" class="-fill -center ml8"
             >Text color
             <a
@@ -292,7 +292,7 @@
                 class="icon-cross text-small"
                 v-if="textColor"
                 @click="
-                  $store.dispatch('settings/setColor', {
+                  store.dispatch('settings/setColor', {
                     type: 'TEXT',
                     value: null
                   })
@@ -301,31 +301,31 @@
           ></label>
         </div>
         <div class="form-group column mb8">
-          <color-picker-control
-            :value="buyColor"
+          <ColorPickerControl
+            :modelValue="buyColor"
             label="Buy color"
             @close="regenerateSwatch"
-            @input="
-              $store.dispatch('settings/setColor', {
+            @update:modelValue="
+              store.dispatch('settings/setColor', {
                 type: 'BUY',
                 value: $event
               })
             "
-          ></color-picker-control>
+          ></ColorPickerControl>
           <label class="-fill -center ml8">Buy color</label>
         </div>
         <div class="form-group column mb8">
-          <color-picker-control
-            :value="sellColor"
+          <ColorPickerControl
+            :modelValue="sellColor"
             label="Sell color"
             @close="regenerateSwatch"
-            @input="
-              $store.dispatch('settings/setColor', {
+            @update:modelValue="
+              store.dispatch('settings/setColor', {
                 type: 'SELL',
                 value: $event
               })
             "
-          ></color-picker-control>
+          ></ColorPickerControl>
           <label class="-fill -center ml8">Sell color</label>
         </div>
       </ToggableSection>
@@ -346,7 +346,7 @@
       </ToggableSection>
 
       <ToggableSection id="settings-other" title="Other" inset>
-        <other-settings />
+        <OtherSettings />
       </ToggableSection>
 
       <template v-slot:footer>
@@ -373,7 +373,7 @@
           >
             Reset
           </button>
-          <dropdown ref="databaseDropdown">
+          <Dropdown ref="databaseDropdown">
             <button type="button" class="dropdown-item" @click="reset">
               <i class="icon-warning"></i>
               <span>Reset to default</span>
@@ -382,7 +382,7 @@
               <i class="icon-upload"></i>
               <span>Export database</span>
             </button>
-          </dropdown>
+          </Dropdown>
         </span>
       </template>
     </Dialog>
@@ -401,7 +401,7 @@ import ToggableSection from '@/components/framework/ToggableSection.vue'
 import Btn from '@/components/framework/Btn.vue'
 import { useDialog } from '@/composables/useDialog'
 import { browseFile, ago } from '@/utils/helpers'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import importService from '@/services/importService'
 import workspacesService from '@/services/workspacesService'
 import Dropdown from '../framework/Dropdown.vue'

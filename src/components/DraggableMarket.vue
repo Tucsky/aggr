@@ -106,7 +106,7 @@ watch(
     transform: none;
   }
 
-  &-enter,
+  &-enter-from,
   &-leave-to {
     opacity: 0;
     transform: scale(0.8);

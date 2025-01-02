@@ -10,16 +10,16 @@
           :step="0.01"
           :show-completion="false"
           class="mt8 -fill -start"
-          :value="thresholdsMultipler"
+          :modelValue="thresholdsMultipler"
           :gradient="gradient"
-          @input="
-            $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
+          @update:modelValue="
+            store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
               value: $event,
               market: markets[0]
             })
           "
           @reset="
-            $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
+            store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
               value: 1,
               market: markets[0]
             })
@@ -46,7 +46,7 @@
             type="checkbox"
             class="form-control"
             :checked="showTrades"
-            @change="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showTrades')"
+            @change="store.commit(paneId + '/TOGGLE_PREFERENCE', 'showTrades')"
           />
           <div></div>
         </label>
@@ -69,7 +69,7 @@
           <i class="icon-info mr8"></i>
           <a
             href="javascript:void(0);"
-            @click="$store.commit('settings/TOGGLE_ANIMATIONS')"
+            @click="store.commit('settings/TOGGLE_ANIMATIONS')"
             >Enable animations to show gifs</a
           >
         </p>
@@ -89,7 +89,7 @@
             class="form-control"
             :checked="showLiquidations"
             @change="
-              $store.commit(paneId + '/TOGGLE_PREFERENCE', 'showLiquidations')
+              store.commit(paneId + '/TOGGLE_PREFERENCE', 'showLiquidations')
             "
             @click.stop
           />
@@ -114,7 +114,7 @@
           <i class="icon-info mr8"></i>
           <a
             href="javascript:void(0);"
-            @click="$store.commit('settings/TOGGLE_ANIMATIONS')"
+            @click="store.commit('settings/TOGGLE_ANIMATIONS')"
             >Enable animations to show gifs</a
           >
         </p>
@@ -130,7 +130,7 @@
               class="form-control"
               :disabled="!useAudio"
               :checked="muted"
-              @change="$store.commit(paneId + '/TOGGLE_MUTED')"
+              @change="store.commit(paneId + '/TOGGLE_MUTED')"
             />
             <div></div>
             <span>Mute pane</span>
@@ -146,14 +146,14 @@
               :step="1"
               :label="true"
               :disabled="muted"
-              :value="audioVolume * 100"
-              @input="
-                $store.commit(
+              :modelValue="audioVolume * 100"
+              @update:modelValue="
+                store.commit(
                   paneId + '/SET_AUDIO_VOLUME',
                   +($event / 100).toFixed(2)
                 )
               "
-              @reset="$store.commit(paneId + '/SET_AUDIO_VOLUME', null)"
+              @reset="store.commit(paneId + '/SET_AUDIO_VOLUME', null)"
               log
             >
               <template v-slot:tooltip>
@@ -164,8 +164,10 @@
             <editable
               class="-center text-nowrap ml8"
               style="line-height: 1"
-              :value="'× ' + audioVolume"
-              @input="$store.commit(paneId + '/SET_AUDIO_VOLUME', $event)"
+              :modelValue="'× ' + audioVolume"
+              @update:modelValue="
+                store.commit(paneId + '/SET_AUDIO_VOLUME', $event)
+              "
             ></editable>
           </div>
           <label class="mt16 d-block text-color-base">Transpose</label>
@@ -177,9 +179,11 @@
               :step="0.01"
               :showCompletion="false"
               :disabled="muted"
-              :value="audioPitch"
-              @input="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
-              @reset="$store.commit(paneId + '/SET_AUDIO_PITCH', null)"
+              :modelValue="audioPitch"
+              @update:modelValue="
+                store.commit(paneId + '/SET_AUDIO_PITCH', $event)
+              "
+              @reset="store.commit(paneId + '/SET_AUDIO_PITCH', null)"
               log
             >
               <template v-slot:tooltip>× {{ audioPitch }} </template>
@@ -187,8 +191,10 @@
             <editable
               class="-center text-nowrap ml8"
               style="line-height: 1"
-              :value="'× ' + audioPitch"
-              @input="$store.commit(paneId + '/SET_AUDIO_PITCH', $event)"
+              :modelValue="'× ' + audioPitch"
+              @update:modelValue="
+                store.commit(paneId + '/SET_AUDIO_PITCH', $event)
+              "
             ></editable>
           </div>
         </div>
@@ -204,9 +210,11 @@
         </label>
         <editable
           class="form-control"
-          :value="audioThreshold"
+          :modelValue="audioThreshold"
           placeholder="10%"
-          @input="$store.commit(paneId + '/SET_AUDIO_THRESHOLD', $event)"
+          @update:modelValue="
+            store.commit(paneId + '/SET_AUDIO_THRESHOLD', $event)
+          "
         />
       </div>
 
@@ -214,7 +222,7 @@
         v-if="!useAudio"
         type="button"
         class="btn -text -small -cases"
-        @click="$store.commit('settings/TOGGLE_AUDIO', true)"
+        @click="store.commit('settings/TOGGLE_AUDIO', true)"
         title="Click to enable audio"
         v-tippy
       >
@@ -244,9 +252,7 @@
       <div
         v-if="isLegacy"
         class="form-group column"
-        @click.stop="
-          $store.commit(paneId + '/TOGGLE_PREFERENCE', 'showTimeAgo')
-        "
+        @click.stop="store.commit(paneId + '/TOGGLE_PREFERENCE', 'showTimeAgo')"
       >
         <label class="-fill -center -inline">Time format</label>
         <div
@@ -263,7 +269,7 @@
         v-if="!isLegacy"
         class="form-group column mb8"
         @click.stop="
-          $store.commit(paneId + '/TOGGLE_PREFERENCE', 'showHistograms')
+          store.commit(paneId + '/TOGGLE_PREFERENCE', 'showHistograms')
         "
       >
         <label class="-fill -center -inline">Histogram</label>
@@ -280,7 +286,7 @@
           />
           <div
             @click="
-              $store.commit(paneId + '/TOGGLE_PREFERENCE', 'showHistograms')
+              store.commit(paneId + '/TOGGLE_PREFERENCE', 'showHistograms')
             "
           ></div>
         </div>
@@ -294,7 +300,7 @@
             type="checkbox"
             class="form-control"
             :checked="showPairs"
-            @change="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showPairs')"
+            @change="store.commit(paneId + '/TOGGLE_PREFERENCE', 'showPairs')"
           />
           <div></div>
           <span>
@@ -310,9 +316,9 @@
 
       <toggable-group
         class="mb8 mt16"
-        :value="showPrices"
+        :modelValue="showPrices"
         label="Show prices"
-        @change="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showPrices')"
+        @change="store.commit(paneId + '/TOGGLE_PREFERENCE', 'showPrices')"
         small
       >
         <div class="form-group">
@@ -322,7 +328,7 @@
               class="form-control"
               :checked="showAvgPrice"
               @change="
-                $store.commit(paneId + '/TOGGLE_PREFERENCE', 'showAvgPrice')
+                store.commit(paneId + '/TOGGLE_PREFERENCE', 'showAvgPrice')
               "
             />
             <div></div>
@@ -340,9 +346,9 @@
       <toggable-group
         v-if="isLegacy"
         class="mb8 mt16"
-        :value="showLogos"
+        :modelValue="showLogos"
         label="Show logos"
-        @change="$store.commit(paneId + '/TOGGLE_PREFERENCE', 'showLogos')"
+        @change="store.commit(paneId + '/TOGGLE_PREFERENCE', 'showLogos')"
         small
       >
         <div class="form-group">
@@ -352,7 +358,7 @@
               class="form-control"
               :checked="monochromeLogos"
               @change="
-                $store.commit(paneId + '/TOGGLE_PREFERENCE', 'monochromeLogos')
+                store.commit(paneId + '/TOGGLE_PREFERENCE', 'monochromeLogos')
               "
             />
             <div></div>
@@ -386,7 +392,7 @@
         No active markets,
         <a
           href="javascript:void(0);"
-          @click="$store.dispatch('app/showSearch', { paneId })"
+          @click="store.dispatch('app/showSearch', { paneId })"
         >
           add markets</a
         >.

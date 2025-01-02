@@ -132,11 +132,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineProps, defineEmits, nextTick } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import store from '@/store'
 import Btn from '@/components/framework/Btn.vue'
 import Dropdown from '@/components/framework/Dropdown.vue'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import workspacesService from '@/services/workspacesService'
 import importService from '@/services/importService'
 import { downloadAnything, slugify } from '@/utils/helpers'

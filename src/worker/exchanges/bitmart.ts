@@ -140,6 +140,7 @@ export default class extends Exchange {
       }
     }
   }
+
   onMessage(event, api) {
     let data = event.data
 
@@ -176,5 +177,7 @@ export default class extends Exchange {
     if (liquidationTrades.length > 0) {
       this.emitLiquidations(api.id, liquidationTrades)
     }
+
+    return !!(regularTrades.length || liquidationTrades.length)
   }
 }

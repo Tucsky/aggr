@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, onMounted, computed, useSlots } from 'vue'
+import { ref, onMounted, computed, useSlots } from 'vue'
 import Btn from '@/components/framework/Btn.vue'
 import notificationService from '@/services/notificationService'
 

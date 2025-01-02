@@ -1,6 +1,6 @@
 <template>
   <div class="pane-trades">
-    <pane-header
+    <PaneHeader
       :paneId="paneId"
       ref="paneHeader"
       :settings="() => import('@/components/trades/TradesDialog.vue')"
@@ -23,35 +23,40 @@
         </button>
       </template>
       <hr />
-      <dropdown v-model="sliderDropdownTrigger" interactive no-scroll>
+      <Dropdown
+        v-model="sliderDropdownTrigger"
+        :margin="0"
+        interactive
+        no-scroll
+      >
         <slider
-          style="width: 100px"
+          class="pane-trades__slider"
           :min="0"
           :max="10"
           :step="0.01"
           label
           :show-completion="false"
           :gradient="gradient"
-          :value="thresholdsMultipler"
-          @input="
-            $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
+          :modelValue="thresholdsMultipler"
+          @update:modelValue="
+            store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
               value: $event,
               market: market
             })
           "
           @reset="
-            $store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
+            store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
               value: 1,
               market: market
             })
           "
           log
         >
-          <template v-slot:tooltip>
+          <template #tooltip>
             {{ formatAmount(thresholdsMultipler * minAmount) }}
           </template>
         </slider>
-      </dropdown>
+      </Dropdown>
       <button
         class="btn"
         @click="
@@ -62,7 +67,7 @@
       >
         <i class="icon-gauge"></i>
       </button>
-    </pane-header>
+    </PaneHeader>
     <ul
       ref="tradesContainer"
       class="trades-list"
@@ -95,6 +100,7 @@ import { TradesPaneState } from '@/store/panesSettings/trades'
 import { Trade } from '@/types/types'
 import { usePane } from '@/composables/usePane'
 import { useMutationObserver } from '@/composables/useMutationObserver'
+import Dropdown from '../framework/Dropdown.vue'
 
 // Props
 const props = defineProps({
@@ -105,10 +111,10 @@ const props = defineProps({
 })
 
 // Refs
-const tradesContainer = ref<HTMLElement | null>(null)
+const tradesContainer = ref<HTMLElement>()
 const showPlaceholder = ref(true)
 const sliderDropdownTrigger = ref()
-let feed: TradesFeed | null = null
+let feed: TradesFeed
 
 // Computed properties
 const pane = computed(() => store.state.panes.panes[props.paneId])
@@ -197,7 +203,7 @@ onMounted(() => {
 
   feed = new TradesFeed(
     props.paneId,
-    tradesContainer.value,
+    tradesContainer.value as HTMLElement,
     store.state[props.paneId].maxRows
   )
 })
@@ -216,7 +222,7 @@ const onTrades = (trades: Trade[]) => {
 }
 
 const refreshList = () => {
-  const elements = tradesContainer.value?.getElementsByClassName('trade') ?? []
+  const elements = (tradesContainer.value?.getElementsByClassName('trade') ?? []) as HTMLElement[]
 
   const trades: Trade[] = []
 
@@ -276,7 +282,15 @@ defineExpose({
 </script>
 
 <style lang="scss">
+@use 'sass:color';
+@use '@/assets/sass/variables.scss' as vars;
+
 .pane-trades {
+  &__slider {
+    width: 100%;
+    margin-top: 1rem;
+  }
+
   &.-extra-small .trade {
     padding: 0 1rem 0 1rem;
 
@@ -404,7 +418,7 @@ defineExpose({
   }
 
   &.-sell {
-    background-color: lighten($red, 35%);
+    background-color: color.adjust(vars.$red, $lightness: 35%);
     color: $red;
 
     .icon-side:before {
@@ -413,7 +427,7 @@ defineExpose({
   }
 
   &.-buy {
-    background-color: lighten($green, 50%);
+    background-color: color.adjust(vars.$green, $lightness: 50%);
     color: $green;
 
     .icon-side:before {

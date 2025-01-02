@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { createComponent, mountComponent } from '@/utils/helpers'
 import Btn from '@/components/framework/Btn.vue'
 import { ChartPaneState } from '../../store/panesSettings/chart'
@@ -20,6 +20,7 @@ const props = defineProps<{ paneId: string; indicatorId: string }>()
 // Reactive state for the label and dropdown instance
 const priceScaleLabel = ref<string | null>(null)
 let priceScaleDropdown: any = null
+let unmountPriceScaleDropdown: () => void
 
 // Update label based on store state
 const updateLabel = () => {
@@ -46,7 +47,8 @@ onMounted(() => {
 // Cleanup dropdown on unmount
 onBeforeUnmount(() => {
   if (priceScaleDropdown) {
-    priceScaleDropdown.$destroy()
+    unmountPriceScaleDropdown()
+    unmountPriceScaleDropdown = null
     priceScaleDropdown = null
   }
 })
@@ -64,15 +66,15 @@ const togglePriceScaleDropdown = async (
     priceScaleDropdown = createComponent(PriceScaleDropdown, {
       paneId: props.paneId,
       indicatorId,
-      value: anchor
+      modelValue: anchor,
+      async onInput(value) {
+        priceScaleDropdown.value = value
+        await nextTick()
+        updateLabel()
+      }
     })
 
-    priceScaleDropdown.$on('input', async (value: any) => {
-      priceScaleDropdown.value = value
-      await nextTick()
-      updateLabel()
-    })
-    mountComponent(priceScaleDropdown)
+    unmountPriceScaleDropdown = mountComponent(priceScaleDropdown)
   } else if (priceScaleDropdown.value) {
     priceScaleDropdown.value = null
   } else {

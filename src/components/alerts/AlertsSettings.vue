@@ -22,7 +22,9 @@
             4: 'SparseDotted'
           }"
           placeholder="lineStyle"
-          @input="store.commit('settings/SET_ALERTS_LINESTYLE', $event)"
+          @update:modelValue="
+            store.commit('settings/SET_ALERTS_LINESTYLE', $event)
+          "
           title="Line style (ex: dashed)"
           v-tippy
         ></DropdownButton>
@@ -31,7 +33,9 @@
         <label>Line width</label>
         <Editable
           :model-value="alertsLineWidth"
-          @input="store.commit('settings/SET_ALERTS_LINEWIDTH', $event)"
+          @update:modelValue="
+            store.commit('settings/SET_ALERTS_LINEWIDTH', $event)
+          "
           class="form-control -center w-100"
           title="Line width (ex: 2)"
           v-tippy
@@ -40,9 +44,9 @@
       <div class="form-group">
         <label>Color</label>
         <ColorPickerControl
-          :value="alertsColor"
+          :modelValue="alertsColor"
           label="Alert color"
-          @input="store.commit('settings/SET_ALERTS_COLOR', $event)"
+          @update:modelValue="store.commit('settings/SET_ALERTS_COLOR', $event)"
         ></ColorPickerControl>
       </div>
     </div>

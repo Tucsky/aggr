@@ -7,21 +7,13 @@
   ></div>
 </template>
 <script setup lang="ts">
-import {
-  ref,
-  defineProps,
-  defineEmits,
-  onMounted,
-  onBeforeUnmount,
-  watch,
-  nextTick
-} from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { createComponent, getEventCords, mountComponent } from '@/utils/helpers'
 import { IndicatorEditorWordWrapOption } from '@/store/panesSettings/chart'
 
 // Define props and emits
 const props = defineProps({
-  value: {
+  modelValue: {
     type: String,
     default: ''
   },
@@ -39,6 +31,7 @@ const isLoaded = ref(false)
 const preventOverride = ref(false)
 let editorInstance = null
 let contextMenuComponent: any = null
+let unmountContextMenu: () => void
 const currentEditorOptions = ref({
   fontSize: window.devicePixelRatio > 1 ? 12 : 14,
   wordWrap: 'off' as IndicatorEditorWordWrapOption
@@ -56,7 +49,7 @@ watch(
 )
 
 watch(
-  () => props.value,
+  () => props.modelValue,
   newValue => {
     if (!preventOverride.value) {
       editorInstance.setValue(newValue)
@@ -75,6 +68,11 @@ onBeforeUnmount(() => {
     onBlur(true)
   }
   editorInstance.dispose()
+
+  if (typeof unmountContextMenu === 'function') {
+    unmountContextMenu()
+    unmountContextMenu = null
+  }
 })
 
 // Methods
@@ -102,7 +100,7 @@ const resize = async () => {
 
 const createEditor = async (monaco: Monaco.Editor) => {
   editorInstance = monaco.create(editorRef.value, {
-    value: props.value,
+    value: props.modelValue,
     language: 'javascript',
     tabSize: 2,
     insertSpaces: true,
@@ -162,12 +160,11 @@ async function onContextMenu(event: MouseEvent) {
   event.preventDefault()
   const { x, y } = getEventCords(event, true)
   const propsData = {
-    value: { top: y, left: x, width: 2, height: 2 },
+    modelValue: { top: y, left: x, width: 2, height: 2 },
     editorOptions: currentEditorOptions.value
   }
 
   if (contextMenuComponent) {
-    contextMenuComponent.$off('cmd')
     Object.assign(contextMenuComponent, propsData)
   } else {
     document.body.style.cursor = 'progress'
@@ -175,18 +172,19 @@ async function onContextMenu(event: MouseEvent) {
       '@/components/framework/editor/EditorContextMenu.vue'
     )
     document.body.style.cursor = ''
-    contextMenuComponent = createComponent(module.default, propsData)
-    mountComponent(contextMenuComponent)
+    contextMenuComponent = createComponent(module.default, {
+      ...propsData,
+      onCmd(args) {
+        const method = args[0] as keyof typeof methods
+        if (typeof methods[method] === 'function') {
+          methods[method].apply(null, args.slice(1))
+        } else {
+          throw new Error(`[editor] ContextMenu-->${args[0]} is not a function`)
+        }
+      }
+    })
+    unmountContextMenu = mountComponent(contextMenuComponent)
   }
-
-  contextMenuComponent.$on('cmd', (args: any[]) => {
-    const method = args[0] as keyof typeof methods
-    if (typeof methods[method] === 'function') {
-      methods[method].apply(null, args.slice(1))
-    } else {
-      throw new Error(`[editor] ContextMenu-->${args[0]} is not a function`)
-    }
-  })
 }
 
 // Exported methods for zooming and toggling word wrap

@@ -29,8 +29,8 @@
       <component
         v-if="layoutReady"
         class="pane"
-        ref="panes"
-        :is="gridItem.type"
+        ref="panesRef"
+        :is="components[gridItem.type]"
         :paneId="gridItem.i"
       ></component>
     </GridItem>
@@ -46,7 +46,6 @@ import {
   nextTick,
   defineAsyncComponent
 } from 'vue'
-import { useStore } from 'vuex'
 
 // Import vue3-grid-layout-next components
 import { GridLayout, GridItem } from 'vue3-grid-layout-next'
@@ -54,6 +53,9 @@ import { GridLayout, GridItem } from 'vue3-grid-layout-next'
 // Import constants and types
 import { GRID_COLS } from '@/utils/constants'
 import type { GridItem as GridItemType } from '@/utils/grid'
+import store from '@/store'
+import { Layout } from 'vue3-grid-layout-next/dist/helpers/utils'
+import { PaneTypeEnum } from '@/store/panes'
 
 // Define Async Components
 const Chart = defineAsyncComponent(() => import('@/components/chart/Chart.vue'))
@@ -80,27 +82,24 @@ const Alerts = defineAsyncComponent(
 // Register Components for Template Usage
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const components = {
-  Chart,
-  Trades,
-  Stats,
-  Counters,
-  Prices,
-  Website,
-  TradesLite,
-  Alerts
+  [PaneTypeEnum.CHART]: Chart,
+  [PaneTypeEnum.TRADES]: Trades,
+  [PaneTypeEnum.STATS]: Stats,
+  [PaneTypeEnum.COUNTERS]: Counters,
+  [PaneTypeEnum.PRICES]: Prices,
+  [PaneTypeEnum.WEBSITE]: Website,
+  [PaneTypeEnum.TRADESLITE]: TradesLite,
+  [PaneTypeEnum.ALERTS]: Alerts
 }
 
 // Template Refs
 const grid = ref<InstanceType<typeof GridLayout> | null>(null)
-const panes = ref<Array<any>>([]) // Replace `any` with appropriate type
-
-// Vuex Store
-const store = useStore()
 
 // Reactive Data
 const rowHeight = ref<number>(80)
-const cols = ref<number | null>(null)
+const cols = ref<number>()
 const layoutReady = ref<boolean>(false)
+const panesRef = ref<any[]>()
 
 // Internal Variables
 let resizeTimeout: number | null = null
@@ -115,6 +114,8 @@ onMounted(() => {
   cols.value = GRID_COLS
   updateRowHeight()
   window.addEventListener('resize', updateRowHeight)
+
+  console.log(layout.value)
 })
 
 onBeforeUnmount(() => {
@@ -165,12 +166,12 @@ const resizeMaximizedPane = async () => {
  * @param height - The new height.
  * @param width - The new width.
  */
-const resizePane = (id: string, height: number, width: number) => {
-  if (!panes.value) {
+const resizePane = (id: string | number, height: number, width: number) => {
+  if (!panesRef.value) {
     return
   }
 
-  const pane = panes.value.find((pane: any) => pane.paneId === id) // Adjust type based on PaneMixin
+  const pane = panesRef.value.find((pane: any) => pane.paneId === id) // Adjust type based on PaneMixin
 
   if (!pane) {
     return
@@ -190,23 +191,21 @@ const resizePane = (id: string, height: number, width: number) => {
  * @param wPx - The new width in pixels.
  */
 const onItemResized = (
-  id: string,
+  i: string | number,
   h: number,
   w: number,
-  hPx: number,
-  wPx: number
+  height: number,
+  width: number
 ) => {
-  resizePane(id, hPx, wPx)
-  // Uncomment if you want to update the layout in the store
-  // store.commit('panes/UPDATE_LAYOUT', layout.value)
+  resizePane(i, height, width)
 }
 
 /**
  * Handler for layout updated event.
  * @param gridItems - The updated grid items.
  */
-const onLayoutUpdated = (gridItems: GridItemType[]) => {
-  store.commit('panes/UPDATE_LAYOUT', gridItems)
+const onLayoutUpdated = (layout: Layout) => {
+  store.commit('panes/UPDATE_LAYOUT', layout)
 }
 
 /**
@@ -216,13 +215,13 @@ const onLayoutUpdated = (gridItems: GridItemType[]) => {
  * @param wPx - The new width in pixels.
  */
 const onContainerResized = (
-  id: string,
+  i: string | number,
   h: number,
   w: number,
-  hPx: number,
-  wPx: number
+  height: number,
+  width: number
 ) => {
-  resizePane(id, hPx, wPx)
+  resizePane(i, height, width)
 }
 
 /**
@@ -247,12 +246,3 @@ const updateRowHeight = (event?: Event) => {
   }
 }
 </script>
-
-<style scoped>
-/* Your styles here */
-.pane {
-  /* Example styles */
-  width: 100%;
-  height: 100%;
-}
-</style>

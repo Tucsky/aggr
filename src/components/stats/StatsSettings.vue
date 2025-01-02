@@ -87,9 +87,9 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, computed } from 'vue'
+import { computed } from 'vue'
 import store from '@/store'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import StatDialog from '@/components/stats/StatDialog.vue'
 import { getHms } from '@/utils/helpers'
 

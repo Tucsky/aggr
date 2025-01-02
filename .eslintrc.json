@@ -1,0 +1,23 @@
+{
+  "root": true,
+  "env": {
+    "node": true,
+    "browser": true,
+    "es2024": true
+  },
+  "extends": [
+    "plugin:vue/vue3-recommended",
+    "eslint:recommended",
+    "@vue/typescript/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "parserOptions": {
+    "ecmaVersion": "latest", // Always use the latest ECMAScript version
+    "sourceType": "module"  // Enables ES Modules, which is standard in modern projects
+  },
+  "rules": {
+    "no-console": "warn", // Warnings for console logs, useful for production
+    "no-debugger": "warn", // Warn on debugger usage
+    "@typescript-eslint/no-explicit-any": "off" // Relax rules for 'any' if needed
+  }
+}

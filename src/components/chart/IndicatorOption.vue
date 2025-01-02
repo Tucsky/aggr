@@ -6,9 +6,9 @@
       :pane-id="paneId"
       :indicator-id="indicatorId"
       :label="label"
-      :value="value"
+      :modelValue="value"
       :definition="definition"
-      @input="setValue($event)"
+      @update:modelValue="setValue($event)"
     >
       <template v-if="definition.description" #description>
         <i

@@ -62,10 +62,7 @@ import {
   nextTick,
   getCurrentInstance
 } from 'vue'
-import dialogService, {
-  DialogComponent,
-  DialogPosition
-} from '@/services/dialogService'
+import dialogService, { DialogPosition } from '@/services/oldDialogService'
 import { getEventCords } from '../../utils/helpers'
 import { isTouchSupported } from '@/utils/touchevent'
 
@@ -295,7 +292,7 @@ const setPosition = (pos, shouldSavePosition = false) => {
 
 // Lifecycle hooks
 onMounted(async () => {
-  const parentDialog = getCurrentInstance()?.proxy.$parent as DialogComponent
+  const parentDialog = getCurrentInstance()?.proxy.$parent as any
   if (parentDialog && parentDialog.dialogId) {
     const savedPosition = dialogService.dialogPositions[parentDialog.dialogId]
     if (typeof savedPosition?.x === 'number') {
@@ -354,7 +351,7 @@ bindGlobalEvents()
 // Persist position and settings if applicable when window unloads or before component is destroyed
 const persistPosition = () => {
   const dialogPosition = { ...position.value }
-  const parentDialog = getCurrentInstance()?.proxy.$parent as DialogComponent
+  const parentDialog = getCurrentInstance()?.proxy.$parent as any
   if (parentDialog && parentDialog.dialogId) {
     dialogService.dialogPositions[parentDialog.dialogId] = {
       x: dialogPosition.x,

@@ -2,7 +2,6 @@ import aggregatorService from '@/services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
 import { getBucketId, slugify, uniqueName } from '@/utils/helpers'
 import { registerModule } from '@/utils/store'
-import Vue from 'vue'
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 import { ModulesState } from '.'
 import panesSettings from './panesSettings'
@@ -10,7 +9,7 @@ import defaultPanes from './defaultPanes.json'
 import { ListenedProduct } from './app'
 import { getMarketProduct, parseMarket } from '../services/productsService'
 import { GridItem, GridSpace, findOrCreateSpace } from '@/utils/grid'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 
 enum StaticPaneTypeEnum {
   website = 'website',
@@ -31,11 +30,11 @@ export enum PaneTypeEnum {
 export type MarketsListeners = { [market: string]: ListenedProduct }
 
 export interface Pane {
-  type: string
+  type: PaneTypeEnum
   id: string
   name: string
   zoom?: number
-  markets?: string[]
+  markets: string[]
   settings?: any
 }
 
@@ -48,14 +47,14 @@ export interface PanesState {
 }
 
 const layoutDesktop = [
-  { i: 'chart', type: 'chart', x: 0, y: 0, w: 20, h: 24 },
-  { i: 'trades', type: 'trades', x: 20, y: 0, w: 4, h: 20 },
-  { i: 'liquidations', type: 'trades', x: 20, y: 20, w: 4, h: 4 }
+  { i: 'chart', type: PaneTypeEnum.CHART, x: 0, y: 0, w: 20, h: 24 },
+  { i: 'trades', type: PaneTypeEnum.TRADES, x: 20, y: 0, w: 4, h: 20 },
+  { i: 'liquidations', type: PaneTypeEnum.TRADES, x: 20, y: 20, w: 4, h: 4 }
 ]
 
 const layoutMobile = [
-  { i: 'chart', type: 'chart', x: 0, y: 0, w: 24, h: 16 },
-  { i: 'trades', type: 'trades', x: 0, y: 0, w: 24, h: 8 }
+  { i: 'chart', type: PaneTypeEnum.CHART, x: 0, y: 0, w: 24, h: 16 },
+  { i: 'trades', type: PaneTypeEnum.TRADES, x: 0, y: 0, w: 24, h: 8 }
 ]
 
 const state: PanesState = JSON.parse(JSON.stringify(defaultPanes))
@@ -283,8 +282,8 @@ const actions = {
       }
     }
 
-    aggregatorService.connect(toConnect)
-    aggregatorService.disconnect(toDisconnect)
+    /*aggregatorService.connect(toConnect)
+    aggregatorService.disconnect(toDisconnect)*/
 
     aggregatorService.dispatch({
       op: 'updateBuckets',
@@ -335,7 +334,7 @@ const actions = {
   },
   async resetPane(
     { state, rootState },
-    { id, data, type }: { id: string; data?: any; type?: string }
+    { id, data, type }: { id: string; data?: any; type?: PaneTypeEnum }
   ) {
     const pane = JSON.parse(JSON.stringify(state.panes[id]))
 
@@ -428,10 +427,10 @@ const actions = {
 
 const mutations = {
   ADD_PANE: (state, pane: Pane) => {
-    Vue.set(state.panes, pane.id, pane)
+    state.panes[pane.id] = pane
   },
   REMOVE_PANE: (state, id: string) => {
-    Vue.delete(state.panes, id)
+    delete state.panes[id]
   },
   ADD_GRID_ITEM: (state, { pane, space }: { pane: Pane; space: GridSpace }) => {
     const item: GridItem = {
@@ -467,7 +466,7 @@ const mutations = {
     state.panes[id].name = name
   },
   SET_PANE_ZOOM: (state, { id, zoom }: { id: string; zoom: number }) => {
-    Vue.set(state.panes[id], 'zoom', zoom)
+    state.panes[id].zoom = zoom
   },
   TOGGLE_SYNC_WITH_PARENT_FRAME: (state, paneId) => {
     const index = state.syncedWithParentFrame.indexOf(paneId)

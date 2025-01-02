@@ -3,11 +3,11 @@
     <label>{{ label }}</label>
     <editable
       class="form-control"
-      :value="value"
+      :modelValue="modelValue"
       :min="min"
       :max="max"
       :step="step"
-      @input="emit('input', $event)"
+      @update:modelValue="emit('update:modelValue', $event)"
     ></editable>
   </div>
 </template>
@@ -15,7 +15,7 @@
 import { computed } from 'vue'
 import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 
-const emit = defineEmits(['input'])
+const emit = defineEmits(['update:modelValue'])
 
 // Import props
 const props = defineProps(useIndicatorOptionProps)

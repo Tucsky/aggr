@@ -6,22 +6,23 @@
       @zoom="onZoom"
     >
       <hr />
-      <dropdown
+      <Dropdown
         v-if="market"
         v-model="sliderDropdownTrigger"
+        :margin="0"
         interactive
         no-scroll
       >
         <slider
-          style="width: 100px"
+          class="pane-trades__slider"
           :min="0"
           :max="10"
           :step="0.01"
           label
           :show-completion="false"
           :gradient="gradient"
-          :value="thresholdsMultipler"
-          @input="
+          :modelValue="thresholdsMultipler"
+          @update:modelValue="
             store.commit(paneId + '/SET_THRESHOLDS_MULTIPLER', {
               value: $event,
               market: market
@@ -39,7 +40,7 @@
             {{ formatAmount(thresholdsMultipler * minAmount) }}
           </template>
         </slider>
-      </dropdown>
+      </Dropdown>
       <button
         class="btn"
         :name="paneId"
@@ -1113,6 +1114,11 @@ canvas {
 
 .pane-trades {
   position: relative;
+
+  &__slider {
+    width: 100%;
+    margin-top: 1rem;
+  }
 
   &__paused {
     position: absolute;

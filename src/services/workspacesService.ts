@@ -21,7 +21,7 @@ import { openDB, DBSchema, IDBPDatabase, deleteDB } from 'idb'
 import { databaseUpgrades, workspaceUpgrades } from './migrations'
 import { PanesState } from '@/store/panes'
 import alertService, { MarketAlerts } from './alertService'
-import dialogService from './dialogService'
+import dialogService from './oldDialogService'
 import { stripStablePair } from './productsService'
 import notificationService from './notificationService'
 
@@ -832,9 +832,9 @@ class WorkspacesService {
   }
 
   async exportDatabase() {
-    const { Dexie } = (await import('dexie')) as any
-    const { exportDB } = await import('dexie-export-import')
-
+    const { Dexie } = await import('dexie');
+    const { exportDB } = await import('dexie-export-import');
+  
     const db = await new Dexie('aggr').open()
     const blob = await exportDB(db, {
       filter: tableName => {

@@ -11,6 +11,7 @@
     }"
   >
     <Loader v-if="isLoading" />
+    <DialogContainer />
     <Notices />
     <div class="app__wrapper">
       <Menu />
@@ -39,6 +40,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 // Import components
 import Loader from '@/components/framework/Loader.vue'
 import Notices from '@/components/framework/Notices.vue'
+import DialogContainer from '@/components/framework/DialogContainer.vue'
 import Menu from '@/components/Menu.vue'
 import Panes from '@/components/panes/Panes.vue'
 
@@ -46,7 +48,7 @@ import Panes from '@/components/panes/Panes.vue'
 import aggregatorService from './services/aggregatorService'
 import workspacesService from '@/services/workspacesService'
 import { formatMarketPrice } from '@/services/productsService'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import importService from '@/services/importService'
 import { pathToBase64 } from './utils/helpers'
 
@@ -64,7 +66,7 @@ const mainMarkets = ref<string[]>([])
 const mainPair = ref<string | null>(null)
 const faviconElement = ref<HTMLLinkElement | null>(null)
 const favicons = ref<{ up?: string; down?: string }>({})
-let stuckTimeout: NodeJS.Timeout
+let stuckTimeout: number
 
 // Computed properties
 const isBooted = computed(() => {
@@ -219,7 +221,7 @@ const handleDrop = async (event: DragEvent) => {
     return
   }
 
-  for (const file of event.dataTransfer.files) {
+  for (const file of event.dataTransfer.files as unknown as Iterable<File>) {
     try {
       await importService.importAnything(file)
     } catch (error: any) {

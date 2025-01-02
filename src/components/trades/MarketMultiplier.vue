@@ -6,7 +6,7 @@
     <div
       class="market-multiplier__id"
       @dblclick="
-        $store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', {
+        store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', {
           identifier: market.identifier,
           multiplier: null
         })
@@ -27,24 +27,24 @@
         :label="market.multiplier !== 1"
         :step="0.01"
         :showCompletion="false"
-        :value="market.multiplier"
+        :modelValue="market.multiplier"
         :editable="false"
         log
-        @input="
-          $store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', {
+        @update:modelValue="
+          store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', {
             identifier: market.identifier,
             multiplier: $event
           })
         "
         @reset="
-          $store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', {
+          store.commit(paneId + '/SET_THRESHOLD_MULTIPLIER', {
             identifier: market.identifier,
             multiplier: 1
           })
         "
       >
-        <template v-slot:tooltip="{ value }">
-          × {{ +value.toFixed(2) }}
+        <template v-slot:tooltip="{ modelValue }">
+          × {{ +modelValue.toFixed(2) }}
         </template>
       </slider>
     </div>
@@ -53,6 +53,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import Slider from '@/components/framework/picker/Slider.vue'
+import store from '@/store'
 
 // Props
 const props = defineProps({

@@ -1,0 +1,892 @@
+Need to install the following packages:
+  vue-upgrade-tool@1.0.36
+Ok to proceed? (y) Processed 239 of 239 matching files with 46 errors
+Parse/transform errors:
+In file /Users/aptea/dev/aggr/src/worker/exchange.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/aggregator.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/uniswap.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/poloniex.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/phemex.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/okex.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/mexc.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/kucoin.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/kraken.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/huobi.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/hitbtc.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/gateio.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/dydx.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/deribit.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/cryptocom.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/coinbase.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/bybit.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/bitstamp.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/bitmex.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/bitmart.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/bitget.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/bitfinex.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/binance_us.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/binance_futures.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/binance.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/worker/exchanges/aggr.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/utils/grid.ts:
+Error: did not recognize object of type "TSInterfaceHeritage"
+
+
+In file /Users/aptea/dev/aggr/src/utils/bucket.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/types/types.d.ts:
+Error: did not recognize object of type "TSInterfaceHeritage"
+
+
+In file /Users/aptea/dev/aggr/src/store/app.ts:
+Error: did not recognize object of type "TSInterfaceHeritage"
+
+
+In file /Users/aptea/dev/aggr/src/services/workspacesService.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/services/notificationService.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/services/historicalService.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/services/gifsService.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/services/dialogService.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/services/audioService.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/services/alertService.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/services/aggregatorService.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/directives/commitDirective.ts:
+Error: did not recognize object of type "TSInterfaceHeritage"
+
+
+In file /Users/aptea/dev/aggr/src/components/trades/tradesFeed.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/components/chart/controls.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/components/chart/chart.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/components/chart/chart.d.ts:
+Error: did not recognize object of type "TSInterfaceHeritage"
+
+
+In file /Users/aptea/dev/aggr/src/components/chart/cache.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/components/chart/controls/measurementEventHandler.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+In file /Users/aptea/dev/aggr/src/components/chart/controls/alertEventHandler.ts:
+Error: did not recognize object of type "PropertyDefinition"
+
+
+[
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchange.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/aggregator.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/uniswap.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/poloniex.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/phemex.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/okex.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/mexc.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/kucoin.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/kraken.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/huobi.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/hitbtc.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/gateio.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/dydx.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/deribit.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/cryptocom.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/coinbase.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/bybit.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/bitstamp.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/bitmex.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/bitmart.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/bitget.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/bitfinex.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/binance_us.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/binance_futures.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/binance.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/worker/exchanges/aggr.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/utils/grid.ts',
+    error: Error: did not recognize object of type "TSInterfaceHeritage"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/types.js:660:19)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:184:36)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at NodePath.each (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path.js:87:26)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:178:18)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/utils/bucket.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/types/types.d.ts',
+    error: Error: did not recognize object of type "TSInterfaceHeritage"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/store/app.ts',
+    error: Error: did not recognize object of type "TSInterfaceHeritage"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/types.js:660:19)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:184:36)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at NodePath.each (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path.js:87:26)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:178:18)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/services/workspacesService.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/services/notificationService.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/types.js:660:19)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:184:36)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at NodePath.each (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path.js:87:26)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:178:18)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/services/historicalService.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/services/gifsService.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/types.js:660:19)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:184:36)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at NodePath.each (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path.js:87:26)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:178:18)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/services/dialogService.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/services/audioService.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/services/alertService.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/services/aggregatorService.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/types.js:660:19)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:184:36)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at NodePath.each (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path.js:87:26)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:178:18)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/directives/commitDirective.ts',
+    error: Error: did not recognize object of type "TSInterfaceHeritage"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/types.js:660:19)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:184:36)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at NodePath.each (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path.js:87:26)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:178:18)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at NodePath.each (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path.js:87:26)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:178:18)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/components/trades/tradesFeed.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/components/chart/controls.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/components/chart/chart.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/components/chart/chart.d.ts',
+    error: Error: did not recognize object of type "TSInterfaceHeritage"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/types.js:660:19)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:184:36)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at NodePath.each (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path.js:87:26)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:178:18)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/components/chart/cache.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/components/chart/controls/measurementEventHandler.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/types.js:660:19)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:184:36)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at NodePath.each (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path.js:87:26)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:178:18)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+        at visitChildren (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:203:25)
+        at PVp.visitWithoutReset (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/ast-types/lib/path-visitor.js:166:20)
+  },
+  {
+    filename: '/Users/aptea/dev/aggr/src/components/chart/controls/alertEventHandler.ts',
+    error: Error: did not recognize object of type "PropertyDefinition"
+        at Object.getFieldNames (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/node_modules/ast-types/lib/types.js:669:19)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:53:23)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at getSortedChildNodes (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:62:9)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:70:22)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at decorateComment (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:82:13)
+        at /Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:119:9
+        at Array.forEach (<anonymous>)
+        at attach (/Users/aptea/.npm/_npx/73fc777d61ba4276/node_modules/recast/lib/comments.js:117:14)
+  }
+]
+╔══════════════════════════════════════╤═══════╗
+║ Codemod name                         │ Count ║
+╟──────────────────────────────────────┼───────╢
+║ vue-set                              │ 35    ║
+╟──────────────────────────────────────┼───────╢
+║ vue-delete                           │ 6     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-contextual-h                     │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-defineComponent                  │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-v-on-native                      │ 12    ║
+╟──────────────────────────────────────┼───────╢
+║ vue-hook-events                      │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-v-bind-sync                      │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-scoped-slots                     │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-nextTick                         │ 1     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-lifecycle-hooks                  │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-data-function                    │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-functional-component             │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-remove-$listeners                │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-v-model                          │ 147   ║
+╟──────────────────────────────────────┼───────╢
+║ vue-v-deep                           │ 7     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-array-watch                      │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-emits-sfc                        │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-emits-non-sfc                    │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vuex-instantiation                   │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ test-utils-wrapper-destroy           │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ test-utils-propsData                 │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ test-utils-scoped-slots-mount-option │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ test-utils-global-mount-options      │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-router-instantiation             │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-router-onReady                   │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-router-getMatchedComponents      │ 0     ║
+╟──────────────────────────────────────┼───────╢
+║ vue-router-view-slot-content         │ 0     ║
+╚══════════════════════════════════════╧═══════╝
+

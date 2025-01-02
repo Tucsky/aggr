@@ -106,7 +106,7 @@ const mutations = {
       disabled = !state[id].disabled
     }
 
-    Vue.set(state[id], 'disabled', disabled)
+    state[id].disabled = disabled
   }
 } as MutationTree<ExchangesState>
 

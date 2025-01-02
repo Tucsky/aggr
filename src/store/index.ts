@@ -8,6 +8,9 @@ import panes, { PanesState } from './panes'
 import { Workspace } from '@/types/types'
 import { resolvePairs } from '../services/productsService'
 import panesSettings from './panesSettings'
+import { ChartPaneState } from './panesSettings/chart'
+import { TradesPaneState } from './panesSettings/trades'
+import { PricesPaneState } from './panesSettings/prices'
 
 // Define the module tree
 export interface AppModuleTree<R> {
@@ -19,6 +22,7 @@ export interface ModulesState {
   settings: SettingsState
   panes: PanesState
   exchanges: ExchangesState
+  [key: string]: any;
 }
 
 // Create the store instance

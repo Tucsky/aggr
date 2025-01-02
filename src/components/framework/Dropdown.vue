@@ -1,41 +1,37 @@
 <template>
-  <transition
-    name="dropdown"
-    @enter="onEnterStart"
-    @after-enter="emit('opened')"
-    @before-leave="emit('closed')"
-  >
-    <div
-      ref="elementRef"
-      class="dropdown hide-scrollbar"
-      :class="[
-        noScroll && 'dropdown--no-scroll',
-        transparent && 'dropdown--transparent'
-      ]"
-      v-if="triggerElement"
-      :style="{ top: top + 'px', left: left + 'px' }"
-      @click.stop="!interactive && toggle(null, true)"
+  <div ref="elementRef" class="dropdown__container">
+    <transition
+      name="dropdown"
+      @after-enter="onAfterEnter"
+      @after-leave="onAfterLeave"
     >
-      <slot />
-    </div>
-  </transition>
+      <div
+        class="dropdown hide-scrollbar"
+        :class="[
+          noScroll && 'dropdown--no-scroll',
+          transparent && 'dropdown--transparent'
+        ]"
+        v-if="triggerElement"
+        @click.stop="!interactive && toggle(null, true)"
+      >
+        <slot />
+      </div>
+    </transition>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import {
-  ref,
-  watch,
-  onMounted,
-  onBeforeUnmount,
-  defineProps,
-  defineEmits,
-  nextTick
-} from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { isTouchSupported } from '@/utils/touchevent'
+import {
+  createPopper,
+  Instance as PopperInstance,
+  Placement
+} from '@popperjs/core'
 
 const props = defineProps({
-  value: {
-    type: Object,
+  modelValue: {
+    type: HTMLElement,
     default: null
   },
   margin: {
@@ -54,10 +50,6 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  onSides: {
-    type: Boolean,
-    default: false
-  },
   transparent: {
     type: Boolean,
     default: false
@@ -66,55 +58,45 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  draggable: {
-    type: Boolean,
-    default: false
+  placement: {
+    type: String as () => Placement,
+    default: 'bottom' // Default placement; can be 'top', 'bottom', 'left', 'right', etc.
   }
 })
 
-const emit = defineEmits(['input', 'opened', 'closed'])
+const emit = defineEmits(['update:modelValue', 'opened', 'closed'])
 
 // State refs
-const triggerElement = ref<any>(props.value || null)
-const top = ref<number | null>(null)
-const left = ref<number | null>(null)
+const triggerElement = ref<any>(props.modelValue || null)
 const elementRef = ref<HTMLElement>()
+let popperInstance: PopperInstance | null = null
 
 // Internal refs for resize and outside-click handling
-let _resizeHandler: (() => void) | null = null
-let _resizeTimeout: ReturnType<typeof setTimeout> | null = null
 let clickOutsideHandler: ((event: MouseEvent | TouchEvent) => void) | null =
   null
 
-// Watch for changes in `value` prop to toggle dropdown
+// Watch for changes in `modelValue` prop to toggle dropdown
 watch(
-  () => props.value,
+  () => props.modelValue,
   newTrigger => toggle(newTrigger)
 )
 
 // Lifecycle hooks
 onMounted(() => {
-  if (props.value) {
-    toggle(props.value)
+  if (props.modelValue) {
+    toggle(props.modelValue)
   }
 })
 
 onBeforeUnmount(() => {
   toggle(null, true)
-  if (_resizeHandler) {
-    window.removeEventListener('resize', _resizeHandler)
-  }
-  if (clickOutsideHandler) {
-    document.removeEventListener(
-      isTouchSupported() ? 'touchstart' : 'mousedown',
-      clickOutsideHandler
-    )
-  }
+
+  destroyPopperInstance()
 })
 
 // Methods
 
-const toggle = (newTriggerElement: any, emitInput = false) => {
+const toggle = async (newTriggerElement: any, emitInput = false) => {
   const nextTrigger =
     newTriggerElement && newTriggerElement !== triggerElement.value
       ? newTriggerElement
@@ -126,12 +108,16 @@ const toggle = (newTriggerElement: any, emitInput = false) => {
 
   triggerElement.value = nextTrigger
 
-  if (nextTrigger) {
-    open(nextTrigger)
+  if (
+    nextTrigger &&
+    (nextTrigger.getBoundingClientRect ||
+      typeof nextTrigger.top !== 'undefined')
+  ) {
+    await open(nextTrigger)
   }
 
   if (emitInput) {
-    emit('input', triggerElement.value)
+    emit('update:modelValue', triggerElement.value)
   }
 }
 
@@ -139,12 +125,12 @@ const open = async (nextTrigger: any) => {
   if (nextTrigger instanceof HTMLElement) {
     nextTrigger.classList.add('dropdown-trigger')
   }
-  document
-    .getElementById('app')
-    ?.appendChild(triggerElement.value as HTMLElement)
 
-  bindResize()
   await nextTick()
+
+  // document.getElementById('app')?.appendChild(elementRef.value as HTMLElement)
+
+  createPopperInstance()
 
   if (!props.isolate) {
     bindClickOutside()
@@ -152,64 +138,52 @@ const open = async (nextTrigger: any) => {
 }
 
 const close = () => {
-  if (!triggerElement.value) return
   if (triggerElement.value instanceof HTMLElement) {
     triggerElement.value.classList.remove('dropdown-trigger')
   }
-  unbindResize()
+
   unbindClickOutside()
 }
 
-const fitScreen = () => {
-  if (
-    !triggerElement.value ||
-    !(triggerElement.value as HTMLElement).getBoundingClientRect
-  )
+const createPopperInstance = () => {
+  if (!triggerElement.value || !elementRef.value) {
     return
-
-  const dropdownElement = triggerElement.value as HTMLElement
-  const triggerRect =
-    triggerElement.value instanceof HTMLElement
-      ? triggerElement.value.getBoundingClientRect()
-      : triggerElement.value
-  const viewportWidth = window.innerWidth
-  const viewportHeight = window.innerHeight
-  const dropdownWidth = dropdownElement.offsetWidth * 1.25
-
-  left.value = Math.max(
-    props.margin,
-    Math.min(
-      triggerRect.left + triggerRect.width / 2 - dropdownWidth / 2,
-      viewportWidth - dropdownWidth - props.margin * 2
-    )
-  )
-
-  const triggerIsLowerThanViewportMiddle = triggerRect.top > viewportHeight / 2
-  if (triggerIsLowerThanViewportMiddle) {
-    top.value = triggerRect.top - dropdownElement.offsetHeight - props.margin
-  } else {
-    top.value = triggerRect.top + triggerRect.height + props.margin
   }
+
+  if (popperInstance) {
+    popperInstance.update()
+    return
+  }
+
+  popperInstance = createPopper(triggerElement.value, elementRef.value, {
+    placement: props.placement,
+    modifiers: [
+      {
+        name: 'offset',
+        options: {
+          offset: [props.margin, props.margin]
+        }
+      },
+      {
+        name: 'preventOverflow',
+        options: {
+          padding: props.margin
+        }
+      },
+      {
+        name: 'flip',
+        options: {
+          fallbackPlacements: ['top', 'right', 'left']
+        }
+      }
+    ]
+  })
 }
 
-const onResize = () => {
-  if (_resizeTimeout) clearTimeout(_resizeTimeout)
-  _resizeTimeout = setTimeout(() => {
-    fitScreen()
-    _resizeTimeout = null
-  }, 500)
-}
-
-const bindResize = () => {
-  if (_resizeHandler) return
-  _resizeHandler = onResize
-  window.addEventListener('resize', _resizeHandler)
-}
-
-const unbindResize = () => {
-  if (_resizeHandler) {
-    window.removeEventListener('resize', _resizeHandler)
-    _resizeHandler = null
+const destroyPopperInstance = () => {
+  if (popperInstance) {
+    popperInstance.destroy()
+    popperInstance = null
   }
 }
 
@@ -217,17 +191,26 @@ const bindClickOutside = () => {
   if (clickOutsideHandler) return
 
   clickOutsideHandler = (event: MouseEvent | TouchEvent) => {
+    if (event.defaultPrevented || (event as any).button === 2) {
+      return
+    }
+
     let isOutside = true
-    let element = event.target as HTMLElement
+    let element = event.target as HTMLElement | null
     let depth = 0
 
-    while (isOutside && depth++ < 10 && (element = element.parentElement)) {
+    while (isOutside && depth++ < 10 && element && (element = element.parentElement)) {
       if (element.classList.contains('dropdown')) {
         isOutside = false
       }
     }
 
-    if (isOutside) {
+    if (
+      isOutside &&
+      (typeof triggerElement.value.top !== 'undefined' ||
+        (!triggerElement.value.contains(event.target) &&
+          triggerElement.value !== event.target))
+    ) {
       toggle(null, true)
     }
   }
@@ -248,16 +231,11 @@ const unbindClickOutside = () => {
   }
 }
 
-/**
- * Enter animation started
- */
-const onEnterStart = async () => {
-  await nextTick()
-
-  fitScreen()
+const onAfterEnter = () => {
+  emit('opened')
 
   if (props.autoFocus) {
-    const button = elementRef.value.querySelector('button')
+    const button = elementRef.value?.querySelector('button') as HTMLElement
 
     if (button) {
       button.focus()
@@ -265,12 +243,15 @@ const onEnterStart = async () => {
   }
 }
 
+const onAfterLeave = () => {
+  emit('closed')
+}
+
 defineExpose({ toggle })
 </script>
 
 <style lang="scss" scoped>
 .dropdown {
-  position: fixed;
   z-index: 10;
   border-radius: 0.75em;
   background-color: var(--theme-background-150);
@@ -279,6 +260,10 @@ defineExpose({ toggle })
   max-width: 300px;
   overflow-y: auto;
   text-align: left;
+
+  &__container {
+    position: absolute;
+  }
 
   &--transparent {
     box-shadow: none;
@@ -306,13 +291,13 @@ defineExpose({ toggle })
     transform: none;
   }
 
-  &-enter,
+  &-enter-from,
   &-leave-to {
     opacity: 0;
     transform: scale(0.8);
   }
 
-  ::v-deep(&-divider) {
+  :deep(.dropdown-divider) {
     background-color: var(--theme-background-200);
     height: 1px;
     padding: 0;
@@ -348,7 +333,7 @@ defineExpose({ toggle })
     }
   }
 
-  ::v-deep(&-item) {
+  :deep(.dropdown-item) {
     border: 0;
     background: 0;
     padding: 0.625em;
@@ -369,7 +354,7 @@ defineExpose({ toggle })
       background-color: var(--theme-color-o10);
     }
 
-    &--active {
+    &.dropdown-item--active {
       font-weight: 600;
       background-color: var(--theme-background-100);
 
@@ -378,7 +363,7 @@ defineExpose({ toggle })
       }
     }
 
-    &--group {
+    &.dropdown-item--group {
       padding: 0;
 
       span {
@@ -386,27 +371,27 @@ defineExpose({ toggle })
       }
     }
 
-    &--narrow {
+    &.dropdown-item--narrow {
       padding-block: 0.375rem;
     }
 
-    &__subtitle {
+    .dropdown-item__subtitle {
       opacity: 0.5;
       font-size: 0.875em;
       margin-top: 0.25em;
     }
 
-    &__emoji {
+    .dropdown-item__emoji {
       width: 1em;
       padding-right: 1em;
       font-size: 0.75em;
     }
 
-    &__icon {
+    .dropdown-item__icon {
       padding: 0 0.375rem;
     }
 
-    &--space-between {
+    &.dropdown-item--space-between {
       justify-content: space-between;
     }
 

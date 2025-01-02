@@ -2,23 +2,23 @@
   <label class="indicator-option-dropdown form-group">
     <label>{{ label }}<slot name="description" /></label>
     <dropdown-button
-      :value="value"
+      :modelValue="modelValue"
       :options="options"
       class="-outline form-control -arrow"
       :placeholder="definition.placeholder"
-      @input="onInput"
+      @update:modelValue="onInput"
     ></dropdown-button>
   </label>
 </template>
 
 <script setup lang="ts">
-import { computed, defineEmits, defineProps } from 'vue'
+import { computed } from 'vue'
 import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 
 // Define props and emit
 const props = defineProps(useIndicatorOptionProps)
-const emit = defineEmits(['input'])
+const emit = defineEmits(['update:modelValue'])
 
 // Computed property for dropdown options
 const options = computed(() => {
@@ -39,6 +39,6 @@ const options = computed(() => {
 
 // Emit input event
 const onInput = (value: any) => {
-  emit('input', value)
+  emit('update:modelValue', value)
 }
 </script>

@@ -1,5 +1,8 @@
 <template>
-  <dropdown :value="value" @input="$emit('input', $event)">
+  <Dropdown
+    :modelValue="modelValue"
+    @update:modelValue="$emit('update:modelValue', $event)"
+  >
     <div class="dropdown-divider" :data-label="indicatorName"></div>
     <IndicatorScaleButton :indicator-id="indicatorId" :pane-id="paneId" />
     <button type="button" class="dropdown-item" @click="resizeIndicator">
@@ -42,18 +45,18 @@
     <button type="button" class="dropdown-item" @click="removeIndicator">
       <i class="icon-cross"></i> <span>Remove</span>
     </button>
-  </dropdown>
+  </Dropdown>
 </template>
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, defineProps } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { ChartPaneState } from '@/store/panesSettings/chart'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import IndicatorScaleButton from '@/components/indicators/IndicatorScaleButton.vue'
 import store from '@/store'
 
 // Define props
 const props = defineProps<{
-  value: HTMLElement | null
+  modelValue: HTMLElement | null
   paneId: string
   indicatorId: string | null
 }>()
@@ -74,7 +77,7 @@ const indicatorOrder = computed(() => {
 
 // Watcher to call updateLabels whenever `value` prop changes
 watch(
-  () => props.value,
+  () => props.modelValue,
   newValue => {
     if (newValue) {
       updateLabels()

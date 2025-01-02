@@ -17,7 +17,7 @@
   </button>
 </template>
 <script setup lang="ts">
-import { computed, defineProps, onBeforeUnmount } from 'vue'
+import { computed, onBeforeUnmount } from 'vue'
 import { ChartPaneState } from '../../store/panesSettings/chart'
 import { createComponent, mountComponent } from '@/utils/helpers'
 import store from '@/store'
@@ -74,10 +74,10 @@ async function togglePriceFormatDropdown(indicatorId: string, event: Event) {
     priceFormatDropdown = createComponent(module.default, {
       paneId: props.paneId,
       indicatorId: indicatorId,
-      value: anchor
-    })
-    priceFormatDropdown.$on('modelValue', (value: any) => {
-      priceFormatDropdown.value = value
+      modelValue: anchor,
+      onInput(value) {
+        priceFormatDropdown.modelValue = value
+      }
     })
     unmountPriceFormatDropdown = mountComponent(priceFormatDropdown)
   } else if (priceFormatDropdown.value) {

@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import store from '@/store'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import { parseMarket } from '@/services/productsService'
 import workspacesService from '@/services/workspacesService'
 import panesSettings from '@/store/panesSettings'
