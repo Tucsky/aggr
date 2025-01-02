@@ -3,7 +3,7 @@
 
 Cryptocurrency market trades aggregator./
 
-Currently supporting Kucoin, BitMEX, Bitfinex, Binance, Coinbase, Bitstamp, Deribit, Huobi, Okex, Hitbtc, Poloniex, Bybit, Bitget, Mexc, Gate.io and Crypto.com ([see src/exchanges/](src/exchanges) for detail)
+Currently supporting Kucoin, BitMEX, Bitfinex, Binance, Coinbase, Bitstamp, Deribit, Huobi, Okex, Hitbtc, Poloniex, Bybit, Bitget, Bitunix, Mexc, Gate.io and Crypto.com ([see src/exchanges/](src/exchanges) for detail)
 
 ![screenshot](https://i.imgur.com/nHJxsdL.gif)
 
@@ -118,5 +118,7 @@ If you plan to use real money with this, USE AT YOUR OWN RISK.
 
 ## Support this project!
 
+BTC bc1q3f5ndx2zww3pw5c5vctw7t4wfgv05fdsc2graj<br>
+SOL FKMNaBJqdpNA1d33hiUEjHaovQ5AiBGACqRuKuxA9q3D<br>
 ETH 0x83bBC120a998cF7dFcBa1518CDDCb68Aa0D0c158<br>
 COINBASE https://commerce.coinbase.com/checkout/c58bd003-5e47-4cfb-ae25-5292f0a0e1e8
