@@ -127,7 +127,7 @@ const submit = async () => {
 .publish-resource {
   $self: &;
 
-  ::v-deep {
+  :deep() {
     .dialog__content {
       width: 380px;
     }

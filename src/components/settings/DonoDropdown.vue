@@ -4,7 +4,7 @@
     :options="donationMenu"
     :placeholder="label"
     class="-text -arrow"
-    @input="onSelect"
+    @update:modelValue="onSelect"
   >
     <template v-slot:option="{ value }">
       <i :class="value.icon" style="width: 16px; text-align: center"></i>
@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps } from 'vue'
+import { ref } from 'vue'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 import { copyTextToClipboard } from '@/utils/helpers'
 

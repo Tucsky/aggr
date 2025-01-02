@@ -104,7 +104,7 @@
   </table>
 </template>
 <script setup lang="ts">
-import { ref, computed, defineProps } from 'vue'
+import { ref, computed } from 'vue'
 import { ago } from '@/utils/helpers'
 import { usePreview } from '@/composables/usePreview'
 

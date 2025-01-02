@@ -2,11 +2,11 @@
   <div id="menu" class="menu" :class="{ '-open': open }">
     <button
       class="menu__button btn"
-      @click="menuDropdownRef.toggle($event.currentTarget)"
+      @click="menuDropdownRef?.toggle($event.currentTarget)"
     >
       <i class="icon-menu"></i>
     </button>
-    <dropdown ref="menuDropdownRef">
+    <Dropdown ref="menuDropdownRef">
       <button
         type="button"
         class="dropdown-item dropdown-item--space-between"
@@ -18,16 +18,16 @@
       <button
         type="button"
         class="dropdown-item"
-        @click.stop="panesDropdownRef.toggle($event.currentTarget)"
+        @click.stop="panesDropdownRef?.toggle($event.currentTarget)"
       >
         <i class="icon-dashboard -center mr8"></i>
         <span class="mr4">Pane</span>
         <i class="icon-plus mlauto"></i>
       </button>
-      <dropdown
+      <Dropdown
         ref="panesDropdownRef"
-        @mousedown.native.stop
-        @touchstart.native.stop
+        @mousedown.stop
+        @touchstart.stop
         on-sides
       >
         <button
@@ -110,20 +110,21 @@
           </div>
           <i class="icon-plus" />
         </button>
-      </dropdown>
+      </Dropdown>
 
-      <dropdown
+      <Dropdown
         v-model="volumeSliderOpened"
         v-on="volumeSliderEvents"
-        @mousedown.native.stop
-        @touchstart.native.stop
-        @mouseleave.native="volumeSliderTriggerEvents.mouseleave"
+        @mousedown.stop
+        @touchstart.stop
+        @mouseleave="volumeSliderTriggerEvents.mouseleave"
         ref="volumeSlider"
         class="volume-slider"
         interactive
         no-scroll
         transparent
-        on-sides
+        placement="left"
+        :margin="0"
       >
         <Slider
           style="width: 100px"
@@ -132,18 +133,20 @@
           :step="0.01"
           :label="true"
           :model-value="audioVolume"
-          @input="store.dispatch('settings/setAudioVolume', $event)"
+          @update:modelValue="store.dispatch('settings/setAudioVolume', $event)"
           @reset="store.dispatch('settings/setAudioVolume', 1)"
           log
         >
-          <template v-slot:tooltip="{ value }">
+          <template #tooltip="{ modelValue }">
             {{
-              ((Math.log10(value + 1) / Math.log10(3 + 1)) * 100).toFixed() +
-              '%'
+              (
+                (Math.log10(modelValue + 1) / Math.log10(3 + 1)) *
+                100
+              ).toFixed() + '%'
             }}
           </template>
         </Slider>
-      </dropdown>
+      </Dropdown>
 
       <button
         type="button"
@@ -178,12 +181,12 @@
         <span class="mr4">Settings</span>
         <i class="icon-cog"></i>
       </button>
-    </dropdown>
+    </Dropdown>
   </div>
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import { PaneTypeEnum } from '@/store/panes'
 import { isTouchSupported } from '../utils/touchevent'
 import Dropdown from './framework/Dropdown.vue'
@@ -192,15 +195,15 @@ import SettingsDialog from './settings/SettingsDialog.vue'
 import store from '@/store'
 
 // Reactive state
-const volumeSliderOpened = ref<HTMLElement | null>(null)
+const volumeSliderOpened = ref<HTMLElement>()
 const isFullscreen = ref(false)
 const open = ref(false)
 
 // Refs
 const volumeSlider = ref<any>(null)
 const volumeSliderTriggerRef = ref<HTMLElement | null>(null)
-const menuDropdownRef = ref<InstanceType<typeof Dropdown> | null>(null)
-const panesDropdownRef = ref<InstanceType<typeof Dropdown> | null>(null)
+const menuDropdownRef = ref<InstanceType<typeof Dropdown>>()
+const panesDropdownRef = ref<InstanceType<typeof Dropdown>>()
 
 // Fullscreen event handlers
 function handleFullScreenChange() {
@@ -224,7 +227,7 @@ const audioVolume = computed(() => store.state.settings.audioVolume)
 
 // Event handling for volume slider
 const volumeSliderEvents = computed(() => {
-  if (!volumeSliderOpened.value) return null
+  if (!volumeSliderOpened.value) return {}
   return {
     [isTouchSupported() ? 'touchstart' : 'mousedown']: (event: Event) => {
       event.stopPropagation()
@@ -236,7 +239,7 @@ const volumeSliderEvents = computed(() => {
       ) {
         return
       }
-      volumeSliderOpened.value = null
+      volumeSliderOpened.value = undefined
     }
   }
 })
@@ -251,7 +254,7 @@ const volumeSliderTriggerEvents = computed(() => {
         ) {
           return
         }
-        volumeSliderOpened.value = null
+        volumeSliderOpened.value = undefined
       }
     }
   } else {

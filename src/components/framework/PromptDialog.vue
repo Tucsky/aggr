@@ -61,11 +61,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, defineProps } from 'vue'
+import { ref, onMounted } from 'vue'
 import { defineAsyncComponent } from 'vue'
 import Dialog from '@/components/framework/Dialog.vue'
 import { useDialog } from '@/composables/useDialog'
 const { opened, close, hide } = useDialog()
+
 defineExpose({ close })
 
 const props = defineProps({

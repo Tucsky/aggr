@@ -11,7 +11,7 @@
       @enabled="toggleEnabled"
       @dropdown="toggleDropdown"
     />
-    <dropdown v-model="dropdownTrigger">
+    <Dropdown v-model="dropdownTrigger">
       <button type="button" class="dropdown-item" @click="selectIndicator()">
         <i class="icon-plus"></i>
         <span>Add to chart</span>
@@ -29,15 +29,15 @@
         <i class="icon-trash"></i>
         <span>Remove</span>
       </button>
-    </dropdown>
+    </Dropdown>
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted, defineEmits, nextTick } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { downloadAnything } from '@/utils/helpers'
 import SearchBar from '@/components/framework/SearchBar.vue'
 import IndicatorTable from '@/components/library/indicators/IndicatorTable.vue'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import workspacesService from '@/services/workspacesService'
 import importService from '@/services/importService'
 

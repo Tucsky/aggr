@@ -7,7 +7,7 @@
     >
       <toggable-group
         class="mb8 mt16"
-        :value="showPairs"
+        :modelValue="showPairs"
         label="Show Symbols"
         @change="store.commit(paneId + '/TOGGLE_PAIRS')"
         small
@@ -96,8 +96,10 @@
         <editable
           placeholder="Enter amount"
           class="form-control pl16 w-100"
-          :value="formatAmountHelper(volumeThreshold)"
-          @input="store.commit(paneId + '/SET_VOLUME_THRESHOLD', $event)"
+          :modelValue="formatAmountHelper(volumeThreshold)"
+          @update:modelValue="
+            store.commit(paneId + '/SET_VOLUME_THRESHOLD', $event)
+          "
         />
       </div>
       <div class="form-group mb8">
@@ -156,11 +158,11 @@
           ></span>
         </label>
         <dropdown-button
-          :value="period"
+          :modelValue="period"
           :options="periods"
           class="-outline form-control -arrow w-100 -cases"
           placeholder="No period"
-          @input="store.commit(paneId + '/SET_PERIOD', $event)"
+          @update:modelValue="store.commit(paneId + '/SET_PERIOD', $event)"
         ></dropdown-button>
       </div>
       <div class="form-group mb8">

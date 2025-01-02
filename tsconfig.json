@@ -1,24 +1,19 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "strict": false,
-    "jsx": "preserve",
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "noImplicitAny": false,
-    "experimentalDecorators": true,
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
-    "baseUrl": ".",
-    "types": ["node", "vite/client"],
+    "target": "ESNext", // Optimized for modern browsers
+    "module": "ESNext", // Works with Vite's ES module support
+    "moduleResolution": "Node", // Resolves modules in a Node.js-like environment
+    "strict": false, // Enable all strict TypeScript checks
+    "jsx": "preserve", // Required for JSX/TSX in Vue
+    "esModuleInterop": true, // Allows compatibility with CommonJS modules
+    "allowSyntheticDefaultImports": true, // Supports `import` of modules without `default`
+    "resolveJsonModule": true, // Allows importing `.json` files
+    "lib": ["ESNext", "DOM"], // Includes modern JavaScript features and DOM APIs
+    "baseUrl": ".", // Base URL for resolving non-relative imports
     "paths": {
-      "@/*": ["src/*"]
-    },
-    "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
+      "@/*": ["src/*"] // Simplified alias for imports like `@/components`
+    }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "public/sw.js"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*"], // Include all source files
+  "exclude": ["node_modules"] // Exclude dependencies
 }

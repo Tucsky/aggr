@@ -1,8 +1,7 @@
 import { MutationTree, ActionTree, GetterTree, Module } from 'vuex'
 
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import StatDialog from '@/components/stats/StatDialog.vue'
-import Vue from 'vue'
 import { slugify, uniqueName } from '@/utils/helpers'
 
 export interface StatBucket {
@@ -121,14 +120,14 @@ const mutations = {
 
     stat.enabled = value ? true : false
 
-    Vue.set(state.buckets, id, stat)
+    state.buckets[id] = stat
   },
   SET_BUCKET_INPUT(state, { id, value }) {
     const stat = state.buckets[id]
 
     stat.input = value
 
-    Vue.set(state.buckets, id, stat)
+    state.buckets[id] = stat
   },
   RENAME_BUCKET(state, { id, name }) {
     const stat = state.buckets[id]
@@ -137,14 +136,14 @@ const mutations = {
     // stat.id = id
 
     // Vue.delete(state.buckets, oldId)
-    Vue.set(state.buckets, id, stat)
+    state.buckets[id] = stat
   },
   SET_BUCKET_COLOR(state, { id, value }) {
     const stat = state.buckets[id]
 
     stat.color = value
 
-    Vue.set(state.buckets, id, stat)
+    state.buckets[id] = stat
   },
   SET_BUCKET_TYPE(state, { id, value }) {
     const stat = state.buckets[id]
@@ -155,7 +154,7 @@ const mutations = {
       this.commit(state._id + '/TOGGLE_BUCKET_COLOR_CONDITION', id)
     }
 
-    Vue.set(state.buckets, id, stat)
+    state.buckets[id] = stat
   },
   TOGGLE_BUCKET_COLOR_CONDITION(state, id) {
     const stat = state.buckets[id]
@@ -168,7 +167,7 @@ const mutations = {
       })
     }
 
-    Vue.set(state.buckets, id, stat)
+    state.buckets[id] = stat
   },
   SET_BUCKET_PRECISION(state, { id, value }) {
     const stat = state.buckets[id]
@@ -177,7 +176,7 @@ const mutations = {
 
     stat.precision = !isNaN(value) ? value : null
 
-    Vue.set(state.buckets, id, stat)
+    state.buckets[id] = stat
   },
   SET_BUCKET_WINDOW(state, { id, value }) {
     const stat = state.buckets[id]
@@ -197,18 +196,18 @@ const mutations = {
       stat.window = milliseconds
     }
 
-    Vue.set(state.buckets, id, stat)
+    state.buckets[id] = stat
   },
   CREATE_BUCKET(state, { id, name }) {
-    Vue.set(state.buckets, id, {
+    state.buckets[id] = {
       id,
       name,
       input: 'vbuy + vsell',
       enabled: false
-    })
+    }
   },
   REMOVE_BUCKET(state, id) {
-    Vue.delete(state.buckets, id)
+    delete state.buckets[id]
   },
   SET_WINDOW(state, value) {
     let milliseconds = parseInt(value) || 0

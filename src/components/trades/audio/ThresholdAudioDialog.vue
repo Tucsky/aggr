@@ -172,7 +172,7 @@ import audioService, {
   audioParametersDefinitions,
   audioParametersDescriptions
 } from '@/services/audioService'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import AudioAssistantDialog from './AudioAssistantDialog.vue'
 import panesSettings from '@/store/panesSettings'
 import workspacesService from '@/services/workspacesService'
@@ -406,27 +406,29 @@ async function emulateAudioFunction(
 }
 
 function openSoundAssistant(type: string, side: 'buy' | 'sell') {
-  const dialog = dialogService.open(AudioAssistantDialog, {
+  dialogService.open(AudioAssistantDialog, {
     type,
-    error: side === 'buy' ? buyError.value : sellError.value
-  })
+    error: side === 'buy' ? buyError.value : sellError.value,
+    onTest({ event, litteral }) {
+      testCustom(side, event, litteral)
+    },
+    onStop() {
+      restartWebAudio()
+    },
+    onAppend({ litteral, uploadedSound }) {
+      if (uploadedSound) {
+        uploadedSounds.value.push(uploadedSound)
+      }
 
-  dialog.$on('test', ({ event, litteral }) => testCustom(side, event, litteral))
-  dialog.$on('stop', restartWebAudio)
-
-  dialog.$on('append', ({ litteral, uploadedSound }) => {
-    if (uploadedSound) {
-      uploadedSounds.value.push(uploadedSound)
-    }
-
-    if ((side === 'buy' ? buyAudio.value : sellAudio.value).trim().length) {
-      side === 'buy'
-        ? (buyAudio.value += `\n${litteral}`)
-        : (sellAudio.value += `\n${litteral}`)
-    } else {
-      side === 'buy'
-        ? (buyAudio.value = litteral)
-        : (sellAudio.value = litteral)
+      if ((side === 'buy' ? buyAudio.value : sellAudio.value).trim().length) {
+        side === 'buy'
+          ? (buyAudio.value += `\n${litteral}`)
+          : (sellAudio.value += `\n${litteral}`)
+      } else {
+        side === 'buy'
+          ? (buyAudio.value = litteral)
+          : (sellAudio.value = litteral)
+      }
     }
   })
 }

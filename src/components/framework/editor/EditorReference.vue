@@ -1,5 +1,5 @@
 <template>
-  <dropdown
+  <Dropdown
     ref="dropdown"
     v-model="dropdownTrigger"
     class="editor-reference__dropdown"
@@ -27,13 +27,14 @@
       v-html="markupContent"
       class="editor-reference__content marked"
     ></div>
-  </dropdown>
+  </Dropdown>
 </template>
 <script setup lang="ts">
-import { ref, defineProps, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { marked } from 'marked'
 import { editor } from 'monaco-editor/esm/vs/editor/editor.api'
 import { getEventCords } from '@/utils/helpers'
+import Dropdown from '@/components/framework/Dropdown.vue'
 
 // Define props
 const props = defineProps({
@@ -48,10 +49,12 @@ const props = defineProps({
   content: {
     type: String,
     required: true
+  },
+  onClosed: {
+    type: Function,
+    default: null
   }
 })
-
-const emit = defineEmits(['closed'])
 
 // Reactive state
 const dropdownTrigger = ref(props.coordinates)
@@ -167,7 +170,9 @@ function onReferenceDropdownClose() {
   unbindDragMove()
   detachMonaco()
 
-  emit('closed')
+  if (typeof props.onClosed === 'function') {
+    props.onClosed()
+  }
 }
 </script>
 

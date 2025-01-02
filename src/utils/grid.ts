@@ -1,17 +1,18 @@
 import store from '@/store'
 import { GRID_COLS } from './constants'
 import { sleep } from './helpers'
+import { PaneTypeEnum } from '@/store/panes'
 
 export interface GridSpace {
-  x?: number
-  y?: number
-  w?: number
-  h?: number
+  x: number
+  y: number
+  w: number
+  h: number
 }
 
 export interface GridItem extends GridSpace {
   i: string
-  type?: string
+  type: PaneTypeEnum | 'div'
 }
 
 type GridAvailability = boolean[][]
@@ -61,7 +62,7 @@ export async function findOrCreateSpace(
 ): Promise<GridSpace> {
   const grid = initializeGrid(layout)
 
-  let space: GridSpace
+  let space: GridSpace | null
 
   if (originalItem && originalItem.w && originalItem.h) {
     space = findAvailableSpace(grid, originalItem.w, originalItem.h)

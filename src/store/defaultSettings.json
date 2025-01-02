@@ -1,7 +1,6 @@
 {
   "preferQuoteCurrencySize": true,
   "aggregationLength": 1,
-  "calculateSlippage": null,
   "wsProxyUrl": null,
   "disableAnimations": false,
   "autoHideHeaders": true,
@@ -14,6 +13,7 @@
   "timezoneOffset": 0,
   "useAudio": false,
   "audioVolume": 1,
+  "calculateSlippage": false,
   "audioFilters": {
     "PingPongDelay": true,
     "Compressor": false,

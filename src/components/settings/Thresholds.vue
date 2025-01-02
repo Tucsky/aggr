@@ -42,8 +42,8 @@
               <editable
                 placeholder="Amount*"
                 class="w-100"
-                :value="formatAmount(threshold.amount)"
-                @input="
+                :modelValue="formatAmount(threshold.amount)"
+                @update:modelValue="
                   store.commit(paneId + '/SET_THRESHOLD_AMOUNT', {
                     id: threshold.id,
                     value: $event
@@ -60,30 +60,30 @@
             </div>
           </td>
           <td class="table-action">
-            <color-picker-control
+            <ColorPickerControl
               label="Buy color"
-              :value="threshold.buyColor"
-              @input="
+              :modelValue="threshold.buyColor"
+              @update:modelValue="
                 store.commit(paneId + '/SET_THRESHOLD_COLOR', {
                   id: threshold.id,
                   side: 'buyColor',
                   value: $event
                 })
               "
-            ></color-picker-control>
+            ></ColorPickerControl>
           </td>
           <td class="table-action">
-            <color-picker-control
+            <ColorPickerControl
               label="Sell color"
-              :value="threshold.sellColor"
-              @input="
+              :modelValue="threshold.sellColor"
+              @update:modelValue="
                 store.commit(paneId + '/SET_THRESHOLD_COLOR', {
                   id: threshold.id,
                   side: 'sellColor',
                   value: $event
                 })
               "
-            ></color-picker-control>
+            ></ColorPickerControl>
           </td>
           <td
             v-if="useAudio"
@@ -142,14 +142,14 @@
         <i class="icon-plus"></i>
       </button>
     </div>
-    <dropdown v-model="thresholdPanelTrigger" interactive>
+    <Dropdown v-model="thresholdPanelTrigger" interactive>
       <threshold-dropdown
         :threshold="selectedThreshold"
         :pane-id="paneId"
         :can-delete="thresholds.length > 2"
-        @input="thresholdPanelTrigger = $event"
+        @update:modelValue="thresholdPanelTrigger = $event"
       />
-    </dropdown>
+    </Dropdown>
   </div>
 </template>
 
@@ -158,7 +158,7 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { sleep, randomString } from '@/utils/helpers'
 import { formatAmount as formatAmountService } from '@/services/productsService'
 
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import ThresholdAudioDialog from '../trades/audio/ThresholdAudioDialog.vue'
 import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
 import { Threshold } from '@/store/panesSettings/trades'

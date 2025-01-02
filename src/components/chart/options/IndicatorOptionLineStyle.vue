@@ -2,7 +2,7 @@
   <div class="indicator-option-line-style form-group">
     <label>{{ label }}<slot name="description" /></label>
     <dropdown-button
-      v-model="value"
+      v-model="modelValue"
       :options="{
         0: 'Solid',
         1: 'Dotted',
@@ -12,22 +12,21 @@
       }"
       class="-outline form-control -arrow"
       :placeholder="definition.placeholder || 'lineStyle'"
-      @input="onInput"
+      @update:modelValue="onInput"
     ></dropdown-button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps } from 'vue'
 import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 
 // Define props and emit
 defineProps(useIndicatorOptionProps)
-const emit = defineEmits(['input'])
+const emit = defineEmits(['update:modelValue'])
 
 // Emit input event
 const onInput = (value: any) => {
-  emit('input', value)
+  emit('update:modelValue', value)
 }
 </script>

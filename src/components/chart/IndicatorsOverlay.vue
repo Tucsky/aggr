@@ -1,6 +1,6 @@
 <template>
   <div class="chart-overlay__panel indicators-overlay">
-    <div class="chart-overlay__content" v-if="value">
+    <div class="chart-overlay__content" v-if="modelValue">
       <IndicatorDropdown
         v-if="indicatorId"
         v-model="dropdownTrigger"
@@ -13,7 +13,7 @@
         :indicator-id="id"
         :pane-id="paneId"
         @action="onClickIndicator"
-        @mousedown.native="bindSort(id, $event)"
+        @mousedown="bindSort(id, $event)"
       />
     </div>
     <div class="chart-overlay__head pane-overlay" @click="toggleOverlay">
@@ -29,7 +29,7 @@
 <script lang="ts" setup>
 import { ref, computed, nextTick } from 'vue'
 import store from '@/store' // Rule #11
-import dialogService from '../../services/dialogService'
+import dialogService from '../../services/oldDialogService'
 
 import IndicatorControl from '@/components/chart/IndicatorControl.vue'
 import IndicatorDropdown from '@/components/indicators/IndicatorDropdown.vue'
@@ -40,14 +40,14 @@ const props = defineProps({
     type: String,
     required: true
   },
-  value: {
+  modelValue: {
     type: Boolean,
     required: true
   }
 })
 
 // Emits
-const emit = defineEmits(['input'])
+const emit = defineEmits(['update:modelValue'])
 
 // Refs (data properties)
 const dropdownTrigger = ref<HTMLElement | null>(null)
@@ -76,7 +76,7 @@ const label = computed(() => {
 
 // Methods
 const toggleOverlay = () => {
-  emit('input', !props.value)
+  emit('update:modelValue', !props.modelValue)
 }
 
 const toggleDropdown = (event?: Event, id?: string) => {

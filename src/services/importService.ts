@@ -1,5 +1,5 @@
 import { Preset } from '@/types/types'
-import dialogService from './dialogService'
+import dialogService from './oldDialogService'
 import workspacesService from './workspacesService'
 import SettingsImportConfirmation from '../components/settings/ImportConfirmation.vue'
 import store from '@/store'

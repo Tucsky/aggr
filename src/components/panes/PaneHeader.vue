@@ -135,13 +135,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineProps, defineEmits } from 'vue'
+import { ref, computed } from 'vue'
 import store from '@/store'
 import Btn from '@/components/framework/Btn.vue'
 import Dropdown from '@/components/framework/Dropdown.vue'
 import { downloadAnything, getSiblings, slugify } from '@/utils/helpers'
-import dialogService from '@/services/dialogService'
 import { INFRAME } from '@/utils/constants'
+import { dialogService } from '@/services/dialogService'
 
 // Define props with types and defaults
 const props = withDefaults(
@@ -153,7 +153,6 @@ const props = withDefaults(
     split?: boolean
   }>(),
   {
-    settings: null,
     showSearch: true,
     showName: true,
     split: true
@@ -169,7 +168,7 @@ const emit = defineEmits<{
 const paneHeader = ref<HTMLElement | null>(null)
 
 // Reactive variables
-const paneDropdownTrigger = ref<HTMLElement | null>(null)
+const paneDropdownTrigger = ref<HTMLElement>()
 const isLoading = ref(false)
 const isInFrame = INFRAME
 
@@ -290,7 +289,7 @@ const downloadPane = () => {
 
 const toggleDropdown = (event: MouseEvent) => {
   if (paneDropdownTrigger.value) {
-    paneDropdownTrigger.value = null
+    paneDropdownTrigger.value = undefined
   } else {
     paneDropdownTrigger.value = event.currentTarget as HTMLElement
   }

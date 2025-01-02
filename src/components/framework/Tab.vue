@@ -2,8 +2,8 @@
   <button
     type="button"
     class="btn tab"
-    :class="[selected && 'tab--active']"
-    @click="onClick"
+    :class="{ 'tab--active': isSelected }"
+    @click="handleClick"
   >
     <slot />
     <transition
@@ -14,7 +14,7 @@
       @before-leave="beforeLeave"
       @leave="leave"
     >
-      <div ref="control" class="tab__control" v-if="$slots.control && selected">
+      <div v-if="slots.control && isSelected" class="tab__control">
         <slot name="control"></slot>
       </div>
     </transition>
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, defineEmits } from 'vue'
+import { computed, inject, Ref, useSlots } from 'vue'
 
 const props = defineProps({
   name: {
@@ -31,28 +31,20 @@ const props = defineProps({
   }
 })
 
-// Define emits
-const emit = defineEmits(['select'])
+const slots = useSlots()
+const selectedTab = inject('selectedTab') as Ref<string | null>
+const selectTab = inject('selectTab') as (name: string) => void
 
-// Reactive state for selection
-const selected = ref(false)
+// Determine if this tab is selected
+const isSelected = computed(() => selectedTab.value === props.name)
 
-// Methods for selection handling
-const select = () => {
-  selected.value = true
+const handleClick = () => {
+  selectTab(props.name)
 }
 
-const deselect = () => {
-  selected.value = false
-}
-
-const onClick = () => {
-  emit('select', props.name)
-}
-
-// Transition hooks for entry and exit
+// Transition hooks remain the same...
 const beforeEnter = (el: HTMLElement) => {
-  el.style.position = 'absolute' // Prevent layout shift
+  el.style.position = 'absolute'
 }
 
 const enter = (el: HTMLElement) => {
@@ -77,12 +69,8 @@ const leave = (el: HTMLElement) => {
     el.style.width = '0px'
   })
 }
-
-defineExpose({
-  select,
-  deselect
-})
 </script>
+
 <style lang="scss" scoped>
 .tab {
   display: inline-flex;
@@ -146,7 +134,7 @@ defineExpose({
         transform 0.5s $ease-out-expo 0.1s;
     }
 
-    &-enter,
+    &-enter-from,
     &-leave-to {
       opacity: 0;
       transform: translateX(100%);

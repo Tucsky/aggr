@@ -1,7 +1,7 @@
 import store from '@/store'
 import { getApiUrl, handleFetchError } from '@/utils/helpers'
 import aggregatorService from './aggregatorService'
-import dialogService from './dialogService'
+import dialogService from './oldDialogService'
 import { formatMarketPrice } from './productsService'
 import workspacesService from './workspacesService'
 

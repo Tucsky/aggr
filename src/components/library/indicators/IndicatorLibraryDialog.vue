@@ -86,7 +86,7 @@ import IndicatorDetail from '@/components/library/indicators/IndicatorDetail.vue
 import TransitionHeight from '@/components/framework/TransitionHeight.vue'
 import Tabs from '@/components/framework/Tabs.vue'
 import Tab from '@/components/framework/Tab.vue'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import importService from '@/services/importService'
 import workspacesService from '@/services/workspacesService'
 import store from '@/store'
@@ -119,7 +119,7 @@ const paneId = computed(() => {
       }
     }
   }
-  return null
+  return null;
 })
 
 // Methods
@@ -214,7 +214,7 @@ const reloadSelection = async (id?: string) => {
 
 <style lang="scss" scoped>
 .indicator-library-dialog {
-  ::v-deep {
+  :deep() {
     .dialog__content {
       width: 500px;
     }

@@ -39,7 +39,7 @@ import {
 } from '../chart/options'
 
 import StatDialog from './StatDialog.vue'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 
 import { getBucketId } from '@/utils/helpers'
 import { formatAmount } from '@/services/productsService'

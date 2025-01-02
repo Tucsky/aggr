@@ -3,7 +3,7 @@ import store from '@/store'
 
 export function usePane(
   paneId: string,
-  paneElement?: Ref<HTMLElement | null>,
+  paneElement?: Ref<HTMLElement | undefined>,
   onResize?: (width: number, height: number, isMounting?: boolean) => void
 ) {
   // Methods

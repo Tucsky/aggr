@@ -2,9 +2,9 @@
   <ColorPickerControl
     v-if="color"
     class="ml8"
-    :value="color"
+    :modelValue="color"
     label="Buy color"
-    @input="regenerateSwatch"
+    @update:modelValue="regenerateSwatch"
     @click.stop
   />
 </template>

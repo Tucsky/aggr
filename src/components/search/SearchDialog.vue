@@ -27,7 +27,7 @@
           </div>
         </div>
         <div v-else>
-          <div class="dialog__title">Manage connections</div>
+          <div class="dialog__title">Search</div>
         </div>
         <Loader
           v-if="isLoading || isPreloading"
@@ -48,9 +48,7 @@
               type="checkbox"
               class="form-control"
               :checked="searchFilters.normalize"
-              @change="
-                $store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')
-              "
+              @change="store.commit('settings/TOGGLE_SEARCH_TYPE', 'normalize')"
             />
             <div></div>
             <span>Group by pair</span>
@@ -63,9 +61,7 @@
               type="checkbox"
               class="form-control"
               :checked="searchFilters.mergeUsdt"
-              @change="
-                $store.commit('settings/TOGGLE_SEARCH_TYPE', 'mergeUsdt')
-              "
+              @change="store.commit('settings/TOGGLE_SEARCH_TYPE', 'mergeUsdt')"
             />
             <div></div>
             <span>Merge stablecoins</span>
@@ -80,7 +76,7 @@
               class="form-control"
               :checked="searchFilters.historical"
               @change="
-                $store.commit('settings/TOGGLE_SEARCH_TYPE', 'historical')
+                store.commit('settings/TOGGLE_SEARCH_TYPE', 'historical')
               "
             />
             <div></div>
@@ -91,7 +87,7 @@
               type="checkbox"
               class="form-control"
               :checked="searchFilters.recent"
-              @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'recent')"
+              @change="store.commit('settings/TOGGLE_SEARCH_TYPE', 'recent')"
             />
             <div></div>
             <span>Show history</span>
@@ -103,7 +99,7 @@
             <label
               class="checkbox-control -small mb4 -custom hide-scrollbar"
               :key="id"
-              v-if="!$store.state.exchanges[id].disabled"
+              v-if="!store.state.exchanges[id].disabled"
             >
               <input
                 type="checkbox"
@@ -145,7 +141,7 @@
               type="checkbox"
               class="form-control"
               :checked="searchFilters.spots"
-              @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'spots')"
+              @change="store.commit('settings/TOGGLE_SEARCH_TYPE', 'spots')"
             />
             <div></div>
             <span>Spots</span>
@@ -156,7 +152,7 @@
               class="form-control"
               :checked="searchFilters.perpetuals"
               @change="
-                $store.commit('settings/TOGGLE_SEARCH_TYPE', 'perpetuals')
+                store.commit('settings/TOGGLE_SEARCH_TYPE', 'perpetuals')
               "
             />
             <div></div>
@@ -167,7 +163,7 @@
               type="checkbox"
               class="form-control"
               :checked="searchFilters.futures"
-              @change="$store.commit('settings/TOGGLE_SEARCH_TYPE', 'futures')"
+              @change="store.commit('settings/TOGGLE_SEARCH_TYPE', 'futures')"
             />
             <div></div>
             <span>Futures</span>
@@ -392,11 +388,7 @@
           <i class="icon-cog"></i>
         </btn>
         <button type="button" class="btn -text" @click="hide">Cancel</button>
-        <btn
-          class="-large -green ml8"
-          @click.native="submit"
-          :loading="isLoading"
-        >
+        <btn class="-large -green ml8" @click="submit" :loading="isLoading">
           {{ submitLabel }}
         </btn>
       </template>
@@ -405,21 +397,13 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ref,
-  computed,
-  watch,
-  onMounted,
-  nextTick,
-  defineProps,
-  defineEmits
-} from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import Loader from '@/components/framework/Loader.vue'
 import Btn from '@/components/framework/Btn.vue'
 import Dialog from '@/components/framework/Dialog.vue'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
 import { getBucketId } from '@/utils/helpers'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import workspacesService from '@/services/workspacesService'
 import {
   indexedProducts,
@@ -914,7 +898,7 @@ function getNoResultsMessage() {
 
 <style lang="scss" scoped>
 .search-dialog {
-  ::v-deep .dialog__content {
+  :deep(.dialog__content) {
     .dialog__body {
       padding: 0;
       flex-direction: row;
@@ -1105,7 +1089,7 @@ function getNoResultsMessage() {
         margin: 0;
       }
 
-      ::v-deep button {
+      :deep(button) {
         text-decoration: underline;
         cursor: pointer;
       }

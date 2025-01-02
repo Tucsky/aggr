@@ -13,9 +13,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, withDefaults, defineEmits } from 'vue'
-
-// Define props with defaults
 withDefaults(
   defineProps<{
     value?: string

@@ -13,13 +13,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, defineProps, defineEmits } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { countDecimals } from '@/services/productsService'
 import { toPlainString } from '@/utils/helpers'
 
 // Define props
 const props = defineProps<{
-  value: any
+  modelValue: any
   step?: number
   min?: number
   max?: number
@@ -29,7 +29,7 @@ const props = defineProps<{
 }>()
 
 // Define emits
-const emit = defineEmits(['input', 'submit'])
+const emit = defineEmits(['update:modelValue', 'submit'])
 
 // Refs and internal state
 const editableElement = ref<HTMLElement | null>(null)
@@ -40,15 +40,15 @@ let _emitTimeout: ReturnType<typeof setTimeout> | null = null
 
 // Watch the value prop and update the element's inner text if needed
 watch(
-  () => props.value,
+  () => props.modelValue,
   () => {
     if (editableElement.value) {
       const value = editableElement.value.innerText
       if (
-        +props.value !== +value ||
-        (isNaN(+props.value) && value !== props.value)
+        +props.modelValue !== +value ||
+        (isNaN(+props.modelValue) && value !== props.modelValue)
       ) {
-        editableElement.value.innerText = props.value
+        editableElement.value.innerText = props.modelValue
       }
     }
   }
@@ -56,7 +56,7 @@ watch(
 
 // Set the initial value on mount
 onMounted(() => {
-  setValue(props.value)
+  setValue(props.modelValue)
 })
 
 function setValue(value: string | number) {
@@ -108,7 +108,7 @@ function onBlur(event: FocusEvent) {
 
   if (changed.value) {
     target.innerHTML = target.innerText
-    emit('input', target.innerText)
+    emit('update:modelValue', target.innerText)
   }
 
   const selection = window.getSelection()
@@ -121,7 +121,7 @@ function emitInput(value: string) {
   }
   _emitTimeout = setTimeout(() => {
     _emitTimeout = null
-    emit('input', value)
+    emit('update:modelValue', value)
   }, 50)
 }
 
@@ -134,8 +134,9 @@ function onKeyDown(event: KeyboardEvent) {
     event.preventDefault()
     editableElement.value?.blur()
     const target = event.target as HTMLElement
-    target.innerText = props.value || editableElement.value?.innerText || ''
-    emit('submit', props.value)
+    target.innerText =
+      props.modelValue || editableElement.value?.innerText || ''
+    emit('submit', props.modelValue)
     return
   }
 

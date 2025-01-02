@@ -1,9 +1,9 @@
 <template>
-  <dropdown :value="value" @input="$emit('input', $event)">
+  <Dropdown :modelValue="value" @update:modelValue="onInput">
     <div class="timeframe-dropdown">
       <div class="dropdown-item timeframe-dropdown__header" @click.stop>
         <timeframe-input
-          @input="onInput"
+          @update:modelValue="typeaheadTimeframe = $event"
           @submit="addTimeframe"
           placeholder="ex 1m"
           class="timeframe-dropdown__input"
@@ -43,7 +43,7 @@
           :key="timeframe.value"
           type="button"
           class="dropdown-item dropdown-item--space-between timeframe-option"
-          @click="$store.dispatch(`${paneId}/setTimeframe`, timeframe.value)"
+          @click="store.dispatch(`${paneId}/setTimeframe`, timeframe.value)"
         >
           <span>{{ timeframe.label }}</span>
 
@@ -63,10 +63,10 @@
         </button>
       </ToggableSection>
     </div>
-  </dropdown>
+  </Dropdown>
 </template>
 <script setup lang="ts">
-import { ref, computed, defineProps } from 'vue'
+import { ref, computed } from 'vue'
 import TimeframeInput from '@/components/chart/TimeframeInput.vue'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
 import { getTimeframeForHuman } from '@/utils/helpers'
@@ -76,6 +76,7 @@ import store from '@/store'
 const props = defineProps<{
   paneId: string
   value: HTMLButtonElement | null
+  onInput: (value) => void
 }>()
 
 // Reactive state
@@ -154,10 +155,6 @@ function removeTimeframe(value: any) {
 
 function toggleEdit() {
   editing.value = !editing.value
-}
-
-function onInput(event: any) {
-  typeaheadTimeframe.value = event
 }
 </script>
 

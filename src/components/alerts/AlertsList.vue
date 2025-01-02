@@ -13,7 +13,7 @@
           type="checkbox"
           class="form-control"
           :checked="alertsClick"
-          @change="$store.commit('settings/TOGGLE_ALERTS_CLICK')"
+          @change="store.commit('settings/TOGGLE_ALERTS_CLICK')"
         />
         <span>1 click</span>
         <i
@@ -113,7 +113,7 @@
       </table>
       <p v-else class="text-danger pl8">No alerts</p>
     </ToggableSection>
-    <dropdown v-model="alertDropdownTrigger">
+    <Dropdown v-model="alertDropdownTrigger">
       <template v-if="dropdownAlert && !dropdownAlert.triggered">
         <Btn
           type="button"
@@ -128,15 +128,15 @@
         </Btn>
         <div class="dropdown-divider"></div>
       </template>
-      <button
+      <Btn
         type="button"
         class="dropdown-item"
         @click="removeAlert(dropdownAlert)"
       >
         <i class="icon-cross"></i>
         <span>Remove</span>
-      </button>
-    </dropdown>
+      </Btn>
+    </Dropdown>
   </div>
 </template>
 <script setup lang="ts">
@@ -150,7 +150,7 @@ import alertService, {
   MarketAlert,
   MarketAlerts
 } from '@/services/alertService'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import aggregatorService from '@/services/aggregatorService'
 import { sleep } from '@/utils/helpers'
 import { formatMarketPrice } from '@/services/productsService'

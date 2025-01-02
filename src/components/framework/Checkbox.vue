@@ -3,7 +3,7 @@
     <input
       type="checkbox"
       class="form-control"
-      :checked="value"
+      :checked="modelValue"
       @change="onChange"
     />
     <div :class="iconClass"></div>
@@ -14,10 +14,10 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, computed } from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps({
-  value: {
+  modelValue: {
     type: Boolean,
     default: false
   },
@@ -36,12 +36,12 @@ const props = defineProps({
 })
 
 // Define emits
-const emit = defineEmits(['input'])
+const emit = defineEmits(['update:modelValue'])
 
 const iconClass = computed(() => (props.icon ? `icon-${props.icon}` : null))
 
 const onChange = (event: Event) => {
   const target = event.target as HTMLInputElement
-  emit('input', target.checked)
+  emit('update:modelValue', target.checked)
 }
 </script>

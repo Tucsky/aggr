@@ -1,14 +1,14 @@
 <template>
   <div class="indicator-option-color">
     <label>{{ label }}<slot name="description" /></label>
-    <color-picker-control
+    <ColorPickerControl
       :label="label"
       model="rgb"
       allow-null
-      :value="value"
-      @input="onInput"
+      :modelValue="modelValue"
+      @update:modelValue="onInput"
       @close="reloadIndicator"
-    ></color-picker-control>
+    ></ColorPickerControl>
   </div>
 </template>
 
@@ -20,11 +20,11 @@ import ColorPickerControl from '@/components/framework/picker/ColorPickerControl
 // Import props
 const props = defineProps(useIndicatorOptionProps)
 
-const emit = defineEmits(['input'])
+const emit = defineEmits(['update:modelValue'])
 
 // Event handler for emitting input
 const onInput = (value: any) => {
-  emit('input', value)
+  emit('update:modelValue', value)
 }
 
 // Method to reload the indicator script

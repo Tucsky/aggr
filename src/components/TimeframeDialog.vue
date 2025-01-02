@@ -8,7 +8,7 @@
         <div class="text-center">
           <timeframe-input
             :placeholder="placeholder"
-            @input="onTimeframe"
+            @update:modelValue="onTimeframe"
             @submit="submit"
             class="form-control w-100"
           />

@@ -5,11 +5,11 @@
       <editable
         tag="code"
         class="indicator-option-range__value -filled"
-        :value="stepRoundedValue"
+        :modelValue="stepRoundedValue"
         :min="min"
         :max="max"
         :step="step"
-        @input="onInput"
+        @update:modelValue="onInput"
       ></editable>
       <slot name="description" />
     </label>
@@ -20,23 +20,23 @@
       :step="step"
       :log="log"
       :label="true"
-      :value="value"
+      :modelValue="modelValue"
       :gradient="gradient"
-      @input="onInput"
+      @update:modelValue="onInput"
       @reset="onReset"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, defineEmits, defineProps } from 'vue'
+import { computed } from 'vue'
 import { useIndicatorOptionProps } from './useIndicatorOptionProps'
 import Slider from '@/components/framework/picker/Slider.vue'
 import { countDecimals } from '@/services/productsService'
 
 // Define props and emit
 const props = defineProps(useIndicatorOptionProps)
-const emit = defineEmits(['input'])
+const emit = defineEmits(['update:modelValue'])
 
 // Computed properties for range settings
 const min = computed(() =>
@@ -53,9 +53,9 @@ const decimals = computed(() => countDecimals(step.value))
 
 // Computed for the rounded step value
 const stepRoundedValue = computed(() => {
-  return typeof props.value === 'number'
-    ? +props.value.toFixed(decimals.value)
-    : props.value
+  return typeof props.modelValue === 'number'
+    ? +props.modelValue.toFixed(decimals.value)
+    : props.modelValue
 })
 
 // Computed for gradient if available
@@ -66,9 +66,9 @@ const gradient = computed(() => {
 })
 
 // Event handlers
-const onInput = (value: any) => emit('input', value ? +value : 0)
+const onInput = (value: any) => emit('update:modelValue', value ? +value : 0)
 const onReset = () =>
-  emit('input', props.definition.default ?? props.definition.value)
+  emit('update:modelValue', props.definition.default ?? props.definition.value)
 </script>
 
 <style lang="scss" scoped>

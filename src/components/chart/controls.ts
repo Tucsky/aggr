@@ -1,5 +1,5 @@
 import alertService, { MarketAlert } from '@/services/alertService'
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import { formatAmount, formatPrice } from '@/services/productsService'
 import store from '@/store'
 import { ChartPaneState } from '@/store/panesSettings/chart'
@@ -329,20 +329,21 @@ export default class ChartControl {
       const module = await import(`@/components/chart/ChartContextMenu.vue`)
       document.body.style.cursor = ''
 
-      components.contextMenu = createComponent(module.default, propsData)
+      components.contextMenu = createComponent(module.default, {
+        ...propsData,
+        onCmd(args) {
+          if (this.chart[args[0]] instanceof Function) {
+            this.chart[args[0]](...args.slice(1))
+          } else {
+            throw new Error(
+              `[chart/control] ContextMenu->chart->${args[0]} is not a function`
+            )
+          }
+        }
+      })
 
       mountComponent(components.contextMenu)
     }
-
-    components.contextMenu.$on('cmd', args => {
-      if (this.chart[args[0]] instanceof Function) {
-        this.chart[args[0]](...args.slice(1))
-      } else {
-        throw new Error(
-          `[chart/control] ContextMenu->chart->${args[0]} is not a function`
-        )
-      }
-    })
   }
 
   onClick(event: MouseEvent | TouchEvent) {
@@ -584,25 +585,26 @@ export default class ChartControl {
 
   async toggleTimeframeDropdown(event) {
     const propsData = {
-      value: event.currentTarget,
+      modelValue: event.currentTarget,
       paneId: this.chart.paneId
     }
 
     if (!components.timeframeDropdown) {
       const module = await import(`@/components/chart/TimeframeDropdown.vue`)
-      components.timeframeDropdown = createComponent(module.default, propsData)
+      components.timeframeDropdown = createComponent(module.default, {
+        ...propsData,
+        onInput(value) {
+          components.timeframeDropdown.modelValue = value
+        }
+      })
 
       mountComponent(components.timeframeDropdown)
-
-      components.timeframeDropdown.$on('input', value => {
-        components.timeframeDropdown.value = value
-      })
     } else {
       if (components.timeframeDropdown.value === event.currentTarget) {
         components.timeframeDropdown.value = null
       } else {
         components.timeframeDropdown.paneId = propsData.paneId
-        components.timeframeDropdown.value = propsData.value
+        components.timeframeDropdown.value = propsData.modelValue
       }
     }
   }

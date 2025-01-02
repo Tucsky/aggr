@@ -1,17 +1,17 @@
 <template>
-  <dropdown v-model="dropdownTrigger">
+  <Dropdown v-model="dropdownTrigger">
     <div class="d-flex btn-group" style="width: 135px">
       <button
         type="button"
         class="btn -green"
-        @click.stop="$emit('cmd', ['zoom', -1])"
+        @click.stop="dispatch('zoom', -1)"
       >
         <i class="icon-minus"></i>
       </button>
       <button
         type="button"
         class="btn -green text-monospace flex-grow-1 text-center -cases"
-        @click.stop="$emit('cmd', ['zoom', 14, true])"
+        @click.stop="dispatch('zoom', 14, true)"
       >
         <div class="text-center w-100">
           {{ currentEditorOptions.fontSize.toFixed(0) }}px
@@ -20,7 +20,7 @@
       <button
         type="button"
         class="btn -green"
-        @click.stop="$emit('cmd', ['zoom', 1])"
+        @click.stop="dispatch('zoom', 1)"
       >
         <i class="icon-plus"></i>
       </button>
@@ -50,31 +50,34 @@
         <span>Wiki</span>
       </label>
     </a>
-  </dropdown>
+  </Dropdown>
 </template>
 <script setup lang="ts">
-import { ref, watch, defineProps, defineEmits, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 
 // Define props and emits
 const props = defineProps({
-  value: {
+  modelValue: {
     type: Object,
     default: null
   },
   editorOptions: {
     type: Object,
     required: true
+  },
+  onCmd: {
+    type: Function,
+    default: null
   }
 })
-const emit = defineEmits(['cmd'])
 
 // Reactive state
-const dropdownTrigger = ref(props.value)
+const dropdownTrigger = ref(props.modelValue)
 const currentEditorOptions = ref(props.editorOptions)
 
 // Watchers
 watch(
-  () => props.value,
+  () => props.modelValue,
   newValue => {
     dropdownTrigger.value = newValue
   }
@@ -89,11 +92,17 @@ watch(
 
 // Lifecycle hook
 onMounted(() => {
-  dropdownTrigger.value = props.value
+  dropdownTrigger.value = props.modelValue
 })
 
 const toggleWordWrap = (event: Event) => {
   const target = event.target as HTMLInputElement
-  emit('cmd', ['toggleWordWrap', target.checked])
+  dispatch('toggleWordWrap', target.checked)
+}
+
+const dispatch = (...args) => {
+  if (typeof props.onCmd === 'function') {
+    props.onCmd(args)
+  }
 }
 </script>

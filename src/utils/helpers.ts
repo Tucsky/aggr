@@ -164,7 +164,7 @@ export function uniqueName(name, names, slug?: boolean, suffix = ' copy 1') {
   return slug ? slugify(name) : name
 }
 
-export function sleep(duration = 1000): Promise<void> {
+export function sleep(duration = 1): Promise<void> {
   return new Promise(resolve => {
     setTimeout(() => resolve(), duration)
   })
@@ -573,28 +573,6 @@ export function mountComponent(
 
   // Return a cleanup function for the caller
   return () => {
-    const instance = app._instance?.proxy as {
-      modelValue?: any
-      $once?: (event: string, callback: () => void) => void
-    }
-
-    // Check if `modelValue` exists on the component
-    if (instance?.modelValue !== undefined) {
-      // If `modelValue` is truthy, set it to `false` to trigger closing animation
-      if (instance.modelValue) {
-        instance.modelValue = false
-
-        // Listen for the `after-closed` event emitted by the component
-        instance.$once('after-closed', () => {
-          app.unmount() // Unmount the app instance
-          mountElement.remove() // Remove the DOM element
-        })
-
-        return // Wait for the animation to complete before unmounting
-      }
-    }
-
-    // If `modelValue` doesn't exist or is falsy, unmount immediately
     app.unmount()
     mountElement.remove()
   }

@@ -15,7 +15,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue'
 import { useDialog } from '@/composables/useDialog'
 import { usePaneDialog } from '@/composables/usePaneDialog'
 import StatsSettings from './StatsSettings.vue'

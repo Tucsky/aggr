@@ -1,4 +1,4 @@
-import dialogService from '@/services/dialogService'
+import dialogService from '@/services/oldDialogService'
 import {
   indexedProducts,
   parseMarket,

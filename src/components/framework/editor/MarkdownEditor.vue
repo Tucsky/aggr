@@ -11,22 +11,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  ref,
-  computed,
-  onMounted,
-  onBeforeUnmount,
-  watch,
-  nextTick,
-  defineProps,
-  defineExpose
-} from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { marked } from 'marked'
 import Loader from '@/components/framework/Loader.vue'
 
 // Define props
 const props = defineProps({
-  value: {
+  modelValue: {
     type: String,
     default: ''
   },
@@ -52,11 +43,11 @@ const isLoading = ref(true)
 let editorInstance = null
 
 // Computed property for preview
-const preview = computed(() => marked(props.value))
+const preview = computed(() => marked(props.modelValue))
 
 // Watchers
 watch(
-  () => props.value,
+  () => props.modelValue,
   newValue => {
     if (editorInstance && newValue !== editorInstance.getValue()) {
       editorInstance.setValue(newValue)
@@ -109,7 +100,7 @@ const getDefaultOptions = (): Monaco.Options => ({
     top: 8,
     bottom: 8
   },
-  value: props.value,
+  value: props.modelValue,
   tabSize: 2,
   insertSpaces: true,
   fontSize: 12,
