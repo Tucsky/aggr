@@ -2,15 +2,14 @@
   <transition name="indicator-detail" @after-leave="$emit('close')">
     <div v-if="opened" class="indicator-detail" @click="onBackdropClick">
       <div class="indicator-detail__wrapper hide-scrollbar">
-        <div class="indicator-detail__preview">
-          <Btn class="indicator-detail__close -text" @click="close">
-            <i class="icon-cross"></i>
-          </Btn>
-          <code class="indicator-detail__id -filled">
-            <small>#{{ indicator.id }}</small>
-          </code>
-          <img v-if="image" :src="image" />
-        </div>
+        <IndicatorPreview
+          class="indicator-detail__preview"
+          :id="indicator.id"
+          :preview="indicator.preview"
+          :path="indicator.imagePath"
+          :is-installed="isInstalled"
+          @close="close"
+        ></IndicatorPreview>
         <div class="indicator-detail__content">
           <div class="indicator-detail__head">
             <div class="indicator-detail__name">
@@ -43,10 +42,9 @@
           <div class="indicator-detail__detail">
             <p
               class="indicator-detail__description"
+              v-html="description"
               @dblclick="editDescription"
-            >
-              {{ indicator.description || 'Add description' }}
-            </p>
+            />
             <ul class="indicator-detail__metadatas">
               <li
                 v-if="indicator.pr"
@@ -125,15 +123,17 @@
   </transition>
 </template>
 
-<script>
+<script lang="ts">
 import Btn from '@/components/framework/Btn.vue'
 import importService from '@/services/importService'
 import { ago, sleep } from '@/utils/helpers'
 import dialogService from '@/services/dialogService'
 import workspacesService from '@/services/workspacesService'
 import EditResourceDialog from '@/components/library/EditResourceDialog.vue'
-import { openPublishDialog } from '@/components/library/helpers'
+import { openPublishDialog, fetchIndicator } from '@/components/library/helpers'
 import { computeThemeColorAlpha } from '@/utils/colors'
+import IndicatorPreview from './IndicatorPreview.vue'
+import { marked } from 'marked'
 
 export default {
   props: {
@@ -147,7 +147,8 @@ export default {
     }
   },
   components: {
-    Btn
+    Btn,
+    IndicatorPreview
   },
   data() {
     return {
@@ -167,17 +168,6 @@ export default {
   computed: {
     isInstalled() {
       return !!this.indicator.script
-    },
-    image() {
-      if (this.imageObjectUrl) {
-        return this.imageObjectUrl
-      }
-
-      if (this.indicator.imagePath) {
-        return `${import.meta.env.VITE_APP_LIB_URL}${this.indicator.imagePath}`
-      }
-
-      return null
     },
     createdAt() {
       if (this.indicator.createdAt) {
@@ -237,13 +227,24 @@ export default {
     },
     versions() {
       return this.indicator.versions || this.fetchedVersions || []
+    },
+    description() {
+      if (!this.indicator.description) {
+        if (this.installed) {
+          return 'Add description'
+        }
+
+        return ''
+      }
+
+      console.log('do marked')
+      return marked(this.indicator.description)
     }
   },
   watch: {
     indicator: {
       immediate: true,
       handler() {
-        this.loadPreview()
         if (this.isInstalling) {
           this.addToChart()
         }
@@ -252,12 +253,6 @@ export default {
   },
   mounted() {
     this.opened = true
-  },
-  beforeDestroy() {
-    if (this.imageObjectUrl) {
-      URL.revokeObjectURL(this.imageObjectUrl)
-      this.imageObjectUrl = null
-    }
   },
   methods: {
     close() {
@@ -285,24 +280,6 @@ export default {
         this.close()
       }
     },
-    loadPreview() {
-      this.clearPreview()
-
-      const preview = this.indicator.preview
-
-      if (
-        this.isInstalled &&
-        (preview instanceof Blob || preview instanceof File)
-      ) {
-        this.imageObjectUrl = URL.createObjectURL(preview)
-      }
-    },
-    clearPreview() {
-      if (this.imageObjectUrl) {
-        URL.revokeObjectURL(this.imageObjectUrl)
-        this.imageObjectUrl = null
-      }
-    },
     async fetchIndicatorVersions() {
       if (this.indicator.versions) {
         return
@@ -315,7 +292,9 @@ export default {
       try {
         this.fetchedVersions = await (
           await fetch(
-            `${import.meta.env.VITE_APP_LIB_URL}versions/${this.indicator.jsonPath}`
+            `${import.meta.env.VITE_APP_LIB_URL}versions/${
+              this.indicator.jsonPath
+            }`
           )
         ).json()
       } catch {
@@ -332,33 +311,11 @@ export default {
       this.isInstalling = true
 
       try {
-        let indicator
-
-        if (sha) {
-          console.log(
-            'path',
-            `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${this.indicator.jsonPath}`
-          )
-          indicator = await (
-            await fetch(
-              `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${this.indicator.jsonPath}`
-            )
-          ).json()
-        } else {
-          indicator = await (
-            await fetch(
-              `${import.meta.env.VITE_APP_LIB_URL}${this.indicator.jsonPath}`
-            )
-          ).json()
-        }
-
-        if (!indicator.data) {
-          throw new Error('invalid payload')
-        }
-
-        if (this.image) {
-          indicator.data.preview = await (await fetch(this.image)).blob()
-        }
+        const indicator = await fetchIndicator(
+          this.indicator.jsonPath,
+          this.indicator.imagePath,
+          sha
+        )
 
         await importService.importIndicator(indicator, false, true)
       } catch (error) {
@@ -403,13 +360,16 @@ export default {
         return
       }
 
-      const description = await dialogService.prompt({
-        label: 'Description',
-        action: 'Edit',
-        placeholder: this.indicator.description,
-        input: this.indicator.description,
-        tag: 'textarea'
-      })
+      const description = await dialogService.prompt(
+        {
+          label: 'Description',
+          action: 'Edit',
+          placeholder: this.indicator.description,
+          input: this.indicator.description,
+          markdown: true
+        },
+        'edit-description'
+      )
 
       if (description && description !== this.indicator.description) {
         await workspacesService.saveIndicator(
@@ -479,31 +439,8 @@ export default {
   z-index: 27;
 
   &__preview {
-    height: 100px;
-    width: 100%;
-    position: relative;
-    overflow: hidden;
     border-radius: 0.75rem 0.75rem 0 0;
-    background-color: var(--theme-background-o75);
-
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 0.75rem 0.75rem 0 0;
-    }
-  }
-
-  &__id {
-    position: absolute;
-    top: 0.5rem;
-    left: 0.5rem;
-  }
-
-  &__close {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
+    max-height: 420px;
   }
 
   &__name {
@@ -616,7 +553,6 @@ export default {
   &__description {
     margin: 0;
     flex-grow: 1;
-    white-space: pre-line;
   }
 
   &__detail {

@@ -593,6 +593,10 @@ export default class ChartControl {
       components.timeframeDropdown = createComponent(module.default, propsData)
 
       mountComponent(components.timeframeDropdown)
+
+      components.timeframeDropdown.$on('input', value => {
+        components.timeframeDropdown.value = value
+      })
     } else {
       if (components.timeframeDropdown.value === event.currentTarget) {
         components.timeframeDropdown.value = null

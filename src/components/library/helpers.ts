@@ -1,4 +1,5 @@
 import dialogService from '@/services/dialogService'
+import { ExportedIndicator } from '@/services/importService'
 import notificationService from '@/services/notificationService'
 
 export async function openPublishDialog(item) {
@@ -21,6 +22,67 @@ export async function openPublishDialog(item) {
   )
 }
 
+function cleanOptions(options = {}) {
+  const whitelist = [
+    'priceScaleId',
+    'strokeWidth',
+    'scaleMargins',
+    'priceFormat',
+    'crosshairMarkerVisible',
+    'lastValueVisible',
+    'priceLineVisible',
+    'baseLineVisible',
+    'type',
+    'minMove',
+    'precision',
+    'priceLineStyle',
+    'color',
+    'lineWidth',
+    'lineStyle',
+    'lineType',
+    'priceLineColor',
+    'borderVisible',
+    'upColor',
+    'downColor',
+    'borderUpColor',
+    'borderDownColor',
+    'wickUpColor',
+    'wickDownColor',
+    'topFillColor1',
+    'topFillColor2',
+    'topLineColor',
+    'bottomFillColor1',
+    'bottomFillColor2',
+    'bottomLineColor',
+    'lineWidth',
+    'color',
+    'topColor',
+    'bottomColor',
+    'lineColor',
+    'lineStyle',
+    'lineWidth',
+    'positiveColor',
+    'negativeColor',
+    'positiveLineColor',
+    'higherLineStyle',
+    'higherLineWidth',
+    'negativeLineColor',
+    'lowerLineStyle',
+    'lowerLineWidth',
+    'color',
+    'thinBars',
+    'upColor',
+    'downColor',
+    'openVisible'
+  ]
+
+  return Object.keys(options)
+    .filter(key => whitelist.includes(key))
+    .reduce((filteredOptions, key) => {
+      filteredOptions[key] = options[key]
+      return filteredOptions
+    }, {})
+}
 export async function uploadResource(item) {
   if (!item.preview) {
     dialogService.confirm({
@@ -47,6 +109,7 @@ export async function uploadResource(item) {
 
   const jsonData = {
     ...item,
+    options: cleanOptions(item.options),
     preview: undefined,
     author
   }
@@ -82,4 +145,41 @@ export async function uploadResource(item) {
   } catch (error) {
     throw new Error('Failed to parse server response')
   }
+}
+
+export async function fetchIndicator(
+  jsonPath: string,
+  imagePath: string,
+  sha?: string
+): Promise<ExportedIndicator> {
+  let indicator: ExportedIndicator
+  let preview: Blob
+  if (sha) {
+    indicator = await (
+      await fetch(
+        `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${jsonPath}`
+      )
+    ).json()
+
+    preview = await (
+      await fetch(
+        `${import.meta.env.VITE_APP_LIB_URL}version/${sha}/${imagePath}`
+      )
+    ).blob()
+  } else {
+    indicator = await (
+      await fetch(`${import.meta.env.VITE_APP_LIB_URL}${jsonPath}`)
+    ).json()
+    preview = await (
+      await fetch(`${import.meta.env.VITE_APP_LIB_URL}${imagePath}`)
+    ).blob()
+  }
+
+  if (!indicator.data) {
+    throw new Error('invalid payload')
+  }
+
+  indicator.data.preview = preview
+
+  return indicator
 }
