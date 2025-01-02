@@ -6,9 +6,9 @@
     @input="onSelect"
   >
     <template v-slot:option="{ value }">
-      <i :class="value.icon" class="-fill"></i>
+      <i :class="value.icon" style="width: 16px; text-align: center"></i>
 
-      <span class="ml4">{{ value.label }}</span>
+      <span>{{ value.label }}</span>
     </template>
   </dropdown-button>
 </template>
@@ -16,6 +16,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
+import { copyTextToClipboard } from '@/utils/helpers'
 
 @Component({
   components: {
@@ -32,13 +33,19 @@ export default class DonoDropdown extends Vue {
     {
       label: 'with Bitcoin',
       icon: 'icon-bitcoin',
-      click: () => window.open('bitcoin:3PK1bBK8sG3zAjPBPD7g3PL14Ndux3zWEz')
+      click: () => this.copyAddress('bc1q3f5ndx2zww3pw5c5vctw7t4wfgv05fdsc2graj', 'Bitcoin')
     },
     {
       label: 'Ethereum',
       icon: 'icon-eth',
       click: () =>
-        window.open('erc20:0x83bBC120a998cF7dFcBa1518CDDCb68Aa0D0c158')
+        this.copyAddress('0x83bBC120a998cF7dFcBa1518CDDCb68Aa0D0c158', 'Ethereum')
+    },
+    {
+      label: 'Solana',
+      icon: 'icon-sol',
+      click: () =>
+        this.copyAddress('FKMNaBJqdpNA1d33hiUEjHaovQ5AiBGACqRuKuxA9q3D', 'Solana')
     },
     {
       label: 'with other coin',
@@ -54,6 +61,16 @@ export default class DonoDropdown extends Vue {
     if (typeof option.click === 'function') {
       option.click()
     }
+  }
+
+  async copyAddress(text, name) {
+    await copyTextToClipboard(text)
+
+    this.$store.dispatch('app/showNotice', {
+      id: 'copy-address',
+      type: 'info',
+      title: `${name} address added to clipboard`
+    })
   }
 }
 </script>
