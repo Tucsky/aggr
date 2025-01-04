@@ -22,7 +22,6 @@
         "BYBIT:BTCUSDT",
         "COINBASE:BTC-USDT",
         "BITSTAMP:btcusd",
-        "KRAKEN:PI_XBTUSD",
         "OKEX:BTC-USD-SWAP",
         "OKEX:BTC-USDT-SWAP"
       ]
@@ -46,7 +45,6 @@
         "BYBIT:BTCUSDT",
         "COINBASE:BTC-USDT",
         "BITSTAMP:btcusd",
-        "KRAKEN:PI_XBTUSD",
         "OKEX:BTC-USD-SWAP",
         "OKEX:BTC-USDT-SWAP"
       ],
@@ -68,7 +66,6 @@
         "DERIBIT:BTC-PERPETUAL",
         "BYBIT:BTCUSD",
         "BYBIT:BTCUSDT",
-        "KRAKEN:PI_XBTUSD",
         "OKEX:BTC-USD-SWAP",
         "OKEX:BTC-USDT-SWAP"
       ],
