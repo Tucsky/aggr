@@ -351,11 +351,13 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     type = 'perp'
   } else if (exchangeId === 'BITUNIX' && BITUNIX_PERP_REGEX.test(symbol)) {
     type = 'perp'
+  } else if (exchangeId === 'GATEIO' && !DASH_SPOT_REGEX.test(symbol)) {
+    type = 'perp'
   }
 
   let localSymbol = symbol
 
-  if (exchangeId === 'BYBIT') {
+  if (exchangeId === 'BYBIT' || exchangeId === 'GATEIO') {
     localSymbol = localSymbol.replace(DASH_SPOT_REGEX, '')
   } else if (exchangeId === 'KRAKEN') {
     localSymbol = localSymbol.replace(KRAKEN_FUTURES_REGEX, '')

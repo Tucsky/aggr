@@ -5,51 +5,42 @@ export default class GATEIO extends Exchange {
   protected endpoints: { [id: string]: any } = {
     PRODUCTS: [
       'https://api.gateio.ws/api/v4/spot/currency_pairs',
-      'https://api.gateio.ws/api/v4/futures/usdt/contracts'
+      'https://api.gateio.ws/api/v4/futures/usdt/contracts',
+      'https://api.gateio.ws/api/v4/futures/btc/contracts'
     ]
   }
 
-  private types: { [pair: string]: string } = {}
-  private multipliers: { [pair: string]: number } = {}
+  private specs: { [pair: string]: number } = {}
 
   async getUrl(pair: string) {
-    if (this.types[pair] === 'spot') return 'wss://ws.gate.io/v3/'
-    if (this.types[pair] === 'futures')
-      return 'wss://fx-ws.gateio.ws/v4/ws/usdt'
+    if (typeof this.specs[pair] === 'number') {
+      if (/USDT$/.test(pair)) {
+        return 'wss://fx-ws.gateio.ws/v4/ws/usdt'
+      }
+      return 'wss://fx-ws.gateio.ws/v4/ws/btc'
+    }
+
+    return 'wss://api.gateio.ws/ws/v4/'
   }
 
-  formatProducts(response) {
+  formatProducts(responses) {
     const products = []
-    const multipliers = {}
-    const types = {}
+    const specs = {}
 
-    response.forEach((data: Array<any>, index: number) => {
-      const type = ['spot', 'futures'][index]
-
-      data.forEach((product: any) => {
-        let pair: string
-        switch (type) {
-          case 'spot':
-            pair = product.id + '_SPOT'
-            multipliers[pair] = parseFloat(product.min_base_amount)
-            break
-          case 'futures':
-            pair = product.name + '_FUTURES'
-            multipliers[pair] = parseFloat(product.quanto_multiplier)
-            break
+    for (const response of responses) {
+      for (const product of response) {
+        if (product.id) {
+          products.push(`${product.id}-SPOT`)
+        } else {
+          products.push(product.name)
+          specs[product.name] = product.quanto_multiplier
+            ? parseFloat(product.quanto_multiplier)
+            : 1
         }
+      }
+    }
 
-        if (products.find(a => a.toLowerCase() === pair.toLowerCase())) {
-          throw new Error(
-            'Duplicate pair detected on gateio exchange (' + pair + ')'
-          )
-        }
-
-        types[pair] = type
-        products.push(pair)
-      })
-    })
-    return { products, multipliers, types }
+    return { products, specs }
   }
 
   /**
@@ -62,29 +53,19 @@ export default class GATEIO extends Exchange {
       return
     }
 
-    if (this.types[pair] === 'spot') {
-      api.send(
-        JSON.stringify({
-          method: `trades.subscribe`,
-          params: [pair.split('_').slice(0, 2).join('_')]
-        })
-      )
-    } else if (this.types[pair] === 'futures') {
-      api.send(
-        JSON.stringify({
-          time: Date.now(),
-          channel: `${this.types[pair]}.trades`,
-          event: 'subscribe',
-          payload: [pair.split('_').slice(0, 2).join('_')]
-        })
-      )
-    }
+    api.send(
+      JSON.stringify({
+        channel: `${typeof this.specs[pair] === 'number' ? 'futures' : 'spot'}.trades`,
+        event: 'subscribe',
+        payload: [pair.replace('-SPOT', '')]
+      })
+    )
 
     return true
   }
 
   /**
-   * Sub
+   * Unsub
    * @param {WebSocket} api
    * @param {string} pair
    */
@@ -93,25 +74,48 @@ export default class GATEIO extends Exchange {
       return
     }
 
-    if (this.types[pair] === 'spot') {
-      api.send(
-        JSON.stringify({
-          method: `trades.unsubscribe`,
-          params: [pair.split('_').slice(0, 2).join('_')]
-        })
-      )
-    } else if (this.types[pair] === 'futures') {
-      api.send(
-        JSON.stringify({
-          time: Date.now(),
-          channel: `${this.types[pair]}.trades`,
-          event: 'unsubscribe',
-          payload: [pair.split('_').slice(0, 2).join('_')]
-        })
-      )
-    }
+    api.send(
+      JSON.stringify({
+        channel: `${typeof this.specs[pair] === 'number' ? 'futures' : 'spot'}.trades`,
+        event: 'unsubscribe',
+        payload: [pair.replace('-SPOT', '')]
+      })
+    )
 
     return true
+  }
+
+  formatSpotTrade(trade) {
+    return {
+      exchange: this.id,
+      pair: trade.currency_pair + '-SPOT',
+      timestamp: +trade.create_time_ms,
+      price: +trade.price,
+      size: +trade.amount,
+      side: trade.side
+    }
+  }
+
+  formatFuturesTrade(trade) {
+    return {
+      exchange: this.id,
+      pair: trade.contract,
+      timestamp: +trade.create_time_ms,
+      price: +trade.price,
+      size:
+        this.specs[trade.contract] > 0
+          ? Math.abs(trade.size) * this.specs[trade.contract]
+          : Math.abs(trade.size) / trade.price,
+      side: trade.size > 0 ? 'buy' : 'sell'
+    }
+  }
+
+  formatLiquidation(trade) {
+    return {
+      ...this.formatFuturesTrade(trade),
+      side: trade.size > 0 ? 'sell' : 'buy',
+      liquidation: true
+    }
   }
 
   onMessage(event: any, api: any) {
@@ -121,51 +125,52 @@ export default class GATEIO extends Exchange {
       return
     }
 
-    let trades = []
-
     if (
-      json.channel &&
-      json.channel.endsWith('.trades') &&
       json.event &&
       json.event === 'update' &&
-      json.result &&
-      json.result.length
+      json.result
     ) {
-      trades = json.result.map((trade: any) => {
-        const channel = json.channel.split('.')[0].toUpperCase()
-        trade = {
-          exchange: this.id,
-          pair: trade.contract + '_' + channel,
-          timestamp: +new Date(trade.create_time_ms),
-          price: +trade.price,
-          size: +(
-            Math.abs(trade.size) *
-            this.multipliers[trade.contract + '_' + channel]
-          ),
-          side: trade.size > 0 ? 'buy' : 'sell'
+      if (json.result.length && json.channel === 'futures.trades') {
+        const result = json.result.reduce((acc, trade) => {
+          if (trade.is_internal) {
+            acc.liquidations.push(this.formatLiquidation(trade))
+          } else {
+            acc.trades.push(this.formatFuturesTrade(trade))
+          }
+          return acc
+        }, {
+          trades: [],
+          liquidations: []
+        })
+
+        if (result.trades.length) {
+          return this.emitTrades(
+            api.id,
+            result.trades
+          )
         }
-        return trade
-      })
-    } else if (
-      json.method &&
-      json.method === 'trades.update' &&
-      json.params &&
-      Array.isArray(json.params)
-    ) {
-      const [contract, tradesData] = json.params
-      trades = tradesData.map((trade: any) => {
-        return {
-          exchange: this.id,
-          pair: contract + '_SPOT',
-          timestamp: +new Date(
-            parseInt((trade.time * 1000).toString().split('.')[0])
-          ),
-          price: +trade.price,
-          size: +trade.amount,
-          side: trade.type
+
+        if (result.liquidations.length) {
+          return this.emitLiquidations(
+            api.id,
+            result.liquidations
+          )
         }
-      })
+      }
+      if (json.channel === 'spot.trades') {
+        return this.emitTrades(
+          api.id,
+          [this.formatSpotTrade(json.result)]
+        )
+      }
     }
-    return this.emitTrades(api.id, trades)
+  }
+
+  onApiCreated(api) {
+    this.startKeepAlive(api, /fx-ws/.test(api.url) ? { channel: 'futures.ping' } : { channel: 'spot.ping' }, 18000)
+  }
+
+  onApiRemoved(api) {
+    this.stopKeepAlive(api)
   }
 }
