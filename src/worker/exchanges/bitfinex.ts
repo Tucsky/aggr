@@ -167,7 +167,7 @@ export default class BITFINEX extends Exchange {
     }
   }
 
-  onApiCreated(api: any): void {
+  onApiCreated(api) {
     this.channels[api._id] = {}
   }
 
