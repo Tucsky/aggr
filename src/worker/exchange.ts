@@ -692,6 +692,7 @@ class Exchange extends EventEmitter {
     api,
     payload:
       | {
+          channel?: string
           type?: string
           event?: string
           op?: string
