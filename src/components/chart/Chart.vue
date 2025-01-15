@@ -36,7 +36,7 @@
         @click="toggleTimeframeDropdown($event, $refs.timeframeButton)"
         class="-arrow -cases pane-header__highlight pane-chart__timeframe-selector"
       >
-        {{ !isKnownTimeframe ? timeframeForHuman : '' }}
+        <span>{{ !isKnownTimeframe ? timeframeForHuman : '' }}</span>
       </Btn>
       <hr />
     </pane-header>

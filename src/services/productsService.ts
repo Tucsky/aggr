@@ -624,11 +624,11 @@ export function formatAmount(amount, decimals?: number) {
 
   if (amount >= 1000000000) {
     amount =
-      +(amount / 1000000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' B'
+      +(amount / 1000000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' B'
   } else if (amount >= 1000000) {
-    amount = +(amount / 1000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' M'
+    amount = +(amount / 1000000).toFixed(isNaN(decimals) ? 1 : decimals) + ' M'
   } else if (amount >= 1000) {
-    amount = +(amount / 1000).toFixed(isNaN(decimals) ? 1 : decimals) + ' K'
+    amount = +(amount / 1000).toFixed(isNaN(decimals) ? 1 : decimals) + ' K'
   } else {
     amount = +amount.toFixed(isNaN(decimals) ? 2 : decimals)
   }

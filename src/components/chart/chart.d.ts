@@ -108,13 +108,15 @@ export interface IndicatorReference {
   indicatorId: string
   serieId?: string
   plotIndex: number
+  plotType: string
 }
 export interface Renderer {
+  minLength: number
   type: 'time' | 'tick' | 'bps' | 'vol'
   timeframe: number
   timestamp: number
   localTimestamp: number
-  lastTradeTimestamp: number
+  lastTradeTimestamp?: number
   length: number
   bar: Bar
   sources: { [name: string]: Bar }
