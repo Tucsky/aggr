@@ -74,7 +74,7 @@ export default class BYBIT extends Exchange {
     const topics = [`publicTrade.${realPair}`]
 
     if (!isSpot) {
-      topics.push(`liquidation.${realPair}`)
+      topics.push(`allLiquidation.${realPair}`)
     }
 
     api.send(
@@ -102,7 +102,7 @@ export default class BYBIT extends Exchange {
     const topics = [`publicTrade.${realPair}`]
 
     if (!isSpot) {
-      topics.push(`liquidation.${realPair}`)
+      topics.push(`allLiquidation.${realPair}`)
     }
 
     api.send(
@@ -136,19 +136,19 @@ export default class BYBIT extends Exchange {
   }
 
   formatLiquidation(liquidation) {
-    let size = +liquidation.size
+    let size = +liquidation.v
 
-    if (this.types[liquidation.symbol] === 'inverse') {
-      size /= liquidation.price
+    if (this.types[liquidation.s] === 'inverse') {
+      size /= liquidation.p
     }
 
     return {
       exchange: this.id,
-      pair: liquidation.symbol,
-      timestamp: +liquidation.updatedTime,
+      pair: liquidation.s,
+      timestamp: +liquidation.T,
       size,
-      price: +liquidation.price,
-      side: liquidation.side === 'Buy' ? 'sell' : 'buy',
+      price: +liquidation.p,
+      side: liquidation.S === 'Buy' ? 'sell' : 'buy',
       liquidation: true
     }
   }
@@ -169,9 +169,7 @@ export default class BYBIT extends Exchange {
           json.data.map(trade => this.formatTrade(trade, isSpot))
         )
       } else {
-        return this.emitLiquidations(api.id, [
-          this.formatLiquidation(json.data)
-        ])
+        return this.emitLiquidations(api.id, json.data.map(liquidation => this.formatLiquidation(liquidation)))
       }
     }
   }
