@@ -30,6 +30,7 @@
         @mousedown="handleDrag"
         @touchstart="handleDrag"
       >
+        <slot name="cover"></slot>
         <div class="dialog__header">
           <slot name="header"></slot>
           <button
@@ -183,7 +184,7 @@ export default class Dialog extends Vue {
 
   handleDrag(event) {
     if (
-      this._handleTranslateRelease || 
+      this._handleTranslateRelease ||
       event.button === 2 ||
       event.target.classList.contains('-no-grab') ||
       event.target.parentElement.classList.contains('-no-grab')
@@ -338,9 +339,15 @@ export default class Dialog extends Vue {
     }
 
     if (savePosition) {
-      this.savePosition(position)
+      if (
+        typeof position.w === 'number' &&
+        typeof position.h === 'number' &&
+        (position.w !== this.position?.w || position.h !== this.position?.h)
+      ) {
+        this.$emit('resize')
+      }
 
-      this.$emit('resize')
+      this.savePosition(position)
     }
 
     if (this._persistTimeout) {

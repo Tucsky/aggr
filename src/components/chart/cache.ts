@@ -56,7 +56,7 @@ export default class ChartCache {
       return
     }
 
-    let reduced = false
+    let trimmed = false
 
     while (this.chunks[0] && this.chunks[0].to < end) {
       console.debug(
@@ -64,11 +64,11 @@ export default class ChartCache {
       )
       this.chunks.splice(0, 1)
 
-      reduced = true
+      trimmed = true
     }
 
     this.cacheRange.from = this.chunks[0].from
 
-    return reduced
+    return trimmed
   }
 }

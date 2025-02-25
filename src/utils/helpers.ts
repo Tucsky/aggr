@@ -612,7 +612,9 @@ export function displayCanvasInPopup(canvas) {
     const dataURL = canvas.toDataURL()
 
     // Create an image element in the popup window
-    const img = popupWindow.document.createElement('img')
+    const img =
+      popupWindow.document.body.children[0] ||
+      popupWindow.document.createElement('img')
 
     // Set the src attribute of the image to the canvas data URL
     img.src = dataURL

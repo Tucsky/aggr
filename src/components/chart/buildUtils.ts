@@ -831,7 +831,8 @@ function parseReferences(
           references.push({
             indicatorId,
             serieId,
-            plotIndex
+            plotIndex,
+            plotType: 'unknown'
           })
         }
 
@@ -1143,7 +1144,7 @@ export function getRendererIndicatorData(indicator: LoadedIndicator) {
 
     indicator.options.minLength = Math.max(
       indicator.options.minLength,
-      instruction.length
+      instruction.length * 2
     )
   }
 

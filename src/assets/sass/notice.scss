@@ -88,6 +88,11 @@
     color: black;
   }
 
+  &.-info .notice__wrapper {
+    background-color: $blue;
+    color: white;
+  }
+
   &.-success .notice__wrapper {
     background-color: var(--theme-buy-base);
     color: var(--theme-buy-color);

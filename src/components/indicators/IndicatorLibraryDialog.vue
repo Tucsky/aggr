@@ -15,10 +15,7 @@
     <template #subheader>
       <tabs v-model="tab">
         <tab name="installed"> Installed </tab>
-        <tab v-if="communityTabEnabled" name="community">
-          Community
-          <span class="badge -red ml8">new</span>
-        </tab>
+        <tab v-if="communityTabEnabled" name="community"> Community </tab>
       </tabs>
     </template>
 
