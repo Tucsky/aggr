@@ -2,7 +2,7 @@
   <div class="markdown-editor form-control">
     <Loader v-if="isLoading" class="markdown-editor__loader" small />
     <template v-if="isLoaded">
-      <div ref="editor" class="markdown-editor__monaco"></div>
+      <div ref="editor" class="markdown-editor__monaco" style=""></div>
       <template v-if="showPreview">
         <div class="markdown-editor__divider">
           <span class="markdown-editor__divider-badge badge ml4">
@@ -125,16 +125,19 @@ export default class MarkdownEditor extends Vue {
       glyphMargin: false,
       folding: false,
       lineNumbersMinChars: 3,
-      scrollbar: {
-        vertical: 'visible'
-      },
       renderLineHighlight: 'none',
       renderIndentGuides: false,
       renderLineHighlightOnlyWhenFocus: true,
       renderValidationDecorations: 'off',
       renderWhitespace: 'none',
       rulers: [],
-      language: 'markdown'
+      language: 'markdown',
+      scrollBeyondLastLine: false,
+      automaticLayout: false,
+      scrollbar: {
+        vertical: 'hidden',
+        horizontal: 'auto'
+      }
     }
   }
 
@@ -145,6 +148,18 @@ export default class MarkdownEditor extends Vue {
       this.getDefaultOptions()
     )
 
+    const containerEl = this.$refs.editor as HTMLElement
+
+    let previousHeight = 0
+
+    this.editorInstance.onDidContentSizeChange(() => {
+      const contentHeight = this.editorInstance.getContentHeight()
+      if (contentHeight !== previousHeight) {
+        previousHeight = contentHeight
+        containerEl.style.height = `${contentHeight}px`
+        this.editorInstance.layout()
+      }
+    })
     this.editorInstance.onDidChangeModelContent(() => {
       console.log('monaco change')
       this.$emit('input', this.editorInstance.getValue())
@@ -178,6 +193,7 @@ export default class MarkdownEditor extends Vue {
 
   &__monaco {
     flex-grow: 1;
+    max-height: 50vh;
   }
 
   &__loader {

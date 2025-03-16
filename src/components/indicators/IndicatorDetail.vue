@@ -40,11 +40,29 @@
             </small>
           </div>
           <div class="indicator-detail__detail">
-            <p
-              class="indicator-detail__description"
-              v-html="description"
-              @dblclick="editDescription"
-            />
+            <div class="indicator-detail__inner">
+              <p
+                class="indicator-detail__description"
+                v-html="description"
+                @dblclick="editDescription"
+              />
+
+              <div class="indicator-detail__options">
+                <template v-for="(value, key) in options">
+                  <div
+                    v-if="
+                      value && key !== 'priceScaleId' && key !== 'scaleMargins'
+                    "
+                    v-tippy
+                    :title="key"
+                    :key="`${key}`"
+                    class="badge -outline indicator-detail__option"
+                  >
+                    {{ value.toString().replace(' ', '') }}
+                  </div>
+                </template>
+              </div>
+            </div>
             <ul class="indicator-detail__metadatas">
               <li
                 v-if="indicator.pr"
@@ -224,6 +242,21 @@ export default {
       return !!Object.values(this.$store.state[this.paneId].indicators).find(
         indicator => indicator.libraryId === this.indicator.id
       )
+    },
+    options() {
+      if (!this.indicator.options) {
+        return {}
+      }
+
+      return Object.keys(this.indicator.options).reduce((acc, key) => {
+        const value = this.indicator.options[key]
+        if (!value || typeof value === 'object') {
+          return acc
+        }
+
+        acc[key] = value
+        return acc
+      }, {})
     },
     versions() {
       return this.indicator.versions || this.fetchedVersions || []
@@ -550,9 +583,25 @@ export default {
     }
   }
 
+  &__inner {
+    flex-grow: 1;
+  }
+
   &__description {
     margin: 0;
-    flex-grow: 1;
+  }
+
+  &__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__option {
+    padding-block: 0.25rem;
+    letter-spacing: 1px;
+    font-size: 10px;
+    font-family: $font-monospace;
   }
 
   &__detail {

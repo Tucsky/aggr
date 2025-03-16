@@ -2386,7 +2386,21 @@ export default class Chart {
       })
     }
 
-    displayCanvasInPopup(canvas)
+    canvas.toBlob(blob => {
+      if (!blob || !window.ClipboardItem) {
+        displayCanvasInPopup(canvas)
+        return
+      }
+
+      const item = new ClipboardItem({ 'image/png': blob })
+      navigator.clipboard
+        .write([item])
+        .then(
+          () => console.log('Screenshot copied to clipboard'),
+          err => console.error('Failed to copy image to clipboard:', err)
+        )
+        .finally(() => displayCanvasInPopup(canvas))
+    })
   }
 
   restart() {
