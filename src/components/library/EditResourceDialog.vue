@@ -256,6 +256,9 @@ export default {
 </script>
 <style lang="scss" scoped>
 .edit-resource-dialog {
+  ::v-deep .dialog__content {
+    width: 420px;
+  }
   &__preview {
     position: relative;
     border-radius: 0.375rem;

@@ -119,7 +119,7 @@
             :pane-id="paneId"
             :indicator-id="indicatorId"
             :plot-types="plotTypes"
-            ensure
+            :ensure="ensureOptionValue"
             @change="setIndicatorOption"
           />
         </div>
@@ -249,7 +249,7 @@
               :pane-id="paneId"
               :indicator-id="indicatorId"
               :plot-types="plotTypes"
-              ensure
+              :ensure="ensureOptionValue"
               @change="setIndicatorOption"
             />
           </div>
@@ -402,7 +402,8 @@ export default {
         lineWidth: `Only for line and area series`,
         lineStyle: `Only for line and area series`,
         lineType: `Only for line and area series`
-      }
+      },
+      ensureOptionValue: true
     }
   },
   computed: {
@@ -900,7 +901,10 @@ export default {
     },
     async revertChanges(op: 'reset' | 'revert') {
       if (op === 'reset') {
-        this.indicator.options = {}
+        this.ensureOptionValue = false
+        this.indicator.options = {
+          priceScaleId: this.indicator.options.priceScaleId
+        }
         this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', {
           id: this.indicatorId
         })

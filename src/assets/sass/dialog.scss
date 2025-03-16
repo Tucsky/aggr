@@ -112,6 +112,7 @@
   }
 
   &__header {
+    user-select: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -126,6 +127,7 @@
 
     &-wrapper {
       position: relative;
+      user-select: none;
     }
 
     #{$self}--contrasted & {
