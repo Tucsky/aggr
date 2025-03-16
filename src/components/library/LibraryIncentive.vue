@@ -81,6 +81,9 @@ export default {
 
     #app.-light & {
       background-blend-mode: darken;
+      mix-blend-mode: color-burn;
+      backdrop-filter: brightness(0.9) contrast(0.98) sepia(0.5);
+      border-radius: 0.5rem;
     }
   }
 
