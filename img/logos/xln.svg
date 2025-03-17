@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 27.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="xln" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 500 500" style="enable-background:new 0 0 500 500;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:url(#SVGID_1_);}
+	.st1{fill:url(#SVGID_00000023249654511949258520000008279525841441875333_);}
+</style>
+<path d="M498,96.5h-83.7c-8.6,0-16.6,4.3-21.5,11.4L344.8,179c-3.6,5.3-9.6,8.5-16.1,8.5H172c-6.5,0-12.5-3.2-16.1-8.5l-48.1-71.2
+	C103,100.8,95,96.5,86.4,96.5H2.6L48,163.7l0,0l43,63.7c1.2,1.8,2.6,3.4,4.2,4.8c4.8,4.3,10.9,6.6,17.3,6.6h275.6
+	c6.4,0,12.6-2.4,17.3-6.6c1.6-1.4,3-3,4.2-4.8l43-63.7l0,0L498,96.5z"/>
+<path d="M498,407.1h-83.7c-8.6,0-16.6-4.3-21.5-11.4l-48.1-71.1c-3.6-5.4-9.6-8.6-16.1-8.7H172c-6.5,0-12.5,3.3-16.1,8.7l-48.1,71.2
+	c-4.8,7.1-12.8,11.3-21.4,11.3H2.6L48,339.9l0,0l43-63.7c1.2-1.8,2.6-3.4,4.2-4.8c4.8-4.3,10.9-6.6,17.3-6.6h275.6
+	c6.4,0,12.6,2.4,17.3,6.6c1.6,1.4,3,3,4.2,4.8l43,63.7l0,0L498,407.1z"/>
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="164.9169" y1="457.4862" x2="335.7959" y2="457.4862" gradientTransform="matrix(1 0 0 1 0 -299.06)">
+	<stop  offset="0" style="stop-color:#DB30F6"/>
+	<stop  offset="0.8" style="stop-color:#04DEFF"/>
+	<stop  offset="0.99" style="stop-color:#04FFFF"/>
+</linearGradient>
+<path class="st0" d="M164.9,147.9l10.3,15.3c2.4,3.6,6.5,5.7,10.8,5.7h128.7c4.3,0,8.3-2.1,10.7-5.7l10.3-15.3L164.9,147.9z"/>
+<linearGradient id="SVGID_00000098210228637375944630000001921055059758748834_" gradientUnits="userSpaceOnUse" x1="164.9169" y1="-8323.7578" x2="335.7959" y2="-8323.7578" gradientTransform="matrix(1 0 0 -1 0 -7978.5698)">
+	<stop  offset="0" style="stop-color:#DB30F6"/>
+	<stop  offset="0.8" style="stop-color:#04DEFF"/>
+	<stop  offset="0.99" style="stop-color:#04FFFF"/>
+</linearGradient>
+<path style="fill:url(#SVGID_00000098210228637375944630000001921055059758748834_);" d="M164.9,355.6l10.3-15.3
+	c2.4-3.5,6.5-5.7,10.8-5.6h128.7c4.3,0,8.3,2.1,10.7,5.7l10.3,15.3L164.9,355.6z"/>
+</svg>
