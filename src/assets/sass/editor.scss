@@ -1,0 +1,30 @@
+.editor {
+  height: 100%;
+  min-height: 50px;
+
+  .monaco-editor {
+    #app.-light & {
+      --vscode-editor-background: var(--theme-background-100);
+      --vscode-editorStickyScroll-background: var(--theme-background-100);
+      --vscode-editorStickyScrollHover-background: var(--theme-background-100);
+      --vscode-editorGutter-background: var(--theme-background-100);
+    }
+
+    .minimap-shadow-visible {
+      box-shadow: rgb(0 0 0 / 10%) -6px 0 6px -6px inset;
+    }
+
+    .scroll-decoration {
+      box-shadow: rgb(0 0 0 / 10%) 0 6px 6px -6px inset;
+    }
+
+    .view-overlays .current-line {
+      border-color: var(--theme-background-100);
+    }
+
+    .minimap {
+      left: auto !important;
+      right: 0 !important;
+    }
+  }
+}

@@ -5,12 +5,13 @@
         v-if="dialogOpened"
         class="edit-resource-dialog"
         @clickOutside="hide"
+        @resize="resizeEditor"
       >
         <template v-slot:header>
           <div class="d-flex">
             <div class="dialog__title">Edit {{ item.name }}</div>
 
-            <small>
+            <small class="-center">
               <code
                 class="-filled -center ml4"
                 :title="`ID: ${item.id}`"
@@ -32,7 +33,7 @@
               required
             />
           </div>
-          <div class="form-group">
+          <div v-if="item.name !== name" class="form-group">
             <label for="label">&nbsp;</label>
             <label class="checkbox-control">
               <input type="checkbox" class="form-control" v-model="updateId" />
@@ -50,9 +51,22 @@
           <code class="-filled">{{ item.id }}</code> →
           <code class="-filled">{{ newId }}</code>
         </p>
-        <div class="form-group mb16">
-          <label for="label">Description</label>
-          <textarea class="form-control w-100" v-model="description"></textarea>
+        <div class="form-group mb16 flex-grow-1 d-flex -column">
+          <label for="label">
+            Description
+            <span
+              class="icon-info"
+              title='Markdown supported <span class="badge -red ml4">new</span>'
+              v-tippy
+            ></span>
+          </label>
+          <MarkdownEditor
+            class="w-100 flex-grow-1"
+            ref="editor"
+            style="height: auto"
+            v-model="description"
+            minimal
+          />
         </div>
         <div class="d-flex -gap16">
           <div class="form-group">
@@ -97,7 +111,9 @@ import { slugify, uniqueName } from '@/utils/helpers'
 export default {
   name: 'EditResourceDialog',
   components: {
-    Btn
+    Btn,
+    MarkdownEditor: () =>
+      import('@/components/framework/editor/MarkdownEditor.vue')
   },
   props: {
     item: {
@@ -229,12 +245,20 @@ export default {
 
       this.clearPreview()
       this.hasDeletedPreview = true
+    },
+    resizeEditor() {
+      if (this.$refs.editor) {
+        this.$refs.editor.resize()
+      }
     }
   }
 }
 </script>
 <style lang="scss" scoped>
 .edit-resource-dialog {
+  ::v-deep .dialog__content {
+    width: 420px;
+  }
   &__preview {
     position: relative;
     border-radius: 0.375rem;

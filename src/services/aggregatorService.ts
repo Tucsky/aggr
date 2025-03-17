@@ -33,6 +33,7 @@ class AggregatorService extends EventEmitter {
     })
 
     this.listenUtilityEvents()
+    this.listenVisibilityChange()
   }
 
   listenUtilityEvents() {
@@ -262,6 +263,14 @@ class AggregatorService extends EventEmitter {
     this.emit('decimals', this.normalizeDecimalsQueue.markets)
 
     this.normalizeDecimalsQueue = null
+  }
+
+  listenVisibilityChange() {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        this.worker.postMessage({ op: 'clearReconnectionTimeout' })
+      }
+    })
   }
 }
 

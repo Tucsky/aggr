@@ -60,8 +60,6 @@ export default class Editor extends Vue {
       }
     }
 
-    this.createTheme()
-
     this.createEditor()
   }
 
@@ -109,45 +107,6 @@ export default class Editor extends Vue {
     window.addEventListener('beforeunload', this._beforeUnloadHandler)
   }
 
-  createTheme() {
-    const lsLight = this.$store.state.settings.theme === 'light'
-    const style = getComputedStyle(document.documentElement)
-    const backgroundColor = splitColorCode(
-      style.getPropertyValue('--theme-background-base')
-    )
-    const backgroundColor100 = splitColorCode(
-      style.getPropertyValue('--theme-background-100')
-    )
-    const backgroundColor150 = splitColorCode(
-      style.getPropertyValue('--theme-background-150')
-    )
-
-    if (lsLight) {
-      monaco.defineTheme('my-light', {
-        base: 'vs',
-        inherit: true,
-        rules: [],
-        colors: {
-          'minimap.background': rgbToHex(backgroundColor150),
-          'editor.background': rgbToHex(backgroundColor100),
-          'editor.lineHighlightBackground': rgbToHex(backgroundColor),
-          'editor.lineHighlightBorder': rgbToHex(backgroundColor)
-        }
-      })
-    } else {
-      monaco.defineTheme('my-dark', {
-        base: 'vs-dark',
-        inherit: true,
-        rules: [],
-        colors: {
-          'editor.background': rgbToHex(backgroundColor100),
-          'editor.lineHighlightBackground': rgbToHex(backgroundColor),
-          'editor.lineHighlightBorder': rgbToHex(backgroundColor)
-        }
-      })
-    }
-  }
-
   async createEditor() {
     this.editorInstance = monaco.create(this.$el as HTMLElement, {
       value: this.value,
@@ -162,8 +121,7 @@ export default class Editor extends Vue {
       overviewRulerLanes: 0,
       overviewRulerBorder: false,
       contextmenu: false,
-      theme:
-        this.$store.state.settings.theme === 'light' ? 'my-light' : 'my-dark'
+      theme: 'aggr'
     })
 
     this.editorInstance.getDomNode().addEventListener('mousedown', () => {
@@ -235,8 +193,12 @@ export default class Editor extends Vue {
     })
   }
 
-  zoom(value) {
-    this.currentEditorOptions.fontSize += value
+  zoom(value, override?: boolean) {
+    if (override) {
+      this.currentEditorOptions.fontSize = value
+    } else {
+      this.currentEditorOptions.fontSize += value
+    }
     this.$emit('options', this.currentEditorOptions)
   }
 

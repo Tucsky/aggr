@@ -760,11 +760,11 @@ class Aggregator {
 
   startAggrInterval() {
     if (this['_aggrInterval']) {
-      return
+      this.clearInterval('aggr')
     }
     this['_aggrInterval'] = self.setInterval(
       this.emitPendingTrades.bind(this),
-      50
+      Math.max(settings.aggregationLength, 50)
     )
   }
 
@@ -877,6 +877,19 @@ class Aggregator {
       trackingId: trackingId,
       data: this.tickers
     })
+  }
+
+  clearReconnectionTimeout() {
+    for (const exchange of exchanges) {
+      if (exchange.reconnectAllClosedApis()) {
+        this.ctx.postMessage({
+          op: 'notice',
+          data: {
+            title: `Reconnecting ${exchange.id}`
+          }
+        })
+      }
+    }
   }
 }
 

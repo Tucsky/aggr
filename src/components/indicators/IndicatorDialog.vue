@@ -8,12 +8,17 @@
     size="wide"
     :mask="false"
     :close-on-escape="false"
+    :cover="savedPreview"
     @clickOutside="close"
     @resize="onResize"
     contrasted
   >
+    <template #cover>
+      <BlobImage :value="savedPreview" class="indicator-dialog__preview" />
+    </template>
+
     <template #header>
-      <div class="dialog__title indicator-dialog__title -center">
+      <div class="dialog__title indicator-dialog__title -center mrauto">
         <div @dblclick="renameIndicator">{{ name }}</div>
         <code
           class="indicator-dialog__id -filled"
@@ -24,15 +29,6 @@
           <small>{{ displayId }}</small>
         </code>
       </div>
-
-      <a
-        href="https://github.com/Tucsky/aggr/wiki/introduction-to-scripting"
-        target="_blank"
-        title="Scripting documentation"
-        v-tippy
-        class="btn -text -white mlauto -center -no-grab indicator-dialog__action"
-        ><i class="icon-info"></i><span class="ml8">Wiki</span></a
-      >
 
       <button
         v-if="unsavedChanges"
@@ -59,6 +55,34 @@
         <tab name="script">Script</tab>
         <tab name="options">Options</tab>
       </tabs>
+
+      <IndicatorDropdown
+        v-model="dropdownIndicatorTrigger"
+        :indicator-id="indicatorId"
+        :pane-id="paneId"
+      >
+        <DropdownButton
+          @click.native.stop
+          button-class="dropdown-item"
+          :options="{
+            revert: 'Revert changes',
+            reset: 'Reset to default'
+          }"
+          class="-cases"
+          @input="revertChanges"
+        >
+          <template #selection>
+            <i class="icon-eraser"></i> <span>Reset</span>
+          </template>
+        </DropdownButton>
+      </IndicatorDropdown>
+
+      <button
+        class="btn -text -arrow indicator-dialog__settings"
+        @click="toggleIndicatorDropdown"
+      >
+        Settings
+      </button>
     </template>
     <div
       v-if="loadedEditor"
@@ -95,7 +119,7 @@
             :pane-id="paneId"
             :indicator-id="indicatorId"
             :plot-types="plotTypes"
-            ensure
+            :ensure="ensureOptionValue"
             @change="setIndicatorOption"
           />
         </div>
@@ -225,7 +249,7 @@
               :pane-id="paneId"
               :indicator-id="indicatorId"
               :plot-types="plotTypes"
-              ensure
+              :ensure="ensureOptionValue"
               @change="setIndicatorOption"
             />
           </div>
@@ -300,38 +324,6 @@
         :show-reset="false"
         @apply="applyIndicatorPreset($event)"
       />
-      <button class="btn -text -arrow" @click="toggleIndicatorDropdown">
-        Options
-      </button>
-      <dropdown v-model="dropdownIndicatorTrigger">
-        <button type="button" class="dropdown-item" @click="resizeIndicator">
-          <i class="icon-resize-height"></i> <span>Resize</span>
-        </button>
-        <button type="button" class="dropdown-item" @click="downloadIndicator">
-          <i class="icon-download"></i> <span>Download</span>
-        </button>
-        <button type="button" class="dropdown-item" @click="duplicateIndicator">
-          <i class="icon-copy-paste"></i> <span>Duplicate</span>
-        </button>
-        <div class="dropdown-divider"></div>
-        <dropdown-button
-          @click.native.stop
-          button-class="dropdown-item"
-          :options="{
-            revert: 'Revert changes',
-            reset: 'Reset to default'
-          }"
-          class="-cases"
-          @input="revertChanges"
-        >
-          <template #selection>
-            <i class="icon-eraser"></i> <span>Reset</span>
-          </template>
-        </dropdown-button>
-        <button type="button" class="dropdown-item" @click="removeIndicator">
-          <i class="icon-cross"></i> <span>Unload</span>
-        </button>
-      </dropdown>
     </template>
   </Dialog>
 </template>
@@ -342,6 +334,7 @@
 import DialogMixin from '../../mixins/dialogMixin'
 import Tabs from '@/components/framework/Tabs.vue'
 import Tab from '@/components/framework/Tab.vue'
+import IndicatorDropdown from '@/components/indicators/IndicatorDropdown.vue'
 
 import {
   defaultPlotsOptions,
@@ -368,13 +361,18 @@ import ToggableSection from '@/components/framework/ToggableSection.vue'
 import IndicatorOption from '@/components/chart/IndicatorOption.vue'
 import DropdownButton from '@/components/framework/DropdownButton.vue'
 import { Preset } from '@/types/types'
+import workspacesService from '@/services/workspacesService'
+import BlobImage from '../framework/BlobImage.vue'
+
 export default {
   components: {
-    IndicatorOption,
     Tabs,
     Tab,
+    IndicatorOption,
     DropdownButton,
     ToggableSection,
+    BlobImage,
+    IndicatorDropdown,
     Editor: () => import('@/components/framework/editor/Editor.vue')
   },
   props: ['paneId', 'indicatorId'],
@@ -390,6 +388,7 @@ export default {
       },
       resizingColumn: false,
       loadedEditor: false,
+      savedPreview: null,
       plotTypes: [],
       defaultOptionsKeys: [],
       scriptOptionsKeys: [],
@@ -403,7 +402,8 @@ export default {
         lineWidth: `Only for line and area series`,
         lineStyle: `Only for line and area series`,
         lineType: `Only for line and area series`
-      }
+      },
+      ensureOptionValue: true
     }
   },
   computed: {
@@ -509,6 +509,7 @@ export default {
   },
   created() {
     this.restoreNavigation()
+    this.getSavedPreview()
 
     this.$nextTick(() => {
       this.getPlotTypes()
@@ -521,6 +522,10 @@ export default {
     this.saveNavigation()
   },
   methods: {
+    async getSavedPreview() {
+      const indicator = await workspacesService.getIndicator(this.libraryId)
+      this.savedPreview = indicator?.preview
+    },
     toggleCollapseColum() {
       if (this.navigation.columnWidth > 50) {
         this.navigation.columnWidth = 0
@@ -649,18 +654,6 @@ export default {
             self.indexOf(t) === index && defaultPlotsOptions[t]
         )
     },
-    async removeIndicator() {
-      await this.close()
-
-      this.$store.dispatch(this.paneId + '/removeIndicator', {
-        id: this.indicatorId
-      })
-    },
-    async resizeIndicator() {
-      await this.close()
-
-      this.$store.commit(this.paneId + '/TOGGLE_LAYOUTING', this.indicatorId)
-    },
     async renameIndicator() {
       const name = await dialogService.prompt({
         action: 'Rename',
@@ -674,21 +667,14 @@ export default {
         })
       }
     },
-    async downloadIndicator() {
-      this.$store.dispatch(this.paneId + '/downloadIndicator', this.indicatorId)
-    },
-    async duplicateIndicator() {
-      this.$store.dispatch(
-        this.paneId + '/duplicateIndicator',
+    async saveIndicator() {
+      await this.$store.dispatch(
+        this.paneId + '/saveIndicator',
         this.indicatorId
       )
-
-      await this.close()
-
-      dialogService.openIndicator(this.paneId, this.indicatorId)
-    },
-    async saveIndicator() {
-      this.$store.dispatch(this.paneId + '/saveIndicator', this.indicatorId)
+      setTimeout(() => {
+        this.getSavedPreview()
+      }, 500)
     },
     async undoIndicator() {
       if (!(await dialogService.confirm('Undo changes ?'))) {
@@ -915,7 +901,10 @@ export default {
     },
     async revertChanges(op: 'reset' | 'revert') {
       if (op === 'reset') {
-        this.indicator.options = {}
+        this.ensureOptionValue = false
+        this.indicator.options = {
+          priceScaleId: this.indicator.options.priceScaleId
+        }
         this.$store.commit(this.paneId + '/SET_INDICATOR_SCRIPT', {
           id: this.indicatorId
         })
@@ -959,6 +948,29 @@ export default {
     .indicator-editor {
       overflow: hidden;
     }
+  }
+
+  &__settings {
+    position: absolute;
+    right: 0.25rem;
+    top: 0.25rem;
+    bottom: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  &__preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 1rem 1rem 0 0;
+    filter: blur(0.25rem);
+    object-fit: cover;
   }
 
   ::v-deep .dialog__content {

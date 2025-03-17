@@ -112,6 +112,7 @@
   }
 
   &__header {
+    user-select: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -124,9 +125,13 @@
     border-radius: 0.75rem 0.75rem 0 0;
     cursor: grab;
 
+    &-wrapper {
+      position: relative;
+      user-select: none;
+    }
+
     #{$self}--contrasted & {
       border-bottom: 0 !important;
-      padding-bottom: 0;
       background-color: var(--theme-base-o25);
     }
 
@@ -153,10 +158,11 @@
   }
 
   &__subheader {
+    position: relative;
+    z-index: 1;
 
     #{$self}--contrasted & {
       background-color: var(--theme-base-o25);
-      padding-top: 0.5rem;
     }
   }
 
@@ -239,13 +245,7 @@
 
   .dialog__close {
     text-align: center;
-    padding: 0.75rem;
-    margin: -0.75rem -0.75rem -0.75rem 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    align-self: stretch;
-    border-radius: 0 $border-radius-base 0 0;
+    margin: 0 -0.5rem 0 0.5rem;
     color: var(--theme-color-100);
 
     &:hover {

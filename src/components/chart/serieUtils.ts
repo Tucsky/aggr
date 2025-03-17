@@ -773,7 +773,7 @@ export default {
         const last = state.points[state.points.length - 1]
         state.output = k * value + (1 - k) * last
       } else {
-        state.output = 1
+        state.output = value
       }
 
       return state.output

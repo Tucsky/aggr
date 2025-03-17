@@ -7,13 +7,13 @@
     class="btn"
     @click="onClick"
   >
-    <loader v-if="loading" class="btn__loader" small />
+    <loader v-if="isLoading" class="btn__loader" small />
     <slot />
   </component>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Watch } from 'vue-property-decorator'
 import Loader from '@/components/framework/Loader.vue'
 
 @Component({
@@ -50,10 +50,15 @@ import Loader from '@/components/framework/Loader.vue'
   }
 })
 export default class Btn extends Vue {
-  loading: boolean
+  isLoading = false
+
+  @Watch('loading')
+  onLoadingChange(value) {
+    this.isLoading = value
+  }
 
   onClick(event) {
-    if (!this.loading) {
+    if (!this.isLoading) {
       this.$emit('click', event)
     }
   }
@@ -63,7 +68,6 @@ export default class Btn extends Vue {
 <style lang="scss" scoped>
 .btn {
   &__loader {
-    margin-right: 0.25rem;
     width: 0.5em;
     height: 0.5em;
 

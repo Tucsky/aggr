@@ -190,6 +190,7 @@ function parse(
     )
   }
 
+  // remove all spaces between comma and names
   output = parseFunctions(
     output,
     functions,
@@ -658,7 +659,7 @@ function parseFunctions(
   return output
 }
 
-function parseOptions(output, options) {
+function parseOptions(output, options: { [key: string]: IndicatorOption }) {
   const OPTION_FUNCTION_REGEX = new RegExp(
     `[\\s\\n]*(\\w[\\d\\w]+)[\\s\\n]*=[\\s\\n]*option\\(`,
     'g'
@@ -688,11 +689,6 @@ function parseOptions(output, options) {
         ''
       )
 
-      output = output.replace(
-        new RegExp('([^.]|^)\\b(' + functionMatch[1] + ')\\b(?!:|=)', 'ig'),
-        `$1options.${functionMatch[1]}`
-      )
-
       if (!optionOptions.type) {
         optionOptions.type = 'number'
       } else if (optionOptions.type === 'exchange') {
@@ -715,6 +711,13 @@ function parseOptions(output, options) {
       OPTION_FUNCTION_REGEX.lastIndex -= functionMatch[0].length
     }
   } while (functionMatch && ++iterations < 1000)
+
+  for (const key in options) {
+    output = output.replace(
+      new RegExp('([^.]|^)\\b(' + key + ')\\b(?!:|=)', 'ig'),
+      `$1options.${key}`
+    )
+  }
 
   return output
 }
@@ -831,7 +834,8 @@ function parseReferences(
           references.push({
             indicatorId,
             serieId,
-            plotIndex
+            plotIndex,
+            plotType: 'unknown'
           })
         }
 
@@ -1143,7 +1147,7 @@ export function getRendererIndicatorData(indicator: LoadedIndicator) {
 
     indicator.options.minLength = Math.max(
       indicator.options.minLength,
-      instruction.length
+      instruction.length * 2
     )
   }
 

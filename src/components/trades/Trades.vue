@@ -46,7 +46,11 @@
             })
           "
           log
-        />
+        >
+          <template v-slot:tooltip>
+            {{ formatAmount(thresholdsMultipler * minAmount) }}
+          </template>
+        </slider>
       </dropdown>
       <button
         class="btn"
@@ -85,9 +89,10 @@ import gifsService from '@/services/gifsService'
 import PaneMixin from '@/mixins/paneMixin'
 import PaneHeader from '@/components/panes/PaneHeader.vue'
 import TradesPlaceholder from '@/components/trades/TradesPlaceholder.vue'
-import { parseMarket } from '@/services/productsService'
+import { formatAmount, parseMarket } from '@/services/productsService'
 import TradesFeed from '@/components/trades/tradesFeed'
 import Slider from '@/components/framework/picker/Slider.vue'
+import { TradesPaneState } from '@/store/panesSettings/trades'
 
 @Component({
   components: { PaneHeader, TradesPlaceholder, Slider },
@@ -115,6 +120,10 @@ export default class Trades extends Mixins(PaneMixin) {
     return this.$store.state[this.paneId].thresholdsMultipler
   }
 
+  get minAmount() {
+    return (this.$store.state[this.paneId] as TradesPaneState).thresholds[0].amount
+  }
+
   get gradient() {
     return [
       this.$store.state[this.paneId].thresholds[0].buyColor,
@@ -126,6 +135,10 @@ export default class Trades extends Mixins(PaneMixin) {
 
   $refs!: {
     tradesContainer: HTMLElement
+  }
+
+  formatAmount(v) {
+    return formatAmount(v)
   }
 
   created() {

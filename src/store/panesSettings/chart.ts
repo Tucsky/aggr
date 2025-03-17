@@ -112,13 +112,13 @@ const state = {
   showAlerts: true,
   showAlertsLabel: true,
   showLegend: true,
-  fillGapsWithEmpty: true,
+  fillGapsWithEmpty: false,
   showHorizontalGridlines: false,
   horizontalGridlinesColor: 'rgba(255,255,255,.1)',
   showVerticalGridlines: false,
   verticalGridlinesColor: 'rgba(255,255,255,.1)',
   showWatermark: true,
-  watermarkColor: 'rgba(255,255,255,.1)',
+  watermarkColor: 'rgba(255,255,255,.033)',
   showBorder: true,
   borderColor: null,
   textColor: null,
@@ -190,7 +190,7 @@ const actions = {
     return indicator.id
   },
 
-  duplicateIndicator({ state, dispatch }, id) {
+  async duplicateIndicator({ state, dispatch }, id) {
     const indicator = merge({}, state.indicators[id])
 
     const indicators = Object.values(state.indicators)
@@ -198,6 +198,7 @@ const actions = {
       indicator.name,
       indicators.map(indicator => indicator.name)
     )
+    delete indicator.id
     delete indicator.libraryId
     delete indicator.updatedAt
     delete indicator.createdAt
@@ -206,7 +207,9 @@ const actions = {
     delete indicator.optionsDefinitions
     delete (indicator as any).model // past releases might have included this, force remove
 
-    dispatch('addIndicator', indicator)
+    const duplicatedIndicatorId = await dispatch('addIndicator', indicator)
+
+    dialogService.openIndicator(state._id, duplicatedIndicatorId)
   },
 
   async downloadIndicator({ state }, indicatorId) {

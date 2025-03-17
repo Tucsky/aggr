@@ -65,9 +65,9 @@ export default class ChartControl {
         isTouchSupported() ? 'touchstart' : 'mousedown',
         this.clickHandler
       )
-      this.contextMenuHandler = this.onContextMenu.bind(this)
-      canvas.addEventListener('contextmenu', this.contextMenuHandler)
     }
+    this.contextMenuHandler = this.onContextMenu.bind(this)
+    canvas.addEventListener('contextmenu', this.contextMenuHandler)
 
     // bind crosshair
     this.crosshairMoveHandler = this.onCrosshairMove.bind(this)
@@ -96,14 +96,15 @@ export default class ChartControl {
       .unsubscribeVisibleLogicalRangeChange(this.onPan)
 
     // unbind click / context menu
+    const canvas = this.chart.chartElement
+
     if (import.meta.env.VITE_APP_PUBLIC_VAPID_KEY) {
-      const canvas = this.chart.chartElement
       const clickEventName = isTouchSupported() ? 'touchstart' : 'mousedown'
       canvas.removeEventListener(clickEventName, this.clickHandler)
       this.clickHandler = null
-      canvas.removeEventListener('contextmenu', this.contextMenuHandler)
-      this.contextMenuHandler = null
     }
+    canvas.removeEventListener('contextmenu', this.contextMenuHandler)
+    this.contextMenuHandler = null
 
     // unbind crosshair
     this.chart.chartInstance.unsubscribeCrosshairMove(this.crosshairMoveHandler)
@@ -593,6 +594,10 @@ export default class ChartControl {
       components.timeframeDropdown = createComponent(module.default, propsData)
 
       mountComponent(components.timeframeDropdown)
+
+      components.timeframeDropdown.$on('input', value => {
+        components.timeframeDropdown.value = value
+      })
     } else {
       if (components.timeframeDropdown.value === event.currentTarget) {
         components.timeframeDropdown.value = null
