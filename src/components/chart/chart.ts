@@ -1821,6 +1821,7 @@ export default class Chart {
         renderer,
         serieData.functions,
         serieData.variables,
+        serieData.customFunctions,
         indicator.apis,
         indicator.options,
         seriesUtils
@@ -1882,6 +1883,7 @@ export default class Chart {
           renderer,
           serieData.functions,
           serieData.variables,
+          serieData.customFunctions,
           indicator.apis,
           indicator.options,
           seriesUtils

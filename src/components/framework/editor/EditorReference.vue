@@ -3,6 +3,7 @@
     ref="dropdown"
     v-model="dropdownTrigger"
     class="editor-reference__dropdown"
+    :class="[dragging && 'editor-reference__dropdown--dragging']"
     interactive
     draggable
     @closed="onReferenceDropdownClose"
@@ -54,7 +55,8 @@ export default {
   data() {
     return {
       dropdownTrigger: null,
-      markupContent: ''
+      markupContent: '',
+      dragging: null
     }
   },
   async mounted() {
@@ -64,7 +66,7 @@ export default {
 
     await this.$nextTick()
 
-    this.attachMonaco()
+    // this.attachMonaco()
   },
   methods: {
     attachMonaco() {
@@ -73,6 +75,8 @@ export default {
       for (const code of elements) {
         const content = code.innerText.replace(/\n$/, '')
         const lines = content.split('\n')
+
+        debugger
 
         if (content.length > 64) {
           code.style.display = 'block'
@@ -183,6 +187,7 @@ export default {
 .editor-reference {
   &__content {
     padding: 0 1rem;
+    overflow-x: auto;
 
     .monaco-editor {
       --vscode-editor-background: var(--theme-background-50);
@@ -226,7 +231,12 @@ export default {
   }
 
   &__dropdown {
+    border: 1px solid var(--theme-color-base);
     background-color: var(--theme-background-50) !important;
+
+    &--dragging .editor-reference__header {
+      cursor: grabbing !important;
+    }
   }
 
   &__close {
@@ -242,6 +252,7 @@ export default {
     position: sticky;
     backdrop-filter: blur(1rem);
     top: 0;
+    cursor: grab;
     z-index: 1;
   }
 

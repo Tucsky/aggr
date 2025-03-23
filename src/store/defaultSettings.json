@@ -11,6 +11,7 @@
   "textColor": "",
   "buyColor": "rgb(100, 157, 102)",
   "sellColor": "rgb(239, 67, 82)",
+  "colorBalanceThreshold": 0.125,
   "timezoneOffset": 0,
   "useAudio": false,
   "audioVolume": 1,

@@ -5,7 +5,17 @@ import { createComponent, mountComponent } from '@/utils/helpers'
 export const TOKENS = Object.keys(serieUtils).concat(
   Object.keys(SERIE_TYPES),
   DATA_PROPS,
-  ['renderer', 'bar', 'options', 'option', 'source', 'time', 'indicatorId']
+  [
+    'renderer',
+    'bar',
+    'options',
+    'option',
+    'source',
+    'time',
+    'indicatorId',
+    'series',
+    'customFns'
+  ]
 )
 
 const TOKEN_ALIASES = {

@@ -27,10 +27,7 @@ export interface IndicatorApi extends ISeriesApi<any> {
   precision?: number
 }
 
-export type IndicatorMarkets = {
-  [marketId: string]: string[]
-}
-
+export type IndicatorMarketMap = Record<string, string[]>
 export interface IndicatorSource {
   prop: string
   filters: IndicatorSourceFilters
@@ -63,6 +60,7 @@ export type IndicatorRealtimeAdapter = (
   renderer: Renderer,
   functions: IndicatorFunction[],
   variables: IndicatorVariable[],
+  customFunctions: IndicatorCustomFunctionsMap,
   apis: IndicatorApi[],
   options: SeriesOptions<any>,
   seriesUtils: any
@@ -82,11 +80,33 @@ export interface IndicatorTranspilationResult {
   variables: IndicatorVariable[]
   functions: IndicatorFunction[]
   plots: IndicatorPlot[]
-  markets?: IndicatorMarkets
+  markets?: IndicatorMarketMap
   references?: IndicatorReference[]
-  options?: { [key: string]: IndicatorOption }
+  options?: IndicatorOptionMap
   sources?: IndicatorSource[]
+  customFunctionsDefinition?: IndicatorCustomFunctionDefinitionMap
 }
+
+export type IndicatorOptionMap = Record<string, IndicatorOption>
+
+export type IndicatorCustomFunctionDefinition = {
+  args: string
+  body: string
+}
+export type IndicatorCustomFunctionDefinitionMap = Record<
+  string,
+  {
+    args: string[]
+    body: string
+  }
+>
+
+export type IndicatorCustomFunction = (...args: any[]) => any
+export type IndicatorCustomFunctionsMap = Record<
+  string,
+  IndicatorCustomFunction
+>
+
 export interface IndicatorFunction {
   name: string
   args?: any[]
@@ -130,6 +150,7 @@ export interface RendererIndicatorData {
   canRender: boolean
   variables: IndicatorVariable[]
   functions: IndicatorFunction[]
+  customFunctions: IndicatorCustomFunctionsMap
   plotsOptions?: any[]
   minLength?: number
 }

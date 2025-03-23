@@ -59,13 +59,11 @@ export default class ChartControl {
     const canvas = this.chart.chartElement
 
     // bind click
-    if (import.meta.env.VITE_APP_PUBLIC_VAPID_KEY) {
-      this.clickHandler = this.onClick.bind(this)
-      canvas.addEventListener(
-        isTouchSupported() ? 'touchstart' : 'mousedown',
-        this.clickHandler
-      )
-    }
+    this.clickHandler = this.onClick.bind(this)
+    canvas.addEventListener(
+      isTouchSupported() ? 'touchstart' : 'mousedown',
+      this.clickHandler
+    )
     this.contextMenuHandler = this.onContextMenu.bind(this)
     canvas.addEventListener('contextmenu', this.contextMenuHandler)
 
@@ -98,11 +96,9 @@ export default class ChartControl {
     // unbind click / context menu
     const canvas = this.chart.chartElement
 
-    if (import.meta.env.VITE_APP_PUBLIC_VAPID_KEY) {
-      const clickEventName = isTouchSupported() ? 'touchstart' : 'mousedown'
-      canvas.removeEventListener(clickEventName, this.clickHandler)
-      this.clickHandler = null
-    }
+    const clickEventName = isTouchSupported() ? 'touchstart' : 'mousedown'
+    canvas.removeEventListener(clickEventName, this.clickHandler)
+    this.clickHandler = null
     canvas.removeEventListener('contextmenu', this.contextMenuHandler)
     this.contextMenuHandler = null
 

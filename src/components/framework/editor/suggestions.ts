@@ -301,5 +301,57 @@ line(
   title=PERP,
   color=perpColor
 )`
+  },
+  {
+    label: 'customFns',
+    detail: '[AGGR] custom functions',
+    insertText: `customFns`
+  },
+  {
+    label: 'series',
+    detail: '[AGGR] series API array',
+    insertText: `series`
+  },
+  {
+    label: 'bar.series',
+    detail: '[AGGR] series values object (keyed by serie id)',
+    insertText: `bar.series[series[0].id]`
+  },
+  {
+    label: 'bar.length',
+    detail: '[AGGR] current bar index (start at 1)',
+    insertText: `bar.length`
+  },
+  {
+    label: 'time',
+    detail: '[AGGR] alias for bar.localTimestamp',
+    insertText: `time`
+  },
+  {
+    label: 'function',
+    detail: '[AGGR] define custom functions',
+    insertText: `function ohlc4(ohlc) {
+  return ohlc.open + ohlc.high + ohlc.low + ohlc.close / 4
+    }
+      
+    ohlc4($price)`
+  },
+  {
+    label: 'function in function',
+    detail: '[AGGR] use custom functions in custom functions',
+    insertText: `
+// define a base function
+function midpoint(low, high) {
+  return (low + high) / 2
+}
+
+// define a function that calls another function
+function rangeMidpoint(customFns, ohlc) {
+  return customFns.midpoint(ohlc.low, ohlc.high)
+}
+
+// usage
+rangeMidpoint(customFns, $price)
+    `
   }
 ]

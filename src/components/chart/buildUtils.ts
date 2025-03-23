@@ -8,11 +8,14 @@ import {
   IndicatorFunction,
   LoadedIndicator,
   IndicatorReference,
-  IndicatorMarkets,
+  IndicatorMarketMap,
   IndicatorSource,
   MarketsFilters,
   IndicatorSourceFilters,
-  IndicatorOption
+  IndicatorOption,
+  IndicatorCustomFunctionsMap,
+  IndicatorCustomFunctionDefinitionMap,
+  RendererIndicatorData
 } from './chart.d'
 import store from '@/store'
 import {
@@ -63,7 +66,7 @@ const allowedOptionsTypes = Object.values(ALLOWED_OPTION_TYPES)
 export function build(
   indicator: LoadedIndicator,
   serieIndicatorsMap: { [serieId: string]: IndicatorReference }
-) {
+): IndicatorTranspilationResult {
   const { id: indicatorId, libraryId } = indicator
   const result = parse(
     indicator.script,
@@ -85,6 +88,7 @@ export function build(
     output: result.output,
     functions: result.functions,
     variables: result.variables,
+    customFunctionsDefinition: result.customFunctionsDefinition,
     references: result.references,
     markets: result.markets,
     sources: result.sources,
@@ -154,6 +158,44 @@ function determineVariableState(instruction: IndicatorVariable) {
   }
 }
 
+function extractCustomFunctionsDefinition(
+  code: string,
+  customFunctionsDefinition: IndicatorCustomFunctionDefinitionMap,
+  indicatorId: string
+): string {
+  const FUNCTION_REGEX =
+    /function\s+([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)\s*{([\s\S]*?)}/g
+  let match
+
+  while ((match = FUNCTION_REGEX.exec(code)) !== null) {
+    const [fullMatch, name, args, body] = match
+
+    const normalizedBody = normalizeCommonVariables(body, indicatorId)
+
+    customFunctionsDefinition[name] = {
+      args: args.trim().length ? parseFunctionArguments(args) : [],
+      body: normalizedBody
+    }
+
+    code = code.replace(fullMatch, '')
+
+    FUNCTION_REGEX.lastIndex -= fullMatch.length
+  }
+
+  return code
+}
+
+function injectCustomFunctionCalls(
+  code: string,
+  customFns: IndicatorCustomFunctionDefinitionMap
+): string {
+  for (const fnName in customFns) {
+    const regex = new RegExp(`([^\\w.])(${fnName})\\(`, 'g')
+    code = code.replace(regex, `$1customFns.$2(`)
+  }
+  return code
+}
+
 /**
  * parse variable, functions referenced sources and external indicators used in it
  * @param input
@@ -168,14 +210,20 @@ function parse(
   const functions: IndicatorFunction[] = []
   const variables: IndicatorVariable[] = []
   const plots: IndicatorPlot[] = []
-  const markets: IndicatorMarkets = {}
+  const markets: IndicatorMarketMap = {}
   const sources: IndicatorSource[] = []
+  const customFunctionsDefinition: IndicatorCustomFunctionDefinitionMap = {}
   const options: { [key: string]: IndicatorOption } = {}
   const references: IndicatorReference[] = []
   const strings = []
 
   let output = input.replace(/\/\/.*/g, '')
 
+  output = extractCustomFunctionsDefinition(
+    output,
+    customFunctionsDefinition,
+    indicatorId
+  )
   output = parseOptions(output, options)
   output = parseSources(output, sources)
   output = normalizeCommonVariables(output, indicatorId)
@@ -190,7 +238,6 @@ function parse(
     )
   }
 
-  // remove all spaces between comma and names
   output = parseFunctions(
     output,
     functions,
@@ -207,6 +254,8 @@ function parse(
     serieIndicatorsMap
   )
 
+  output = injectCustomFunctionCalls(output, customFunctionsDefinition)
+
   output = formatOutput(output)
 
   return {
@@ -217,7 +266,8 @@ function parse(
     markets,
     references,
     options,
-    sources
+    sources,
+    customFunctionsDefinition
   }
 }
 
@@ -763,7 +813,7 @@ function parseSources(output, sources) {
   return output
 }
 
-function parseMarkets(output: string, markets: IndicatorMarkets): string {
+function parseMarkets(output: string, markets: IndicatorMarketMap): string {
   const EXCHANGE_REGEX =
     /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{5,})(:[\w]{4,})?\.?([a-z]{3,})?\b/g
 
@@ -1088,6 +1138,7 @@ export function getBuildedIndicator(
   marketFilters: MarketsFilters,
   options: any
 ) {
+  // compile sources
   let sourcedOutput = model.output
 
   if (model.sources.length) {
@@ -1098,10 +1149,11 @@ export function getBuildedIndicator(
     'renderer',
     FUNCTIONS_VAR_NAME,
     VARIABLES_VAR_NAME,
+    'customFns',
     'series',
     'options',
     'utils',
-    '"use strict"; ' + sourcedOutput
+    `"use strict"; ${sourcedOutput}`
   ) as IndicatorRealtimeAdapter
 }
 
@@ -1109,8 +1161,10 @@ export function getBuildedIndicator(
  * get fresh state of indicator for the renderer
  * @param indicator
  */
-export function getRendererIndicatorData(indicator: LoadedIndicator) {
-  const { functions, variables, plots } = JSON.parse(
+export function getRendererIndicatorData(
+  indicator: LoadedIndicator
+): RendererIndicatorData {
+  const { functions, variables, plots, customFunctionsDefinition } = JSON.parse(
     JSON.stringify(indicator.model)
   ) as IndicatorTranspilationResult
 
@@ -1158,11 +1212,25 @@ export function getRendererIndicatorData(indicator: LoadedIndicator) {
     plotsOptions.push(getCustomPlotOptions(indicator, plot))
   }
 
+  // compile custom functions
+  const customFunctions: IndicatorCustomFunctionsMap = {}
+
+  if (customFunctionsDefinition) {
+    for (const name in customFunctionsDefinition) {
+      const { args, body } = customFunctionsDefinition[name]
+      customFunctions[name] = new Function(
+        ...args,
+        `"use strict"; ${body}`
+      ) as any
+    }
+  }
+
   return {
     canRender: indicator.options.minLength <= 1,
     functions,
     variables,
     plotsOptions,
+    customFunctions,
     minLength: indicator.options.minLength
   }
 }

@@ -34,6 +34,7 @@ export interface SettingsState {
   textColor?: string
   buyColor?: string
   sellColor?: string
+  colorBalanceThreshold?: number
   timezoneOffset?: number
   useAudio?: boolean
   audioVolume?: number
@@ -162,7 +163,7 @@ const actions = {
     )
     document.documentElement.style.setProperty(
       '--theme-base-o50',
-      joinRgba([...themeBase.slice(0, 3), 0.50])
+      joinRgba([...themeBase.slice(0, 3), 0.5])
     )
     document.documentElement.style.setProperty(
       '--theme-background-75',
@@ -202,7 +203,12 @@ const actions = {
     let textColorRgb
 
     if (!textColor) {
-      textColorRgb = getLinearShadeText(backgroundRgb, 0.75)
+      textColorRgb = getLinearShadeText(
+        backgroundRgb,
+        0.75,
+        null,
+        state.colorBalanceThreshold
+      )
       textColor = joinRgba(textColorRgb)
     } else {
       textColorRgb = splitColorCode(textColor)
@@ -210,7 +216,9 @@ const actions = {
 
     document.documentElement.style.setProperty(
       '--theme-color-base',
-      joinRgba(getLinearShadeText(backgroundRgb, 1))
+      joinRgba(
+        getLinearShadeText(backgroundRgb, 1, null, state.colorBalanceThreshold)
+      )
     )
     document.documentElement.style.setProperty('--theme-color-100', textColor)
 
@@ -249,13 +257,21 @@ const actions = {
     document.documentElement.style.setProperty(
       '--theme-buy-100',
       joinRgba(
-        getLogShade(buyRgb, 0.1 * backgroundScale, 0.1 * backgroundScale)
+        getLogShade(
+          buyRgb,
+          0.1 * backgroundScale,
+          0.1 * Math.abs(backgroundScale)
+        )
       )
     )
     document.documentElement.style.setProperty(
       '--theme-buy-200',
       joinRgba(
-        getLogShade(buyRgb, 0.5 * backgroundScale, 0.5 * backgroundScale)
+        getLogShade(
+          buyRgb,
+          0.5 * backgroundScale,
+          0.2 * Math.abs(backgroundScale)
+        )
       )
     )
     document.documentElement.style.setProperty(
@@ -264,7 +280,7 @@ const actions = {
     )
     document.documentElement.style.setProperty(
       '--theme-buy-color',
-      joinRgba(getLinearShadeText(buyRgb, 1, null, 0.125))
+      joinRgba(getLinearShadeText(buyRgb, 1, null, state.colorBalanceThreshold))
     )
 
     const sellRgb = splitColorCode(state.sellColor)
@@ -276,13 +292,21 @@ const actions = {
     document.documentElement.style.setProperty(
       '--theme-sell-100',
       joinRgba(
-        getLogShade(sellRgb, 0.1 * backgroundScale, 0.1 * backgroundScale)
+        getLogShade(
+          sellRgb,
+          0.1 * backgroundScale,
+          0.1 * Math.abs(backgroundScale)
+        )
       )
     )
     document.documentElement.style.setProperty(
       '--theme-sell-200',
       joinRgba(
-        getLogShade(sellRgb, 0.5 * backgroundScale, 0.5 * backgroundScale)
+        getLogShade(
+          sellRgb,
+          0.5 * backgroundScale,
+          0.2 * Math.abs(backgroundScale)
+        )
       )
     )
     document.documentElement.style.setProperty(
@@ -291,7 +315,9 @@ const actions = {
     )
     document.documentElement.style.setProperty(
       '--theme-sell-color',
-      joinRgba(getLinearShadeText(sellRgb, 1, null, 0.125))
+      joinRgba(
+        getLinearShadeText(sellRgb, 1, null, state.colorBalanceThreshold)
+      )
     )
   },
   setAudioVolume({ commit, state }, volume: number) {
@@ -344,6 +370,11 @@ const actions = {
       markets: sortedSelection,
       count
     })
+  },
+  setColorBalanceThreshold({ commit, dispatch }, value: number) {
+    commit('SET_COLOR_BALANCE_THRESHOLD', value)
+
+    dispatch('updateCSS')
   }
 } as ActionTree<SettingsState, ModulesState>
 
@@ -570,6 +601,9 @@ const mutations = {
   },
   SET_INDICATOR_DIALOG_NAVIGATION(state, value) {
     state.indicatorDialogNavigation = JSON.stringify(value)
+  },
+  SET_COLOR_BALANCE_THRESHOLD(state, value) {
+    state.colorBalanceThreshold = value
   }
 } as MutationTree<SettingsState>
 

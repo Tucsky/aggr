@@ -13,8 +13,7 @@
     </div>
     <div class="chart-measurement__percent">
       <i class="icon-up-thin chart-measurement__icon"></i>
-      {{ percent > 0 ? '+' : '' }}{{ percent.toFixed(precision)
-      }}<small>%</small>
+      {{ percent > 0 ? '+' : '' }}{{ percent.toFixed(precision) }}<span>%</span>
     </div>
     <div class="chart-measurement__line chart-measurement__line--bottom">
       <div class="chart-measurement__price">{{ low }}</div>
@@ -195,6 +194,12 @@ export default {
     white-space: nowrap;
     text-shadow: 1.5px 1.5px 0 var(--theme-background-base);
     font-weight: 700;
+
+    #app.-light & {
+      text-shadow:
+        -0.5px -0.5px 0 var(--theme-color-o20),
+        0.5px 0.5px 0 var(--theme-background-base);
+    }
 
     #{$self}--medium & {
       font-size: 1em;

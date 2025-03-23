@@ -264,6 +264,25 @@
       description="background, buy/sell color"
       inset
     >
+      <div class="form-group mb16 mt16">
+        <label>
+          Color balance threshold
+          <i
+            class="icon-info"
+            v-tippy="{ followCursor: true, distance: 32 }"
+            title="Adjust text-over-background contrast"
+          ></i>
+        </label>
+        <slider
+          class="mt8"
+          :min="-1"
+          :max="1"
+          :step="0.001"
+          :label="true"
+          :value="colorBalanceThreshold"
+          @input="$store.dispatch('settings/setColorBalanceThreshold', $event)"
+        />
+      </div>
       <div class="form-group column mb8">
         <color-picker-control
           :value="backgroundColor"
@@ -402,6 +421,7 @@ import AudioSettings from './AudioSettings.vue'
 import OtherSettings from './OtherSettings.vue'
 import ColorPickerControl from '../framework/picker/ColorPickerControl.vue'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
+import Slider from '@/components/framework/picker/Slider.vue'
 import Btn from '@/components/framework/Btn.vue'
 import importService from '@/services/importService'
 import workspacesService from '@/services/workspacesService'
@@ -419,6 +439,7 @@ export default {
     OtherSettings,
     DonoDropdown,
     ColorPickerControl,
+    Slider,
     ToggableSection
   },
   data() {
@@ -481,6 +502,10 @@ export default {
 
     calculateSlippage() {
       return this.$store.state.settings.calculateSlippage
+    },
+
+    colorBalanceThreshold() {
+      return this.$store.state.settings.colorBalanceThreshold
     }
   },
 

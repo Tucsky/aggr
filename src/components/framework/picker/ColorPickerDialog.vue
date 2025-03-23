@@ -60,11 +60,16 @@
         class="btn -text -small"
         @click="switchFormat"
         type="button"
-        title="Rotate"
+        title="Rotate formats (rgb, hex, hsl)"
         v-tippy
       >
         <i class="icon-refresh"></i>
       </button>
+      <input
+        type="color"
+        :value="flatHex"
+        @input="setColorFromProp($event.target.value)"
+      />
       <editable
         class="form-control hide-scrollbar"
         :value="displayColor"
@@ -74,7 +79,7 @@
         class="btn -text -small"
         @click="submitColor"
         type="button"
-        title="Save color"
+        title="Save color in the palette below"
         v-tippy
       >
         <i class="icon-save"></i>
@@ -137,7 +142,8 @@ import {
   getLinearShade,
   joinRgba,
   PALETTE,
-  splitColorCode
+  splitColorCode,
+  getLinearShadeText
 } from '@/utils/colors'
 
 import Dialog from '@/components/framework/Dialog.vue'
@@ -194,6 +200,10 @@ export default {
   }),
   computed: {
     swatches: () => PALETTE,
+    flatHex() {
+      // #RRGGBBAA -> #RRGGBB
+      return this.colors.hex.slice(0, 7)
+    },
     outputColor() {
       const activeColor = this.colors[this.outputFormat]
 
@@ -421,6 +431,7 @@ export default {
       this.setColor('hsv', hsvColor)
     },
     updateHexColorValue(value) {
+      debugger
       if (isValidHexColor(value)) {
         this.setColor('hex', value)
       }
@@ -478,17 +489,14 @@ export default {
       this.setColorFromProp(color)
     },
     getLinearShadeText(backgroundColor) {
-      if (!backgroundColor) {
-        return
-      }
-
-      const color = splitColorCode(backgroundColor, getAppBackgroundColor())
-      const scaledColor = getLinearShade(
-        color,
-        0.75 * (getColorLuminance(color) > 0 ? -1 : 1)
+      return joinRgba(
+        getLinearShadeText(
+          splitColorCode(backgroundColor),
+          1,
+          null,
+          this.$store.state.settings.colorBalanceThreshold
+        )
       )
-
-      return joinRgba(scaledColor)
     }
   }
 }
@@ -534,6 +542,17 @@ export default {
       flex-grow: 1;
       white-space: nowrap;
       overflow: auto;
+      border-left: 0;
+      border-radius: 0 0.25rem 0.25rem 0;
+    }
+
+    input[type='color'] {
+      border: 1px solid var(--theme-background-200);
+      background: transparent;
+      border-radius: 0.25rem 0 0 0.25rem;
+      block-size: auto;
+      inline-size: 2rem;
+      border-right-width: 0;
     }
   }
 
