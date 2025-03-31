@@ -29,6 +29,7 @@ const REVERSE_MATCH_REGEX = /(\w+)[^a-z0-9]/i
 const COMMON_FUTURES_SUFFIX_REGEX = /[HUZ_-]\d{2}/
 const UNDERSCORE_ANYTHING_REGEX = /_.*/
 const PARSE_MARKET_REGEX = /([^:]*):(.*)/
+const BITUNIX_PERP_REGEX = /[A-Z]/
 
 const stablecoins = [
   'USDT',
@@ -347,6 +348,8 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   ) {
     type = 'perp'
   } else if (exchangeId === 'KUCOIN' && symbol.indexOf('-') === -1) {
+    type = 'perp'
+  } else if (exchangeId === 'BITUNIX' && BITUNIX_PERP_REGEX.test(symbol)) {
     type = 'perp'
   }
 
