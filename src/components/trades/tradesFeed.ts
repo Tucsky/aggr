@@ -49,6 +49,7 @@ export default class TradesFeed {
   private showLogos: boolean
   private showPairs: boolean
   private showPrices: boolean
+  private showAvgPrice: boolean
   private showTimeAgo: boolean
   private slippageMode: SlippageMode
   private paneMarkets: { [identifier: string]: boolean }
@@ -320,17 +321,17 @@ export default class TradesFeed {
     ${pairName}
     ${
       this.showPrices
-        ? `<div class="trade__price">${priceSlippage}${formatMarketPrice(
-            trade.price,
+        ? `<div class="trade__price">${priceSlippage}<span>${formatMarketPrice(
+            this.showAvgPrice ? trade.avgPrice : trade.price,
             marketKey
-          )}</div>`
+          )}</span></div>`
         : ''
     }
     <div class="trade__amount">
     <span class="trade__amount__quote">
         ${' '}
         <span class="icon-quote"></span>
-        <span>${formatAmount(trade.size * trade.price)}</span>
+        <span>${formatAmount(trade.size * trade.avgPrice)}</span>
         ${' '}
       </span>
       <span class="trade__amount__base">
@@ -522,6 +523,7 @@ export default class TradesFeed {
     this.showLogos = store.state[this.paneId].showLogos
     this.showPairs = store.state[this.paneId].showPairs
     this.showPrices = store.state[this.paneId].showPrices
+    this.showAvgPrice = store.state[this.paneId].showAvgPrice
     this.showTimeAgo = store.state[this.paneId].showTimeAgo
 
     if (this.showTimeAgo && !this.timeUpdateInterval) {
