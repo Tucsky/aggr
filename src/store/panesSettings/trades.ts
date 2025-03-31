@@ -40,6 +40,7 @@ export interface TradesPaneState {
   monochromeLogos: boolean
   multipliers: { [identifier: string]: number }
   thresholdsMultipler: number
+  showAvgPrice: boolean
 }
 
 const getters = {
@@ -75,7 +76,8 @@ const state = {
   showTimeAgo: true,
   showPrices: true,
   showHistograms: true,
-  thresholdsMultipler: 1
+  thresholdsMultipler: 1,
+  showAvgPrice: true
 } as TradesPaneState
 
 const actions = {

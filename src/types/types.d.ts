@@ -22,6 +22,7 @@ export interface AggregatorPayload {
 
 export interface AggregatedTrade extends Trade {
   originalPrice: number
+  value: number
 }
 
 export interface AggregatorSettings {
@@ -45,9 +46,10 @@ export interface Trade {
   price: number
   size: number
   side: 'buy' | 'sell'
+  originalPrice?: number
+  avgPrice?: number
   amount?: number
   count?: number
-  originalPrice?: number
   liquidation?: boolean
   slippage?: number
 }

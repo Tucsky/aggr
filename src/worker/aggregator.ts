@@ -209,6 +209,7 @@ class Aggregator {
         ) {
           aggTrade.size += trade.size
           aggTrade.price = trade.price
+          aggTrade.value += trade.price * trade.size
           aggTrade.count += trade.count || 1
           continue
         } else {
@@ -217,6 +218,7 @@ class Aggregator {
       }
 
       trade.originalPrice = this.tickers[marketKey].price || trade.price
+      trade.value = trade.price * trade.size
 
       trade.count = trade.count || 1
       this.aggregationTimeouts[marketKey] = now + this.baseAggregationTimeout
@@ -276,7 +278,7 @@ class Aggregator {
     }
   }
 
-  processTrade(trade: Trade): Trade {
+  processTrade(trade: AggregatedTrade | Trade): Trade {
     const marketKey = trade.exchange + ':' + trade.pair
 
     if (settings.calculateSlippage) {
@@ -285,24 +287,29 @@ class Aggregator {
           Math.round(
             (trade.price - trade.originalPrice + Number.EPSILON) * 10
           ) / 10
-        if (Math.abs(trade.slippage) / trade.price < 0.00025) {
-          trade.slippage = null
+        if (Math.abs(trade.slippage) / trade.price < 0.000025) {
+          trade.slippage = 0
         }
       } else if (settings.calculateSlippage === 'bps') {
-        if (trade.side === 'buy') {
-          trade.slippage = Math.floor(
+        if (trade.price > trade.originalPrice) {
+          trade.slippage = Math.round(
             ((trade.price - trade.originalPrice) / trade.originalPrice) * 10000
           )
         } else {
-          trade.slippage = Math.floor(
+          trade.slippage = Math.round(
             ((trade.originalPrice - trade.price) / trade.price) * 10000
           )
         }
       }
     }
 
+    trade.avgPrice =
+      trade.count > 1
+        ? (trade as AggregatedTrade).value / trade.size
+        : trade.price
+
     trade.amount =
-      (settings.preferQuoteCurrencySize ? trade.price : 1) * trade.size
+      (settings.preferQuoteCurrencySize ? trade.avgPrice : 1) * trade.size
 
     this.tickers[marketKey].updated = true
     this.tickers[marketKey].volume += trade.amount
@@ -312,10 +319,6 @@ class Aggregator {
 
     if (this.tickers[marketKey].initialPrice === null) {
       this.emitInitialPrice(marketKey, trade.price)
-    }
-
-    if (settings.aggregationLength > 0) {
-      trade.price = Math.max(trade.price, trade.originalPrice)
     }
 
     if (this.connections[marketKey].bucket) {
