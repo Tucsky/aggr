@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented here.
 
+## [3.6.3] - 2025-01-02
+
+- Add Bitunix exchange
+
 ## [3.6.2] - 2024-09-29
 
 - Fix Binance Futures wicks of death
