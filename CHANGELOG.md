@@ -4,12 +4,20 @@ All notable changes to this project will be documented here.
 
 ## [3.6.4] - 2025-01-03
 
-- Reconnect closed apis when tab made visible again (& ios pwa)
-- Fetch range based on indicator length
-- Autocomplete local variable in script
-- Zoomable indicator preview
+### Added
+- Added Solana address to donation
+- Added Indicator scaleWith dropdown
 - Markdown editor for indicators description
-- Indicator scaleWith dropdown
+- Zoomable indicator preview
+
+- Autocomplete local variable in script
+### Enhanced
+- Changed donation link behavior to copy wallet address to clipboard instead of opening a new tab
+- Fetch range based on indicator length
+
+### Fixed
+- Fixed handling of large subscriptions (Kraken)
+- Reconnect closed apis when tab made visible again (& ios pwa)
 
 ## [3.6.3] - 2025-01-02
 
