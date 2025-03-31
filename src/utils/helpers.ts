@@ -347,7 +347,7 @@ export function copyTextToClipboard(text) {
 function formatAmount(amount, decimals?: number) {
   const negative = amount < 0
 
-  amount = Math.abs(amount)
+  amount = Math.ceil(Math.abs(amount))
 
   if (amount >= 1000000000) {
     amount =

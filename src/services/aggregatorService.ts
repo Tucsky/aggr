@@ -82,6 +82,7 @@ class AggregatorService extends EventEmitter {
       marketDecimals[market] = countDecimals(
         price < 0.000001 ? price + 1 : price
       )
+
       if (!this.normalizeDecimalsQueue) {
         this.normalizeDecimalsQueue = {
           markets: []

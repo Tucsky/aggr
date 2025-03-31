@@ -241,6 +241,7 @@ export default class Trades extends Mixins(PaneMixin) {
         exchange,
         pair,
         price,
+        avgPrice: price,
         amount,
         size,
         side
