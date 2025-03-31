@@ -2,20 +2,28 @@
 
 All notable changes to this project will be documented here.
 
+## [3.7.0] - 2025-03-17
+
+
+
+
 ## [3.6.4] - 2025-01-03
 
 ### Added
+
 - Added Solana address to donation
 - Added Indicator scaleWith dropdown
 - Markdown editor for indicators description
 - Zoomable indicator preview
-
 - Autocomplete local variable in script
+
 ### Enhanced
+
 - Changed donation link behavior to copy wallet address to clipboard instead of opening a new tab
 - Fetch range based on indicator length
 
 ### Fixed
+
 - Fixed handling of large subscriptions (Kraken)
 - Reconnect closed apis when tab made visible again (& ios pwa)
 
