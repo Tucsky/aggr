@@ -29,7 +29,7 @@
     "monaco-editor": "0.41.0",
     "pako": "^1.0.6",
     "tunajs": "^1.0.13",
-    "vite": "^4.4.9",
+    "vite": "^4.5.14",
     "vite-plugin-comlink": "^3.0.2",
     "vue": "^2.7.13",
     "vue-class-component": "^7.2.6",
