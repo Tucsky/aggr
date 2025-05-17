@@ -4,9 +4,6 @@ All notable changes to this project will be documented here.
 
 ## [3.7.0] - 2025-03-17
 
-
-
-
 ## [3.6.4] - 2025-01-03
 
 ### Added
