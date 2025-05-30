@@ -8,7 +8,7 @@ export default class HYPERLIQUID extends Exchange {
         url: 'https://api.hyperliquid.xyz/info',
         method: 'POST',
         data: JSON.stringify({ type: 'meta' }),
-        proxy: true
+        proxy: false
       }
     ]
   }
