@@ -194,7 +194,14 @@ async function fetchExchangeProducts(
     }
 
     try {
+      const headers: Record<string, string> = {}
+
+      if (endpoint.method === 'POST' && endpoint.data) {
+        headers['Content-Type'] = 'application/json'
+      }
+
       const json = await fetch(endpoint.url, {
+        headers,
         method: endpoint.method,
         body: endpoint.data
       }).then(response => response.json())
@@ -310,7 +317,11 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
 
   if (COMMON_FUTURES_SUFFIX_REGEX.test(symbol)) {
     type = 'future'
-  } else if (exchangeId === 'BINANCE_FUTURES' || exchangeId === 'DYDX') {
+  } else if (
+    exchangeId === 'BINANCE_FUTURES' ||
+    exchangeId === 'DYDX' ||
+    exchangeId === 'HYPERLIQUID'
+  ) {
     type = 'perp'
   } else if (exchangeId === 'COINBASE' && COINBASE_INTX_REGEX.test(symbol)) {
     type = 'perp'
@@ -378,6 +389,8 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     localSymbol = localSymbol.replace(KUCOIN_SUFFIX_REGEX, '')
   } else if (exchangeId === 'COINBASE' && type === 'perp') {
     localSymbol = localSymbol.replace(COINBASE_INTX_REGEX, '')
+  } else if (exchangeId === 'HYPERLIQUID') {
+    localSymbol = localSymbol.replace(/^k/, '') + 'USD'
   }
 
   localSymbol = localSymbol
