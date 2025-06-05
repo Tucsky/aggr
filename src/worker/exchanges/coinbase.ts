@@ -1,5 +1,5 @@
 import Exchange from '../exchange'
-const INTX_PAIR_REGEX = /-INTX$/
+import { sleep } from '../helpers/utils'
 
 export default class COINBASE extends Exchange {
   id = 'COINBASE'
@@ -59,6 +59,9 @@ export default class COINBASE extends Exchange {
       })
     )
 
+    // this websocket api have a limit of about 10 messages per second.
+    await sleep(100 * this.apis.length)
+
     return true
   }
 
@@ -81,6 +84,9 @@ export default class COINBASE extends Exchange {
         }
       })
     )
+
+    // this websocket api have a limit of about 10 messages per second.
+    await sleep(100 * this.apis.length)
 
     return true
   }
