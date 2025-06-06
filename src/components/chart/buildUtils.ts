@@ -765,7 +765,7 @@ function parseSources(output, sources) {
 
 function parseMarkets(output: string, markets: IndicatorMarkets): string {
   const EXCHANGE_REGEX =
-    /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{5,})(:[\w]{4,})?\.?([a-z]{3,})?\b/g
+    /\b([A-Z_]{3,}:[a-zA-Z0-9/_-]{1,})(:[\w]{3,})?\.?([a-z]{3,})?\b/g
 
   let marketMatch = null
   let iterations = 0
