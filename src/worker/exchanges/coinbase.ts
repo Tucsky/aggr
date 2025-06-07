@@ -26,6 +26,11 @@ export default class COINBASE extends Exchange {
           continue
         }
 
+        if (product.alias) {
+          // Skip alias-only products like LTC-USDC
+          continue
+        }
+
         products.push(product.product_id)
       }
     }
