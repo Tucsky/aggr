@@ -391,6 +391,8 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     localSymbol = localSymbol.replace(COINBASE_INTX_REGEX, '')
   } else if (exchangeId === 'HYPERLIQUID') {
     localSymbol = localSymbol.replace(/^k/, '') + 'USD'
+  } else if (exchangeId === 'PHEMEX') {
+    localSymbol = localSymbol.replace(/^[a-z]/, '')
   }
 
   localSymbol = localSymbol
