@@ -1,6 +1,9 @@
 import Exchange from '../exchange'
 import { inflateRaw } from 'pako'
 
+const WS_API_SPOT = 'wss://ws-manager-compress.bitmart.com/api?protocol=1.1'
+const WS_API_FUTURES = 'wss://openapi-ws-v2.bitmart.com/api?protocol=1.1'
+
 export default class extends Exchange {
   id = 'BITMART'
   protected endpoints: { [id: string]: any } = {
@@ -12,12 +15,12 @@ export default class extends Exchange {
 
   private specs: { [pair: string]: number } = {}
 
-  async getUrl(pair: string) {
+  async getUrl(pair) {
     if (this.specs[pair]) {
-      return 'wss://openapi-ws-v2.bitmart.com/api?protocol=1.1'
+      return WS_API_FUTURES
     }
 
-    return 'wss://ws-manager-compress.bitmart.com/api?protocol=1.1'
+    return WS_API_SPOT
   }
 
   validateProducts(data) {
@@ -121,13 +124,20 @@ export default class extends Exchange {
       return {
         exchange: this.id,
         pair: trade.symbol,
-        timestamp: trade.create_time_mill,
+        timestamp: +new Date(trade.created_at),
         price: +trade.deal_price,
         size:
           (trade.deal_vol * this.specs[trade.symbol]) /
           (this.specs[trade.symbol] > 1 ? trade.deal_price : 1),
-        side: trade.way < 4 ? 'buy' : 'sell',
-        liquidation: !!trade.type
+        side:
+          typeof trade.m === 'boolean'
+            ? trade.m
+              ? 'sell'
+              : 'buy'
+            : trade.way <= 4
+              ? 'buy'
+              : 'sell',
+        liquidation: trade.type === 1
       }
     } else {
       return {
@@ -175,6 +185,20 @@ export default class extends Exchange {
 
     if (liquidationTrades.length > 0) {
       this.emitLiquidations(api.id, liquidationTrades)
+    }
+
+    return true
+  }
+
+  onApiCreated(api) {
+    if (api.url === WS_API_FUTURES) {
+      this.startKeepAlive(api, { action: 'ping' } as any, 15000)
+    }
+  }
+
+  onApiRemoved(api) {
+    if (api.url === WS_API_FUTURES) {
+      this.stopKeepAlive(api)
     }
   }
 }
