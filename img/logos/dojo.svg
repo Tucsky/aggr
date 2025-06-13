@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 27.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="dojo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 500 500" style="enable-background:new 0 0 500 500;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:url(#SVGID_1_);}
+	.st1{fill:#FFFFFF;}
+</style>
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="1.4442" y1="249.944" x2="497.2722" y2="249.944">
+	<stop  offset="0" style="stop-color:#6118B1"/>
+	<stop  offset="1" style="stop-color:#CC34FF"/>
+</linearGradient>
+<circle class="st0" cx="249.4" cy="249.9" r="247.9"/>
+<path class="st1" d="M293.8,132.1V95.1h-35.1v34.8h-32.5V95.1h-35.1v34.8h-35.5V165H273c35.5,0,64.3,28.9,64.3,64.3v41.4
+	c0,35.5-28.9,64.3-64.3,64.3H155v35.1h36.1v35.3h35.1v-35.3h32.5v35.3h35.1v-37.5c44.8-9.6,78.6-49.5,78.6-97.2v-41.4
+	C372.4,181.6,338.6,141.7,293.8,132.1z"/>
+</svg>

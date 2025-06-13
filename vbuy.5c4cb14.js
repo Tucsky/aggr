@@ -1,0 +1,1 @@
+const r="```ts\r\nvbuy: number\r\n```\r\n\r\nRepresents the sum of all buy volume from the added sources for the current bar.\r\n> Disabling a market in the chart filter UI will affect this amount\r\n\r\n\r\n```ts\r\nhistogram(vbuy, title='buy volume')\r\n```";export{r as default};
