@@ -71,6 +71,13 @@ export default class extends Exchange {
         api.id,
         json.result.data.map(t => this.formatResponse(t))
       )
+    } else if (json.method === 'public/heartbeat') {
+      api.send(
+        JSON.stringify({
+          id: json.id,
+          method: 'public/respond-heartbeat'
+        })
+      )
     }
   }
 
