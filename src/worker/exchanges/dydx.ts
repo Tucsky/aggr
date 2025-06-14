@@ -4,10 +4,12 @@ import Exchange from '../exchange'
 export default class DYDX extends Exchange {
   id = 'DYDX'
 
-  protected endpoints = { PRODUCTS: 'https://api.dydx.exchange/v3/markets' }
+  protected endpoints = {
+    PRODUCTS: 'https://indexer.dydx.trade/v4/perpetualMarkets'
+  }
 
   async getUrl() {
-    return `wss://api.dydx.exchange/v3/ws`
+    return `wss://indexer.dydx.trade/v4/ws`
   }
 
   formatProducts(data) {
@@ -27,7 +29,7 @@ export default class DYDX extends Exchange {
     api.send(
       JSON.stringify({
         type: 'subscribe',
-        channel: 'v3_trades',
+        channel: 'v4_trades',
         id: pair
       })
     )
@@ -48,7 +50,7 @@ export default class DYDX extends Exchange {
     api.send(
       JSON.stringify({
         type: 'unsubscribe',
-        channel: 'v3_trades',
+        channel: 'v4_trades',
         id: pair
       })
     )
@@ -70,11 +72,7 @@ export default class DYDX extends Exchange {
   onMessage(event, api) {
     const json = JSON.parse(event.data)
 
-    if (json.channel === 'v3_trades') {
-      if (json.type === 'subscribed') {
-        return
-      }
-
+    if (json.type === 'channel_data') {
       const trades = []
       const liquidations = []
 
