@@ -393,6 +393,8 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     localSymbol = localSymbol.replace(/^k/, '') + 'USD'
   } else if (exchangeId === 'PHEMEX') {
     localSymbol = localSymbol.replace(/^[a-z]/, '')
+  } else if (exchangeId === 'WHITEBIT') {
+    localSymbol = localSymbol.replace(/_PERP$/, 'USDT')
   }
 
   localSymbol = localSymbol
