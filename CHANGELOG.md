@@ -2,10 +2,30 @@
 
 All notable changes to this project will be documented here.
 
-## [3.7.0] - 2025-03-17
+## [3.8.0] - 2025-07-17
 
+### Added
 
+- Added Hyperliquid exchange
+- Added heartbeat ping response for Crypto.com
 
+### Enhanced 
+
+- Improved support for short symbols and 3-char suffixes in indicator market references
+
+### Updated
+
+- Updated protocol for DyDx exchange
+- Updated Bitmart API.
+- Updated Phemex API implementation
+
+### Bug fix
+
+- Coinbase: skip alias-only products, fixed advanced-trade-ws rate limiting
+
+## [3.7.0] - 2025-03-31
+
+- Fixed rma function base value
 
 ## [3.6.4] - 2025-01-03
 
