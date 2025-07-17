@@ -20,7 +20,7 @@
     "@vue/eslint-config-typescript": "^11.0.3",
     "axios": "^1.4.0",
     "color-fns": "^0.1.1",
-    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-prettier": "^5.5.1",
     "eventemitter3": "^4.0.7",
     "idb": "^6.0.0",
     "lightweight-charts": "git+https://github.com/Tucsky/lightweight-charts.git#3ac7ebd731452fb0d9967905e10128b20409b7d7",
