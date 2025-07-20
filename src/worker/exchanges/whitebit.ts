@@ -15,14 +15,6 @@ export default class WHITEBIT extends Exchange {
 
   formatProducts(response) {
     const products = [...response.map(p => p.name)];
-    // const [collateralResponse, futuresResponse] = response;
-    // if (collateralResponse && collateralResponse.result?.length > 0) {
-    //     products.push(...collateralResponse.result)
-    // }
-    // if (futuresResponse && futuresResponse.result?.length > 0) {
-    //     products.push(...futuresResponse.result.map(p => p.ticker_id))
-    // }
-    // // for some reason the collateral endpoint returns data from the futures endpoints too?
     const productsUniqueSet = [...new Set(products)];
     return productsUniqueSet;
   }
