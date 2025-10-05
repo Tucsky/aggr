@@ -1234,7 +1234,12 @@ export default {
         }
 
         const [exchange] = parseMarket(market)
-        const product = indexedProducts[exchange].find(
+        const index = indexedProducts[exchange]
+        if (!index) {
+          continue
+        }
+
+        const product = index.find(
           product => product.id === market
         )
         selectedProducts[market] = product

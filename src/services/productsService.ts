@@ -354,7 +354,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   ) {
     type = 'perp'
   } else if (
-    (exchangeId === 'BITGET' || exchangeId === 'MEXC') &&
+    (exchangeId === 'BITGET') &&
     symbol.indexOf('_') !== -1
   ) {
     type = 'perp'

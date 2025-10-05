@@ -21,7 +21,6 @@ import Uniswap from './uniswap'
 import Kucoin from './kucoin'
 import Bitget from './bitget'
 import Bitunix from './bitunix'
-import Mexc from './mexc'
 import Gateio from './gateio'
 import CryptoCom from './cryptocom'
 import Bitmart from './bitmart'
@@ -50,7 +49,6 @@ export const exchanges = [
   new Kucoin(),
   new Bitget(),
   new Bitunix(),
-  new Mexc(),
   new Gateio(),
   new CryptoCom(),
   new Bitmart(),

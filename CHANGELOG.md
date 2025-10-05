@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented here.
 
+## [3.8.1] - 2025-10-05
+
+- Removed MEXC exchange
+
 ## [3.8.0] - 2025-07-17
 
 ### Added
