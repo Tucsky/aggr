@@ -1,0 +1,1 @@
+const t="```ts\r\ncsell: number\r\n```\r\n\r\nRepresents the sum of all the individuals sell / short market orders in the current bar.\r\nIt's the count, not the volume.\r\n> Disabling a market in the chart filter UI will affect this amount\r\n\r\n\r\n```ts\r\nhistogram(csell, title='sell count')\r\n```";export{t as default};
