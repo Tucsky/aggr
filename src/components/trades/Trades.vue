@@ -489,13 +489,11 @@ export default class Trades extends Mixins(PaneMixin) {
       display: inline-block;
       vertical-align: top;
       padding: 0.2em 0.25em;
-      direction: ltr;
     }
   }
 
   .trade__amount {
     flex-grow: 1.25;
-
     .trade__amount__base {
       display: none;
       padding: 0 0.5em;
@@ -521,10 +519,6 @@ export default class Trades extends Mixins(PaneMixin) {
     &.-fixed {
       font-size: 87.5%;
     }
-  }
-
-  .trade__price {
-    direction: rtl;
   }
 }
 
