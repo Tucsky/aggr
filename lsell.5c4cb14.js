@@ -1,0 +1,1 @@
+const r="```ts\r\nlsell: number\r\n```\r\n\r\nRepresents the sum of all long liquidations amount, (or forced sell orders) from the added sources for the current bar.\r\n> Disabling a market in the chart filter UI will affect this amount\r\n\r\n\r\n```ts\r\nhistogram(lsell, title='long liqs')\r\n```";export{r as default};
