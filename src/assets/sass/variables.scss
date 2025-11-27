@@ -31,6 +31,7 @@ $border-radius-small: 3px;
 /* AUTO VAR INJECTION HEADER !! DO NOT MOVE !! */
 
 $icon-AGGR: "\ea01";
+$icon-ASTER: "\ea6a";
 $icon-BINANCE: "\ea02";
 $icon-BINANCE_FUTURES: "\ea03";
 $icon-BINANCE_US: "\ea04";
@@ -53,6 +54,7 @@ $icon-HUOBI: "\ea14";
 $icon-HYPERLIQUID: "\ea15";
 $icon-KRAKEN: "\ea16";
 $icon-KUCOIN: "\ea17";
+$icon-MEXC: "\ea69";
 $icon-OKEX: "\ea19";
 $icon-PHEMEX: "\ea1a";
 $icon-POLONIEX: "\ea1b";
@@ -137,6 +139,7 @@ $icon-yen: "\ea67";
 
 $exchange-list: (
 	'AGGR': $icon-AGGR,
+	'ASTER': $icon-ASTER,
 	'BINANCE': $icon-BINANCE,
 	'BINANCE_FUTURES': $icon-BINANCE_FUTURES,
 	'BINANCE_US': $icon-BINANCE_US,

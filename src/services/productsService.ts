@@ -353,10 +353,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     type === 'spot'
   ) {
     type = 'perp'
-  } else if (
-    (exchangeId === 'BITGET') &&
-    symbol.indexOf('_') !== -1
-  ) {
+  } else if (exchangeId === 'BITGET' && symbol.indexOf('_') !== -1) {
     type = 'perp'
   } else if (exchangeId === 'KUCOIN' && symbol.indexOf('-') === -1) {
     type = 'perp'

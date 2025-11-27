@@ -1,6 +1,7 @@
 import Exchange from '../exchange'
 
 import Aggr from './aggr'
+import Aster from './aster'
 import Bitmex from './bitmex'
 import BinanceFutures from './binance_futures'
 import BinanceUs from './binance_us'
@@ -29,6 +30,7 @@ import WhiteBIT from './whitebit'
 
 export const exchanges = [
   new Aggr(),
+  new Aster(),
   new Bitmex(),
   new BinanceFutures(),
   new BinanceUs(),
