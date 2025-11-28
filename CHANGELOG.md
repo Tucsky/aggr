@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented here.
 
+## [3.8.3] - 2025-11-29
+
+- Removed Uniswap
+- Added back Mexc
+
 ## [3.8.2] - 2025-11-28
 
 - Updated Bitget api

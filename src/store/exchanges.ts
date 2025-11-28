@@ -20,9 +20,7 @@ const state = supportedExchanges.reduce(
   (exchangesState: ExchangesState, id: string) => {
     exchangesState[id] = {
       disabled:
-        /CRYPTOCOM|BITMART|UNISWAP|HITBTC|PHEMEX|BINANCE_US|SERUM|GATEIO/.test(
-          id
-        )
+        /CRYPTOCOM|BITMART|HITBTC|MEXC|ASTER|PHEMEX|BINANCE_US|GATEIO/.test(id)
     }
 
     return exchangesState

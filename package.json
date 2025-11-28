@@ -1,6 +1,6 @@
 {
   "name": "aggr",
-  "version": "3.8.2",
+  "version": "3.8.3",
   "private": true,
   "type": "module",
   "scripts": {
@@ -28,6 +28,7 @@
     "marked": "^9.1.2",
     "monaco-editor": "0.41.0",
     "pako": "^1.0.6",
+    "protobufjs": "^7.5.4",
     "tunajs": "^1.0.13",
     "vite": "^4.4.9",
     "vite-plugin-comlink": "^3.0.2",
