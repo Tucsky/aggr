@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented here.
 
+## [3.8.2] - 2025-11-28
+
+- Updated Bitget api
+- Added Aster
+
 ## [3.8.1] - 2025-10-05
 
 - Removed MEXC exchange

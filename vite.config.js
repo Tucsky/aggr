@@ -1,12 +1,12 @@
-import { defineConfig, loadEnv } from 'vite'
-import { qrcode } from 'vite-plugin-qrcode'
-import { visualizer } from 'rollup-plugin-visualizer'
-import fs from 'fs'
-import gitprocess from 'child_process'
-import monacoEditorPlugin from 'vite-plugin-monaco-editor'
-import path from 'path'
-import svgLoader from 'vite-svg-loader'
 import vue from '@vitejs/plugin-vue2'
+import gitprocess from 'child_process'
+import fs from 'fs'
+import path from 'path'
+import { visualizer } from 'rollup-plugin-visualizer'
+import { defineConfig, loadEnv } from 'vite'
+import monacoEditorPlugin from 'vite-plugin-monaco-editor'
+import { qrcode } from 'vite-plugin-qrcode'
+import svgLoader from 'vite-svg-loader'
 
 import crypto from 'crypto'
 
@@ -50,10 +50,13 @@ export default defineConfig(({ mode }) => {
 
   const processEnvValues = {
     'process.env': Object.entries(env).reduce((prev, [key, val]) => {
-      return {
-        ...prev,
-        [key]: val
+      if (key.startsWith('VITE_') || key === 'NODE_ENV') {
+        return {
+          ...prev,
+          [key]: val
+        }
       }
+      return prev
     }, {})
   }
 
