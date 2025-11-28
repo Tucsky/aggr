@@ -1,8 +1,7 @@
 import { ProductsData, ProductsStorage } from '@/types/types'
 import { EventEmitter } from 'eventemitter3'
-import { sleep } from './helpers/utils'
 import { dispatchAsync } from './helpers/com'
-import { randomString } from './helpers/utils'
+import { randomString, sleep } from './helpers/utils'
 import settings from './settings'
 interface Api extends WebSocket {
   _id: string
@@ -240,7 +239,6 @@ class Exchange extends EventEmitter {
       this.markLoadingAsCompleted(this.disconnecting, api._id, true)
 
       const pairsToReconnect = [...api._pending, ...api._connected]
-
       if (pairsToReconnect.length) {
         console.error(
           `[${
@@ -335,7 +333,7 @@ class Exchange extends EventEmitter {
 
     await this.unsubscribe(api, pair)
 
-    if (!api._connected.length) {
+    if (!api._connected.length && !api._pending.length) {
       console.debug(
         `[${this.id}.unlink] ${pair}'s api is now empty (trigger close api)`
       )

@@ -353,7 +353,8 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     type === 'spot'
   ) {
     type = 'perp'
-  } else if (exchangeId === 'BITGET' && symbol.indexOf('_') !== -1) {
+  } else if (exchangeId === 'BITGET' && !/-SPOT$/.test(symbol)) {
+    // In V2 API: spot markets have -SPOT suffix, everything else is perp/futures
     type = 'perp'
   } else if (exchangeId === 'KUCOIN' && symbol.indexOf('-') === -1) {
     type = 'perp'
@@ -365,7 +366,11 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
 
   let localSymbol = symbol
 
-  if (exchangeId === 'BYBIT' || exchangeId === 'GATEIO') {
+  if (
+    exchangeId === 'BYBIT' ||
+    exchangeId === 'GATEIO' ||
+    exchangeId === 'BITGET'
+  ) {
     localSymbol = localSymbol.replace(DASH_SPOT_REGEX, '')
   } else if (exchangeId === 'KRAKEN') {
     localSymbol = localSymbol.replace(KRAKEN_FUTURES_REGEX, '')
@@ -377,11 +382,6 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     localSymbol = localSymbol.replace(HUOBI_SUFFIXES_REGEX, 'USD')
   } else if (exchangeId === 'DERIBIT') {
     localSymbol = localSymbol.replace(DERIBIT_PERP_REGEX, '$1')
-  } else if (exchangeId === 'BITGET') {
-    localSymbol = localSymbol
-      .replace('USD_DMCBL', 'USD')
-      .replace('PERP_CMCBL', 'USDC')
-      .replace(UNDERSCORE_ANYTHING_REGEX, '')
   } else if (exchangeId === 'KUCOIN') {
     localSymbol = localSymbol.replace(KUCOIN_SUFFIX_REGEX, '')
   } else if (exchangeId === 'COINBASE' && type === 'perp') {
