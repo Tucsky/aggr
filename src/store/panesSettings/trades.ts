@@ -25,10 +25,10 @@ export interface TradesPaneState {
   _id?: string
   liquidations: Threshold[]
   thresholds: Threshold[]
-  audioThreshold: number
+  audioThreshold: number | null
   muted: boolean
-  audioPitch: number
-  audioVolume: number
+  audioPitch: number | null
+  audioVolume: number | null
   maxRows: number
   showPairs: boolean
   showTimeAgo: boolean
