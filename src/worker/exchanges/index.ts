@@ -1,35 +1,36 @@
 import Exchange from '../exchange'
 
 import Aggr from './aggr'
-import Bitmex from './bitmex'
+import Aster from './aster'
+import Binance from './binance'
 import BinanceFutures from './binance_futures'
 import BinanceUs from './binance_us'
-import Kraken from './kraken'
-import Huobi from './huobi'
-import Binance from './binance'
 import Bitfinex from './bitfinex'
-import Bitstamp from './bitstamp'
-import Coinbase from './coinbase'
-import Hitbtc from './hitbtc'
-import Okex from './okex'
-import Poloniex from './poloniex'
-import Deribit from './deribit'
-import Bybit from './bybit'
-import Phemex from './phemex'
-import Dydx from './dydx'
-import Uniswap from './uniswap'
-import Kucoin from './kucoin'
 import Bitget from './bitget'
-import Bitunix from './bitunix'
-import Mexc from './mexc'
-import Gateio from './gateio'
-import CryptoCom from './cryptocom'
 import Bitmart from './bitmart'
+import Bitmex from './bitmex'
+import Bitstamp from './bitstamp'
+import Bitunix from './bitunix'
+import Bybit from './bybit'
+import Coinbase from './coinbase'
+import CryptoCom from './cryptocom'
+import Deribit from './deribit'
+import Dydx from './dydx'
+import Gateio from './gateio'
+import Hitbtc from './hitbtc'
+import Huobi from './huobi'
 import Hyperliquid from './hyperliquid'
+import Kraken from './kraken'
+import Kucoin from './kucoin'
+import Mexc from './mexc/mexc'
+import Okex from './okex'
+import Phemex from './phemex'
+import Poloniex from './poloniex'
 import WhiteBIT from './whitebit'
 
 export const exchanges = [
   new Aggr(),
+  new Aster(),
   new Bitmex(),
   new BinanceFutures(),
   new BinanceUs(),
@@ -46,11 +47,10 @@ export const exchanges = [
   new Bybit(),
   new Phemex(),
   new Dydx(),
-  new Uniswap(),
+  new Mexc(),
   new Kucoin(),
   new Bitget(),
   new Bitunix(),
-  new Mexc(),
   new Gateio(),
   new CryptoCom(),
   new Bitmart(),

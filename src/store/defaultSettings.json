@@ -33,9 +33,7 @@
   },
   "searchQuotes": {},
   "previousSearchSelections": [],
-  "searchExchanges": {
-    "UNISWAP": false
-  },
+  "searchExchanges": {},
   "timeframes": [
     { "label": "1s", "value": "1" },
     { "label": "3s", "value": "3" },

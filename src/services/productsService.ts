@@ -27,7 +27,6 @@ const SYMBOL_DELIMITER_REGEX = /[-_/:]/
 const EVERYTHING_BINANCE_REGEX = /BINANCE/
 const REVERSE_MATCH_REGEX = /(\w+)[^a-z0-9]/i
 const COMMON_FUTURES_SUFFIX_REGEX = /[HUZ_-]\d{2}/
-const UNDERSCORE_ANYTHING_REGEX = /_.*/
 const PARSE_MARKET_REGEX = /([^:]*):(.*)/
 const BITUNIX_PERP_REGEX = /[A-Z]/
 
@@ -320,7 +319,8 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   } else if (
     exchangeId === 'BINANCE_FUTURES' ||
     exchangeId === 'DYDX' ||
-    exchangeId === 'HYPERLIQUID'
+    exchangeId === 'HYPERLIQUID' ||
+    exchangeId === 'ASTER'
   ) {
     type = 'perp'
   } else if (exchangeId === 'COINBASE' && COINBASE_INTX_REGEX.test(symbol)) {
@@ -331,12 +331,19 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     type = 'future'
   } else if (exchangeId === 'BITMART' && !UNDERSCORE_REGEX.test(symbol)) {
     type = 'perp'
+  } else if (exchangeId === 'MEXC' && UNDERSCORE_REGEX.test(symbol)) {
+    type = 'perp'
   } else if (exchangeId === 'HUOBI' && DASH_REGEX.test(symbol)) {
     type = 'perp'
-  } else if (exchangeId === 'BYBIT' && !DASH_SPOT_REGEX.test(symbol)) {
-    if (TWO_DIGITS_REGEX.test(symbol)) {
+  } else if (
+    (exchangeId === 'BYBIT' ||
+      exchangeId === 'GATEIO' ||
+      exchangeId === 'BITGET') &&
+    !DASH_SPOT_REGEX.test(symbol)
+  ) {
+    if (exchangeId === 'BYBIT' && TWO_DIGITS_REGEX.test(symbol)) {
       type = 'future'
-    } else if (!DASH_SPOT_REGEX.test(symbol)) {
+    } else {
       type = 'perp'
     }
   } else if (exchangeId === 'BITMEX' || SWAP_OR_PERP_REGEX.test(symbol)) {
@@ -353,22 +360,19 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     type === 'spot'
   ) {
     type = 'perp'
-  } else if (
-    (exchangeId === 'BITGET' || exchangeId === 'MEXC') &&
-    symbol.indexOf('_') !== -1
-  ) {
-    type = 'perp'
   } else if (exchangeId === 'KUCOIN' && symbol.indexOf('-') === -1) {
     type = 'perp'
   } else if (exchangeId === 'BITUNIX' && BITUNIX_PERP_REGEX.test(symbol)) {
-    type = 'perp'
-  } else if (exchangeId === 'GATEIO' && !DASH_SPOT_REGEX.test(symbol)) {
     type = 'perp'
   }
 
   let localSymbol = symbol
 
-  if (exchangeId === 'BYBIT' || exchangeId === 'GATEIO') {
+  if (
+    exchangeId === 'BYBIT' ||
+    exchangeId === 'GATEIO' ||
+    exchangeId === 'BITGET'
+  ) {
     localSymbol = localSymbol.replace(DASH_SPOT_REGEX, '')
   } else if (exchangeId === 'KRAKEN') {
     localSymbol = localSymbol.replace(KRAKEN_FUTURES_REGEX, '')
@@ -380,11 +384,6 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     localSymbol = localSymbol.replace(HUOBI_SUFFIXES_REGEX, 'USD')
   } else if (exchangeId === 'DERIBIT') {
     localSymbol = localSymbol.replace(DERIBIT_PERP_REGEX, '$1')
-  } else if (exchangeId === 'BITGET') {
-    localSymbol = localSymbol
-      .replace('USD_DMCBL', 'USD')
-      .replace('PERP_CMCBL', 'USDC')
-      .replace(UNDERSCORE_ANYTHING_REGEX, '')
   } else if (exchangeId === 'KUCOIN') {
     localSymbol = localSymbol.replace(KUCOIN_SUFFIX_REGEX, '')
   } else if (exchangeId === 'COINBASE' && type === 'perp') {

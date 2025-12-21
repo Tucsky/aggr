@@ -1,12 +1,11 @@
-import { defineConfig, loadEnv } from 'vite'
-import { qrcode } from 'vite-plugin-qrcode'
-import { visualizer } from 'rollup-plugin-visualizer'
-import fs from 'fs'
-import gitprocess from 'child_process'
-import monacoEditorPlugin from 'vite-plugin-monaco-editor'
-import path from 'path'
-import svgLoader from 'vite-svg-loader'
 import vue from '@vitejs/plugin-vue2'
+import gitprocess from 'child_process'
+import path from 'path'
+import { visualizer } from 'rollup-plugin-visualizer'
+import { defineConfig, loadEnv } from 'vite'
+import monacoEditorPlugin from 'vite-plugin-monaco-editor'
+import { qrcode } from 'vite-plugin-qrcode'
+import svgLoader from 'vite-svg-loader'
 
 import crypto from 'crypto'
 
@@ -28,19 +27,36 @@ process.env.VITE_APP_BUILD_DATE =
   ' ' +
   date.toLocaleString('en-US', { month: 'short' }).toLowerCase()
 
-function makeExchangeList() {
-  const exchanges = []
-
-  fs.readdirSync('./src/worker/exchanges/').forEach(file => {
-    if (/\w+\.ts$/.test(file) && file !== 'index.ts') {
-      exchanges.push(file.replace(/\.ts$/, ''))
-    }
-  })
-
-  return exchanges.join(',')
-}
-
-process.env.VITE_APP_EXCHANGES = makeExchangeList()
+process.env.VITE_APP_EXCHANGES = [
+  'AGGR',
+  'ASTER',
+  'BITMEX',
+  'BINANCE_FUTURES',
+  'BINANCE_US',
+  'KRAKEN',
+  'HUOBI',
+  'BINANCE',
+  'BITFINEX',
+  'BITSTAMP',
+  'COINBASE',
+  'HITBTC',
+  'OKEX',
+  'POLONIEX',
+  'DERIBIT',
+  'BYBIT',
+  'PHEMEX',
+  'DYDX',
+  'MEXC',
+  'MEXC_FUTURES',
+  'KUCOIN',
+  'BITGET',
+  'BITUNIX',
+  'GATEIO',
+  'CRYPTOCOM',
+  'BITMART',
+  'HYPERLIQUID',
+  'WHITEBIT'
+]
 
 export default defineConfig(({ mode }) => {
   const env = {
@@ -50,10 +66,13 @@ export default defineConfig(({ mode }) => {
 
   const processEnvValues = {
     'process.env': Object.entries(env).reduce((prev, [key, val]) => {
-      return {
-        ...prev,
-        [key]: val
+      if (key.startsWith('VITE_') || key === 'NODE_ENV') {
+        return {
+          ...prev,
+          [key]: val
+        }
       }
+      return prev
     }, {})
   }
 
