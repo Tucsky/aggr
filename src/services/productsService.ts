@@ -368,11 +368,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
 
   let localSymbol = symbol
 
-  if (
-    exchangeId === 'BYBIT' ||
-    exchangeId === 'GATEIO' ||
-    exchangeId === 'BITGET'
-  ) {
+  if (exchangeId === 'BYBIT' || exchangeId === 'GATEIO') {
     localSymbol = localSymbol.replace(DASH_SPOT_REGEX, '')
   } else if (exchangeId === 'KRAKEN') {
     localSymbol = localSymbol.replace(KRAKEN_FUTURES_REGEX, '')
@@ -394,6 +390,10 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     localSymbol = localSymbol.replace(/^[a-z]/, '')
   } else if (exchangeId === 'WHITEBIT') {
     localSymbol = localSymbol.replace(/_PERP$/, 'USDT')
+  } else if (exchangeId === 'BITGET') {
+    localSymbol = localSymbol
+      .replace(DASH_SPOT_REGEX, '')
+      .replace(/PERP$/, 'USDC')
   }
 
   localSymbol = localSymbol
