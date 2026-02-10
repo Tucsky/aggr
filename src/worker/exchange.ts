@@ -43,7 +43,7 @@ class Exchange extends EventEmitter {
   /**
    * ping timers
    */
-  keepAliveIntervals: { [url: string]: number } = {}
+  keepAliveIntervals: { [apiId: string]: number } = {}
 
   /**
    * active websocket apis
@@ -710,11 +710,13 @@ class Exchange extends EventEmitter {
       | (() => any) = { event: 'ping' },
     every = 30000
   ) {
-    if (this.keepAliveIntervals[api.url]) {
+    const keepAliveId = api._id || api.url
+
+    if (this.keepAliveIntervals[keepAliveId]) {
       this.stopKeepAlive(api)
     }
 
-    this.keepAliveIntervals[api.url] = setInterval(() => {
+    this.keepAliveIntervals[keepAliveId] = setInterval(() => {
       if (api.readyState === WebSocket.OPEN) {
         api.send(
           typeof payload === 'function'
@@ -728,14 +730,18 @@ class Exchange extends EventEmitter {
   }
 
   stopKeepAlive(api) {
-    if (!this.keepAliveIntervals[api.url]) {
+    const keepAliveId = api._id || api.url
+
+    if (!this.keepAliveIntervals[keepAliveId]) {
       return
     }
 
-    console.debug(`[${this.id}] stop keepalive for ws ${api.url}`)
+    console.debug(
+      `[${this.id}] stop keepalive for ws ${api.url} (${keepAliveId})`
+    )
 
-    clearInterval(this.keepAliveIntervals[api.url])
-    delete this.keepAliveIntervals[api.url]
+    clearInterval(this.keepAliveIntervals[keepAliveId])
+    delete this.keepAliveIntervals[keepAliveId]
   }
 
   markLoadingAsCompleted(
