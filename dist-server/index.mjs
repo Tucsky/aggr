@@ -7,8 +7,8 @@ config()
 const __filename = new URL(import.meta.url).pathname
 let __dirname = path.dirname(__filename)
 
-if(process.platform === "win32"){
-	__dirname = __dirname.substring(1)
+if (process.platform === 'win32') {
+  __dirname = __dirname.substring(1)
 }
 
 const app = express()

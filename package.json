@@ -22,6 +22,7 @@
     "color-fns": "^0.1.1",
     "eslint-plugin-prettier": "^5.0.0",
     "eventemitter3": "^4.0.7",
+    "express": "^5.2.1",
     "idb": "^6.0.0",
     "lightweight-charts": "git+https://github.com/Tucsky/lightweight-charts.git#3ac7ebd731452fb0d9967905e10128b20409b7d7",
     "lodash.merge": "^4.6.2",
@@ -77,5 +78,21 @@
   "volta": {
     "node": "20.2.0",
     "npm": "9.7.1"
-  }
+  },
+  "description": "Cryptocurrency market trades aggregator./",
+  "main": "babel.config.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tucsky/aggr.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Tucsky/aggr/issues"
+  },
+  "homepage": "https://github.com/Tucsky/aggr#readme"
 }
