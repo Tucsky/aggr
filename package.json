@@ -16,6 +16,7 @@
     "deploy": "node scripts/gh-pages-deploy.mjs"
   },
   "dependencies": {
+    "next": "^latest",
     "@mdi/font": "^5.6.55",
     "@vue/eslint-config-typescript": "^11.0.3",
     "axios": "^1.12.0",
