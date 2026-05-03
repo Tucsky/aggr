@@ -19,9 +19,9 @@ export default class BINANCE_FUTURES extends Exchange {
 
   async getUrl(pair: string) {
     if (this.dapi[pair]) {
-      return 'wss://dstream.binance.com/ws'
+      return 'wss://dstream.binance.com/market/ws'
     } else {
-      return 'wss://fstream.binance.com/ws'
+      return 'wss://fstream.binance.com/market/ws'
     }
   }
 
