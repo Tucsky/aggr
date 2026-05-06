@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script>self["MonacoEnvironment"] = (function (paths) {
+          return {
+            globalAPI: false,
+            getWorkerUrl : function (moduleId, label) {
+              var result =  paths[label];
+              if (/^((http:)|(https:)|(file:)|(\/\/))/.test(result)) {
+                var currentUrl = String(window.location);
+                var currentOrigin = currentUrl.substr(0, currentUrl.length - window.location.hash.length - window.location.search.length - window.location.pathname.length);
+                if (result.substring(0, currentOrigin.length) !== currentOrigin) {
+                  var js = '/*' + label + '*/importScripts("' + result + '");';
+                  var blob = new Blob([js], { type: 'application/javascript' });
+                  return URL.createObjectURL(blob);
+                }
+              }
+              return result;
+            }
+          };
+        })({
+  "editorWorkerService": "/aggr/monacoeditorwork/editor.worker.bundle.js",
+  "css": "/aggr/monacoeditorwork/css.worker.bundle.js",
+  "html": "/aggr/monacoeditorwork/html.worker.bundle.js",
+  "json": "/aggr/monacoeditorwork/json.worker.bundle.js",
+  "typescript": "/aggr/monacoeditorwork/ts.worker.bundle.js",
+  "javascript": "/aggr/monacoeditorwork/ts.worker.bundle.js",
+  "less": "/aggr/monacoeditorwork/css.worker.bundle.js",
+  "scss": "/aggr/monacoeditorwork/css.worker.bundle.js",
+  "handlebars": "/aggr/monacoeditorwork/html.worker.bundle.js",
+  "razor": "/aggr/monacoeditorwork/html.worker.bundle.js"
+});</script>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>AGGR</title>
+    <meta name="description" content="Cryptocurrency market trades aggregator" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/aggr/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/aggr/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/aggr/favicon-16x16.png" />
+    <link rel="mask-icon" href="/aggr/safari-pinned-tab.svg" color="#171b29" />
+    <meta name="msapplication-TileColor" content="#171b29" />
+    <meta name="theme-color" content="#171b29" />
+    <link rel="manifest" href="/aggr/manifest.webmanifest">
+
+    <!-- Google Tag Manager -->
+    <script>
+      ;(function(w, d, s, l, i) {
+        w[l] = w[l] || []
+        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' })
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != 'dataLayer' ? '&l=' + l : ''
+        j.async = true
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl
+        f.parentNode.insertBefore(j, f)
+      })(window, document, 'script', 'dataLayer', 'GTM-KLNCBF7')
+    </script>
+    <!-- End Google Tag Manager -->
+
+    <link
+      href="https://fonts.googleapis.com/css?family=Barlow+Semi+Condensed:400,700|Spline+Sans+Mono:400,500,600&display=swap"
+      rel="stylesheet"
+    />
+	<base href="/" />
+    <script type="module" crossorigin src="/aggr/index.5c4cb14.js"></script>
+    <link rel="stylesheet" href="/aggr/index.5c4cb14.css">
+  </head>
+  <body class="hide-scrollbar">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript
+      ><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KLNCBF7" height="0" width="0" style="display: none; visibility: hidden"></iframe
+    ></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
+    <noscript>
+      <strong
+        >We're sorry but AGGR doesn't work properly without JavaScript enabled. Please enable it to
+        continue.</strong
+      >
+    </noscript>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
+    
+  </body>
+</html>

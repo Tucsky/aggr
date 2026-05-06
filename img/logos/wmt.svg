@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 27.7.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 500 500" style="enable-background:new 0 0 500 500;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:url(#SVGID_1_);}
+	.st1{fill:url(#SVGID_00000029761406059826908240000011992841581521487009_);}
+	.st2{fill:url(#SVGID_00000022542440526048344530000016937468149697587110_);}
+</style>
+<g>
+	<g>
+		
+			<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="117.8695" y1="293.9402" x2="382.1346" y2="29.6751" gradientTransform="matrix(1 0 0 -1 0 500.8898)">
+			<stop  offset="0" style="stop-color:#AA64F1"/>
+			<stop  offset="1" style="stop-color:#363770"/>
+		</linearGradient>
+		<path class="st0" d="M460.1,316H166.7l-17.4,55.6h252.3c-67,83.8-189.3,97.4-273.1,30.3c-28-22.4-49.3-52.1-61.4-85.9H8.9
+			C37.9,421.9,135,500,250,500s212.1-78.1,241.1-184L460.1,316L460.1,316z"/>
+		
+			<linearGradient id="SVGID_00000028306960020195653900000012273129935167664026_" gradientUnits="userSpaceOnUse" x1="264.2393" y1="416.1718" x2="477.8723" y2="202.5388" gradientTransform="matrix(1 0 0 -1 0 500.8898)">
+			<stop  offset="0" style="stop-color:#FFBF6B"/>
+			<stop  offset="1" style="stop-color:#F38220"/>
+		</linearGradient>
+		<path style="fill:url(#SVGID_00000028306960020195653900000012273129935167664026_);" d="M468.4,128.5H220.5L203.1,184h229.8
+			c7.7,21.2,11.6,43.5,11.5,66c0,9.3-0.7,18.6-2,27.8h56c1-9.2,1.5-18.5,1.5-27.8C500,207.4,489.2,165.6,468.4,128.5z"/>
+		
+			<linearGradient id="SVGID_00000036941850386961609180000002506737979446819749_" gradientUnits="userSpaceOnUse" x1="121.6459" y1="465.7767" x2="289.4953" y2="216.9599" gradientTransform="matrix(1 0 0 -1 0 500.8898)">
+			<stop  offset="0" style="stop-color:#FF2B8A"/>
+			<stop  offset="1" style="stop-color:#D01B6C"/>
+		</linearGradient>
+		<path style="fill:url(#SVGID_00000036941850386961609180000002506737979446819749_);" d="M250,55.6c41.6,0,82.2,13.3,115.6,38.2
+			H445C397.6,34.5,325.9,0,250,0C112.1,0,0,112.1,0,250c0,9.3,0.5,18.6,1.5,27.8h297.1l17.4-55.6H57.6
+			C71.5,126.6,153.4,55.7,250,55.6z"/>
+	</g>
+</g>
+</svg>
