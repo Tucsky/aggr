@@ -1,6 +1,10 @@
 import audioService, { AudioFunction } from '@/services/audioService'
 import gifsService from '@/services/gifsService'
-import { formatAmount, formatMarketPrice } from '@/services/productsService'
+import {
+  formatAmount,
+  formatMarketPrice,
+  getMarketDisplayPair
+} from '@/services/productsService'
 import store from '@/store'
 import { SlippageMode, Trade } from '@/types/types'
 import {
@@ -301,10 +305,10 @@ export default class TradesFeed {
     let pairName = ''
 
     if (this.showPairs) {
-      pairName = `<div class="trade__pair">${trade.pair.replace(
-        '_',
-        ' '
-      )}</div>`
+      pairName = `<div class="trade__pair">${getMarketDisplayPair(
+        trade.exchange,
+        trade.pair
+      ).replace('_', ' ')}</div>`
     }
 
     return `<li class="trade -${trade.exchange} -${trade.side} -level-${

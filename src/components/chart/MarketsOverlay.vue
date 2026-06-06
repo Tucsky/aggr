@@ -35,7 +35,7 @@
               @click.stop.prevent
             />
             <div></div>
-            <span>{{ market }}</span>
+            <span>{{ formatMarket(market) }}</span>
           </label>
         </div>
       </div>
@@ -57,6 +57,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { formatMarketForDisplay } from '@/services/productsService'
 
 @Component({
   name: 'MarketsOverlay',
@@ -102,6 +103,10 @@ export default class MarketsOverlay extends Vue {
 
   toggleMarkets(type) {
     this.$store.dispatch(this.paneId + '/toggleMarkets', { type })
+  }
+
+  formatMarket(marketId: string) {
+    return formatMarketForDisplay(marketId)
   }
 }
 </script>

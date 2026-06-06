@@ -32,6 +32,7 @@ export interface Product {
   base: string
   quote: string
   local: string
+  displayPair?: string
 }
 
 export interface ListenedProduct extends Product {

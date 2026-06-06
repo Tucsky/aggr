@@ -29,6 +29,7 @@ const REVERSE_MATCH_REGEX = /(\w+)[^a-z0-9]/i
 const COMMON_FUTURES_SUFFIX_REGEX = /[HUZ_-]\d{2}/
 const PARSE_MARKET_REGEX = /([^:]*):(.*)/
 const BITUNIX_PERP_REGEX = /[A-Z]/
+const HYPERLIQUID_SPOT_REGEX = /^@|\//
 
 const stablecoins = [
   'USDT',
@@ -82,6 +83,8 @@ const simplePairLookup = new RegExp(`^([A-Z0-9]{2,})[-/_]?([A-Z0-9]{3,})$`)
 const promisesOfProducts = {}
 
 export const indexedProducts = {}
+
+const hyperliquidSpotPairLabels: { [pair: string]: string } = {}
 
 export const marketDecimals = {}
 
@@ -291,6 +294,14 @@ export async function getExchangeSymbols(
   const data = await requestExchangeProductsData(exchangeId, forceFetch)
 
   if (data) {
+    if (
+      exchangeId === 'HYPERLIQUID' &&
+      !Array.isArray(data) &&
+      data.spotPairLabels
+    ) {
+      Object.assign(hyperliquidSpotPairLabels, data.spotPairLabels)
+    }
+
     if (Array.isArray(data)) {
       symbols = data
     } else {
@@ -309,6 +320,62 @@ export function parseMarket(market: string) {
   return market.match(PARSE_MARKET_REGEX).slice(1, 3)
 }
 
+function finalizeProduct(product) {
+  if (product.exchange === 'HYPERLIQUID' && product.type === 'spot') {
+    const label = hyperliquidSpotPairLabels[product.pair]
+
+    if (label) {
+      product.displayPair = label
+    } else if (product.pair.includes('/')) {
+      product.displayPair = product.pair
+    } else if (product.base && product.quote) {
+      product.displayPair = `${product.base}/${product.quote}`
+    }
+  }
+
+  return product
+}
+
+export function getMarketDisplayPair(
+  exchangeId: string,
+  pair: string,
+  product?: { displayPair?: string; type?: string }
+) {
+  if (product?.displayPair) {
+    return product.displayPair
+  }
+
+  if (exchangeId === 'HYPERLIQUID') {
+    const label = hyperliquidSpotPairLabels[pair]
+
+    if (label) {
+      return label
+    }
+  }
+
+  return pair
+}
+
+export function formatMarketForDisplay(marketId: string) {
+  const [exchange, pair] = parseMarket(marketId)
+
+  if (!exchange || !pair) {
+    return marketId
+  }
+
+  return `${exchange}:${getMarketDisplayPair(exchange, pair)}`
+}
+
+export function productMatchesSearchQuery(product, queryFilter: RegExp) {
+  return (
+    queryFilter.test(product.id) ||
+    queryFilter.test(product.local) ||
+    queryFilter.test(product.base) ||
+    queryFilter.test(product.quote) ||
+    (product.displayPair && queryFilter.test(product.displayPair))
+  )
+}
+
 export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   const id = exchangeId + ':' + symbol
 
@@ -319,10 +386,13 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   } else if (
     exchangeId === 'BINANCE_FUTURES' ||
     exchangeId === 'DYDX' ||
-    exchangeId === 'HYPERLIQUID' ||
     exchangeId === 'ASTER'
   ) {
     type = 'perp'
+  } else if (exchangeId === 'MEXC' && UNDERSCORE_REGEX.test(symbol)) {
+    type = 'perp'
+  } else if (exchangeId === 'HYPERLIQUID') {
+    type = HYPERLIQUID_SPOT_REGEX.test(symbol) ? 'spot' : 'perp'
   } else if (exchangeId === 'COINBASE' && COINBASE_INTX_REGEX.test(symbol)) {
     type = 'perp'
   } else if (exchangeId === 'BITFINEX' && BITFINEX_PERP_REGEX.test(symbol)) {
@@ -330,8 +400,6 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
   } else if (exchangeId === 'HUOBI' && HUOBI_FUTURES_REGEX.test(symbol)) {
     type = 'future'
   } else if (exchangeId === 'BITMART' && !UNDERSCORE_REGEX.test(symbol)) {
-    type = 'perp'
-  } else if (exchangeId === 'MEXC' && UNDERSCORE_REGEX.test(symbol)) {
     type = 'perp'
   } else if (exchangeId === 'HUOBI' && DASH_REGEX.test(symbol)) {
     type = 'perp'
@@ -384,6 +452,10 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     localSymbol = localSymbol.replace(KUCOIN_SUFFIX_REGEX, '')
   } else if (exchangeId === 'COINBASE' && type === 'perp') {
     localSymbol = localSymbol.replace(COINBASE_INTX_REGEX, '')
+  } else if (exchangeId === 'HYPERLIQUID' && type === 'spot') {
+    if (hyperliquidSpotPairLabels[symbol]) {
+      localSymbol = hyperliquidSpotPairLabels[symbol]
+    }
   } else if (exchangeId === 'HYPERLIQUID') {
     localSymbol = localSymbol.replace(/^k/, '') + 'USD'
   } else if (exchangeId === 'PHEMEX') {
@@ -425,6 +497,36 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
       }
     }
   }
+  if (!match && exchangeId === 'HYPERLIQUID' && type === 'spot') {
+    const label = hyperliquidSpotPairLabels[symbol]
+
+    if (label && label.includes('/')) {
+      const [base, quote] = label.split('/')
+
+      return finalizeProduct({
+        id,
+        base,
+        quote,
+        pair: symbol,
+        local: noStable ? stripStablePair(base + quote) : base + quote,
+        exchange: exchangeId,
+        type
+      })
+    }
+
+    if (HYPERLIQUID_SPOT_REGEX.test(symbol)) {
+      return finalizeProduct({
+        id,
+        base: symbol,
+        quote: 'USDC',
+        pair: symbol,
+        local: symbol,
+        exchange: exchangeId,
+        type
+      })
+    }
+  }
+
   if (!match) {
     return null
   }
@@ -446,7 +548,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     localSymbolAlpha = base + quote
   }
 
-  return {
+  return finalizeProduct({
     id,
     base,
     quote,
@@ -454,7 +556,7 @@ export function getMarketProduct(exchangeId, symbol, noStable?: boolean) {
     local: localSymbolAlpha,
     exchange: exchangeId,
     type
-  }
+  })
 }
 
 export async function getApiSupportedMarkets() {

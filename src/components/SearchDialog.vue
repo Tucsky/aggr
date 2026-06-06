@@ -227,7 +227,7 @@
             </template>
             <template v-else>
               <i class="mr4" :class="`icon-${market.exchange}`"></i>
-              {{ market.pair }}
+              {{ market.displayPair || market.pair }}
             </template>
           </button>
         </template>
@@ -332,7 +332,7 @@
                 :class="'icon-' + market.exchange"
               ></td>
               <td v-text="market.exchange"></td>
-              <td v-text="market.pair"></td>
+              <td v-text="market.displayPair || market.pair"></td>
               <td v-text="market.type"></td>
               <td class="text-center">
                 <i
@@ -408,6 +408,7 @@ import {
   getExchangeSymbols,
   ensureIndexedProducts,
   parseMarket,
+  productMatchesSearchQuery,
   stripStableQuote
 } from '@/services/productsService'
 import ToggableSection from '@/components/framework/ToggableSection.vue'
@@ -662,7 +663,7 @@ export default {
         .filter(
           product =>
             selection.indexOf(product.id) === -1 &&
-            queryFilter.test(product.local)
+            productMatchesSearchQuery(product, queryFilter)
         )
         .reduce((groups, product) => {
           let localPair
@@ -711,7 +712,8 @@ export default {
       } else {
         return this.filteredProducts.filter(
           product =>
-            selection.indexOf(product.id) === -1 && queryFilter.test(product.id)
+            selection.indexOf(product.id) === -1 &&
+            productMatchesSearchQuery(product, queryFilter)
         )
       }
     },
