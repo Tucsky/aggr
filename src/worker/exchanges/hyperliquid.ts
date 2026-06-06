@@ -1,13 +1,49 @@
-import Exchange from '../exchange'
+import Exchange, { Api } from '../exchange'
+
+type SpotMeta = {
+  tokens: { name: string }[]
+  universe: { name: string; tokens: number[]; isDelisted?: boolean }[]
+}
+
+function buildSpotPairLabels(spotMeta: SpotMeta) {
+  const labels: { [pair: string]: string } = {}
+
+  if (!spotMeta?.tokens?.length || !spotMeta?.universe?.length) {
+    return labels
+  }
+
+  for (const product of spotMeta.universe) {
+    if (product.isDelisted) {
+      continue
+    }
+
+    const base = spotMeta.tokens[product.tokens[0]]
+    const quote = spotMeta.tokens[product.tokens[1]]
+
+    if (base && quote) {
+      labels[product.name] = `${base.name}/${quote.name}`
+    }
+  }
+
+  return labels
+}
 
 export default class HYPERLIQUID extends Exchange {
   id = 'HYPERLIQUID'
+  spotPairLabels: { [pair: string]: string } = {}
+
   protected endpoints: { [id: string]: any } = {
     PRODUCTS: [
       {
         url: 'https://api.hyperliquid.xyz/info',
         method: 'POST',
         data: JSON.stringify({ type: 'meta' }),
+        proxy: false
+      },
+      {
+        url: 'https://api.hyperliquid.xyz/info',
+        method: 'POST',
+        data: JSON.stringify({ type: 'spotMeta' }),
         proxy: false
       }
     ]
@@ -17,19 +53,32 @@ export default class HYPERLIQUID extends Exchange {
     return 'wss://api.hyperliquid.xyz/ws'
   }
 
-  formatProducts(response) {
+  formatProducts(responses) {
     const products = []
+    const perpResponse = Array.isArray(responses) ? responses[0] : responses
+    const spotResponse = Array.isArray(responses) ? responses[1] : null
 
-    const perpResponse = response
-
-    if (perpResponse && perpResponse.universe && perpResponse.universe.length) {
+    if (perpResponse?.universe?.length) {
       for (const product of perpResponse.universe) {
-        products.push(product.name)
+        if (!product.isDelisted) {
+          products.push(product.name)
+        }
+      }
+    }
+
+    if (spotResponse?.universe?.length) {
+      this.spotPairLabels = buildSpotPairLabels(spotResponse)
+
+      for (const product of spotResponse.universe) {
+        if (!product.isDelisted) {
+          products.push(product.name)
+        }
       }
     }
 
     return {
-      products
+      products,
+      spotPairLabels: this.spotPairLabels
     }
   }
 
@@ -99,5 +148,13 @@ export default class HYPERLIQUID extends Exchange {
       size: +t.sz,
       side: t.side === 'B' ? 'buy' : 'sell'
     }
+  }
+
+  onApiCreated(api: Api) {
+    this.startKeepAlive(api, { method: 'ping' }, 20000)
+  }
+
+  onApiRemoved(api: Api) {
+    this.stopKeepAlive(api)
   }
 }

@@ -548,9 +548,11 @@ export default class TradesSettings extends Vue {
       const multiplier = (this.$store.state[this.paneId] as TradesPaneState)
         .multipliers[marketKey]
 
+      const product = this.$store.state.panes.marketsListeners[marketKey]
+
       return {
         exchange,
-        pair,
+        pair: product?.displayPair || pair,
         multiplier: !isNaN(multiplier) ? multiplier : 1,
         identifier: marketKey
       }
